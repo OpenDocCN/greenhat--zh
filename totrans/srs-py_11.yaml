@@ -1,30 +1,43 @@
 - en: '**11**'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '**11**'
 - en: '**SCALING AND ARCHITECTURE**'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '**可扩展性与架构**'
 - en: '![image](../images/common01.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![image](../images/common01.jpg)'
 - en: Sooner or later, your development process will have to consider resiliency and
     scalability. An application’s scalability, concurrency, and parallelism depend
     largely on its initial architecture and design. As we’ll see in this chapter,
     there are some paradigms—such as multithreading—that don’t apply correctly to
     Python, whereas other techniques, such as service-oriented architecture, work
     better.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 迟早，你的开发过程将不得不考虑弹性和可扩展性。应用程序的可扩展性、并发性和并行性在很大程度上取决于其初始架构和设计。正如本章所见，有些范式——例如多线程——并不适合
+    Python，而其他技术，如面向服务架构，则更为有效。
 - en: Covering scalability in its entirety would take an entire book, and has in fact
     been covered by many books. This chapter covers the essential scaling fundamentals,
     even if you’re not planning to build applications with millions of users.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 涵盖可扩展性全貌需要一本书的篇幅，实际上已经有很多书籍涉及这一主题。本章将介绍可扩展性的基本原理，即使你不打算构建拥有数百万用户的应用程序。
 - en: '**Multithreading in Python and Its Limitations**'
+  id: totrans-5
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**Python 中的多线程及其局限性**'
 - en: By default, Python processes run on only one thread, called the *main thread*.
     This thread executes code on a single processor. *Multithreading* is a programming
     technique that allows code to run concurrently inside a single Python process
@@ -32,22 +45,31 @@
     which we can introduce concurrency in Python. If the computer is equipped with
     multiple processors, you can even use *parallelism*, running threads in parallel
     over several processors, to make code execution faster.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，Python 进程仅在一个线程上运行，称为*主线程*。该线程在单个处理器上执行代码。*多线程*是一种编程技术，通过同时运行多个线程，使代码在单个
+    Python 进程中并发执行。这是我们在 Python 中引入并发的主要机制。如果计算机配备了多个处理器，你甚至可以使用*并行性*，在多个处理器上并行运行线程，以加速代码执行。
 - en: 'Multithreading is most commonly used (though not always appropriately) when:'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 多线程最常用的场景（尽管并不总是合适）是：
 - en: You need to run background or I/O-oriented tasks without stopping your main
     thread’s execution. For example, the main loop of a graphical user interface is
     busy waiting for an event (e.g., a user click or keyboard input), but the code
     needs to execute other tasks.
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 你需要在不停止主线程执行的情况下运行后台或面向 I/O 的任务。例如，图形用户界面的主循环忙于等待事件（例如用户点击或键盘输入），但代码仍需要执行其他任务。
 - en: You need to spread your workload across several CPUs.
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 你需要将工作负载分配到多个 CPU 上。
 - en: 'The first scenario is a good general case for multithreading. Though implementing
     multithreading in this circumstance would introduce extra complexity, controlling
     multithreading would be manageable, and performance likely wouldn’t suffer unless
@@ -55,8 +77,11 @@
     workloads that are I/O intensive gets more interesting when the I/O has high latency:
     the more often you have to wait to read or write, the more beneficial it is to
     do something else in the meantime.'
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个场景是多线程的一个好例子。尽管在这种情况下实现多线程会引入额外的复杂性，但控制多线程是可管理的，除非 CPU 工作负载非常密集，否则性能不会受到影响。当
+    I/O 密集型任务的 I/O 延迟较高时，使用并发会带来更大的性能提升：你需要等待读写操作时，越是能在这段时间里做其他事情，就越能提高效率。
 - en: In the second scenario, you might want to start a new thread for each new request
     instead of handling them one at a time. This may seem like a good use for multithreading.
     However, if you spread your workload out like this, you will encounter the Python
@@ -66,28 +91,38 @@
     to prevent race conditions, but it unfortunately means that if you try to scale
     your application by making it run multiple threads, you’ll always be limited by
     this global lock.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 在第二种情况下，你可能希望为每个新请求启动一个新线程，而不是一个一个地处理它们。这看起来像是使用多线程的一个好例子。然而，如果你像这样分配工作负载，你会遇到
+    Python 的*全局解释器锁（GIL）*，这是一个每次 CPython 需要执行字节码时必须获取的锁。这个锁意味着在任何时刻，只有一个线程可以控制 Python
+    解释器。这个规则最初是为了防止竞争条件而引入的，但不幸的是，这意味着如果你尝试通过让应用程序运行多个线程来进行扩展，你将始终受到这个全局锁的限制。
 - en: So, while using threads seems like the ideal solution, most applications running
     requests in multiple threads struggle to attain 150 percent CPU usage, or usage
     of the equivalent of 1.5 cores. Most computers have 4 or 8 cores, and servers
     offer 24 or 48 cores, but the GIL prevents Python from using the full CPU. There
     are some initiatives underway to remove the GIL, but the effort is extremely complex
     because it requires performance and backward compatibility trade-offs.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 所以，虽然使用线程看起来是理想的解决方案，但大多数在多个线程中运行请求的应用程序很难达到150%的CPU使用率，或者相当于1.5个核心的使用率。大多数计算机有4个或8个核心，服务器提供24个或48个核心，但GIL（全局解释器锁）限制了Python无法充分利用CPU。虽然有一些计划在进行中，以移除GIL，但这个工作非常复杂，因为它需要在性能和向后兼容性之间做出权衡。
 - en: Although CPython is the most commonly used implementation of the Python language,
     there are others that do not have a GIL. *Jython*, for example, can efficiently
     run multiple threads in parallel. Unfortunately, projects such as Jython by their
     very nature lag behind CPython and so are not really useful targets; innovation
     happens in CPython, and the other implementations are just following in CPython’s
     footsteps.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然CPython是Python语言最常用的实现，但也有其他实现没有GIL。例如，*Jython*可以有效地并行运行多个线程。不幸的是，像Jython这样的项目天生落后于CPython，因此并不是非常有用的目标；创新发生在CPython中，其他实现只是跟随CPython的步伐。
 - en: 'So, let’s revisit our two use cases with what we now know and figure out a
     better solution:'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 所以，让我们根据现在所知道的，重新审视我们的两个用例，并找出一个更好的解决方案：
 - en: When you need to run background tasks, you *can* use multithreading, but the
     easier solution is to build your application around an event loop. There are a
     lot of Python modules that provide for this, and the standard is now asyncio.
@@ -95,205 +130,305 @@
     most advanced frameworks will give you access to events based on signals, timers,
     and file descriptor activity—we’ll talk about this later in the chapter in “[Event-Driven
     Architecture](ch11.xhtml#lev1sec63)” on [page 181](ch11.xhtml#page_181).
+  id: totrans-15
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当你需要运行后台任务时，你*可以*使用多线程，但更简单的解决方案是围绕事件循环构建你的应用程序。有许多Python模块提供这种功能，当前的标准是asyncio。也有一些框架，如Twisted，围绕同样的概念构建。最先进的框架将使你能够基于信号、定时器和文件描述符活动来访问事件——我们将在本章的“[事件驱动架构](ch11.xhtml#lev1sec63)”中进一步讨论，具体在[第181页](ch11.xhtml#page_181)。
 - en: When you need to spread the workload, using multiple processes is the most efficient
     method. We’ll look at this technique in the next section.
+  id: totrans-16
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当你需要分散工作负载时，使用多个进程是最有效的方法。我们将在下一节中探讨这一技术。
 - en: Developers should always think twice before using multithreading. As one example,
     I once used multithreading to dispatch jobs in rebuildd, a Debian-build daemon
     I wrote a few years ago. While it seemed handy to have a different thread to control
     each running build job, I very quickly fell into the threading-parallelism trap
     in Python. If I had the chance to begin again, I’d build something based on asynchronous
     event handling or multiprocessing and not have to worry about the GIL.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 开发人员在使用多线程时应该始终三思而后行。举个例子，我曾经在我几年前编写的Debian构建守护进程rebuildd中使用过多线程来分配任务。虽然有一个独立的线程来控制每个正在运行的构建任务似乎很方便，但我很快就陷入了Python中线程并行的陷阱。如果我有机会重新开始，我会基于异步事件处理或多进程来构建，而不是担心GIL。
 - en: Multithreading is complex, and it’s hard to get multithreaded applications right.
     You need to handle thread synchronization and locking, which means there are a
     lot of opportunities to introduce bugs. Considering the small overall gain, it’s
     better to think twice before spending too much effort on it.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 多线程是复杂的，要使多线程应用程序正确运行非常困难。你需要处理线程同步和锁定，这意味着有很多引入错误的机会。考虑到总体增益较小，在投入过多精力之前最好再三考虑。
 - en: '**Multiprocessing vs. Multithreading**'
+  id: totrans-19
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**多进程与多线程**'
 - en: Since the GIL prevents multithreading from being a good scalability solution,
     look to the alternative solution offered by Python’s *multiprocessing* package.
     The package exposes the same kind of interface you’d achieve using the multithreading
     module, except that it starts new *processes* (via os.fork()) instead of new system
     threads.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于GIL限制了多线程作为可扩展解决方案的有效性，可以考虑Python的*多进程*包提供的替代解决方案。这个包暴露了你在使用多线程模块时能够获得的相同接口，只是它启动的是新的*进程*（通过os.fork()），而不是新的系统线程。
 - en: '[Listing 11-1](ch11.xhtml#ch11list1) shows a simple example in which one million
     random integers are summed eight times, with this activity spread across eight
     threads at the same time.'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: '[示例 11-1](ch11.xhtml#ch11list1) 展示了一个简单的例子，其中对一百万个随机整数进行了八次求和，并且这一操作同时在八个线程上分布执行。'
 - en: import random
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: import random
 - en: import threading
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: import threading
 - en: results = []
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: results = []
 - en: 'def compute():'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def compute():'
 - en: results.append(sum(
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: results.append(sum(
 - en: '[random.randint(1, 100) for i in range(1000000)]))'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: '[random.randint(1, 100) for i in range(1000000)]))'
 - en: 'workers = [threading.Thread(target=compute) for x in range(8)] for worker in
     workers:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 'workers = [threading.Thread(target=compute) for x in range(8)] for worker in
+    workers:'
 - en: worker.start()
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: worker.start()
 - en: 'for worker in workers:'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for worker in workers:'
 - en: worker.join()
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: worker.join()
 - en: 'print("Results: %s" % results)'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 'print("结果: %s" % results)'
 - en: '*Listing 11-1: Using multithreading for concurrent activity*'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: '*示例 11-1：使用多线程进行并发操作*'
 - en: In [Listing 11-1](ch11.xhtml#ch11list1), we create eight threads using the threading.Thread
     class and store them in the workers array. Those threads will execute the compute()
     function. They then use the start() method to start. The join() method only returns
     once the thread has terminated its execution. At this stage, the result can be
     printed.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[示例 11-1](ch11.xhtml#ch11list1)中，我们使用threading.Thread类创建了八个线程，并将它们存储在workers数组中。这些线程将执行compute()函数。然后，它们使用start()方法启动线程。join()方法只有在线程执行完毕后才会返回。在这个阶段，结果可以被打印出来。
 - en: 'Running this program returns the following:'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行这个程序返回以下结果：
 - en: $ time python worker.py
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: $ time python worker.py
 - en: 'Results: [50517927, 50496846, 50494093, 50503078, 50512047, 50482863,'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果：[50517927, 50496846, 50494093, 50503078, 50512047, 50482863,
 - en: 50543387, 50511493]
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 50543387, 50511493]
 - en: python worker.py  13.04s user 2.11s system 129% cpu 11.662 total
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: python worker.py  13.04s 用户 2.11s 系统 129% CPU 11.662 总计
 - en: This has been run on an idle four-core CPU, which means that Python could potentially
     have used up to 400 percent of CPU. However, these results show that it was clearly
     unable to do that, even with eight threads running in parallel. Instead, its CPU
     usage maxed out at 129 percent, which is just 32 percent of the hardware’s capabilities
     (129/400).
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是在一个空闲的四核CPU上运行的，这意味着Python本来可以利用最多400%的CPU。但这些结果表明，即使同时运行了八个线程，它也显然未能达到这一点。相反，CPU使用率最多为129%，这只是硬件能力的32%（129/400）。
 - en: Now, let’s rewrite this implementation using *multiprocessing*. For a simple
     case like this, switching to multiprocessing is pretty straightforward, as shown
     in [Listing 11-2](ch11.xhtml#ch11list2).
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，让我们使用*多进程*重写这个实现。对于像这样的简单案例，切换到多进程是相当直接的，如[示例 11-2](ch11.xhtml#ch11list2)所示。
 - en: import multiprocessing
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: import multiprocessing
 - en: import random
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: import random
 - en: 'def compute(n):'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def compute(n):'
 - en: return sum(
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: return sum(
 - en: '[random.randint(1, 100) for i in range(1000000)])'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: '[random.randint(1, 100) for i in range(1000000)])'
 - en: Start 8 workers
+  id: totrans-47
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 启动8个工作进程
 - en: pool = multiprocessing.Pool(processes=8)
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: pool = multiprocessing.Pool(processes=8)
 - en: 'print("Results: %s" % pool.map(compute, range(8)))'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 'print("结果: %s" % pool.map(compute, range(8)))'
 - en: '*Listing 11-2: Using multiprocessing for concurrent activity*'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: '*示例 11-2：使用多进程进行并发操作*'
 - en: The multiprocessing module offers a Pool object that accepts as an argument
     the number of processes to start. Its map() method works in the same way as the
     native map() method, except that a different Python process will be responsible
     for the execution of the compute() function.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 多进程模块提供了一个Pool对象，它接受一个参数，该参数是要启动的进程数量。它的map()方法与原生map()方法的工作方式相同，不同之处在于不同的Python进程将负责执行compute()函数。
 - en: 'Running the program in [Listing 11-2](ch11.xhtml#ch11list2) under the same
     conditions as [Listing 11-1](ch11.xhtml#ch11list1) gives the following result:'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 在与[示例 11-1](ch11.xhtml#ch11list1)相同的条件下运行[示例 11-2](ch11.xhtml#ch11list2)程序，得到以下结果：
 - en: $ time python workermp.py
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: $ time python workermp.py
 - en: 'Results: [50495989, 50566997, 50474532, 50531418, 50522470, 50488087, 0498016,
     50537899]'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果：[50495989, 50566997, 50474532, 50531418, 50522470, 50488087, 0498016, 50537899]
 - en: python workermp.py  16.53s user 0.12s system 363% cpu 4.581 total
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: python workermp.py  16.53s 用户 0.12s 系统 363% CPU 4.581 总计
 - en: Multiprocessing reduces the exectution time by 60 percent. Moreover, we’ve been
     able to consume up to 363 percent of CPU power, which is more than 90 percent
     (363/400) of the computer’s CPU capacity.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 多进程减少了60%的执行时间。此外，我们还能够消耗高达363%的CPU功率，这比计算机CPU容量的90%（363/400）还要高。
 - en: Each time you think that you can parallelize some work, it’s almost always better
     to rely on multiprocessing and to fork your jobs in order to spread the workload
     across several CPU cores. This wouldn’t be a good solution for very small execution
     times, as the cost of the fork() call would be too big, but for larger computing
     needs, it works well.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 每当你认为可以并行化某些工作时，几乎总是更好地依赖多进程，并通过 fork 你的工作，以便将工作负载分布到多个 CPU 核心上。这对非常短的执行时间来说不是一个好解决方案，因为
+    fork() 调用的开销会太大，但对于更大的计算需求来说，它能很好地工作。
 - en: '**Event-Driven Architecture**'
+  id: totrans-58
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**事件驱动架构**'
 - en: '*Event-driven programming* is characterized by the use of events, such as user
     input, to dictate how control flows through a program, and it is a good solution
     for organizing program flow. The event-driven program listens for various events
     happening on a queue and reacts based on those incoming events.'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: '*事件驱动编程*的特点是使用事件（例如用户输入）来决定程序控制流的走向，它是组织程序流的一种良好解决方案。事件驱动程序监听队列中的各种事件，并根据这些传入事件做出反应。'
 - en: 'Let’s say you want to build an application that listens for a connection on
     a socket and then processes the connection it receives. There are basically three
     ways to approach the problem:'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设你想构建一个应用程序，它监听一个套接字上的连接，并处理接收到的连接。基本上有三种方法可以解决这个问题：
 - en: Fork a new process each time a new connection is established, relying on something
     like the multiprocessing module.
+  id: totrans-61
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 每次建立新连接时，依赖类似 multiprocessing 模块的工具来分叉一个新进程。
 - en: Start a new thread each time a new connection is established, relying on something
     like the threading module.
+  id: totrans-62
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 每次建立新连接时启动一个新线程，可以依赖类似 threading 模块的工具。
 - en: Add this new connection to your event loop and react to the event it will generate
     when it occurs.
+  id: totrans-63
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将这个新连接添加到你的事件循环中，并在事件发生时做出响应。
 - en: Determining how a modern computer should handle tens of thousands of connections
     simultaneously is known as the *C10K problem*. Among other things, the C10K resolution
     strategies explain how using an event loop to listen to hundreds of event sources
@@ -301,84 +436,129 @@
     This doesn’t mean that the two techniques are not compatible, but it does mean
     that you can usually replace the multiple-threads approach with an event-driven
     mechanism.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 确定现代计算机如何同时处理成千上万的连接被称为 *C10K 问题*。其中，C10K 的解决策略解释了如何使用事件循环监听成百上千个事件源，比起每个连接一个线程的方式，事件驱动的方式扩展性更好。这并不意味着这两种技术不可兼容，而是通常可以用事件驱动机制替代多线程方式。
 - en: 'Event-driven architecture uses an event loop: the program calls a function
     that blocks execution until an event is received and ready to be processed. The
     idea is that your program can be kept busy doing other tasks while waiting for
     inputs and outputs to complete. The most basic events are “data ready to be read”
     and “data ready to be written.”'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 事件驱动架构使用事件循环：程序调用一个函数，该函数会阻塞执行，直到接收到并准备好处理的事件。其思想是，在等待输入和输出完成时，程序可以忙于执行其他任务。最基本的事件是“数据准备好读取”和“数据准备好写入”。
 - en: In Unix, the standard functions for building such an event loop are the system
     calls select(2) or poll(2). These functions expect a list of file descriptors
     to listen for, and they will return as soon as at least one of the file descriptors
     is ready to be read from or written to.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 Unix 中，构建这种事件循环的标准函数是系统调用 select(2) 或 poll(2)。这些函数期望一个文件描述符列表进行监听，一旦至少有一个文件描述符准备好读取或写入，它们就会返回。
 - en: 'In Python, we can access these system calls through the select module. It’s
     easy enough to build an event-driven system with these calls, though doing so
     can be tedious. [Listing 11-3](ch11.xhtml#ch11list3) shows an event-driven system
     that does our specified task: listening on a socket and processing any connections
     it receives.'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 Python 中，我们可以通过 select 模块访问这些系统调用。使用这些调用来构建事件驱动系统是相当容易的，尽管这么做可能会很繁琐。[Listing
+    11-3](ch11.xhtml#ch11list3) 展示了一个事件驱动系统，它完成我们指定的任务：在一个套接字上监听并处理任何接收到的连接。
 - en: import select
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: import select
 - en: import socket
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: import socket
 - en: server = socket.socket(socket.AF_INET,
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: server = socket.socket(socket.AF_INET,
 - en: socket.SOCK_STREAM)
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: socket.SOCK_STREAM)
 - en: Never block on read/write operations
+  id: totrans-72
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 永远不要在读/写操作上阻塞
 - en: server.setblocking(0)
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: server.setblocking(0)
 - en: Bind the socket to the port
+  id: totrans-74
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 将套接字绑定到端口
 - en: server.bind(('localhost', 10000))
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: server.bind(('localhost', 10000))
 - en: server.listen(8)
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: server.listen(8)
 - en: 'while True:'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 'while True:'
 - en: '# select() returns 3 arrays containing the object (sockets, files...)'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: '# select() 返回包含对象（套接字、文件等）的 3 个数组'
 - en: '# that are ready to be read, written to or raised an error'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 准备好读取、写入或触发错误的文件描述符'
 - en: inputs,
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 输入，
 - en: outputs, excepts = select.select([server], [], [server])
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出，例外 = select.select([server], [], [server])
 - en: 'if server in inputs:'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果服务器在输入列表中：
 - en: connection, client_address = server.accept()
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: connection, client_address = server.accept()
 - en: connection.send("hello!\n")
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: connection.send("hello!\n")
 - en: '*Listing 11-3: Event-driven program that listens for and processes connections*'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 11-3：监听并处理连接的事件驱动程序*'
 - en: In [Listing 11-3](ch11.xhtml#ch11list3), a server socket is created and set
     to *non-blocking*, meaning that any read or write operation attempted on that
     socket won’t block the program. If the program tries to read from the socket when
@@ -387,8 +567,11 @@
     socket would stay in blocking mode rather than raise an error, which is not what
     we want here. The socket is then bound to a port and listens with a maximum backlog
     of eight connections.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[清单 11-3](ch11.xhtml#ch11list3)中，创建了一个服务器套接字并设置为*非阻塞模式*，意味着对该套接字进行的任何读取或写入操作都不会阻塞程序。如果程序尝试从套接字读取数据，但没有数据准备好读取，套接字的
+    recv() 方法将引发 OSError，表明套接字未准备好。如果我们没有调用 setblocking(0)，套接字将保持阻塞模式，而不是引发错误，这不是我们在这里想要的行为。然后，套接字绑定到一个端口，并以最多八个连接的回溯队列进行监听。
 - en: The main loop is built using select(), which receives the list of file descriptors
     we want to read (the socket in this case), the list of file descriptors we want
     to write to (none in this case), and the list of file descriptors we want to get
@@ -397,80 +580,122 @@
     has raised an exception. The returned values are lists of file descriptors that
     match the requests. It’s then easy to check whether our socket is in the ready-to-be-read
     list and, if so, accept the connection and send a message.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 主循环使用 select() 构建，该函数接收我们要读取的文件描述符列表（在本例中是套接字）、我们要写入的文件描述符列表（在本例中没有）以及我们希望从中获取异常的文件描述符列表（在本例中是套接字）。select()
+    函数在选定的文件描述符准备好读取、写入或引发异常时立即返回。返回值是符合请求的文件描述符的列表。然后，很容易检查我们的套接字是否在准备好读取的列表中，如果是，接受连接并发送消息。
 - en: '**Other Options and asyncio**'
+  id: totrans-88
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**其他选项和 asyncio**'
 - en: Alternatively, there are many frameworks, such as Twisted or Tornado, that provide
     this kind of functionality in a more integrated manner; Twisted has been the de
     facto standard for years in this regard. C libraries that export Python interfaces,
     such as libevent, libev, or libuv, also provide very efficient event loops.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 另外，还有许多框架，如 Twisted 或 Tornado，它们以更加集成的方式提供这种功能；在这方面，Twisted 多年来一直是事实上的标准。导出
+    Python 接口的 C 库，如 libevent、libev 或 libuv，也提供了非常高效的事件循环。
 - en: These options all solve the same problem. The downside is that, while there
     are a wide variety of choices, most of them are not interoperable. Many are also
     *callback based*, meaning that the program flow is not very clear when reading
     the code; you have to jump to a lot of different places to read through the program.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些选项都解决了相同的问题。缺点是，尽管有各种各样的选择，但大多数选项不兼容。许多选项也是*基于回调的*，这意味着在阅读代码时，程序流程并不十分清晰；你必须跳转到许多不同的地方才能理解程序。
 - en: Another option would be the gevent or greenlet libraries, which avoid callback
     use. However, the implementation details include CPython x86–specific code and
     dynamic modification of standard functions at runtime, meaning you wouldn’t want
     to use and maintain code using these libraries over the long term.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种选择是使用 gevent 或 greenlet 库，它们避免了回调的使用。然而，这些库的实现细节包括 CPython x86 特定代码和在运行时动态修改标准函数，这意味着你不希望长期使用并维护这些库的代码。
 - en: In 2012, Guido Van Rossum began work on a solution code-named *tulip*, documented
     under PEP 3156 (*[https://www.python.org/dev/peps/pep-3156](https://www.python.org/dev/peps/pep-3156)*).
     The goal of this package was to provide a standard event loop interface that would
     be compatible with all frameworks and libraries and be interoperable.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 2012年，Guido Van Rossum 开始了名为*tulip*的解决方案的工作，并在PEP 3156中进行了文档化（*[https://www.python.org/dev/peps/pep-3156](https://www.python.org/dev/peps/pep-3156)*）。该软件包的目标是提供一个标准的事件循环接口，与所有框架和库兼容，并且具有互操作性。
 - en: The tulip code has since been renamed and merged into Python 3.4 as the asyncio
     module, and it is now the de facto standard. Not all libraries are compatible
     with asyncio, and most existing bindings need to be rewritten.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 自那时以来，郁金香代码已经更名并合并到 Python 3.4 中，成为 asyncio 模块，并且现在已成为事实上的标准。并不是所有的库都与 asyncio
+    兼容，大多数现有的绑定需要重写。
 - en: As of Python 3.6, asyncio has been so well integrated that it has its own await
     and async keywords, making it straightforward to use. [Listing 11-4](ch11.xhtml#ch11list4)
     shows how the aiohttp library, which provides an asynchronous HTTP binding, can
     be used with asyncio to run several web page retrievals concurrently.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 Python 3.6 开始，asyncio 被如此深入集成，以至于它拥有了自己的 `await` 和 `async` 关键字，使得使用起来非常简单。[Listing
+    11-4](ch11.xhtml#ch11list4) 展示了如何使用 aiohttp 库（提供异步 HTTP 绑定）与 asyncio 一起运行多个网页获取操作。
 - en: import aiohttp
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: import aiohttp
 - en: import asyncio
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: import asyncio
 - en: 'async def get(url):'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 'async def get(url):'
 - en: 'async with aiohttp.ClientSession() as session:'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 'async with aiohttp.ClientSession() as session:'
 - en: 'async with session.get(url) as response:'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 'async with session.get(url) as response:'
 - en: return response
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: return response
 - en: loop = asyncio.get_event_loop()
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: loop = asyncio.get_event_loop()
 - en: coroutines = [get("http://example.com") for _ in range(8)]
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: coroutines = [get("http://example.com") for _ in range(8)]
 - en: results = loop.run_until_complete(asyncio.gather(*coroutines))
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: results = loop.run_until_complete(asyncio.gather(*coroutines))
 - en: 'print("Results: %s" % results)'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 'print("Results: %s" % results)'
 - en: '*Listing 11-4: Retrieving web pages concurrently with aiohttp*'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 11-4：使用 aiohttp 并发获取网页*'
 - en: We define the get() function as asynchronous, so it is technically a coroutine.
     The get() function’s two steps, the connection and the page retrieval, are defined
     as asynchronous operations that yield control to the caller until they are ready.
@@ -478,17 +703,24 @@
     The module resumes the execution of a coroutine when the connection is established
     or the page is ready to be read. The eight coroutines are started and provided
     to the event loop at the same time, and it is asyncio’s job to schedule them efficiently.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将 get() 函数定义为异步函数，因此它从技术上来说是一个协程。get() 函数的两个步骤，即连接和页面获取，被定义为异步操作，直到准备好时才将控制权交还给调用者。这使得
+    asyncio 可以在任何时候安排另一个协程。模块在连接建立或页面准备好被读取时恢复协程的执行。这八个协程同时启动并提供给事件循环，asyncio 的任务是高效地安排它们。
 - en: The asyncio module is a great framework for writing asynchronous code and leveraging
     event loops. It supports files, sockets, and more, and a lot of third-party libraries
     are available to support various protocols. Don’t hesitate to use it!
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: asyncio 模块是编写异步代码和利用事件循环的一个很好的框架。它支持文件、套接字等，许多第三方库也可用来支持各种协议。不要犹豫，尽管使用它！
 - en: '**Service-Oriented Architecture**'
+  id: totrans-108
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**面向服务架构**'
 - en: Circumventing Python’s scaling shortcomings can seem tricky. However, Python
     *is* very good at implementing *service-oriented architecture (SOA),* a style
     of software design in which different components provide a set of services through
@@ -496,29 +728,41 @@
     of its components. The components use HTTP REST to communicate with external clients
     (end users) and an abstracted remote procedure call (RPC) mechanism that is built
     on top of the Advanced Message Queuing Protocol (AMQP).
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 绕过 Python 的扩展性不足可能看起来有些棘手。然而，Python *非常*擅长实现 *面向服务架构（SOA）*，这是一种软件设计风格，其中不同的组件通过通信协议提供一组服务。例如，OpenStack
+    在其所有组件中使用 SOA 架构。这些组件使用 HTTP REST 与外部客户端（最终用户）通信，并使用基于高级消息队列协议（AMQP）的抽象远程过程调用（RPC）机制。
 - en: In your development situations, knowing which communication channels to use
     between those blocks is mainly a matter of knowing with whom you will be communicating.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 在你的开发场景中，知道在这些模块之间使用哪个通信渠道，主要取决于你将与谁进行通信。
 - en: When exposing a service to the outside world, the preferred channel is HTTP,
     especially for stateless designs such as REST-style (REpresentational State Transfer–style)
     architectures. These kinds of architectures make it easier to implement, scale,
     deploy, and comprehend services.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 当将服务暴露给外部世界时，首选的通信渠道是 HTTP，尤其是对于像 REST 风格（表述性状态转移风格）架构这样的无状态设计。这些架构使得实现、扩展、部署和理解服务变得更容易。
 - en: However, when exposing and using your API internally, HTTP may be not the best
     protocol. There are many other communication protocols and fully describing even
     one would likely fill an entire book.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，当在内部暴露和使用你的 API 时，HTTP 可能不是最佳协议。有许多其他的通信协议，甚至描述其中一个就可能填满整本书。
 - en: In Python, there are plenty of libraries for building RPC systems. Kombu is
     interesting because it provides an RPC mechanism on top of a lot of backends,
     AMQ protocol being the main one. It also supports Redis, MongoDB, Beanstalk, Amazon
     SQS, CouchDB, or ZooKeeper.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 Python 中，有很多用于构建 RPC 系统的库。Kombu 很有趣，因为它在许多后端之上提供了一个 RPC 机制，AMQ 协议是其中的主要之一。它还支持
+    Redis、MongoDB、Beanstalk、Amazon SQS、CouchDB 或 ZooKeeper。
 - en: In the end, you can indirectly gain a huge amount of performance from using
     such loosely coupled architecture. If we consider that each module provides and
     exposes an API, we can run multiple daemons that can also expose that API, allowing
@@ -531,156 +775,255 @@
     spreading out your workload. You’ll be able to start multiple workers on each
     node. Even if stateless blocks are not strictly necessary, you should favor their
     use anytime you have the choice.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 最终，通过使用这种松耦合架构，你可以间接地获得巨大的性能提升。如果我们考虑到每个模块提供并暴露一个 API，我们可以运行多个守护进程，这些守护进程也可以暴露该
+    API，允许多个进程——因此也能利用多个 CPU——来处理工作负载。例如，*Apache httpd* 会创建一个新的工作进程来处理新的连接；然后我们可以将连接分配给在同一节点上运行的另一个工作进程。为了做到这一点，我们只需要一个用于将工作分配到各个工作进程的系统，而这个
+    API 就提供了这样的功能。每个模块将是一个不同的 Python 进程，正如我们之前所看到的，这种方法比多线程更适合分担工作负载。你将能够在每个节点上启动多个工作进程。即使无状态的模块并非绝对必要，每当有选择时，你都应该优先使用它们。
 - en: '**Interprocess Communication with ZeroMQ**'
+  id: totrans-115
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**进程间通信与 ZeroMQ**'
 - en: As we’ve just discussed, a messaging bus is always needed when building distributed
     systems. Your processes need to communicate with each other in order to pass messages.
     ZeroMQ is a socket library that can act as a concurrency framework. [Listing 11-5](ch11.xhtml#ch11list5)
     implements the same worker seen in [Listing 11-1](ch11.xhtml#ch11list1) but uses
     ZeroMQ as a way to dispatch work and communicate between processes.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们刚才讨论的，构建分布式系统时总是需要一个消息总线。你的进程需要相互通信以传递消息。ZeroMQ 是一个可以充当并发框架的套接字库。[清单 11-5](ch11.xhtml#ch11list5)
+    实现了与 [清单 11-1](ch11.xhtml#ch11list1) 中看到的相同的工作进程，但使用 ZeroMQ 来分配工作并在进程间进行通信。
 - en: import multiprocessing
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: import multiprocessing
 - en: import random
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: import random
 - en: import zmq
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: import zmq
 - en: 'def compute():'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def compute():'
 - en: return sum(
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: return sum(
 - en: '[random.randint(1, 100) for i in range(1000000)])'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: '[random.randint(1, 100) for i in range(1000000)])'
 - en: 'def worker():'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def worker():'
 - en: context = zmq.Context()
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: context = zmq.Context()
 - en: work_receiver = context.socket(zmq.PULL)
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: work_receiver = context.socket(zmq.PULL)
 - en: work_receiver.connect("tcp://0.0.0.0:5555")
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: work_receiver.connect("tcp://0.0.0.0:5555")
 - en: result_sender = context.socket(zmq.PUSH)
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: result_sender = context.socket(zmq.PUSH)
 - en: result_sender.connect("tcp://0.0.0.0:5556")
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: result_sender.connect("tcp://0.0.0.0:5556")
 - en: poller = zmq.Poller()
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: poller = zmq.Poller()
 - en: poller.register(work_receiver, zmq.POLLIN)
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: poller.register(work_receiver, zmq.POLLIN)
 - en: 'while True:'
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 'while True:'
 - en: socks = dict(poller.poll())
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: socks = dict(poller.poll())
 - en: 'if socks.get(work_receiver) == zmq.POLLIN:'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if socks.get(work_receiver) == zmq.POLLIN:'
 - en: obj = work_receiver.recv_pyobj()
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: obj = work_receiver.recv_pyobj()
 - en: result_sender.send_pyobj(obj())
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: result_sender.send_pyobj(obj())
 - en: context = zmq.Context()
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: context = zmq.Context()
 - en: '# Build a channel to send work to be done'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 构建一个通道来发送待完成的工作'
 - en: ➊ work_sender = context.socket(zmq.PUSH)
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: ➊ work_sender = context.socket(zmq.PUSH)
 - en: work_sender.bind("tcp://0.0.0.0:5555")
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: work_sender.bind("tcp://0.0.0.0:5555")
 - en: '# Build a channel to receive computed results'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 构建一个通道来接收计算结果'
 - en: ➋ result_receiver = context.socket(zmq.PULL)
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: ➋ result_receiver = context.socket(zmq.PULL)
 - en: result_receiver.bind("tcp://0.0.0.0:5556")
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: result_receiver.bind("tcp://0.0.0.0:5556")
 - en: '# Start 8 workers'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 启动 8 个工作进程'
 - en: processes = []
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: processes = []
 - en: 'for x in range(8):'
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for x in range(8):'
 - en: ➌     p = multiprocessing.Process(target=worker)
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: ➌     p = multiprocessing.Process(target=worker)
 - en: p.start()
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: p.start()
 - en: processes.append(p)
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: processes.append(p)
 - en: '# Send 8 jobs'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 发送 8 个任务'
 - en: 'for x in range(8):'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for x in range(8):'
 - en: work_sender.send_pyobj(compute)
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: work_sender.send_pyobj(compute)
 - en: '# Read 8 results'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 读取 8 个结果'
 - en: results = []
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: results = []
 - en: 'for x in range(8):'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for x in range(8):'
 - en: '➍     results.append(result_receiver.recv_pyobj()) # Terminate all processes'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: '➍     results.append(result_receiver.recv_pyobj()) # 终止所有进程'
 - en: 'for p in processes:'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for p in processes:'
 - en: p.terminate()
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: p.terminate()
 - en: 'print("Results: %s" % results)'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 'print("Results: %s" % results)'
 - en: '*Listing 11-5: workers using ZeroMQ*'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 11-5：使用 ZeroMQ 的工作进程*'
 - en: We create two sockets, one to send the function (work_sender) ➊ and one to receive
     the job (result_receiver) ➋. Each worker started by multiprocessing.Process ➌
     creates its own set of sockets and connects them to the master process. The worker
     then executes whatever function is sent to it and sends back the result. The master
     process just has to send eight jobs over its sender socket and wait for eight
     results to be sent back via the receiver socket ➍.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们创建了两个套接字，一个用于发送函数（work_sender） ➊，另一个用于接收任务（result_receiver） ➋。每个由 `multiprocessing.Process`
+    启动的工作进程 ➌ 都会创建自己的套接字并将其连接到主进程。然后，工作进程执行发送给它的任何函数并返回结果。主进程只需通过发送套接字发送八个任务，并通过接收套接字等待八个结果返回
+    ➍。
 - en: As you can see, ZeroMQ provides an easy way to build communication channels.
     I’ve chosen to use the TCP transport layer here to illustrate the fact that we
     could run this over a network. It should be noted that ZeroMQ also provides an
@@ -690,30 +1033,44 @@
     but it shouldn’t be hard to imagine building a more sophisticated communication
     layer on top of it. It’s also easy to imagine building an entirely distributed
     application communication with a network message bus such as ZeroMQ or AMQP.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 如你所见，ZeroMQ 提供了一种简便的方式来构建通信通道。我在这里选择使用 TCP 传输层来说明我们可以在网络上运行这个过程。需要注意的是，ZeroMQ
+    还提供了一个本地的进程间通信通道（没有任何网络层参与），通过使用 Unix 套接字来实现。显然，为了保持清晰简洁，本示例中基于 ZeroMQ 构建的通信协议非常简单，但不难想象，在此基础上构建一个更复杂的通信层。同样，也可以很容易地想象，构建一个完全分布式的应用，使用网络消息总线进行通信，比如
+    ZeroMQ 或 AMQP。
 - en: 'Note that protocols such as HTTP, ZeroMQ, and AMQP are language agnostic: you
     can use different languages and platforms to implement each part of your system.
     While we all agree that Python is a good language, other teams might have other
     preferences, or another language might be a better solution for some part of a
     problem.'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，像 HTTP、ZeroMQ 和 AMQP 这样的协议是与语言无关的：你可以使用不同的语言和平台来实现系统的每个部分。虽然我们都认为 Python
+    是一种很好的语言，但其他团队可能有不同的偏好，或者某个问题的某个部分可能需要其他语言来提供更好的解决方案。
 - en: In the end, using a transport bus to decouple your application into several
     parts is a good option. This approach allows you to build both synchronous and
     asynchronous APIs that can be distributed from one computer to several thousand.
     It doesn’t tie you to a particular technology or language, so you can evolve everything
     in the right direction.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 最终，使用传输总线将你的应用解耦为多个部分是一个不错的选择。这种方法使你能够构建同步和异步的 API，并可以从一台计算机分布到几千台计算机。它不会将你绑定到特定的技术或语言，因此你可以将一切朝着正确的方向发展。
 - en: '**Summary**'
+  id: totrans-164
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**总结**'
 - en: The rule of thumb in Python is to use threads only for I/O-intensive workloads
     and to switch to multiple processes as soon as a CPU-intensive workload is on
     the table. Distributing workloads on a wider scale—such as when building a distributed
     system over a network—requires external libraries and protocols. These are supported
     by Python, though provided externally.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 Python 中的经验法则是：只对 I/O 密集型工作负载使用线程，而当 CPU 密集型工作负载出现时，立即切换到多进程。将工作负载在更大范围内分布——比如在网络上构建分布式系统——需要外部库和协议。Python
+    本身支持这些内容，但它们是由外部提供的。
