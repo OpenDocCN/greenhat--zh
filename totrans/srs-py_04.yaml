@@ -1,18 +1,26 @@
 - en: '**4**'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '**4**'
 - en: '**HANDLING TIMESTAMPS AND TIME ZONES**'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '**处理时间戳和时区**'
 - en: '![image](../images/common01.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![image](../images/common01.jpg)'
 - en: Time zones are complicated. Most people expect dealing with time zones to involve
     merely adding or subtracting a few hours from the universal time reference, UTC
     (Coordinated Universal Time), from −12 hours to +12 hours.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 时区是复杂的。大多数人期望处理时区仅仅是从协调世界时（UTC）中加减几个小时的简单操作，从−12小时到+12小时。
 - en: 'However, reality shows otherwise: time zones are not logical or predictable.
     There are time zones with 15-minute granularity; countries that change time zones
     twice a year; countries that use a custom time zone during summer, known as daylight
@@ -20,32 +28,42 @@
     These make the history of time zones interesting but also complicate how to handle
     them. All of those particularities should make you stop and think when dealing
     with time zones.'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，现实情况并非如此：时区并非逻辑上或可预测的。存在15分钟粒度的时区；有些国家每年两次更改时区；有些国家在夏季使用不同的时区（夏令时），并且开始日期不同；还有大量特殊的边缘情况。这些因素使得时区的历史既有趣又复杂，处理时区时也会带来挑战。所有这些特殊情况应当在处理时区时引起你的思考。
 - en: This chapter will outline why dealing with time zones is tricky and how to best
     handle them in your programs. We’ll look at how to build timestamp objects, how
     and why to make them time zone aware, and how to deal with corner cases you might
     come across.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章将概述为什么处理时区很棘手，并介绍如何在你的程序中最佳地处理时区。我们将讨论如何构建时间戳对象，如何以及为什么让它们具备时区感知功能，以及如何处理你可能遇到的边缘情况。
 - en: '**The Problem of Missing Time Zones**'
+  id: totrans-6
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**缺失时区的问题**'
 - en: A timestamp without a time zone attached gives no useful information, because
     without the time zone, you cannot infer what point in time your application is
     really referring to. Without their respective time zones, therefore, you can’t
     compare two timestamps; that would be like comparing days of the week without
     accompanying dates—whether Monday is before or after Tuesday depends on what weeks
     they’re in. Timestamps without time zones attached should be considered irrelevant.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果时间戳没有附带时区信息，它就没有任何有用的信息，因为没有时区，你无法推测你的应用程序到底指的是哪个时间点。因此，没有时区的时间戳无法进行比较；这就像在没有日期的情况下比较星期几——星期一是否在星期二之前，取决于它们属于哪个星期。因此，没有时区附带的时间戳应被视为无关紧要。
 - en: For that reason, your application should never have to handle timestamps with
     no time zone. Instead, it must raise an error if no time zone is provided, or
     it should make clear what default time zone is assumed—for example, it’s common
     practice to choose UTC as the default time zone.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，你的应用程序绝不应处理没有时区的时间戳。相反，如果没有提供时区，它必须抛出错误，或者明确指出假设的默认时区——例如，选择UTC作为默认时区是常见的做法。
 - en: You also must be careful of making any kind of time zone conversion before *storing*
     your timestamps. Imagine a user creates a recurring event every Wednesday at 10:00
     AM in their local time zone, say Central European Time (CET). CET is an hour ahead
@@ -54,8 +72,10 @@
     to UTC+02:00 in the summer, so on top of that, in the summer months, your application
     will compute that the event starts at 11:00 AM CET every Wednesday. You can see
     how this program quickly becomes redundant!
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 你还必须小心在*存储*时间戳之前进行任何形式的时区转换。假设一个用户在其本地时区创建了一个每周三上午10:00的重复事件，比如中欧时间（CET）。CET比协调世界时（UTC）快一个小时，因此，如果你将这个时间戳转换为UTC来存储，事件将被存储为每周三上午09:00。CET在夏季从UTC+01:00切换到UTC+02:00，因此，夏季期间，你的应用程序会计算出事件每周三上午11:00开始。你可以看到，这个程序很快就会变得冗余！
 - en: Now that you understand the general problem of handling time zones, let’s dig
     into our favorite language. Python comes with a timestamp object named datetime.datetime
     that can store date and time precise to the microsecond. The datetime.datetime
@@ -64,64 +84,99 @@
     API returns a time zone–unaware object by default, as you’ll soon see in [Listing
     4-1](ch04.xhtml#ch4list1). Let’s look at how to build a default timestamp object
     and then how to rectify it so that it uses time zones.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: '既然你已经理解了处理时区的常见问题，让我们深入了解我们最喜欢的编程语言。Python 提供了一个名为 datetime.datetime 的时间戳对象，可以存储精确到微秒的日期和时间。datetime.datetime
+    对象可以是时区*感知*的，这意味着它包含时区信息；也可以是时区*无感知*的，这意味着它不包含时区信息。不幸的是，datetime API 默认返回一个时区无感知的对象，正如你将在[清单
+    4-1](ch04.xhtml#ch4list1)中看到的那样。让我们看看如何构建一个默认的时间戳对象，然后如何纠正它以便使用时区。  '
 - en: '**Building Default datetime Objects**'
+  id: totrans-11
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**构建默认的 datetime 对象**  '
 - en: To build a datetime object with the current date and time as values, you can
     use the datetime.datetime.utcnow() function. This function retrieves the date
     and time for the UTC time zone right now, as shown in [Listing 4-1](ch04.xhtml#ch4list1).
     To build this same object using the date and time for the time zone of the region
     the machine is in, you can use the datetime.datetime.now() method. [Listing 4-1](ch04.xhtml#ch4list1)
     retrieves the time and date for both UTC and my region’s time zone.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: '要构建一个包含当前日期和时间的 datetime 对象，你可以使用 datetime.datetime.utcnow() 函数。此函数检索当前 UTC
+    时区的日期和时间，如[清单 4-1](ch04.xhtml#ch4list1)所示。要使用机器所在区域的时区的日期和时间构建相同的对象，你可以使用 datetime.datetime.now()
+    方法。[清单 4-1](ch04.xhtml#ch4list1) 同时获取 UTC 和我所在区域时区的时间和日期。  '
 - en: '>>> import datetime'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import datetime  '
 - en: '>>> datetime.datetime.utcnow()'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> datetime.datetime.utcnow()  '
 - en: ➊ datetime.datetime(2018, 6, 15, 13, 24, 48, 27631) >>> datetime.datetime.utcnow().tzinfo
     is None
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: '➊ datetime.datetime(2018, 6, 15, 13, 24, 48, 27631) >>> datetime.datetime.utcnow().tzinfo
+    是 None  '
 - en: ➋ True
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: '➋ 正确  '
 - en: '*Listing 4-1: Getting the time of the day with datetime*'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-1：使用 datetime 获取一天中的时间*  '
 - en: We import the datetime library and define the datetime object as using the UTC
     time zone. This returns a UTC timestamp whose values are year, month, date, hours,
     minutes, seconds, and microseconds ➊, respectively, in the listing. We can check
     whether this object has time zone information by checking the tzinfo object, and
     here we’re told that it doesn’t ➋.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: '我们导入 datetime 库并定义一个使用 UTC 时区的 datetime 对象。这将返回一个 UTC 时间戳，其中的值分别是年份、月份、日期、小时、分钟、秒和微秒
+    ➊，如清单所示。我们可以通过检查 tzinfo 对象来判断该对象是否具有时区信息，在这里我们看到它没有时区信息 ➋。  '
 - en: 'We then create the datetime object using the datetime.datetime.now() method
     to retrieve the current date and time in the default time zone for the region
     of the machine:'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: '然后，我们使用 datetime.datetime.now() 方法创建 datetime 对象，以检索机器所在区域的默认时区的当前日期和时间：  '
 - en: '>>> datetime.datetime.now()'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> datetime.datetime.now()  '
 - en: ➌ datetime.datetime(2018, 6, 15, 15, 24, 52, 276161)
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: '➌ datetime.datetime(2018, 6, 15, 15, 24, 52, 276161)  '
 - en: This timestamp, too, is returned without any time zone, as we can tell from
     the absence of the tzinfo field ➌—if the time zone information had been present,
     it would have appeared at the end of the output as something like tzinfo=<UTC>.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个时间戳同样没有返回时区信息，我们可以通过缺少 tzinfo 字段 ➌ 来判断——如果时区信息存在，它会出现在输出的末尾，像 tzinfo=<UTC>
+    这样的形式。
 - en: The datetime API always returns unaware datetime objects by default, and since
     there is no way for you to tell what the time zone is from the output, these objects
     are pretty useless.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 'datetime API 默认始终返回无感知的 datetime 对象，由于输出中无法看出时区信息，这些对象几乎没有用处。  '
 - en: Armin Ronacher, creator of the Flask framework, suggests that an application
     should always assume the unaware datetime objects in Python are UTC. However,
     as we just saw, this doesn’t work for objects returned by datetime.datetime.now().
@@ -129,32 +184,50 @@
     sure they are time zone aware. That ensures you can always compare your objects
     directly and check whether they are returned correctly with the information you
     need. Let’s see how to create time zone–aware timestamps using tzinfo objects.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 'Flask 框架的创建者 Armin Ronacher 建议，应用程序应该始终假设 Python 中的无感知 datetime 对象是 UTC。然而，正如我们刚才看到的，这对于
+    datetime.datetime.now() 返回的对象并不适用。当你构建 datetime 对象时，我强烈建议你始终确保它们是时区感知的。这可以确保你能够直接比较对象，并检查它们是否返回了你需要的正确信息。让我们看看如何使用
+    tzinfo 对象创建时区感知的时间戳。  '
 - en: '**BONUS: CONSTRUCT ING A DATETIME OB JECT FROM A DATE**'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: '**附加：从日期构建一个 datetime 对象**'
 - en: You can also build your own datetime object with a particular date by passing
     the values you want for the different components of the day, as shown in [Listing
     4-2](ch04.xhtml#ch4list2).
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 你还可以通过传递你想要的日期各个组成部分的值，构建一个特定日期的 datetime 对象，如[示例 4-2](ch04.xhtml#ch4list2)所示。
 - en: '>>> import datetime'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import datetime'
 - en: '>>> datetime.datetime(2018, 6, 19, 19, 54, 49)'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> datetime.datetime(2018, 6, 19, 19, 54, 49)'
 - en: datetime.datetime(2018, 6, 19, 19, 54, 49)
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: datetime.datetime(2018, 6, 19, 19, 54, 49)
 - en: '*Listing 4-2: Building your own timestamp object*'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: '*示例 4-2：构建你自己的时间戳对象*'
 - en: '**Time Zone–Aware Timestamps with dateutil**'
+  id: totrans-31
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**使用 dateutil 进行时区感知的时间戳**'
 - en: 'There are already many databases of existing time zones, maintained by central
     authorities such as IANA (Internet Assigned Numbers Authority), which are shipped
     with all major operating systems. For this reason, rather than creating our own
@@ -164,371 +237,578 @@
     directly, without much effort: the tz module can access the operating system’s
     time zone information, as well as ship and embed the time zone database so it
     is directly accessible from Python.'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 已经有许多现有时区的数据库，由 IANA（互联网编号分配局）等中央机构维护，并随所有主要操作系统一起发布。因此，Python 开发者依赖于 dateutil
+    项目来获取 tzinfo 类，而不是在每个 Python 项目中手动创建自己的时区类并复制这些类。dateutil 项目提供了 Python 模块 tz，它使时区信息可以直接获取，且不需要太多的工作：tz
+    模块可以访问操作系统的时区信息，也可以分发和嵌入时区数据库，使其能直接从 Python 中访问。
 - en: 'You can install dateutil using pip with the command pip install python-dateutil.
     The dateutil API allows you to obtain a tzinfo object based on a time zone name,
     like so:'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以使用 pip 命令安装 dateutil，命令为 `pip install python-dateutil`。dateutil API 允许你根据时区名称获取
+    tzinfo 对象，如下所示：
 - en: '>>> from dateutil import tz'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> 来自 dateutil 的 tz'
 - en: '>>> tz.gettz("Europe/Paris")'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> tz.gettz("Europe/Paris")'
 - en: tzfile('/usr/share/zoneinfo/Europe/Paris')
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: tzfile('/usr/share/zoneinfo/Europe/Paris')
 - en: '>>> tz.gettz("GMT+1")'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> tz.gettz("GMT+1")'
 - en: tzstr('GMT+1')
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: tzstr('GMT+1')
 - en: The dateutil.tz.gettz() method returns an object implementing the tzinfo interface.
     This method accepts various string formats as argument, such as the time zone
     based on a location (for example, “Europe/Paris”) or a time zone relative to GMT.
     The dateutil time zone objects can be used as tzinfo classes directly, as demonstrated
     in [Listing 4-3](ch04.xhtml#ch4list3).
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: dateutil.tz.gettz() 方法返回一个实现 tzinfo 接口的对象。此方法接受多种字符串格式作为参数，例如基于位置的时区（例如，“Europe/Paris”）或相对于
+    GMT 的时区。dateutil 时区对象可以直接用作 tzinfo 类，如[示例 4-3](ch04.xhtml#ch4list3)中所示。
 - en: '>>> import datetime'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import datetime'
 - en: '>>> from dateutil import tz'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> 来自 dateutil 的 tz'
 - en: '>>> now = datetime.datetime.now()'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> now = datetime.datetime.now()'
 - en: '>>> now'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> 当前时间'
 - en: datetime.datetime(2018, 10, 16, 19, 40, 18, 279100)
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: datetime.datetime(2018, 10, 16, 19, 40, 18, 279100)
 - en: '>>> tz = tz.gettz("Europe/Paris")'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> tz = tz.gettz("Europe/Paris")'
 - en: '>>> now.replace(tzinfo=tz)'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> now.replace(tzinfo=tz)'
 - en: datetime.datetime(2018, 10, 16, 19, 40, 18, 279100, tzinfo=tzfile('/usr/share/zoneinfo/Europe/
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: datetime.datetime(2018, 10, 16, 19, 40, 18, 279100, tzinfo=tzfile('/usr/share/zoneinfo/Europe/
 - en: Paris'))
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 巴黎'))
 - en: '*Listing 4-3: Using dateutil objects as tzinfo classes*'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: '*示例 4-3：将 dateutil 对象作为 tzinfo 类使用*'
 - en: 'As long as you know the name of the desired time zone, you can obtain a tzinfo
     object that matches the time zone you target. The dateutil module can access the
     time zone managed by the operating system, and if that information is for some
     reason unavailable, will fall back on its own list of embedded time zones. If
     you ever need to access this embedded list, you can do so via the datetutil.zoneinfo
     module:'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 只要你知道所需时区的名称，就可以获得一个与目标时区匹配的 tzinfo 对象。dateutil 模块可以访问操作系统管理的时区，如果由于某种原因无法获取该信息，它会回退到自己嵌入的时区列表。如果你需要访问这个嵌入的列表，可以通过
+    datetutil.zoneinfo 模块来实现：
 - en: '>>> from dateutil.zoneinfo import get_zonefile_instance'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> 来自 dateutil.zoneinfo 的 get_zonefile_instance'
 - en: '>>> zones = list(get_zonefile_instance().zones)'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> zones = list(get_zonefile_instance().zones)'
 - en: '>>> sorted(zones)[:5] [''Africa/Abidjan'', ''Africa/Accra'', ''Africa/Addis_Ababa'',
     ''Africa/Algiers'', ''Africa/Asmara'']'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> sorted(zones)[:5] [''Africa/Abidjan'', ''Africa/Accra'', ''Africa/Addis_Ababa'',
+    ''Africa/Algiers'', ''Africa/Asmara'']'
 - en: '>>> len(zones)'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> len(zones)'
 - en: '592'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: '592'
 - en: In some cases, your program does not know which time zone it’s running in, so
     you’ll need to determine it yourself. The datetutil.tz.gettz() function will return
     the local time zone of your computer if you pass no argument to it, as shown in
     [Listing 4-4](ch04.xhtml#ch4list4).
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 在某些情况下，你的程序不知道自己运行在哪个时区，所以你需要自行确定。datetutil.tz.gettz() 函数如果不传入任何参数，将返回你计算机的本地时区，如
+    [示例 4-4](ch04.xhtml#ch4list4) 所示。
 - en: '>>> from dateutil import tz'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> from dateutil import tz'
 - en: '>>> import datetime'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import datetime'
 - en: '>>> now = datetime.datetime.now()'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> now = datetime.datetime.now()'
 - en: '>>> localzone = tz.gettz()'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> localzone = tz.gettz()'
 - en: '>>> localzone'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> localzone'
 - en: tzfile('/etc/localtime')
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: tzfile('/etc/localtime')
 - en: '>>> localzone.tzname(datetime.datetime(2018, 10, 19))'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> localzone.tzname(datetime.datetime(2018, 10, 19))'
 - en: '''CEST'''
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: '''CEST'''
 - en: '>>> localzone.tzname(datetime.datetime(2018, 11, 19))'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> localzone.tzname(datetime.datetime(2018, 11, 19))'
 - en: '''CET'''
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: '''CET'''
 - en: '*Listing 4-4: Obtaining your local time zone*'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: '*示例 4-4：获取你的本地时区*'
 - en: As you can see, we pass two dates to localzone.tzname(datetime.datetime()) separately,
     and dateutil is able to tell us that one is in Central European Summer Time (CEST)
     and the other is in Central European Time (no summer). If you pass in your current
     date, you’ll get your own current time zone.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 如你所见，我们分别将两个日期传递给 localzone.tzname(datetime.datetime())，dateutil 能告诉我们一个日期在中欧夏令时（CEST），另一个在中欧标准时间（CET，非夏令时）。如果你传入当前日期，它会返回你所在的时区。
 - en: You can use objects from the dateutil library in tzinfo classes without having
     to bother implementing those yourself in your application. This makes it easy
     to convert unaware datetime objects to aware datetime objects.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以在 tzinfo 类中使用来自 dateutil 库的对象，而无需在应用程序中自己实现它们。这使得将不带时区感知的日期时间对象转换为带时区感知的日期时间对象变得容易。
 - en: '**IMPLEMENTING YOUR OWN TIME ZONE CLASSES**'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: '**实现你自己的时区类**'
 - en: 'A class exists in Python that allows you to implement time zone classes yourself:
     the datetime.tzinfo class is an abstract class that provides a base for implementing
     classes representing time zones. If you ever want to implement a class to represent
     a time zone, you need to use this as the parent class and implement three different
     methods:'
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: Python 中有一个类允许你自己实现时区类：datetime.tzinfo 类是一个抽象类，为实现表示时区的类提供了基础。如果你想实现一个类来表示时区，你需要使用这个类作为父类，并实现三个不同的方法：
 - en: utcoffset(dt), which must return an offset from UTC in minutes east of UTC for
     the time zone
+  id: totrans-72
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: utcoffset(dt)，必须返回时区相对于 UTC 的偏移量（以分钟为单位），东区为正值
 - en: dst(dt), which must return the daylight saving time adjustment in minutes east
     of UTC for the time zone
+  id: totrans-73
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: dst(dt)，必须返回时区的夏令时调整（以分钟为单位，东区为正值）
 - en: tzname(dt), which must return the name of the time zone as a string
+  id: totrans-74
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: tzname(dt)，必须返回时区名称的字符串
 - en: These three methods will embed a tzinfo object, allowing you to translate any
     time zone–aware datetime to another time zone.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 这三个方法会嵌入一个 tzinfo 对象，使你可以将任何时区感知的日期时间转换为另一个时区。
 - en: However, as mentioned, since time zone databases exist, it’s impractical to
     implement those time zone classes oneself.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，如前所述，由于时区数据库的存在，自己实现这些时区类是不可行的。
 - en: '**Serializing Time Zone–Aware datetime Objects**'
+  id: totrans-77
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**序列化时区感知的日期时间对象**'
 - en: You’ll often need to transport a datetime object from one point to another,
     where those different points might not be Python native. The typical case nowadays
     would be with an HTTP REST API, which must return datetime objects serialized
     to a client. The native Python method named isoformat can be used to serialize
     datetime objects for non-Python native points, as shown in [Listing 4-5](ch04.xhtml#ch4list5).
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 你经常需要将一个日期时间对象从一个地方传输到另一个地方，而这些地方可能不是 Python 本地的。如今的典型情况是使用 HTTP REST API，API
+    必须将日期时间对象序列化并返回给客户端。Python 的原生方法 isoformat 可以用于将日期时间对象序列化成非 Python 本地格式，如 [示例
+    4-5](ch04.xhtml#ch4list5) 所示。
 - en: '>>> import datetime'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import datetime'
 - en: '>>> from dateutil import tz'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> from dateutil import tz'
 - en: '➊ >>> def utcnow():'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: '➊ >>> def utcnow():'
 - en: return datetime.datetime.now(tz=tz.tzutc())
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: return datetime.datetime.now(tz=tz.tzutc())
 - en: '>>> utcnow()'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> utcnow()'
 - en: ➋ datetime.datetime(2018, 6, 15, 14, 45, 19, 182703, tzinfo=tzutc())
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: ➋ datetime.datetime(2018, 6, 15, 14, 45, 19, 182703, tzinfo=tzutc())
 - en: ➌ >>> utcnow().isoformat()
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: ➌ >>> utcnow().isoformat()
 - en: '''2018-06-15T14:45:21.982600+00:00'''
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: '''2018-06-15T14:45:21.982600+00:00'''
 - en: '*Listing 4-5: Serializing a time zone–aware datetime object*'
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: '*示例 4-5：序列化时区感知的日期时间对象*'
 - en: We define a new function called utcnow and tell it explicitly to return an object
     with the UTC time zone ➊. As you can see, the object returned now contains time
     zone information ➋. We then format the string using the ISO format ➌, ensuring
     the timestamp also contains some time zone information (the +00:00 part).
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们定义了一个名为utcnow的新函数，并明确告诉它返回一个带有UTC时区的对象➊。如你所见，返回的对象现在包含时区信息➋。然后我们使用ISO格式对字符串进行格式化➌，确保时间戳也包含一些时区信息（如+00:00部分）。
 - en: You can see I’ve used the method isoformat() to format the output. I recommend
     that you always format your datetime input and output strings using ISO 8601,
     with the method datetime.datetime.isoformat(), to return timestamps formatted
     in a readable way that includes the time zone information.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以看到，我使用了isoformat()方法来格式化输出。我建议你始终使用ISO 8601格式来格式化你的日期时间输入和输出字符串，使用方法datetime.datetime.isoformat()，以返回一种包含时区信息的可读格式的时间戳。
 - en: Your ISO 8601–formatted strings can then be converted to native datetime.datetime
     objects. The iso8601 module offers only one function, parse_date, which does all
     the hard work of parsing the string and determining the timestamp and time zone
     values. The iso8601 module is not provided as a built-in module in Python, so
     you need to install it using pip install iso8601. [Listing 4-6](ch04.xhtml#ch4list6)
     shows how to parse a timestamp using ISO 8601.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 你的ISO 8601格式字符串可以被转换为原生的datetime.datetime对象。iso8601模块仅提供一个函数parse_date，它完成了字符串解析并确定时间戳和时区值的所有繁重工作。iso8601模块不是Python的内置模块，所以你需要使用pip
+    install iso8601来安装它。[清单4-6](ch04.xhtml#ch4list6)展示了如何使用ISO 8601解析时间戳。
 - en: '>>> import iso8601'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import iso8601'
 - en: '>>> import datetime'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import datetime'
 - en: '>>> from dateutil import tz'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> from dateutil import tz'
 - en: '>>> now = datetime.datetime.utcnow()'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> now = datetime.datetime.utcnow()'
 - en: '>>> now.isoformat()'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> now.isoformat()'
 - en: '''2018-06-19T09:42:00.764337'''
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: '''2018-06-19T09:42:00.764337'''
 - en: ➊ >>> parsed = iso8601.parse_date(now.isoformat())
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: ➊ >>> parsed = iso8601.parse_date(now.isoformat())
 - en: '>>> parsed'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> parsed'
 - en: datetime.datetime(2018, 6, 19, 9, 42, 0, 764337, tzinfo=<iso8601.Utc>)
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: datetime.datetime(2018, 6, 19, 9, 42, 0, 764337, tzinfo=<iso8601.Utc>)
 - en: '>>> parsed == now.replace(tzinfo=tz.tzutc())'
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> parsed == now.replace(tzinfo=tz.tzutc())'
 - en: 'True'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 'True'
 - en: '*Listing 4-6: Using the iso8601 module to parse an ISO 8601–formatted timestamp*'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单4-6：使用iso8601模块解析ISO 8601格式的时间戳*'
 - en: In [Listing 4-6](ch04.xhtml#ch4list6), the iso8601 module is used to construct
     a datetime object from a string. By calling iso8601.parse_date on a string containing
     an ISO 8601–formatted timestamp ➊, the library is able to return a datetime object.
     Since that string does not contain any time zone information, the iso8601 module
     assumes that the time zone is UTC. If a time zone contains correct time zone information,
     the iso8601 module returns correctly.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[清单4-6](ch04.xhtml#ch4list6)中，iso8601模块被用来从字符串构建一个datetime对象。通过对包含ISO 8601格式时间戳的字符串调用iso8601.parse_date➊，该库能够返回一个datetime对象。由于该字符串没有包含任何时区信息，iso8601模块假定时区为UTC。如果时区包含正确的时区信息，iso8601模块会正确返回。
 - en: Using time zone–aware datetime objects and using ISO 8601 as the format for
     their string representation is a perfect solution for most problems around time
     zone, making sure no mistakes are made and building great interoperability between
     your application and the outside world.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用时区感知的datetime对象，并将ISO 8601作为其字符串表示的格式，是解决大多数时区问题的完美方案，确保不会出错，并在你的应用程序与外部世界之间建立良好的互操作性。
 - en: '**Solving Ambiguous Times**'
+  id: totrans-105
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**解决歧义时间**'
 - en: There are certain cases where the time of the day can be ambiguous; for example
     during the daylight saving time transition when the same “wall clock” time occurs
     twice a day. The dateutil library provides us with the is_ambiguous method to
     distinguish such timestamps. To show this in action, we’ll create an ambiguous
     timestamp in [Listing 4-7](ch04.xhtml#ch4list7).
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 有些情况下，一天中的时间可能是模糊的；例如在夏令时转换期间，某个“墙钟”时间可能一天内出现两次。dateutil库为我们提供了is_ambiguous方法，用以区分这样的时间戳。为了演示这个方法的作用，我们将在[清单4-7](ch04.xhtml#ch4list7)中创建一个模糊的时间戳。
 - en: '>>> import dateutil.tz'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import dateutil.tz'
 - en: '>>> localtz = dateutil.tz.gettz("Europe/Paris")'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> localtz = dateutil.tz.gettz("Europe/Paris")'
 - en: '>>> confusing = datetime.datetime(2017, 10, 29, 2, 30)'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> confusing = datetime.datetime(2017, 10, 29, 2, 30)'
 - en: '>>> localtz.is_ambiguous(confusing)'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> localtz.is_ambiguous(confusing)'
 - en: 'True'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 'True'
 - en: '*Listing 4-7: A confusing timestamp, occurring during the daylight saving time
     crossover*'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单4-7：一个在夏令时转换期间发生的模糊时间戳*'
 - en: On the night of October 30, 2017, Paris switched from summer to winter time.
     The city switched at 3:00 AM, when the time goes back to 2:00 AM. If we try to
     use a timestamp at 2:30 on that date, there is no way for this object to be sure
     whether it is after or before the daylight saving time change.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 2017年10月30日夜间，巴黎从夏令时切换到冬令时。城市在凌晨3:00切换，时间会倒退到凌晨2:00。如果我们尝试使用该日期的2:30的时间戳，那么这个对象无法确定它是夏令时切换之后还是之前。
 - en: However, it is possible to specify which side of the fold a timestamp is on
     by using the fold attribute, added to datetime objects from Python 3.6 by PEP
     495 (Local Time Disambiguation—*[https://www.python.org/dev/peps/pep-0495/](https://www.python.org/dev/peps/pep-0495/)*).
     This attribute indicates which side of the fold the datetime is on, as demonstrated
     in [Listing 4-8](ch04.xhtml#ch4list8).
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，可以通过使用 `fold` 属性来指定时间戳位于折叠的哪一侧，这个属性是 Python 3.6 中由 PEP 495（本地时间消歧义—*[https://www.python.org/dev/peps/pep-0495/](https://www.python.org/dev/peps/pep-0495/)*）加入到
+    `datetime` 对象中的。这个属性指示 `datetime` 位于折叠的哪一侧，如 [清单 4-8](ch04.xhtml#ch4list8) 所示。
 - en: '>>> import dateutil.tz'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import dateutil.tz'
 - en: '>>> import datetime'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import datetime'
 - en: '>>> localtz = dateutil.tz.gettz("Europe/Paris")'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> localtz = dateutil.tz.gettz("Europe/Paris")'
 - en: '>>> utc = dateutil.tz.tzutc()'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> utc = dateutil.tz.tzutc()'
 - en: '>>> confusing = datetime.datetime(2017, 10, 29, 2, 30, tzinfo=localtz)'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> confusing = datetime.datetime(2017, 10, 29, 2, 30, tzinfo=localtz)'
 - en: '>>> confusing.replace(fold=0).astime zone(utc)'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> confusing.replace(fold=0).astimezone(utc)'
 - en: datetime.datetime(2017, 10, 29, 0, 30, tzinfo=tzutc())
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: datetime.datetime(2017, 10, 29, 0, 30, tzinfo=tzutc())
 - en: '>>> confusing.replace(fold=1).astime zone(utc)'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> confusing.replace(fold=1).astimezone(utc)'
 - en: datetime.datetime(2017, 10, 29, 1, 30, tzinfo=tzutc())
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: datetime.datetime(2017, 10, 29, 1, 30, tzinfo=tzutc())
 - en: '*Listing 4-8: Disambiguating the ambiguous timestamp*'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-8：消除模糊的时间戳*'
 - en: You’ll need to use this in only very rare cases, since ambiguous timestamps
     occur only in a small window. Sticking to UTC is a great workaround to keep life
     simple and avoid running into time zone issues. However, it is good to know that
     the fold attribute exists and that dateutil is able to help in such cases.
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 你只需要在非常罕见的情况下使用这个方法，因为模糊的时间戳只会出现在一个小的时间窗口内。坚持使用 UTC 是一个很好的解决方法，既能保持生活简单，又能避免遇到时区问题。然而，知道
+    `fold` 属性的存在以及 `dateutil` 能在这种情况下提供帮助也是很有益的。
 - en: '**Summary**'
+  id: totrans-126
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**总结**'
 - en: 'In this chapter, we have seen how crucial it is to carry time zone information
     in time stamps. The built-in datetime module is not complete in this regard, but
     the dateutil module is a great complement: it allows us to get tzinfo-compatible
     objects that are ready to be used. The dateutil module also helps us solve subtle
     issues such as daylight saving time ambiguity.'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们已经看到在时间戳中携带时区信息是多么重要。内建的 `datetime` 模块在这方面并不完整，但 `dateutil` 模块是一个很好的补充：它让我们能够获得与
+    `tzinfo` 兼容的对象，这些对象随时可以使用。`dateutil` 模块还帮助我们解决了诸如夏令时模糊性等微妙问题。
 - en: The ISO 8601 standard format is an excellent choice for serializing and unserializing
     timestamps because it is readily available in Python and compatible with any other
     programming language.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: ISO 8601 标准格式是序列化和反序列化时间戳的绝佳选择，因为它在 Python 中已经现成可用，并且与任何其他编程语言兼容。
