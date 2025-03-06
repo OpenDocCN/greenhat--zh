@@ -1,21 +1,30 @@
 - en: '16'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '16'
 - en: STRUCTURE RESOLUTION
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 结构求解
 - en: '![Image](../images/common01.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/common01.jpg)'
 - en: 'In the previous chapter, we defined the classes for the structure model: StrNode,
     StrBar, and Structure. We also wrote the classes for the structure’s solution:
     StrNodeSolution, StrBarSolution, and StructureSolution. We use the first three
     to define a structure and the other three to model the solution, including the
     nodes’ displacements and bars’ stresses and strains. The question is, how do we
     go from the definition model to the solution model?'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前一章中，我们定义了结构模型的类：StrNode、StrBar 和 Structure。我们还编写了结构求解的类：StrNodeSolution、StrBarSolution
+    和 StructureSolution。我们使用前面三个类来定义结构，使用后面三个类来建模解，包括节点的位移和杆件的应力与应变。问题是，我们如何从定义模型过渡到求解模型呢？
 - en: 'In this chapter, we’ll answer that question by developing the resolution algorithm,
     the link between the original and solution structure models. We’ll revise the
     structure’s resolution process, where we assemble the structure’s stiffness matrix
@@ -24,423 +33,637 @@
     system of equations yields the displacements of the nodes in the structure in
     global coordinates: ![Image](../images/f00427-p2.jpg). To solve the system of
     equations, we’ll use our Cholesky’s implementation.'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们将通过开发求解算法来回答这个问题，该算法是原始结构模型和求解结构模型之间的桥梁。我们将回顾结构的求解过程，其中我们基于每根杆件的矩阵组装结构的刚度矩阵
+    [*k*]，并根据每个节点的负载组装负载向量 {![Image](../images/fvictorit.jpg)}。解算 ![Image](../images/f00427-p1.jpg)
+    方程组得到结构节点在全局坐标系中的位移：![Image](../images/f00427-p2.jpg)。为了求解这个方程组，我们将使用我们的 Cholesky
+    实现。
 - en: 'This chapter will also introduce an advanced unit testing technique: test doubles.
     Test doubles help us isolate a piece of the code by replacing the functions or
     classes it relies on with “fake” implementations so that when we run the test,
     we’re testing only one piece of the code.'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章还将介绍一种高级单元测试技术：测试替身（test doubles）。测试替身帮助我们通过将代码中依赖的函数或类替换为“虚拟”的实现，从而隔离代码的某一部分，以便在测试时只测试代码的一部分。
 - en: '**Structure Resolution**'
+  id: totrans-6
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**结构求解**'
 - en: 'In the previous chapter we studied the system of equations that relates the
     forces applied in each of the degrees of freedom of a bar with its displacements.
     A bar has two nodes, each with two degrees of freedom:'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前一章中，我们研究了与杆件的位移相关的各个自由度所施加的力的方程组。一个杆件有两个节点，每个节点有两个自由度：
 - en: '*u* The displacement in the x direction'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: '*u* x 方向的位移'
 - en: '*v* The displacement in the y direction'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: '*v* y 方向的位移'
 - en: 'This makes a total of four degrees of freedom per bar: *u*[1] and *v*[1] for
     node 1 and *u*[2] and *v*[2] for node 2\. The forces applied to the nodes—let’s
     call them ![Image](../images/f1victorit.jpg) and ![Image](../images/f2victorit.jpg)—can
     each be decomposed into their two projections. Thus, ![Image](../images/f1victorit.jpg)
     can be decomposed into *F*[1*x*] and *F*[1*y*], and the same goes for ![Image](../images/f2victorit.jpg)
     (see [Figure 16-1](ch16.xhtml#ch16fig1)).'
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 这使得每根杆件总共有四个自由度：*u*[1]和*v*[1]对应节点1，*u*[2]和*v*[2]对应节点2。施加在节点上的力——我们称它们为 ![Image](../images/f1victorit.jpg)
+    和 ![Image](../images/f2victorit.jpg)——可以分别分解为两个分量。因此，![Image](../images/f1victorit.jpg)
+    可以分解为 *F*[1*x*] 和 *F*[1*y*]，同样适用于 ![Image](../images/f2victorit.jpg)（参见[图16-1](ch16.xhtml#ch16fig1)）。
 - en: '![Image](../images/16fig01.jpg)'
+  id: totrans-11
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/16fig01.jpg)'
 - en: '*Figure 16-1: A bar’s degrees of freedom*'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图16-1：杆件的自由度*'
 - en: 'The system of equations relating these forces and the node displacements is
     repeated here from section “Stiffness Matrices in Global Coordinates” on [page
     397](ch15.xhtml#ch00lev1sec92):'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些力和节点位移之间的方程系统在“全局坐标系中的刚度矩阵”一节中已重复出现，见[第397页](ch15.xhtml#ch00lev1sec92)：
 - en: '![Image](../images/f0428-01.jpg)'
+  id: totrans-14
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0428-01.jpg)'
 - en: It’s important to note that these forces and displacements, as well as the stiffness
     matrix [*k*], are all based on the global system of coordinates, which is the
     one represented on the bottom left of [Figure 16-1](ch16.xhtml#ch16fig1). Each
     bar has its own local coordinate system, as you may recall from [Figure 15-18](ch15.xhtml#ch15fig18),
     but to build the structure’s global system of equations, we want the forces and
     displacements referred to this global coordinate system.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要注意的是，这些力和位移，以及刚度矩阵 [*k*]，都是基于全局坐标系的，正如[图16-1](ch16.xhtml#ch16fig1)左下角所示的那样。每根杆件都有自己的局部坐标系，正如你从[图15-18](ch15.xhtml#ch15fig18)中看到的那样，但为了建立结构的全局方程组，我们希望将力和位移参考到这个全局坐标系。
 - en: Before we move on, let’s briefly touch on what each term in the stiffness matrix
     means.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 在继续之前，让我们简要了解一下刚度矩阵中每个术语的含义。
 - en: '***Interpreting the Stiffness Matrix Terms***'
+  id: totrans-17
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***解释刚度矩阵项***'
 - en: 'The stiffness matrix terms relate the force in a given degree of freedom with
     the displacement produced in another degree of freedom. They are ordered in a
     well-defined way:'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 刚度矩阵项将给定自由度的力与另一个自由度中产生的位移相关联。它们按一种明确定义的方式排列：
 - en: '![Image](../images/f0429-01.jpg)'
+  id: totrans-19
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0429-01.jpg)'
 - en: Here, for example, ![Image](../images/f00429-p1.jpg) can be read as “the relation
     between the force in the first node’s x direction (![Image](../images/f00429-p2.jpg))
     and the displacement it produces in the second node’s y direction (![Image](../images/f00429-p3.jpg)).”
     With this is mind, we can discern a pattern.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，这里 ![Image](../images/f00429-p1.jpg) 可以解读为“第一节点x方向的力 (![Image](../images/f00429-p2.jpg))
+    与它在第二节点y方向上产生的位移 (![Image](../images/f00429-p3.jpg)) 之间的关系”。牢记这一点，我们可以辨识出一个模式。
 - en: 'Each row contains the stiffness terms relating the force in one degree of freedom
     with the displacements in every degree of freedom. For example, the first row
     includes the terms that relate the force in the x-axis of the start node ![Image](../images/f00429-p2.jpg)
     with all possible displacements: ![Image](../images/f00429-p5.jpg), ![Image](../images/f00429-p6.jpg),
     ![Image](../images/f00429-p7.jpg), and ![Image](../images/f00429-p3.jpg).'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 每一行包含了将某一自由度的力与所有自由度的位移相关联的刚度项。例如，第一行包括将起始节点x轴方向的力 (![Image](../images/f00429-p2.jpg))
+    与所有可能的位移相关联的项：![Image](../images/f00429-p5.jpg)、![Image](../images/f00429-p6.jpg)、![Image](../images/f00429-p7.jpg)
+    和 ![Image](../images/f00429-p3.jpg)。
 - en: Each of the columns contains the stiffness terms relating the forces in every
     degree of freedom with the displacement in a given degree of freedom. For example,
     the first column includes the terms that relate the forces in every degree of
     freedom—![Image](../images/f00429-p2.jpg), ![Image](../images/f1yvictorit.jpg),
     ![Image](../images/f2xvictorit.jpg), and ![Image](../images/f2yvictorit.jpg)—with
     the start node’s displacement in the x-axis.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 每一列包含了将每个自由度中的力与给定自由度中位移相关联的刚度项。例如，第一列包括将每个自由度中的力—![Image](../images/f00429-p2.jpg)、![Image](../images/f1yvictorit.jpg)、![Image](../images/f2xvictorit.jpg)
+    和 ![Image](../images/f2yvictorit.jpg)—与起始节点在x轴方向的位移相关联的项。
 - en: Remember this interpretation of the stiffness terms; we’ll use this knowledge
     later when we assemble the structure’s global stiffness matrix. Let’s continue
     revising the resolution process and write the code for it one step at a time.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 记住这种刚度项的解释；我们稍后在组装结构的全局刚度矩阵时将使用这些知识。让我们继续修订解析过程，并逐步编写代码。
 - en: '***Structure Initialization***'
+  id: totrans-24
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***结构初始化***'
 - en: As part of the structure’s resolution process there will be some intermediate
     results we want to save in the Structure class as private attributes. Let’s initialize
     these attributes before we dive into the main algorithm.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为结构解析过程的一部分，我们希望将一些中间结果保存在结构类的私有属性中。在进入主算法之前，我们先初始化这些属性。
 - en: Open your *model/structure.py* file and edit the class so that it includes the
     new attributes we’re adding in the __init__ method, as shown in [Listing 16-1](ch16.xhtml#ch16lis1).
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 打开你的 *model/structure.py* 文件，编辑类，以便它包含我们在 __init__ 方法中添加的新属性，正如[列表16-1](ch16.xhtml#ch16lis1)中所示。
 - en: '[PRE0]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '*Listing 16-1: Initializing the structure*'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 16-1：初始化结构*'
 - en: 'We need to add two new imports, Matrix and Vector, from the eqs package ➊.
     Because we’ll later need to import the other Vector class, the one defined in
     the geom2d package, we alias Vector from the eqs package to be named EqVector
     instead. Notice the aliasing syntax in Python:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要从 eqs 包中添加两个新的导入，Matrix 和 Vector ➊。因为我们稍后还需要导入另一个 Vector 类，那个是在 geom2d 包中定义的，我们将
+    eqs 包中的 Vector 别名为 EqVector。请注意 Python 中的别名语法：
 - en: '[PRE1]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Next, we define a constant called __DOF_PER_NODE ➋, which is set to 2. We’ll
     use this constant in our code instead of directly using the number. Its clear
     name should give a good hint as to what the number actually means. We’ll avoid
     using *magic numbers* in our code, that is, numbers that appear in the code where
     it isn’t clear what they represent. Well-named constants tell the readers of our
     code what the number actually stands for.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们定义一个名为 __DOF_PER_NODE ➋ 的常量，其值为 2。我们将在代码中使用这个常量，而不是直接使用数字。这个清晰的名称应该能很好地提示该数字的实际含义。我们将在代码中避免使用*魔法数字*，即那些出现在代码中，但不清楚其代表什么含义的数字。命名良好的常量可以告诉读者该数字实际上代表什么。
 - en: Lastly, we define four new private attributes and initialize all of them to
     None ➌.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们定义四个新的私有属性，并将它们都初始化为 None ➌。
 - en: __dofs_dict A dictionary where the keys are IDs of the nodes, and the values
     are the lists of degrees of freedom numbers assigned to the node. We’ll see what
     this means in a minute.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: __dofs_dict 一个字典，其中键是节点的 ID，值是分配给该节点的自由度编号的列表。稍后我们会解释这个是什么意思。
 - en: __system_matrix The stiffness matrix for the structure’s global system of equations.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: __system_matrix 结构全局方程组的刚度矩阵。
 - en: __system_vector The load vector for the structure’s global system of equations.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: __system_vector 结构全局方程组的载荷向量。
 - en: __global_displacements The list of a node’s global displacements, where the
     indices of each displacement are the same as their degrees of freedom numbers.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: __global_displacements 一个节点的全局位移列表，其中每个位移的索引与其自由度编号相同。
 - en: Don’t worry if you don’t fully understand what each of these new attributes
     mean; we’ll explain each in detail in the following sections.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你还不完全理解这些新属性的含义，别担心；我们将在后续章节中详细解释每个属性。
 - en: '***The Main Structure Resolution Algorithm***'
+  id: totrans-38
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***主要结构求解算法***'
 - en: 'The structure resolution algorithm can be broken down into three big steps:'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 结构求解算法可以分为三个大步骤：
 - en: Assign each degree of freedom a number.
+  id: totrans-40
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为每个自由度分配一个编号。
 - en: Assemble and resolve the structure’s system of equations.
+  id: totrans-41
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 汇总并求解结构的方程组。
 - en: Use the system’s resulting vector to build the solution model.
+  id: totrans-42
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用系统的结果向量来构建求解模型。
 - en: Let’s try to quickly understand what each of these steps is about; we’ll fill
     in the remaining details later. The first step, numbering the degrees of freedom,
     is a process that assigns every DOF in the structure a unique number. Let’s take
     the structure in [Figure 16-2](ch16.xhtml#ch16fig2) as an example.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们试着快速理解这些步骤的含义；我们稍后会补充剩余的细节。第一步，给自由度编号，是一个为结构中的每个自由度分配一个唯一数字的过程。我们以[图16-2](ch16.xhtml#ch16fig2)中的结构为例。
 - en: '![Image](../images/16fig02.jpg)'
+  id: totrans-44
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/16fig02.jpg)'
 - en: '*Figure 16-2: Our example structure*'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图16-2：我们的示例结构*'
 - en: 'The structure in [Figure 16-2](ch16.xhtml#ch16fig2) has three nodes (N1, N2,
     and N3), and each node has two degrees of freedom. Assigning numbers to the degrees
     of freedom is as simple as it sounds: we take each DOF and associate a unique
     number with it. [Table 16-1](ch16.xhtml#ch16tab1) shows a possible DOF number
     assignment that uses the natural ordering of the nodes.'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图16-2](ch16.xhtml#ch16fig2)中的结构有三个节点（N1、N2 和 N3），每个节点有两个自由度。为自由度分配编号就像听起来那么简单：我们将每个自由度与一个独特的数字关联。[表16-1](ch16.xhtml#ch16tab1)展示了一个可能的自由度编号分配方案，使用了节点的自然顺序。'
 - en: '**Table 16-1:** Assigning Degrees of Freedom Numbers'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表16-1：分配自由度编号**'
 - en: '| **Node** | **DOF numbers** |'
+  id: totrans-48
   prefs: []
   type: TYPE_TB
+  zh: '| **节点** | **自由度编号** |'
 - en: '| N1 | 0, 1 |'
+  id: totrans-49
   prefs: []
   type: TYPE_TB
+  zh: '| N1 | 0, 1 |'
 - en: '| N2 | 2, 3 |'
+  id: totrans-50
   prefs: []
   type: TYPE_TB
+  zh: '| N2 | 2, 3 |'
 - en: '| N3 | 4, 5 |'
+  id: totrans-51
   prefs: []
   type: TYPE_TB
+  zh: '| N3 | 4, 5 |'
 - en: As you can see, we assign DOF numbers starting from zero. We could have chosen
     any other set of numbers, including a numbering scheme starting at any number
     we like, but as we’ll use these numbers to refer to positions in the system’s
     matrix and vector, it’ll be more convenient to have numbers that directly refer
     to indices. Otherwise, we’d need a mapping between the DOF numbers and indices
     in the system.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 如你所见，我们从零开始分配DOF编号。我们本可以选择任何其他的数字集合，包括从我们喜欢的任何数字开始的编号方案，但由于我们将使用这些数字来引用系统矩阵和向量中的位置，使用直接与索引相关联的数字会更方便。否则，我们就需要在DOF编号和系统中的索引之间进行映射。
 - en: 'With the DOF numbers assigned, the next step is to assemble the global system
     of equations. This system has the same structure as the bar’s system of equations:
     ![Image](../images/f00431-p1.jpg). When we solve this system of equations, we
     obtain the global displacements for all DOFs. Using these displacements, we can
     create the structure solution model using the classes we defined in [Chapter 15](ch15.xhtml#ch15).'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 在分配了DOF编号后，下一步是组装全局方程系统。这个系统与杆件的方程系统结构相同：![Image](../images/f00431-p1.jpg)。当我们解这个方程系统时，我们会得到所有自由度的全局位移。使用这些位移，我们可以利用[第15章](ch15.xhtml#ch15)中定义的类创建结构解模型。
 - en: Let’s implement this three-step algorithm in a new method in the Structure class
     (from the *model* package). Enter the new method in [Listing 16-2](ch16.xhtml#ch16lis2).
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们在`Structure`类（来自*model*包）中实现这个三步算法。请在[列表 16-2](ch16.xhtml#ch16lis2)中输入新方法。
 - en: '[PRE2]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: '*Listing 16-2: Structure resolution*'
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 16-2：结构解析*'
 - en: The solve_structure method will compute the solution and return an instance
     of StructureSolution. This method outlines the three steps we just described.
     None of the three private methods exist yet, but we’ll implement them in the following
     sections one by one.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: '`solve_structure`方法将计算解并返回一个`StructureSolution`实例。该方法概述了我们刚刚描述的三步过程。虽然这三个私有方法还不存在，但我们将在接下来的部分逐一实现它们。'
 - en: '***Numbering Degrees of Freedom***'
+  id: totrans-58
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***自由度编号***'
 - en: The first step of the resolution process is to assign a number to each of the
     structure’s degrees of freedom. Remember that each node has two degrees of freedom,
     so the __assign_degrees_of_freedom method will assign two numbers to each of the
     structure’s nodes and save them in the __dofs_dict dictionary we initialized in
     [Listing 16-1](ch16.xhtml#ch16lis1). With the DOF numbers assigned, the structure
     we saw in [Figure 16-2](ch16.xhtml#ch16fig2) could now look like [Figure 16-3](ch16.xhtml#ch16fig3).
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 解析过程的第一步是为结构的每个自由度分配一个编号。请记住，每个节点有两个自由度，因此`__assign_degrees_of_freedom`方法会为结构的每个节点分配两个数字，并将它们保存在我们在[列表
+    16-1](ch16.xhtml#ch16lis1)中初始化的`__dofs_dict`字典里。分配了DOF编号后，我们在[图 16-2](ch16.xhtml#ch16fig2)中看到的结构现在应该像[图
+    16-3](ch16.xhtml#ch16fig3)那样。
 - en: '![Image](../images/16fig03.jpg)'
+  id: totrans-60
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/16fig03.jpg)'
 - en: '*Figure 16-3: Our structure nodes’ degrees of freedom, with number labels*'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 16-3：我们结构节点的自由度，带有编号标签*'
 - en: Let’s implement the method. Enter the code in [Listing 16-3](ch16.xhtml#ch16lis3).
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们实现这个方法。请在[列表 16-3](ch16.xhtml#ch16lis3)中输入代码。
 - en: '[PRE3]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: '*Listing 16-3: Degrees of freedom assignment*'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 16-3：自由度分配*'
 - en: 'The method first initializes the __dofs_dict attribute, setting it to an empty
     dictionary to make sure that we use a fresh new dictionary each time we run the
     method. Then, we iterate over the enumeration of all the nodes in the structure
     (self.__nodes), adding each node’s id as the key in the dictionary associated
     with a tuple of two numbers: the node’s DOFs.'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 该方法首先初始化`__dofs_dict`属性，将其设置为空字典，以确保每次运行该方法时使用的是一个全新的字典。然后，我们遍历结构中所有节点的枚举（`self.__nodes`），将每个节点的id作为字典中的键，并将该节点的自由度（DOFs）作为一个包含两个数字的元组与之关联。
 - en: The enumerate function in Python returns an iterable sequence of the elements
     that we pass the function, together with their indices. This function is convenient
     for when the logic of what we’re doing requires the index of the items in a list.
     Here, we use the index of the node to compute its DOF numbers, which for a given
     index *i* are 2*i* and 2*i* + 1.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: Python中的`enumerate`函数返回我们传递给该函数的元素的可迭代序列及其索引。当我们的逻辑需要获取列表中项目的索引时，这个函数非常方便。在这里，我们使用节点的索引来计算它的DOF编号，对于给定的索引`i`，DOF编号分别是`2*i`和`2*i
+    + 1`。
 - en: The first node, at index 0, will therefore get the degrees of freedom 0 and
     1\. The node at index 1 will get 2 and 3, and so on and so forth.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，索引为0的第一个节点将获得自由度0和1，索引为1的节点将获得自由度2和3，以此类推。
 - en: 'For a structure with three nodes whose IDs are 1, 2, and 3, the degrees of
     freedom dictionary could look like the following:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于一个有三个节点（编号为1、2和3）的结构，其自由度字典可能如下所示：
 - en: '[PRE4]'
+  id: totrans-69
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Let’s move on to the next step, where the heavy lifting happens.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们继续下一步，这里是关键步骤。
 - en: '***Assembling and Resolving the System of Equations***'
+  id: totrans-71
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***组装和求解方程组***'
 - en: To find the displacements of the structure’s nodes, we need to assemble and
     solve the structure’s global ![Image](../images/f00433-p1.jpg) system of equations.
     This system consists of the bar’s individual systems of equations assembled together.
     The same way a bar’s ![Image](../images/f00433-p1.jpg) system relates the external
     forces and displacements on both its nodes, the structure’s global system of equations
     relates the forces and displacements of every node in the structure.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 要找到结构各个节点的位移，我们需要组装并求解结构的整体 ![Image](../images/f00433-p1.jpg) 方程组。这个方程组由各个杆件的单独方程组组合而成。就像每个杆件的
+    ![Image](../images/f00433-p1.jpg) 方程组将其节点上的外力和位移联系在一起一样，结构的整体方程组则将结构中每个节点的力和位移联系在一起。
 - en: Let’s break this down a bit more so we understand all the details. As always,
     doing a small example by hand will help us understand the process better.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们更详细地分析一下，以便理解所有的细节。像往常一样，通过手动做一个小例子可以帮助我们更好地理解这个过程。
 - en: '**An Example by Hand**'
+  id: totrans-74
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**手动示例**'
 - en: 'Before we begin, a quick note on nomenclature: we’ll label each bar using the
     numbers of the nodes it lies on, separated with an arrow. So, 1 → 2 is the bar
     going from node 1 to node 2\. The nomenclature'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 在开始之前，关于术语的一个小提示：我们将用杆件所在节点的编号，并用箭头分隔，来标记每根杆件。所以，1 → 2 是从节点1到节点2的杆件。
 - en: '![Image](../images/f0433-01.jpg)'
+  id: totrans-76
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0433-01.jpg)'
 - en: 'refers to the ![Image](../images/f00397-p1.jpg) quantity for the bar 1 → 2:
     *E* refers to the bar’s material Young’s modulus, *A* is the bar’s cross section,
     and *l* is the bar’s length.'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 指的是杆件1 → 2的 ![Image](../images/f00397-p1.jpg) 数量：*E* 代表杆件的材料杨氏模量，*A* 是杆件的截面积，*l*
+    是杆件的长度。
 - en: Now let’s look at the structure in [Figure 16-3](ch16.xhtml#ch16fig3). This
     structure has three nodes, three bars, and an external load applied to node 3\.
     Let’s derive the system of equations for each of the three bars using the degrees
     of freedom numbering we’ve defined (see [Figure 16-4](ch16.xhtml#ch16fig4)).
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们来看一下 [图16-3](ch16.xhtml#ch16fig3) 中的结构。这个结构有三个节点，三个杆件，并且节点3上施加了外部载荷。让我们使用之前定义的自由度编号来推导每个杆件的方程组（参见
+    [图16-4](ch16.xhtml#ch16fig4)）。
 - en: '![Image](../images/16fig04.jpg)'
+  id: totrans-79
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/16fig04.jpg)'
 - en: '*Figure 16-4: Our structure’s nodes and bars, labeled*'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图16-4：我们结构的节点和杆件，已标记*'
 - en: '**Bar** 1 → 2 This horizontal bar goes from node 1 to node 2\. Its local x-
     and y-axes are aligned with the global coordinate system; thus, in this case,
     *θ* = 0°, and therefore cos0*°* = 1 and sin0*°* = 0\. The bar’s system of equations
     is as follows:'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: '**杆件** 1 → 2 这个水平杆件从节点1到节点2，其局部的x轴和y轴与全局坐标系对齐；因此，在这种情况下，*θ* = 0°，所以cos0° =
+    1，sin0° = 0。杆件的方程组如下：'
 - en: '![Image](../images/f0434-01.jpg)'
+  id: totrans-82
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0434-01.jpg)'
 - en: If you need a refresher on how this system of equations is derived, refer to
     section “Stiffness Matrices in Global Coordinates” on [page 397](ch15.xhtml#ch00lev1sec92).
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你需要回顾这个方程组是如何推导出来的，请参考 [第397页](ch15.xhtml#ch00lev1sec92)中的“全局坐标系中的刚度矩阵”章节。
 - en: '**Bar** 1 → 3 This bar going from node 1 to node 3 forms an angle of 30° with
     the global x-axis; therefore, ![Image](../images/f00434-p1.jpg) and ![Image](../images/f00434-p2.jpg).
     The bar’s system of equations is as follows:'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: '**杆件** 1 → 3 这个从节点1到节点3的杆件与全局x轴形成30°的角度，因此 ![Image](../images/f00434-p1.jpg)
+    和 ![Image](../images/f00434-p2.jpg)。杆件的方程组如下：'
 - en: '![Image](../images/f0434-02.jpg)'
+  id: totrans-85
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0434-02.jpg)'
 - en: '**Bar** 2 → 3 This vertical bar going from node 2 to node 3 makes an angle
     *θ* equal to 90°, so cos90° = 0 and sin90° = 1\. The bar’s system of equations
     is as follows:'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: '**杆件** 2 → 3 这个垂直杆件从节点2到节点3，与全局坐标系的x轴形成30°角，因此cos30° = 0，sin30° = 1。杆件的方程组如下：'
 - en: '![Image](../images/f0434-03.jpg)'
+  id: totrans-87
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0434-03.jpg)'
 - en: Now that we have each bar’s system of equations, we need to assemble the structure’s
     global system. The structure has a total of three nodes, and each node has two
     degrees of freedom, so the size of the system is 3 × 2 = 6\. In this system, the
     forces and displacements need to appear in the position given by their DOF number.
     To make this clear, let’s make a table with the DOF numbers and the forces and
     displacements associated with them ([Table 16-2](ch16.xhtml#ch16tab2)).
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们已经有了每个杆件的方程组，我们需要组装结构的全局方程组。结构总共有三个节点，每个节点有两个自由度，因此系统的大小为 3 × 2 = 6。在这个系统中，力和位移需要出现在它们对应的自由度编号所给定的位置。为了清楚说明这一点，让我们做一个表格，列出自由度编号以及与之相关的力和位移（[表
+    16-2](ch16.xhtml#ch16tab2)）。
 - en: '**Table 16-2:** DOF Numbers for Each Force and Displacement'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表 16-2：** 每个力和位移对应的自由度编号'
 - en: '| **DOF** | **Associated force** | **Associated displacement** |'
+  id: totrans-90
   prefs: []
   type: TYPE_TB
+  zh: '| **自由度 (DOF)** | **相关力** | **相关位移** |'
 - en: '| 0 | *F*[1*x*] = 0 | *u*[1] |'
+  id: totrans-91
   prefs: []
   type: TYPE_TB
+  zh: '| 0 | *F*[1*x*] = 0 | *u*[1] |'
 - en: '| 1 | *F*[1*y*] = 0 | *v*[1] |'
+  id: totrans-92
   prefs: []
   type: TYPE_TB
+  zh: '| 1 | *F*[1*y*] = 0 | *v*[1] |'
 - en: '| 2 | *F*[2*x*] = 0 | *u*[2] |'
+  id: totrans-93
   prefs: []
   type: TYPE_TB
+  zh: '| 2 | *F*[2*x*] = 0 | *u*[2] |'
 - en: '| 3 | *F*[2*y*] = 0 | *v*[2] |'
+  id: totrans-94
   prefs: []
   type: TYPE_TB
+  zh: '| 3 | *F*[2*y*] = 0 | *v*[2] |'
 - en: '| 4 | *F*[3*x*] | *u*[3] |'
+  id: totrans-95
   prefs: []
   type: TYPE_TB
+  zh: '| 4 | *F*[3*x*] | *u*[3] |'
 - en: '| 5 | *F*[3*y*] | *v*[3] |'
+  id: totrans-96
   prefs: []
   type: TYPE_TB
+  zh: '| 5 | *F*[3*y*] | *v*[3] |'
 - en: 'If the DOF numbering gives us the position in the system of equations that
     each force or displacement term needs to occupy, we can start constructing the
     system like so:'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果自由度编号能告诉我们每个力或位移项在方程组中应占的位置，那么我们可以这样开始构建系统：
 - en: '![Image](../images/f0435-01.jpg)'
+  id: totrans-98
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0435-01.jpg)'
 - en: Note that if we decided to number the degrees of freedom differently, the order
     of the force and displacement terms would be different but perfectly valid nevertheless.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，如果我们决定以不同的方式编号自由度，那么力和位移项的顺序会有所不同，但仍然是完全有效的。
 - en: In this system of equations, we have yet to compute the stiffness terms. The
     general stiffness term *k*[*ij*] relates the force applied in the *i*^(th) degree
     of freedom with the displacement in the *j*^(th) degree of freedom (the same as
     we saw earlier in the “Interpreting the Stiffness Matrix Terms” on [page 429](ch16.xhtml#ch00lev2sec168)).
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个方程组中，我们还需要计算刚度项。一般的刚度项 *k*[*ij*] 将施加在 *i*^(th) 自由度上的力与 *j*^(th) 自由度上的位移相关联（这与我们之前在“解释刚度矩阵项”中看到的内容相同，见
+    [第 429 页](ch16.xhtml#ch00lev2sec168)）。
 - en: 'As you can imagine, if the *i*^(th) and *j*^(th) degrees of freedom don’t belong
     to the same node or to nodes not joined by a bar, the *k*[*ij*] stiffness term
     will be zero: there can’t be any relation between a force applied in *i* with
@@ -448,8 +671,11 @@
     so there won’t be zero values in the global matrix (except for those already in
     the bar’s individual matrices). In big structures where a node is connected with
     only a few others, the resulting stiffness matrices tend to have many zeros.'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你所想的那样，如果 *i*^(th) 和 *j*^(th) 自由度不属于同一节点，或者不通过杆件连接的节点之间，那么 *k*[*ij*] 刚度项将为零：在
+    *i* 自由度施加的力和 *j* 自由度的位移之间无法产生任何关系。在我们的示例结构中，所有节点都已连接，因此全局矩阵中不会出现零值（除了已经存在于杆件各自矩阵中的零值）。在大型结构中，如果一个节点只与少数几个节点相连，那么得到的刚度矩阵往往会有很多零值。
 - en: 'To compute each of the *k*[*ij*] terms, we need to add all the stiffness values
     in the bar’s stiffness matrices that relate the *i*^(th) and *j*^(th) degrees
     of freedom. For example, to compute *k*[00], we have to account for the stiffness
@@ -457,134 +683,202 @@
     force applied in the DOF 0 and the displacement in the same DOF. To simplify the
     notation of the ![Image](../images/f00397-p1.jpg) terms a bit, let’s use the following
     aliases:'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 要计算每个 *k*[*ij*] 项，我们需要加上与 *i*^(th) 和 *j*^(th) 自由度相关的杆件刚度矩阵中的所有刚度值。例如，要计算 *k*[00]，我们必须考虑杆件
+    1 → 2 和 1 → 3 的刚度，因为这些杆件在自由度 0 上施加的力与相同自由度的位移之间产生了刚度关系。为了简化 ![Image](../images/f00397-p1.jpg)
+    项的符号表示，我们使用以下别名：
 - en: '![Image](../images/f0435-02.jpg)'
+  id: totrans-103
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0435-02.jpg)'
 - en: 'With this, let’s assemble the system’s matrix and vector by adding each of
     the stiffness terms and loads:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 这样，我们可以通过添加每个刚度项和荷载来组装系统的矩阵和向量：
 - en: '![Image](../images/f0436-01.jpg)'
+  id: totrans-105
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0436-01.jpg)'
 - en: 'There’s one last step required to make this system of equations solvable: applying
     the external constraint conditions, that is, setting the constrained displacements
     as zero. This system of equations so far represents the structure without external
     constraints, but there are some imposed displacements of zero, and we have to
     force these conditions into its solution. In this case, node N1 has both its x
     and y displacements constrained, which can be expressed mathematically as follows:'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 还有最后一步是让这个方程系统可解：应用外部约束条件，即将受约束的位移设为零。到目前为止，这个方程系统代表的是没有外部约束的结构，但有一些被强加为零的位移，我们必须将这些条件强制输入其解中。在这种情况下，节点
+    N1 的 x 和 y 位移都受到约束，这可以用数学方式表达如下：
 - en: '*u*[1] = 0 and *v*[1] = 0'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: '*u*[1] = 0 和 *v*[1] = 0'
 - en: The N2 node has its y displacement constrained. Thus,
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: N2 节点的 y 位移受到约束。因此，
 - en: '*v*[2] = 0'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: '*v*[2] = 0'
 - en: 'To introduce these conditions in our system of equations so that they appear
     in the solution, we have to set both the row and columns of the given DOF number
     as the identity in the system’s matrix and a zero in the system’s force vector.
     In this case, the displacements *u*[1], *v*[1], and *v*[2] have the 0, 1, and
     3 DOFs assigned to them; let’s make those rows and columns the identity vector:'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 要在我们的方程组中引入这些条件，以便它们出现在解中，我们必须将给定自由度（DOF）编号的行和列设置为系统矩阵中的单位矩阵，并将系统的力向量中的相应位置设为零。在这种情况下，位移
+    *u*[1]、*v*[1] 和 *v*[2] 分别分配了 0、1 和 3 的自由度编号；让我们将这些行和列设置为单位向量：
 - en: '![Image](../images/f0436-02.jpg)'
+  id: totrans-111
   prefs: []
   type: TYPE_IMG
+  zh: '![图像](../images/f0436-02.jpg)'
 - en: The force vector values at the constrained indices were already zero (there’s
     no force applied in those degrees of freedom), but if they weren’t, we’d have
     to zero them out as well. With this little algebraic trick, we force *u*[1], *v*[1],
     and *v*[2] to be equal to zero in the system’s solution. The resulting system
     matrix is positive definite; thus, the Cholesky numerical method we implemented
     in [Chapter 14](ch14.xhtml#ch14) is a good candidate to solve this system.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 受约束索引的力向量值已经是零（在这些自由度上没有施加力），但如果不是零，我们也必须将它们置为零。通过这个小的代数技巧，我们强制 *u*[1]、*v*[1]
+    和 *v*[2] 在系统的解中等于零。得到的系统矩阵是正定的；因此，我们在 [第 14 章](ch14.xhtml#ch14) 中实现的 Cholesky
+    数值方法是一个解决此系统的良好候选。
 - en: The structure’s system of equations is now assembled and ready to be solved.
     If we use a linear system resolution procedure, such as Cholesky’s factorization,
     we’ll obtain the values for the displacements.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 结构的方程组现在已经组装完毕，并准备求解。如果我们使用线性系统求解过程，如 Cholesky 分解，我们将获得位移的值。
 - en: Now that we understand this procedure, let’s put it in code.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们理解了这个过程，让我们将其写成代码。
 - en: '**The Algorithm**'
+  id: totrans-115
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**算法**'
 - en: In the Structure class, enter the method in [Listing 16-4](ch16.xhtml#ch16lis4).
     This method defines our resolution algorithm step-by-step.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 在结构类中，输入方法 [清单 16-4](ch16.xhtml#ch16lis4)。该方法一步步定义了我们的求解算法。
 - en: '[PRE5]'
+  id: totrans-117
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: '*Listing 16-4: Solving the system of equations*'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 16-4：求解方程组*'
 - en: We called __solve_system_of_equations in [Listing 16-2](ch16.xhtml#ch16lis2),
     but we hadn’t yet defined it. This now complete method outlines the main steps
     to assemble and resolve the structure’s system of equations. Note that we’re using
     many methods we have yet to define; we’ll do so in later sections.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在 [清单 16-2](ch16.xhtml#ch16lis2) 中调用了 __solve_system_of_equations，但当时还没有定义它。现在这个完整的方法概述了组装和求解结构方程组的主要步骤。注意，我们使用了许多我们还没有定义的方法；我们将在后续章节中定义它们。
 - en: We first compute the size of the system by multiplying the number of nodes in
     the structure by the degrees of freedom for each node, a value we stored in the
     constant __DOF_PER_NODE in the class.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先通过将结构中节点的数量与每个节点的自由度数相乘来计算系统的大小，这个值我们已经存储在类中的常量 __DOF_PER_NODE 中。
 - en: 'Then we assemble both the system’s matrix and vector using two private methods
     we’ll write later: __assemble_system_matrix and __assemble_system_vector.'
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们使用稍后编写的两个私有方法 __assemble_system_matrix 和 __assemble_system_vector 来组装系统的矩阵和向量。
 - en: The next method we call, __apply_external_constraints, applies the conditions
     that force the constrained displacements to be zero, similar to the example we
     did by hand shown earlier.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们调用的下一个方法，__apply_external_constraints，应用那些强制约束位移为零的条件，类似于我们之前手动示例中做的。
 - en: 'The last step uses the recently computed system matrix and force vector to
     find the solution using our Cholesky’s solver function: cholesky_solve. This function
     needs to be imported from the eqs package. The result we get is the displacement
     vector in global coordinates.'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后一步使用我们最近计算的系统矩阵和力向量，通过 Cholesky 解算器函数：cholesky_solve 来求解该方程。此函数需要从 eqs 包中导入。我们得到的结果是全局坐标系下的位移向量。
 - en: '**Assembling the System’s Matrix**'
+  id: totrans-124
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**组装系统矩阵**'
 - en: Let’s write the __assemble_system_matrix method. This is probably the most complex
     piece of code involved in the structural analysis algorithm, but don’t worry,
     I’ll walk you through it. First, enter the code in [Listing 16-5](ch16.xhtml#ch16lis5).
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们编写 __assemble_system_matrix 方法。这可能是结构分析算法中最复杂的代码部分，但别担心，我会一步一步带你走。首先，输入代码到[清单
+    16-5](ch16.xhtml#ch16lis5)中。
 - en: '[PRE6]'
+  id: totrans-126
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: '*Listing 16-5: Assembling the system of equations matrix*'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 16-5：组装方程组矩阵*'
 - en: We start by creating a new Matrix instance with as many rows and columns as
     the passed-in size parameter. Then, we have a for loop that iterates over the
     bars in the structure. In the loop, we call the global_stiffness_matrix method
     on each bar and store the resulting stiffness matrix in the bar_matrix variable
     ➊.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先创建一个新的矩阵实例，其行数和列数与传入的大小参数相同。然后，我们使用一个 for 循环遍历结构中的所有杆件。在循环中，我们对每个杆件调用 global_stiffness_matrix
+    方法，并将结果的刚度矩阵存储在 bar_matrix 变量中 ➊。
 - en: 'Next, we create a list of all the degrees of freedom numbers included in the
     nodes of the bar: dofs ➋. To do this without adding too much noise in the __assemble_system_matrix
     method, we’ve implemented another private method: __bar_dofs.'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们创建一个包含所有自由度编号的列表，这些自由度编号包含在杆件的节点中：dofs ➋。为了在 __assemble_system_matrix
+    方法中避免增加过多的噪声，我们实现了另一个私有方法：__bar_dofs。
 - en: This __bar_dofs method uses the ids of the passed-in bar nodes to extract its
     DOF numbers from the __dofs_dict. After extracting the start and end nodes’ DOF
     numbers, we create a new tuple by concatenating the two DOF tuples. Note that
     we can concatenate tuples using the + operator.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个 __bar_dofs 方法使用传入杆件节点的 id，从 __dofs_dict 中提取其自由度编号。在提取起始节点和结束节点的自由度编号后，我们通过连接两个自由度元组来创建一个新的元组。注意，我们可以使用
+    + 运算符来连接元组。
 - en: 'Now we have a tuple containing the DOF numbers for a given bar’s nodes. Recall
     that this gives us the bar’s stiffness term’s position in the structure’s system
     of equations matrix: the DOF number is also the index in the system’s matrix.
@@ -594,14 +888,22 @@
     ➌. We use the indices from the enumerations to access the bar’s stiffness matrix
     and the DOF numbers to know the position in the structure’s matrix. To make sure
     you understand this process, take a look at [Figure 16-5](ch16.xhtml#ch16fig5).'
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，我们有了一个包含给定杆件节点自由度编号的元组。回想一下，这给了我们杆件刚度项在结构方程组矩阵中的位置：自由度编号也是系统矩阵中的索引。在 __assemble_system_matrix
+    中，我们使用两个 for 循环遍历杆件刚度矩阵中的所有项。这些循环遍历矩阵的行和列，并将每个访问到的刚度值添加到结构的全局矩阵 ➌ 中。我们使用枚举中的索引来访问杆件的刚度矩阵，使用自由度编号来确定在结构矩阵中的位置。为了确保你理解这个过程，请查看[图
+    16-5](ch16.xhtml#ch16fig5)。
 - en: '![Image](../images/16fig05.jpg)'
+  id: totrans-132
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/16fig05.jpg)'
 - en: '*Figure 16-5: Assembling the stiffness matrix*'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 16-5：组装刚度矩阵*'
 - en: In the figure, we’ve taken bar 1 → 3, whose first node, N1, has the DOFs 0 and
     1, and whose second node, N2, has the DOFs 4 and 5\. We’ve annotated the side
     and top of the bar’s stiffness matrix with the degrees of freedom numbers. The
@@ -611,55 +913,81 @@
     DOF 1\. These DOF numbers are the indices in the structure’s stiffness matrix.
     The *k*[21] term, for instance, is located in the 4^(th) row and 1^(st) column
     in this matrix.
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 在图中，我们选择了杆件 1 → 3，其第一个节点 N1 的自由度为 0 和 1，而第二个节点 N2 的自由度为 4 和 5。我们在杆件的刚度矩阵的边侧和顶部标注了自由度编号。矩阵中的刚度项将这些自由度关联起来。例如，*k*[21]
+    项位于与自由度 4 对应的行和与自由度 1 对应的列中；该项关联了在自由度 4 上施加的力与自由度 1 上的位移。这些自由度编号是结构刚度矩阵中的索引。例如，*k*[21]
+    项位于该矩阵的第 4 行和第 1 列。
 - en: The last step in [Listing 16-5](ch16.xhtml#ch16lis5) is to assign the computed
     matrix to the instance’s __system_matrix attribute ➍.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[清单 16-5](ch16.xhtml#ch16lis5)的最后一步是将计算得到的矩阵赋值给实例的__system_matrix属性 ➍。
 - en: '**Assembling the System’s Vector**'
+  id: totrans-136
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**组装系统的向量**'
 - en: 'We assemble the system’s external-force vector using a similar procedure to
     what we just did with the stiffness matrix. This time, instead of iterating over
     the bars of the structure, we’ll iterate over the nodes: we want to collect the
     external forces on each of them.'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用与刚度矩阵类似的过程来组装系统的外力向量。不同的是，这次我们不遍历结构的杆件，而是遍历节点：我们要收集每个节点上的外部力。
 - en: In your file, enter the new private method in [Listing 16-6](ch16.xhtml#ch16lis6).
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 在你的文件中，输入新的私有方法到[清单 16-6](ch16.xhtml#ch16lis6)中。
 - en: '[PRE7]'
+  id: totrans-139
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: '*Listing 16-6: Assembling the system of equations vector*'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 16-6：组装方程系统向量*'
 - en: We first create a new Vector sized according to the size parameter (don’t forget
     we’ve aliased this class to be named EqVector now).
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先创建一个新的向量，其大小根据size参数来确定（别忘了，我们已经将这个类别名为EqVector）。
 - en: Next, we have a for loop that iterates over the nodes. For each node we save
     its net load in the net_load variable. Then we extract the node’s DOF numbers
     from __dofs_dict into the dof_x and dof_y variables. Note that we’re destructuring
     the tuple into these variables; take a look at “Destructuring” on [page 20](ch01.xhtml#ch00lev1sec15)
     if you need a refresher on destructuring.
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们有一个for循环，遍历每个节点。对于每个节点，我们将其净载荷保存到net_load变量中。然后，我们从__dofs_dict中提取节点的自由度编号到dof_x和dof_y变量中。请注意，我们正在将元组解构到这些变量中；如果需要复习解构，请查看[第20页](ch01.xhtml#ch00lev1sec15)的“解构”部分。
 - en: 'We then add each of the net load components into the vector variable: the x
     component (net_load.u) in the position given by dof_x and the y component (net_load.v)
     in the position given by dof_y.'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们将每个净载荷分量加入到向量变量中：x分量（net_load.u）放在dof_x指定的位置，y分量（net_load.v）放在dof_y指定的位置。
 - en: Lastly, we assign the vector we’ve computed to the instance’s __system_vector
     attribute.
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们将计算得到的向量分配给实例的__system_vector属性。
 - en: '**Applying the External Constraints**'
+  id: totrans-145
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**应用外部约束**'
 - en: Lastly, we need to include the external constraints in the structure’s stiffness
     matrix and force vector. This means that we want those displacements that are
     externally constrained to be zero in the final solution vector; if they’re constrained,
@@ -667,115 +995,172 @@
     earlier, which consisted of setting the rows and columns of the associated degrees
     of freedom as identity rows and columns in the stiffness matrix and as zero in
     the force vector.
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们需要将外部约束包含到结构的刚度矩阵和力向量中。这意味着我们希望那些外部约束的位移在最终解向量中为零；如果它们受到约束，就不能移动。为了实现这一点，我们可以使用之前探讨的代数技巧，即将相关自由度的行和列设置为刚度矩阵中的单位行列，并在力向量中设置为零。
 - en: This is easier done than said, so, without further ado, let’s see what the code
     looks like. Enter the code in [Listing 16-7](ch16.xhtml#ch16lis7).
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 这比说起来容易做，所以，事不宜迟，先看看代码长什么样。将代码输入到[清单 16-7](ch16.xhtml#ch16lis7)中。
 - en: '[PRE8]'
+  id: totrans-148
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: '*Listing 16-7: Applying the external constraints*'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 16-7：应用外部约束*'
 - en: 'To check the existing external constraints, we iterate over the nodes of the
     structure. For each node, we extract its DOF numbers into the dof_x and dof_y
     variables ➊. Then we check whether the node has its displacement in the x direction
     constrained ➋, in which case we do three things:'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了检查现有的外部约束，我们遍历结构的每个节点。对于每个节点，我们将其自由度编号提取到dof_x和dof_y变量中➊。然后，我们检查该节点的x方向位移是否受到约束➋，如果是的话，我们需要做三件事：
 - en: Set the stiffness matrix dof_x row to the identity.
+  id: totrans-151
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将刚度矩阵中的dof_x行设置为单位矩阵。
 - en: Set the stiffness matrix dof_x column to the identity.
+  id: totrans-152
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将刚度矩阵中的dof_x列设置为单位矩阵。
 - en: Set the force vector dof_x value to zero.
+  id: totrans-153
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将力向量dof_x的值设置为零。
 - en: We do the same for the displacement in the y direction constraint ➌.
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 对y方向的位移约束➌，我们也做同样的处理。
 - en: The system is now ready to be solved. Once we have the system’s solution in
     the form of the displacement vector, we can create the structure’s solution model.
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 系统现在准备好求解了。一旦我们得到了系统的解，以位移向量的形式，我们就可以创建结构的解模型。
 - en: '***Creating the Solution***'
+  id: totrans-156
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***创建解***'
 - en: Let’s do a quick recap to remind ourselves where we are. We’ve written a lot
     of code split among a couple private methods. [Figure 16-6](ch16.xhtml#ch16fig6)
     shows a hierarchy of the methods involved in solving the structure.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们快速回顾一下，提醒自己当前所处的阶段。我们已经编写了很多代码，分布在几个私有方法中。[图16-6](ch16.xhtml#ch16fig6)显示了解决结构问题所涉及的各个方法的层级结构。
 - en: '![Image](../images/16fig06.jpg)'
+  id: totrans-158
   prefs: []
   type: TYPE_IMG
+  zh: '![图像](../images/16fig06.jpg)'
 - en: '*Figure 16-6: Structure resolution code split into a hierarchy*'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图16-6：结构求解代码分解成层级结构*'
 - en: 'The nodes in this diagram are the methods ordered from left to right according
     to their execution order. The solve_structure method is the public method defining
     the main algorithm. If you recall, that method consists of three steps, which
     are written as private methods:'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 图中的节点是按执行顺序从左到右排列的方法。solve_structure 方法是定义主要算法的公共方法。如果你还记得，该方法由三个步骤组成，这些步骤被写成私有方法：
 - en: __assign_degrees_of_freedom
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: __assign_degrees_of_freedom
 - en: __solve_system_of_equations
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: __solve_system_of_equations
 - en: __make_structure_solution
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: __make_structure_solution
 - en: The second private method, __solve_system_of_equations, is the one with the
     most submethods, as you can observe in the diagram.
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 第二个私有方法，__solve_system_of_equations，是包含最多子方法的方法，如图中所示。
 - en: So far we’ve written all but the __make_structure_solution method, the third
     and last step in solve_structure. Let’s write this method now. It uses the solution
     to the system of equations (the node’s global displacements) to build the structure
     solution model.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，我们已经编写了除了 __make_structure_solution 方法之外的所有代码，__make_structure_solution
+    是 solve_structure 中的第三步，也是最后一步。现在我们来编写这个方法。它利用方程组的解（节点的全局位移）来构建结构解模型。
 - en: In the *model/structure.py* file, enter the code in [Listing 16-8](ch16.xhtml#ch16lis8).
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *model/structure.py* 文件中，输入[清单16-8](ch16.xhtml#ch16lis8)中的代码。
 - en: '[PRE9]'
+  id: totrans-167
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: '*Listing 16-8: Creating the solution model*'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单16-8：创建解模型*'
 - en: The first thing we need to do is add a few imports from the structures.solution
     package. We also import the Vector class from the geom2d package.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要做的第一件事是从 structures.solution 包中添加几个导入。我们还从 geom2d 包中导入了 Vector 类。
 - en: Note how we add a type hint for the method’s returned object. These type hints
     are preceded by an arrow (->) and go between the method or function name and the
     colon.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意我们如何为方法的返回对象添加类型提示。这些类型提示前面会有一个箭头（->），并位于方法或函数名称与冒号之间。
 - en: 'Then, using a list comprehension, we map each of the original __nodes to the
     node solution model ➊. We use a private method we have to write: __node_to_solution.
     Given a node, this method looks for its degrees of freedom numbers ➎, creates
     a vector with the two displacements associated with those DOF numbers ➏, and returns
     an instance of StrNodeSolution using the original node and the vector of global
     displacements ➐.'
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，使用列表推导，我们将每个原始的 __nodes 映射到节点解决方案模型 ➊。我们使用一个需要编写的私有方法：__node_to_solution。给定一个节点，该方法查找它的自由度编号
+    ➎，创建一个包含这两个自由度编号对应的位移的向量 ➏，并返回一个 StrNodeSolution 实例，使用原始节点和全局位移向量 ➐。
 - en: Back in __make_structure_solution, the next step is an intermediate computation
     that will simplify the construction of the solution bars. We’ll create a dictionary
     of solution nodes where the key is the id of the node and the value is the node
     itself ➋.
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 回到 __make_structure_solution，下一步是一个中间计算，它将简化结构解算条的构建。我们将创建一个解决方案节点的字典，其中键是节点的
+    id，值是节点本身 ➋。
 - en: With the help of nodes_dict, computing the solution bar model becomes simpler.
     Using a list comprehension, we map each of the original bars to a StrBarSolution
     instance ➌. To instantiate this class, we need to pass it the original bar and
@@ -788,13 +1173,16 @@
     size of the dictionary, looking up the value associated with a key takes the same
     amount of time. If the structure has a large number of nodes, this improvement
     can noticeably decrease the execution time.
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
 - en: Lastly, we instantiate StructureSolution, passing it the solution nodes and
     bars ➍.
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
 - en: '***The Result***'
+  id: totrans-175
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -802,12 +1190,16 @@
     all together in a single listing for clarity. [Listing 16-9](ch16.xhtml#ch16lis9)
     is the complete Structure class’s code, including the solve_structure implementation
     and every private method we wrote.
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-177
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: '*Listing 16-9: The final Structure class*'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
 - en: With this code ready, the only missing thing is some unit tests. We need to
@@ -815,9 +1207,11 @@
     in the previous two chapters has become more complex and requires the interaction
     of several different classes to work. How do we isolate the parts of the code
     we want to test?
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
 - en: '**Advanced Unit Testing: Test Doubles**'
+  id: totrans-180
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -830,15 +1224,19 @@
     interested in knowing whether the smaller pieces of a system still work when they
     interact with each other. We won’t be integration testing here, but I encourage
     you to try it on your own.
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
 - en: Going back to unit tests, let’s take our StructureSolution class from the previous
     chapter. Let’s say we want to test its bounds_rect method.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-183
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: This method delegates most of its logic to make_rect_containing_with_margin
     and also depends on StrNodeSolution instances to correctly compute their displaced
     position. If we tested this method as is, we’d be testing make_rect_containing_with_margin
@@ -846,13 +1244,16 @@
     unit tested somewhere else. The test could fail for several reasons that are unrelated
     to the logic in bounds_rect. In this case, we’d be doing an integration test,
     but we first want to make sure our method works well in isolation using unit tests.
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
 - en: We can test this method without relying on other classes’ implementation using
     test doubles.
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
 - en: '***Test Doubles***'
+  id: totrans-186
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -861,11 +1262,13 @@
     we replace all the parts of the code that are not being directly tested by the
     unit test with test doubles. What exactly the test double does depends on what
     type of test double it is. There are a few flavors.
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
 - en: '**Dummy** This is the simplest test double. The *dummy* replaces an object
     whose presence is required but that is never actually used in the test. This could
     be a parameter to the function, for example.'
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
 - en: '**Fake** A *fake* test double replaces some part of the code; it has a working
@@ -874,12 +1277,14 @@
     If this function was used in another part of the code we wanted to test, we could
     create a fake version of it that pretends to read a file, although it really doesn’t
     and creates a structure to return it.'
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
 - en: '**Stub** A *stub* replaces some part of the code and always returns the same
     value or behaves in a specific way. For example, we could stub our are_close_enough
     function (that compares floating-point numbers) to always return False in a given
     test.'
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
 - en: '**Mock** This is a test double that records the way it’s being used so that
@@ -888,14 +1293,17 @@
     code in place of the real implementation, and then explore how our code interacted
     with the mock to make sure the right interactions took place. We’ll look at a
     real example of a mock briefly.'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s now explore how Python allows us to create test doubles. We’ll focus on
     mocking, as mocks are so versatile that we can use them in almost every case where
     a test double is required.
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
 - en: '***The unittest.mock Package***'
+  id: totrans-193
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -905,46 +1313,62 @@
     and I recommend you do, as it contains detailed explanations that will help you
     understand how best to use it. Let’s take a quick look at how to use the unittest.mock
     package’s main functionalities.
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: Python标准库中的unittest包包括了自己的mock机制，位于unittest.mock包中。你可以在[*docs.python.org/3/library/unittest.mock.html*](http://docs.python.org/3/library/unittest.mock.html)阅读该包的文档，我建议你这样做，因为它包含了详细的解释，帮助你理解如何最好地使用它。让我们快速了解一下如何使用unittest.mock包的主要功能。
 - en: '**The Mock Object**'
+  id: totrans-195
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**Mock对象**'
 - en: Mock is the main class in the unittest.mock package. This class’s instances
     record every interaction they have and provide us with assertions to check those
     interactions. You can call any method you want in a mock object; if the method
     doesn’t exist, it will be created so we can inspect how many times this method
     was called or what parameters were passed in. As stated in the documentation,
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: Mock是unittest.mock包中的主要类。这个类的实例记录它们的每一次交互，并提供断言功能来检查这些交互。你可以在mock对象中调用任何你想调用的方法；如果该方法不存在，它将被创建，以便我们可以检查该方法被调用了多少次，或传入了什么参数。正如文档中所述，
 - en: Mocks are callable and create attributes as new mocks when you access them.
     Accessing the same attribute will always return the same mock. Mocks record how
     you use them, allowing you to make assertions about what your code has done to
     them.
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: Mock是可调用的，并且当你访问它们时，会创建新mock作为新属性。访问同一属性将始终返回相同的mock。Mock记录你如何使用它们，从而允许你对代码对它们的操作进行断言。
 - en: Let’s break that documentation down. An instance of the Mock class being “callable”
     means that you can “call” it the same way you call a function. Those calls you
     make on the instance are recorded by the mock. This suggests we can use Mock instances
     to replace functions.
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们分解一下文档内容。Mock类的实例是“可调用的”，意味着你可以像调用函数一样“调用”它。你在实例上做的这些调用都会被mock记录下来。这表明我们可以使用Mock实例来替代函数。
 - en: 'The documentation also says that mocks “create attributes as new mocks when
     you access them.” This means that when you call a method on a Mock instance, Python
     will create a new Mock for that method, if it doesn’t exist yet, and append it
     as a new attribute of the instance. Don’t forget that mocks are callable: you
     can call these attributes as if they were methods, and their interactions will
     be recorded.'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: 文档还指出，当你访问mock的属性时，mock会“创建新mock作为新属性”。这意味着当你在一个Mock实例上调用方法时，如果该方法尚未存在，Python将会为该方法创建一个新的Mock，并将其作为实例的新属性添加。不要忘记mock是可调用的：你可以像调用方法一样调用这些属性，它们的交互将会被记录下来。
 - en: 'Let’s take a look at a quick example in Python’s shell to start making these
     concepts a bit more concrete:'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们通过Python的shell来查看一个快速示例，以便将这些概念变得更具体：
 - en: '[PRE12]'
+  id: totrans-201
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'In this code we create a new instance of the Mock class and call it like a
     function. We also call a method named some_method on our mock and pass it two
     arguments: the string ’foo’ and the number 23. Calling some_method has no side
@@ -952,54 +1376,79 @@
     methods have no implementation by default. We’ll learn later how to make mock
     methods return something or perform some kind of side effect, but for now just
     keep in mind that, by default, mocks do nothing but record their usage.'
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这段代码中，我们创建了一个新的Mock类实例，并像函数一样调用它。我们还在mock上调用了一个名为some_method的方法，并传递了两个参数：字符串’foo’和数字23。调用some_method没有副作用：它什么也不做，除了记录调用；这是因为mock方法默认没有实现。稍后我们将学习如何让mock方法返回某些内容或执行某种副作用，但现在请记住，默认情况下，mock只会记录它们的使用。
 - en: If we call a method from a Mock object that we haven’t configured to return
     anything or perform any kind of side effect, by default it’ll return another Mock
     instance. This is the instance that’s stored in the original mock as an attribute.
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们从一个未配置返回任何内容或执行任何副作用的Mock对象中调用一个方法，默认情况下它将返回另一个Mock实例。这个实例作为属性存储在原始mock中。
 - en: 'We can ask this mock whether some_method has been called or not, and with what
     arguments:'
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以询问这个mock，some_method是否被调用过，调用时使用了哪些参数：
 - en: '[PRE13]'
+  id: totrans-205
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: All three calls succeed (don’t raise an assertion error), but if we asked for
     arguments that were not passed to some_method,
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有三个调用都成功（不会引发断言错误），但是如果我们请求没有传递给some_method的参数，
 - en: '[PRE14]'
+  id: totrans-207
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'we’d get an AssertionError with a helpful message, which would make a test
     fail and give us the reason why:'
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE15]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Likewise, if we asked for the calls of a method that was never called,
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE16]'
+  id: totrans-211
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'we’d also get an error:'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-213
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'Let’s not forget that the mock itself is a callable object that records the
     interactions made with it. Therefore, the following also succeeds:'
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-215
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: '**Mocking Classes**'
+  id: totrans-216
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
@@ -1007,108 +1456,142 @@
     mocks let us inspect how the class they’re mocking was used and what methods were
     called on it; we can also use the mock to provide return values for the mocked
     methods to use in the tests.
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
 - en: 'To mock a class, we pass it to the spec parameter of the Mock constructor.
     Let’s create a mock for our Vector class:'
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-219
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'This mock object has its __class__ attribute set to Vector so that it looks
     like a real Vector instance. It even passes the isinstance test! This mock can
     be effectively used to replace a real Vector. All of the methods in the Vector
     class are also defined in this test double. We can call any of them as we normally
     would:'
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-221
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: This time, rotated_radians didn’t return a new instance of Vector, as we’d expect.
     Instead, it returned a Mock instance. Since a mocked class’s methods have no implementation,
     there is no code to perform the rotating operation and return the resulting vector.
     We can program mock methods to return a predefined value using the mock’s side_effect
     and return_value attributes.
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
 - en: 'But before we get to that, there’s one more thing that’s important about class
     mocks: if we try to call a method that doesn’t exist in the class, we’ll get an
     AttributeError. New attributes can be added to a generic mock, but not to a mock
     of a class. The code'
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-224
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'yields this:'
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-226
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'This is good: we can be sure that if some part of our code tries to call methods
     that don’t exist in the original class, we’ll get an error.'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s now take a look at how we can go about adding a stub implementation or
     simply a predefined return value for mocks.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
 - en: '**Setting Return Values and Side Effects**'
+  id: totrans-229
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
 - en: 'By setting a mock’s return_value, we can make it return something when called:'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE23]'
+  id: totrans-231
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'Calling rotated_radians now returns an instance of the Vector class: exactly
     the instance we programmed it to return. From now on, every time this method is
     called on the mock, it will return the same Vector instance.'
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
 - en: Mocks can also execute side effects when called. According to the documentation,
     a side_effect
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
 - en: can either be a function to be called when the mock is called, an iterable or
     an exception (class or instance) to be raised.
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
 - en: 'Let’s first take a look at how a mock can raise an exception. For example,
     if we needed the cosine method to raise a ValueError, we could do the following:'
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE24]'
+  id: totrans-236
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'Note that we’re setting the ValueError class itself as the side_effect, but
     as the documentation states, we can also use a concrete instance, like this:'
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE25]'
+  id: totrans-238
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: In this case, every time we call cosine, we get the same ValueError instance.
     In the previous example, every call produces a new instance of the error.
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
 - en: 'We can also assign a function to a mock’s side_effect attribute. This function
     receives the parameters passed to the mock function and might return a value.
     For example, in our Vector mock, we could decide to have the scaled_by method
     return the passed-in factor parameter:'
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE26]'
+  id: totrans-241
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: In this case, the scaled_by method was passed a 45 as the scaling factor, and
     this parameter was forwarded to the function defined as the mock’s side_effect
     attribute.
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
 - en: 'This function can perform its own side effect, like saving the parameters it
@@ -1116,16 +1599,21 @@
     with return_value. If we use the function to perform a side effect but still want
     to return whatever is set in the return_value attribute, the function should return
     DEFAULT (defined in unittest.mock):'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE27]'
+  id: totrans-244
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: As you can see, the side_effect function was called, but as it returned the
     DEFAULT value, the call to scaled_by returned the vector we set as return_value.
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
 - en: '**The patch Decorator**'
+  id: totrans-246
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
@@ -1137,27 +1625,33 @@
     the target we want to mock using the format ’package.module.name’ (this is a string,
     so don’t forget the quotation marks), where name can be the name of a class or
     a function. The decorated function will be passed the mocked target as a new argument:'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE28]'
+  id: totrans-248
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: In this test we’re replacing the make_circle_from_points function defined in
     the *geom2d* package’s *circles* module. We have to include the mocked function,
     make_circle_mock, as an argument to the function. Then, in the context of the
     test_something function, we can refer to the mocked function and assert it was
     called like we do with any other mock.
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
 - en: The @patch decorator’s main use case is replacing functions or classes that
     are imported by our test subjects. By using a patch, we force them to import a
     mock instead of the real dependency.
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
 - en: 'There is no other easy way of mocking the dependencies of the modules we want
     to unit test: if the module imports their dependencies, we need a way of replacing
     that dependency in Python’s importing mechanism. The @patch decorator does this
     for us in an elegant manner.'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
 - en: 'Now let’s apply all this knowledge to test our code in isolation: there’s no
@@ -1165,36 +1659,46 @@
     If you’re new to using test doubles, you may be a bit confused at this point;
     that’s perfectly normal. As we see mocks in action a couple times, you’ll start
     to grasp the concepts.'
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
 - en: '**Testing the Structure Solution Class**'
+  id: totrans-253
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'Following the example we introduced earlier of the bounds_rect method in the
     StructureSolution class, let’s see how we can go about testing it. Remember, the
     method we want to test is defined as follows:'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE29]'
+  id: totrans-255
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: The method requires that the StrNodeSolution class correctly computes its displaced
     position using a scale and that the make_rect_containing_with_margin function
     returns the correct rectangle using the given margin. We don’t need to test those
     behaviors; that should have been done somewhere else. What we want to do is replace
     their real implementations with test doubles so that they don’t interfere in our
     tests.
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
 - en: Without further ado, let’s create a new file in *structures/tests* named *structure_solution_test.py*.
     In the file, enter the test setup code, as in [Listing 16-10](#ch16lis10).
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE30]'
+  id: totrans-258
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: '*Listing 16-10: Structure solution class test: the setup*'
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
 - en: 'In this test setup, we’re defining two points: p_one and p_two; these are the
@@ -1202,23 +1706,29 @@
     is executed by the unittest framework before each test, which ensures that each
     test gets fresh mocks; otherwise, mocks would continue to record throughout the
     tests, breaking the independence between tests.'
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
 - en: 'We define two nodes: n_one and n_two. Then we instantiate node mocks using
     the StrNodeSolution class as the value for the spec parameter. Each of the node
     mocks defines one of the defined points as the return value for its displaced_pos_scaled
     method.'
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
 - en: Next, let’s write the first test, which will ensure that the two nodes get the
     displaced_pos_scaled called with the correct value for the scale parameter. After
     the setUp method, enter the test in [Listing 16-11](ch16.xhtml#ch16lis11).
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE31]'
+  id: totrans-263
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: '*Listing 16-11: Structure solution class test: first test*'
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
 - en: 'We create a StructureSolution instance with a list containing the two nodes
@@ -1229,65 +1739,83 @@
     test double: we’d pass the constructor a list of dummy bars. Dummies are used
     to fill in required parameters, but dummies don’t actually do anything or interfere
     with the test in any way.'
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
 - en: Once we’ve instantiated our StructureSolution, we call the bounds_rect method,
     our test subject, with values for the margin and scale. Lastly, we assert that
     displaced_pos_scaled was called once with the correct value for the scale in both
     nodes.
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
 - en: 'This test ensures that we use the node’s displaced positions with the corresponding
     scale applied to compute the structure solution bounds. Imagine that, by mistake,
     we confused the margin and scale parameters when implementing the method:'
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE32]'
+  id: totrans-268
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'Our unit test would have warned us:'
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE33]'
+  id: totrans-270
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: Congratulations! You’ve written your first unit test using test doubles. Let’s
     now write a second test that ensures the right usage of the function that computes
     the rectangle. Enter the code in [Listing 16-12](ch16.xhtml#ch16lis12).
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE34]'
+  id: totrans-272
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: '*Listing 16-12: Structure solution class test: second test*'
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
 - en: 'This test is a bit trickier because the make_rect_containing_with_margin function
     is imported by the StructureSolution class. To make this class import our mock
     instead of the real implementation, we have to patch the function’s path: ’package.module.name’,
     which is, in this case, as follows:'
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
 - en: '''structures.solution.structure.make_rect_containing_with_margin'''
+  id: totrans-275
   prefs: []
   type: TYPE_NORMAL
 - en: 'But, wait: isn’t make_rect_containing_with_margin defined in the *geom2d* package?
     So why are we patching it as if it were in the *structures.solution* package and
     the *structure* module?'
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
 - en: The @patch decorator has some rules that define how the path should be given
     to mock a given object. In the “Where to patch” section, the documentation states
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
 - en: patch() works by (temporarily) changing the object that a *name* points to with
     another one. There can be many names pointing to any individual object, so for
     patching to work you must ensure that you patch the name used by the system under
     test.
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
 - en: The basic principle is that you patch where an object is *looked up*, which
     is not necessarily the same place as where it is defined.
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
 - en: 'That second paragraph gives us the key: objects have to be patched where they’re
@@ -1295,6 +1823,7 @@
     up in the structures.solution package, in the *structure* module. This may sound
     a bit complicated in the beginning, but it’ll start to make sense after you’ve
     done it a few times.'
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
 - en: 'Moving on with our test, the first two lines are identical to the previous
@@ -1303,35 +1832,47 @@
     make_rect_mock. Remember, the @patch decorator passes the patched entity to the
     decorated function. We assert that the mock was called only once with the list
     of positions the mocked nodes return and the value for the margin.'
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
 - en: 'You can run these tests using PyCharm, by clicking the green play button to
     the left of the test class name. Alternatively, you can run them from the shell:'
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE35]'
+  id: totrans-283
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: '[Listing 16-13](ch16.xhtml#ch16lis13) shows the resulting code for your reference.'
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE36]'
+  id: totrans-285
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: '*Listing 16-13: Structure solution class test: the result*'
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
 - en: Before we move on, there’s one important gotcha we need to take into account.
     If you take a look at both tests, you may be tempted to remove the duplicated
     lines,
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE37]'
+  id: totrans-288
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: by moving them to the setUp. That seems a reasonable thing to do so that the
     tests don’t need to repeat those lines, but if you want to go ahead and do the
     refactor, you’ll find that the second test now fails. Why?
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
 - en: The answer has to do with how the @patch decorator works. It has to decorate
@@ -1340,31 +1881,40 @@
     class is instantiated. Therefore, at least for the second test, the instantiation
     of this class needs to happen in the test method, which is annotated with the
     @patch decorator.
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
 - en: '**Testing the Structure Resolution Process**'
+  id: totrans-291
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: Let’s now add a few tests to ensure the structure resolution process yields
     the correct results. For these tests, we’ll define the structure in [Figure 16-7](ch16.xhtml#ch16fig7)
     in code.
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
 - en: '![Image](../images/16fig07.jpg)'
+  id: totrans-293
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 16-7: Structure for the unit tests*'
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
 - en: Create a new file in the *structures/tests* directory named *structure_test.py*.
     In the file, enter the code in [Listing 16-14](ch16.xhtml#ch16lis14).
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE38]'
+  id: totrans-296
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: '*Listing 16-14: Structure resolution test*'
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
 - en: 'This listing defines the StructureTest test class. In the setUp method, which
@@ -1375,12 +1925,14 @@
     between the nodes we just defined; we use the values 5 and 10 for the cross section
     and Young’s modulus. With all these nodes and bars, the structure is finally instantiated
     ➊.'
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
 - en: Next come three simple tests. The first ensures that the structure counts how
     many nodes it has ➋. The second does the same thing but with bars ➌. The third
     also does the same, this time with the number of loads applied to the structure
     ➍.
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
 - en: One of the most complex operations in solving the structure is assembling the
@@ -1392,18 +1944,23 @@
     vector, which we can capture to make assertions. By mocking this function, our
     code won’t execute the Cholesky’s method original code, which is fine because
     that logic shouldn’t interfere with our test. Enter the new test in [Listing 16-15](ch16.xhtml#ch16lis15).
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE39]'
+  id: totrans-301
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: '*Listing 16-15: System’s stiffness matrix assembly test*'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
 - en: 'We first want the cholesky_solve function mocked, so we’ve added an @patch
     decorator with the path to where this function is looked up: the structures/model/structure
     package’s *cholesky_solve* module ➊. Notice how we pass cholesky_mock as an argument
     to the test method.'
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
 - en: 'Next, we define the expected structure’s stiffness matrix: expected_mat. This
@@ -1411,21 +1968,26 @@
     math and assembled the matrix by hand; I suggest you do this as well to make sure
     you understand the process. There are some auxiliary variables defined for bar
     1 → 3:'
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
 - en: eal3 is the ![Image](../images/f00397-p1.jpg) amount
+  id: totrans-305
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: c2_eal3 is ![Image](../images/f00460-p1.jpg)
+  id: totrans-306
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: s2_eal3 is ![Image](../images/f00460-p2.jpg)
+  id: totrans-307
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: cs_eal3 is ![Image](../images/f00460-p3.jpg)
+  id: totrans-308
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1433,6 +1995,7 @@
     because their angles are ![Image](../images/f00460-p4.jpg) and 0 radians, respectively.
     After assembling the global matrix using the three bars’ matrices, the result
     is ➋.
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
 - en: To run the resolution code, we have to call the solve_structure method. After
@@ -1440,6 +2003,7 @@
     to the cholesky_mock function. Mocks have an attribute, call_args, a list containing
     the arguments passed to each of the calls to the mock. Our mock function was called
     only once, so we want the arguments to this first call.
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
 - en: We destructured cholesky_mock’s call_args for the first call (call_args[0])
@@ -1447,23 +2011,29 @@
     the second element in the left-side list ([actual_mat, _]) is an underscore, meaning
     there is a value for that position in the right-side list (cholesky_mock.call_args[0]),
     but we’re not interested in saving it.
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
 - en: Then come two assertions. The first one checks that cholesky_mock was called
     only once ➍, and the second compares the expected stiffness matrix with the actual
     stiffness matrix passed to the cholesky_mock resolution function ➎.
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
 - en: In this test, we’re ensuring that the Cholesky resolution function gets passed
     the right structure’s stiffness matrix assembled without external constraint conditions
     applied. Let’s now write a new test with these constraints to check that the stiffness
     matrix is correctly modified to include them. Enter the test in [Listing 16-16](ch16.xhtml#ch16lis16).
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE40]'
+  id: totrans-314
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: '*Listing 16-16: System’s stiffness matrix constraints test*'
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
 - en: This test is similar to the previous one. The cholesky_solve function is patched
@@ -1471,12 +2041,14 @@
     method. Then, we call a private method to add the external constraints to nodes
     1 and 2, like they appear in [Figure 16-7](ch16.xhtml#ch16fig7) ➋. We’ll have
     to write this method after the test.
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
 - en: 'Then comes the definition of the expected matrix, this time with the external
     constraints applied ➌. The only terms that are not zero, apart from the ones in
     the main diagonal, are those that belong to node 3: degrees of freedom 4 and 5\.
     For this reason, only the terms in those row and column indices are nonzero.'
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
 - en: 'The rest of the test is exactly the same as before: we call the solve_structure
@@ -1486,33 +2058,43 @@
     is ignored by using an underscore. There’s the assertion that checks if the Cholesky
     mock function has been called only once, and the check comparing the actual and
     expected system matrices ➍.'
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
 - en: Lastly, we need to write the _set_external_constraints function that applies
     the external constraints to nodes 1 and 2\. After the method we’ve just written,
     enter the code in [Listing 16-17](ch16.xhtml#ch16lis17).
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE41]'
+  id: totrans-320
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: '*Listing 16-17: Setting external constraints to nodes*'
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s try one last test to check the load vector assembly process. The idea
     is to follow the structure of the last two tests, but this time checking the load
     vector. Enter the test in [Listing 16-18](ch16.xhtml#ch16lis18).
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE42]'
+  id: totrans-323
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: '*Listing 16-18: System’s load vector assembly test*'
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
 - en: We patch the cholesky_solve function the same way as before ➊. Then we declare
     the expected load vector ➋, which this time is easy, as there’s only one load
     applied to node 3.
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
 - en: The rest of the test is similar. The major difference is that this time we’re
@@ -1522,26 +2104,35 @@
     we could, but that condition is already tested. There’s no need to repeat the
     same assertion. What we do want to check is that the actual_vec equals the expected_vec
     ➍.
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
 - en: 'We may now run our tests. To do so from the shell, run the following command:'
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE43]'
+  id: totrans-328
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'This should produce the following output, if all of your tests passed:'
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE44]'
+  id: totrans-330
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: We could write a few more unit tests, but we won’t be doing so for brevity reasons.
     Nevertheless, I suggest you come up with more tests and exercise your test doubles
     skills.
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
 - en: '**Summary**'
+  id: totrans-332
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1553,6 +2144,7 @@
     global displacements are obtained, they are used to construct the structure solution
     model. We’ll see in [Chapter 18](ch18.xhtml#ch18) how to produce a graphic result
     for this solution model.
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
 - en: 'We also introduced the concept of test doubles, a key technique to write good
@@ -1561,10 +2153,12 @@
     provides us with one: the mock. Nevertheless, this mock implementation is so flexible
     that it can also be used as a stub or spy. We learned how to use this class and
     the @patch decorator by using them to test our latest code.'
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
 - en: It’s now time to focus on reading and parsing structures from text files so
     we can feed our resolution algorithm with some fine structure definitions. Let’s
     go for it!
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
