@@ -1,351 +1,537 @@
 - en: '**10**'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '**10**'
 - en: '**PERFORMANCES AND OPTIMIZATIONS**'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '**性能与优化**'
 - en: '![image](../images/common01.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![image](../images/common01.jpg)'
 - en: Optimizing is rarely the first thing you think about when developing, but there
     always comes a time when optimizing for better performance will be appropriate.
     That’s not to say you should write a program with the idea that it will be slow,
     but thinking about optimization without first figuring out the right tools to
     use and doing the proper profiling is a waste of time. As Donald Knuth wrote,
     “Premature optimization is the root of all evil.”^([1](footnote.xhtml#foot2))
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 优化通常不是你在开发时最先考虑的事情，但总会有一个时刻，优化以提高性能变得合适。这并不是说你应该编写一个程序并预期它会很慢，而是如果在没有首先找到合适工具并进行适当分析的情况下去考虑优化，那就是浪费时间。正如唐纳德·克努斯所说，“过早的优化是万恶之源。”^([1](footnote.xhtml#foot2))
 - en: Here, I’ll show you how to use the right approach to write fast code and where
     to look when more optimization is needed. Many developers try to guess where Python
     might be slower or faster. Rather than speculating, this chapter will help you
     understand how to profile your application so you’ll know what part of your program
     is slowing things down and where the bottlenecks are.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我将展示如何使用正确的方法编写快速代码，并在需要更多优化时，告诉你应该查看哪里。许多开发人员试图猜测 Python 可能在哪些地方更慢或更快。与其猜测，不如通过本章帮助你了解如何分析应用程序性能，从而知道程序的哪一部分正在拖慢速度，以及瓶颈在哪里。
 - en: '**Data Structures**'
+  id: totrans-5
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**数据结构**'
 - en: Most programming problems can be solved in an elegant and simple manner with
     the right data structures—and Python provides many data structures to choose from.
     Learning to leverage those existing data structures results in cleaner and more
     stable solutions than coding custom data structures.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 大多数编程问题都可以通过正确的数据结构以优雅且简单的方式解决——而 Python 提供了许多数据结构供选择。学会利用这些现有的数据结构，能比编写自定义数据结构更清晰、更稳定地解决问题。
 - en: 'For example, everybody uses dict, but how many times have you seen code trying
     to access a dictionary by catching the KeyError exception, as shown here:'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，每个人都在使用 dict，但你见过多少次代码尝试通过捕获 KeyError 异常来访问字典，如下所示：
 - en: 'def get_fruits(basket, fruit):'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def get_fruits(basket, fruit):'
 - en: 'try:'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 'try:'
 - en: return basket[fruit]
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: return basket[fruit]
 - en: 'except KeyError:'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 'except KeyError:'
 - en: return None
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: return None
 - en: 'Or by checking whether the key is present first:'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者通过先检查键是否存在：
 - en: 'def get_fruits(basket, fruit):'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def get_fruits(basket, fruit):'
 - en: 'if fruit in basket:'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if fruit in basket:'
 - en: return basket[fruit]
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: return basket[fruit]
 - en: 'If you use the get() method already provided by the dict class, you can avoid
     having to catch an exception or checking the key’s presence in the first place:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你已经使用了 dict 类提供的 get() 方法，你就可以避免捕获异常或首先检查键是否存在：
 - en: 'def get_fruits(basket, fruit):'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def get_fruits(basket, fruit):'
 - en: return basket.get(fruit)
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: return basket.get(fruit)
 - en: 'The method dict.get() can also return a default value instead of None; just
     call it with a second argument:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: dict.get() 方法也可以返回一个默认值，而不是 None；只需通过第二个参数调用它：
 - en: 'def get_fruits(basket, fruit):'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def get_fruits(basket, fruit):'
 - en: '# Return the fruit, or Banana if the fruit cannot be found.'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 如果找不到水果，则返回水果，或者如果找不到水果，则返回香蕉。'
 - en: return basket.get(fruit, Banana())
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: return basket.get(fruit, Banana())
 - en: 'Many developers are guilty of using basic Python data structures without being
     aware of all the methods they provide. This is also true for sets; methods in
     set data structures can solve many problems that would otherwise need to be addressed
     by writing nested for/if blocks. For example, developers often use for/if loops
     to determine whether an item is in a list, like this:'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多开发人员在使用基本的 Python 数据结构时，并没有意识到它们提供的所有方法。这一点在集合数据结构中也同样适用；集合数据结构中的方法可以解决许多本来需要通过编写嵌套的
+    for/if 语句块来处理的问题。例如，开发人员经常使用 for/if 循环来判断某个项目是否在列表中，如下所示：
 - en: 'def has_invalid_fields(fields):'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def has_invalid_fields(fields):'
 - en: 'for field in fields: if field not in [''foo'', ''bar'']:'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for field in fields: if field not in [''foo'', ''bar'']:'
 - en: return True
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: return True
 - en: return False
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: return False
 - en: 'The loop iterates over each item in the list and checks that all items are
     either foo or bar. But you can write this more efficiently, removing the need
     for a loop:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 循环遍历列表中的每个项目，并检查所有项目是否都是 foo 或 bar。但你可以更高效地写这个，省去循环：
 - en: 'def has_invalid_fields(fields):'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def has_invalid_fields(fields):'
 - en: return bool(set(fields) - set(['foo', 'bar']))
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: return bool(set(fields) - set(['foo', 'bar']))
 - en: This changes the code to convert the fields to a set, and it gets the rest of
     the set by subtracting the set(['foo', 'bar']). It then converts the set to a
     Boolean value, which indicates whether any items that aren’t foo and bar are left
     over. By using sets, there is no need to iterate over any list and to check items
     one by one. A single operation on two sets, done internally by Python, is faster.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码修改了字段，将其转换为集合，然后通过从集合中减去 `set(['foo', 'bar'])` 来获取剩下的集合。然后它将集合转换为布尔值，表示是否还有不是
+    foo 和 bar 的项。通过使用集合，就不需要遍历任何列表并逐个检查项。Python 内部进行的两集合运算要更快。
 - en: Python also has more advanced data structures that can greatly reduce the burden
     of code maintenance. For example, take a look at [Listing 10-1](ch10.xhtml#ch10list1).
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: Python 还有更多高级数据结构，可以大大减轻代码维护的负担。例如，看看[清单 10-1](ch10.xhtml#ch10list1)。
 - en: 'def add_animal_in_family(species, animal, family):'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def add_animal_in_family(species, animal, family):'
 - en: 'if family not in species:'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if family not in species:'
 - en: species[family] = set()
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: species[family] = set()
 - en: species[family].add(animal)
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: species[family].add(animal)
 - en: species = {}
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: species = {}
 - en: add_animal_in_family(species, 'cat', 'felidea')
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: add_animal_in_family(species, 'cat', 'felidea')
 - en: '*Listing 10-1: Adding an entry in a dictionary of sets*'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 10-1：向字典集合中添加一个条目*'
 - en: This code is perfectly valid, but how many times will your programs require
     a variation of [Listing 10-1](ch10.xhtml#ch10list1)? Tens? Hundreds?
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码是完全有效的，但你的程序需要多少次像[清单 10-1](ch10.xhtml#ch10list1)那样的变体？几十次？几百次？
 - en: 'Python provides the collections.defaultdict structure, which solves the problem
     in an elegant way:'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: Python 提供了 `collections.defaultdict` 结构，它优雅地解决了这个问题：
 - en: import collections
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: import collections
 - en: 'def add_animal_in_family(species, animal, family):'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def add_animal_in_family(species, animal, family):'
 - en: species[family].add(animal)
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: species[family].add(animal)
 - en: species = collections.defaultdict(set)
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: species = collections.defaultdict(set)
 - en: add_animal_in_family(species, 'cat', 'felidea')
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: add_animal_in_family(species, 'cat', 'felidea')
 - en: Each time you try to access a nonexistent item from your dict, the defaultdict
     will use the function that was passed as argument to its constructor to build
     a new value, instead of raising a KeyError. In this case, the set() function is
     used to build a new set each time we need it.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 每次你尝试从字典中访问一个不存在的项时，`defaultdict` 会使用作为参数传递给构造函数的函数来构建一个新值，而不是抛出 `KeyError`。在这种情况下，`set()`
+    函数被用来在每次需要时构建一个新的集合。
 - en: 'The collections module offers a few more data structures that you can use to
     solve other kinds of problems. For example, imagine that you want to count the
     number of distinct items in an iterable. Let’s take a look at the collections.Counter()
     method, which provides methods that solve this problem:'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: '`collections` 模块提供了一些其他的数据结构，你可以用来解决其他类型的问题。例如，假设你想要统计一个可迭代对象中不同项目的数量。让我们来看一下
+    `collections.Counter()` 方法，它提供了解决这个问题的方法：'
 - en: '>>> import collections'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> import collections'
 - en: '>>> c = collections.Counter("Premature optimization is the root of all evil.")'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> c = collections.Counter("Premature optimization is the root of all evil.")'
 - en: '>>> c'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> c'
 - en: '>>> c[''P'']  # Returns the name of occurrence of the letter ''P'''
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> c[''P'']  # 返回字母 ''P'' 的出现次数'
 - en: '1'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: '1'
 - en: '>>> c[''e'']  # Returns the name of occurrence of the letter ''e'''
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> c[''e'']  # 返回字母 ''e'' 的出现次数'
 - en: '4'
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: '4'
 - en: '>>> c.most_common(2)  # Returns the 2 most common letters'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> c.most_common(2)  # 返回最常见的 2 个字母'
 - en: '[('' '', 7), (''i'', 5)]'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: '[('' '', 7), (''i'', 5)]'
 - en: The collections.Counter object works with any iterable that has hashable items,
     removing the need to write your own counting functions. It can easily count the
     number of letters in a string and return the top *n* most common items of an iterable.
     You might have tried to implement something like this on your own if you were
     not aware it was already provided by Python’s Standard Library.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: '`collections.Counter` 对象适用于任何具有可哈希项的可迭代对象，避免了你自己编写计数函数的需要。它可以轻松地计算字符串中每个字母的数量，并返回可迭代对象中最常见的前
+    *n* 项。如果你之前没有意识到 Python 标准库已经提供了这样的功能，可能已经尝试自己实现类似的功能。'
 - en: With the right data structure, the correct methods, and—obviously—an adequate
     algorithm, your program should perform well. However, if it is not performing
     well enough, the best way to get clues about where it might be slow and need optimization
     is to profile your code.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用合适的数据结构、正确的方法，当然，还有一个合适的算法，你的程序应该能表现得很好。然而，如果它的表现不够好，最好的方法是通过对代码进行性能分析来获取线索，找出哪里可能是瓶颈并需要优化。
 - en: '**Understanding Behavior Through Profiling**'
+  id: totrans-61
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**通过性能分析理解行为**'
 - en: '*Profiling* is a form of dynamic program analysis that allows us to understand
     how a program behaves. It allows us to determine where there might be bottlenecks
     and a need for optimization. A profile of a program takes the form of a set of
     statistics that describe how often parts of the program execute and for how long.'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: '*性能分析* 是一种动态程序分析方法，可以帮助我们了解程序的行为。它可以让我们确定程序中可能存在的瓶颈和需要优化的地方。程序的性能分析结果通常以一组统计数据的形式呈现，描述程序中各部分执行的频率和持续时间。'
 - en: Python provides a few tools for profiling your program. One, cProfile, is part
     of the Python Standard Library and does not require installation. We’ll also look
     at the dis module, which can disassemble Python code into smaller parts, making
     it easier to understand what is happening under the hood.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: Python提供了几个工具用于分析程序的性能。其中一个工具，cProfile，属于Python标准库，不需要额外安装。我们还将介绍dis模块，它可以将Python代码反汇编成更小的部分，便于我们理解底层的实现。
 - en: '***cProfile***'
+  id: totrans-64
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***cProfile***'
 - en: Python has included cProfile by default since Python 2.5\. To use cProfile,
     call it with your program using the syntax python –m cProfile <program>. This
     should load and enable the cProfile module, then run the regular program with
     instrumentation enabled, as shown in [Listing 10-2](ch10.xhtml#ch10list2).
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 从Python 2.5起，Python默认包含了cProfile模块。要使用cProfile，可以通过语法 `python –m cProfile <program>`
+    来调用它。这会加载并启用cProfile模块，然后运行常规程序并启用性能分析，如[清单10-2](ch10.xhtml#ch10list2)所示。
 - en: $ python -m cProfile myscript.py
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: $ python -m cProfile myscript.py
 - en: 343 function calls (342 primitive calls) in 0.000 seconds
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 343 次函数调用（342 次原始函数调用）用时 0.000 秒
 - en: 'Ordered by: standard name ncalls  tottime  percall  cumtime  percall filename:lineno(function)'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 排序方式：标准名称 ncalls  tottime  percall  cumtime  percall 文件名:行号(函数)
 - en: 1    0.000    0.000    0.000    0.000 :0(_getframe)
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 1    0.000    0.000    0.000    0.000 :0(_getframe)
 - en: 1    0.000    0.000    0.000    0.000 :0(len)
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 1    0.000    0.000    0.000    0.000 :0(len)
 - en: 104    0.000    0.000    0.000    0.000 :0(setattr)
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 104    0.000    0.000    0.000    0.000 :0(setattr)
 - en: 1    0.000    0.000    0.000    0.000 :0(setprofile)
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 1    0.000    0.000    0.000    0.000 :0(setprofile)
 - en: 1    0.000    0.000    0.000    0.000 :0(startswith)
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 1    0.000    0.000    0.000    0.000 :0(startswith)
 - en: 2/1    0.000    0.000    0.000    0.000 <string>:1(<module>)
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 2/1    0.000    0.000    0.000    0.000 <string>:1(<module>)
 - en: 1    0.000    0.000    0.000    0.000 StringIO.py:30(<module>)
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 1    0.000    0.000    0.000    0.000 StringIO.py:30(<module>)
 - en: 1    0.000    0.000    0.000    0.000 StringIO.py:42(StringIO)
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 1    0.000    0.000    0.000    0.000 StringIO.py:42(StringIO)
 - en: '*Listing 10-2: Default output of cProfile used against a Python script*'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单10-2：使用cProfile分析Python脚本的默认输出*'
 - en: '[Listing 10-2](ch10.xhtml#ch10list2) shows the output of running a simple script
     with cProfile. This tells you the number of times each function in the program
     was called and the time spent on its execution. You can also use the -s option
     to sort by other fields; for example, -s time would sort the results by internal
     time.'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单10-2](ch10.xhtml#ch10list2)展示了使用cProfile运行简单脚本的输出结果。这会告诉你程序中每个函数被调用的次数以及执行时花费的时间。你还可以使用
+    -s 选项按其他字段排序；例如，-s time 可以按内部时间排序结果。'
 - en: We can visualize the information generated by cProfile using a great tool called
     KCacheGrind. This tool was created to deal with programs written in C, but luckily
     we can use it with Python data by converting the data to a call tree.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用一个叫做KCacheGrind的强大工具来可视化cProfile生成的信息。这个工具最初是为处理C语言编写的程序而创建的，但幸运的是我们可以通过将数据转换为调用树的形式，在Python中也能使用它。
 - en: 'The cProfile module has an -o option that allows you to save the profiling
     data, and pyprof2calltree can convert data from one format to the other. First,
     install the converter with the following:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: cProfile模块有一个 -o 选项，可以让你保存性能分析数据，而pyprof2calltree可以将数据从一种格式转换成另一种格式。首先，使用以下命令安装转换器：
 - en: $ pip install pyprof2calltree
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: $ pip install pyprof2calltree
 - en: Then run the converter as shown in [Listing 10-3](ch10.xhtml#ch10list3) to both
     convert the data (-i option) and run KCacheGrind with the converted data (-k option).
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，按照[清单10-3](ch10.xhtml#ch10list3)中的方法运行转换器，以转换数据（使用 -i 选项）并通过转换后的数据运行KCacheGrind（使用
+    -k 选项）。
 - en: $ python -m cProfile -o myscript.cprof myscript.py
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: $ python -m cProfile -o myscript.cprof myscript.py
 - en: $ pyprof2calltree -k -i myscript.cprof
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: $ pyprof2calltree -k -i myscript.cprof
 - en: '*Listing 10-3: Running cProfile and launching KCacheGrind*'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单10-3：运行cProfile并启动KCacheGrind*'
 - en: Once KCacheGrind opens, it will display information that looks like that in
     [Figure 10-1](ch10.xhtml#ch10fig1). With these visual results, you can use the
     call graph to follow the percentage of time spent in each function, allowing you
     to determine what part of your program might be consuming too many resources.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
 - en: The easiest way to read KCacheGrind is to start with the table on the left of
     the screen, which lists all the functions and methods executed by your program.
     You can sort these by execution time, then identify the one that consumes the
     most CPU time and click on it.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
 - en: The right panels of KCacheGrind can show you which functions have called that
     function and how many times, as well as which other functions are being called
     by the function. The call graph of your program, including the execution time
     of each part, is easy to navigate.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
 - en: This should allow you to better understand which parts of your code might need
     optimization. The way to optimize the code is up to you and depends on what your
     program is trying to achieve!
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](../images/f10-01.jpg)'
+  id: totrans-90
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-1: Example of KCacheGrind output*'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
 - en: While retrieving information about how your program runs and visualizing it
@@ -353,9 +539,11 @@
     view of some parts of the code to inspect its elements more closely. In such a
     case, I find it better to rely on the dis module to find out what’s going on behind
     the scenes.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
 - en: '***Disassembling with the dis Module***'
+  id: totrans-93
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -364,172 +552,226 @@
     it. For example, [Listing 10-4](ch10.xhtml#ch10list4) shows the dis.dis() function,
     which disassembles whichever function you pass as a parameter and prints the list
     of bytecode instructions that are run by the function.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> def x():'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
 - en: '...     return 42'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
 - en: '...'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> import dis'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> dis.dis(x)'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
 - en: 2           0 LOAD_CONST               1 (42)
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
 - en: 3 RETURN_VALUE
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-4: Disassembling a function*'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
 - en: 'In [Listing 10-4](ch10.xhtml#ch10list4), the function x is disassembled and
     its constituents, made of bytecode instructions, are printed. There are only two
     operations here: loading a constant (LOAD_CONST), which is 42, and returning that
     value (RETURN_VALUE).'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
 - en: 'To see dis in action and how it can be useful, we’ll define two functions that
     do the same thing—concatenate three letters—and disassemble them to see how they
     do their tasks in different ways:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
 - en: abc = ('a', 'b', 'c')
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
 - en: 'def concat_a_1():'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
 - en: 'for letter in abc:'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
 - en: abc[0] + letter
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
 - en: 'def concat_a_2():'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
 - en: a = abc[0]
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
 - en: 'for letter in abc:'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
 - en: a + letter
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
 - en: Both functions appear to do the same thing, but if we disassemble them using
     dis.dis, as shown in [Listing 10-5](ch10.xhtml#ch10list5), we’ll see that the
     generated bytecode is a bit different.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> dis.dis(concat_a_1)'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
 - en: 2           0 SETUP_LOOP              26 (to 29)
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
 - en: 3 LOAD_GLOBAL              0 (abc)
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
 - en: 6 GET_ITER
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
 - en: '>>    7 FOR_ITER                18 (to 28)'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
 - en: 10 STORE_FAST               0 (letter)
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
 - en: 3          13 LOAD_GLOBAL              0 (abc)
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
 - en: 16 LOAD_CONST               1 (0)
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
 - en: 19 BINARY_SUBSCR
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
 - en: 20 LOAD_FAST                0 (letter)
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
 - en: 23 BINARY_ADD
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
 - en: 24 POP_TOP
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
 - en: 25 JUMP_ABSOLUTE            7
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
 - en: '>>   28 POP_BLOCK'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
 - en: '>>   29 LOAD_CONST               0 (None)'
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
 - en: 32 RETURN_VALUE
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> dis.dis(concat_a_2)'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
 - en: 2           0 LOAD_GLOBAL              0 (abc)
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
 - en: 3 LOAD_CONST               1 (0)
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
 - en: 6 BINARY_SUBSCR
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
 - en: 7 STORE_FAST               0 (a)
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
 - en: 3          10 SETUP_LOOP              22 (to 35)
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
 - en: 13 LOAD_GLOBAL              0 (abc)
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
 - en: 16 GET_ITER
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
 - en: '>>   17 FOR_ITER                14 (to 34)'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
 - en: 20 STORE_FAST               1 (letter)
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
 - en: 4          23 LOAD_FAST                0 (a)
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
 - en: 26 LOAD_FAST                1 (letter)
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
 - en: 29 BINARY_ADD
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
 - en: 30 POP_TOP
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
 - en: 31 JUMP_ABSOLUTE           17
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
 - en: '>>   34 POP_BLOCK >>   35 LOAD_CONST               0 (None)'
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
 - en: 38 RETURN_VALUE
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-5: Disassembling functions that concatenate strings*'
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
 - en: In the second function in [Listing 10-5](ch10.xhtml#ch10list5), we store abc[0]
@@ -540,6 +782,7 @@
     a whole microsecond less to execute! Obviously this microsecond is not worth optimizing
     for unless you call this function billions of times, but this is the kind of insight
     that the dis module can provide.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
 - en: Whether you rely on “tricks” such as storing the value outside the loop depends
@@ -551,9 +794,11 @@
     on the version of the function you use, the abc.__getitem__ method will be called
     once or several times, which might make a difference. Therefore, be careful when
     writing and optimizing your code!
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
 - en: '**Defining Functions Efficiently**'
+  id: totrans-150
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -561,140 +806,184 @@
     within functions. This is inefficient because the function is then redefined repeatedly
     and needlessly. For example, [Listing 10-6](ch10.xhtml#ch10list6) shows the y()
     function being defined multiple times.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
 - en: '>> import dis'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> def x():'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
 - en: '...     return 42'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
 - en: '...'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> dis.dis(x)'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
 - en: 2           0 LOAD_CONST               1 (42)
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
 - en: 3 RETURN_VALUE
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> def x():'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
 - en: '...     def y():'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
 - en: '...             return 42'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
 - en: '...     return y()'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
 - en: '...'
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> dis.dis(x)'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
 - en: 2           0 LOAD_CONST               1 (<code object y at
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
 - en: x100ce7e30, file "<stdin>", line 2>)
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
 - en: 3 MAKE_FUNCTION            0
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
 - en: 6 STORE_FAST               0 (y)
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
 - en: 4           9 LOAD_FAST                0 (y) 12 CALL_FUNCTION            0
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
 - en: 15 RETURN_VALUE
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-6: Function redefinition*'
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
 - en: '[Listing 10-6](ch10.xhtml#ch10list6) shows the calling of MAKE_FUNCTION, STORE_FAST,
     LOAD_FAST, and CALL_FUNCTION, which requires many more opcodes than those needed
     to return 42, as seen in [Listing 10-4](ch10.xhtml#ch10list4).'
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
 - en: The only case in which you’d need to define a function within a function is
     when building a function closure, and this is a perfectly identified use case
     in Python’s opcodes with LOAD_CLOSURE, as shown in [Listing 10-7](ch10.xhtml#ch10list7).
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> def x():'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
 - en: '...     a = 42'
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
 - en: '...     def y():'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
 - en: '...             return a'
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
 - en: '...     return y()'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
 - en: '...'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> dis.dis(x)'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
 - en: 2           0 LOAD_CONST               1 (42)
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
 - en: 3 STORE_DEREF              0 (a)
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
 - en: 3           6 LOAD_CLOSURE             0 (a)
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
 - en: 9 BUILD_TUPLE              1
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
 - en: 12 LOAD_CONST               2 (<code object y at
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
 - en: x100d139b0, file "<stdin>", line 3>)
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
 - en: 15 MAKE_CLOSURE             0
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
 - en: 18 STORE_FAST               0 (y)
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
 - en: 5          21 LOAD_FAST                0 (y)
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
 - en: 24 CALL_FUNCTION            0
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
 - en: 27 RETURN_VALUE
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-7: Defining a closure*'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
 - en: While you probably won’t need to use it every day, disassembling code is a handy
     tool for when you want a closer look at what happens under the hood.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
 - en: '**Ordered Lists and bisect**'
+  id: totrans-194
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -702,6 +991,7 @@
     scenario for finding a particular item’s position in the list has a complexity
     of *O(n)*, meaning that in the worst case, you’ll find your item after iterating
     over every item of the list.
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
 - en: The usual solution for optimizing this problem is to use a *sorted* list instead.
@@ -709,52 +999,68 @@
     *O(log n)*. The idea is to recursively split the list in half and look on which
     side, left or right, the item must appear in and so which side should be searched
     next.
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
 - en: Python provides the bisect module, which contains a bisection algorithm, as
     shown in [Listing 10-8](ch10.xhtml#ch10list8).
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> farm = sorted([''haystack'', ''needle'', ''cow'', ''pig''])'
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> bisect.bisect(farm, ''needle'')'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
 - en: '3'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> bisect.bisect_left(farm, ''needle'')'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
 - en: '2'
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> bisect.bisect(farm, ''chicken'')'
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
 - en: '0'
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> bisect.bisect_left(farm, ''chicken'')'
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
 - en: '0'
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> bisect.bisect(farm, ''eggs'')'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
 - en: '1'
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> bisect.bisect_left(farm, ''eggs'')'
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
 - en: '1'
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-8: Using bisect to find a needle in a haystack*'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
 - en: 'As shown in [Listing 10-8](ch10.xhtml#ch10list8), the bisect.bisect() function
@@ -764,503 +1070,757 @@
     return whether the item is in the list but where the item should be if it is in
     the list. Retrieving the item at this index will answer the question about whether
     the item is in the list.'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
 - en: If you wish to insert the element into the correct sorted position immediately,
     the bisect module provides the insort_left() and insort_right() functions, as
     shown in [Listing 10-9](ch10.xhtml#ch10list9).
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你希望将元素立即插入到正确的排序位置，`bisect`模块提供了`insort_left()`和`insort_right()`函数，如[清单 10-9](ch10.xhtml#ch10list9)所示。
 - en: '>>> farm'
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> farm'
 - en: '[''cow'', ''haystack'', ''needle'', ''pig'']'
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: '[''cow'', ''haystack'', ''needle'', ''pig'']'
 - en: '>>> bisect.insort(farm, ''eggs'')'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> bisect.insort(farm, ''eggs'')'
 - en: '>>> farm'
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> farm'
 - en: '[''cow'', ''eggs'', ''haystack'', ''needle'', ''pig'']'
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: '[''cow'', ''eggs'', ''haystack'', ''needle'', ''pig'']'
 - en: '>>> bisect.insort(farm, ''turkey'')'
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> bisect.insort(farm, ''turkey'')'
 - en: '>>> farm'
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> farm'
 - en: '[''cow'', ''eggs'', ''haystack'', ''needle'', ''pig'', ''turkey'']'
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: '[''cow'', ''eggs'', ''haystack'', ''needle'', ''pig'', ''turkey'']'
 - en: '*Listing 10-9: Inserting an item in a sorted list*'
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 10-9: 在排序列表中插入项*'
 - en: 'Using the bisect module, you could also create a special SortedList class inheriting
     from list to create a list that is always sorted, as shown in [Listing 10-10](ch10.xhtml#ch10list10):'
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`bisect`模块，你也可以创建一个特殊的`SortedList`类，继承自`list`，来创建一个始终保持排序的列表，如[清单 10-10](ch10.xhtml#ch10list10)所示：
 - en: import bisect
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: import bisect
 - en: import unittest
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: import unittest
 - en: 'class SortedList(list):'
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 'class SortedList(list):'
 - en: 'def __init__(self, iterable):'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def __init__(self, iterable):'
 - en: super(SortedList, self).__init__(sorted(iterable))
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: super(SortedList, self).__init__(sorted(iterable))
 - en: 'def insort(self, item):'
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def insort(self, item):'
 - en: 'bisect.insort(self, item) def extend(self, other):'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 'bisect.insort(self, item) def extend(self, other):'
 - en: 'for item in other:'
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for item in other:'
 - en: self.insort(item)
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: self.insort(item)
 - en: '@staticmethod'
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: '@staticmethod'
 - en: 'def append(o):'
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def append(o):'
 - en: raise RuntimeError("Cannot append to a sorted list")
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: raise RuntimeError("无法向排序列表添加项")
 - en: 'def index(self, value, start=None, stop=None):'
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def index(self, value, start=None, stop=None):'
 - en: place = bisect.bisect_left(self[start:stop], value)
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: place = bisect.bisect_left(self[start:stop], value)
 - en: 'if start:'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if start:'
 - en: place += start
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: place += start
 - en: end = stop or len(self)
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: end = stop or len(self)
 - en: 'if place < end and self[place] == value:'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if place < end and self[place] == value:'
 - en: return place
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: return place
 - en: raise ValueError("%s is not in list" % value)
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: raise ValueError("%s 不在列表中" % value)
 - en: 'class TestSortedList(unittest.TestCase):'
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: 'class TestSortedList(unittest.TestCase):'
 - en: 'def setUp(self):'
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def setUp(self):'
 - en: self.mylist = SortedList(
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: self.mylist = SortedList(
 - en: '[''a'', ''c'', ''d'', ''x'', ''f'', ''g'', ''w'']'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: '[''a'', ''c'', ''d'', ''x'', ''f'', ''g'', ''w'']'
 - en: )
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: )
 - en: 'def test_sorted_init(self):'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def test_sorted_init(self):'
 - en: self.assertEqual(sorted(['a', 'c', 'd', 'x', 'f', 'g', 'w']),
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertEqual(sorted(['a', 'c', 'd', 'x', 'f', 'g', 'w']),
 - en: self.mylist)
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: self.mylist)
 - en: 'def test_sorted_insort(self):'
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def test_sorted_insort(self):'
 - en: self.mylist.insort('z')
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: self.mylist.insort('z')
 - en: self.assertEqual(['a', 'c', 'd', 'f', 'g', 'w', 'x', 'z'],
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertEqual(['a', 'c', 'd', 'f', 'g', 'w', 'x', 'z'],
 - en: self.mylist)
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: self.mylist)
 - en: self.mylist.insort('b')
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: self.mylist.insort('b')
 - en: self.assertEqual(['a', 'b', 'c', 'd', 'f', 'g', 'w', 'x', 'z'],
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertEqual(['a', 'b', 'c', 'd', 'f', 'g', 'w', 'x', 'z'],
 - en: self.mylist)
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: self.mylist)
 - en: 'def test_index(self):'
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def test_index(self):'
 - en: self.assertEqual(0, self.mylist.index('a'))
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertEqual(0, self.mylist.index('a'))
 - en: self.assertEqual(1, self.mylist.index('c'))
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertEqual(1, self.mylist.index('c'))
 - en: self.assertEqual(5, self.mylist.index('w'))
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertEqual(5, self.mylist.index('w'))
 - en: self.assertEqual(0, self.mylist.index('a', stop=0))
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertEqual(0, self.mylist.index('a', stop=0))
 - en: self.assertEqual(0, self.mylist.index('a', stop=2))
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertEqual(0, self.mylist.index('a', stop=2))
 - en: self.assertEqual(0, self.mylist.index('a', stop=20))
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertEqual(0, self.mylist.index('a', stop=20))
 - en: self.assertRaises(ValueError, self.mylist.index, 'w', stop=3)
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertRaises(ValueError, self.mylist.index, 'w', stop=3)
 - en: self.assertRaises(ValueError, self.mylist.index, 'a', start=3)
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertRaises(ValueError, self.mylist.index, 'a', start=3)
 - en: self.assertRaises(ValueError, self.mylist.index, 'a', start=333)
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertRaises(ValueError, self.mylist.index, 'a', start=333)
 - en: 'def test_extend(self):'
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def test_extend(self):'
 - en: self.mylist.extend(['b', 'h', 'j', 'c'])
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: self.mylist.extend(['b', 'h', 'j', 'c'])
 - en: self.assertEqual(
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: self.assertEqual(
 - en: '[''a'', ''b'', ''c'', ''c'', ''d'', ''f'', ''g'', ''h'', ''j'', ''w'', ''x'']'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: '[''a'', ''b'', ''c'', ''c'', ''d'', ''f'', ''g'', ''h'', ''j'', ''w'', ''x'']'
 - en: self.mylist)
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: self.mylist)
 - en: '*Listing 10-10: A SortedList object implementation*'
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 10-10: 排序列表对象实现*'
 - en: 'Using a list class like this is slightly slower when it comes to inserting
     the item, because the program has to look for the right spot to insert it. However,
     this class is faster at using the index() method than its parent. Obviously, one
     shouldn’t use the list.append() method on this class: you can’t append an item
     at the end of the list or it could end up unsorted!'
+  id: totrans-275
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用像这样的列表类，在插入项时稍微慢一些，因为程序必须查找合适的位置插入它。然而，这个类在使用`index()`方法时比其父类要快。显然，不应该在这个类上使用`list.append()`方法：你不能在列表的末尾添加项，否则它可能会变得不再排序！
 - en: Many Python libraries implement various versions of [Listing 10-10](ch10.xhtml#ch10list10)
     for many more data types, such as binary or red-black tree structures. The blist
     and bintree Python packages contain code that can be used for these purposes and
     are a handy alternative to implementing and debugging your own version.
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多 Python 库为更多的数据类型实现了[清单 10-10](ch10.xhtml#ch10list10)的不同版本，比如二进制树或红黑树结构。blist
+    和 bintree Python 包含可以用于这些目的的代码，是实现和调试你自己版本的一个便捷替代方案。
 - en: In the next section, we’ll see how the native tuple data type provided by Python
     can be leveraged to make your Python code a little faster.
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一节中，我们将看到如何利用 Python 提供的原生元组数据类型来加速你的 Python 代码。
 - en: '**namedtuple and Slots**'
+  id: totrans-278
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**namedtuple 和 Slots**'
 - en: 'Often in programming, you’ll need to create simple objects that possess only
     a few fixed attributes. A simple implementation might be something along these
     lines:'
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: 在编程中，你通常需要创建一些只有少数固定属性的简单对象。一种简单的实现可能如下所示：
 - en: 'class Point(object):'
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 'class Point(object):'
 - en: 'def __init__(self, x, y):'
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def __init__(self, x, y):'
 - en: self.x = x
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: self.x = x
 - en: self.y = y
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: self.y = y
 - en: This definitely gets the job done. However, there is a downside to this approach.
     Here we’re creating a class that inherits from the object class, so by using this
     Point class, you are instantiating full objects and allocating a lot of memory.
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 这确实能完成工作。然而，这种方法有一个缺点。这里我们创建了一个继承自 object 类的类，所以通过使用这个 Point 类，你正在实例化完整的对象并分配大量内存。
 - en: In Python, regular objects store all of their attributes inside a dictionary,
     and this dictionary is itself stored in the __dict__ attribute, as shown in [Listing
     10-11](ch10.xhtml#ch10list11).
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 Python 中，常规对象将其所有属性存储在一个字典中，并且这个字典本身存储在 __dict__ 属性中，如[清单 10-11](ch10.xhtml#ch10list11)所示。
 - en: '>>> p = Point(1, 2)'
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> p = Point(1, 2)'
 - en: '>>> p.__dict__'
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> p.__dict__'
 - en: '{''y'': 2, ''x'': 1}'
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: '{''y'': 2, ''x'': 1}'
 - en: '>>> p.z = 42'
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> p.z = 42'
 - en: '>>> p.z'
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> p.z'
 - en: '42'
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: '42'
 - en: '>>> p.__dict__'
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: '>>> p.__dict__'
 - en: '{''y'': 2, ''x'': 1, ''z'': 42}'
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: '{''y'': 2, ''x'': 1, ''z'': 42}'
 - en: '*Listing 10-11: How attributes are stored internally in a Python object*'
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 10-11：Python 对象内部如何存储属性*'
 - en: For Python, the advantage of using a dict is that it allows you to add as many
     attributes as you want to an object. The drawback is that using a dictionary to
     store these attributes is expensive in terms of memory—you need to store the object,
     the keys, the value references, and everything else. That makes it slow to create
     and slow to manipulate, with a high memory cost.
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于 Python，使用字典的优势在于它允许你为对象添加任意多的属性。缺点是，使用字典来存储这些属性在内存上是昂贵的——你需要存储对象、键、值引用以及其他一切。这使得对象创建和操作变得缓慢，而且内存成本较高。
 - en: 'As an example of this unnecessary memory usage, consider the following simple
     class:'
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为这个不必要的内存使用的一个示例，请看下面这个简单的类：
 - en: 'class Foobar(object):'
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: 'class Foobar(object):'
 - en: 'def __init__(self, x):'
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def __init__(self, x):'
 - en: self.x = x
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: self.x = x
 - en: This creates a simple Point object with a single attribute named x. Let’s check
     the memory usage of this class using the memory_profiler, a nice Python package
     that allows us to see the memory usage of a program line by line, and a small
     script that creates 100,000 objects, as shown in [Listing 10-12](ch10.xhtml#ch10list12).
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将创建一个简单的 Point 对象，具有一个名为 x 的属性。让我们使用 memory_profiler 来检查这个类的内存使用情况，memory_profiler
+    是一个非常好的 Python 包，可以逐行查看程序的内存使用情况。下面是一个创建 100,000 个对象的小脚本，参见[清单 10-12](ch10.xhtml#ch10list12)。
 - en: $ python -m memory_profiler object.py
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: $ python -m memory_profiler object.py
 - en: 'Filename: object.py'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 文件名：object.py
 - en: 'Line #    Mem usage    Increment   Line Contents'
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: 行号    内存使用    增量   行内容
 - en: 5                             @profile
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 5                             @profile
 - en: '6     9.879 MB     0.000 MB   def main():'
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: '6     9.879 MB     0.000 MB   def main():'
 - en: 7    50.289 MB    40.410 MB       f = [ Foobar(42) for i in range(100000) ]
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 7    50.289 MB    40.410 MB       f = [ Foobar(42) for i in range(100000) ]
 - en: '*Listing 10-12: Using memory_profiler on a script using objects*'
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 10-12：在使用对象的脚本中使用 memory_profiler*'
 - en: '[Listing 10-12](ch10.xhtml#ch10list12) demonstrates that creating 100,000 of
     the objects of the Foobar class would consume 40MB of memory. Although 400 bytes
     per object might not sound that big, when you are creating thousands of objects,
     the memory adds up.'
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单 10-12](ch10.xhtml#ch10list12)演示了创建 100,000 个 Foobar 类对象将消耗 40MB 的内存。虽然每个对象占用
+    400 字节的内存可能听起来不大，但当你创建成千上万个对象时，内存会迅速增加。'
 - en: 'There is a way to use objects while avoiding this default behavior of dict:
     classes in Python can define a __slots__ attribute that will list only the attributes
     allowed for instances of this class. Instead of allocating a whole dictionary
     object to store the object attributes, you can use a *list* object to store them.'
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
 - en: 'If you go through CPython source code and take a look at the *Objects/typeobject.c*
     file, it is quite easy to understand what Python does when __slots__ is set on
     a class. [Listing 10-13](ch10.xhtml#ch10list13) is an abbreviated version of the
     function that handles this:'
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
 - en: static PyObject *
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
 - en: type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
 - en: '{'
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
 - en: --snip--
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: /* Check for a __slots__ sequence variable in dict, and count it */
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
 - en: slots = _PyDict_GetItemId(dict, &PyId___slots__);
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
 - en: nslots = 0;
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
 - en: if (slots == NULL) {
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
 - en: if (may_add_dict)
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
 - en: add_dict++;
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
 - en: if (may_add_weak)
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: add_weak++;
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
 - en: '} else {'
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
 - en: /* Have slots */
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
 - en: /* Make it into a tuple */
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
 - en: if (PyUnicode_Check(slots))
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
 - en: slots = PyTuple_Pack(1, slots);
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
 - en: else
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
 - en: slots = PySequence_Tuple(slots);
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
 - en: /* Are slots allowed? */
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
 - en: nslots = PyTuple_GET_SIZE(slots);
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
 - en: if (nslots > 0 && base->tp_itemsize != 0) {
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
 - en: PyErr_Format(PyExc_TypeError,
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
 - en: '"nonempty __slots__ "'
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
 - en: '"not supported for subtype of ''%s''",'
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
 - en: base->tp_name);
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
 - en: goto error;
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
 - en: '}'
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
 - en: /* Copy slots into a list, mangle names and sort them.
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
 - en: Sorted names are needed for __class__ assignment.
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
 - en: Convert them back to tuple at the end.
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
 - en: '*/'
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
 - en: newslots = PyList_New(nslots - add_dict - add_weak);
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
 - en: if (newslots == NULL)
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
 - en: goto error;
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
 - en: if (PyList_Sort(newslots) == -1) {
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
 - en: Py_DECREF(newslots);
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
 - en: goto error;
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
 - en: '}'
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
 - en: slots = PyList_AsTuple(newslots);
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
 - en: Py_DECREF(newslots);
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
 - en: if (slots == NULL)
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
 - en: goto error;
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
 - en: '}'
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
 - en: /* Allocate the type object */
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
 - en: type = (PyTypeObject *)metatype->tp_alloc(metatype, nslots);
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
 - en: --snip--
+  id: totrans-357
   prefs: []
   type: TYPE_NORMAL
 - en: /* Keep name and slots alive in the extended type object */
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
 - en: et = (PyHeapTypeObject *)type;
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
 - en: Py_INCREF(name);
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
 - en: et->ht_name = name;
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
 - en: et->ht_slots = slots;
+  id: totrans-362
   prefs: []
   type: TYPE_NORMAL
 - en: slots = NULL;
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
 - en: --snip--
+  id: totrans-364
   prefs: []
   type: TYPE_NORMAL
 - en: return (PyObject *)type;
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-13: An extract from Objects/typeobject.c*'
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
 - en: As you can see in [Listing 10-13](ch10.xhtml#ch10list13), Python converts the
@@ -1268,48 +1828,62 @@
     before converting the list back into a tuple to use and store in the class. In
     this way, Python can retrieve the values quickly, without having to allocate and
     use an entire dictionary.
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
 - en: 'It’s easy enough to declare and use such a class. All you need to do is to
     set the __slots__ attribute to a list of the attributes that will be defined in
     the class:'
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
 - en: 'class Foobar(object):'
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
 - en: __slots__ = ('x',)
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
 - en: 'def __init__(self, x):'
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
 - en: self.x = x
+  id: totrans-372
   prefs: []
   type: TYPE_NORMAL
 - en: We can compare the memory usage of the two approaches using the memory_profiler
     Python package, as shown in [Listing 10-14](ch10.xhtml#ch10list14).
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
 - en: '% python -m memory_profiler slots.py'
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
 - en: 'Filename: slots.py'
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
 - en: 'Line #    Mem usage    Increment   Line Contents'
+  id: totrans-376
   prefs: []
   type: TYPE_NORMAL
 - en: 7                             @profile
+  id: totrans-377
   prefs: []
   type: TYPE_NORMAL
 - en: '8     9.879 MB     0.000 MB   def main():'
+  id: totrans-378
   prefs: []
   type: TYPE_NORMAL
 - en: 9    21.609 MB    11.730 MB       f = [ Foobar(42) for i in range(100000) ]
+  id: totrans-379
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-14: Running memory_profiler on the script using __slots__*'
+  id: totrans-380
   prefs: []
   type: TYPE_NORMAL
 - en: '[Listing 10-14](ch10.xhtml#ch10list14) shows that this time, less than 12MB
@@ -1319,74 +1893,95 @@
     attribute is an effective and efficient choice. However, this technique shouldn’t
     be used for performing static typing by hardcoding the list of attributes of every
     class: doing so wouldn’t be in the spirit of Python programs.'
+  id: totrans-381
   prefs: []
   type: TYPE_NORMAL
 - en: The drawback here is that the list of attributes is now fixed. No new attribute
     can be added to the Foobar class at runtime. Due to the fixed nature of the attribute
     list, it’s easy enough to imagine classes where the attributes listed would always
     have a value and where the fields would always be sorted in some way.
+  id: totrans-382
   prefs: []
   type: TYPE_NORMAL
 - en: This is exactly what occurs in the namedtuple class from the collection module.
     This namedtuple class allows us to dynamically create a class that will inherit
     from the tuple class, thus sharing characteristics such as being immutable and
     having a fixed number of entries.
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
 - en: Rather than having to reference them by index, namedtuple provides the ability
     to retrieve tuple elements by referencing a named attribute. This makes the tuple
     easier to access for humans, as shown in [Listing 10-15](ch10.xhtml#ch10list15).
+  id: totrans-384
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> import collections'
+  id: totrans-385
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> Foobar = collections.namedtuple(''Foobar'', [''x''])'
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> Foobar = collections.namedtuple(''Foobar'', [''x'', ''y''])'
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> Foobar(42, 43) Foobar(x=42, y=43)'
+  id: totrans-388
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> Foobar(42, 43).x'
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
 - en: '42'
+  id: totrans-390
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> Foobar(42, 43).x = 44'
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
 - en: 'Traceback (most recent call last):'
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
 - en: File "<stdin>", line 1, in <module>
+  id: totrans-393
   prefs: []
   type: TYPE_NORMAL
 - en: 'AttributeError: can''t set attribute'
+  id: totrans-394
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> Foobar(42, 43).z = 0'
+  id: totrans-395
   prefs: []
   type: TYPE_NORMAL
 - en: 'Traceback (most recent call last):'
+  id: totrans-396
   prefs: []
   type: TYPE_NORMAL
 - en: File "<stdin>", line 1, in <module>
+  id: totrans-397
   prefs: []
   type: TYPE_NORMAL
 - en: 'AttributeError: ''Foobar'' object has no attribute ''z'''
+  id: totrans-398
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> list(Foobar(42, 43))'
+  id: totrans-399
   prefs: []
   type: TYPE_NORMAL
 - en: '[42, 43]'
+  id: totrans-400
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-15: Using namedtuple to reference tuple elements*'
+  id: totrans-401
   prefs: []
   type: TYPE_NORMAL
 - en: '[Listing 10-15](ch10.xhtml#ch10list15) shows how you can create a simple class
@@ -1395,31 +1990,40 @@
     from namedtuple and because the __slots__ value is set to an empty tuple, avoiding
     the creation of the __dict__. Since a class like this would inherit from tuple,
     we can easily convert it to a list.'
+  id: totrans-402
   prefs: []
   type: TYPE_NORMAL
 - en: '[Listing 10-16](ch10.xhtml#ch10list16) demonstrates the memory usage of the
     namedtuple class factory.'
+  id: totrans-403
   prefs: []
   type: TYPE_NORMAL
 - en: '% python -m memory_profiler namedtuple.py'
+  id: totrans-404
   prefs: []
   type: TYPE_NORMAL
 - en: 'Filename: namedtuple.py'
+  id: totrans-405
   prefs: []
   type: TYPE_NORMAL
 - en: 'Line #    Mem usage    Increment   Line Contents'
+  id: totrans-406
   prefs: []
   type: TYPE_NORMAL
 - en: 4                             @profile
+  id: totrans-407
   prefs: []
   type: TYPE_NORMAL
 - en: '5     9.895 MB     0.000 MB   def main():'
+  id: totrans-408
   prefs: []
   type: TYPE_NORMAL
 - en: 6    23.184 MB    13.289 MB       f = [ Foobar(42) for i in range(100000) ]
+  id: totrans-409
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-16: Using namedtuple to run memory_profiler on a script*'
+  id: totrans-410
   prefs: []
   type: TYPE_NORMAL
 - en: 'At around 13MB for 100,000 objects, using namedtuple is slightly less efficient
@@ -1429,6 +2033,7 @@
     enjoys the various optimizations that exist for tuples: for example, tuples with
     fewer items than PyTuple_MAXSAVESIZE (20 by default) will use a faster memory
     allocator in CPython.'
+  id: totrans-411
   prefs: []
   type: TYPE_NORMAL
 - en: The namedtuple class also provides a few extra methods that, even if prefixed
@@ -1436,6 +2041,7 @@
     convert the namedtuple to a dict instance, the _make() method allows you to convert
     an existing iterable object to this class, and _replace() returns a new instance
     of the object with some fields replaced.
+  id: totrans-412
   prefs: []
   type: TYPE_NORMAL
 - en: Named tuples are a great replacement for small objects that consists of only
@@ -1443,9 +2049,11 @@
     than dictionaries, for example. If your data type needs methods, has a fixed list
     of attributes, and might be instantiated thousands of times, then creating a custom
     class using __slots__ might be a good idea to save some memory.
+  id: totrans-413
   prefs: []
   type: TYPE_NORMAL
 - en: '**Memoization**'
+  id: totrans-414
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1453,72 +2061,95 @@
     by caching their results. The results of a function can be cached only if the
     function is *pure*, meaning that it has no side effects and does not depend on
     any global state. (See [Chapter 8](ch08.xhtml#ch08) for more on pure functions.)'
+  id: totrans-415
   prefs: []
   type: TYPE_NORMAL
 - en: One trivial function that can be memoized is sin(), shown in [Listing 10-17](ch10.xhtml#ch10list17).
+  id: totrans-416
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> import math'
+  id: totrans-417
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> _SIN_MEMOIZED_VALUES = {}'
+  id: totrans-418
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> def memoized_sin(x):'
+  id: totrans-419
   prefs: []
   type: TYPE_NORMAL
 - en: '...    if x not in _SIN_MEMOIZED_VALUES:'
+  id: totrans-420
   prefs: []
   type: TYPE_NORMAL
 - en: '...        _SIN_MEMOIZED_VALUES[x] = math.sin(x)'
+  id: totrans-421
   prefs: []
   type: TYPE_NORMAL
 - en: '...    return _SIN_MEMOIZED_VALUES[x]'
+  id: totrans-422
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin(1)'
+  id: totrans-423
   prefs: []
   type: TYPE_NORMAL
 - en: '0.8414709848078965'
+  id: totrans-424
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> _SIN_MEMOIZED_VALUES'
+  id: totrans-425
   prefs: []
   type: TYPE_NORMAL
 - en: '{1: 0.8414709848078965}'
+  id: totrans-426
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin(2)'
+  id: totrans-427
   prefs: []
   type: TYPE_NORMAL
 - en: '0.9092974268256817'
+  id: totrans-428
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin(2)'
+  id: totrans-429
   prefs: []
   type: TYPE_NORMAL
 - en: '0.9092974268256817'
+  id: totrans-430
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> _SIN_MEMOIZED_VALUES'
+  id: totrans-431
   prefs: []
   type: TYPE_NORMAL
 - en: '{1: 0.8414709848078965, 2: 0.9092974268256817}'
+  id: totrans-432
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin(1)'
+  id: totrans-433
   prefs: []
   type: TYPE_NORMAL
 - en: '0.8414709848078965'
+  id: totrans-434
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> _SIN_MEMOIZED_VALUES'
+  id: totrans-435
   prefs: []
   type: TYPE_NORMAL
 - en: '{1: 0.8414709848078965, 2: 0.9092974268256817}'
+  id: totrans-436
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-17: A memoized sin() function*'
+  id: totrans-437
   prefs: []
   type: TYPE_NORMAL
 - en: In [Listing 10-17](ch10.xhtml#ch10list17), the first time that memoized_sin()
@@ -1527,6 +2158,7 @@
     value again, the result will be retrieved from the dictionary rather than recomputed.
     While sin() computes very quickly, some advanced functions involving more complicated
     computations may take longer, and this is where memoization really shines.
+  id: totrans-438
   prefs: []
   type: TYPE_NORMAL
 - en: If you’ve already read about decorators (if not, see “[Decorators and When to
@@ -1534,6 +2166,7 @@
     see a perfect opportunity to use them here, and you’d be right. PyPI lists a few
     implementations of memoization through decorators, from very simple cases to the
     most complex and complete.
+  id: totrans-439
   prefs: []
   type: TYPE_NORMAL
 - en: Starting with Python 3.3, the functools module provides a *least recently used
@@ -1544,102 +2177,134 @@
     cache or not), among other data. In my opinion, these statistics are must-haves
     when implementing such a cache. The strength of using memoization, or any caching
     technique, is in the ability to meter its usage and usefulness.
+  id: totrans-440
   prefs: []
   type: TYPE_NORMAL
 - en: '[Listing 10-18](ch10.xhtml#ch10list18) demonstrates how to use the functools.lru_cache()
     method to implement the memoization of a function. When decorated, the function
     gets a cache_info() method that can be called to get statistics about the cache
     usage.'
+  id: totrans-441
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> import functools'
+  id: totrans-442
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> import math'
+  id: totrans-443
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> @functools.lru_cache(maxsize=2)'
+  id: totrans-444
   prefs: []
   type: TYPE_NORMAL
 - en: '... def memoized_sin(x):'
+  id: totrans-445
   prefs: []
   type: TYPE_NORMAL
 - en: '...     return math.sin(x)'
+  id: totrans-446
   prefs: []
   type: TYPE_NORMAL
 - en: '...'
+  id: totrans-447
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin(2)'
+  id: totrans-448
   prefs: []
   type: TYPE_NORMAL
 - en: '0.9092974268256817'
+  id: totrans-449
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin.cache_info()'
+  id: totrans-450
   prefs: []
   type: TYPE_NORMAL
 - en: CacheInfo(hits=0, misses=1, maxsize=2, currsize=1)
+  id: totrans-451
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin(2)'
+  id: totrans-452
   prefs: []
   type: TYPE_NORMAL
 - en: '0.9092974268256817'
+  id: totrans-453
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin.cache_info()'
+  id: totrans-454
   prefs: []
   type: TYPE_NORMAL
 - en: CacheInfo(hits=1, misses=1, maxsize=2, currsize=1)
+  id: totrans-455
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin(3)'
+  id: totrans-456
   prefs: []
   type: TYPE_NORMAL
 - en: '0.1411200080598672'
+  id: totrans-457
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin.cache_info()'
+  id: totrans-458
   prefs: []
   type: TYPE_NORMAL
 - en: CacheInfo(hits=1, misses=2, maxsize=2, currsize=2)
+  id: totrans-459
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin(4)'
+  id: totrans-460
   prefs: []
   type: TYPE_NORMAL
 - en: '-0.7568024953079282'
+  id: totrans-461
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin.cache_info()'
+  id: totrans-462
   prefs: []
   type: TYPE_NORMAL
 - en: CacheInfo(hits=1, misses=3, maxsize=2, currsize=2)
+  id: totrans-463
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin(3)'
+  id: totrans-464
   prefs: []
   type: TYPE_NORMAL
 - en: '0.1411200080598672'
+  id: totrans-465
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin.cache_info()'
+  id: totrans-466
   prefs: []
   type: TYPE_NORMAL
 - en: CacheInfo(hits=2, misses=3, maxsize=2, currsize=2)
+  id: totrans-467
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin.cache_clear()'
+  id: totrans-468
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> memoized_sin.cache_info()'
+  id: totrans-469
   prefs: []
   type: TYPE_NORMAL
 - en: CacheInfo(hits=0, misses=0, maxsize=2, currsize=0)
+  id: totrans-470
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-18: Inspecting cache statistics*'
+  id: totrans-471
   prefs: []
   type: TYPE_NORMAL
 - en: '[Listing 10-18](ch10.xhtml#ch10list18) demonstrates how your cache is being
@@ -1647,9 +2312,11 @@
     if the number of misses is high when the cache is not full, then the cache may
     be useless because the arguments passed to the function are never identical. This
     will help determine what should or should not be memoized!'
+  id: totrans-472
   prefs: []
   type: TYPE_NORMAL
 - en: '**Faster Python with PyPy**'
+  id: totrans-473
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1659,18 +2326,21 @@
     in C—can be very slow. The idea behind PyPy was to write a Python interpreter
     in Python itself. In time, it evolved to be written in RPython, which is a restricted
     subset of the Python language.'
+  id: totrans-474
   prefs: []
   type: TYPE_NORMAL
 - en: RPython places constraints on the Python language such that a variable’s type
     can be inferred at compile time. The RPython code is translated into C code, which
     is compiled to build the interpreter. RPython could of course be used to implement
     languages other than Python.
+  id: totrans-475
   prefs: []
   type: TYPE_NORMAL
 - en: What’s interesting in PyPy, besides the technical challenge, is that it is now
     at a stage where it can act as a faster replacement for CPython. PyPy has a *just-in-time
     (JIT)* compiler built-in; in other words, it allows the code to run faster by
     combining the speed of compiled code with the flexibility of interpretation.
+  id: totrans-476
   prefs: []
   type: TYPE_NORMAL
 - en: How fast? That depends, but for pure algorithmic code, it is much faster. For
@@ -1678,6 +2348,7 @@
     of the time. Unfortunately, PyPy also has some of the limitations of CPython,
     including the *global interpreter lock (GIL)*, which allows only one thread to
     execute at a time.
+  id: totrans-477
   prefs: []
   type: TYPE_NORMAL
 - en: Though it’s not strictly an optimization technique, targeting PyPy as one of
@@ -1687,14 +2358,17 @@
     tox (see “Using virtualenv with tox” on [page 92](ch06.xhtml#page_92)), which
     supports the building of virtual environments using PyPy, just as it does for
     any version of CPython, so putting PyPy support in place should be pretty straightforward.
+  id: totrans-478
   prefs: []
   type: TYPE_NORMAL
 - en: Testing PyPy support right at the beginning of the project will ensure that
     there’s not too much work to do at a later stage if you decide that you want to
     be able to run your software with PyPy.
+  id: totrans-479
   prefs: []
   type: TYPE_NORMAL
 - en: '**NOTE**'
+  id: totrans-480
   prefs: []
   type: TYPE_NORMAL
 - en: '*For the Hy project discussed in [Chapter 9](ch09.xhtml#ch09), we successfully
@@ -1703,6 +2377,7 @@
     to do so for its projects and, as a result, is now blocked by various code paths
     and dependencies that don’t work on PyPy for various reasons; they weren’t required
     to be fully tested in the early stages.*'
+  id: totrans-481
   prefs: []
   type: TYPE_NORMAL
 - en: PyPy is compatible with Python 2.7 and Python 3.5, and its JIT compiler works
@@ -1710,169 +2385,216 @@
     (Linux, Windows, and Mac OS X). PyPy often lags behind CPython in features, but
     it regularly catches up. Unless your project is reliant on the latest CPython
     features, this lag might not be a problem.
+  id: totrans-482
   prefs: []
   type: TYPE_NORMAL
 - en: '**Achieving Zero Copy with the Buffer Protocol**'
+  id: totrans-483
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: Often programs have to deal with huge amounts of data in the form of large arrays
     of bytes. Handling such a large quantity of input in strings can be very ineffective
     once you start manipulating the data by copying, slicing, and modifying it.
+  id: totrans-484
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s consider a small program that reads a large file of binary data and copies
     it partially into another file. To examine the memory usage of this program, we
     will use memory_profiler, as we did earlier. The script to partially copy the
     file is shown in [Listing 10-19](ch10.xhtml#ch10list19).
+  id: totrans-485
   prefs: []
   type: TYPE_NORMAL
 - en: '@profile'
+  id: totrans-486
   prefs: []
   type: TYPE_NORMAL
 - en: 'def read_random():'
+  id: totrans-487
   prefs: []
   type: TYPE_NORMAL
 - en: 'with open("/dev/urandom", "rb") as source:'
+  id: totrans-488
   prefs: []
   type: TYPE_NORMAL
 - en: content = source.read(1024 * 10000)
+  id: totrans-489
   prefs: []
   type: TYPE_NORMAL
 - en: content_to_write = content[1024:]
+  id: totrans-490
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("Content length: %d, content to write length %d" %'
+  id: totrans-491
   prefs: []
   type: TYPE_NORMAL
 - en: (len(content), len(content_to_write)))
+  id: totrans-492
   prefs: []
   type: TYPE_NORMAL
 - en: 'with open("/dev/null", "wb") as target:'
+  id: totrans-493
   prefs: []
   type: TYPE_NORMAL
 - en: target.write(content_to_write)
+  id: totrans-494
   prefs: []
   type: TYPE_NORMAL
 - en: 'if __name__ == ''__main__'':'
+  id: totrans-495
   prefs: []
   type: TYPE_NORMAL
 - en: read_random()
+  id: totrans-496
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-19: Partially copying a file*'
+  id: totrans-497
   prefs: []
   type: TYPE_NORMAL
 - en: Running the program in [Listing 10-19](ch10.xhtml#ch10list19) using memory_profiler
     produces the output shown in [Listing 10-20](ch10.xhtml#ch10list20).
+  id: totrans-498
   prefs: []
   type: TYPE_NORMAL
 - en: $ python -m memory_profiler memoryview/copy.py
+  id: totrans-499
   prefs: []
   type: TYPE_NORMAL
 - en: 'Content length: 10240000, content to write length 10238976'
+  id: totrans-500
   prefs: []
   type: TYPE_NORMAL
 - en: 'Filename: memoryview/copy.py'
+  id: totrans-501
   prefs: []
   type: TYPE_NORMAL
 - en: Mem usage    Increment   Line Contents
+  id: totrans-502
   prefs: []
   type: TYPE_NORMAL
 - en: '@profile'
+  id: totrans-503
   prefs: []
   type: TYPE_NORMAL
 - en: '9.883 MB     0.000 MB   def read_random():'
+  id: totrans-504
   prefs: []
   type: TYPE_NORMAL
 - en: '9.887 MB     0.004 MB       with open("/dev/urandom", "rb") as source:'
+  id: totrans-505
   prefs: []
   type: TYPE_NORMAL
 - en: 19.656 MB     9.770 MB           content = source.read(1024 * 10000)➊
+  id: totrans-506
   prefs: []
   type: TYPE_NORMAL
 - en: 29.422 MB     9.766 MB           content_to_write = content[1024:]➋
+  id: totrans-507
   prefs: []
   type: TYPE_NORMAL
 - en: '29.422 MB     0.000 MB       print("Content length: %d, content to write length
     %d" %'
+  id: totrans-508
   prefs: []
   type: TYPE_NORMAL
 - en: 29.434 MB     0.012 MB             (len(content), len(content_to_write)))
+  id: totrans-509
   prefs: []
   type: TYPE_NORMAL
 - en: '29.434 MB     0.000 MB       with open("/dev/null", "wb") as target:'
+  id: totrans-510
   prefs: []
   type: TYPE_NORMAL
 - en: 29.434 MB     0.000 MB           target.write(content_to_write)
+  id: totrans-511
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-20: Memory profiling of partial file copy*'
+  id: totrans-512
   prefs: []
   type: TYPE_NORMAL
 - en: According to the output, the program reads 10MB from *_/dev/urandom* ➊. Python
     needs to allocate around 10MB of memory to store this data as a string. It then
     copies the entire block of data, minus the first KB ➋.
+  id: totrans-513
   prefs: []
   type: TYPE_NORMAL
 - en: What’s interesting in [Listing 10-20](ch10.xhtml#ch10list20) is that the program’s
     memory usage is increased by about 10MB when building the variable content_to_write.
     In fact, the slice operator is copying the entirety of content, minus the first
     KB, into a new string object, allocating a large chunk of the 10MB.
+  id: totrans-514
   prefs: []
   type: TYPE_NORMAL
 - en: Performing this kind of operation on large byte arrays is going to be a disaster
     since large pieces of memory will be allocated and copied. If you have experience
     writing in C code, you know that using the memcpy() function has a significant
     cost in terms of both memory usage and general performance.
+  id: totrans-515
   prefs: []
   type: TYPE_NORMAL
 - en: But as a C programmer, you’ll also know that strings are arrays of characters
     and that nothing stops you from looking at only *part* of an array without copying
     it. You can do this through the use of basic pointer arithmetic, assuming that
     the entire string is in a contiguous memory area.
+  id: totrans-516
   prefs: []
   type: TYPE_NORMAL
 - en: This is also possible in Python using objects that implement the *buffer protocol*.
     The buffer protocol is defined in PEP 3118, as a C API that needs to be implemented
     on various types for them to provide this protocol. The string class, for example,
     implements this protocol.
+  id: totrans-517
   prefs: []
   type: TYPE_NORMAL
 - en: 'When you implement this protocol on an object, you can then use the memoryview
     class constructor to build a new memoryview object that will reference the original
     object memory. For example, [Listing 10-21](ch10.xhtml#ch10list21) shows how to
     use memoryview to access slice of a string without doing any copying:'
+  id: totrans-518
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> s = b"abcdefgh"'
+  id: totrans-519
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> view = memoryview(s)'
+  id: totrans-520
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> view[1]'
+  id: totrans-521
   prefs: []
   type: TYPE_NORMAL
 - en: ➊ 98 <1>
+  id: totrans-522
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> limited = view[1:3]'
+  id: totrans-523
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> limited'
+  id: totrans-524
   prefs: []
   type: TYPE_NORMAL
 - en: <memory at 0x7fca18b8d460>
+  id: totrans-525
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> bytes(view[1:3])'
+  id: totrans-526
   prefs: []
   type: TYPE_NORMAL
 - en: b'bc'
+  id: totrans-527
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-21: Using memoryview to avoid copying data*'
+  id: totrans-528
   prefs: []
   type: TYPE_NORMAL
 - en: At ➊, you find the ASCII code for the letter *b*. In [Listing 10-21](ch10.xhtml#ch10list21),
@@ -1881,108 +2603,140 @@
     references a particular slice of it, saving the memory that would be used by a
     copy. [Figure 10-2](ch10.xhtml#ch10fig2) illustrates what happens in [Listing
     10-21](ch10.xhtml#ch10list21).
+  id: totrans-529
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](../images/f10-02.jpg)'
+  id: totrans-530
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-2: Using slice on memoryview objects*'
+  id: totrans-531
   prefs: []
   type: TYPE_NORMAL
 - en: We can rewrite the program from [Listing 10-19](ch10.xhtml#ch10list19), this
     time referencing the data we want to write using a memoryview object rather than
     allocating a new string.
+  id: totrans-532
   prefs: []
   type: TYPE_NORMAL
 - en: '@profile'
+  id: totrans-533
   prefs: []
   type: TYPE_NORMAL
 - en: 'def read_random():'
+  id: totrans-534
   prefs: []
   type: TYPE_NORMAL
 - en: 'with open("/dev/urandom", "rb") as source:'
+  id: totrans-535
   prefs: []
   type: TYPE_NORMAL
 - en: content = source.read(1024 * 10000)
+  id: totrans-536
   prefs: []
   type: TYPE_NORMAL
 - en: content_to_write = memoryview(content)[1024:]
+  id: totrans-537
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("Content length: %d, content to write length %d" %'
+  id: totrans-538
   prefs: []
   type: TYPE_NORMAL
 - en: (len(content), len(content_to_write)))
+  id: totrans-539
   prefs: []
   type: TYPE_NORMAL
 - en: 'with open("/dev/null", "wb") as target:'
+  id: totrans-540
   prefs: []
   type: TYPE_NORMAL
 - en: target.write(content_to_write)
+  id: totrans-541
   prefs: []
   type: TYPE_NORMAL
 - en: 'if __name__ == ''__main__'':'
+  id: totrans-542
   prefs: []
   type: TYPE_NORMAL
 - en: read_random()
+  id: totrans-543
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-22: Partially copying a file using memoryview*'
+  id: totrans-544
   prefs: []
   type: TYPE_NORMAL
 - en: 'The program in [Listing 10-22](ch10.xhtml#ch10list22) uses half the memory
     of the first version in [Listing 10-19](ch10.xhtml#ch10list19). We can see this
     by testing it with memory_profiler again, like so:'
+  id: totrans-545
   prefs: []
   type: TYPE_NORMAL
 - en: $ python -m memory_profiler memoryview/copy-memoryview.py
+  id: totrans-546
   prefs: []
   type: TYPE_NORMAL
 - en: 'Content length: 10240000, content to write length 10238976'
+  id: totrans-547
   prefs: []
   type: TYPE_NORMAL
 - en: 'Filename: memoryview/copy-memoryview.py'
+  id: totrans-548
   prefs: []
   type: TYPE_NORMAL
 - en: Mem usage    Increment   Line Contents
+  id: totrans-549
   prefs: []
   type: TYPE_NORMAL
 - en: '@profile'
+  id: totrans-550
   prefs: []
   type: TYPE_NORMAL
 - en: '9.887 MB     0.000 MB   def read_random():'
+  id: totrans-551
   prefs: []
   type: TYPE_NORMAL
 - en: '9.891 MB     0.004 MB ➊     with open("/dev/urandom", "rb") as source:'
+  id: totrans-552
   prefs: []
   type: TYPE_NORMAL
 - en: 19.660 MB     9.770 MB ➋        content = source.read(1024 * 10000)
+  id: totrans-553
   prefs: []
   type: TYPE_NORMAL
 - en: 19.660 MB     0.000 MB           content_to_write = memoryview(content)[1024:]
+  id: totrans-554
   prefs: []
   type: TYPE_NORMAL
 - en: '19.660 MB     0.000 MB       print("Content length: %d, content to write length
     %d" %'
+  id: totrans-555
   prefs: []
   type: TYPE_NORMAL
 - en: 19.672 MB     0.012 MB             (len(content), len(content_to_write)))
+  id: totrans-556
   prefs: []
   type: TYPE_NORMAL
 - en: '19.672 MB     0.000 MB       with open("/dev/null", "wb") as target:'
+  id: totrans-557
   prefs: []
   type: TYPE_NORMAL
 - en: 19.672 MB     0.000 MB           target.write(content_to_write)
+  id: totrans-558
   prefs: []
   type: TYPE_NORMAL
 - en: These results show that we are reading 10,000KB from */dev/urandom* and not
     doing much with it ➊. Python needs to allocate 9.77MB of memory to store this
     data as a string ➋.
+  id: totrans-559
   prefs: []
   type: TYPE_NORMAL
 - en: We reference the entire block of data minus the first KB, because we won’t be
     writing that first KB to the target file. Because we aren’t copying, no more memory
     is used!
+  id: totrans-560
   prefs: []
   type: TYPE_NORMAL
 - en: 'This kind of trick is especially useful when dealing with sockets. When sending
@@ -1991,73 +2745,94 @@
     length that was able to be sent by the network, which might be smaller than the
     data that was intended to be sent. [Listing 10-23](ch10.xhtml#ch10list23) shows
     how the situation is usually handled.'
+  id: totrans-561
   prefs: []
   type: TYPE_NORMAL
 - en: import socket
+  id: totrans-562
   prefs: []
   type: TYPE_NORMAL
 - en: s = socket.socket(...)
+  id: totrans-563
   prefs: []
   type: TYPE_NORMAL
 - en: s.connect(...)
+  id: totrans-564
   prefs: []
   type: TYPE_NORMAL
 - en: '➊ data = b"a" * (1024 * 100000) <1> while data:'
+  id: totrans-565
   prefs: []
   type: TYPE_NORMAL
 - en: sent = s.send(data)
+  id: totrans-566
   prefs: []
   type: TYPE_NORMAL
 - en: ➋ data = data[sent:] <2>
+  id: totrans-567
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-23: Sending data over a socket*'
+  id: totrans-568
   prefs: []
   type: TYPE_NORMAL
 - en: First, we build a bytes object that contains the letter *a* more than 100 million
     times ➊. Then we remove the first sent bytes ➋.
+  id: totrans-569
   prefs: []
   type: TYPE_NORMAL
 - en: Using a mechanism that implemented in [Listing 10-23](ch10.xhtml#ch10list23),
     a program will copy the data over and over until the socket has sent everything.
+  id: totrans-570
   prefs: []
   type: TYPE_NORMAL
 - en: We can alter the program in [Listing 10-23](ch10.xhtml#ch10list23) to use memoryview
     to achieve the same functionality with zero copying, and therefore higher performance,
     as shown in [Listing 10-24](ch10.xhtml#ch10list24).
+  id: totrans-571
   prefs: []
   type: TYPE_NORMAL
 - en: import socket
+  id: totrans-572
   prefs: []
   type: TYPE_NORMAL
 - en: s = socket.socket(...)
+  id: totrans-573
   prefs: []
   type: TYPE_NORMAL
 - en: s.connect(...)
+  id: totrans-574
   prefs: []
   type: TYPE_NORMAL
 - en: ➊ data = b"a" * (1024 * 100000) <1>
+  id: totrans-575
   prefs: []
   type: TYPE_NORMAL
 - en: mv = memoryview(data)
+  id: totrans-576
   prefs: []
   type: TYPE_NORMAL
 - en: 'while mv:'
+  id: totrans-577
   prefs: []
   type: TYPE_NORMAL
 - en: sent = s.send(mv)
+  id: totrans-578
   prefs: []
   type: TYPE_NORMAL
 - en: ➋ mv = mv[sent:] <2>
+  id: totrans-579
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-24: Sending data over a socket using memoryview*'
+  id: totrans-580
   prefs: []
   type: TYPE_NORMAL
 - en: First, we build a bytes object that contains the letter *a* more than 100 million
     times ➊. Then, we build a new memoryview object pointing to the data that remains
     to be sent, rather than copying that data ➋. This program won’t copy anything,
     so it won’t use any more memory than the 100MB initially needed for the data variable.
+  id: totrans-581
   prefs: []
   type: TYPE_NORMAL
 - en: 'We’ve seen how memoryview objects can be used to write data efficiently, and
@@ -2066,36 +2841,47 @@
     those, and also write to those. In this case, we don’t need memoryview objects;
     we can just ask an I/O function to write into our preallocated object, as shown
     in [Listing 10-25](ch10.xhtml#ch10list25).'
+  id: totrans-582
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> ba = bytearray(8)'
+  id: totrans-583
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> ba'
+  id: totrans-584
   prefs: []
   type: TYPE_NORMAL
 - en: bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00')
+  id: totrans-585
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> with open("/dev/urandom", "rb") as source:'
+  id: totrans-586
   prefs: []
   type: TYPE_NORMAL
 - en: '...     source.readinto(ba)'
+  id: totrans-587
   prefs: []
   type: TYPE_NORMAL
 - en: '...'
+  id: totrans-588
   prefs: []
   type: TYPE_NORMAL
 - en: '8'
+  id: totrans-589
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> ba'
+  id: totrans-590
   prefs: []
   type: TYPE_NORMAL
 - en: bytearray(b'`m.z\x8d\x0fp\xa1')
+  id: totrans-591
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-25: Writing into a preallocated bytearray*'
+  id: totrans-592
   prefs: []
   type: TYPE_NORMAL
 - en: In [Listing 10-25](ch10.xhtml#ch10list25), by using the readinto() method of
@@ -2104,52 +2890,66 @@
     buffer (as you would do in C to mitigate the number of calls to malloc()) and
     fill it at your convenience. Using memoryview, you can place data at any point
     in the memory area, as shown in [Listing 10-26](ch10.xhtml#ch10list26).
+  id: totrans-593
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> ba = bytearray(8)'
+  id: totrans-594
   prefs: []
   type: TYPE_NORMAL
 - en: ➊ >>> ba_at_4 = memoryview(ba)[4:]
+  id: totrans-595
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> with open("/dev/urandom", "rb") as source:'
+  id: totrans-596
   prefs: []
   type: TYPE_NORMAL
 - en: ➋ ...     source.readinto(ba_at_4)
+  id: totrans-597
   prefs: []
   type: TYPE_NORMAL
 - en: '...'
+  id: totrans-598
   prefs: []
   type: TYPE_NORMAL
 - en: '4'
+  id: totrans-599
   prefs: []
   type: TYPE_NORMAL
 - en: '>>> ba'
+  id: totrans-600
   prefs: []
   type: TYPE_NORMAL
 - en: bytearray(b'\x00\x00\x00\x00\x0b\x19\xae\xb2')
+  id: totrans-601
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-26: Writing into an arbitrary position of bytearray*'
+  id: totrans-602
   prefs: []
   type: TYPE_NORMAL
 - en: We reference the bytearray from offset 4 to its end ➊. Then, we write the content
     of */dev/urandom* from offset 4 to the end of bytearray, effectively reading just
     4 bytes ➋.
+  id: totrans-603
   prefs: []
   type: TYPE_NORMAL
 - en: The buffer protocol is extremely important for achieving low memory overhead
     and great performances. As Python hides all the memory allocations, developers
     tend to forget what happens under the hood, at great cost to the speed of their
     programs!
+  id: totrans-604
   prefs: []
   type: TYPE_NORMAL
 - en: Both the objects in the array module and the functions in the struct module
     can handle the buffer protocol correctly and can therefore perform efficiently
     when targeting zero copying.
+  id: totrans-605
   prefs: []
   type: TYPE_NORMAL
 - en: '**Summary**'
+  id: totrans-606
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -2157,14 +2957,17 @@
     faster. Choosing the right data structure and using the correct methods for manipulating
     the data can have a huge impact in terms of CPU and memory usage. That’s why it’s
     important to understand what happens in Python internally.
+  id: totrans-607
   prefs: []
   type: TYPE_NORMAL
 - en: However, optimization should never be done prematurely, without first performing
     a proper profiling. It is too easy to waste time rewriting some barely used code
     with a faster variant while missing central pain points. Don’t miss the big picture.
+  id: totrans-608
   prefs: []
   type: TYPE_NORMAL
 - en: '**Victor Stinner on Optimization**'
+  id: totrans-609
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -2173,9 +2976,11 @@
     module to trace memory block allocation inside Python, and he wrote a simple AST
     optimizer called FAT. He also regularly contributes to the improvement of CPython
     performance.
+  id: totrans-610
   prefs: []
   type: TYPE_NORMAL
 - en: '**What’s a good starting strategy for optimizing Python code?**'
+  id: totrans-611
   prefs: []
   type: TYPE_NORMAL
 - en: The strategy is the same in Python as in other languages. First, you need a
@@ -2184,67 +2989,81 @@
     and premature optimization. Useless optimizations may make the code worse, less
     readable, or even slower. A useful optimization must speed the program up by at
     least 5 percent if it’s to be worth pursuing.
+  id: totrans-612
   prefs: []
   type: TYPE_NORMAL
 - en: If a specific part of the code is identified as being “slow,” a benchmark should
     be prepared on this code. A benchmark on a short function is usually called a
     *micro-benchmark*. The speedup should be at least 20 percent, maybe 25 percent,
     to justify an optimization on a micro-benchmark.
+  id: totrans-613
   prefs: []
   type: TYPE_NORMAL
 - en: It may be interesting to run a benchmark on different computers, different operating
     systems, or different compilers. For example, performances of realloc() may vary
     between Linux and Windows.
+  id: totrans-614
   prefs: []
   type: TYPE_NORMAL
 - en: '**What are your recommended tools for profiling or optimizing Python code?**'
+  id: totrans-615
   prefs: []
   type: TYPE_NORMAL
 - en: Python 3.3 has a time.perf_counter() function to measure elapsed time for a
     benchmark. It has the best resolution available.
+  id: totrans-616
   prefs: []
   type: TYPE_NORMAL
 - en: A test should be run more than once; three times is a minimum, and five may
     be enough. Repeating a test fills disk cache and CPU caches. I prefer to keep
     the minimum timing; other developers prefer the geometric mean.
+  id: totrans-617
   prefs: []
   type: TYPE_NORMAL
 - en: For micro-benchmarks, the timeit module is easy to use and gives results quickly,
     but the results are not reliable using default parameters. Tests should be repeated
     manually to get stable results.
+  id: totrans-618
   prefs: []
   type: TYPE_NORMAL
 - en: Optimizing can take a lot of time, so it’s better to focus on functions that
     use the most CPU power. To find these functions, Python has cProfile and profile
     modules to record the amount of time spent in each function.
+  id: totrans-619
   prefs: []
   type: TYPE_NORMAL
 - en: '**Do you have any Python tricks that could improve performance?**'
+  id: totrans-620
   prefs: []
   type: TYPE_NORMAL
 - en: 'You should reuse the Standard Library as much as possible—it’s well tested
     and also usually efficient. Built-in Python types are implemented in C and have
     good performance. Use the correct container to get the best performance; Python
     provides many different kind of containers: dict, list, deque, set, and so on.'
+  id: totrans-621
   prefs: []
   type: TYPE_NORMAL
 - en: There are some hacks for optimizing Python, but you should avoid these because
     they make the code less readable in exchange for a minor speedup.
+  id: totrans-622
   prefs: []
   type: TYPE_NORMAL
 - en: The Zen of Python (PEP 20) says, “There should be one—and preferably only one—obvious
     way to do it.” In practice, there are different ways to write Python code, and
     performances are not the same. Only trust benchmarks on your use case.
+  id: totrans-623
   prefs: []
   type: TYPE_NORMAL
 - en: '**Which areas of Python have the poorest performance and should be watched
     out for?**'
+  id: totrans-624
   prefs: []
   type: TYPE_NORMAL
 - en: In general, I prefer not to worry about performance while developing a new application.
     Premature optimization is the root of all evil. When you identify slow functions,
     change the algorithm. If the algorithm and the container types are well chosen,
     you might rewrite short functions in C to get the best performance.
+  id: totrans-625
   prefs: []
   type: TYPE_NORMAL
 - en: One bottleneck in CPython is the global interpreter lock, known as the GIL.
@@ -2252,22 +3071,27 @@
     only matters if two threads are executing pure Python code. If most processing
     time is spent in function calls, and these functions release the GIL, then the
     GIL is not the bottleneck. For example, most I/O functions release the GIL.
+  id: totrans-626
   prefs: []
   type: TYPE_NORMAL
 - en: The multiprocessing module can easily be used to work around the GIL. Another
     option, more complex to implement, is to write asynchronous code. Twisted, Tornado,
     and Tulip projects, which are network-oriented libraries, make use of this technique.
+  id: totrans-627
   prefs: []
   type: TYPE_NORMAL
 - en: '**What are some often-seen performance mistakes?**'
+  id: totrans-628
   prefs: []
   type: TYPE_NORMAL
 - en: When Python is not well understood, inefficient code can be written. For example,
     I have seen copy.deepcopy() misused, when no copying was required.
+  id: totrans-629
   prefs: []
   type: TYPE_NORMAL
 - en: Another performance killer is an inefficient data structure. With less than
     100 items, the container type has no impact on performance. With more items, the
     complexity of each operation (add, get, delete) and its effects must be known.
+  id: totrans-630
   prefs: []
   type: TYPE_NORMAL
