@@ -1,90 +1,124 @@
 - en: '12'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '12'
 - en: ANIMATING AFFINE TRANSFORMATIONS
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 动画仿射变换
 - en: '![Image](../images/common01.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/common01.jpg)'
 - en: You just learned the basics of animation and GUI design. In this chapter, we’ll
     combine the two and build an application that animates affine transformations.
     This will help build your visual intuition for this potentially confusing topic
     and strengthen your programming skills.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 你刚刚学习了动画和GUI设计的基础知识。在本章中，我们将结合这两者，构建一个动画化仿射变换的应用程序。这将帮助你培养对这个可能令人困惑的主题的视觉直觉，并增强你的编程技能。
 - en: The application will first read a text file defining the affine transformation
     and the geometries to transform. Then, it’ll compute a sequence of affine transformations,
     interpolating from the identity to the given transformation. Each of the transformations
     in this sequence will be used to draw a frame of the animation.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 该应用程序将首先读取一个文本文件，定义仿射变换和需要变换的几何图形。然后，它将计算一个仿射变换的序列，从单位变换插值到给定的变换。这个序列中的每个变换将用于绘制动画的每一帧。
 - en: As with the circle building application we built in [Chapter 9](ch09.xhtml#ch09),
     we’ll use regular expressions to read the primitives from the text file. We’ll
     be using some more advanced ones here, which we’ll analyze in detail. There will
     be a lot of code in this chapter. We’re building a larger application, and it’s
     a great opportunity to learn about how to distribute responsibilities in your
     code.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 和我们在[第9章](ch09.xhtml#ch09)中构建的圆形构建应用程序一样，我们将使用正则表达式从文本文件中读取原始数据。在这里，我们将使用一些更高级的正则表达式，我们会进行详细分析。本章会有很多代码。我们正在构建一个更大的应用程序，这是一个学习如何在代码中分配责任的绝佳机会。
 - en: As always, we’ll try to keep the architecture and design as clean as possible,
     explaining the reasoning behind each decision we encounter. Let’s get started!
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 和往常一样，我们将尽量保持架构和设计的简洁，解释我们所遇到的每个决策背后的理由。让我们开始吧！
 - en: '**Application Architecture and Visibility Diagrams**'
+  id: totrans-7
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**应用程序架构和可见性图**'
 - en: 'To discuss this application’s architecture, we’ll introduce a new kind of diagram:
     a *visibility diagram*. Visibility diagrams display the components of an application
     using arrows to indicate what each part of the program knows—in other words, who
     can see whom. Take a look at the diagram from [Figure 12-1](ch12.xhtml#ch12fig1).'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 要讨论这个应用程序的架构，我们将引入一种新的图表类型：*可见性图*。可见性图通过箭头显示应用程序的各个组件，指示程序的每个部分知道什么——换句话说，谁能看到谁。请看[图
+    12-1](ch12.xhtml#ch12fig1)中的图示。
 - en: '![Image](../images/12fig01.jpg)'
+  id: totrans-9
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/12fig01.jpg)'
 - en: '*Figure 12-1: Our application architecture*'
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 12-1：我们的应用程序架构*'
 - en: 'At the top of the diagram is *Main*, the executing script. The circle around
     it signifies that it’s the entry point to the application. There are three arrows
     starting from *Main*, which means *Main* knows about three other modules: *Config*,
     *Input*, and *Simulation*. Modules are represented with rectangles.'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 图表的顶部是*Main*，即执行脚本。围绕它的圆圈表示它是应用程序的入口点。从*Main*出发有三条箭头，这意味着*Main*知道另外三个模块：*Config*、*Input*和*Simulation*。模块用矩形表示。
 - en: 'Note the arrows go one way. *Main* knows these modules exist, and depends on
     them, but these modules know nothing about the existence of *Main*. This is critical:
     we want to minimize what the components of our application know about each other.
     This ensures the modules are as *decoupled* as possible, meaning that they can
     live on their own.'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，箭头是单向的。*Main*知道这些模块的存在，并依赖它们，但这些模块对*Main*的存在一无所知。这一点至关重要：我们希望尽量减少应用程序组件之间的相互了解。这确保了模块尽可能地*解耦*，也就是说，它们可以独立存在。
 - en: The benefits of a decoupled design are mainly simplicity, which allows us to
     easily grow and maintain our software, and reusability. The fewer dependencies
     a module has, the easier it is to use it somewhere else.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 解耦设计的好处主要是简洁性，它使我们能够轻松地扩展和维护软件，并且具有可重用性。模块的依赖关系越少，越容易在其他地方使用它。
 - en: 'Going back to the diagram in [Figure 12-1](ch12.xhtml#ch12fig1), we said that
     *Main* uses three modules: *Config*, *Input*, and *Simulation*. The *Config* module
     will be in charge of loading the configuration for the application stored in *config.json*—indicated
     by the arrow.'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 回到[图 12-1](ch12.xhtml#ch12fig1)中的图示，我们说过*Main*使用了三个模块：*Config*、*Input*和*Simulation*。*Config*模块将负责加载存储在*config.json*中的应用程序配置——由箭头指示。
 - en: 'The *Input* module will read the input file given by the user and define both
     an affine transformation and geometric primitives. Thus, this module will use
     two more modules: *Geometry*, to parse the primitives, and *Transformation*, to
     parse the affine transformation. Again, the fact that the arrows go from *Input*
     toward the other two modules means these other two modules have no clue about
     *Input*: they could be used perfectly by another module.'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
 - en: Lastly, we have the *Simulation* module, which will be in charge of performing
     the actual simulation.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
 - en: '**NOTE**'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
 - en: '*I can’t stress the importance of decoupled architectures enough. Applications
@@ -94,12 +128,15 @@
     that don’t respect this simple principle end up doomed more often than not, and
     trust me when I say that you’ll feel hopeless when you fix a small bug in a module
     and it breaks some apparently unrelated piece of another module.*'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s move on and set up the project.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
 - en: '**Setting Up**'
+  id: totrans-20
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -108,42 +145,55 @@
     by right-clicking *apps* and choosing **New** ▸ **Python Package**, *__init__.py*
     will already be in the directory; the IDE created it for us. If you created the
     package in another way, don’t forget to add this file.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
 - en: apps
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
 - en: '|- aff_transf_motion'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
 - en: '|- __init__.py'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
 - en: '|- config.json'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
 - en: '|- config.py'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
 - en: '|- input.py'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
 - en: '|- main.py'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
 - en: '|- parse_geom.py'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
 - en: '|- parse_transform.py'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
 - en: '|- simulation.py'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
 - en: '|- test.txt'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
 - en: All your files are empty for now, but we’ll be filling them with code soon.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
 - en: Before we do that, though, we want to have a run configuration or bash script
@@ -151,20 +201,26 @@
     We first need to define the script it will execute in *main.py*. For now, we’ll
     simply print a message to the shell to make sure things are working properly.
     Open the file and enter the code in [Listing 12-1](ch12.xhtml#ch12lis1).
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE0]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '*Listing 12-1: Main file*'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
 - en: 'Let’s now explore our two options for executing the project: a run configuration
     and a bash script. You don’t need to set up both; you can choose the one that
     works best for you and skip the other.'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
 - en: '***Creating a Run Configuration***'
+  id: totrans-38
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -174,407 +230,609 @@
     script path and *aff_transform_motion* as the working directory. Lastly, check
     the **Redirect input from** option, and choose *test.txt*. Your configuration
     should look similar to [Figure 12-2](ch12.xhtml#ch12fig2).
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
 - en: '![Image](../images/12fig02.jpg)'
+  id: totrans-40
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 12-2: The run configuration*'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
 - en: To make sure the run configuration is properly set up, choose it from the run
     configuration navigation bar and click the green play button. The shell should
     display the message Ready!. If you had any trouble setting this up, refer to [Chapter
     9](ch09.xhtml#ch09) where we covered this process in detail.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了确保运行配置正确设置，请从运行配置导航栏中选择它，并点击绿色的播放按钮。终端应该显示消息“Ready!”。如果你在设置过程中遇到任何问题，参考[第9章](ch09.xhtml#ch09)，我们在那里详细讲解了这个过程。
 - en: '***Creating a Bash Script***'
+  id: totrans-43
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***创建一个 Bash 脚本***'
 - en: 'To run the app from the command line, we’ll use the technique we explored in
     [Chapter 9](ch09.xhtml#ch09): creating a bash script wrapper that uses our project
     root as the workspace for Python to resolve our dependencies. Create a new file
     in the root of the project (under *Mechanics*): *aff_motion.sh*. In the file,
     enter the code in [Listing 12-2](ch12.xhtml#ch12lis2).'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 要从命令行运行应用程序，我们将使用在[第9章](ch09.xhtml#ch09)中探讨的技术：创建一个 Bash 脚本包装器，使用我们的项目根目录作为
+    Python 解析依赖项的工作区。在项目的根目录下（在 *Mechanics* 目录下）创建一个新文件：*aff_motion.sh*。在文件中，输入 [Listing
+    12-2](ch12.xhtml#ch12lis2) 中的代码。
 - en: '[PRE1]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: '*Listing 12-2: Bash script to execute the project*'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 12-2: 执行项目的 Bash 脚本*'
 - en: 'Using this bash script, we can now execute the application from the command
     line like so:'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这个 Bash 脚本，我们现在可以像这样从命令行执行应用程序：
 - en: '[PRE2]'
+  id: totrans-48
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'We can make this bash script executable:'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以让这个 Bash 脚本变得可执行：
 - en: '[PRE3]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'then run it like so:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后像这样运行它：
 - en: '[PRE4]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: '**Reading the Configuration File**'
+  id: totrans-53
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**读取配置文件**'
 - en: Because we want to separate configuration values from the code, we’ll keep them
     in a JSON file. This allows us to change the behavior of our application without
     needing to touch the code. Open *config.json* and enter the content in [Listing
     12-3](ch12.xhtml#ch12lis3).
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 因为我们希望将配置值与代码分离，所以我们将它们保存在一个 JSON 文件中。这使得我们可以在不触碰代码的情况下更改应用程序的行为。打开 *config.json*
+    并输入 [Listing 12-3](ch12.xhtml#ch12lis3) 中的内容。
 - en: '[PRE5]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: '*Listing 12-3: Configuration JSON file*'
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 12-3: 配置 JSON 文件*'
 - en: This configuration first defines the number of frames to use for the simulation.
     Then comes the dimensions and the color of the coordinate axes, which we’ll draw
     to help us visualize how the space is transformed. Lastly, we have configuration
     values for the geometry that will be transformed. Here we’re defining stroke color
     and width.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 该配置首先定义了用于仿真的帧数。接下来是坐标轴的尺寸和颜色，我们将绘制这些坐标轴来帮助我们可视化空间的变换。最后，我们为将要被变换的几何体设置配置值。这里我们定义了线条的颜色和宽度。
 - en: We now need a way to read this configuration JSON file and transform its contents
     into a Python dictionary. Let’s use the same approach we used in [Chapter 9](ch09.xhtml#ch09).
     In *config.py*, enter the code in [Listing 12-4](ch12.xhtml#ch12lis4).
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们需要一种方法来读取这个配置的 JSON 文件，并将其内容转换成 Python 字典。让我们使用在[第9章](ch09.xhtml#ch09)中使用的相同方法。在
+    *config.py* 中，输入 [Listing 12-4](ch12.xhtml#ch12lis4) 中的代码。
 - en: '[PRE6]'
+  id: totrans-59
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: '*Listing 12-4: Reading the configuration file*'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 12-4: 读取配置文件*'
 - en: That’s it for the configuration; let’s turn our attention to reading and parsing
     input.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 配置部分完成后，让我们将注意力转向读取和解析输入。
 - en: '**Reading Input**'
+  id: totrans-62
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**读取输入**'
 - en: We’re expecting the user to pass our program a file containing the definition
     of an affine transformation and a list of the geometric primitives to transform.
     Let’s define how these files should be formatted. We can start by reading the
     affine transformation values since we know beforehand how many values we’re expecting.
     Because there can be any number of geometric primitives, we’ll put those at the
     end.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们希望用户传递给程序一个文件，文件包含仿射变换的定义和要变换的几何图形列表。让我们定义这些文件应该如何格式化。我们可以先读取仿射变换值，因为我们事先知道预期会有多少个值。由于几何图形的数量不固定，我们将它们放在最后。
 - en: '***Formatting the Input***'
+  id: totrans-64
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***格式化输入***'
 - en: 'Here’s a nice way of formatting the affine transformation values:'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里有一个很好的格式化仿射变换值的方法：
 - en: '[PRE7]'
+  id: totrans-66
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'Here each value is defined in its own line and has a tag indicating which term
     it is. We could use a more condensed format and simply have all those values in
     a single line, like so:'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里每个值都在自己的行中定义，并且有一个标签指示它属于哪个术语。我们可以使用更简洁的格式，将所有这些值放在同一行中，像这样：
 - en: '[PRE8]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: But this has the downside of being less clear for the user. What’s the order
     of the values? Was the third number the shear in the x direction or the translation
     in the y direction? To answer this question, you’d need to open the source code
     and find out how those values are parsed. I tend to favor clarity over compactness
     in cases where the size of the input isn’t too big, so we’ll stick to the first
     approach.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 但这样做的缺点是对用户来说不够清晰。值的顺序是什么？第三个数字是 x 方向的剪切还是 y 方向的平移？要回答这个问题，你需要打开源代码，看看这些值是如何解析的。我倾向于在输入大小不大的情况下，优先考虑清晰度而非简洁性，因此我们将坚持使用第一种方法。
 - en: 'So what about the geometric primitives? For each kind of geometric primitive,
     we’ll use a different four-letter code: circ for circle, for example. This code
     will be followed by a bunch of numbers that define the primitive’s properties.'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 那么，几何原始形状怎么样呢？对于每一种几何原始形状，我们将使用不同的四个字母的代码：例如，圆形使用 circ。该代码后面会跟一堆定义原始形状属性的数字。
 - en: For a circle, the definition will look like
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于圆形，定义将如下所示
 - en: '[PRE9]'
+  id: totrans-72
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: where <*cx*> and <*cy*> are the coordinates of the center point and <*r*> is
     the value for the radius.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 <*cx*> 和 <*cy*> 是中心点的坐标，<*r*> 是半径的值。
 - en: A rectangle will look like
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个矩形看起来像
 - en: '[PRE10]'
+  id: totrans-75
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: with <*ox*> and <*oy*> defining the coordinates of its origin, <*w*> its width,
     and <*h*> its height.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 <*ox*> 和 <*oy*> 定义了原点的坐标，<*w*> 是宽度，<*h*> 是高度。
 - en: A polygon will look like
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个多边形看起来像
 - en: '[PRE11]'
+  id: totrans-78
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: where [<*x*> <*y*>] means a sequence of x and y values representing the coordinates
     of a vertex. Bear in mind that the minimum number of vertices to build a polygon
     is three; therefore, we need at least six values here.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 [<*x*> <*y*>] 表示一组 x 和 y 值，表示一个顶点的坐标。请记住，构建多边形的最小顶点数是三，因此这里需要至少六个值。
 - en: Lastly, a segment is defined like
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，一条线段的定义如下
 - en: '[PRE12]'
+  id: totrans-81
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: where <*sx*> and <*sy*> are the coordinates of the start point, and <*ex*> and
     <*ey*> are the coordinates of the end point.
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 <*sx*> 和 <*sy*> 是起点的坐标，<*ex*> 和 <*ey*> 是终点的坐标。
 - en: '***Adding Example Input***'
+  id: totrans-83
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***添加示例输入***'
 - en: Let’s fill our *test.txt* file with an example input. Remember that we redirected
     the standard input in our program to read from *test.txt*, so we’ll be using it
     to test our code. Open the file and enter the definition in [Listing 12-5](ch12.xhtml#ch12lis5).
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们用一个示例输入填充 *test.txt* 文件。记住，我们在程序中将标准输入重定向到 *test.txt*，因此我们将用它来测试我们的代码。打开文件并输入[清单
+    12-5](ch12.xhtml#ch12lis5)中的定义。
 - en: '[PRE13]'
+  id: totrans-85
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: '*Listing 12-5: Input test file*'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-5：输入测试文件*'
 - en: 'This file first defines an affine transformation as follows:'
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 该文件首先定义了一个仿射变换，如下所示：
 - en: '![Image](../images/f0314-01.jpg)'
+  id: totrans-88
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0314-01.jpg)'
 - en: It also defines a circle, two rectangles, a polygon, and a segment. [Figure
     12-3](ch12.xhtml#ch12fig3) depicts the approximate layout of these geometric primitives
     before we apply the affine transformation.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 它还定义了一个圆形、两个矩形、一个多边形和一条线段。[图 12-3](ch12.xhtml#ch12fig3) 描述了在应用仿射变换之前，这些几何原始形状的大致布局。
 - en: '![Image](../images/12fig03.jpg)'
+  id: totrans-90
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/12fig03.jpg)'
 - en: '*Figure 12-3: The geometric primitives in our test file*'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 12-3：我们测试文件中的几何原始形状*'
 - en: Now that *test.txt* has these definitions, let’s write the outline of the code
     we need to read and parse the input. Open *input.py* and enter the code in [Listing
     12-6](ch12.xhtml#ch12lis6).
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在 *test.txt* 包含了这些定义，接下来让我们编写读取和解析输入的代码大纲。打开 *input.py* 并输入[清单 12-6](ch12.xhtml#ch12lis6)中的代码。
 - en: '[PRE14]'
+  id: totrans-93
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: '*Listing 12-6: Parsing the input file starting point*'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-6：解析输入文件起始点*'
 - en: 'We first define a function, read_input, which will read both the affine transformation
     and the geometric primitives and return a tuple containing both. To do its work,
     it delegates each of the two tasks to private functions: __read_transform and
     __read_primitives. These functions return None for now. We’ll implement them in
     the next two sections.'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先定义一个函数 `read_input`，它将读取仿射变换和几何原始形状，并返回一个包含这两者的元组。为了完成这项工作，它将这两个任务委托给私有函数：__read_transform
+    和 __read_primitives。这些函数目前返回 None。我们将在接下来的两节中实现它们。
 - en: '***Parsing the Affine Transformation***'
+  id: totrans-96
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***解析仿射变换***'
 - en: The affine transformation in the input file will always span six lines, one
     line per term. We can simplify the parsing by requiring that the terms always
     appear in the same, predefined order. We’ll double-check that each of the terms
     has the appropriate name tag, just to make sure the user wrote the terms in the
     right order, but we won’t include that bit in our regular expression, which should
     make things a bit simpler.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 输入文件中的仿射变换将始终跨越六行，每个项占一行。我们可以通过要求项总是以相同的、预定义的顺序出现来简化解析过程。我们将重新检查每个项是否具有适当的名称标签，以确保用户按照正确的顺序编写项，但我们不会在正则表达式中包含这部分内容，这应该会简化一些事情。
 - en: 'The first thing we need is a regular expression that can match the floating-point
     numbers in the components of the transformation. It’s important to design this
     regular expression so that it also matches integer numbers; the decimal part should
     be optional. We also want to accept negative numbers. A regular expression combining
     all these characteristics could look like this:'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先需要一个正则表达式，它能够匹配变换组件中的浮点数。设计这个正则表达式时需要确保它也能匹配整数；小数部分应该是可选的。我们还希望接受负数。结合所有这些特征的正则表达式可能是这样的：
 - en: /-?\d+(\.\d+)?/
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: /-?\d+(\.\d+)?/
 - en: 'The regular expression has three parts. The first, -?, matches zero or one
     instances of the minus symbol. The second, \d+, matches one or more digits before
     the decimal separator: the integer part. Lastly comes (\.\d+)?, which matches
     zero or one sequence made of a dot and one or more digits. Note that we’ve used
     ? to handle our optional components.'
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个正则表达式有三个部分。第一个 -? 匹配零次或一次的减号。第二个 \d+ 匹配小数分隔符之前的一个或多个数字：整数部分。最后是 (\.\d+)?，它匹配零次或一次由点和一个或多个数字组成的序列。请注意，我们使用了?来处理可选组件。
 - en: 'Using the regular expression shown earlier, we can prepare another regular
     expression that matches all of the term values:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用前面展示的正则表达式，我们可以准备另一个正则表达式来匹配所有的项值：
 - en: /(?P<val>-?\d+(\.\d+)?)/
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: /(?P<val>-?\d+(\.\d+)?)/
 - en: This defines a group named val that will capture the term’s value using the
     previous expression.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 这定义了一个名为val的组，使用前面的表达式捕获项的值。
 - en: Let’s open *parse_transform.py* (empty at the moment) and implement the logic
     for reading and parsing the affine transformation terms. Enter the code in [Listing
     12-7](ch12.xhtml#ch12lis7).
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们打开*parse_transform.py*（此时为空），并实现读取和解析仿射变换项的逻辑。输入[清单12-7](ch12.xhtml#ch12lis7)中的代码。
 - en: '[PRE15]'
+  id: totrans-105
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: '*Listing 12-7: Parsing the affine transformation terms*'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单12-7：解析仿射变换项*'
 - en: 'We first define the regular expression to parse the affine transformation term
     values: __TRANSF_VAL_RE. Then comes the main function: parse_transform _term,
     which takes two parameters: the name of the term to validate and the line to parse.
     Each of these operations is handled by two private functions.'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先定义正则表达式来解析仿射变换项的值：__TRANSF_VAL_RE。然后是主函数：parse_transform_term，它有两个参数：要验证的项的名称和要解析的行。每个操作都由两个私有函数处理。
 - en: The function __ensure_term_name checks whether the given name is present in
     line. If it’s not, the function raises a ValueError with a helpful message to
     let the user know which term couldn’t be properly interpreted. Then, __parse_transform_term
     applies the regular expression __TRANSF_VAL_RE to match the term’s value. If it
     succeeds, the matched group val is converted to a float value and returned. An
     error is raised in the case that the string doesn’t match the regular expression.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数__ensure_term_name检查给定的名称是否出现在行中。如果没有，函数会引发一个ValueError，并附上有用的消息，告诉用户哪个项无法正确解析。然后，__parse_transform_term应用正则表达式__TRANSF_VAL_RE来匹配项的值。如果匹配成功，匹配的组val将被转换为浮动值并返回。如果字符串不符合正则表达式，则会引发错误。
 - en: 'Let’s now use this parse function in the *Input* module (as depicted by [Figure
     12-1](ch12.xhtml#ch12fig1)). Open your *input.py* file and add the following imports
     at the top:'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，让我们在*Input*模块中使用这个解析函数（如[图12-1](ch12.xhtml#ch12fig1)所示）。打开你的*input.py*文件，并在顶部添加以下导入：
 - en: '[PRE16]'
+  id: totrans-110
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Then, refactor the __read_transform function as in [Listing 12-8](ch12.xhtml#ch12lis8).
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，按照[清单12-8](ch12.xhtml#ch12lis8)中的方式重构__read_transform函数。
 - en: '[PRE17]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: '*Listing 12-8: Parsing the affine transformation*'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单12-8：解析仿射变换*'
 - en: We can easily test that our code works by editing the contents of our *main.py*
     file to match [Listing 12-9](ch12.xhtml#ch12lis9).
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过编辑我们的*main.py*文件，将其内容与[清单12-9](ch12.xhtml#ch12lis9)进行匹配，轻松测试代码是否正常工作。
 - en: '[PRE18]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: '*Listing 12-9: Main file: reading transformation test*'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单12-9：主文件：读取变换测试*'
 - en: 'If you run the application using the run configuration or the bash script we
     created before, the output in your shell should be the following:'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你使用之前创建的运行配置或bash脚本运行程序，终端输出应该如下所示：
 - en: '[PRE19]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'You want to make sure all of the values in the affine transformation we defined
     in *test.txt* are properly parsed. If you recall, those were as follows:'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 你需要确保我们在*test.txt*中定义的仿射变换的所有值都被正确解析。如果你还记得，这些值如下：
 - en: sx 1.2
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: sx 1.2
 - en: sy 1.4
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: sy 1.4
 - en: shx 2.0
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: shx 2.0
 - en: shy 3.0
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: shy 3.0
 - en: tx 50.0
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: tx 50.0
 - en: ty 25.0
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: ty 25.0
 - en: Double-check that the output you got from the program matches these values.
     If you got it all right, congratulations! If you got any unexpected value, debug
     your program until you find the culprit and fix the bug.
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 仔细检查程序输出是否与这些值匹配。如果一切正确，恭喜你！如果得到任何意外的值，请调试程序，直到找到问题并修复它。
 - en: '***Parsing the Geometric Primitives***'
+  id: totrans-127
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***解析几何图形***'
 - en: 'The geometric primitives can come in any order, and there can be any number
     of them, so we’ll need a different parsing strategy. We need to tackle two separate
     problems: we need to read an unknown number of lines from the input and then figure
     out the the type of geometric primitive for each line. Let’s solve these problems
     separately, starting with the first one.'
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 几何图形可以按任意顺序出现，而且数量不确定，因此我们需要一种不同的解析策略。我们需要解决两个独立的问题：我们需要从输入中读取不确定数量的行，然后确定每行对应的几何图形类型。让我们分别解决这两个问题，从第一个开始。
 - en: '**Reading an Unknown Number of Lines**'
+  id: totrans-129
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**读取不确定数量的行**'
 - en: To read an unknown number of lines, we can keep reading from the standard input
     until an EOFError (end of file error) is raised, signaling that we’ve exhausted
     all the available lines. Open *input.py* and refactor __read_primitives by entering
     the code in [Listing 12-10](ch12.xhtml#ch12lis10).
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 要读取不确定数量的行，我们可以不断从标准输入读取，直到引发EOFError（文件结束错误），这意味着我们已读取完所有可用行。打开*input.py*并通过在[列表
+    12-10](ch12.xhtml#ch12lis10)中输入代码来重构__read_primitives。
 - en: '[PRE20]'
+  id: totrans-131
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: '*Listing 12-10: Reading lines from standard input*'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 12-10：从标准输入读取行*'
 - en: We declare a variable has_more_lines and assign it a value of True. Then, in
     a while loop that keeps looping provided the variable remains True, we try to
     read another line from the standard input. If the operation succeeds, we print
     the line to the output; otherwise, we catch the EOFError and set has_more _lines
     to False.
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们声明一个变量has_more_lines并将其赋值为True。然后，在一个while循环中，只要变量保持True，我们就尝试从标准输入中读取另一行。如果操作成功，我们将该行打印到输出中；否则，我们捕获EOFError并将has_more_lines设置为False。
 - en: 'Run the program again to make sure all the lines from the input file are processed
     by __read_primitives and appear in the shell output. The output of your program
     should include the following lines:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 再次运行程序，确保输入文件中的所有行都由__read_primitives处理，并出现在终端输出中。程序的输出应包括以下行：
 - en: '[PRE21]'
+  id: totrans-135
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'The first problem is solved: our *input.py* module knows how to read all the
     lines from the input file. Notice that empty lines are also processed by the __read_primitives
     function; we’ll handle that in the next section. Now that we know how to read
     in the lines, let’s turn our focus to our second problem: identifying the primitive
     type for each of the read-in lines.'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个问题已经解决：我们的*input.py*模块知道如何读取输入文件中的所有行。请注意，空行也由__read_primitives函数处理；我们将在下一节处理这个问题。现在我们知道如何读取这些行，让我们将注意力转向第二个问题：识别每一行的几何图形类型。
 - en: '**Parsing the Right Primitive**'
+  id: totrans-137
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**解析正确的图形**'
 - en: 'Let’s start with one thing we know for sure: we need to have regular expressions
     for each of the geometric primitives our program understands. Earlier in the chapter,
     we defined the input format we expect for each of the primitives. We just need
@@ -582,62 +840,94 @@
     number for the properties of each of the primitives. We saw how to do this before.
     Let’s call the regex that captures a property value NUM_RE and use the following
     definition:'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们先从一个我们确定的事实开始：我们需要为程序理解的每个几何图形定义正则表达式。在本章前面，我们已经定义了我们预期的每种图形的输入格式。我们只需要将其转换为正则表达式。我们将接受整数或浮点数作为每个图形的属性值。我们之前已经看到过如何做到这一点。我们将称捕获属性值的正则表达式为NUM_RE，并使用以下定义：
 - en: /\d+(\.\d+)?/
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: /\d+(\.\d+)?/
 - en: 'Using this regex, we could have the regular expression for a circle as follows:'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这个正则表达式，我们可以为圆形定义正则表达式如下：
 - en: /circ (?P<cx>NUM_RE) (?P<cy>NUM_RE) (?P<r>NUM_RE)/
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: /circ (?P<cx>NUM_RE) (?P<cy>NUM_RE) (?P<r>NUM_RE)/
 - en: 'Here we’ve included three capture groups: cx, cy, and r. These groups coincide
     with the properties we defined for the input representation of the previous circle.
     In a similar fashion, a rectangle can be matched by the regular expression:'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里我们包括了三个捕获组：cx, cy 和 r。这些组与我们为前一个圆的输入表示所定义的属性一致。类似地，一个矩形可以通过以下正则表达式进行匹配：
 - en: /rect (?P<ox>NUM_RE) (?P<oy>NUM_RE) (?P<w>NUM_RE) (?P<h>NUM_RE)/
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: /rect (?P<ox>NUM_RE) (?P<oy>NUM_RE) (?P<w>NUM_RE) (?P<h>NUM_RE)/
 - en: 'A regular expression to match segments can be as follows:'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个匹配线段的正则表达式可以是：
 - en: /segm (?P<sx>NUM_RE) (?P<sy>NUM_RE) (?P<ex>NUM_RE) (?P<ey>NUM_RE)/
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: /segm (?P<sx>NUM_RE) (?P<sy>NUM_RE) (?P<ex>NUM_RE) (?P<ey>NUM_RE)/
 - en: 'Lastly, for the polygon, we use a slightly different approach that simplifies
     its parsing process a bit, as we’ll see now. The following is the regular expression
     we’ll use:'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，对于多边形，我们使用了一种稍微不同的方法来简化它的解析过程，正如我们现在将看到的那样。以下是我们将使用的正则表达式：
 - en: /poly (?P<coords>[\d\s\.]+)/
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: /poly (?P<coords>[\d\s\.]+)/
 - en: This regex matches strings starting with the word *poly* followed by a space
     and a sequence of digits, spaces, or dots (used as decimal separator). With it,
     we’ll match polygon definitions, as follows,
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个正则表达式匹配以*poly*开头，后跟一个空格和一串数字、空格或点（用作小数点分隔符）的字符串。通过它，我们将匹配多边形定义，具体如下：
 - en: poly 30 10 80.5 10 30 90.5
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: poly 30 10 80.5 10 30 90.5
 - en: which we’ll parse as a polygon defined by the vertices (30, 10), (80.5, 10),
     and (30, 90.5).
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将其解析为由顶点(30, 10)，(80.5, 10) 和 (30, 90.5) 定义的多边形。
 - en: Let’s include these definitions in our *parse_geom.py* file, along with some
     imports that we’ll need to create the geometric primitives. Enter the code in
     [Listing 12-11](ch12.xhtml#ch12lis11).
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们将这些定义包括到我们的*parse_geom.py*文件中，并添加一些我们需要的导入，以创建几何原语。将代码输入到[列表 12-11](ch12.xhtml#ch12lis11)中。
 - en: '[PRE22]'
+  id: totrans-152
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: '*Listing 12-11: Geometric primitives, regex definitions*'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 12-11：几何原语，正则表达式定义*'
 - en: 'We have all the regular expressions we need, so our next goal is for the appropriate
     primitive for each line we read. To solve this problem, we’ll follow the “if can
     <verb> then <verb>” pattern, in our case “if can parse then parse.” Let’s see
@@ -648,17 +938,23 @@
     them in. We’ll accompany each of the parse functions with a can_parse function.
     This second function should determine whether all of the parts the parse function
     expects are in the string: the pattern’s “can parse” part.'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经拥有了所有需要的正则表达式，所以我们的下一个目标是为每一行读取到的内容找到适当的原语。为了解决这个问题，我们将遵循“如果能<动词>，那么<动词>”的模式，在我们的情况下是“如果能解析，那么解析”。让我们看看这个是如何工作的。我们有一系列的解析函数，每个函数都期望接收到特定格式的字符串。如果它们试图从格式错误的字符串中解析几何原语，将会失败。因此，在使用这些函数之前，我们希望确保它们能够理解我们传递给它们的字符串。我们将为每个解析函数配备一个can_parse函数。这个第二个函数应该判断解析函数所期望的所有部分是否都存在于字符串中：即模式的“能解析”部分。
 - en: 'For each of our geometric primitives we need a pair of functions: one to determine
     whether the given line of text can be parsed to this primitive (the “can parse”
     part) and another to actually parse it (the “then parse” part). The code for this
     algorithm is as follows:'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于每一个几何原语，我们需要一对函数：一个用于确定给定的文本行是否可以解析为这个原语（即“能解析”部分），另一个则是实际进行解析的函数（即“然后解析”部分）。这个算法的代码如下：
 - en: '[PRE23]'
+  id: totrans-156
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: We first check whether the given line can be parsed to a circle. If the test
     passes, we proceed to parse the circle; otherwise, we continue with the next comparison,
     repeating this pattern. It may happen that none of these comparisons passes, and
@@ -668,114 +964,176 @@
     handle these problem lines. We could, for example, print them to the shell with
     a warning message, thus letting the user know there were lines the program didn’t
     understand. To keep things simple, we’ll just ignore unknown lines.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先检查给定的行是否可以解析为一个圆形。如果测试通过，我们继续解析圆形；否则，我们继续进行下一个比较，重复这个模式。可能会出现没有一个比较通过的情况，最终进入最后的else语句；我们将在handle_unknown_line函数中处理这种情况。例如，考虑那些从输入文件读取的空行，它们将无法匹配任何已知的原语。我们可以有几种方法来处理这些问题行。例如，我们可以在终端中打印它们，并附带警告消息，告知用户程序无法理解某些行。为了简化起见，我们将忽略这些未知行。
 - en: Let’s now implement the “can parse” and “parse” functions for each of our primitives.
     In *parse_geom.py*, after the regular expressions we just defined, enter the code
     in [Listing 12-12](ch12.xhtml#ch12lis12). This code handles the circle case.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们为每个原始数据实现“可以解析”和“解析”函数。在 *parse_geom.py* 中，在我们刚定义的正则表达式之后，输入 [清单 12-12](ch12.xhtml#ch12lis12)
+    中的代码。这段代码处理圆形的情况。
 - en: '[PRE24]'
+  id: totrans-159
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: '*Listing 12-12: Parsing a circle*'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-12：解析圆形*'
 - en: 'As you can see, the can_parse_circle function simply checks for a match between
     the passed-in line and the regular expression for a circle: __CIRC_RE. The parse_circle
     function goes one step further and, assuming the line matches the regular expression,
     extracts the cx and cy group values, the center of the circle. It does the same
     with the r group, the radius.'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你所看到的，can_parse_circle 函数仅检查传入的行是否与圆形的正则表达式 __CIRC_RE 匹配。parse_circle 函数更进一步，假设该行与正则表达式匹配，它提取
+    cx 和 cy 组的值，即圆心的位置。它同样处理 r 组的值，即半径。
 - en: Don’t forget that the values we extract from the regular expression capture
     groups are always strings. Since we’re expecting floating-point numbers, we need
     to do the conversion using the float function.
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 不要忘记，我们从正则表达式捕获组中提取的值始终是字符串。由于我们期望的是浮点数，因此需要使用 `float` 函数进行转换。
 - en: Let’s now implement the same functions for the case of a rectangle. After the
     code you just wrote, enter the code in [Listing 12-13](ch12.xhtml#ch12lis13).
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们为矩形的情况实现相同的函数。在你刚写的代码之后，输入 [清单 12-13](ch12.xhtml#ch12lis13) 中的代码。
 - en: '[PRE25]'
+  id: totrans-164
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: '*Listing 12-13: Parsing a rectangle*'
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-13：解析矩形*'
 - en: No surprises here. We applied the same procedure, this time extracting groups
     named ox, oy, w, and h, which define the origin point and the size of the rectangle.
     Let’s do the same for the case of a polygon. Enter the code in [Listing 12-14](ch12.xhtml#ch12lis14).
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里没有什么惊讶。我们应用了相同的程序，这次提取了名为 ox、oy、w 和 h 的组，它们定义了矩形的原点和大小。让我们对多边形的情况做同样的处理。在
+    [清单 12-14](ch12.xhtml#ch12lis14) 中输入代码。
 - en: '[PRE26]'
+  id: totrans-167
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: '*Listing 12-14: Parsing a polygon*'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-14：解析多边形*'
 - en: In this case, the mechanics are a bit different. Remember we had a slightly
     different regular expression for the case of a polygon. Since polygons are defined
     by an unknown number of vertices, the regex to match these numbers by pairs had
     to be more complicated. We also had to use a list comprehension to properly parse
     the coordinates.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，机制稍有不同。记住，我们在处理多边形时使用了略有不同的正则表达式。由于多边形由未知数量的顶点定义，因此用于匹配这些数字对的正则表达式必须更复杂。我们还需要使用列表推导式来正确解析坐标。
 - en: First, the string captured by the group named coords is split using a space
     as the separator. Thus, the string of numbers
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，名为 coords 的组捕获的字符串使用空格作为分隔符进行拆分。因此，数字字符串
 - en: '''10 20 30 40 50 60'''
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: '''10 20 30 40 50 60'''
 - en: 'would be converted to an array of strings like so:'
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 将被转换为如下所示的字符串数组：
 - en: '[''10'', ''20'', ''30'', ''40'', ''50'', ''60'']'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: '[''10'', ''20'', ''30'', ''40'', ''50'', ''60'']'
 - en: 'Then each of the strings is converted into a floating-point number:'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后每个字符串都将转换为浮点数：
 - en: '[10.0, 20.0, 30.0, 40.0, 50.0, 60.0]'
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: '[10.0, 20.0, 30.0, 40.0, 50.0, 60.0]'
 - en: 'With this array of numbers we can easily create an instance of our Polygon
     class using the factory function make_polygon_from_coords. Don’t forget to add
     the import at the top of the file:'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 有了这个数字数组，我们可以轻松地使用工厂函数 make_polygon_from_coords 创建一个 Polygon 类的实例。别忘了在文件顶部添加导入：
 - en: '[PRE27]'
+  id: totrans-177
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: The last pair of “can parse” and “parse” functions we need are for segments.
     Enter the code in [Listing 12-15](ch12.xhtml#ch12lis15).
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要的最后一对“可以解析”和“解析”函数是针对线段的。在 [清单 12-15](ch12.xhtml#ch12lis15) 中输入代码。
 - en: '[PRE28]'
+  id: totrans-179
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: '*Listing 12-15: Parsing a segment*'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-15：解析线段*'
 - en: 'Great! We now have the functions we need to apply our “if can parse then parse”
     strategy. Open *input.py* and import these functions:'
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 太棒了！我们现在有了需要的函数，可以应用我们的“如果可以解析则解析”的策略。打开 *input.py* 并导入这些函数：
 - en: '[PRE29]'
+  id: totrans-182
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: We use the asterisk import to bring all the defined functions in the *parse
     _geom* module without writing all of their names. Now let’s refactor the __read
     _primitives function ([Listing 12-16](ch12.xhtml#ch12lis16)).
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用星号导入语法，将 *parse_geom* 模块中定义的所有函数导入，而无需写出所有函数的名称。现在让我们重构 __read_primitives
+    函数（[清单 12-16](ch12.xhtml#ch12lis16)）。
 - en: '[PRE30]'
+  id: totrans-184
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: '*Listing 12-16: Reading the primitives from the input*'
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-16：从输入中读取原始数据*'
 - en: 'We start defining a dictionary named prims with an array for each type of geometric
     primitive. Each of the arrays in the dictionary is identified by a name: circs,
     rects, polys, and segs. Then comes the while loop, which iterates through all
@@ -783,57 +1141,85 @@
     functions, similar to what we did in pseudocode before. This time, whenever a
     primitive is parsed, the result is appended to the corresponding array of the
     prims dictionary. The function ends by returning prims.'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们开始定义一个名为prims的字典，其中包含每种几何原始图形的数组。字典中的每个数组都有一个名称：circs、rects、polys和segs。接下来是while循环，它遍历所有读取的行。我们没有将它们打印到控制台，而是添加了我们的解析函数，类似于之前在伪代码中所做的。每次解析到一个原始图形时，结果会被追加到prims字典中相应数组中。函数最后通过返回prims来结束。
 - en: '[Listing 12-17](ch12.xhtml#ch12lis17) contains the final result for *input.py*.
     Make sure yours looks similar.'
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单12-17](ch12.xhtml#ch12lis17)包含了*input.py*的最终结果。确保你的代码看起来类似。'
 - en: '[PRE31]'
+  id: totrans-188
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: '*Listing 12-17: Complete input-reading code*'
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单12-17：完整的输入读取代码*'
 - en: Now that we can fully parse the input, let’s move on and implement the simulation.
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们已经可以完全解析输入，让我们继续实现模拟功能。
 - en: '**Running the Simulation**'
+  id: totrans-191
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**运行模拟**'
 - en: 'Once the configuration and input are completely read and parsed, they’re both
     passed to a simulation function that we’ll write shortly. This function will also
     define the user interface: a canvas to draw the shapes and a button to start the
     animation. [Figure 12-4](ch12.xhtml#ch12fig4) shows how these components will
     be laid out.'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦配置和输入完全读取并解析，它们将一起传递给我们稍后编写的模拟函数。该函数还会定义用户界面：一个画布来绘制形状，一个按钮来启动动画。[图12-4](ch12.xhtml#ch12fig4)展示了这些组件的布局方式。
 - en: The simulation won’t start until the user clicks the play button. This way we
     prevent the simulation from starting too soon; otherwise, the user may miss the
     first part of it. Furthermore, thanks to the button, we’ll be able to rerun the
     simulation without needing to relaunch the application.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 模拟直到用户点击播放按钮才会开始。这样我们可以防止模拟过早开始；否则，用户可能会错过第一部分。此外，由于有按钮，我们还可以在不需要重新启动应用程序的情况下重新运行模拟。
 - en: '![Image](../images/12fig04.jpg)'
+  id: totrans-194
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/12fig04.jpg)'
 - en: '*Figure 12-4: The simulation’s user interface*'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图12-4：模拟的用户界面*'
 - en: '***Building the User Interface***'
+  id: totrans-196
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***构建用户界面***'
 - en: Open the empty *simulation.py* and enter the code in [Listing 12-18](ch12.xhtml#ch12lis18).
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 打开空的*simulation.py*并输入[清单12-18](ch12.xhtml#ch12lis18)中的代码。
 - en: '[PRE32]'
+  id: totrans-198
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: '*Listing 12-18: Simulation function*'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单12-18：模拟函数*'
 - en: 'We’ve defined a function simulate, which takes in the target transform, the
     geometric primitives, and the configuration for the application. Recall that the
     configuration JSON file contains the number of frames to use for the simulation
@@ -841,8 +1227,10 @@
     will get a bit long, we’ve added three header comments to easily locate each of
     the sections: the user interface definition; the update, draw, and should_continue
     functions; and the main loop.'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们定义了一个名为simulate的函数，它接收目标变换、几何原始图形和应用程序的配置。回想一下，配置的JSON文件包含了用于模拟的帧数，以及我们将在屏幕上绘制的所有内容的大小和颜色。由于该函数会稍长，我们为每个部分添加了三个头部注释，以便轻松定位：用户界面定义；更新、绘制和should_continue函数；以及主循环。
 - en: The first section of the function builds the user interface. We instantiate
     the Tk class and add a Canvas and a Button to it. Using the grid system, we place
     the canvas in the first row (row=0) and the button in the second one (row=1).
@@ -850,33 +1238,48 @@
     is pressed. This function doesn’t do much for now; all it does is tell Tkinter
     to process all pending events (tk.update()) and print a message to the shell.
     We’ll add the simulation’s updating logic here shortly.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数的第一部分构建了用户界面。我们实例化了Tk类，并向其中添加了Canvas和Button。使用网格系统，我们将画布放在第一行（row=0），按钮放在第二行（row=1）。我们还创建了一个名为start_simulation的函数，当按钮被点击时该函数会执行。现在，这个函数的作用不大；它只是告诉Tkinter处理所有待处理的事件（tk.update()）并向控制台打印一条消息。稍后我们将在这里添加模拟的更新逻辑。
 - en: 'Then we define the templates for the key simulation functions: update _system,
     redraw, and should_continue. Don’t forget to declare the appropriate input parameters
     for each of them; otherwise, Python will complain once we hand them to our main_loop
     function. We’ll fill in these functions shortly.'
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后我们定义了关键仿真函数的模板：update_system、redraw和should_continue。别忘了为每个函数声明适当的输入参数；否则，一旦我们把它们交给main_loop函数，Python会报错。我们稍后会填充这些函数的内容。
 - en: Lastly, we call redraw to render the initial state of the geometric primitives
     to the screen and start Tkinter’s main loop. To test our progress, let’s edit
     *main.py* so that it shows the user interface. Open that file and modify it so
     that it looks like [Listing 12-19](ch12.xhtml#ch12lis19).
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们调用redraw来渲染几何图形的初始状态并启动Tkinter的主循环。为了测试我们的进展，让我们编辑*main.py*，使其显示用户界面。打开该文件并修改，使其看起来像[清单
+    12-19](ch12.xhtml#ch12lis19)中的代码。
 - en: '[PRE33]'
+  id: totrans-204
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: '*Listing 12-19: Execution entry point*'
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-19：执行入口点*'
 - en: Our *main.py* file is now ready. Let’s work on the simulation code.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们的*main.py*文件已经准备好。接下来，我们来编写仿真代码。
 - en: '***Implementing the Simulation Logic***'
+  id: totrans-207
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***实现仿真逻辑***'
 - en: Let’s move on to the simulation logic. If you recall from [Chapter 7](ch07.xhtml#ch07),
     to draw the different frames of the animation, we need to generate a sequence
     of interpolated affine transformations going from the identity transformation
@@ -885,46 +1288,68 @@
     Thanks to the affine-transformation interpolation function we implemented in [Chapter
     7](ch07.xhtml#ch07), ease_in_out_interpolation, this piece of logic is a breeze.
     In *simulation.py* make the changes shown in [Listing 12-20](ch12.xhtml#ch12lis20).
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来我们进入仿真逻辑部分。如果你还记得[第7章](ch07.xhtml#ch07)，为了绘制动画的不同帧，我们需要生成一系列插值仿射变换，从单位变换到我们从输入中解析出来的目标变换。如果你需要复习这个主题，可以参考[第192页](ch07.xhtml#ch00lev1sec45)中的“插值变换”部分。得益于我们在[第7章](ch07.xhtml#ch07)中实现的仿射变换插值函数ease_in_out_interpolation，这段逻辑变得非常简单。在*simulation.py*文件中，进行[清单
+    12-20](ch12.xhtml#ch12lis20)所示的更改。
 - en: '[PRE34]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: '*Listing 12-20: Computing the transformation sequence*'
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-20：计算变换序列*'
 - en: 'The first thing that we need is the number of steps for the interpolation.
     This is just the number of frames, a value that we read from the configuration
     and stored in variable frames. To compute the interpolated sequence, we’ve defined
     a private function in the file: __make_transform_sequence. This function takes
     the target affine transformation and the number of frames and computes the sequence
     using the following transformation as the starting point:'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要做的第一件事是确定插值的步数。这就是帧数的数量，一个我们从配置中读取并存储在变量frames中的值。为了计算插值序列，我们在文件中定义了一个私有函数：__make_transform_sequence。该函数接受目标仿射变换和帧数，并以以下变换作为起点来计算序列：
 - en: '![Image](../images/f0328-01.jpg)'
+  id: totrans-212
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/f0328-01.jpg)'
 - en: Notice the translation of 20 pixels in both the horizontal and vertical axes.
     This small offset separates the axes from the canvas’s upper and left sides. The
     resulting sequence of transformations is stored in transform_seq.
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意到在水平和垂直轴上各移动了20个像素。这个小偏移将坐标轴与画布的上边和左边分开。最终计算出的变换序列存储在transform_seq中。
 - en: 'Let’s now dive into the key functions for the simulation: update_system, redraw,
     and should_continue. Edit *simulation.py* to look like the code in [Listing 12-21](ch12.xhtml#ch12lis21).'
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们深入研究仿真的关键函数：update_system、redraw和should_continue。编辑*simulation.py*，使其与[清单
+    12-21](ch12.xhtml#ch12lis21)中的代码相同。
 - en: '[PRE35]'
+  id: totrans-215
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: '*Listing 12-21: Implementing drawing and updating*'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-21：实现绘制和更新*'
 - en: After the sequence of transformations we recently computed, we instantiate our
     CanvasDrawing class, passing in the Tkinter canvas and the first affine transformations
     ➊. Note that we imported the class at the top of the file and that the first transformation
     on the sequence is the initial transformation for the geometric primitives.
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们最近计算的变换序列之后，我们实例化了CanvasDrawing类，传入Tkinter画布和第一个仿射变换➊。注意，我们在文件顶部导入了这个类，并且变换序列中的第一个变换是几何图形的初始变换。
 - en: Then, we implement the update_system function. This function updates the drawing’s
     transformation according to the current frame number ➋ and invokes tk’s update
     method. To compute the index used to obtain the corresponding transformation,
@@ -933,111 +1358,162 @@
     particular simulation, it’s not the system (made up of the geometric primitives)
     that gets updated every frame but rather the affine transformation, a property
     of the CanvasDrawing class, that gets a new value.
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们实现 `update_system` 函数。该函数根据当前帧数 ➋ 更新绘图的变换，并调用 Tk 的 `update` 方法。为了计算用于获取相应变换的索引，我们从帧数中减去
+    1。请记住，帧是从 1 开始计数的，而 Python 列表的第一个索引是 0。重要的是要意识到，在这个特定的模拟中，并不是由几何原始图形组成的系统每帧都会更新，而是
+    `CanvasDrawing` 类的一个属性——仿射变换——会获得一个新的值。
 - en: Next is the redraw function ➌. It first clears the canvas and sets the size
     and color for the outlines of the shapes we’re drawing. These two values come
     from the configuration file. Then, it iterates through all the primitives in the
     dictionary, calling the corresponding draw command from the CanvasDrawing class.
     Thanks to our previous work on that class, drawing to the canvas is that simple.
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来是 `redraw` 函数 ➌。它首先清空画布并设置我们绘制的形状的轮廓大小和颜色。这两个值来自配置文件。然后，它遍历字典中的所有基本图形，调用
+    `CanvasDrawing` 类中的相应绘制命令。得益于我们之前在该类中的工作，绘制到画布上变得如此简单。
 - en: Last is the implementation of should_continue that simply compares the current
     frame number to the total number of frames for the animation ➍.
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后是 `should_continue` 的实现，它仅仅是将当前帧数与动画的总帧数进行比较 ➍。
 - en: '***Drawing the Axes***'
+  id: totrans-221
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***绘制坐标轴***'
 - en: We’re almost there! Let’s add some code to draw the x- and y-axes as well as
     a call to the simulation’s main loop (not to be confused with Tkinter’s mainloop
     function). The axes will provide a good visual reference for how the space is
     transformed. Include the changes in [Listing 12-22](ch12.xhtml#ch12lis22).
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们快完成了！让我们添加一些代码来绘制 x 轴和 y 轴，并调用模拟的主循环（不要与 Tkinter 的 `mainloop` 函数混淆）。坐标轴将提供一个良好的视觉参考，帮助我们理解空间是如何变换的。请将这些更改包含在
+    [清单 12-22](ch12.xhtml#ch12lis22) 中。
 - en: '[PRE36]'
+  id: totrans-223
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: '*Listing 12-22: Drawing the axes and main loop*'
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-22：绘制坐标轴和主循环*'
 - en: 'First comes the most important addition: the inclusion of a call to the main_loop
     function ➊. We pass in the functions defined next to take care of the updating,
     redrawing, and continuation of the simulation. Make sure you import the main_loop
     function at the top of the file.'
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先是最重要的新增内容：调用 `main_loop` 函数 ➊。我们传入接下来定义的函数来处理更新、重绘和模拟的继续。确保在文件顶部导入 `main_loop`
+    函数。
 - en: Next come the definitions of x_axis ➋ and y_axis ➌, both defined as segments.
     Each length is a parameter we read from the configuration file and store in axis_length.
     To draw the axes, we need to take into account that they have a different stroke
     width and color than the other geometry. We’ve added the code for these properties
     in the redraw function, just below the call to clear_drawing.
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来是定义 `x_axis` ➋ 和 `y_axis` ➌，它们都被定义为线段。每个长度都是我们从配置文件中读取的参数，并存储在 `axis_length`
+    中。为了绘制坐标轴，我们需要考虑到它们的笔触宽度和颜色与其他几何图形不同。我们已将这些属性的代码添加到了 `redraw` 函数中，就在调用 `clear_drawing`
+    之后。
 - en: 'After setting the corresponding outline width and color, we use our CanvasDrawing
     class’s draw_arrow method, passing it the segment that defines the x_axis geometry
     and the size of the arrow ➍. The size of the arrow, once again, comes from the
     configuration. We have to add the same code to draw y_axis ➎, but this time only
     the stroke color needs to be updated: the axes are drawn using the same stroke
     width.'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 在设置了相应的轮廓宽度和颜色之后，我们使用 `CanvasDrawing` 类的 `draw_arrow` 方法，将定义 `x_axis` 几何的线段和箭头的大小
+    ➍ 传递给它。箭头的大小同样来自配置文件。我们需要添加相同的代码来绘制 `y_axis` ➎，但这次只需更新笔触颜色：两轴使用相同的笔触宽度绘制。
 - en: Well, we’ve been incrementally writing a lot of code. Just for reference, [Listing
     12-23](ch12.xhtml#ch12lis23) shows the final *simulation.py* file. Take a look
     and make sure you got it all.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 好的，我们已经逐步编写了很多代码。仅供参考，[清单 12-23](ch12.xhtml#ch12lis23) 展示了最终的 *simulation.py*
+    文件。看一下并确保你已经理解了全部内容。
 - en: '[PRE37]'
+  id: totrans-229
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: '*Listing 12-23: Complete simulation code*'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-23：完整的模拟代码*'
 - en: At last! We’re now ready to see the result, so execute the application using
     the run configuration or the bash script. A window with the geometric primitives
     as they were defined in the input file should appear (see the left image in [Figure
     12-5](ch12.xhtml#ch12fig5)). Notice also the x- and y-axes, which we drew as arrows;
     can you spot the 20 pixels of separation we gave the origin?
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后！我们现在准备看到结果了，因此请使用运行配置或bash脚本执行该应用程序。一个显示几何原语的窗口应当出现，原语如输入文件中所定义（参见[图 12-5](ch12.xhtml#ch12fig5)中的左侧图片）。还要注意我们绘制的x轴和y轴，它们以箭头的形式显示；你能发现我们给原点留出的20像素的间距吗？
 - en: Now click **Play** and watch the result. The simulation should start slow, then
     build some speed, and finally decelerate toward its end. We achieved this effect
     using ease-in-out interpolation, which makes the animation look smooth and realistic.
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在点击**播放**并观察结果。模拟应该开始得较慢，然后逐渐加速，最后在结束时减速。我们通过使用“ease-in-out”插值方法实现了这一效果，使动画看起来平滑且逼真。
 - en: '![Image](../images/12fig05.jpg)'
+  id: totrans-233
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/12fig05.jpg)'
 - en: '*Figure 12-5: Simulating an affine transformation*'
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 12-5：仿射变换的模拟*'
 - en: Now is a good time to go back to “Interpolating Transformations” on [page 192](ch07.xhtml#ch00lev1sec45)
     and give it a second read. After seeing the ease-in-out effect in action, you
     can build a solid visual intuition for [Equation 7.11](ch07.xhtml#ch07eqa11) ([page
     194](ch07.xhtml#ch07eqa11)), which defines the pace for the animation you just
     witnessed.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在是回顾[第192页](ch07.xhtml#ch00lev1sec45)上“插值变换”部分并再次阅读的好时机。在看到“ease-in-out”效果的实际应用后，你可以建立起对[方程7.11](ch07.xhtml#ch07eqa11)（[第194页](ch07.xhtml#ch07eqa11)）的直观理解，该方程定义了你刚刚看到的动画的节奏。
 - en: Take some time to play with your application. Change some parameters to see
     the effect on the resulting simulation. For example, try to change the offset
     of the initial affine transformation (the translation components tx and ty). Play
     with the stroke widths and colors in the configuration file, and edit the number
     of frames. Another interesting exercise is editing the affine transformation and
     the geometric primitives defined in the input file *test.txt*.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 花点时间玩一下你的应用程序。改变一些参数，看看对模拟结果的影响。例如，尝试更改初始仿射变换的偏移量（平移组件 tx 和 ty）。在配置文件中调整线条宽度和颜色，编辑帧数。另一个有趣的练习是编辑仿射变换和输入文件*test.txt*中定义的几何图形。
 - en: '**Summary**'
+  id: totrans-237
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**总结**'
 - en: In this chapter, we developed our second application, one that animates the
     effect of affine transformations. Like before, we used regular expressions to
     parse the input and used our geometry library for the heavy lifting. This time
     the output was an animation, which, thanks to the work we did in the previous
     chapters, was straightforward to implement.
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们开发了第二个应用程序，动画效果展示了仿射变换的效果。像之前一样，我们使用正则表达式解析输入，并利用我们的几何库进行复杂计算。这次的输出是一个动画，由于前几章的工作，这一实现变得非常简单。
 - en: 'This chapter concludes [Part III](part03.xhtml#part03) of the book. In this
     part, we learned to create SVG vector graphics and animated simulations from our
     geometric primitives, key skills for building good engineering software. We used
@@ -1045,11 +1521,15 @@
     passing through three given points and one that animates geometric primitives
     under an affine transformation. Those were simple applications, but they illustrate
     how powerful geometric and visual primitives really are.'
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章结束了[第三部分](part03.xhtml#part03)的内容。在这一部分中，我们学习了如何从几何原语创建SVG矢量图形和动画模拟，这是构建优质工程软件的关键技能。我们运用这些知识构建了两个简单的应用程序：一个用来确定通过三点的圆，另一个用于在仿射变换下进行几何原语动画。这些虽然是简单的应用，但它们展示了几何和视觉原语的强大功能。
 - en: In the next part of the book, we’ll look at how to solve systems of equations,
     another key piece for any engineering application. That is the last tool our *Mechanics*
     package needs. After exploring that topic, the rest of the book will be focused
     on solving mechanics problems using only the powerful primitives we coded ourselves.
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 在书的下一部分，我们将研究如何解方程组，这是任何工程应用中的另一个关键内容。这是我们*力学*包所需的最后一项工具。在探讨了这一主题后，书的其余部分将专注于使用我们自己编写的强大原语解决力学问题。
