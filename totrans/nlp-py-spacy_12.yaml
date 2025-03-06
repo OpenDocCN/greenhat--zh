@@ -1,46 +1,67 @@
 - en: '**12'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '**12'
 - en: IMPLEMENTING WEB DATA AND PROCESSING IMAGES**
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 实现网络数据和处理图像**
 - en: '![Image](../Images/comm1.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../Images/comm1.jpg)'
 - en: Real-life chatbots should respond to a variety of inputs, such as questions
     from users on unfamiliar topics or even images sent through messaging apps. For
     example, chatbot app users can send not only text messages, but also photos, and
     the bot is supposed to react appropriately to both.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 现实中的聊天机器人应该能够应对各种输入，例如用户提出的关于不熟悉主题的问题，甚至是通过消息应用程序发送的图片。例如，聊天机器人应用程序的用户不仅可以发送文本消息，还可以发送照片，而机器人应该能够对这两者做出适当的反应。
 - en: This chapter provides some examples of how to use other libraries from Python’s
     AI ecosystem when developing a bot application. First, you’ll combine spaCy with
     Wikipedia to find information about keywords taken from a user’s question. Next,
     you’ll obtain descriptive tags for a submitted image with the help of Clarifai,
     an image and video recognition tool, so your app can interpret visual content.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章提供了一些使用 Python 的 AI 生态系统中其他库的示例，用于开发机器人应用程序。首先，你将结合 spaCy 和维基百科来查找用户问题中提取的关键词的信息。接下来，你将借助
+    Clarifai（一种图像和视频识别工具）来获取提交图像的描述性标签，从而让你的应用程序能够解读视觉内容。
 - en: Then you’ll put all the components together to build a Telegram bot that can
     generate relevant responses to text and images by extracting information from
     Wikipedia.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后你会将所有组件整合在一起，构建一个 Telegram 机器人，通过从维基百科提取信息来生成对文本和图像的相关回应。
 - en: '**How It Works**'
+  id: totrans-6
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**工作原理**'
 - en: '[Figure 12-1](../Text/ch12.xhtml#ch12fig01) shows a diagram of the bot we’ll
     build in this chapter. The bot is designed to understand text messages and pictures,
     and respond with text from Wikipedia.'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 12-1](../Text/ch12.xhtml#ch12fig01)展示了我们将在本章中构建的机器人的示意图。这个机器人旨在理解文本信息和图片，并用来自维基百科的文本进行回应。'
 - en: '![image](../Images/fig12-1.jpg)'
+  id: totrans-8
   prefs: []
   type: TYPE_IMG
+  zh: '![image](../Images/fig12-1.jpg)'
 - en: '*Figure 12-1: How a bot that can process text messages and pictures works*'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 12-1：一个能够处理文本消息和图片的机器人的工作原理*'
 - en: Using this bot, the user can post either a text message or a picture. If the
     post is a picture, the bot sends it to an image recognition tool for processing.
     This tool returns a verbal description of the picture in the form of descriptive
@@ -50,20 +71,27 @@
     and return a piece of it to the user. You can use this scenario in chatbots you
     design to hold a conversation on various topics for fun, learning, or personal
     use.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这个机器人，用户可以发布文本消息或图片。如果发布的是图片，机器人会将其发送到图像识别工具进行处理。该工具会返回一份以描述性标签形式呈现的图片文字描述。如果发布的是文本消息，机器人会使用像
+    spaCy 这样的自然语言处理工具从中提取关键词或关键短语。然后，机器人使用这个标签或关键短语来查找维基百科（或网络其他地方）上的最相关内容，并返回一部分给用户。你可以在你设计的聊天机器人中使用这一场景来进行各种主题的对话，供娱乐、学习或个人使用。
 - en: '**Making Your Bot Find Answers to Questions from Wikipedia**'
+  id: totrans-11
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**让你的机器人从维基百科中找到问题的答案**'
 - en: Let’s start with a discussion of techniques that you can implement in your bot
     to make it interpret a wide range of text messages. Previous chapters talked about
     how bots used for business purposes typically ask for certain information from
     the user and then use the answer to fill an order or booking request. In contrast,
     a bot designed to hold informal conversations should be able to answer a diverse
     range of user questions.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们从讨论一些可以在你的机器人中实现的技术开始，这些技术能让机器人解读各种各样的文本信息。前几章讨论了用于商业目的的机器人通常会向用户索要某些信息，然后用回答来填充订单或预定请求。相比之下，旨在进行非正式对话的机器人应该能够回答各种各样的用户问题。
 - en: One way to help a chatbot answer user questions is to choose a keyword or keyphrase
     in the question that provides a clue as to what information should be included
     in the answer. Once you have this keyword or keyphrase, you can use it to search
@@ -71,17 +99,24 @@
     lets you access and parse Wikipedia content programmatically, performing a search
     for a keyword to retrieve content from the most relevant Wikipedia article. The
     following sections describe how to do this.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 帮助聊天机器人回答用户问题的一种方法是从问题中选择一个关键词或关键短语，这可以提供有关答案中应包含哪些信息的线索。一旦你获得了这个关键词或关键短语，就可以使用像维基百科的
+    Python API 这样的工具来搜索答案。维基百科的 API 让你能够以编程方式访问和解析维基百科内容，进行关键词搜索，从而从最相关的维基百科文章中获取内容。接下来的章节将描述如何做到这一点。
 - en: 'But before proceeding to the examples, make sure you’re using one of the most
     recent spaCy models, because the accuracy of the dependency parsing is higher
     in newer versions. You can check the version of your current model using the following
     command:'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 但在继续之前，请确保你使用的是最新的spaCy模型，因为新版本的依赖解析准确度更高。你可以使用以下命令检查当前模型的版本：
 - en: nlp.meta['version']
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: nlp.meta['version']
 - en: Then visit the *[https://explosion.ai/demos/displacy/](https://explosion.ai/demos/displacy/)*
     demo page (discussed in [Chapter 7](../Text/ch07.xhtml#ch07)) to see the latest
     stable versions of spaCy models available. Alternatively, you can visit spaCy’s
@@ -90,213 +125,321 @@
     scheme. Based on that information, you might want to update the model you currently
     use. Refer to [Chapter 2](../Text/ch02.xhtml#ch02) for details on how to download
     and install a spaCy model.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后访问*[https://explosion.ai/demos/displacy/](https://explosion.ai/demos/displacy/)*演示页面（在[第7章](../Text/ch07.xhtml#ch07)中讨论过），查看最新稳定版的spaCy模型。或者，你也可以访问spaCy的文档页面*[https://spacy.io/usage/](https://spacy.io/usage/)*来查看最新版本的spaCy。spaCy及其模型遵循相同的版本管理规则。根据这些信息，你可能想要更新你当前使用的模型。有关如何下载和安装spaCy模型的详细信息，请参见[第2章](../Text/ch02.xhtml#ch02)。
 - en: '***Determining What the Question Is About***'
+  id: totrans-17
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***确定问题的主题***'
 - en: 'Some words in a question are more important than others when you’re trying
     to determine what the speaker is asking about. Sometimes it’s enough to look at
     a single word in the question, such as the noun that follows a preposition. For
     example, a user might use any of the following questions to ask the bot to find
     some information about rhinos:'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 在试图确定说话者想要问什么时，问题中的某些词比其他词更为重要。有时，观察问题中的一个词就足够了，比如跟在介词后面的名词。例如，用户可能会使用以下任何问题来要求机器人查找关于犀牛的信息：
 - en: Have you heard of rhinos? Are you familiar with rhinos? What could you tell
     me about rhinos?
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 你听说过犀牛吗？你了解犀牛吗？你能告诉我关于犀牛的什么信息？
 - en: Let’s look at what the dependency parsing of such sentences might look like.
     [Figure 12-2](../Text/ch12.xhtml#ch12fig02) shows a graphical representation of
     the parsing of the first sentence.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看看这些句子的依赖解析可能是什么样子。[图12-2](../Text/ch12.xhtml#ch12fig02)展示了第一个句子解析的图形表示。
 - en: '![image](../Images/fig12-2.jpg)'
+  id: totrans-21
   prefs: []
   type: TYPE_IMG
+  zh: '![image](../Images/fig12-2.jpg)'
 - en: '*Figure 12-2: The dependency parsing of a sentence containing an object of
     a preposition*'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图12-2：包含介词宾语的句子的依赖解析*'
 - en: 'The parsing illustrates that in this kind of question you can get the word
     “rhinos” by extracting the object of the preposition. “Rhinos” would be the most
     helpful word in the question for finding an answer. The following code fragment
     shows how you might extract the first occurrence of an object of the preposition
     in the question:'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 解析表明，在这种类型的问题中，通过提取介词的宾语，可以得到“犀牛”一词。“犀牛”将是问题中最有助于找到答案的词。以下代码片段展示了如何提取问题中第一个出现的介词宾语：
 - en: doc = nlp(u"Have you heard of rhinos?")
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: doc = nlp(u"你听说过犀牛吗？")
 - en: 'for t in doc:'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for t in doc:'
 - en: 'if t.dep_ == ''pobj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if t.dep_ == ''pobj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
 - en: phrase = (' '.join([child.text for child in t.lefts]) + ' ' + t.text).lstrip()
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: phrase = (' '.join([child.text for child in t.lefts]) + ' ' + t.text).lstrip()
 - en: break
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: break
 - en: 'In the code, we also pick up the left children of the object of the preposition,
     because the object might have important modifiers, as in the following example:
     “What can you say about wild mountain goats?” When given this question, the code
     should assign “wild mountain goats” to the phrase variable.'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 在代码中，我们还会提取介词宾语的左侧子节点，因为宾语可能有重要的修饰词，如以下示例：“你能说些什么关于野生山羊？”对于这个问题，代码应该将“野生山羊”赋值给phrase变量。
 - en: Notice the use of the break statement at the end, which guarantees that only
     the first object of a preposition in a sentence will be picked up. For example,
     in the sentence, “Tell me about the United States of America,” the phrase “the
     United States” would be picked up, but not “America.”
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意在末尾使用了break语句，它确保只会提取句子中第一个介词宾语。例如，在句子“告诉我关于美利坚合众国的事”中，短语“美利坚合众国”会被提取，但“美国”则不会。
 - en: But this is not always desirable behavior. What if a user asked, “Tell me about
     the color of the sky.”? This is where we need to apply more complicated logic.
     In particular, we might want to to pick up any prepositional object that follows
     the first prepositional object, provided the latter is dependent on the former.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 但这并不总是理想的行为。如果用户问：“告诉我天空的颜色。”怎么办？这时我们需要应用更复杂的逻辑。特别是，我们可能希望获取紧跟第一个介词对象后的任何介词对象，前提是后者依赖于前者。
 - en: 'Here is how you might implement this logic:'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是你如何实现这一逻辑的方法：
 - en: doc = nlp(u"Tell me about the color of the sky.")
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: doc = nlp(u"告诉我天空的颜色。")
 - en: 'for t in doc:'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for t in doc:'
 - en: 'if t.dep_ == ''pobj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if t.dep_ == ''pobj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
 - en: phrase = (' '.join([child.text for child in t.lefts]) + ' ' + t.text).lstrip()
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: phrase = (' '.join([child.text for child in t.lefts]) + ' ' + t.text).lstrip()
 - en: 'if bool([prep for prep in t.rights if prep.dep_ == ''prep'']):'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if bool([prep for prep in t.rights if prep.dep_ == ''prep'']):'
 - en: prep = list(t.rights)[0]
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: prep = list(t.rights)[0]
 - en: pobj = list(prep.children)[0]
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: pobj = list(prep.children)[0]
 - en: phrase = phrase + ' ' + prep.text + ' ' + pobj.text
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: phrase = phrase + ' ' + prep.text + ' ' + pobj.text
 - en: break
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: break
 - en: Note that this code will process a prepositional object that is a dependent
     of the first prepositional object only if the former exists in the sentence. Otherwise,
     this code will work the same as the code shown previously.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，如果第一个介词对象的依赖项存在，代码将处理作为第一个介词对象依赖项的介词对象。否则，代码将与之前展示的代码相同。
 - en: 'Now let’s look at another type of question in the following examples where
     two words, a verb and its subject, provide the best information about what a user
     wants in response to the questions:'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们来看一下以下示例中的另一种问题类型，在这些示例中，动词及其主语为回答问题提供了最佳信息：
 - en: Do you know what an elephant eats? Tell me how dolphins sleep. What is an API?
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 你知道大象吃什么吗？告诉我海豚如何睡觉。什么是API？
 - en: '[Figure 12-3](../Text/ch12.xhtml#ch12fig03) shows what a dependency parsing
     for one of these sentences might look like.'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图12-3](../Text/ch12.xhtml#ch12fig03) 展示了其中一个句子的依赖解析可能是什么样子。'
 - en: '![image](../Images/fig12-3.jpg)'
+  id: totrans-46
   prefs: []
   type: TYPE_IMG
+  zh: '![image](../Images/fig12-3.jpg)'
 - en: '*Figure 12-3: The dependency parsing of a sentence in which a subject/verb
     pair is the most informative element for discovering what the speaker wants to
     know*'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图12-3：句子的依赖解析，其中主语/动词对是发现说话者想知道什么的最有信息量的元素*'
 - en: 'Looking through the parsing shown in the figure, notice that the subject/verb
     pair that occurs at the end of the sentence is the most informative when trying
     to determine what the speaker asks about. Programmatically, you can extract the
     subject and verb pair from a sentence using the following code:'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过查看图中的解析，可以注意到，出现在句子末尾的主语/动词对在确定说话者询问的内容时是最具信息量的。程序化地，你可以通过以下代码从句子中提取主语和动词对：
 - en: doc = nlp(u"Do you know what an elephant eats?")
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: doc = nlp(u"你知道大象吃什么吗？")
 - en: 'for t in reversed(doc):'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for t in reversed(doc):'
 - en: 'if t.dep_ == ''nsubj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if t.dep_ == ''nsubj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
 - en: phrase = t.text + ' ' + t.head.text
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: phrase = t.text + ' ' + t.head.text
 - en: break
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: break
 - en: 'While examining this code, notice that we loop backward from the end of the
     sentence using Python’s reversed() function. The reason is that we need to pick
     up the last subject/verb pair in the sentence, as in this example: “Do you know
     what an elephant eats?” In this sentence, we’re interested in the phrase “elephant
     eats” rather than “you know,” which is also a subject/verb pair.'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 在检查这段代码时，请注意我们使用 Python 的 `reversed()` 函数从句子的末尾向后循环。原因是我们需要获取句子中的最后一个主语/动词对，如这个例子：“你知道大象吃什么吗？”在这个句子中，我们关注的是“elephant
+    eats”短语，而不是“you know”，后者也是一个主语/动词对。
 - en: 'Additionally, in some questions, the last noun in the sentence is the direct
     object of a verb that matters to determine what the question is about, as in the
     following example:'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，在某些问题中，句子中的最后一个名词是动词的直接宾语，这对于确定问题的内容至关重要，如以下示例所示：
 - en: How to feed a cat?
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 如何喂猫？
 - en: In this sentence, extracting the direct object “cat” wouldn’t be sufficient,
     because we also need the word “feed” to understand the question. Ideally, we’d
     generate the keyphrase “feeding a cat.” That is, we’d replace the infinitive “to”
     form of the verb with a gerund by adding “-ing,” optimizing the keyphrase for
     an internet search. [Figure 12-4](../Text/ch12.xhtml#ch12fig04) shows the dependency
     parsing for this sentence.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个句子中，提取直接宾语“cat”并不足够，因为我们还需要动词“feed”来理解问题。理想情况下，我们会生成关键词短语“feeding a cat”。也就是说，我们通过添加“-ing”将动词的不定式形式“to”替换为动名词，从而优化关键词以进行互联网搜索。[图12-4](../Text/ch12.xhtml#ch12fig04)展示了这个句子的依存句法分析。
 - en: '![image](../Images/fig12-4.jpg)'
+  id: totrans-58
   prefs: []
   type: TYPE_IMG
+  zh: '![image](../Images/fig12-4.jpg)'
 - en: '*Figure 12-4: Dependency parsing of a sentence with a verb/direct object pair
     as the most informative phrase*'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图12-4：包含动词/直接宾语对的句子依存句法分析作为最有信息量的短语*'
 - en: This syntactic parsing shows that extracting the required phrase is easy, because
     the direct object and its transitive verb are connected with a direct link.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种句法分析表明，提取所需短语非常简单，因为直接宾语及其及物动词之间有直接的联系。
 - en: 'The code implementation for the extraction discussed here might look like this:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里讨论的提取代码实现可能如下所示：
 - en: doc = nlp(u"How to feed a cat?")
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: doc = nlp(u"How to feed a cat?")
 - en: 'for t in reversed(doc):'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for t in reversed(doc):'
 - en: 'if t.dep_ == ''dobj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if t.dep_ == ''dobj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
 - en: phrase = t.head.lemma_ + 'ing' + ' ' + t.text
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: phrase = t.head.lemma_ + 'ing' + ' ' + t.text
 - en: break
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: break
 - en: 'In this case, we once again loop backward from the end of the sentence. To
     understand why, consider the following sentence: “Tell me something about how
     to feed a cat.” It contains two verb/direct object pairs, but we’re interested
     only in the one that occurs at the end of the sentence.'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，我们再次从句子的末尾向前循环。为了理解为什么这么做，请考虑以下句子：“Tell me something about how to feed
+    a cat。”它包含两个动词/直接宾语对，但我们只对句子末尾的那一个感兴趣。
 - en: '***Try This***'
+  id: totrans-68
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***试试这个***'
 - en: Modify the code in the previous section that extracts the phrase “elephant eats”
     so the keyphrase being extracted from the sentence includes possible modifiers
     of the subject, excluding a possible determiner. For example, in the sentence,
@@ -305,113 +448,176 @@
     you might implement this, look at the code that follows [Figure 12-2](../Text/ch12.xhtml#ch12fig02).
     In that code, you picked up modifiers for the object of the preposition being
     extracted.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 修改上一节中提取短语“elephant eats”的代码，使得从句子中提取的关键词包含可能修饰主语的词，排除可能的限定词。例如，在句子“Tell me
+    how a female cheetah hunts”中，您的脚本应返回“female cheetah hunts”，并从名词短语中去除限定词“a”。查看[图12-2](../Text/ch12.xhtml#ch12fig02)中代码的示例，您会看到如何为提取的介词宾语获取修饰词。
 - en: 'Also, add a check to see whether the verb included in the phrase being extracted
     has a direct object, and if so, append the direct object to the keyphrase. For
     example, the question “Do you know how many eggs a sea turtle lays?” should give
     you the following keyphrase: “sea turtle lays eggs.”'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，添加检查以查看提取的短语中包含的动词是否有直接宾语，如果有，将直接宾语附加到关键词中。例如，问题“Do you know how many eggs
+    a sea turtle lays?”应该生成以下关键词：“sea turtle lays eggs”。
 - en: '***Using Wikipedia to Answer User Questions***'
+  id: totrans-71
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***使用维基百科回答用户问题***'
 - en: Now that you have a keyphrase that can help you find the information needed
     to generate a relevant response to the user’s question, you need to retrieve the
     information. A bot can get answers to user questions from several places, and
     the proper source to use depends on the application, but Wikipedia is a good place
     to start. The wikipedia Python library (*[https://pypi.org/project/wikipedia/](https://pypi.org/project/wikipedia/)*)
     allows you to access Wikipedia articles from within your Python code.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，您有了一个关键词，可以帮助您找到生成相关回复所需的信息，接下来需要获取这些信息。一个机器人可以从多个地方获取用户问题的答案，选择哪个源取决于应用程序，但维基百科是一个不错的起点。维基百科
+    Python 库（*[https://pypi.org/project/wikipedia/](https://pypi.org/project/wikipedia/)*)
+    允许您在 Python 代码中访问维基百科文章。
 - en: 'You can install the library via pip as follows:'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以通过以下方式使用 pip 安装该库：
 - en: pip install wikipedia
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: pip install wikipedia
 - en: To test the newly installed library, use the following script, which relies
     on a code fragment from the previous section to extract a keyword from a submitted
     sentence. Then it uses that keyword as a Wikipedia search term.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了测试新安装的库，使用以下脚本，它依赖前一节的代码片段从提交的句子中提取关键字。然后，它将这个关键字用作维基百科的搜索词。
 - en: import spacy
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入 spacy
 - en: import wikipedia
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入 wikipedia
 - en: nlp = spacy.load('en')
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: nlp = spacy.load('en')
 - en: doc = nlp(u"What do you know about rhinos?")
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: doc = nlp(u"你知道关于犀牛的哪些信息？")
 - en: 'for t in doc:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于 t 在 doc 中：
 - en: 'if t.dep_ == ''pobj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 t.dep_ == 'pobj' 且（t.pos_ == 'NOUN' 或 t.pos_ == 'PROPN'）：
 - en: ➊ phrase = (' '.join([child.text for child in t.lefts]) + ' ' + t.text).
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: ➊ phrase = (' '.join([child.text for child in t.lefts]) + ' ' + t.text)。
 - en: lstrip()
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: lstrip()
 - en: break
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: break
 - en: ➋ wiki_resp = wikipedia.page(phrase)
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: ➋ wiki_resp = wikipedia.page(phrase)
 - en: 'print("Article title: ", wiki_resp.title)'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 'print("文章标题: ", wiki_resp.title)'
 - en: 'print("Article url: ", wiki_resp.url)'
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 'print("文章链接: ", wiki_resp.url)'
 - en: 'print("Article summary: ", wikipedia.summary(phrase, sentences=1))'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 'print("文章摘要: ", wikipedia.summary(phrase, sentences=1))'
 - en: In this script, we extract a keyword or keyphrase from the submitted sentence
     ➊ and send it to the wikipedia.page() function, which returns the most relevant
     article for the given keyword ➋. Then we simply print out the article’s title,
     URL, and first sentence.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个脚本中，我们从提交的句子 ➊ 中提取关键字或关键短语，并将其发送到 wikipedia.page() 函数，这个函数返回与给定关键字最相关的文章
+    ➋。然后我们简单地打印出文章的标题、网址和第一句话。
 - en: 'The output this script generates should look like this:'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个脚本生成的输出应该如下所示：
 - en: Article title:  Rhinoceros
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: '文章标题: Rhinoceros'
 - en: Article url:  https://en.wikipedia.org/wiki/Rhinoceros
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: '文章链接: https://en.wikipedia.org/wiki/Rhinoceros'
 - en: Article summary:  A rhinoceros (, from Greek  rhinokero–s, meaning 'nose-horned',
     from  rhis,
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: '文章摘要: 犀牛（来自希腊语 rhinokero–s，意为“鼻角”，其中 rhis 意为“鼻子”，keras 意为“角”），常简称为犀牛，是一种...'
 - en: meaning 'nose', and  keras, meaning 'horn'), commonly abbreviated to rhino,
     is one of ...
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 意为“鼻子”，keras，意为“角”），通常简称为犀牛，是一种...
 - en: '***Try This***'
+  id: totrans-95
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***试试看***'
 - en: Enhance the script in the previous section so it can “see” the children of the
     first prepositional object and the dependent prepositional objects. For example,
     in the question, “Have you heard of fried eggs with yellow tomatoes?” it should
     extract the keyphrase “fried eggs with yellow tomatoes.”
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 增强前一节的脚本，使其能够“查看”第一个介词对象的子节点以及依赖的介词对象。例如，在问题“你听说过黄番茄炒蛋吗？”中，它应该提取关键短语“黄番茄炒蛋”。
 - en: '**Reacting to Images Sent in a Chat**'
+  id: totrans-97
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**对聊天中发送的图片进行反应**'
 - en: 'In addition to text messages, users of messenger apps often post images. Other
     people usually respond to these with comments about what is shown in the picture.
     For example, a user posts a photo of grapes, to which another user leaves the
@@ -420,193 +626,294 @@
     an image that the bot can use in processing. This is where you need an image recognition
     tool, like Clarifai, which provides built-in models trained with photos from different
     domains, such as apparel, travel, or celebrities.'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了文本消息外，消息应用的用户通常还会发布图片。其他人通常会就图片中的内容发表评论。例如，某用户发布了一张葡萄的照片，另一个用户评论道：“我喜欢水果。它含有丰富的纤维和维生素。”你如何教一个机器人做同样的事情？一种方法是为图片生成描述标签，机器人可以利用这些标签进行处理。这时你需要一个图像识别工具，比如
+    Clarifai，它提供了经过不同领域照片训练的内置模型，如服装、旅行或名人。
 - en: Clarifai allows a bot to obtain a set of categories for a submitted photo, making
     it possible for the bot to guess what is depicted in the image. You can get useful
     categories for a photo in two steps. First, you use Clarifai’s general image recognition
     model to obtain descriptive tags (objects with probabilities) that can give you
     a general idea of what is shown in the photo. For example, the presence of the
     “no person” tag indicates that no people are in the photo.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: Clarifai 允许机器人为提交的照片获取一组类别，从而使机器人能够猜测图片中展示的内容。你可以通过两个步骤来获取照片的有用类别。首先，你使用 Clarifai
+    的通用图像识别模型来获取描述标签（带有概率的对象），这些标签可以给你一个大致的图像展示内容。例如，“no person”标签的出现表示照片中没有人。
 - en: Second, after examining the tags, you can apply more specific models to the
     same photo, such as Clarifai’s Food or Apparel models. Both are trained to recognize
     food and fashion-related items, respectively. This time, you’ll obtain another,
     more granular set of tags to give you a better idea of the contents of the photo.
     For the entire list of Clarifai’s image recognition models, visit its Models page
     at *[https://www.clarifai.com/models/](https://www.clarifai.com/models/)*.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 其次，在检查标签之后，你可以对同一张照片应用更具体的模型，例如 Clarifai 的食品或服装模型。两者分别经过训练，能够识别与食物和时尚相关的物品。这一次，你将获得另一个更为详细的标签集，从而更好地了解照片的内容。如需查看
+    Clarifai 所有的图像识别模型，请访问其模型页面 *[https://www.clarifai.com/models/](https://www.clarifai.com/models/)*。
 - en: '***Generating Descriptive Tags for Images Using Clarifai***'
+  id: totrans-101
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***使用 Clarifai 生成图像的描述性标签***'
 - en: 'Clarifai offers a Python client to interact with its recognition API. You can
     install the latest stable package using pip:'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: Clarifai 提供了一个 Python 客户端，用于与其识别 API 进行交互。你可以使用 pip 安装最新的稳定版本：
 - en: pip install clarifai --upgrade
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: pip install clarifai --upgrade
 - en: Before you can start using the Clarifai library, you must obtain an API key
     by creating an account and then clicking the **GET API KEY** button at *[https://www.clarifai.com/](https://www.clarifai.com/)*.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 在你开始使用 Clarifai 库之前，必须先通过创建账户并点击 **GET API KEY** 按钮来获得 API 密钥，地址是 *[https://www.clarifai.com/](https://www.clarifai.com/)*。
 - en: 'Once you have the key, you can test the Clarifai library. The following simple
     script passes an image to a Clarifai model and prints a list of tags expressing
     possible categories for the image:'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦你获得了密钥，就可以测试 Clarifai 库。以下简单的脚本将一张图像传递给 Clarifai 模型，并打印出表示图像可能所属类别的标签列表：
 - en: from clarifai.rest import ClarifaiApp, client, Image
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: from clarifai.rest import ClarifaiApp, client, Image
 - en: app = ClarifaiApp(api_key='YOUR_API_KEY')
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: app = ClarifaiApp(api_key='YOUR_API_KEY')
 - en: ➊ model = app.public_models.general_model
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: ➊ model = app.public_models.general_model
 - en: filename = '/your_path/grape.jpg'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: filename = '/your_path/grape.jpg'
 - en: ➋ image = Image(file_obj=open(filename, 'rb'))
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: ➋ image = Image(file_obj=open(filename, 'rb'))
 - en: response = model.predict([image])
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: response = model.predict([image])
 - en: ➌ concepts = response['outputs'][0]['data']['concepts']
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: ➌ concepts = response['outputs'][0]['data']['concepts']
 - en: 'for concept in concepts:'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for concept in concepts:'
 - en: print(concept['name'], concept['value'])
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: print(concept['name'], concept['value'])
 - en: In this example, we call Clarifai’s Predict API with the general model ➊. Clarifai
     takes only the pixels as input, so make sure you’re opening an image file in 'rb'
     mode ➋, which opens the file in binary format for reading. The Predict API generates
     a list of descriptive tags, such as fruit, grape, health, and so on ➌, for the
     submitted photo, allowing the code to “understand” what it shows.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本示例中，我们调用了 Clarifai 的预测 API，并使用了通用模型 ➊。Clarifai 仅接受像素作为输入，因此请确保以 'rb' 模式打开图像文件
+    ➋，该模式以二进制格式打开文件进行读取。预测 API 为提交的照片生成了一系列描述性标签，如 fruit、grape、health 等 ➌，从而使得代码能够“理解”其显示的内容。
 - en: The *grape.jpg* file used in this example contains the photo shown in [Figure
     12-5](../Text/ch12.xhtml#ch12fig05).
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例中使用的 *grape.jpg* 文件包含 [图 12-5](../Text/ch12.xhtml#ch12fig05) 所示的照片。
 - en: '![image](../Images/fig12-5.jpg)'
+  id: totrans-117
   prefs: []
   type: TYPE_IMG
+  zh: '![image](../Images/fig12-5.jpg)'
 - en: '*Figure 12-5: The photo submitted to Clarifai in the preceding script*'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 12-5：提交给 Clarifai 的照片（如前面的脚本所示）*'
 - en: 'The list of concepts that the script generates for the photo should look as
     follows:'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 脚本为照片生成的概念列表应如下所示：
 - en: no person 0.9968359470367432
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: no person 0.9968359470367432
 - en: wine 0.9812138080596924
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: wine 0.9812138080596924
 - en: fruit 0.9805494546890259
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: fruit 0.9805494546890259
 - en: juicy 0.9788177013397217
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: juicy 0.9788177013397217
 - en: health 0.9755384922027588
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: health 0.9755384922027588
 - en: grow 0.9669009447097778
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: grow 0.9669009447097778
 - en: grape 0.9660607576370239
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: grape 0.9660607576370239
 - en: '...'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: '...'
 - en: Each entry represents a category and the probability that the image fits within
     the category. Thus, the first tag in the list tells us that the submitted photo
     contains no person with a probability of 0.99\. Note that not all the tags will
     provide a direct description of the depicted content. For example, the tag “wine”
     is included here, perhaps because wine is made from grapes. The presence of indirect
     tags in the list gives your bot more options to interpret the image.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个条目代表一个类别以及图像属于该类别的概率。因此，列表中的第一个标签告诉我们，提交的照片中没有人，概率为 0.99。注意，并非所有标签都会直接描述所描绘的内容。例如，标签“wine”可能出现在这里，因为酒是由葡萄酿成的。列表中间接标签的存在，给你的机器人提供了更多解读图像的选项。
 - en: '***Using Tags to Generate Text Responses to Images***'
+  id: totrans-129
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***使用标签生成图像的文本响应***'
 - en: 'Now that you know how to obtain descriptive tags for an image, how can you
     use these tags to respond to the image? Or how can you choose the most important
     tags from the generated list? Think about the following general considerations:'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在你知道如何获取图像的描述性标签，如何利用这些标签来回应图像？或者你如何从生成的标签列表中选择最重要的标签？考虑以下一般性问题：
 - en: You might want to take into account only the tags with high likelihoods. For
     that, you can choose a threshold of likelihood for the tags. For example, consider
     only the top five or 10 tags.
+  id: totrans-131
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 你可能只想考虑那些具有较高可能性的标签。为此，你可以为标签选择一个可能性的阈值。例如，只考虑前五个或十个标签。
 - en: You might choose only those tags that are in the context of the current chat.
     [Chapter 11](../Text/ch11.xhtml#ch11) showed an example of how to maintain the
     context of the current chat in a Telegram bot using the context.user_data dictionary.
+  id: totrans-132
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 你可能只选择那些在当前聊天上下文中的标签。[第11章](../Text/ch11.xhtml#ch11)展示了如何在 Telegram 机器人中使用 context.user_data
+    字典来保持当前聊天的上下文。
 - en: You might iterate over the generated tags, searching for a particular tag. For
     example, you might search for the tag “fruit” or “health” to determine whether
     you should continue the conversation on this topic.
+  id: totrans-133
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 你可能会遍历生成的标签，寻找特定的标签。例如，你可以搜索标签“fruit”或“health”以确定是否应该继续讨论这个话题。
 - en: The bot discussed in the next section will implement the third option.
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一节讨论的机器人将实现第三个选项。
 - en: '**Putting All the Pieces Together in a Telegram Bot**'
+  id: totrans-135
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**将所有部分组合成一个 Telegram 机器人**'
 - en: In the rest of this chapter, we’ll build a Telegram chatbot that uses the Wikipedia
     API and the Clarifai API. This bot will respond intelligently to text and images
     of food. Refer back to [Chapter 11](../Text/ch11.xhtml#ch11) for details on how
     to create a new bot in Telegram.
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章的其余部分，我们将构建一个使用 Wikipedia API 和 Clarifai API 的 Telegram 聊天机器人。这个机器人将能够智能地响应食物的文本和图像。有关如何在
+    Telegram 中创建新机器人的详细信息，请参考 [第11章](../Text/ch11.xhtml#ch11)。
 - en: '***Importing the Libraries***'
+  id: totrans-137
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***导入库***'
 - en: The import section of the code must include all the libraries that we’ll use
     in the bot’s code. In this example, we include the libraries required to access
     the Telegram Bot API, Wikipedia API, Clarifai API, and spaCy.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码的导入部分必须包含我们将在机器人代码中使用的所有库。在这个例子中，我们包括了访问 Telegram Bot API、Wikipedia API、Clarifai
+    API 和 spaCy 所需的库。
 - en: import spacy
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入 spacy
 - en: import wikipedia
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入 wikipedia
 - en: from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 telegram.ext 导入 Updater, CommandHandler, MessageHandler, Filters
 - en: from clarifai.rest import ClarifaiApp, Image
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 clarifai.rest 导入 ClarifaiApp, Image
 - en: If you’ve followed the instructions provided in this chapter and [Chapter 11](../Text/ch11.xhtml#ch11),
     all of these libraries should be available on your system.
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你已经按照本章和 [第11章](../Text/ch11.xhtml#ch11) 中提供的说明操作，那么所有这些库应该都可以在你的系统上使用。
 - en: '***Writing the Helper Functions***'
+  id: totrans-144
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***编写辅助函数***'
 - en: 'Next, we need to implement the helper functions that will be invoked from within
     the bot’s callback functions. The keyphrase() function takes a sentence as a Doc
     object and tries to extract the most informative word or a phrase from it, as
@@ -614,189 +921,302 @@
     on [page 171](../Text/ch12.xhtml#page_171). The following implementation uses
     the code fragments you saw in that section, adjusting them so we can use them
     within a single function:'
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们需要实现将在机器人回调函数中调用的辅助函数。keyphrase() 函数将一个句子作为 Doc 对象，并试图从中提取最具信息量的单词或短语，正如之前在“[确定问题的内容](../Text/ch12.xhtml#lev159)”一节中讨论的那样。以下实现使用了你在该节中看到的代码片段，并对其进行了调整，以便我们可以在一个函数中使用它们：
 - en: 'def keyphrase(doc):'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: '定义 keyphrase(doc):'
 - en: 'for t in doc:'
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 对 doc 中的每个 t 进行迭代：
 - en: 'if t.dep_ == ''pobj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: '如果 t.dep_ == ''pobj'' 且 (t.pos_ == ''NOUN'' 或 t.pos_ == ''PROPN''):'
 - en: return (' '.join([child.text for child in t.lefts]) + ' ' + t.text).
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回 (' '.join([child.text for child in t.lefts]) + ' ' + t.text)
 - en: lstrip()
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: lstrip()
 - en: 'for t in reversed(doc):'
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 对 doc 中的每个 t 进行逆序迭代：
 - en: 'if t.dep_ == ''nsubj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: '如果 t.dep_ == ''nsubj'' 且 (t.pos_ == ''NOUN'' 或 t.pos_ == ''PROPN''):'
 - en: return t.text + ' ' + t.head.text
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回 t.text + ' ' + t.head.text
 - en: 'for t in reversed(doc):'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 对 doc 中的每个 t 进行逆序迭代：
 - en: 'if t.dep_ == ''dobj'' and (t.pos_ == ''NOUN'' or t.pos_ == ''PROPN''):'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: '如果 t.dep_ == ''dobj'' 且 (t.pos_ == ''NOUN'' 或 t.pos_ == ''PROPN''):'
 - en: return t.head.text + 'ing' + ' ' + t.text
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回 t.head.text + 'ing' + ' ' + t.text
 - en: return False
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回 False
 - en: Note that the conditions are arranged in order of priority in this code. Thus,
     if the object of the preposition is found, we extract it and quit without checking
     for the other conditions. Of course, some complicated questions might meet multiple
     conditions, but checking for this would complicate the function implementation.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，在此代码中，条件按照优先级顺序排列。因此，如果找到介词的宾语，我们将提取它并退出，而不再检查其他条件。当然，某些复杂的问题可能会符合多个条件，但检查这些条件会使函数实现变得复杂。
 - en: 'Like the keyphrase() function, the photo_tags() function is supposed to determine
     the most descriptive word for a user’s input. But unlike keyphrase(), it analyzes
     a photo. It performs the analysis with the help of Clarifai, which generates a
     set of descriptive tags for a submitted photo. This implementation uses only two
     Clarifai models: the general model and the food model.'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 像 keyphrase() 函数一样，photo_tags() 函数也应该确定用户输入的最具描述性的词汇。但与 keyphrase() 不同，它分析的是一张照片。它借助
+    Clarifai 执行分析，Clarifai 会为提交的照片生成一组描述性标签。此实现仅使用两个 Clarifai 模型：通用模型和食品模型。
 - en: 'def photo_tags(filename):'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def photo_tags(filename):'
 - en: app = ClarifaiApp(api_key=CLARIFAI_API_KEY)
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: app = ClarifaiApp(api_key=CLARIFAI_API_KEY)
 - en: model = app.public_models.general_model
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: model = app.public_models.general_model
 - en: image = Image(file_obj=open(filename, 'rb'))
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: image = Image(file_obj=open(filename, 'rb'))
 - en: response = model.predict([image])
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: response = model.predict([image])
 - en: concepts = response['outputs'][0]['data']['concepts']
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: concepts = response['outputs'][0]['data']['concepts']
 - en: 'for concept in concepts:'
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for concept in concepts:'
 - en: 'if concept[''name''] == ''food'':'
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if concept[''name''] == ''food'':'
 - en: food_model = app.public_models.food_model
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: food_model = app.public_models.food_model
 - en: result = food_model.predict([image])
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: result = food_model.predict([image])
 - en: first_concept = result['outputs'][0]['data']['concepts'][0]['name']
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: first_concept = result['outputs'][0]['data']['concepts'][0]['name']
 - en: return first_concept
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: return first_concept
 - en: return response['outputs'][0]['data']['concepts'][1]['name']
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: return response['outputs'][0]['data']['concepts'][1]['name']
 - en: This code starts by applying the general model. If the tag 'food' is found in
     the generated list, it applies the food model to obtain more descriptive tags
     for the food items shown in the image. This implementation will use the first
     tag only as the keyword for the search.
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码首先应用通用模型。如果在生成的标签列表中找到“food”标签，它将应用食品模型，以获得图像中食品项的更多描述性标签。此实现将只使用第一个标签作为搜索的关键字。
 - en: 'Now that we have the keyword or keyphrase, determined either in the keyphrase()
     function or in the photo_tags() function, we need to obtain a piece of information
     that is closely related to this keyword or keyphrase. The following wiki() function
     does the trick:'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，我们已经通过 keyphrase() 函数或 photo_tags() 函数确定了关键字或关键短语，我们需要获取一条与这个关键字或关键短语密切相关的信息。以下的
+    wiki() 函数可以完成这个任务：
 - en: 'def wiki(concept):'
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def wiki(concept):'
 - en: nlp = spacy.load('en')
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: nlp = spacy.load('en')
 - en: wiki_resp = wikipedia.page(concept)
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: wiki_resp = wikipedia.page(concept)
 - en: doc = nlp(wiki_resp.content)
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: doc = nlp(wiki_resp.content)
 - en: 'if len(concept.split()) == 1:'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if len(concept.split()) == 1:'
 - en: 'for sent in doc.sents:'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for sent in doc.sents:'
 - en: 'for t in sent:'
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for t in sent:'
 - en: 'if t.text == concept and t.dep_ == ''dobj'':'
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if t.text == concept and t.dep_ == ''dobj'':'
 - en: return sent.text
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: return sent.text
 - en: return list(doc.sents)[0].text
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: return list(doc.sents)[0].text
 - en: The algorithm we use here searches for a sentence in the retrieved content that
     includes the keyword as the direct object.
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在这里使用的算法会搜索检索到的内容中的一个句子，这个句子包含关键字作为直接宾语。
 - en: But this simple implementation can intelligently process only a single-word
     input. When a word is submitted, the algorithm we use here just extracts the first
     sentence from the Wikipedia article found with the help of this word.
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 但这种简单的实现只能智能地处理单个词汇的输入。当提交一个词汇时，我们在这里使用的算法只是提取出 Wikipedia 文章中找到的第一个句子。
 - en: '***Writing the Callback and main() Functions***'
+  id: totrans-187
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***编写回调函数和 main() 函数***'
 - en: Next, we add the bot’s callback functions. The start() function simply sends
     a greeting to the user in response to the /start command.
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们添加机器人的回调函数。start() 函数简单地响应 /start 命令，向用户发送问候。
 - en: 'def start(update, context):'
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def start(update, context):'
 - en: update.message.reply_text('Hi! This is a conversational bot. Ask me something.')
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: update.message.reply_text('你好！我是一个对话机器人，问我点什么吧。')
 - en: The text_msg() function is the callback for the bot’s user text messages handler.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: text_msg() 函数是机器人用户文本消息处理器的回调函数。
 - en: 'def text_msg(update, context):'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def text_msg(update, context):'
 - en: msg = update.message.text
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: msg = update.message.text
 - en: nlp = spacy.load('en')
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: nlp = spacy.load('en')
 - en: doc = nlp(msg)
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: doc = nlp(msg)
 - en: concept = keyphrase(doc)
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: concept = keyphrase(doc)
 - en: 'if concept != False:'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if concept != False:'
 - en: update.message.reply_text(wiki(concept))
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: update.message.reply_text(wiki(concept))
 - en: 'else:'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: 'else:'
 - en: update.message.reply_text('Please rephrase your question.')
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
 - en: First, we apply spaCy’s pipeline to the message, converting it to a Doc object.
@@ -804,67 +1224,87 @@
     a keyword or keyphrase from the message. The returned keyword or keyphrase is
     then sent to the wiki() function to obtain a piece of relevant information, which
     should be a single sentence in this implementation.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
 - en: 'The photo() function shown in the following code is the callback for the bot’s
     handler for the photos submitted by the user:'
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
 - en: 'def photo(update, context):'
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
 - en: photo_file = update.message.photo[-1].get_file()
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
 - en: filename = '{}.jpg'.format(photo_file.file_id)
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
 - en: photo_file.download(filename)
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
 - en: concept = photo_tags(filename)
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
 - en: update.message.reply_text(wiki(concept))
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
 - en: The function retrieves the submitted image as a file and sends it for further
     processing to the helper functions discussed earlier in “[Writing the Helper Functions](../Text/ch12.xhtml#lev168)”
     on [page 178](../Text/ch12.xhtml#page_178).
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
 - en: Finally, we add the main() function in which we register handlers for both text
     messages and photos.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
 - en: 'def main():'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
 - en: updater = Updater("YOUR_TOKEN", use_context=True)
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
 - en: disp = updater.dispatcher
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
 - en: disp.add_handler(CommandHandler("start", start))
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
 - en: disp.add_handler(MessageHandler(Filters.text, text_msg))
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
 - en: disp.add_handler(MessageHandler(Filters.photo, photo))
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
 - en: updater.start_polling()
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
 - en: updater.idle()
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
 - en: 'if __name__ == ''__main__'':'
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
 - en: main()
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
 - en: The main() function for this Telegram bot is quite concise. We create the Updater
@@ -874,9 +1314,11 @@
     The third one handles photos posted by the user. After registering handlers, we
     start the bot by invoking updater.start_polling() and then invoking updater.idle()
     to block the script to wait for a user message or an exit shortcut (CTRL-C).
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
 - en: '***Testing the Bot***'
+  id: totrans-222
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -884,67 +1326,89 @@
     on a smartphone or a computer. On a smartphone, in the Telegram app search for
     your bot’s name followed by the @ sign, and then enter the /start command to start
     a chat. On a computer, use Telegram Web at *[https://web.telegram.org](https://web.telegram.org)*.
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
 - en: After receiving a greeting from the bot, send it a simple request, such as “Tell
     me about fruit.” The bot should respond with a single sentence that it extracts
     from a relevant Wikipedia article. For simplicity, choose a sentence that uses
     the direct object from the sentence (“fruit” in this example) as the keyword.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
 - en: You can also submit a photo to check which comment the bot will give in response.
     [Figure 12-6](../Text/ch12.xhtml#ch12fig06) illustrates a screenshot of such a
     test.
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](../Images/fig12-6.jpg)'
+  id: totrans-226
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 12-6: A screenshot of the bot we created*'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
 - en: Remember that this implementation can properly process only photos of food.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 记住，这个实现只能正确处理食物的照片。
 - en: '***Try This***'
+  id: totrans-229
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***尝试这个***'
 - en: Note that the bot implementation provided in the preceding section can’t generate
     smart responses to many different types of user input. The wiki() function we
     used can properly process only those requests for which keyphrase() returns a
     single word. It also works best if that keyword is a direct object. Also, the
     bot can only intelligently respond to images of food.
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，前一节提供的机器人实现无法对多种不同类型的用户输入生成智能响应。我们使用的wiki()函数只能正确处理那些keyphrase()返回单个词的请求。如果该关键字是直接宾语，效果会最好。此外，机器人只能智能地响应食物的图片。
 - en: Enhance the wiki() function so it can process phrases instead of only one word,
     such as “dolphins sleep.” Finding an appropriate sentence for such a phrase requires
     using dependency labels, because you’ll need to find a subject/verb pair. In addition,
     you’ll need to reduce the words to their lemmas. For example, “dolphins sleep”
     and “dolphin sleeps” should satisfy the search criteria.
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 增强wiki()函数，使其能够处理短语，而不仅仅是单个词，例如“海豚睡觉”。找到适合这样的短语的句子需要使用依赖标签，因为你需要找到一个主语/动词对。此外，你还需要将单词还原为词元。例如，“海豚睡觉”和“海豚睡”应该满足搜索标准。
 - en: You might also want to enhance the functionality of the photo_tags() function
     so it can process not only food photos, but also those that show something else—for
     example, apparel.
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 你也许想增强photo_tags()函数的功能，使其不仅能处理食物照片，还能处理其他类型的照片——例如，服装类照片。
 - en: '**Summary**'
+  id: totrans-233
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**总结**'
 - en: In this chapter, you saw examples of how to use spaCy along with other libraries
     in Python’s AI ecosystem to build an AI-powered application that can process data
     of different types. By using the Wikipedia and Clarifai Python APIs, we designed
     a chatbot that could react to images and pull text from Wikipedia, techniques
     that make the bot a smarter interlocutor.
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一章中，你看到了如何将spaCy与Python AI生态系统中的其他库结合使用，构建一个能够处理不同类型数据的AI应用程序。通过使用Wikipedia和Clarifai的Python
+    API，我们设计了一个能够对图片作出反应并从Wikipedia中提取文本的聊天机器人，这些技术使得机器人成为一个更智能的对话者。
 - en: After reading this book, you might want to expand and improve on what you’ve
     learned. The most natural way to enhance your knowledge is to continue to experiment
     with chatbots. Start by building a Telegram script with Python using the instructions
     provided in [Chapter 11](../Text/ch11.xhtml#ch11); next, enhance its functionality
     using instructions provided in this chapter. Then work on improving the algorithms
     you learned in this book to make them more suitable for your use cases.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 阅读完本书后，你可能会想扩展和提升所学的知识。最自然的方式是继续尝试使用聊天机器人。首先，按照[第11章](../Text/ch11.xhtml#ch11)中的说明，使用Python构建一个Telegram脚本；接着，按照本章提供的说明，增强其功能。然后，改进你在本书中学到的算法，使其更适合你的使用场景。
