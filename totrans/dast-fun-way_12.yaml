@@ -483,6 +483,7 @@
   id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还添加了一个第二个辅助函数`BTreeNodeSplit`，该函数接收一个节点和一个子节点的索引，并分裂该子节点。该索引之前的所有内容保留在原始子节点中。该索引之后的所有内容从子节点中清除并添加到新创建的兄弟节点中。索引处的键从子节点中清除并添加到当前（父级）节点中。
 - en: '[PRE4]'
   id: totrans-54
   prefs: []
@@ -504,6 +505,7 @@
   id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: '`BTreeNodeSplit`的代码首先查找需要分裂的节点（`old_child`），并创建一个新的（空的）兄弟节点（`new_child`）❶。该节点将与要分裂的子节点位于同一层级，因此我们复制`is_leaf`的值。接下来，代码确定用于`old_child`的分裂点的索引和值❷。然后，代码使用`WHILE`循环将`old_child`中`split_index`之后的所有内容从`keys`和`children`复制到`new_child`中的相应数组❸。代码使用一对索引来捕获旧位置的索引（`old_index`）和相应的新位置（`new_index`）。与此同时，代码通过将条目设置为`null`来从`old_child`的数组中删除这些元素。由于`children`数组比原来长一个元素，我们需要单独复制最后一个元素❹。最后，我们删除`split_index`处的键❺，将`split_key`和新的子节点指针添加到当前节点❻，并设置两个子节点的大小❼。'
 - en: Let’s view this operation in the context of our collectibles storage index as
     shown in [Figure 12-6](#figure12-6). When a binder reaches capacity, we repartition
     its contents into two binders. First, we buy a new empty binder. This sibling
@@ -517,6 +519,7 @@
   id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们在[图12-6](#figure12-6)所示的收藏品存储索引的上下文中查看这个操作。当一个文件夹达到容量时，我们将其内容重新分配到两个文件夹中。首先，我们购买一个新的空文件夹。这个兄弟文件夹将存储约一半的超满文件夹内容。其次，我们小心地将超满文件夹的后半部分内容移动到新的文件夹中，同时保持已排序的顺序。第三，我们移除包含每个文件夹之间键的单个索引卡片，并将其插入到父级文件夹中，以指示两个子文件夹之间的划分。之前超满的子文件夹将包含键小于此分割的卡片，而新的文件夹将包含键大于此分割的卡片。
 - en: '![A row  with three entries: Caffeine Ten Coffee Mug, Jeremy’s Gourmet High‐Caffeine
     Experience Coffee Mug, and Morning Zap Brand Coffee Mug. An arrow indicates that
     the card on the left (and all preceding cards) stays in the binder. A second arrow
@@ -525,11 +528,14 @@
   id: totrans-57
   prefs: []
   type: TYPE_IMG
+  zh: '![一排有三个条目的卡片：Caffeine Ten Coffee Mug、Jeremy’s Gourmet High‐Caffeine Experience
+    Coffee Mug和Morning Zap Brand Coffee Mug。箭头表示左侧的卡片（以及所有之前的卡片）保留在文件夹中。第二个箭头表示中间的卡片移到父级文件夹中。第三个箭头表示右侧的卡片和所有后续的卡片将移到新的文件夹中。](image_fi/502604c12/f12006.png)'
 - en: 'Figure 12-6: We repartition the binder by splitting it on the key of the middle
     card.'
   id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12-6：我们通过在中间卡片的键上进行分割来重新分配文件夹。
 - en: Given these helpers, we can now define an insertion function that performs the
     recursive search and the subsequent addition. We perform the addition at the leaf
     node. As the recursion returns up the tree, we check whether the recently accessed
@@ -537,6 +543,7 @@
   id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 有了这些辅助函数，我们现在可以定义一个插入函数，该函数执行递归搜索和随后的添加。我们在叶节点执行添加操作。随着递归从树中返回，我们检查最近访问的子节点是否已满，因此需要分裂。
 - en: '[PRE5]'
   id: totrans-60
   prefs: []
@@ -1323,6 +1330,8 @@
   id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: B树展示了几个重要的概念。首先，它们展示了如何调整先前数据结构的行为，以处理节点间内存访问比节点内访问更昂贵的情况。B树以某种方式将索引和存储结合起来，从而最小化所需的访问次数。这对于可能将信息存储在磁盘或外部服务器上的大数据集至关重要。通过强制每个非根节点至少有
+    *k* 个键，我们确保每个节点的分支因子至少为 *k* + 1，从而将整个数据结构“扁平化”。这有助于限制树的整体深度，从而减少搜索、插入或删除所需的检索次数。我们还保证每个非根节点始终保持至少半满，这意味着我们不会浪费时间去检索只有少量元素的节点（除了可能是根节点的情况）。
 - en: It is useful to contrast the B-tree’s approach with a more specialized indexing
     scheme for our collectibles. We could develop a data structure that initially
     splits on category. The top-level index maps the collectible’s category, such
@@ -1338,6 +1347,7 @@
   id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 将B树的方式与我们收藏品的更专门化索引方案进行对比是有用的。我们可以开发一个数据结构，最初按类别进行划分。顶级索引将收藏品的类别（例如与咖啡相关的收藏品）映射到该特定类别的文件夹。每个类别的文件夹再映射到所有子类别，如咖啡杯或咖啡海报，依此类推。这也是一种有效的方法，建立在本书中看到的分支结构的基础上。其权衡在于通用性与效率。在许多情况下，我们可以将数据结构进一步优化以适应当前任务，但这可能会失去将其应用于其他问题的能力。在某些情况下，这种权衡可能是值得的，但在其他情况下则可能不值得。与聚焦于类别的索引方案相比，B树提供了一种更为通用的方法，适用于任何可排序的键集。
 - en: The second concept B-trees illustrate is a second level of dynamism within the
     data structure itself. The B-tree constantly rearranges its structure to adapt
     to the distribution of data it stores and thus remain balanced. As we saw in Chapter
@@ -1352,3 +1362,5 @@
   id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: B树展示的第二个概念是数据结构本身的第二级动态性。B树会不断调整其结构，以适应存储的数据分布，从而保持平衡。正如我们在第五章看到的那样，如果树变得高度不平衡，我们就会失去基于树的结构所带来的优势。B树通过限制每个节点中键的数量（*k*
+    到 2*k*）以及确保所有叶子节点具有完全相同的深度来程序化地防止这一问题。它们通过重新平衡来适应“不良”数据分布——修正那些包含过多或过少项目的节点。虽然树的平衡策略有很多种，B树提供了一个简单明了的例子，展示了我们如何通过添加额外的结构（在这种情况下，每个节点多个键）来避免最坏情况的发生。

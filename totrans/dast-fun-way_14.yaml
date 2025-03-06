@@ -1,11 +1,14 @@
 - en: '14'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: Skip Lists
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
 - en: '![](image_fi/book_art/chapterart.png)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
 - en: This chapter introduces the *skip list*, a sorted linked list with multiple
@@ -14,6 +17,7 @@
     to jump mitigates one of the major concerns with linked lists—that we have to
     scan through all the elements to find a single target. Skipping some elements
     saves precious time.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
 - en: To envision how skip lists work, consider the strategy I employ every time I
@@ -25,6 +29,7 @@
     shift to smaller and smaller jumps as I near where I left off. Skip lists use
     a similar approach to dramatically change the behavior of the linked list, enabling
     it to take on problems that we’d previously reserved for tree-based data structures.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
 - en: Skip lists, proposed by computer scientist William Pugh, are probabilistic data
@@ -37,6 +42,7 @@
     search, we drop down in the multilevel hierarchy. In the case of searching for
     our place in a book, this corresponds to using smaller and smaller jumps as we
     near our most recent location.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
 - en: 'I’ve included skip lists in this book for two reasons. First, in keeping with
@@ -48,9 +54,11 @@
     a step further: their very structure is probabilistically determined in order
     to balance out performance in the average case. We use a random number generator
     to choose the level of each node and thus how far ahead it will let us skip.'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
 - en: Randomized vs. Deterministic Structures
+  id: totrans-7
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -61,21 +69,27 @@
     get the same structure. The same applies for heaps, tries, grids, quadtrees, and
     so forth. Even two hash tables or Bloom filters will be identical if we use the
     same hash functions and insert the same set of items.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 从一个确定性生成的数据结构转变为一个随机化的数据结构引入了复杂性和益处。到目前为止，我们所研究的每个数据结构的结构都完全由我们插入的数据决定。例如，如果我们将相同的数据按相同的顺序插入二叉搜索树，我们总是会得到相同的结构。堆、前缀树、网格、四叉树等结构也一样。即使是两个哈希表或布隆过滤器，如果我们使用相同的哈希函数并插入相同的数据集，它们也将是相同的。
 - en: This determinism can lead to problems in the face of worst-case data. As we
     saw in Chapter 5, if we start with an empty binary search tree and insert elements
     in sorted order, our tree effectively becomes a sorted linked list. Each node
     will have a single child node in the same direction. One potential way to mitigate
     this problem is to insert the data in random order. While we still might happen
     to choose a bad ordering, the probability is significantly lower.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种确定性可能会在最坏情况的数据面前引发问题。正如我们在第5章中看到的，如果我们从一个空的二叉搜索树开始，并按排序顺序插入元素，那么我们的树实际上会变成一个排序链表。每个节点将只拥有一个子节点，且方向相同。缓解这个问题的一种潜在方法是按随机顺序插入数据。虽然我们仍然可能选择一个不理想的顺序，但这种情况的概率显著降低。
 - en: We can extend this randomized approach to constructing the data structures themselves
     by randomly choosing parameters during each insertion. Instead of varying the
     order of the data, we are varying how we link that data into our structure.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以将这种随机化方法扩展到构建数据结构本身，在每次插入时随机选择参数。我们不再变化数据的顺序，而是变化如何将数据链接到我们的结构中。
 - en: At first, the randomized approach can seem unintuitive. If we don’t know our
     input distribution, we may easily end up making bad structural choices for that
     distribution. We might worry that we will always choose the worst-case parameter.
@@ -85,12 +99,16 @@
     it will often produce a reasonable one. The randomness can provide good average
     case performance. The randomness also helps smooth out cases where the data arrives
     in a pathologically bad ordering.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 一开始，随机化方法可能显得不直观。如果我们不了解输入的分布，我们可能会轻易地为该分布做出糟糕的结构选择。我们可能担心总是会选择最坏的参数。然而，如果我们使用一个好的随机化策略，这种失败的可能性将极为罕见。另一方面，随机化设计可以防止我们做出持续的不优选择。虽然它可能不会导致最优解，但它通常会产生一个合理的解。随机性可以提供良好的平均情况表现，也有助于平滑数据以病态方式到达的情况。
 - en: Introducing Skip Lists
+  id: totrans-12
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 引入跳表
 - en: As we saw in Chapter 3, certain operations on linked lists are inherently limited
     by the list’s structure. We can’t efficiently search a linked list because we
     can’t randomly access elements. This has tragic consequences; even when we know
@@ -98,22 +116,30 @@
     the pointers from one node to another until we reach the target node. This frustrating
     limitation has caused many new computer scientists to tear out their hair, muttering
     unkind things.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们在第3章中看到的，链表上的某些操作本质上受到链表结构的限制。我们不能高效地搜索链表，因为我们不能随机访问元素。这会产生悲惨的后果；即使我们知道节点是有序的，我们也不能使用二分查找。我们被迫沿着指针从一个节点爬行到另一个节点，直到找到目标节点。这一令人沮丧的限制让许多新计算机科学家抓狂，嘀咕着不太友善的话。
 - en: 'Skip lists help alleviate this inefficiency by providing the ability to jump
     ahead multiple entries. At its heart, a skip list is simply a sorted linked list
     with multi-height nodes:'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 跳表通过提供一次跳跃多个条目的能力来缓解这种低效。跳表的核心就是一个带有多层节点的排序链表：
 - en: '[PRE0]'
+  id: totrans-15
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: The field `top_level` represents the highest level currently in use, while the
     field `max_level` represents the highest allowable level. For simplicity, we specify
     `max_level` independently so we can preallocate an array of pointers at the start
     of our list.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 字段`top_level`表示当前使用的最高级别，而字段`max_level`表示允许的最高级别。为了简化，我们独立指定`max_level`，这样我们可以在列表开始时预分配一个指针数组。
 - en: Skip lists’ complexity, and thus their power, arises from the pointer structure
     within the nodes. Instead of storing a single pointer to the next node in the
     list, each node has a predefined level, or *height*, in which it stores pointers
@@ -121,16 +147,20 @@
     one for each level [0, *L*]. Critically, the pointer at level *L* links the current
     node to the next node *at the same height*, meaning that the pointers in `next`
     will often point to different skip list nodes.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE1]'
+  id: totrans-18
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Since the higher levels of a skip list contain fewer nodes than the layers below
     them, nodes at these higher levels can link further than would have been possible
     at the lower layers. This allows algorithms to take larger steps at the higher
     layers and skip many intervening nodes. As the levels progress higher and higher,
     the number of nodes decreases, and these linkings jump further and further ahead.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
 - en: Imagine the process of searching a skip list in terms of passing messages between
@@ -142,16 +172,19 @@
     heads of closer, but shorter, buildings, as shown in [Figure 14-1](#figure14-1).
     Alternatively, if you need to send a message to your immediate neighbor, you can
     simply move down to the lowest floor.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
 - en: '![Five buildings of different heights. Building 2 is the highest, and building
     5 is next highest. An arrow shows that someone in the second building can pass
     messages to the last building from a floor above the tops of the two buildings
     in between.](image_fi/502604c14/f14001.png)'
+  id: totrans-21
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 14-1: Moving between nodes in a skip list is like passing messages by
     flashlight between buildings in a city.'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
 - en: Skip lists create these linkings probabilistically. The program gives each node
@@ -163,14 +196,17 @@
     with only a single floor compared to a building with three floors. The building
     with three floors is able to pass messages at three different heights, potentially
     accessing up to three neighbors.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
 - en: '![The skip list contains the keys 0, 1, 8, 9, 12, and 17\. Each node has a
     height between 0 and 2\. The node for 1 has pointers to the node 8 at height 0,
     node 12 at height 1, and node 17 at height 2.](image_fi/502604c14/f14002.png)'
+  id: totrans-24
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 14-2: An example skip list'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
 - en: Since higher nodes provide the ability to skip further ahead, over the tops
@@ -183,6 +219,7 @@
     + 1 are less numerous than nodes at level *L*. This leads to good average case
     performance and can help avoid the worst-case scenarios that can occur in other
     data structures.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
 - en: As shown in [Figure 14-2](#figure14-2), this skip list implementation uses a
@@ -190,9 +227,11 @@
     `front` is a `SkipListNode` but contains no key or value. Tracking the front of
     the list in a `SkipListNode` makes the code for insertion and deletion significantly
     simpler, as we’ll see later in the chapter.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
 - en: Searching Skip Lists
+  id: totrans-28
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -206,11 +245,14 @@
     key is larger than or equal to our target), we drop down a level and continue
     our search from there. Our search terminates when we try to drop below the bottom
     level.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE2]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: The code for a skip list search starts with the `current` node at the front
     of the topmost list ❶. Two nested `WHILE` loops handle the traversal. The inner
     loop iterates through the current linked list until it hits the end of the list
@@ -221,6 +263,7 @@
     node both exists and has the correct key ❹. When the search loop terminates, we
     are guaranteed to be at the last node in the list with a key *less* than the target.
     The target is either the next node in the list or does not exist.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
 - en: Consider searching for a target of 14 in the list shown in [Figure 14-3](#figure14-3).
@@ -228,6 +271,7 @@
     which is less than our target, so we progress to that node. At this point we've
     reached the end of the list for level 3\. We can’t progress any further at this
     height. The next node pointer is null.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
 - en: The search then drops down a level and continues on level 2\. Here we find the
@@ -236,14 +280,17 @@
     is not less than our target. Our search terminates once we have completed level
     0\. At this point, our current node’s (key = 13) `next` pointer leads to the target
     node.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
 - en: '![The search for 14 starts at the front, follows the pointer to node 13 at
     height 3, and then proceeds down the levels in that node.](image_fi/502604c14/f14003.png)'
+  id: totrans-34
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 14-3: Searching a skip list for the target of 14\. The shaded entries
     and dashed pointers represent the ones traversed during the search.'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
 - en: Note that although we pointed to the target node for several iterations (at
@@ -251,20 +298,24 @@
     This is due to our termination criteria in the code. We could add additional logic
     to halt the search earlier, but we keep the logic simpler here to match the logic
     used later for insertion.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
 - en: In contrast, if we were searching the same list for a target of 12, as shown
     in [Figure 14-4](#figure14-4), we'd drop down to the bottom level significantly
     earlier in our search and progress along the bottom level.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
 - en: '![The search for 12 starts at the front, follows the pointer to node 2 at height
     2, Proceeds down that node until height 0, and follows the pointer to node 9 at
     height 0.](image_fi/502604c14/f14004.png)'
+  id: totrans-38
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 14-4: Searching a skip list for the target of 12\. The shaded entries
     and dashed pointers represent the ones traversed during the search.'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
 - en: We can picture this traversal as a squirrel’s navigation along a row of trees.
@@ -275,6 +326,7 @@
     also covers more distance per jump. Moving from the wide branches of a tall tree
     to those of its tall neighbor requires fewer jumps than traversing all the small
     saplings in between.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
 - en: However, the squirrel is unwilling to waste time backtracking and thus never
@@ -284,12 +336,16 @@
     descends to the lower level of branches before continuing forward. It progresses
     at the next level, taking jumps as large as possible and enjoying the scenic route,
     until it again hits a point where it needs to descend.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，松鼠不愿意浪费时间回溯，因此永远不会超越它的目标。最终，松鼠会到达一个地方，在这里，如果它跳到这个高度的下一个树上，它就会超过目标。或者，可能没有更多的同高度树。不管怎样，松鼠叹了口气，勉强降落到较低的树枝层级，然后继续向前。它在下一个层级前进，尽可能跳得更远，享受风景路线，直到它再次遇到需要下降的地方。
 - en: Adding Nodes
+  id: totrans-42
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 添加节点
 - en: The distribution we use to select the height of a new node can have a significant
     impact on the structure and performance of the skip list. If everything is the
     same level, whether minimum or maximum, our skip list devolves into nothing more
@@ -297,8 +353,10 @@
     the heights to the maximum, we create multiple parallel lists without adding any
     search efficiencies. Ideally, we’d like fewer tall nodes with increasing numbers
     at each level below.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们用于选择新节点高度的分布方式对跳表的结构和性能有重要影响。如果所有节点都处于相同的层级，无论是最小层级还是最大层级，那么我们的跳表就会退化成一个排序链表，且附带额外的内存开销。更糟糕的是，如果我们将所有高度设置为最大值，我们就会创建多个并行列表，但并没有增加任何搜索效率。理想情况下，我们希望有较少的高节点，并且在每个下层级上节点数量逐渐增加。
 - en: William Pugh’s original approach to selecting heights is to continually use
     a constant probability *p* of adding another level. All nodes start at level 0\.
     We keep flipping a weighted coin—choosing a random number from 0 to 1 and checking
@@ -310,8 +368,13 @@
     value of *p* will mean fewer tall nodes and thus fewer pointers per node. We cap
     a node’s height at `max_level` to stay consistent with the preallocated array
     in the `front` node.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: William Pugh 最初选择高度的方法是不断使用一个常数概率 *p* 来添加另一个层级。所有节点从 0 层开始。我们不断抛一个加权硬币——选择一个从
+    0 到 1 的随机数，检查它是否小于 *p*——直到得到一个大于 *p* 的数字或达到最大允许高度。我们计算小于 *p* 的抛掷次数，并将其设为新的层级。例如，我们可以使用
+    *p* = 0.5，在这种情况下，我们期望大约一半的节点在 *L* 层被提升到 *L* + 1 层。我们可以通过调整 *p* 的值来平衡搜索效率和内存使用。较小的
+    *p* 值意味着较少的高节点，从而每个节点的指针也更少。我们将节点的高度限制在 `max_level`，以保持与 `front` 节点中预分配数组的一致性。
 - en: You can visualize this approach in terms of an inconsistent parent responding
     to a child’s request for more candy. When the child gets candy, they always gets
     a single piece, and then they always want more. Every time the child asks for
@@ -322,18 +385,24 @@
     with probability (1 − *p*), and shouts a definitive “No more candy!” Similarly,
     we continue to increase the height of the node until either our random number
     generator or our max threshold tells us to stop altogether.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以通过一个不一致的父母回应孩子要求更多糖果的情境来形象化这种方法。当孩子得到糖果时，他们总是得到一块，而之后总是想要更多。每次孩子请求糖果时，父母都会随机（以概率*p*）决定是否满足请求。如果同意，他们就会再给孩子一块糖果。这相当于将节点的高度增加一。自然地，孩子看到自己获胜后，会立刻再次提出请求。这个过程会继续，直到父母最终感到恼火，以概率（1
+    − *p*）喊出“不给糖果了！”类似地，我们会继续增加节点的高度，直到我们的随机数生成器或最大阈值告诉我们要完全停止。
 - en: 'Adding nodes to a skip list follows the same flow as searching for a target
     node: we progress downward and to the right, looking for a place to insert the
     new node. In fact, we can reuse the basic structure of the search for our insertion.
     We just need to track one additional piece of data: the last node at each level
     that could point to our new node.'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE3]'
+  id: totrans-47
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: We begin at the top left corner of the list (`list.top_level` of `list.front`)
     ❶. With a pair of nested `WHILE` loops, we progress downward and to the right
     as we search for the correct place to insert the node. The outer `WHILE` loop
@@ -341,6 +410,7 @@
     and then dropping down to the next level. The inner `WHILE` loop ❹ traverses the
     skip list, moving forward whenever another node along this level has a key less
     than our target.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
 - en: Every entry in the array `last` starts off at `list.front`, indicating that
@@ -351,6 +421,7 @@
     node. If we happen to find a matching key while traversing the skip list, we simply
     update the data for that key ❻. This means that, like our other data structures,
     our skip list implementation treats each key as unique.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
 - en: When we find the correct point to insert the new node, we pick a random level
@@ -360,6 +431,7 @@
     we avoid an invalid access to the `last` array. We check whether the selected
     level represents a new top level for the list and, if so, update `list.top_level`
     ❽.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
 - en: Finally, the code inserts the new element by using a `WHILE` loop to update
@@ -369,19 +441,23 @@
     to store the pointers to the beginning of the list. We can track and update this
     “front of list” position as we would any other node. This greatly simplifies the
     code.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
 - en: '[Figure 14-5](#figure14-5) shows how we would insert the key of 10 into an
     example skip list. The shaded nodes indicate which entries we traverse during
     the search.'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
 - en: '![The last array points to front at height 3, node 1 at height 2, Node 1 at
     height 1, and node 9 at height 0.](image_fi/502604c14/f14005.png)'
+  id: totrans-53
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 14-5: Inserting the key of 10 into a skip list. The array last tracks
     which node comes before the inserted node.'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
 - en: By tracking the last node at each level *before* the target, we are effectively
@@ -392,9 +468,11 @@
     after this one!” We then descend a level to continue our work. By the time the
     search phase reaches the bottom layer, we already have a full list of all the
     nodes whose forward pointers we need to adjust.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
 - en: Deleting Nodes
+  id: totrans-56
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -402,11 +480,14 @@
     nodes. We first search the skip list for the deletion target while tracking the
     last node at each level that comes *before* the target node. Once the search phase
     completes, we update this list of previous nodes to remove the node we are deleting.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE4]'
+  id: totrans-58
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: The initial block of deletion code is identical to the code for insertion. We
     start at the top left of the list ❶. A pair of nested `WHILE` loops ❷ searches
     across each level until we hit a node with a key greater than or equal to `target`
@@ -414,6 +495,7 @@
     and drop down to the next level to continue our search. At the end of the search,
     we check that we’ve found a node whose `key` matches `target` ❸. Otherwise, there
     is no match in the skip list and thus nothing to delete.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
 - en: 'To remove the identified node, we use a `WHILE` loop ❹ to simply link the next
@@ -421,6 +503,7 @@
     `last[j].next[j] = result.next[j]` for all levels `j`. This splices our node out
     of the list. We also set `result.next[j]` to `null` because `result` is no longer
     in the list.'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
 - en: Finally, we need to check whether the skip list’s top level is still valid ❺.
@@ -431,6 +514,7 @@
     the list’s top level if needed. It finds the first level where our dummy front
     node points to a valid data node. If the list is empty, we simply default to a
     top level of zero.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
 - en: 'Again, we can visualize the initial search required for deletion in terms of
@@ -442,9 +526,11 @@
     record the pointer to the current node in `last` and proceed to the next level.
     At the end of our journey, we have collected a full list of the nodes whose pointers
     need to be updated.'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
 - en: Runtimes
+  id: totrans-63
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -456,12 +542,14 @@
     by looking at the single node in the top layer. We then drop down a layer and
     cut the space in half again. Thus, in the best case, our performance will be logarithmic
     in terms of the number of entries.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
 - en: The worst-case performance of a skip list is equivalent to that of a standard
     linked list—it is linearly proportional to the number of nodes. If every node
     in the list is the same height, our skip list is nothing more than a sorted linked
     list. We’re forced to scan through each node in sequence to find a given target.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
 - en: Assuming that we use a good probability distribution of heights, such as that
@@ -470,9 +558,11 @@
     with the number of entries. Unlike worst-case cost, expected cost provides an
     estimate of how the data structure will perform on average. This puts the average
     performance of skip lists on par with binary search trees.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
 - en: Why This Matters
+  id: totrans-67
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -482,6 +572,7 @@
     and binary search trees, skip lists rely on randomized structure to provide good
     performance. The *expected* computational cost of our common operations—search,
     insertion, and deletion—is logarithmic in the size of the list.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
 - en: 'This naturally poses a question: why should we trust the performance of our
@@ -493,5 +584,6 @@
     skip lists rely on randomization to avoid terrible behavior. In exchange, they
     use much simpler code. Thus, skip lists demonstrate how randomization can provide
     both a robust defense against bad data and simplicity in a data structure’s implementation.'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
