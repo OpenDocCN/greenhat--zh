@@ -1,0 +1,324 @@
+<html><head></head><body>
+<div id="sbo-rt-content"><section>
+<header>
+<h1 class="chapter">
+<span class="ChapterNumber"><span epub:type="pagebreak" id="Page_169" title="169"/>8</span><br/>
+<span class="ChapterTitle">Web Scraping</span></h1>
+</header>
+<figure class="opener">
+<img alt="" height="200" src="image_fi/book_art/chapterart.png" width="200"/>
+</figure>
+<p class="ChapterIntro">You need data to do data science, and when you don’t have a dataset on hand, you can try <em>web scraping</em>, a set of techniques for reading information directly from public websites and converting it to usable datasets. In this chapter, we’ll cover some common web-scraping techniques.</p>
+<p>We’ll start with the simplest possible kind of scraping: downloading a web page’s code and looking for relevant text. We’ll then discuss regular expressions, a set of methods for searching logically through text, and Beautiful Soup, a free Python library that can help you parse websites more easily by directly accessing HyperText Markup Language (HTML) elements and attributes. We’ll explore tables and conclude by going over some advanced topics related to scraping. Let’s start by looking at how websites work.</p>
+<h2 id="h1-502888c08-0001"><span epub:type="pagebreak" id="Page_170" title="170"/>Understanding How Websites Work</h2>
+<p class="BodyFirst">Suppose you want to see the website of No Starch Press, the publisher of this book. You open a browser like Mozilla Firefox, Google Chrome, or Apple Safari. You enter the URL of No Starch’s home page, <a class="LinkURL" href="https://nostarch.com">https://nostarch.com</a>. Then your browser shows you the page, which, at the time of writing, looks like <a href="#figure8-1" id="figureanchor8-1">Figure 8-1</a>.</p>
+<figure>
+<img alt="" class="keyline" height="390" src="image_fi/502888c08/f08001.png" width="694"/>
+<figcaption><p><a id="figure8-1">Figure 8-1</a>: The home page of the publisher of this book, accessible at <a class="LinkURL" href="https://nostarch.com">https://nostarch.com</a></p></figcaption>
+</figure>
+<p>You can see a lot on this page, including text, images, and links, all arranged and formatted carefully so that the page is easy for humans to read and understand. This careful formatting doesn’t happen by accident. Every web page has source code that specifies the page’s text and images, as well as its formatting and arrangement. When you visit a website, you see a browser’s <em>interpretation</em> of this code.</p>
+<p>If you’re interested in seeing the actual code of a website, rather than the browser’s visual interpretation of it, you can use special commands. In Chrome and Firefox, you can see the source code for <a class="LinkURL" href="https://nostarch.com">https://nostarch.com</a> by opening the page, right-clicking (in Windows, or <span class="KeyCaps">CTRL</span>+clicking in macOS) on blank space on the page, and then clicking View Page Source. When you do that, you’ll see a tab that looks like <a href="#figure8-2" id="figureanchor8-2">Figure 8-2</a>.</p>
+<span epub:type="pagebreak" id="Page_171" title="171"/><figure>
+<img alt="" class="keyline" height="390" src="image_fi/502888c08/f08002.png" width="694"/>
+<figcaption><p><a id="figure8-2">Figure 8-2</a>: The HTML source code of the No Starch Press home page</p></figcaption>
+</figure>
+<p>This tab contains the code that specifies all the content on the No Starch Press home page. It’s in the form of raw text, without the visual interpretation that browsers usually provide. Code for web pages is usually written in the HTML and JavaScript languages.</p>
+<p>In this chapter, we’re interested in this raw data. We’re going to write Python scripts that automatically scan through HTML code, like the code shown in <a href="#figure8-2">Figure 8-2</a>, to find useful information that can be used for data science projects.</p>
+<h2 id="h1-502888c08-0002">Creating Your First Web Scraper</h2>
+<p class="BodyFirst">Let’s start with the simplest possible scraper. This scraper will take a URL, get the source code of the page associated with that URL, and print out the first part of the source code it got:</p>
+<pre><code>import requests
+urltoget = 'https://bradfordtuckfield.com/indexarchive20210903.xhtml'
+pagecode = requests.get(urltoget)
+print(pagecode.text[0:600])</code></pre>
+<p>This snippet starts by importing the <code>requests</code> package, which we used in <span class="xref" itemid="xref_target_Chapter 7">Chapter 7</span>; here we’ll use it to get a page’s source code. Next, we specify the <code>urltoget</code> variable, which will be the URL of the web page whose code we want to request. In this case, we’re requesting an archived page from my personal website. Finally, we use the <code>requests.get()</code> method to get the code of our web page. We store this code in the <code>pagecode</code> variable.</p>
+<p><span epub:type="pagebreak" id="Page_172" title="172"/>The <code>pagecode</code> variable has a <code>text</code> attribute that contains all of the web page’s code. If you run <code>print(pagecode.text)</code>, you should be able to see all the HTML code of the page, stored as one long text string. Some pages have a huge amount of code, so printing out all the code at once may be unwieldy. If so, you can specify that you want to print only part of the code. That’s why we specify that we want only the first 600 characters of the page’s code by running <code>print(pagecode.text[0:600])</code> in the preceding snippet.</p>
+<p>The output looks like this:</p>
+<pre><code>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"&gt;
+&lt;html  xml:lang="en-US" lang="en-US"&gt;
+  &lt;head&gt;&lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;
+
+    &lt;title&gt;Bradford Tuckfield&lt;/title&gt;
+    &lt;meta name="description" content="Bradford Tuckfield" /&gt;
+    &lt;meta name="keywords" content="Bradford Tuckfield" /&gt;
+    &lt;meta name="google-site-verification" content="eNw-LEFxVf71e-ZlYnv5tGSxTZ7V32coMCV9bxS3MGY" /&gt;
+&lt;link rel="stylesheet" type="text/css" href=</code></pre>
+<p>This output is HTML, which consists largely of <em>elements</em> that are marked with angle brackets (<code>&lt;</code> and <code>&gt;</code>). Each element gives a browser like Firefox or Chrome information about how to display the website to visitors. For example, you can see a <code>&lt;title&gt;</code> tag in the output; also called a <em>start tag</em>, this marks the beginning of the title element. At the end of the seventh line, <code>&lt;/title&gt;</code> is another tag, this time called an <em>end tag</em>, which marks the end of the title element. The actual title of the site is the text that appears between the beginning and ending tags; in this case, it’s <code>Bradford Tuckfield</code>. When a browser visits the site, it will interpret the meaning of the start and end tags of the title element and then display the title text <code>Bradford Tuckfield</code> at the top of the browser tab. This isn’t an HTML book, so we’re not going to go over every detail of the code we see here. We can be successful at scraping even without deep HTML expertise.</p>
+<p>Now that we’ve scraped a web page, you may feel like you have all the scraping skills you need. However, you have much more to learn. Most web pages have a great deal of HTML code and content, but a data scientist rarely needs a web page’s entire source code. In business scenarios, you’ll more likely need only one specific piece of information or data on a web page. To find the specific information you need, it will be useful to be able to quickly and automatically search through long strings of HTML code. In other words, you will need to <em>parse</em> the HTML code. Let’s look at how to do this.</p>
+<aside epub:type="sidebar">
+<div class="top hr"><hr/></div>
+<section class="box">
+<h2><span epub:type="pagebreak" id="Page_173" title="173"/>An Important Warning About Scraping</h2>
+<p class="BoxBodyFirst">Be careful when you do web scraping! Many websites consider their data to be an important asset, and their terms of use explicitly forbid automated web scraping of any kind. Some prominent websites have taken legal action against people and organizations that have attempted to scrape their data. It’s a relatively new area of the law, and many active debates are ongoing about what scrapers should and shouldn’t be allowed to do. Judges and legal systems around the world are still trying to settle how scraping should be treated. Regardless, it’s important to be careful when you attempt scraping.</p>
+<p>First, look at a website’s terms of use before you set up a scraper. Second, consider whether the website has an application programming interface (API): some websites don’t mind sharing their data, but want you to download it in the way that they’ve specified and in a way that they’re comfortable with. Third, make sure you don’t overwhelm websites with traffic, because serious scrapers have caused websites to crash. You need to be careful when you do scraping to avoid these problems and liabilities. In this chapter, we’ll scrape my personal web pages; I’m happy to allow gentle scraping of my site (<a class="LinkURL" href="https://bradfordtuckfield.com">https://bradfordtuckfield.com</a>) using the methods outlined in this chapter.</p>
+<div class="bottom hr"><hr/></div>
+</section>
+</aside>
+<h2 id="h1-502888c08-0003">Parsing HTML Code</h2>
+<p class="BodyFirst">In the previous section, we went over how to download any public web page’s code to a Python session. Now let’s talk about how to parse the downloaded code to get the exact data you need.</p>
+<h3 id="h2-502888c08-0001">Scraping an Email Address</h3>
+<p class="BodyFirst">Suppose you’re interested in automatically harvesting email addresses to create a marketing list. You might use the scraper we introduced previously to download the source code for many web pages. But you won’t need all the information in the long strings that represent the full code for each page. Instead, you will want only the small substrings that represent the email addresses that appear on the pages you scraped. So you will want to search through each page you scrape to find these smaller substrings.</p>
+<p>Suppose that one of the pages whose code you’ve downloaded is <a class="LinkURL" href="https://bradfordtuckfield.com/contactscrape.xhtml">https://bradfordtuckfield.com/contactscrape.xhtml</a>. If you visit this web page, you’ll see that a browser displays its content, as in <a href="#figure8-3" id="figureanchor8-3">Figure 8-3</a>.</p>
+<span epub:type="pagebreak" id="Page_174" title="174"/><figure>
+<img alt="" class="keyline" height="148" src="image_fi/502888c08/f08003.png" width="349"/>
+<figcaption><p><a id="figure8-3">Figure 8-3</a>: The content of a demo page that can be scraped easily</p></figcaption>
+</figure>
+<p>This page displays only one email address, which is not hard to find after glancing at the page content for a moment. If we want to write a script that finds the email address on pages that are formatted like this one, we could search for the text <code>Email:</code> and look at the characters immediately following that text. Let’s do this, with a simple text search through the page’s code:</p>
+<pre><code>urltoget = 'https://bradfordtuckfield.com/contactscrape.xhtml'
+pagecode = requests.get(urltoget)
+
+mail_beginning=pagecode.text.find('Email:')
+print(mail_beginning)</code></pre>
+<p>The first two lines of this snippet follow the same scraping process used in the previous section: we specify a URL, download the page code for that URL, and store the code in the <code>pagecode</code> variable. After that, we use <code>find()</code> to search for the email text. This method takes a string of text as its input and returns the location of that text as its output. In this case, we use the <code>Email:</code> string as the input to the <code>find()</code> method, and we store the location of this text in the <code>mail_beginning</code> variable. The final output is <code>511</code>, indicating that the text <code>Email:</code> begins at the 511th character in the page’s code.</p>
+<p>After we know the location of the <code>Email:</code> text, we can try to get the actual email address by looking at characters just after that text:</p>
+<pre><code>print(pagecode.text[(mail_beginning):(mail_beginning+80)])</code></pre>
+<p>Here, we print out the 80 characters that immediately follow the beginning of the <code>Email:</code> text (which starts at the 511th character). The output looks like this:</p>
+<pre><code>Email:  &lt;label class="email" href="#"&gt;demo@bradfordtuckfield.com&lt;/label&gt;
+&lt;/div&gt;</code></pre>
+<p>You can see that the code contains more than just the text visible in <a href="#figure8-3">Figure 8-3</a>. In particular, an HTML element called <code>label</code> appears between the <code>Email:</code> text and the actual email address. If you want the email address alone, you have to skip the characters associated with the <code>&lt;label&gt;</code> tag, <span epub:type="pagebreak" id="Page_175" title="175"/>and you also have to remove the characters that appear after the email address:</p>
+<pre><code>print(pagecode.text[(mail_beginning+38):(mail_beginning+64)])</code></pre>
+<p>This snippet will print out <code>demo@bradfordtuckfield.com</code>, exactly the text we wanted to find on the page, since it skips the 38 characters of the <code>Email:</code> text and the <code>&lt;label&gt;</code> tag, and it trims off the final characters after the email address, which ends at 64 characters after the <code>Email:</code> text.</p>
+<h3 id="h2-502888c08-0002">Searching for Addresses Directly</h3>
+<p class="BodyFirst">We were able to find the email address in the page’s HTML code by looking for the 38th through 64th characters after the <code>Email:</code> text. The problem with this approach is that it’s not likely to work automatically when we try it on a different web page. If other pages don’t have the same <code>&lt;label&gt;</code> tag we found, looking at the 38th character after <code>Email:</code> won’t work. Or if the email address has a different length, stopping our search at the 64th character after <code>Email:</code> won’t work. Since scraping is usually supposed to be performed on many websites in rapid, automatic succession, it probably won’t be feasible to manually check for which characters we should look at instead of the 38th and 64th characters. So this technique probably won’t work for a scraper in an actual business scenario.</p>
+<p>Instead of searching for the text <code>Email:</code> and looking at the following characters, we could try searching for the at sign (<code>@</code>) itself. Every email address should contain an <code>@</code>, so if we find this, we’re likely to have found an email address. There won’t be any HTML tags in the middle of an email address, so we won’t have to worry about skipping HTML tags to find the address. We can search for the <code>@</code> in the same way we searched for the <code>Email:</code> text:</p>
+<pre><code>urltoget = 'https://bradfordtuckfield.com/contactscrape.xhtml'
+pagecode = requests.get(urltoget)
+
+at_beginning=pagecode.text.find('@')
+print(at_beginning)</code></pre>
+<p>This is the same scraping code we used before. The only difference is that we are searching for <code>@</code> instead of <code>Email:</code>. The final output shows that <code>@</code> appears as the 553rd character in the code. We can print out the characters immediately before and after the <code>@</code> to get the email address itself:</p>
+<pre><code>print(pagecode.text[(at_beginning-4):(at_beginning+22)])</code></pre>
+<p>There were no HTML tags to skip over. But we still have a problem: to get the email address without other extra characters, we have to know the number of characters before and after the <code>@</code> (4 and 22, respectively). Again, this wouldn’t work if we tried to repeat it to automatically scrape multiple email addresses from many websites.</p>
+<p><span epub:type="pagebreak" id="Page_176" title="176"/>Our searches would be more successful and easier to automate if we had a way to do intelligent searches. For example, imagine that we could search for text that matches the following pattern:</p>
+<p class="Equation"><var>&lt;characters matching the beginning of an email address&gt;</var></p>
+<p class="Equation"><code>@</code></p>
+<p class="Equation"><var>&lt;characters matching the end of an email address&gt;</var></p>
+<p>In fact, there is a way to perform automated searches through text in a way that can recognize patterns like the one described here. We’ll introduce this approach now.</p>
+<h2 id="h1-502888c08-0004">Performing Searches with Regular Expressions</h2>
+<p class="BodyFirst"><em>Regular expressions</em> are special strings that enable advanced, flexible, custom searches of patterns in text. In Python, we can do regular expression searches by using the <code>re</code> module, which is part of the Python standard library that comes preinstalled with Python. The following is an example of a regular expression search that uses the <code>re</code> module:</p>
+<pre><code>import re
+
+print(re.search(r'recommend','irrelevant text I recommend irrelevant text').span())</code></pre>
+<p>In this snippet, we import the <code>re</code> module. As its abbreviation indicates, this module is used for regular expressions. This module provides a <code>search()</code> method that can be used to search for text in any string. In this case, we specify two arguments: the string <code>recommend</code> and a string of text that contains the word <em>recommend</em>. We’re asking the method to search for the substring <code>recommend</code> within the larger string that also has some irrelevant text. Note that we add a single <code>r</code> character before the <code>recommend</code> string. This <code>r</code> tells Python to treat the <code>recommend</code> string as a <em>raw</em> string, meaning that Python won’t process or adjust it before using it in a search. The <code>span()</code> method will give us the beginning and end locations of this substring.</p>
+<p>The output, <code>(18,27)</code>, indicates that <code>recommend</code> exists in the second string, starting at index 18 in the string and ending at index 27. This <code>search()</code> method is similar to the <code>find()</code> method that we used in the previous section; both are finding the locations of substrings within longer strings.</p>
+<p>But suppose you are searching a web page written by someone who has a tendency to misspell words. By default, the <code>re.search()</code> method looks for exact matches, so if you’re searching a web page that contains <code>recommend</code> spelled incorrectly, you won’t find any matches. In this case, we may want to ask Python to look for <code>recommend</code>, but to look for different spellings of it. The following is one way to accomplish this with regular expressions:</p>
+<pre><code>import re
+print(re.search('rec+om+end', 'irrelevant text I recommend irrelevant text').span())</code></pre>
+<p><span epub:type="pagebreak" id="Page_177" title="177"/>Here, we change the argument of our code: instead of searching for <code>recommend</code> spelled correctly, we search for <code>rec+om+end</code>. This works because the <code>re</code> module interprets the plus sign (<code>+</code>) as a <em>metacharacter</em>. When this special type of character is used in a search, it has a special logical interpretation that can help you do flexible searches instead of requiring exact matches. The <code>+</code> metacharacter indicates repetition: it specifies that Python should search for one or more repetitions of the preceding character. So when we write <code>c+</code>, Python knows that it should search for one or more repetitions of the letter <code>c</code>, and when we write <code>m+</code>, Python knows that it should search for one or more repetitions of the letter <code>m</code>.</p>
+<p>A string that uses a metacharacter like <code>+</code> with a special, logical meaning is called a <em>regular expression</em>. Regular expressions are used in every major programming language and are extremely important in all code applications that deal with text.</p>
+<p>You should try to experiment with the <code>+</code> metacharacter to get more comfortable with the way it works. For example, you could try to search for various misspellings of <code>recommend</code> as follows:</p>
+<pre><code>import re
+print(re.search('rec+om+end','irrelevant text I recomend irrelevant text').span())
+print(re.search('rec+om+end','irrelevant text I reccommend irrelevant text').span())
+print(re.search('rec+om+end','irrelevant text I reommend irrelevant text').span())
+print(re.search('rec+om+end','irrelevant text I recomment irrelevant text').span())</code></pre>
+<p>This snippet contains four regular expression searches. The output of the first search is <code>(18,26)</code>, indicating that the misspelled word <code>recomend</code> matches the regular expression <code>rec+om+end</code> that we searched for. Remember that the <code>+</code> metacharacter searches for one or more repetitions of the preceding character, so it will match the single <code>c</code> and single <code>m</code> in the misspelled <code>recomend</code>. The output of the second search is <code>(18,28)</code>, indicating that the misspelling <code>reccommend</code> also matches the regular expression <code>rec+om+end</code>, again because the <code>+</code> metacharacter specifies one or more repetitions of a character, and <code>c</code> and <code>m</code> are both repeated twice here. In this case, our regular expression using <code>+</code> has provided flexibility to our search so it can match multiple alternative spellings of a word.</p>
+<p>But the flexibility of regular expressions is not absolute. Our third and fourth searches return errors when you run them in Python, because the regular expression <code>rec+om+end</code> doesn’t match any part of the specified strings (<code>reommend</code> and <code>recomment</code>). The third search doesn’t return any matches because <code>c+</code> specifies one or more repetitions of <code>c</code>, and there are zero repetitions of <code>c</code> in <code>reommend</code>. The fourth search doesn’t return any matches because, even though the number of <code>c</code> and <code>m</code> characters is correct, searching for <code>rec+om+end</code> requires a <code>d</code> character at the end, and <code>recomment</code> doesn’t have a match for the <code>d</code>. When you use regular expressions, you need to be careful to make sure that they’re expressing precisely what you want, with the exact amount of flexibility you want.</p>
+<h3 id="h2-502888c08-0003"><span epub:type="pagebreak" id="Page_178" title="178"/>Using Metacharacters for Flexible Searches</h3>
+<p class="BodyFirst">In addition to <code>+</code>, several other important metacharacters can be used in Python regular expressions. Several metacharacters, like <code>+</code>, are used to specify repetitions. For example, the asterisk (<code>*</code>) specifies that the preceding character is repeated <em>zero</em> or more times. Notice that this is different from <code>+</code>, which represents a character repeated <em>one</em> or more times. We can use <code>*</code> in a regular expression as follows:</p>
+<pre><code>re.search('10*','My bank balance is 100').span()</code></pre>
+<p>This regular expression would find the location of a bank balance in a string that specifies 1, 10, 100, 1,000, or indeed any number of 0s (even zero 0s). Here are examples of using <code>*</code> as a metacharacter:</p>
+<pre><code>import re
+print(re.search('10*','My bank balance is 1').span())
+print(re.search('10*','My bank balance is 1000').span())
+print(re.search('10*','My bank balance is 9000').span())
+print(re.search('10*','My bank balance is 1000000').span())</code></pre>
+<p>In this snippet, we again perform searches for the regular expression <code>10*</code> in four strings. We find matches for the first, second, and fourth strings, because, though all specify different amounts of money, each contains the character <code>1</code> followed by zero or more repetitions of the character <code>0</code>. The third string also contains repetitions of the <code>0</code> character, but no match occurs because the string doesn’t contain a <code>1</code> character adjacent to the 0s.</p>
+<p>In practice, having characters in plaintext that repeat more than twice is uncommon, so the <code>*</code> may not always be useful to you. If you don’t want to allow more than one repetition of a character, the question mark (<code>?</code>) is useful as a metacharacter. The <code>?</code>, when used as a metacharacter, specifies that the preceding character appears either zero or one times:</p>
+<pre><code>print(re.search('Clarke?','Please refer questions to Mr. Clark').span())</code></pre>
+<p>In this case, we use the <code>?</code> because we want to search for either Clark or Clarke, but not for Clarkee or Clarkeee or Clark with more <em>e</em>’s.</p>
+<h3 id="h2-502888c08-0004">Fine-Tuning Searches with Escape Sequences</h3>
+<p class="BodyFirst">Metacharacters enable you to perform useful, flexible text searches, allowing for many spellings and formats. However, they can also lead to confusion. For example, suppose that you want to search some text for a particular math equation, like 99 + 12 = 111. You could try to search for it as follows:</p>
+<pre><code>re.search('99+12=111','Example addition: 99+12=111').span()</code></pre>
+<p>When you run this code, you’ll get an error, because Python doesn’t find any matches for the search string. This may surprise you, since it’s <span epub:type="pagebreak" id="Page_179" title="179"/>easy to see an exact match for the equation we specified in the string we searched. This search returns no results because the default interpretation of <code>+</code> is as a metacharacter, not a literal addition sign. Remember that <code>+</code> specifies that the preceding character is repeated one or more times. We would find a match if we did a search like this one:</p>
+<pre><code>re.search('99+12=111','Incorrect fact: 999912=111').span()</code></pre>
+<p>In this case, Python finds an exact match by interpreting the <code>+</code> sign as a metacharacter, since <code>9</code> is repeated in the string on the right. If you want to search for an actual addition sign rather than using <code>+</code> as a metacharacter, you need to use yet another metacharacter to specify this preference. You can do it as follows:</p>
+<pre><code>re.search('99\+12=111','Example addition: 99+12=111').span()</code></pre>
+<p>Here, we use the backslash (<code>\</code>) as a special metacharacter. The <code>\</code> is called an <em>escape character</em>. It allows the <code>+</code> addition sign to “escape” from its metacharacter status and be interpreted literally instead. We call the <code>\+</code> string an <em>escape sequence</em>. In the preceding snippet, we find a match for our math equation because we escape the <code>+</code> addition sign, so Python looks for a literal addition sign instead of interpreting <code>+</code> as a metacharacter and looking for repetitions of the <code>9</code> character.</p>
+<p>You can do a literal search for any metacharacter by using an escape sequence. For example, imagine that you want to look for a question mark, instead of doing a search with a question mark as a metacharacter. You could do the following:</p>
+<pre><code>re.search('Clarke\?','Is anyone here named Clarke?').span()</code></pre>
+<p>This finds a match for <code>Clarke?</code>, but it won’t find a match for <code>Clark?</code> Because we escape the question mark, Python searches for a literal question mark instead of interpreting it as a metacharacter.</p>
+<p>If you ever need to search for a backslash, you’ll need two backslashes—one to escape from metacharacter interpretation and another to tell Python which literal character to search for:</p>
+<pre><code>re.search(r'\\',r'The escape character is \\').span()</code></pre>
+<p>In this snippet, we use the <code>r</code> character again to specify that we want to interpret the strings as raw text and to make sure Python doesn’t do any adjustment or processing before our search. Escape sequences are common and useful in regular expressions. Some escape sequences give special meaning to standard characters (not metacharacters). For example, <code>\d</code> will search for any digit (numbers 0 to 9) in a string, as follows:</p>
+<pre><code>re.search('\d','The loneliest number is 1').span()</code></pre>
+<p><span epub:type="pagebreak" id="Page_180" title="180"/>This snippet finds the location of the character <code>1</code> because the <code>\d</code> escape sequence refers to any digit. The following are other useful escape sequences using non-metacharacters:</p>
+<p class="RunInPara"><span class="RunInHead"><span class="LiteralBold"><code>\D</code></span></span>  Searches for anything that’s not a digit</p>
+<p class="RunInPara"><span class="RunInHead"><span class="LiteralBold"><code>\s</code></span></span>  Searches for whitespace (spaces, tabs, and newlines)</p>
+<p class="RunInPara"><span class="RunInHead"><span class="LiteralBold"><code>\w</code></span></span>  Searches for any alphabetic characters (letters, numbers, or 	underscores)</p>
+<p>Other important metacharacters are the square brackets <code>[</code> and <code>]</code>. These can be used as a pair in regular expressions to represent types of characters. For example, we can look for any lowercase alphabetic character as follows:</p>
+<pre><code>re.search('[a-z]','My Twitter is @fake; my email is abc@def.com').span()</code></pre>
+<p>This snippet is specifying that we want to find any characters that are in the “class” of characters between <code>a</code> and <code>z</code>. This returns the output <code>(1,2)</code>, which consists of only the character <code>y</code>, since this is the first lowercase character in the string. We could search for any uppercase characters similarly:</p>
+<pre><code>re.search('[A-Z]','My Twitter is @fake; my email is abc@def.com').span()</code></pre>
+<p>This search outputs <code>(0,1)</code>, because the first uppercase character it finds is the <code>M</code> at the beginning of the string.</p>
+<p>Another important metacharacter is the pipe (<code>|</code>), which can be used as an <em>or</em> logical expression. This can be especially useful if you’re not sure which of two ways is the correct way to spell something. For example:</p>
+<pre><code>re.search('Manchac[a|k]','Lets drive on Manchaca.').span()</code></pre>
+<p>Here, we specify that we want the string <code>Manchac</code> with either an <code>a</code> or a <code>k</code> at the end. It would also return a match if we searched <code>Lets drive on Manchack.</code></p>
+<h3 id="h2-502888c08-0005">Combining Metacharacters for Advanced Searches</h3>
+<p class="BodyFirst">The following are other metacharacters you should know:</p>
+<p class="RunInPara"><span class="RunInHead"><span class="LiteralBold"><code>$</code></span></span>  For the end of a line or string</p>
+<p class="RunInPara"><span class="RunInHead"><span class="LiteralBold"><code>^</code></span></span>  For the beginning of a line or string</p>
+<p class="RunInPara"><span class="RunInHead"><span class="LiteralBold"><code>.</code></span></span>  For a wildcard, meaning any character except the end of a line (<code>\n</code>)</p>
+<p>You can combine text and metacharacters for advanced searches. For example, suppose you have a list of all the files on your computer. You want to search through all the filenames to find a certain <em>.pdf </em>file. Maybe you remember that the name of your <em>.pdf</em> has something to do with <em>school</em>, but you can’t remember anything else about the name. You could use this flexible search to find the file:</p>
+<pre><code>re.search('school.*\.pdf$','schoolforgottenname.pdf').span()</code></pre>
+<p><span epub:type="pagebreak" id="Page_181" title="181"/>Let’s look at the regular expression in this snippet. It starts with <code>school</code> since you remember that the filename contains that word. Then, it has two metacharacters together: <code>.*</code>. The <code>.</code> is a wildcard metacharacter, and the <code>*</code> refers to any amount of repetition. So, <code>.*</code> specifies any number of any other characters coming after <code>school</code>. Next, we have an escaped period (full stop): <code>\.</code>, which refers to an actual period sign rather than a wildcard. Next, we search for the string <code>pdf</code>, but only if it appears at the end of the filename (specified by <code>$</code>). In summation, this regular expression specifies a filename that starts with <code>school</code>, ends with <code>.pdf</code>, and may have any other characters in between.</p>
+<p>Let’s search different strings for this regular expression to make sure you’re comfortable with the patterns it’s searching for:</p>
+<pre><code>import re
+print(re.search('school.*\.pdf$','schoolforgottenname.pdf').span())
+print(re.search('school.*\.pdf$','school.pdf').span())
+print(re.search('school.*\.pdf$','schoolothername.pdf').span())
+print(re.search('school.*\.pdf$','othername.pdf').span())
+print(re.search('school.*\.pdf$','schoolothernamepdf').span())
+print(re.search('school.*\.pdf$','schoolforgottenname.pdf.exe').span())</code></pre>
+<p>Some of these searches will find matches, and some will throw errors because they don’t find matches. Look closely at the searches that throw errors to make sure you understand why they’re not finding matches. As you get more comfortable with regular expressions and the metacharacters they use, you’ll be able to quickly grasp the logic of any regular expression you see instead of seeing it as a meaningless jumble of punctuation.</p>
+<p>You can use regular expressions for many kinds of searches. For example, you can specify a regular expression that searches for street addresses, URLs, particular types of filenames, or email addresses. As long as a logical pattern occurs in the text you’re searching for, you can specify that pattern in a regular expression.</p>
+<p>To learn more about regular expressions, you can check out the official Python documentation at <a class="LinkURL" href="https://docs.python.org/3/howto/regex.xhtml">https://docs.python.org/3/howto/regex.xhtml</a>. But really, the best way to get comfortable with regular expressions is to simply practice them on your own.</p>
+<h2 id="h1-502888c08-0005">Using Regular Expressions to Search for Email Addresses</h2>
+<p class="BodyFirst">Regular expressions enable you to search flexibly and intelligently for many types of patterns. Let’s return to our initial example of searching for email addresses and see how we can use regular expressions there. Remember that we want to search for text that matches the following pattern:</p>
+<p class="Equation"><var>&lt;some text&gt;</var><code>@</code><var>&lt;some more text&gt;</var></p>
+<p>Here’s a regular expression that will accomplish this search:</p>
+<pre><code>re.search('[a-zA-Z]+@[a-zA-Z]+\.[a-zA-Z]+',\
+'My Twitter is @fake; my email is abc@def.com').span()</code></pre>
+<p><span epub:type="pagebreak" id="Page_182" title="182"/>Let’s look closely at the elements of this snippet:</p>
+<ol class="decimal">
+<li value="1">It starts with <code>[a-zA-Z]</code>. This includes the square bracket metacharacters, which specify a class of characters. In this case, it will look for the characters represented by <code>a-zA-Z</code>, which refers to any lowercase or uppercase alphabetic character.</li>
+<li value="2">The <code>[a-zA-Z]</code> is followed by <code>+</code>, specifying one or more instances of any alphabetic character.</li>
+<li value="3">The <code>@</code> is next. This is not a metacharacter but rather searches for the literal at sign (<code>@</code>).</li>
+<li value="4">Next, we have <code>[a-zA-Z]+</code> again, specifying that after the <code>@</code>, any number of alphabetic characters should appear. This should be the first part of an email domain, like the <em>protonmail</em> in <em>protonmail.com</em>.</li>
+<li value="5">The <code>\.</code> specifies a period or full-stop character, to search for this character in <em>.com</em> or <em>.org</em> or any other top-level domain.</li>
+<li value="6">Finally, we have <code>[a-zA-Z]+</code> again, specifying that some alphabetic characters should come after the full stop. This is the <em>com</em> in <em>.com</em> or the <em>org</em> in <em>.org</em> addresses.</li>
+</ol>
+<p>Together, these six elements specify the general pattern of an email address. If you weren’t familiar with regular expressions, it would be strange to think that <code>[a-zA-Z]+@[a-zA-Z]+\.[a-zA-Z]+</code> is specifying an email address. But because of Python’s ability to interpret metacharacters in regular expressions, Python has been able to interpret this search and return email addresses. Just as important, you have learned regular expressions and understand what this regular expression means too.</p>
+<p>One important thing to remember is that there are many email addresses in the world. The regular expression in the preceding snippet will identify many email addresses, but not every possible one. For example, some domain names use characters that aren’t part of the standard Roman alphabet used for the English language. The preceding regular expression wouldn’t capture those email addresses. Also, email addresses can include numerals, and our regular expression wouldn’t match those either. A regular expression that could reliably capture every possible combination of characters in every possible email address would be extremely complex, and going to that level of complexity is beyond the scope of this book. If you’re interested in advanced regular expressions, you can look at a regular expression written by a professional that is meant to find email addresses at <a class="LinkURL" href="https://web.archive.org/web/20220721014244/https://emailregex.com/">https://web.archive.org/web/20220721014244/https://emailregex.com/</a>.</p>
+<h2 id="h1-502888c08-0006">Converting Results to Usable Data</h2>
+<p class="BodyFirst">Remember that we’re data scientists, not only web scrapers. After scraping web pages, we’ll want to convert the results of our scraping to usable data. We can do this by importing everything we scrape into a pandas dataframe.</p>
+<p><span epub:type="pagebreak" id="Page_183" title="183"/>Let’s scrape all of the (fake) email addresses listed in a paragraph at the following URL: <a class="LinkURL" href="https://bradfordtuckfield.com/contactscrape2.xhtml">https://bradfordtuckfield.com/contactscrape2.xhtml</a>. We can start by reading all of the text from the site, as follows:</p>
+<pre><code>import requests
+urltoget = 'https://bradfordtuckfield.com/contactscrape2.xhtml'
+pagecode = requests.get(urltoget)</code></pre>
+<p>This is the same code we used before: we simply download the HTML code and store it in our <code>pagecode</code> variable. If you’d like, you can look at all the code for this page by running <code>print(pagecode.text)</code>.</p>
+<p>Next, we can specify our regular expression to look for all email addresses in the paragraph:</p>
+<pre><code>allmatches=re.finditer('[a-zA-Z]+@[a-zA-Z]+\.[a-zA-Z]+',pagecode.text)</code></pre>
+<p>Here, we use the same characters for our regular expression. But we’re using a new method: <code>re.finditer()</code> instead of <code>re.search()</code>. We do this because <code>re.finditer()</code> is able to obtain multiple matches, and we need to do this to get all of the email addresses. (By default, <code>re.search()</code> finds only the first match of any string or regular expression.)</p>
+<p>Next, we need to compile these email addresses together:</p>
+<pre><code>alladdresses = []
+for match in allmatches:
+    alladdresses.append(match[0])
+
+print(alladdresses)</code></pre>
+<p>We start with an empty list called <code>alladdresses</code>. Then we append each element of our <code>allmatches</code> object to the list. Finally, we print out the list.</p>
+<p>We can also convert our list to a pandas dataframe:</p>
+<pre><code>import pandas as pd
+alladdpd=pd.DataFrame(alladdresses)
+print(alladdpd)</code></pre>
+<p>Now that our addresses are in a pandas dataframe, we can use the huge number of methods provided by the pandas library to do anything that we may have done with any other pandas dataframe. For example, we can put it in reverse alphabetical order if that’s useful to us, and then export it to a <em>.csv</em> file:</p>
+<pre><code>alladdpd=alladdpd.sort_values(0,ascending=False)
+alladdpd.to_csv('alladdpd20220720.csv')</code></pre>
+<p>Let’s think about what we did so far. Starting with only a URL, we downloaded the full HTML code of the web page specified by the URL. We used a regular expression to find all emails listed on the page. We compiled the emails into a pandas dataframe, which can then be exported to a <em>.csv</em> or Excel file or otherwise transformed as we see fit.</p>
+<p><span epub:type="pagebreak" id="Page_184" title="184"/>Downloading HTML code and specifying regular expressions to search for certain information, as we have done, is a reasonable way to accomplish any scraping task. However, in some cases, it may be difficult or inconvenient to write a complex regular expression for a difficult-to-match pattern. In these cases, you can use other libraries that include advanced HTML parsing and scraping capabilities without requiring you to write any regular expressions. One such library is called Beautiful Soup.</p>
+<h2 id="h1-502888c08-0007">Using Beautiful Soup</h2>
+<p class="BodyFirst">The <em>Beautiful Soup library</em> allows us to search for the contents of particular HTML elements without writing any regular expressions. For example, imagine that you want to collect all the hyperlinks in a page. HTML code uses an <em>anchor</em> element to specify hyperlinks. This special element is specified with a simple <code>&lt;a&gt;</code> start tag. The following is an example of what an anchor element might look like in the HTML code for a web page:</p>
+<pre><code>&lt;a href='https://bradfordtuckfield.com'&gt;Click here&lt;/a&gt;</code></pre>
+<p>This snippet specifies the text <code>Click here</code>. When users click this text on an HTML web page, their browsers will navigate to <a class="LinkURL" href="https://bradfordtuckfield.com">https://bradfordtuckfield.com</a>. The HTML element starts with an <code>&lt;a&gt;</code>, which indicates that it’s an anchor, or hyperlink, to a web page or file. Then it has an attribute called <code>href</code>. In HTML code, an <em>attribute</em> is a variable that provides more information about elements. In this case, the <code>href</code> attribute contains the URL that a hyperlink should “point” to: when someone clicks the <code>Click here</code> text, their browser navigates to the URL contained in the <code>href</code> attribute. After the <code>href</code> attribute, there’s an angle bracket, then the text that appears on the page. A final <code>&lt;/a&gt;</code> indicates the end of the hyperlink element.</p>
+<p>We could find all the anchor elements in a web page’s code by doing a regular expression search for the <code>&lt;a&gt;</code> pattern or by specifying a regular expression to find URLs themselves. However, the Beautiful Soup module enables us to find the anchor elements more easily without worrying about regular expressions. We can find all the URLs that are linked from a website as follows:</p>
+<pre><code>import requests
+from bs4 import BeautifulSoup
+
+URL = 'https://bradfordtuckfield.com/indexarchive20210903.xhtml'
+response = requests.get(URL)
+soup = BeautifulSoup(response.text, 'lxml')
+
+all_urls = soup.find_all('a')
+for each in all_urls:
+    print(each['href'])</code></pre>
+<p>Here, we import the <code>requests</code> and <code>BeautifulSoup</code> modules. Just like every other third-party Python package, you will need to install <code>BeautifulSoup</code> before using it in a script. The <code>BeautifulSoup</code> module is part of a package <span epub:type="pagebreak" id="Page_185" title="185"/>called bs4. The bs4 package has what are called <em>dependencies</em>: other packages that need to be installed for bs4 to work correctly. One of its dependencies is a package called lxml. You will need to install lxml before you can use bs4 and <code>BeautifulSoup</code>. After importing the modules we need, we use the <code>requests.get()</code> method to download a web page’s code, just as we’ve done previously in the chapter. But then we use the <code>BeautifulSoup()</code> method to parse the code and store the result in a variable called <code>soup</code>.</p>
+<p>Having the <code>soup</code> variable enables us to use particular methods from Beautiful Soup. In particular, we can use the <code>find_all()</code> method to look for particular types of elements in the web page code. In this case, we search for all anchor elements, which are identified by the character <code>a</code>. After getting all the anchor elements, we print out the value of their <code>href</code> attributes—the URLs of the pages or files they’re linking to. You can see that with Beautiful Soup, we can do useful parsing with only a few lines of code, all without using complicated regular expressions.</p>
+<h3 id="h2-502888c08-0006">Parsing HTML Label Elements</h3>
+<p class="BodyFirst">The anchor element is not the only type of element in HTML code. We saw the <code>&lt;title&gt;</code> element earlier in the chapter. Sometimes web pages also use the <code>&lt;label&gt;</code> element to put labels on text or content on their page. For example, imagine that you want to scrape contact information from the <a class="LinkURL" href="http://bradfordtuckfield.com/contactscrape.xhtml">http://bradfordtuckfield.com/contactscrape.xhtml</a> web page that we saw earlier. We’ve reproduced <a href="#figure8-3">Figure 8-3</a> as <a href="#figure8-4" id="figureanchor8-4">Figure 8-4</a> here.</p>
+<figure>
+<img alt="" class="keyline" height="153" src="image_fi/502888c08/f08004.png" width="349"/>
+<figcaption><p><a id="figure8-4">Figure 8-4</a>: The content of a demo page that can be scraped easily</p></figcaption>
+</figure>
+<p>You may be doing a project to search web pages for email addresses, phone numbers, or websites. Again, you could try to use regular expressions to search for these items. But the phone numbers and email addresses on this page are labeled with an HTML <code>&lt;label&gt;</code> element, so Beautiful Soup makes it easier to get the information we need. First, let’s look at how this <code>&lt;label&gt;</code> element is used in the HTML code for this web page. Here’s a small sample of this page’s code:</p>
+<pre><code>&lt;div class="find-widget"&gt;
+    Email:  &lt;label class="email" href="#"&gt;demo@bradfordtuckfield.com&lt;/label&gt;
+&lt;/div&gt;</code></pre>
+<p>As you saw earlier in the chapter, the <code>&lt;label&gt;</code> tag is used to indicate that a part of the HTML code is of a particular type. In this case, the <code>class</code> attribute identifies that this is a label for an email address. If the web <span epub:type="pagebreak" id="Page_186" title="186"/>page you’re scraping has these <code>&lt;label&gt;</code> elements, you can search for email addresses, phone numbers, and websites as follows:</p>
+<pre><code>import requests
+from bs4 import BeautifulSoup
+
+
+URL = 'https://bradfordtuckfield.com/contactscrape.xhtml'
+response = requests.get(URL)
+soup = BeautifulSoup(response.text, 'lxml')
+
+email = soup.find('label',{'class':'email'}).text
+mobile = soup.find('label',{'class':'mobile'}).text
+website = soup.find('a',{'class':'website'}).text
+
+print("Email : {}".format(email))
+print("Mobile : {}".format(mobile))
+print("Website : {}".format(website))</code></pre>
+<p>Here, we use the <code>soup.find()</code> method again. But instead of finding only elements labeled with <code>a</code>, as we did when we searched for hyperlinks, this time we also search for elements with the <code>&lt;label&gt;</code> tag. Each <code>&lt;label&gt;</code> tag in the code specifies a different <code>class</code>. We find the text with each kind of label (for email and mobile) and print out the text. For the website link, we search for an anchor tag with the <code>website</code> class. The final result is that we’ve been able to find every type of data we wanted: an email address, a cell phone number, and a website.</p>
+<h3 id="h2-502888c08-0007">Scraping and Parsing HTML Tables</h3>
+<p class="BodyFirst">Tables are common on websites, so it’s worth knowing a little about how to scrape data from website tables. You can see a simple example of an HTML table if you visit <a class="LinkURL" href="https://bradfordtuckfield.com/user_detailsscrape.xhtml">https://bradfordtuckfield.com/user_detailsscrape.xhtml</a>. This web page contains a table with information about several fictional people, shown in <a href="#figure8-5" id="figureanchor8-5">Figure 8-5</a>.</p>
+<figure>
+<img alt="" class="" height="327" src="image_fi/502888c08/f08005.png" width="694"/>
+<figcaption><p><a id="figure8-5">Figure 8-5</a>: A table that can be scraped using Beautiful Soup</p></figcaption>
+</figure>
+<p><span epub:type="pagebreak" id="Page_187" title="187"/>Say we want to scrape information about these people from this table. Let’s look at the HTML code that specifies this table:</p>
+<pre><code>&lt;table style="width:100%"&gt;
+  &lt;tr class="user-details-header"&gt;
+    &lt;th&gt;Firstname&lt;/th&gt;
+    &lt;th&gt;Lastname&lt;/th&gt;
+    &lt;th&gt;Age&lt;/th&gt;
+  &lt;/tr&gt;
+  &lt;tr class="user-details"&gt;
+    &lt;td&gt;Jill&lt;/td&gt;
+    &lt;td&gt;Smith&lt;/td&gt;
+    &lt;td&gt;50&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr class="user-details"&gt;
+    &lt;td&gt;Eve&lt;/td&gt;
+    &lt;td&gt;Jackson&lt;/td&gt;
+    &lt;td&gt;44&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr class="user-details"&gt;
+    &lt;td&gt;John&lt;/td&gt;
+    &lt;td&gt;Jackson&lt;/td&gt;
+    &lt;td&gt;24&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr class="user-details"&gt;
+    &lt;td&gt;Kevin&lt;/td&gt;
+    &lt;td&gt;Snow&lt;/td&gt;
+    &lt;td&gt;34&lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</code></pre>
+<p>The <code>&lt;table&gt;</code> tag specifies the beginning of the table, and <code>&lt;/table&gt;</code> specifies the end of it. Between the beginning and the end are some <code>&lt;tr&gt;</code> and <code>&lt;/tr&gt;</code> tags. Each <code>&lt;tr&gt;</code> tag specifies the beginning of a table row (<code>tr</code> is an abbreviation for <em>table row</em>). Within each table row, the <code>&lt;td&gt;</code> tags specify the content of particular table cells (<code>td</code> is short for <em>table data</em>). You can see that the first row is the header of the table, and it contains the names of every column. After the first row, each subsequent row specifies information about one person: their first name first, their surname second, and their age third, in three different <code>&lt;td&gt;</code> elements.</p>
+<p>We can parse the table as follows:</p>
+<pre><code>import requests
+from bs4 import BeautifulSoup
+
+
+URL = 'https://bradfordtuckfield.com/user_detailsscrape.xhtml'
+response = requests.get(URL)
+soup = BeautifulSoup(response.text, 'lxml')
+
+all_user_entries = soup.find_all('tr',{'class':'user-details'})
+for each_user in all_user_entries:
+    user = each_user.find_all("td")
+<span epub:type="pagebreak" id="Page_188" title="188"/>    print("User Firstname : {}, Lastname : {}, Age: {}"\
+.format(user[0].text, user[1].text, user[2].text))</code></pre>
+<p>Here, we use Beautiful Soup again. We create a <code>soup</code> variable that contains the parsed version of the website. Then we use the <code>find_all()</code> method to find every <code>tr</code> element (table row) on the page. For every table row, we use <code>find_all()</code> again to look for every <code>td</code> element (table data) in the row. After finding the contents of each row, we print them out, with formatting to label first names, last names, and ages. In addition to printing these elements, you could also consider adding them to a pandas dataframe to more easily export them, sort them, or do any other analysis you prefer.</p>
+<h2 id="h1-502888c08-0008">Advanced Scraping</h2>
+<p class="BodyFirst">Scraping is a deep topic, and there is more to learn beyond the material covered in this chapter. You could start with a few areas outlined in this section.</p>
+<p>First, consider that some web pages are dynamic; they change depending on interaction from the user, such as clicking elements or scrolling. Often the dynamic parts of web pages are rendered using JavaScript, a language with syntax that’s very different from the HTML we’ve focused on scraping in this chapter. The <code>requests</code> package that we used to download HTML code, and the Beautiful Soup module that we used to parse the code, are meant to be used with static web pages. With dynamic web pages, you may want to use another tool such as the Selenium library, which is designed for scraping dynamic web pages. With Selenium, your script can do things like enter information into website forms and click CAPTCHA-type challenges without requiring direct human input.</p>
+<p>You should also consider strategies to deal with being blocked. Many websites are hostile to all attempts to scrape their data. They have strategies to block scrapers, and if they detect that you’re trying to scrape and harvest their information, they may try to block you. One response to being blocked is to give up; this will avoid any legal problems or ethical issues that may come with scraping hostile websites. </p>
+<p>If you decide to scrape sites that are trying to block you anyway, you can take some actions to avoid being blocked. One is to set up one or more <em>proxy servers</em>. A website might block your IP address from accessing its data, so you can set up a different server with a different IP address that the website hasn’t blocked. If the website continues to try to block the IP address of your proxy server as well, you can set up <em>rotating proxies</em> so that you continuously get new IP addresses that are not blocked, and scrape only with those fresh, unblocked IP addresses.</p>
+<p>When you take this kind of approach, you should consider its ethical implications: Do you feel comfortable using strategies like these to access a site that doesn’t want you to access it? Remember that in rare cases, unauthorized scraping can lead to lawsuits or even criminal prosecution. You should always be cautious and ensure that you’ve thought through the practical and ethical implications of everything you do.</p>
+<p><span epub:type="pagebreak" id="Page_189" title="189"/>Not all websites are averse to letting people access and scrape their data. Some websites allow scraping, and some even set up an <em>application programming interface (API)</em> to facilitate data access. An API allows you to query a website’s data automatically and receive data that’s in a user-friendly format. If you ever need to scrape a website, check whether it has an API that you can access. If a website has an API, the API documentation should indicate the data that the API provides and how you can access it. Many of the tools and ideas we’ve discussed in this chapter also apply to API usage. For example, the <code>requests</code> package can be used to interact with APIs, and after getting API data, the data can be used to populate a pandas dataframe.</p>
+<p>Finally, timing is an important issue to consider when you set up scraping scripts. Sometimes a scraping script makes many requests to a website in quick succession, trying to download as much data as possible, as quickly as possible. This could cause a website to be overwhelmed and crash, or it may block the scraper to avoid getting overwhelmed. To prevent the target site from crashing or blocking you, you can adjust your scraper so that it works more slowly. One way to slow down your script is to deliberately add pauses. For example, after downloading one row from a table, the script can pause and do nothing (the script can <em>sleep</em>) for 1 second or 2 seconds or 10 seconds, and then download the next row from the table. Going slowly on purpose can be frustrating for those of us who like to get things done quickly, but it can often make scraping success more likely over the long term.</p>
+<h2 id="h1-502888c08-0009">Summary</h2>
+<p class="BodyFirst">In this chapter, we covered web scraping. We outlined the concept of scraping, including a brief introduction to how HTML code works. We went on to build a simple scraper, one that merely downloads and prints out the code for a web page. We also searched through and parsed a website’s code, including using regular expressions for advanced searches. We showed how to convert the data we scrape from websites to usable datasets. We also used Python’s Beautiful Soup to easily find hyperlinks and tagged information on web pages. Finally, we briefly discussed some advanced applications of scraping skills, including API integrations and scraping dynamic websites. In the next chapter, we’ll be going over recommendation systems. Let’s continue!</p>
+</section>
+</div></body></html>

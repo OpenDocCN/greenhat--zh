@@ -1,0 +1,377 @@
+<html><head></head><body>
+<div id="sbo-rt-content"><section>
+<header>
+<h1 class="chapter">
+<span class="ChapterNumber"><span epub:type="pagebreak" id="Page_209" title="209"/>10</span><br/>
+<span class="ChapterTitle">Natural Language Processing</span></h1>
+</header>
+<figure class="opener">
+<img alt="" height="200" src="image_fi/book_art/chapterart.png" width="200"/>
+</figure>
+<p class="ChapterIntro">Finding ways to mathematically analyze textual data is the main goal of the field known as <em>natural language processing (NLP)</em>. In this chapter, we’ll go over some important ideas from the world of NLP and talk about how to use NLP tools in data science projects.</p>
+<p>We’ll start the chapter by introducing a business scenario and thinking through how NLP can help with it. We’ll use the word2vec model, which can convert individual words to numbers in a way that enables all kinds of powerful analyses. We’ll walk through the Python code for this conversion and then explore some applications of it. Next, we’ll discuss the Universal Sentence Encoder (USE), a tool that can convert entire sentences to numeric vectors. We’ll go over the Python code for setting up and using the USE. Along the way, we’ll find ways to use ideas from previous chapters. Let’s begin!</p>
+<h2 id="h1-502888c10-0001"><span epub:type="pagebreak" id="Page_210" title="210"/>Using NLP to Detect Plagiarism</h2>
+<p class="BodyFirst">Suppose that you’re the president of a literary agency. Your agency receives hundreds of emails every day, each containing book chapters from aspiring authors. Chapters can be quite long, consisting of thousands or tens of thousands of words each, and your agency needs to carefully sift through these long chapters, trying to find a small number to accept. The longer it takes agents to filter through these submitted emails, the less time they’ll have to spend on their other important tasks, like selling books to publishers. It’s difficult, but possible, to automate some of the filtering that literary agencies have to do. For example, you could write a Python script that could automatically detect plagiarism.</p>
+<p>Literary agencies are not the only businesses that could be interested in plagiarism detection. Suppose that you’re the president of a large university. Every year, your students submit thousands of long papers, which you want to make sure are not plagiarized. Plagiarism is not only a moral and educational matter but also a business concern. If your university gains a reputation for allowing plagiarism, graduates will face worse job prospects, alumni donations will go down, fewer students will want to enroll, and the revenue and profits your university makes will surely take a nosedive. Your university’s professors and graders are overworked already, so you want to save them time and find an automated approach to plagiarism detection.</p>
+<p>A simple plagiarism detector might look for exact matches of text. For example, one of your university’s students may have submitted the following sentences in one of their papers:</p>
+<blockquote class="blockquote">
+<p class="Blockquote">People’s whole lives do pass in front of their eyes before they die. The process is called “Living.”</p>
+</blockquote>
+<p>Maybe you read this paper and the idea sounds familiar to you, so you ask your librarians to search for this text in their book databases. They find an exact match of every character of this sentence in Terry Pratchett’s classic <em>The Last Continent</em>, indicating plagiarism; the student is punished accordingly.</p>
+<p>Other students may be more wily. Instead of directly copying text from published books, they learn to paraphrase so they can copy ideas with minor, insignificant changes to phrasing. For example, one student may wish to plagiarize the following text (also by Pratchett):</p>
+<blockquote class="blockquote">
+<p class="Blockquote">The trouble with having an open mind, of course, is that people will insist on coming along and trying to put things in it.</p>
+</blockquote>
+<p>The student rephrases the sentence slightly, changing it to the following:</p>
+<blockquote class="blockquote">
+<p class="Blockquote">The problem with having an open mind is that people will insist on approaching and trying to insert things into your mind.</p>
+</blockquote>
+<p>If your librarians do a search for exact matches of this student’s sentence, they won’t find any, since the student rephrased the sentence slightly. To catch clever plagiarists like this one, you will need to rely on <span epub:type="pagebreak" id="Page_211" title="211"/>NLP tools that can detect not only exact text matches but also “loose” or “fuzzy” matches based on the meanings of similar words and sentences. For example, we’ll need a method that can identify that <em>trouble</em> and <em>problem</em> are similar words used roughly as synonyms in the student’s paraphrase. By identifying synonyms and near-synonyms, we’ll be able determine which non-identical sentences are similar enough to each other to constitute evidence for plagiarism. We’ll use an NLP model called word2vec to accomplish this.</p>
+<h2 id="h1-502888c10-0002">Understanding the word2vec NLP Model</h2>
+<p class="BodyFirst">We need a method that can take any two words and quantify exactly how similar they are. Let’s think about what it means for two words to be similar. Consider the words <em>sword</em> and <em>knife</em>. The alphabetic letters in these words are totally different, with no overlaps, but the words refer to things that are similar to each other: both are words for sharp, metallic objects used to cut things. These words are not exact synonyms, but their meanings are fairly similar. We humans have a lifetime of experience that has given us an intuitive sense for how similar these words are, but our computer programs can’t rely on intuition, so we have to find a way to quantify the similarity of these words based on data.</p>
+<p>We’ll use data that comes from a large collection of natural language text, also called a <em>corpus</em>. A corpus may be a collection of books, newspaper articles, research papers, theatrical plays, or blog posts or a mix of these. The important point is that it consists of <em>natural language</em>—phrases and sentences that were put together by humans and reflect the way humans speak and write. Once we have our natural language corpus, we can look at how to use it to quantify the meanings of words.</p>
+<h3 id="h2-502888c10-0001">Quantifying Similarities Between Words</h3>
+<p class="BodyFirst">Let’s start by looking at some natural language sentences and thinking about the words in them. Imagine two possible sentences that might contain the words <em>sword</em> and <em>knife</em>:</p>
+<ol class="none">
+<li>Westley attacked me with a sword and cut my skin.</li>
+<li>Westley attacked me with a knife and cut my skin.</li>
+</ol>
+<p>You can see that these sentences are identical, except for the detail of whether the attacker used a sword or a knife. With one word substituted for the other, they still have rather similar meanings. This is one indication that the words <em>sword</em> and <em>knife</em> are similar: they can be substituted for each other in many sentences without drastically changing the sentence’s meaning or implications. Of course, it’s possible that something other than a sword or knife could be used in an attack, so a sentence like the following could also be in the corpus:</p>
+<ol class="none">
+<li>Westley attacked me with a herring and cut my skin.</li>
+</ol>
+<p><span epub:type="pagebreak" id="Page_212" title="212"/>Though a sentence about a skin-puncturing attack with a herring is technically possible, it’s less likely to appear in any natural language corpus than a sentence about a sword or knife attack. Someone who doesn’t know any English, or a Python script, could find evidence for this by looking at our corpus and noticing that the word <em>attack</em> frequently appears near the word <em>sword</em>, but doesn’t frequently appear near the word <em>herring</em>.</p>
+<p>Noticing which words tend to appear near which other words will be very useful to us, because we can use a word’s neighbors to better understand the word itself. Take a look at <a href="#table10-1" id="tableanchor10-1">Table 10-1</a>, which shows words that often appear near the words <em>sword</em>, <em>knife</em>, and <em>herring.</em></p>
+<figure>
+<figcaption class="TableTitle"><p><a id="table10-1">Table 10-1</a>: Words That Tend to Appear Near Each Other in Natural Language</p></figcaption>
+<table border="1" id="table-502888c10-0001">
+<thead>
+<tr>
+<td><b>Word</b></td>
+<td><b>Words that often appear nearby in a natural language corpus</b></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sword</td>
+<td>cut, attack, sheath, fight, sharp, steel</td>
+</tr>
+<tr>
+<td>knife</td>
+<td>cut, attack, pie, fight, sharp, steel</td>
+</tr>
+<tr>
+<td>herring</td>
+<td>pickled, ocean, fillet, pie, silver, cut</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<p>Swords and knives both tend to be <em>sharp</em>, made of <em>steel</em>, used to <em>attack</em>, and used to <em>cut</em> things and to <em>fight</em>, so we see in <a href="#table10-1">Table 10-1</a> that all of these words often appear near both <em>sword</em> and <em>knife</em> in a natural language corpus. However, we can also see differences between the lists of nearby words. For example, <em>sword</em> appears often near <em>sheath</em>, but <em>knife</em> doesn’t often appear near <em>sheath</em>. Also, <em>knife</em> often appears near <em>pie</em>, but <em>sword</em> usually doesn’t. For its part, <em>herring</em> appears near <em>pie</em> sometimes (since people sometimes eat herring pie) and also appears near <em>cut</em> sometimes (since people sometimes cut herring when preparing meals). But the other words that tend to appear near <em>herring</em> have no overlap with the words that tend to appear near <em>sword</em> and <em>knife</em>.</p>
+<p><a href="#table10-1">Table 10-1</a> is useful because we can use it to understand and express the similarity of two words, using data rather than gut reactions. We can say that <em>sword</em> and <em>knife</em> are similar, not just because we have a gut feeling that they mean similar things, but because they tend to appear near the same neighbors in natural language texts. By contrast, <em>sword</em> and <em>herring</em> are quite different, because little overlap exists between their common neighbors in natural language texts. <a href="#table10-1">Table 10-1</a> gives us a data-centric way to determine whether words are similar, rather than a way based on vague intuition, and importantly, <a href="#table10-1">Table 10-1</a> can be created and interpreted even by someone who doesn’t know a single word of English, since even a non-English speaker can look at a text and find which words tend to be neighbors. The table can also be created by a Python script that reads any corpus and finds common neighbors.</p>
+<p>Our goal is to convert words to numbers, so our next step is to create a version of <a href="#table10-1">Table 10-1</a> that has numeric measurements of how likely words are to be each other’s neighbors, as in <a href="#table10-2" id="tableanchor10-2">Table 10-2</a>.</p>
+<figure>
+<figcaption class="TableTitle"><p><a id="table10-2">Table 10-2</a>: Probabilities of Words Appearing Near Each Other in a Natural Language Corpus<span epub:type="pagebreak" id="Page_213" title="213"/></p></figcaption>
+<table border="1" id="table-502888c10-0002">
+<thead>
+<tr>
+<td rowspan="1"><b>Word</b></td>
+<td rowspan="1"><b>Neighbor word</b></td>
+<td rowspan="1"><b>Probability that the neighbor appears near<br/> the word in a natural language corpus</b></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sword</td>
+<td>cut</td>
+<td>61%</td>
+</tr>
+<tr>
+<td>knife</td>
+<td>cut</td>
+<td>69%</td>
+</tr>
+<tr>
+<td>herring</td>
+<td>cut</td>
+<td>12%</td>
+</tr>
+<tr>
+<td>sword</td>
+<td>pie</td>
+<td>1%</td>
+</tr>
+<tr>
+<td>knife</td>
+<td>pie</td>
+<td>49%</td>
+</tr>
+<tr>
+<td>herring</td>
+<td>pie</td>
+<td>16%</td>
+</tr>
+<tr>
+<td>sword</td>
+<td>sheath</td>
+<td>56%</td>
+</tr>
+<tr>
+<td>knife</td>
+<td>sheath</td>
+<td>16%</td>
+</tr>
+<tr>
+<td>herring</td>
+<td>sheath</td>
+<td>2%</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<p><a href="#table10-2">Table 10-2</a> gives us much of the same information as <a href="#table10-1">Table 10-1</a>; it shows which words are likely to appear near other words in a natural language corpus. But <a href="#table10-2">Table 10-2</a> is more precise; it gives us numeric measurements of the likelihood of words appearing together, instead of just a list of neighbor words. Again, you can see that the percentages in <a href="#table10-2">Table 10-2</a> seem plausible: <em>sword</em> and <em>knife</em> frequently have <em>cut</em> as a neighbor, <em>knife</em> and <em>herring</em> are more likely than <em>sword</em> to have <em>pie</em> as a neighbor, and <em>herring</em> doesn’t often have <em>sheath</em> as a neighbor. Again, <a href="#table10-2">Table 10-2</a> could be created by someone who doesn’t speak English, and it could also be created by a Python script that had a collection of books or English language texts to analyze. Similarly, even someone who doesn’t know a word of English, or a Python script, could look at <a href="#table10-2">Table 10-2</a> and have a good idea about the similarities and differences between various words.</p>
+<h3 id="h2-502888c10-0002">Creating a System of Equations</h3>
+<p class="BodyFirst">We’re almost ready to represent words purely as numbers. The next step is to create something even more numeric than <a href="#table10-2">Table 10-2</a>. Instead of representing these percentage likelihoods in a table, let’s try to represent them in a system of equations. We will need only a few equations to succinctly represent all the information in <a href="#table10-2">Table 10-2</a>.</p>
+<p>Let’s start with a fact from arithmetic. This arithmetic fact may seem useless, but you’ll see later why it’s useful:</p>
+<p class="Equation">61 = 5 · 10 – 5 · 1 + 3 · 5 + 1 · 1</p>
+<p>You can see that this is an equation for the number 61—that’s exactly the probability that the word <em>cut</em> appears near the word <em>sword</em> according to <a href="#table10-2">Table 10-2</a>. We can also rewrite the right side of the equation by using different notation:</p>
+<p class="Equation">61 = (5, –5, 3, 1) · (10, 1, 5, 1)</p>
+<p><span epub:type="pagebreak" id="Page_214" title="214"/>Here, the dot is meant to represent the dot product, which we introduced in <span class="xref" itemid="xref_target_Chapter 9">Chapter 9</span>. When calculating the dot product, we multiply the first elements of both vectors together, multiply the second elements of both vectors together, and so on, summing up the results. We can write out this dot product as a more standard equation using only multiplication and addition as follows:</p>
+<p class="Equation">61 = 5 · 10 + (–5) · 1 + 3 · 5 + 1 · 1</p>
+<p>You can see that this is just the same equation we started with. The 5 and 10 are multiplied together, since they’re the first element of the first and second vectors, respectively. The numbers –5 and 1 are also multiplied together, because they’re the second elements of the first and second vectors, respectively. When we take a dot product, we multiply all of these corresponding elements together and sum up the results. Let’s write one more fact of arithmetic in this same dot product style:</p>
+<p class="Equation">12 = (5, –5, 3, 1) · (2, 2, 2, 6)</p>
+<p>This is just another fact of arithmetic, using dot product notation. But notice, this is an equation for 12—exactly the probability that the word <em>cut</em> appears near the word <em>herring</em> according to <a href="#table10-2">Table 10-2</a>. We can also notice that the first vector in the equation, (5,–5, 3, 1), is exactly the same as the first vector in the previous equation. Now that we have both of these arithmetic facts, we can rewrite them yet again as a simple system of equations:</p>
+<p class="Equation">sword = (10, 1, 5, 1)</p>
+<p class="Equation">herring = (2, 2 ,2, 6)</p>
+<p class="Equation">Probability that <em>cut</em> appears near a word = (5, –5, 3, 1) · the word’s vector</p>
+<p>Here, we’ve taken a leap: instead of just writing down arithmetic facts, we’re claiming that we have numeric vectors that represent the words <em>sword</em> and <em>herring</em>, and we’re claiming that we can use these vectors to calculate the probability that the word <em>cut</em> is near any word. This may seem like a bold leap, but soon you’re going to see why it’s justified. For now, we can keep going and write more arithmetic facts as follows:</p>
+<p class="Equation">60 = (5, –5, 3, 1) · (10, 1, 5, 9)</p>
+<p class="Equation">1 = (1, –10, –1, 6) · (10, 1, 5, 1)</p>
+<p class="Equation">49 = (1, –10, –1, 6) · (2, 2, 2, 6)</p>
+<p class="Equation">16 = (1, –10, –1, 6) · (10, 1, 5, 9)</p>
+<p class="Equation">56 = (1, 6, 9, –5) · (10, 1, 5, 1)</p>
+<p class="Equation">16 = (1, 6, 9, –5) · (2, 2, 2, 6)</p>
+<p class="Equation">2 = (1, 6, 9, –5) · (10, 1, 5, 9)</p>
+<p><span epub:type="pagebreak" id="Page_215" title="215"/>You can look at these as just arbitrary arithmetic facts. But we can also connect them to <a href="#table10-2">Table 10-2</a>. In fact, we can rewrite all of our arithmetic facts so far as the system shown in <a href="#equation10-1" id="equationanchor10-1">Equation 10-1</a>.</p>
+<p class="Equation">sword = (10, 1, 5, 1)</p>
+<p class="Equation">knife = (10, 1 , 5, 9)</p>
+<p class="Equation">herring = (2, 2, 2, 6)</p>
+<p class="Equation">Probability that <em>cut</em> appears near a word = (5, –5, 3, 1) · the word’s vector</p>
+<p class="Equation">Probability that <em>pie</em> appears near a word = (1, –10, –1, 6) · the word’s vector</p>
+<p class="Equation">Probability that <em>sheath</em> appears near a word = (1, 6, 9, –5) · the word’s vector</p>
+<p class="figcaption"><a id="equation10-1">Equation 10-1</a>: A system of equations containing vector representations of words</p>
+<p>Mathematically, you can verify that all the equations in <a href="#equation10-1" id="equationanchor10-2">Equation 10-1</a> are correct: by plugging the word vectors into the equations, we’re able to calculate all the probabilities in <a href="#table10-2">Table 10-2</a>. You may wonder why we created this system of equations. It seems to be doing nothing more than repeating the probabilities that we already have in <a href="#table10-2">Table 10-2</a>, but in a more complicated way with more vectors. The important leap we’ve taken here is that by creating these vectors and this system of equations instead of using <a href="#table10-2">Table 10-2</a>, we’ve found numeric representations of each of our words. The vector (10, 1, 5, 1) in some sense “captures the meaning” of <em>sword</em>, and the same goes for (10, 1, 5, 9) and <em>knife</em> and (2, 2, 2, 6) and <em>herring</em>.</p>
+<p>Even though we have vectors for each of our words, you may not feel convinced that these vectors really represent the meanings of English words. To help convince you, let’s do some simple calculations with our vectors and see what we can learn. First, let’s define these vectors in a Python session:</p>
+<pre><code>sword = [10,1,5,1]
+knife = [10,1,5,9]
+herring = [2,2,2,6]</code></pre>
+<p>Here, we define each of our word vectors as a Python list, a standard way to work with vectors in Python. We’re interested in knowing how similar our words are to each other, so let’s define a function that can calculate the distance between any two vectors:</p>
+<pre><code>import numpy as np
+def euclidean(vec1,vec2):
+    distance=np.array(vec1)-np.array(vec2)
+    squared_sum=np.sum(distance**2)
+    return np.sqrt(squared_sum)</code></pre>
+<p><span epub:type="pagebreak" id="Page_216" title="216"/>This function is called <code>euclidean()</code>, because it’s technically calculating a Euclidean distance between any two vectors. In two dimensions, a <em>Euclidean distance </em>is the length of the hypotenuse of a right triangle, which we can calculate with the Pythagorean theorem. More informally, we often refer to the Euclidean distance as just <em>distance</em>. In more than two dimensions, we use the same Pythagorean theorem formula to calculate a Euclidean distance, and the only difference is that it’s harder to draw. Calculating Euclidean distances between vectors is a reasonable way to calculate the similarity of two vectors: the closer the Euclidean distance between the vectors, the more similar they are. Let’s calculate the Euclidean distances between our word vectors:</p>
+<pre><code>print(euclidean(sword,knife))
+print(euclidean(sword,herring))
+print(euclidean(knife,herring))</code></pre>
+<p>You should see that <em>sword</em> and <em>knife</em> have a distance of 8 from each other. By contrast, <em>sword</em> and <em>herring</em> have a distance of 9.9 from each other. These distance measurements reflect our understandings of these words: <em>sword</em> and <em>knife</em> are similar to each other, so their vectors are close to each other, while <em>sword</em> and <em>herring</em> are less similar to each other, so their vectors are further apart. This is evidence that our method for converting words to numeric vectors has worked: it’s enabling us to quantify word similarities successfully.</p>
+<p>If we want to detect plagiarism, we’ll have to find numeric vectors that represent more than just these three words. We’ll want to find vectors for every word in the English language, or at least the majority of the words that tend to appear in student papers. We can imagine what some of these vectors might be. For example, the word <em>haddock</em> refers to a type of fish, not too different from a herring. So, we’ll expect to find that <em>haddock</em> has similar neighbors to <em>herring</em> and similar probabilities in <a href="#table10-2">Table 10-2</a> (a similar probability of having <em>cut</em> or <em>pie</em> or anything else as a neighbor).</p>
+<p>Anytime two words have similar probabilities in <a href="#table10-2">Table 10-2</a>, we expect that they’ll have similar vectors, since we’ll be multiplying those vectors according to the system of equations in <a href="#equation10-1" id="equationanchor10-3">Equation 10-1</a> to get those probabilities. For example, we might find that the numeric vector for <em>haddock</em> is something like (2.1, 1.9, 2.3, 6.5). This vector will be close in Euclidean distance to the vector for <em>herring</em> (2, 2, 2, 6), and if we multiply the <em>haddock</em> vector by the other vectors in <a href="#equation10-1" id="equationanchor10-4">Equation 10-1</a>, we’ll find that <em>haddock</em> should have probabilities of being near each neighbor word that are similar to the probabilities for <em>herring</em> in <a href="#table10-2">Table 10-2</a>. We’ll similarly need to find vectors for thousands of other words in English, and we’ll expect that words that have similar meanings should have similar vectors.</p>
+<p><span epub:type="pagebreak" id="Page_217" title="217"/>It’s easy to say that we need vectors for every English word, but then the question becomes: How should we determine each of these vectors? To understand how we can determine the vectors for every word, consider a diagram of the system of equations in <a href="#figure10-1" id="figureanchor10-1">Figure 10-1</a>.</p>
+<figure>
+<img alt="" class="" height="225" src="image_fi/502888c10/f10001.png" width="496"/>
+<figcaption><p><a id="figure10-1">Figure 10-1</a>: A visual representation of the probabilities of words appearing near each other</p></figcaption>
+</figure>
+<p>This diagram looks complex, but it’s meant to illustrate nothing more and nothing less than our system of equations. In <a href="#equation10-1" id="equationanchor10-5">Equation 10-1</a>, we represent every word as a vector with four elements, like this: (<em>a</em>, <em>b</em>, <em>c</em>, <em>d</em>). The <em>a</em>, <em>b</em>, <em>c</em>, and <em>d</em> on the left of <a href="#figure10-1">Figure 10-1</a> represent these elements. Each arrow extending from those elements represents a multiplication. For example, the arrow marked with a 5 that extends from the circle labeled <em>a</em> to the oval labeled <em>probability of cut appearing nearby</em> means that we should multiply every <em>a</em> value by 5, and add it to the estimated probability of <em>cut</em> appearing near a word. If we consider all the multiplications indicated by all of these arrows, you can see from <a href="#figure10-1">Figure 10-1</a> that the probability of <em>cut</em> appearing near a word is 5 · <em>a</em> – 5 · <em>b </em>+ 3 · <em>c </em>+ 1 · <em>d</em>, just as described in <a href="#equation10-1" id="equationanchor10-6">Equation 10-1</a>. <a href="#figure10-1">Figure 10-1</a> is just another way to represent <a href="#equation10-1" id="equationanchor10-7">Equation 10-1</a>. If we can find the right <em>a</em>, <em>b</em>, <em>c</em>, and <em>d</em> values for every word in English, we’ll have the word vectors we need to check for plagiarism.</p>
+<p>The reason we drew <a href="#figure10-1">Figure 10-1</a> is to point out that it has exactly the form of a neural network, the type of supervised learning model we already discussed in <span class="xref" itemid="xref_target_Chapter 6">Chapter 6</span>. Since it constitutes a neural network, we can use advanced software (including several free Python packages) to train the neural network and find out exactly what <em>a</em>, <em>b</em>, <em>c</em>, and <em>d</em> should be for every word in English. The whole point of creating Tables 10-1 and 10-2, and the system of equations in <a href="#equation10-1" id="equationanchor10-8">Equation 10-1</a>, is to create a neural network like the hypothetical one shown in <a href="#figure10-1">Figure 10-1</a>. As long as we have data like that in <a href="#table10-2">Table 10-2</a>, we can use this neural network software to train the neural network shown in <a href="#figure10-1">Figure 10-1</a> and find all the word vectors we need.</p>
+<p><span epub:type="pagebreak" id="Page_218" title="218"/>The most important output of this neural network training will be values of <em>a</em>, <em>b</em>, <em>c</em>, and <em>d</em> for every word in our data. In other words, the output of the neural network training will be (<em>a</em>, <em>b</em>, <em>c</em>, <em>d</em>) vectors for every word. This process is called the <em>word2vec</em> model: create a table of probabilities like <a href="#table10-2">Table 10-2</a> for every word in a corpus, use that table to set up a neural network like the one shown in <a href="#figure10-1">Figure 10-1</a>, and then train that neural network to find numeric vectors that represent every word.</p>
+<p>The word2vec model is popular because it can create numeric vectors for any words, and those vectors can be used for many useful applications. One reason that word2vec is popular is that we can train a word2vec model by using only raw text as input; we don’t need to annotate or label any words before training the model and getting our word vectors. So, even someone who doesn’t speak English can create word vectors and reason about them by using the word2vec approach.</p>
+<p>If this sounds complex, don’t worry. Next, we’ll go through code for working with these kinds of vectors, and you’ll see that although the ideas and theory of word2vec are complex, the code and applications can be straightforward and simple. For now, try to feel comfortable with the basic overall idea of what we’ve discussed so far: if we create data about which words appear near each other in natural language, we can use that data to create vectors that allow us to quantify the similarity of any pair of words. Let’s continue with some code, where we can see how to use these numeric vectors for detecting plagiarism.</p>
+<h2 id="h1-502888c10-0003">Analyzing Numeric Vectors in word2vec</h2>
+<p class="BodyFirst">Not only has someone already created the word2vec model, but they’ve also already done all its hard work for us: written the code, calculated the vectors, and published all of it online for us to download anytime for free. In Python, we can use the Gensim package to access word vectors for many English words:</p>
+<pre><code>import gensim.downloader as api</code></pre>
+<p>The Gensim package has a <code>downloader</code> that allows us to access many NLP models and tools just by using the <code>load()</code> method. You can load one such collection of vectors in one line as follows:</p>
+<pre><code>vectors = api.load('word2vec-google-news-300')</code></pre>
+<p>This code loads a collection of word vectors that was created from a corpus of news texts containing about 100 billion words. Essentially, someone got the information that would be in a table like our <a href="#table10-2">Table 10-2</a>, but with thousands more words in it. They obtained these words and probabilities from real news sources written by humans. Then they used that information to create a neural network like the one in <a href="#figure10-1">Figure 10-1</a>—again, with thousands <span epub:type="pagebreak" id="Page_219" title="219"/>more words in it. They trained this neural network and found vectors for every word in their corpus.</p>
+<p>We’ve just downloaded the vectors they calculated. One reason we expect these vectors to be useful is that the text corpus used to create these vectors was large and diverse, and large, diverse text data sources tend to lead to higher accuracy in NLP models. We can look at the vector corresponding to any word as follows:</p>
+<pre><code>print(vectors['sword'])</code></pre>
+<p>Here, we print out the vector for the word <em>sword</em>. The output you’ll see is a vector with 512 numeric elements. Word vectors like this one, which represents the word <em>sword</em> according to the model we downloaded, are also called <em>embeddings</em>, because we’ve successfully <em>embedded</em> a word in a <em>vector space</em>. In short, we’ve converted a word to a vector of numbers.</p>
+<p>You’ll notice that this 512-element vector for <em>sword</em> is not the same as the vector we used for <em>sword</em> previously in the chapter, which was (10, 1, 5, 1). This vector is different from our vector for a few reasons. First, this vector uses a different corpus than the one we used, so it will have different probabilities listed in its version of <a href="#table10-2">Table 10-2</a>. Second, the creators of this model decided to find vectors with 512 elements instead of 4 elements as we did, so they get more vector elements. Third, their vectors were adjusted to have values close to 0, while ours were not. Every corpus and every neural network will lead to slightly different results, but if we’re using a good corpus and a good neural network, we expect the same qualitative result: vectors that represent words and enable us to detect plagiarism (and do many other things).</p>
+<p>After downloading these vectors, we can work with them just like any other Python object. For example, we can calculate distances between our word vectors, as follows:</p>
+<pre><code>print(euclidean(vectors['sword'],vectors['knife']))
+print(euclidean(vectors['sword'],vectors['herring']))
+print(euclidean(vectors['car'],vectors['van']))</code></pre>
+<p>Here, we’re doing the same Euclidean distance calculations that we did before, but instead of calculating distances with the vectors in <a href="#equation10-1" id="equationanchor10-9">Equation 10-1</a>, we’re doing calculations with the vectors we downloaded. When you run these comparisons, you’ll see the following outputs:</p>
+<pre><code>&gt;&gt;&gt; <b>print(euclidean(vectors['sword'],vectors['knife']))</b>
+3.2766972
+&gt;&gt;&gt; <b>print(euclidean(vectors['sword'],vectors['herring']))</b>
+4.9384727
+&gt;&gt;&gt; <b>print(euclidean(vectors['car'],vectors['van']))</b>
+2.608656</code></pre>
+<p><span epub:type="pagebreak" id="Page_220" title="220"/>You can see that these distances make sense: the vector for <em>sword</em> is similar to the vector for <em>knife</em> (they have distance about 3.28 from each other), but it’s different from the vector for <em>herring</em> (they have distance about 4.94 from each other, much larger than the difference between <em>sword</em> and <em>knife</em>). You can try the same calculation for any other pairs words that are in the corpus, like <em>car</em> and <em>van</em> as well. You can compare differences between pairs of words to find out which pairs have the most and the least similar meanings.</p>
+<p>Euclidean distance is not the only distance metric people use to compare word vectors. Using cosine similarity measurements is also common, just as we did in <span class="xref" itemid="xref_target_Chapter 9">Chapter 9</span>. Remember that we used this code to calculate cosine similarities:</p>
+<pre><code>def dot_product(vector1,vector2):
+    thedotproduct=np.sum([vector1[k]*vector2[k] for k in range(0,len(vector1))])
+    return(thedotproduct)
+
+def vector_norm(vector):
+    thenorm=np.sqrt(dot_product(vector,vector))
+    return(thenorm)
+
+def cosine_similarity(vector1,vector2):
+    thecosine=0
+    thedotproduct=dot_product(vector1,vector2)
+    thecosine=thedotproduct/(vector_norm(vector1)*vector_norm(vector2))
+    thecosine=np.round(thecosine,4)
+    return(thecosine)</code></pre>
+<p>Here we define a function called <code>cosine_similarity()</code> to check the cosine of the angle between any two vectors. We can check some cosine similarities between vectors as follows:</p>
+<pre><code>print(cosine_similarity(vectors['sword'],vectors['knife']))
+print(cosine_similarity(vectors['sword'],vectors['herring']))
+print(cosine_similarity(vectors['car'],vectors['van']))</code></pre>
+<p>When you run this snippet, you’ll see the following results:</p>
+<pre><code>&gt;&gt;&gt; <b>print(cosine_similarity(vectors['sword'],vectors['knife']))</b>
+0.5576
+&gt;&gt;&gt; <b>print(cosine_similarity(vectors['sword'],vectors['herring']))</b>
+0.0529
+&gt;&gt;&gt; <b>print(cosine_similarity(vectors['car'],vectors['van']))</b>
+0.6116</code></pre>
+<p>You can see that these metrics are doing exactly what we want: they give us lower values for words that we perceive as different and higher values for words that we perceive as similar. Even though your laptop doesn’t “speak English,” just by analyzing a corpus of natural language text, it’s able to quantify exactly how similar and exactly how different distinct words are.</p>
+<h3 id="h2-502888c10-0003"><span epub:type="pagebreak" id="Page_221" title="221"/>Manipulating Vectors with Mathematical Calculations</h3>
+<p class="BodyFirst">One famous illustration of the power of word2vec comes from an analysis of the words <em>king</em> and <em>queen</em>. To see this illustration, let’s start by getting the vectors associated with some English words:</p>
+<pre><code>king = vectors['king']
+queen = vectors['queen']
+man = vectors['man']
+woman = vectors['woman']</code></pre>
+<p>Here, we define some vectors associated with several words. As humans, we know that a king is a male head of a monarchy and a queen is a female head of a monarchy. We might even express the relationship between the words <em>king</em> and <em>queen</em> as follows:</p>
+<p class="Equation">king – man + woman = queen</p>
+<p>Starting with the idea of a <em>king</em>, and taking away from that the idea of a <em>man</em>, then adding to that the idea of a <em>woman</em>, we end up with the idea of a <em>queen</em>. If we’re thinking about just the world of words, this equation might seem ridiculous, since it’s typically not possible to add and subtract words or ideas in this way. However, remember that we have vector versions of each of these words, so we can add and subtract vectors from each other and see what we get. Let’s try to add and subtract the vectors corresponding to each of these words in Python:</p>
+<pre><code>newvector = king-man+woman</code></pre>
+<p>Here, we take our <code>king</code> vector, subtract our <code>man</code> vector, add our <code>woman</code> vector, and define the result as a new variable called <code>newvector</code>. If our additions and subtractions do what we want them to, our <code>newvector</code> should capture a specific meaning: the idea of a king without any attributes of a <em>man</em>, but with the added attributes of a <em>woman</em>. In other words, even though the <code>newvector</code> is a sum of three vectors, none of which are the vector for <em>queen</em>, we expect their sum to be close to, or equal to, the vector for <em>queen</em>. Let’s check the difference between our <code>newvector</code> and our <code>queen</code> vector to see whether this is the case:</p>
+<pre><code>print(cosine_similarity(newvector,queen))
+print(euclidean(newvector,queen))</code></pre>
+<p>We can see that our <code>newvector</code> is similar to our <code>queen</code> vector: their cosine similarity is 0.76, and their Euclidean distance is 2.5. We can compare this to the differences between other familiar pairs of words:</p>
+<pre><code>print(cosine_similarity(vectors['fish'],vectors['herring']))
+print(euclidean(vectors['fish'],vectors['herring']))</code></pre>
+<p><span epub:type="pagebreak" id="Page_222" title="222"/>You should see that <em>king – man + woman</em> is more similar to <em>queen</em> than <em>fish</em> is to <em>herring</em>. Our mathematical calculations with the words’ vectors lead to exactly the results we expect based on what we know about the words’ linguistic meanings. This demonstrates the usefulness of these vectors: we can not only compare them to find similarities between pairs of words but also manipulate them through addition and subtraction to add and subtract concepts. The ability to add and subtract these vectors, and get results that make sense, is more evidence that these vectors are reliably capturing the meanings of their associated words.</p>
+<h3 id="h2-502888c10-0004">Detecting Plagiarism with word2vec</h3>
+<p class="BodyFirst">Let’s go back to the plagiarism scenario from earlier in the chapter. Remember that we introduced the following two sentences as an example of plagiarism:</p>
+<ol class="none">
+<li>The trouble with having an open mind, of course, is that people will insist on coming along and trying to put things in it. [original sentence]</li>
+<li>The problem with having an open mind is that people will insist on approaching and trying to insert things into your mind. [plagiarized sentence]</li>
+</ol>
+<p>Since these two sentences differ in a few places, a naive plagiarism checker that looks for exact matches won’t detect plagiarism here. Instead of checking for exact matches for every character of both sentences, we want to check for close matches between the meanings of each word. For words that are identical, we’ll find that they have 0 distance between them:</p>
+<pre><code>print(cosine_similarity(vectors['the'],vectors['the']))
+print(euclidean(vectors['having'],vectors['having']))</code></pre>
+<p>The results of this are not surprising. We find that a word’s vector has perfect (1.0) cosine similarity with itself and a word’s vector has 0 Euclidean distance from itself. Every word is equal to itself. But remember, wily plagiarists are paraphrasing, not using the exact same words as published texts. If we compare words that are paraphrased, we expect that they’ll be similar to the words of the original, but not exactly the same. We can measure the similarity of potentially paraphrased words as follows:</p>
+<pre><code>print(cosine_similarity(vectors['trouble'],vectors['problem']))
+print(euclidean(vectors['come'],vectors['approach']))
+print(cosine_similarity(vectors['put'],vectors['insert']))</code></pre>
+<p>You’ll see the following results from this code snippet:</p>
+<pre><code>&gt;&gt;&gt; <b>print(cosine_similarity(vectors['trouble'],vectors['problem']))</b>
+0.5327
+&gt;&gt;&gt; <b>print(euclidean(vectors['come'],vectors['approach']))</b>
+2.9844923
+&gt;&gt;&gt; <b>print(cosine_similarity(vectors['put'],vectors['insert']))</b>
+0.3435</code></pre>
+<p><span epub:type="pagebreak" id="Page_223" title="223"/>This snippet compares the words of the plagiarized text and the words of the original text. The results show close matches in almost every case: either a relatively small Euclidean distance or a relatively high cosine similarity. If the individual words of a student’s sentence are all close matches to the individual words of a published sentence, that’s good evidence of plagiarism, even if there are few or no exact matches. Importantly, we can check for these close matches automatically, not based on slow, costly human judgment, but based on data and quick Python scripts.</p>
+<p>Checking for close matches for all the individual words in sentences is a reasonable way to start detecting plagiarism. However, it’s not perfect. The main problem is that so far, we’ve learned to evaluate only individual words instead of full sentences. We can think of sentences as collections or sequences of individual words. But in many cases, it will be better to have a technique that can evaluate meanings and similarities for entire sentences simultaneously, treating sentences as individual units instead of only as collections of words. For that, we’ll turn to a powerful new approach.</p>
+<h2 id="h1-502888c10-0004">Using Skip-Thoughts</h2>
+<p class="BodyFirst">The <em>skip-thoughts</em> model is an NLP model that uses data and neural networks to convert entire sentences to numeric vectors. It’s quite similar to word2vec, but instead of converting individual words one at a time to vectors, we convert entire sentences to vectors as units.</p>
+<p>The theory behind skip-thoughts is similar to the theory behind word2vec: you take a natural language corpus, find which sentences tend to appear near each other, and train a neural network that can predict which sentences are expected to appear before or after any other sentence. For word2vec, we saw an illustration of a neural network model in <a href="#figure10-1">Figure 10-1</a>. For skip-thoughts, a similar illustration is shown in <a href="#figure10-2" id="figureanchor10-2">Figure 10-2</a>.</p>
+<figure>
+<img alt="" class="" height="181" src="image_fi/502888c10/f10002.png" width="694"/>
+<figcaption><p><a id="figure10-2">Figure 10-2</a>: We use the skip-thoughts model to predict which sentences appear near each other.</p></figcaption>
+</figure>
+<p class="BodyFirst"><a href="#figure10-2">Figure 10-2</a> is based on the model from the 2015 paper titled “Skip-Thought Vectors” by Ryan Kiros and colleagues (<a class="LinkURL" href="https://arxiv.org/pdf/1506.06726.pdf">https://arxiv.org/pdf/1506.06726.pdf</a>). You can see that the sentence on the left of the figure is taken as the input. This sentence is a sequence of individual words, but all the words are considered together as a single unit. The skip-thoughts model attempts to find a vector representation of this sentence that, when used <span epub:type="pagebreak" id="Page_224" title="224"/>as an input in a neural network, can predict sentences that are most likely to come before and after it (including the sentences on the right of <a href="#figure10-2">Figure 10-2</a>). Just as word2vec is based on which individual words are expected to be near other words, skip-thoughts is based on predicting the full sentences that are near other sentences. You don’t need to worry about the theory too much; just try to remember that skip-thoughts is a way to encode natural language sentences as vectors by calculating probabilities of other sentences appearing nearby.</p>
+<p>Just as with word2vec, writing code for any of this ourselves is not necessary. Instead, we’ll turn to the <em>Universal Sentence Encoder (USE)</em>. This tool converts sentences into vectors, using the idea of skip-thoughts to find the vectors (plus other advanced technical methods). We’re going to use the vector outputs of the USE for plagiarism detection, but USE vectors can also be used for chatbot implementations, image tagging, and much more.</p>
+<p>The code for the USE is not hard to work with, because someone else has written it for us. We can start by defining sentences that we want to analyze:</p>
+<pre><code>Sentences = [
+    "The trouble with having an open mind, of course, is that people will insist on coming along and trying to put things in it.",\
+    "The problem with having an open mind is that people will insist on approaching and trying to insert things into your mind.",\
+    "To be or not to be, that is the question",\
+    "Call me Ishmael"
+]</code></pre>
+<p>Here we have a list of sentences, and we want to convert each into a numeric vector. We can import code someone else has written to do this conversion:</p>
+<pre><code>import tensorflow_hub as hub
+embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder-large/5")</code></pre>
+<p>The <code>tensorfow_hub</code> module allows us to load the USE from an online repository. The USE is a big model, so don’t panic if loading it into your Python session takes a few minutes or more. When we load it, we save it as a variable called <code>embed</code>. Now that we have the USE in our Python session, we can create word embeddings (vectors) with one simple line of code:</p>
+<pre><code>embeddings = embed(Sentences)</code></pre>
+<p>Our <code>embeddings</code> variable contains vectors that represent each of the sentences in our <code>Sentences</code> list. You can look at the vector for the first sentence by checking the first element of the <code>embeddings</code> variable as follows:</p>
+<pre><code>print(embeddings[0])</code></pre>
+<p><span epub:type="pagebreak" id="Page_225" title="225"/>When you run this snippet, you’ll see a numeric vector with 512 elements, the first 16 of which are shown here:</p>
+<pre><code>&gt;&gt;&gt; <b>print(embeddings[0])</b>
+tf.Tensor(
+[ 9.70209017e-04 -5.99743128e-02 -2.84200953e-03  7.49062840e-03
+  7.74949566e-02 -1.00521010e-03 -7.75496066e-02  4.12207991e-02
+ -1.55476958e-03 -1.11693323e-01  2.58275736e-02 -1.15299867e-02
+ -3.84882478e-05 -4.07184102e-02  3.69430222e-02  6.66357949e-02</code></pre>
+<p>This is the vector representation of the first sentence in your list—not the individual words in the sentence, but the sentence itself. Just as we did with our word2vec vectors, we can calculate the distance between any two of our sentence vectors. In this case, the distances between vectors will represent the degree of difference between the overall meanings of two sentences. Let’s check the distance between our first two sentences as follows:</p>
+<pre><code>print(cosine_similarity(embeddings[0],embeddings[1]))</code></pre>
+<p>We can see that the cosine similarity is about 0.85—indicating that the first two sentences in our <code>Sentences</code> list are quite similar to each other. This is evidence that the student’s sentence (the second one in our <code>Sentences</code> list) is plagiarized from Pratchett’s sentence (the first one in our <code>Sentences</code> list). By contrast, we can check distances between other vectors and see that they’re not quite so similar. For example, if you run <code>print(cosine_similarity(embeddings[0],embeddings[2]))</code>, you can see that the cosine similarity of these two sentences is about 0.02, indicating that these sentences are almost as different as it’s possible for two sentences to be. This is evidence that Pratchett didn’t plagiarize <em>Hamlet</em>. If you run <code>print(cosine_similarity(embeddings[0],embeddings[3]))</code>, you can see that the cosine similarity of these two sentences is about –0.07, another low similarity score, indicating that Pratchett also didn’t plagiarize <em>Moby Dick</em>.</p>
+<p>You can see that checking the distances between the meanings of any two sentences is straightforward. Your plagiarism detector can simply check for the cosine similarity (or Euclidean distance) between a student’s work and previously published sentences, and if the similarities appear to be large (or the Euclidean distances appear to be too small), you can take it as evidence that the student is guilty of plagiarism.</p>
+<h2 id="h1-502888c10-0005">Topic Modeling</h2>
+<p class="BodyFirst">To finish the chapter, let’s introduce one final business scenario and talk about how we can combine NLP tools with tools from previous chapters to deal with it. In this scenario, imagine that you run a forum website. Your site has become so successful that you can no longer read all the threads and conversations yourself, but you still want to understand the topics people are writing about on your site so you can understand who your users are <span epub:type="pagebreak" id="Page_226" title="226"/>and what they care about. You want to find a reliable, automated way to analyze all the text on your site and discover the main topics being discussed. This goal, called <em>topic modeling</em>, is common in NLP.</p>
+<p>To start, let’s take a collection of sentences that might have appeared on your site. A successful forum website could receive thousands of comments every second, but we’ll start by looking at a small sample of the full data, just eight sentences:</p>
+<pre><code>Sentences = [
+    "The corn and cheese are delicious when they're roasted together",
+    "Several of the scenes have rich settings but weak characterization",
+    "Consider adding extra seasoning to the pork",
+    "The prose was overwrought and pretentious",
+    "There are some nice brisket slices on the menu",
+    "It would be better to have a chapter to introduce your main plot ideas",
+    "Everything was cold when the waiter brought it to the table",
+    "You can probably find it at a cheaper price in bookstores"
+]</code></pre>
+<p>Just as you did before, you can calculate the vectors, or embeddings, for all these sentences:</p>
+<pre><code>embeddings = embed(Sentences)</code></pre>
+<p>Next, we can create a matrix of all our sentence embeddings:</p>
+<pre><code>arrays=[]
+for i in range(len(Sentences)):
+    arrays.append(np.array(embeddings[i]))
+
+sentencematrix = np.empty((len(Sentences),512,), order = "F")
+
+for i in range(len(Sentences)):
+    sentencematrix[i]=arrays[i]
+
+import pandas as pd
+pandasmatrix=pd.DataFrame(sentencematrix)</code></pre>
+<p>This snippet starts by creating a list called <code>arrays</code> and adding all the sentence vectors to the list. Next, it creates a matrix called <code>sentencematrix</code>. This matrix is just your sentence vectors stacked on top of each other, with one row for each sentence vector. Finally, we convert this matrix into a pandas dataframe, so it’s easier to work with. The final result, called <code>pandasmatrix</code>, has eight rows; each row is a sentence vector for one of our eight sentences.</p>
+<p>Now we have a matrix that contains our sentence vectors. But getting our vectors isn’t enough; we need to decide what to do with them. Remember that our goal is topic modeling. We want to understand the topics that people are writing about and which sentences relate to which topics. We have several ways to accomplish this. One natural way to accomplish topic modeling is by using clustering, something we already discussed in <span class="xref" itemid="xref_target_Chapter 7">Chapter 7</span>.</p>
+<p><span epub:type="pagebreak" id="Page_227" title="227"/>Our clustering approach is simple: we’ll take our matrix of sentence vectors as our input data. We’ll apply clustering to determine the natural groups that exist in the data. We’ll interpret the groups (clusters) that we find as the distinct topics being discussed on your forum website. We can do this clustering as follows:</p>
+<pre><code>from sklearn.cluster import KMeans
+m = KMeans(2)
+m.fit(pandasmatrix)
+
+pandasmatrix['topic'] = m.labels_
+
+pandasmatrix['sentences']=Sentences</code></pre>
+<p>You can see that the clustering requires only a few lines of code. We import the <code>KMeans</code> code from the sklearn module. We create a variable called <code>m</code> and then use its <code>fit()</code> method to find two clusters for our matrix (the <code>pandasmatrix</code>). The <code>fit()</code> method uses Euclidean distance measurements with our sentence vectors to find two clusters of documents. The two clusters it finds are what we will take to be the two main topics of our collection of sentences. After we find these clusters, we add two new columns to our <code>pandasmatrix</code>: first, we add the labels that are the result of our clustering (in the <code>topic</code> variable), and second, we add the actual sentences that we’re trying to cluster. Let’s look at the results:</p>
+<pre><code>print(pandasmatrix.loc[pandasmatrix['topic']==0,'sentences'])
+print(pandasmatrix.loc[pandasmatrix['topic']==1,'sentences'])</code></pre>
+<p>This snippet prints out two sets of sentences: first, sentences that are labeled as belonging to cluster 0 (sentences on rows with the <code>topic</code> variable equal to 0) and second, sentences that are labeled as belonging to cluster 1 (sentences on rows with the <code>topic</code> variable equal to 1). You should see the following results:</p>
+<pre><code>&gt;&gt;&gt; <b>print(pandasmatrix.loc[pandasmatrix['topic']==0,'sentences'])</b>
+0    The corn and cheese are delicious when they're...
+2          Consider adding extra seasoning to the pork
+4       There are some nice brisket slices on the menu
+6    Everything was cold when the waiter brought it...
+Name: sentences, dtype: object
+&gt;&gt;&gt; <b>print(pandasmatrix.loc[pandasmatrix['topic']==1,'sentences'])</b>
+1    Several of the scenes have rich settings but w...
+3            The prose was overwrought and pretentious
+5    It would be better to have a chapter to introd...
+7    You can probably find it at a cheaper price in...
+Name: sentences, dtype: object</code></pre>
+<p>You can see that this method has identified two clusters in our data, and they’ve been labeled as cluster 0 and cluster 1. When you look at the sentences that have been classified as cluster 0, you can see that many seem <span epub:type="pagebreak" id="Page_228" title="228"/>to be discussions about food and restaurants. When you look at cluster 1, you can see that it seems to consist of critiques of books. At least according to this sample of eight sentences, these are the main topics being discussed on your forum, and they’ve been identified and organized automatically.</p>
+<p>We’ve accomplished topic modeling, using a numeric method (clustering) on non-numeric data (natural language text). You can see that USE, and word embeddings in general, can be useful in many applications.</p>
+<h2 id="h1-502888c10-0006">Other Applications of NLP</h2>
+<p class="BodyFirst">One useful application of NLP is in the world of recommendation systems. Imagine that you run a movie website and want to recommend movies to your users. In <span class="xref" itemid="xref_target_Chapter 9">Chapter 9</span>, we discussed how to use interaction matrices to make recommendations based on comparisons of transaction histories. However, you could also make a recommendation system based on comparisons of content. For example, you could take plot summaries of individual movies and use the USE to get sentence embeddings for each plot summary. Then you could calculate distances between plot summaries to determine the similarity of various movies and, anytime a user watches a move, recommend that that user also watch movies with the most similar plots. This is a <em>content-based recommendation system</em>.</p>
+<p>Another interesting application of NLP is <em>sentiment analysis</em>. We encountered sentiment analysis a little already in <span class="xref" itemid="xref_target_Chapter 6">Chapter 6</span>. Certain tools can determine whether any given sentence is positive, negative, or neutral in its tone or the sentiment it expresses. Some of these tools rely on word embeddings like those we’ve covered in this chapter, and others don’t. Sentiment analysis could be useful for a business that receives thousands of emails and messages every day. By running automatic sentiment analysis on all of its incoming emails, a business could determine which customers were the most happy or unhappy, and potentially prioritize responses based on customer sentiment.</p>
+<p>Many businesses today deploy <em>chatbots</em> on their websites—computer programs that can understand text inputs and answer questions. Chatbots have varying levels of sophistication, but many rely on some kind of word embeddings like the word2vec and skip-thought methods described in this chapter.</p>
+<p>NLP has many other possible applications in business. Today, law firms are trying to use NLP to automatically analyze documents and even automatically generate or at least organize contracts. News websites have tried to use NLP to automatically generate certain kinds of formulaic articles, like recaps of sports games. There’s no end to the possibilities of NLP as the field itself continues to develop. If you know some powerful methods like word2vec and skip-thoughts as a starting point, there’s no limit to the useful applications you can create.</p>
+<h2 id="h1-502888c10-0007"><span epub:type="pagebreak" id="Page_229" title="229"/>Summary</h2>
+<p class="BodyFirst">In this chapter, we went over natural language processing. All of the applications of NLP that we discussed relied on embeddings: numeric vectors that accurately represent words and sentences. If you can represent a word numerically, you can do math with it, including calculating similarities (which we did for plagiarism detection) and clustering (which we did for topic modeling). NLP tools might be difficult to use and master, but they can be astonishing in their capabilities.</p>
+<p>In the next chapter, we’ll shift gears and wrap up the book by going over some simple ideas about working with other programming languages that are important for data science.</p>
+</section>
+</div></body></html>
