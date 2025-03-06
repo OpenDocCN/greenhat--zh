@@ -1,13 +1,19 @@
 - en: '6'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '6'
 - en: Advanced Optimization
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 高级优化
 - en: '![](Images/circleart.png)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![](Images/circleart.png)'
 - en: 'You already know optimization. In Chapter 3, we covered gradient ascent/descent,
     which lets us “climb hills” to find a maximum or minimum. Any optimization problem
     can be thought of as a version of hill climbing: we strive to find the best possible
@@ -18,51 +24,72 @@
     while would enable us to start scaling the huge mountain that we actually want
     to climb. Dealing with this issue is the most difficult and crucial aspect of
     advanced optimization.'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 你已经了解了优化。在第3章中，我们介绍了梯度上升/下降方法，它帮助我们“爬坡”以找到最大值或最小值。任何优化问题都可以看作是爬坡问题：我们努力从大量可能性中找到最佳的结果。梯度上升工具简单且优雅，但它有一个致命缺点：它可能会引导我们找到一个局部最优解，而非全局最优解。在爬坡的比喻中，它可能会把我们带到一个小山丘的顶部，而事实上，稍微下坡一点就能让我们开始攀登真正想要登上的大山。解决这个问题是高级优化中的最困难也是最关键的方面。
 - en: In this chapter, we discuss a more advanced optimization algorithm using a case
     study. We’ll consider the traveling salesman problem, as well as several of its
     possible solutions and their shortcomings. Finally, we’ll introduce simulated
     annealing, an advanced optimization algorithm that overcomes these shortcomings
     and can perform global, rather than just local, optimization.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们将通过一个案例研究讨论一种更先进的优化算法。我们将考虑旅行推销员问题，以及其几种可能的解决方案及其缺点。最后，我们将介绍模拟退火算法，这是一种克服这些缺点的高级优化算法，能够进行全局优化，而不仅仅是局部优化。
 - en: Life of a Salesman
+  id: totrans-5
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 推销员的生活
 - en: The *traveling salesman problem (TSP)* is an extremely famous problem in computer
     science and combinatorics. Imagine that a traveling salesman wishes to visit a
     collection of many cities to peddle his wares. For any number of reasons—lost
     income opportunities, the cost of gas for his car, his head aching after a long
     journey ([Figure 6-1](#figure6-1))—it’s costly to travel between cities.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: '*旅行推销员问题（TSP）*是计算机科学和组合学中极为著名的问题。假设一个旅行推销员希望拜访多个城市来兜售商品。由于多种原因——失去的收入机会、汽车油费、长时间旅行后的头痛（[图6-1](#figure6-1)）——城市之间的旅行成本很高。'
 - en: '![figure_6_1](Images/figure_6_1.png)'
+  id: totrans-7
   prefs: []
   type: TYPE_IMG
+  zh: '![figure_6_1](Images/figure_6_1.png)'
 - en: '[Figure 6-1:](#figureanchor6-1) A traveling salesman in Naples'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图6-1:](#figureanchor6-1) 那不勒斯的旅行推销员'
 - en: The TSP asks us to determine the order of travel between cities that will minimize
     travel costs. Like all the best problems in science, it’s easy to state and extremely
     difficult to solve.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: TSP要求我们确定城市之间的旅行顺序，以最小化旅行成本。像所有科学领域中的最佳问题一样，陈述起来很容易，但解决起来极其困难。
 - en: Setting Up the Problem
+  id: totrans-10
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 问题设置
 - en: 'Let’s fire up Python and start exploring. First, we’ll randomly generate a
     map for our salesman to traverse. We start by selecting some number *N* that will
     represent the number of cities we want on the map. Let’s say *N* = 40\. Then we’ll
     select 40 sets of coordinates: one *x* value and one *y* value for each city.
     We’ll use the `numpy` module to do the random selection:'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们启动Python并开始探索。首先，我们将随机生成一张地图供我们的推销员穿越。我们从选择一个数字*N*开始，这个数字代表我们想要在地图上设置的城市数量。假设*N*
+    = 40。接着我们将选择40组坐标：每个城市一个*x*值和一个*y*值。我们将使用`numpy`模块来进行随机选择：
 - en: '[PRE0]'
+  id: totrans-12
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: In this snippet, we used the `numpy` module’s `random.seed()` method. This method
     takes any number you pass to it and uses that number as a “seed” for its pseudorandom
     number generation algorithm (see Chapter 5 for more about pseudorandom number
@@ -70,41 +97,59 @@
     snippet, you’ll generate the same random numbers we generate here, so it will
     be easier to follow the code and you’ll get plots and results that are identical
     to these.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个代码片段中，我们使用了`numpy`模块的`random.seed()`方法。这个方法接受你传入的任何数字，并将该数字作为“种子”来初始化其伪随机数生成算法（更多关于伪随机数生成的内容，请参见第5章）。这意味着如果你使用与我们在前面的代码片段中使用的相同的种子，你将生成与我们在这里生成的随机数相同，这样就更容易跟随代码，你也将得到与我们相同的图表和结果。
 - en: Next, we’ll zip the *x* values and *y* values together to create `cities`, a
     list containing the coordinate pair for each of our 40 randomly generated city
     locations.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们将把*x*值和*y*值配对在一起，创建一个`cities`列表，包含每个我们随机生成的40个城市位置的坐标对。
 - en: '[PRE1]'
+  id: totrans-15
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: If you run `print(cities)` in the Python console, you can see a list containing
     the randomly generated points. Each of these points represents a city. We won’t
     bother to give any city a name. Instead, we can refer to the first city as `cities[0]`,
     the second as `cities[1]`, and so on.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你在Python控制台中运行`print(cities)`，你可以看到一个包含随机生成点的列表。这些点中的每一个代表一个城市。我们不会特意给任何城市命名，而是可以将第一个城市称为`cities[0]`，第二个城市称为`cities[1]`，依此类推。
 - en: 'We already have everything we need to propose a solution to the TSP. Our first
     proposed solution will be to simply visit all the cities in the order in which
     they appear in the `cities` list. We can define an `itinerary` variable that will
     store this order in a list:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经拥有了解决TSP问题所需的一切。我们首先提出的解法将是按`cities`列表中出现的顺序依次访问所有城市。我们可以定义一个`itinerary`变量，将这个顺序以列表形式存储：
 - en: '[PRE2]'
+  id: totrans-18
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'This is just another way of writing the following:'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 这仅仅是另一种写法：
 - en: '[PRE3]'
+  id: totrans-20
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'The order of the numbers in our itinerary is the order in which we’re proposing
     to visit our cities: first city 0, then city 1, and so on.'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们行程中的数字顺序就是我们建议访问城市的顺序：首先是城市0，然后是城市1，依此类推。
 - en: 'Next, we’ll need to judge this itinerary and decide whether it represents a
     good or at least acceptable solution to the TSP. Remember that the point of the
     TSP is to minimize the cost the salesman faces as he travels between cities. So
@@ -116,74 +161,107 @@
     any distance units in this chapter because our algorithms work the same whether
     we’re traveling miles or kilometers or light-years. In this case, minimizing the
     cost is the same as minimizing the distance traveled.'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们需要判断这个行程并决定它是否是一个好的，或者至少是可接受的TSP（旅行商问题）解法。记住，TSP的核心目的是最小化销售员在各城市之间旅行时所面临的成本。那么，旅行的成本是什么呢？我们可以指定任何我们想要的成本函数：也许某些道路的交通比其他道路更拥堵，也许有些河流很难跨越，或者也许向北旅行比向东旅行更困难，反之亦然。但让我们从简单开始：假设旅行1个单位的距离需要1美元，无论方向如何，也无论我们在两个城市之间旅行。由于我们的算法在不论是英里、公里还是光年之间旅行时都能以相同的方式工作，本章中我们不会指定任何距离单位。在这种情况下，最小化成本就等同于最小化所旅行的距离。
 - en: 'To determine the distance required by a particular itinerary, we need to define
     two new functions. First, we need a function that will generate a collection of
     lines that connect all of our points. After that, we need to sum up the distances
     represented by those lines. We can start by defining an empty list that we’ll
     use to store information about our lines:'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了确定特定行程所需的距离，我们需要定义两个新函数。首先，我们需要一个函数来生成一组连接所有点的线。接着，我们需要将这些线所代表的距离加总起来。我们可以从定义一个空列表开始，用来存储关于我们线路的信息：
 - en: '[PRE4]'
+  id: totrans-24
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Next, we can iterate over every city in our itinerary, at each step adding a
     new line to our `lines` collection that connects the current city and the city
     after it.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们可以遍历行程中的每个城市，在每一步将一条新线添加到`lines`集合中，连接当前城市和下一个城市。
 - en: '[PRE5]'
+  id: totrans-26
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'If you run `print(lines)`, you can see how we’re storing information about
     lines in Python. Each line is stored as a list that contains the coordinates of
     two cities. For example, you can see the first line by running `print(lines[0])`,
     which will show you the following output:'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你运行`print(lines)`，你可以看到我们在Python中如何存储关于线路的信息。每一条线作为一个列表存储，其中包含两座城市的坐标。例如，你可以通过运行`print(lines[0])`来查看第一条线，它会显示以下输出：
 - en: '[PRE6]'
+  id: totrans-28
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'We can put these elements together in one function called `genlines` (short
     for “generate lines”), which takes `cities` and `itinerary` as arguments and returns
     a collection of lines connecting each city in our list of cities, in the order
     specified in the itinerary:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以将这些元素整合成一个名为`genlines`的函数（"generate lines"的缩写），它接受`cities`和`itinerary`作为参数，并返回一个集合，这个集合包含按行程指定顺序连接每座城市的线：
 - en: '[PRE7]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Now that we have a way to generate a collection of lines between each two cities
     in any itinerary, we can create a function that measures the total distances along
     those lines. It will start by defining our total distance as 0, and then for every
     element in our `lines` list, it will add the length of that line to the `distance`
     variable. We’ll use the Pythagorean theorem to get these line lengths.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们有了一个生成城市间连接线的方式，可以创建一个函数来计算沿这些线的总距离。它将从将总距离定义为 0 开始，然后对 `lines` 列表中的每个元素，都会将该线的长度加到
+    `distance` 变量中。我们将使用勾股定理来计算这些线的长度。
 - en: '[PRE8]'
+  id: totrans-32
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'This function takes a list of lines as its input and outputs the sum of the
     lengths of every line. Now that we have these functions, we can call them together
     with our itinerary to determine the total distance our salesman has to travel:'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个函数以一组线为输入，输出所有线段长度的总和。现在我们有了这些函数，我们可以将它们与我们的行程安排一起调用，以确定销售员需要行进的总距离：
 - en: '[PRE9]'
+  id: totrans-34
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: When I ran this code, I found that the `totaldistance` was about 16.81\. You
     should get the same results if you use the same random seed. If you use a different
     seed or set of cities, your results will vary slightly.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 当我运行这段代码时，我发现 `totaldistance` 大约是 16.81。如果你使用相同的随机种子，应该得到相同的结果。如果使用不同的种子或城市集，结果会略有不同。
 - en: 'To get a sense of what this result means, it will help to plot our itinerary.
     For that, we can create a `plotitinerary()` function:'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了更好地理解这个结果，帮助我们绘制行程安排会更有意义。为此，我们可以创建一个 `plotitinerary()` 函数：
 - en: '[PRE10]'
+  id: totrans-37
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: The `plotitinerary()` function takes `cities`, `itin`, `plottitle`, and `thename`
     as arguments, where `cities` is our list of cities, `itin` is the itinerary we
     want to plot, `plottitle` is the title that will appear at the top of our plot,
@@ -191,76 +269,109 @@
     uses the `pylab` module for plotting and matplotlib’s `collections` module to
     create a collection of lines. Then it plots the points of the itinerary and the
     lines we’ve created connecting them.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: '`plotitinerary()` 函数接受 `cities`、`itin`、`plottitle` 和 `thename` 作为参数，其中 `cities`
+    是我们城市的列表，`itin` 是我们想要绘制的行程安排，`plottitle` 是显示在图表顶部的标题，`thename` 是我们给 `png` 输出图像命名的名称。该函数使用
+    `pylab` 模块进行绘图，并使用 matplotlib 的 `collections` 模块来创建一组线条。然后它绘制了行程安排的点和我们连接这些点所创建的线条。'
 - en: If you plot the itinerary with `plotitinerary(cities,itinerary,'TSP - Random
     Itinerary','figure2')`, you’ll generate the plot shown in [Figure 6-2](#figure6-2).
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你使用 `plotitinerary(cities,itinerary,'TSP - Random Itinerary','figure2')` 来绘制行程安排，你将生成如[图
+    6-2](#figure6-2)所示的图表。
 - en: '![figure_6-2](Images/figure_6-2.png)'
+  id: totrans-40
   prefs: []
   type: TYPE_IMG
+  zh: '![figure_6-2](Images/figure_6-2.png)'
 - en: '[Figure 6-2:](#figureanchor6-2) The itinerary resulting from visiting the cities
     in the random order in which they were generated'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 6-2:](#figureanchor6-2) 访问按随机顺序生成的城市所得到的行程安排'
 - en: Maybe you can tell just by looking at [Figure 6-2](#figure6-2) that we haven’t
     yet found the best solution to the TSP. The itinerary we’ve given our poor salesman
     has him whizzing all the way across the map to an extremely distant city several
     times, when it seems obvious that he could do much better by stopping at some
     other cities along the way. The goal of the rest of this chapter is to use algorithms
     to find an itinerary with the minimum traveling distance.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 也许你仅凭 [图 6-2](#figure6-2) 就能看出，我们还没有找到最优的旅行商问题解决方案。我们给可怜的销售员安排的行程让他多次横穿地图，去到一个非常远的城市，而显然他可以通过在途中停靠其他城市来做得更好。本章接下来的目标是使用算法找到一个最短的行程安排。
 - en: The first potential solution we’ll discuss is the simplest and has the worst
     performance. After that, we’ll discuss solutions that trade a little complexity
     for a lot of performance improvement.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将讨论的第一个潜在解决方案是最简单的，但它的性能最差。之后，我们将讨论一些解决方案，它们通过增加一些复杂性来换取显著的性能提升。
 - en: Brains vs. Brawn
+  id: totrans-44
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 智力与力量的对决
 - en: 'It might occur to you to make a list of every possible itinerary that can connect
     our cities and evaluate them one by one to see which is best. If we want to visit
     three cities, the following is an exhaustive list of every order in which they
     can be visited:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可能会想到列出所有可能的行程安排，以便连接我们的城市并逐一评估它们，看看哪一个最优。如果我们要访问三个城市，以下是它们可以被访问的所有顺序的详尽列表：
 - en: 1, 2, 3
+  id: totrans-46
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 1, 2, 3
 - en: 1, 3, 2
+  id: totrans-47
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 1, 3, 2
 - en: 2, 3, 1
+  id: totrans-48
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 2, 3, 1
 - en: 2, 1, 3
+  id: totrans-49
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 2, 1, 3
 - en: 3, 1, 2
+  id: totrans-50
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 3, 1, 2
 - en: 3, 2, 1
+  id: totrans-51
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 3, 2, 1
 - en: It shouldn’t take long to evaluate which is best by measuring each of the lengths
     one by one and comparing what we find for each of them. This is called a *brute
     force* solution. It refers not to physical force, but to the effort of checking
     an exhaustive list by using the brawn of our CPUs rather than the brains of an
     algorithm designer, who could find a more elegant approach with a quicker runtime.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
 - en: Sometimes a brute force solution is exactly the right approach. They tend to
     be easy to write code for, and they work reliably. Their major weakness is their
     runtime, which is never better and usually much worse than algorithmic solutions.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
 - en: 'In the case of the TSP, the required runtime grows far too fast for a brute
@@ -268,29 +379,34 @@
     To see this, consider the following argument about how many possible itineraries
     there are to check if we are working with four cities and trying to find every
     possible order of visiting them:'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
 - en: When we choose the first city to visit, we have four choices, since there are
     four cities and we haven’t visited any of them yet. So the total number of ways
     to choose the first city is 4.
+  id: totrans-55
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: When we choose the second city to visit, we have three choices, since there
     are four cities total and we’ve already visited one of them. So the total number
     of ways to choose the first two cities is 4 × 3 = 12.
+  id: totrans-56
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: When we choose the third city to visit, we have two choices, since there are
     four cities total and we’ve already visited two of them. So the total number of
     ways to choose the first three cities is 4 × 3 × 2 = 24.
+  id: totrans-57
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: When we choose the fourth city to visit, we have one choice, since there are
     four cities total and we’ve already visited three of them. So the total number
     of ways to choose all four cities is 4 × 3 × 2 × 1 = 24.
+  id: totrans-58
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
@@ -302,6 +418,7 @@
     and 18! is over 6 quadrillion, 25! is over 15 septillion, and 35! and above starts
     to push the edge of what’s possible to brute force on today’s technology given
     the current expectation for the longevity of the universe.'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
 - en: This phenomenon is called *combinatorial explosion*. Combinatorial explosion
@@ -309,6 +426,7 @@
     in which apparently small sets can, when considered in combinations and permutations,
     lead to a number of possible choices far beyond the size of the original set and
     beyond any size that we know how to work with using brute force.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
 - en: The number of possible itineraries that connect the 90 zip codes in Rhode Island,
@@ -321,12 +439,16 @@
     investigate all possible solutions of the hardest problems. Combinatorial explosion
     means that we have to consider algorithmic solutions to the TSP because we don’t
     have enough CPUs in the whole world to calculate a brute force solution.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，连接罗德岛90个邮政编码的所有可能行程数量，比宇宙中估算的原子数量要大得多，尽管罗德岛比宇宙要小得多。类似地，尽管棋盘比罗德岛还小，但一个棋盘能够进行的可能棋局数量也比宇宙中原子数量要多。这些看似矛盾的情况——在有限的事物中迸发出几乎无限的可能性——使得良好的算法设计变得更加重要，因为暴力搜索永远无法解决最难的问题。组合爆炸意味着我们必须考虑解决TSP（旅行商问题）的算法方案，因为全世界的CPU都不足以计算暴力破解的解决方案。
 - en: The Nearest Neighbor Algorithm
+  id: totrans-62
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 最近邻算法
 - en: Next we’ll consider a simple, intuitive method called the *nearest neighbor*
     algorithm. We start with the first city on the list. Then we simply find the closest
     unvisited city to the first city and visit that city second. At every step, we
@@ -336,41 +458,59 @@
     every possible itinerary, as we would in a brute force search, we find only the
     nearest neighbor at each step. This gives us a runtime that’s very fast even for
     very large *N*.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们将考虑一种简单直观的方法，称为*最近邻*算法。我们从列表中的第一个城市开始。然后，我们简单地找到与第一个城市最接近的未访问城市，并将该城市作为第二个城市访问。在每一步，我们只需要查看当前位置，并选择最近的未访问城市作为下一个行程城市。虽然这种方法可能不会最小化总的旅行距离，但它在每一步都会最小化旅行距离。请注意，我们不是像暴力搜索那样查看所有可能的行程，而是每次只找到最近的邻居。这使得即使对于非常大的*N*，我们的运行时间也非常快。
 - en: Implementing Nearest Neighbor Search
+  id: totrans-64
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 实现最近邻搜索
 - en: 'We’ll start by writing a function that can find the nearest neighbor of any
     given city. Suppose that we have a point called `point` and a list of cities called
     `cities`. The distance between `point` and the `j`th element of `cities` is given
     by the following Pythagorean-style formula:'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将从编写一个可以找到任何给定城市最近邻的函数开始。假设我们有一个名为`point`的点和一个名为`cities`的城市列表。`point`和`cities`中第`j`个城市之间的距离由以下毕达哥拉斯式公式给出：
 - en: '[PRE11]'
+  id: totrans-66
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: If we want to find which element of `cities` is closest to our `point` (the
     `point`’s nearest neighbor), we need to iterate over every element of `cities`
     and check the distance between the `point` and every city, as in [Listing 6-1](#listing6-1).
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们想找出`cities`中哪个元素最接近我们的`point`（即`point`的最近邻城市），我们需要遍历`cities`中的每个元素，检查`point`与每个城市之间的距离，如[清单6-1](#listing6-1)所示。
 - en: '[PRE12]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: '[Listing 6-1:](#listinganchor6-1) The `findnearest()` function, which finds
     the nearest city to a given city'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单6-1:](#listinganchor6-1) `findnearest()`函数，找到给定城市的最近邻城市'
 - en: 'After we have this `findnearest()` function, we’re ready to implement the nearest
     neighbor algorithm. Our goal is to create an itinerary called `nnitinerary`. We’ll
     start by saying that the first city in `cities` is where our salesman starts:'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们拥有了`findnearest()`函数之后，我们就准备好实现最近邻算法了。我们的目标是创建一个名为`nnitinerary`的行程。我们将从假设`cities`中的第一个城市是我们的销售员出发的地方开始：
 - en: '[PRE13]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: If our itinerary needs to have *N* cities, our goal is to iterate over all the
     numbers between 0 and *N* – 1, find for each of those numbers the nearest neighbor
     to the most recent city we visited, and append that city to our itinerary. We’ll
@@ -378,38 +518,59 @@
     for “do nearest neighbor”). It starts with the first city in `cities`, and at
     every step adds the closest city to the most recently added city until every city
     has been added to the itinerary.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们的行程需要有*N*个城市，我们的目标是遍历从0到*N*–1之间的所有数字，找到每个数字对应的最近邻城市（即我们最近访问的城市的邻近城市），并将这个城市添加到我们的行程中。我们将通过[清单6-2](#listing6-2)中的`donn()`函数（即“do
+    nearest neighbor”的缩写）来实现这一点。它从`cities`中的第一个城市开始，在每一步将最接近最近添加的城市的城市添加到行程中，直到所有城市都被添加到行程中。
 - en: '[PRE14]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: '[Listing 6-2:](#listinganchor6-2) A function that successively finds the nearest
     neighbor to each city and returns a complete itinerary'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: '[列表 6-2:](#listinganchor6-2) 一个函数，依次找到每个城市的最近邻并返回完整的行程'
 - en: 'We already have everything we need to check the performance of the nearest
     neighbor algorithm. First, we can plot the nearest neighbor itinerary:'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经拥有检查最近邻算法性能所需的所有内容。首先，我们可以绘制最近邻行程：
 - en: '[PRE15]'
+  id: totrans-76
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: '[Figure 6-3](#figure6-3) shows the result we get.'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 6-3](#figure6-3)显示了我们得到的结果。'
 - en: '![figure_6_3](Images/figure_6-3.png)'
+  id: totrans-78
   prefs: []
   type: TYPE_IMG
+  zh: '![figure_6_3](Images/figure_6-3.png)'
 - en: '[Figure 6-3:](#figureanchor6-3) The itinerary generated by the nearest neighbor
     algorithm'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 6-3:](#figureanchor6-3) 最近邻算法生成的行程'
 - en: 'We can also check how far the salesman had to travel using this new itinerary:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还可以检查使用这个新行程时，销售员需要走多远：
 - en: '[PRE16]'
+  id: totrans-81
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: In this case, we find that whereas the salesman travels a distance of 16.81
     following the random path, our algorithm has pushed down the distance to 6.29\.
     Remember that we’re not using units, so we could interpret this as 6.29 miles
@@ -418,37 +579,54 @@
     improvement, all from a very simple, intuitive algorithm. In [Figure 6-3](#figure6-3),
     the performance improvement is evident; there are fewer journeys to opposite ends
     of the map and more short trips between cities that are close to each other.
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，我们发现，尽管销售员沿着随机路径行驶了16.81的距离，但我们的算法将距离减少到了6.29。记住，我们没有使用单位，因此我们可以将其解释为6.29英里（或公里或秒差距）。重要的是，这个距离小于我们从随机行程中找到的16.81英里、公里或秒差距。这是一个显著的改进，完全来自于一个非常简单、直观的算法。在[图
+    6-3](#figure6-3)中，性能的提升非常明显；往返地图两端的行程减少了，更多的是在彼此接近的城市之间的短途旅行。
 - en: Checking for Further Improvements
+  id: totrans-83
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 检查进一步改进
 - en: 'If you look closely at [Figure 6-2](#figure6-2) or [Figure 6-3](#figure6-3),
     you might be able to imagine some specific improvements that could be made. You
     could even attempt those improvements yourself and check whether they worked by
     using our `howfar()` function. For example, maybe you look at our initial random
     itinerary:'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你仔细看[图 6-2](#figure6-2)或[图 6-3](#figure6-3)，你可能能想象出一些可以改进的地方。你甚至可以尝试这些改进，并使用我们的`howfar()`函数检查它们是否有效。例如，也许你看了我们的初始随机行程：
 - en: '[PRE17]'
+  id: totrans-85
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'and you think you could improve the itinerary by switching the order of the
     salesman’s visits to city 6 and city 30\. You can switch them by defining this
     new itinerary with the numbers in question switched (shown in bold):'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 你认为通过交换销售员访问城市6和城市30的顺序，可以改进行程。你可以通过定义这个新行程并交换这两个城市的顺序来进行交换（用粗体显示）：
 - en: '[PRE18]'
+  id: totrans-87
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'We can then do a simple comparison to check whether the switch we performed
     has decreased the total distance:'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后我们可以做一个简单的比较，检查我们执行的交换是否减少了总距离：
 - en: '[PRE19]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'If the `new_itinerary` is better than the `initial_itinerary`, we might want
     to throw out the `initial_itinerary` and keep the new one. In this case, we find
     that the new itinerary has a total distance of about 16.79, a very slight improvement
@@ -458,20 +636,28 @@
     and at each step expect a reasonable chance that we can find a way to decrease
     the traveling distance. After repeating this process many times, we can (we hope)
     obtain an itinerary with a very low total distance.'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果`new_itinerary`比`initial_itinerary`更好，我们可能想丢弃`initial_itinerary`并保留新的行程。在这种情况下，我们发现新行程的总距离大约为16.79，比我们最初的行程略有改进。在找到一个小的改进后，我们可以再次执行相同的过程：选择两个城市，交换它们在行程中的位置，然后检查距离是否减少。我们可以无限期地继续这个过程，每一步都有合理的机会找到减少旅行距离的方法。在重复这个过程多次后，我们可以（希望）得到一个总距离非常低的行程。
 - en: 'It’s simple enough to write a function that can perform this switch-and-check
     process automatically ([Listing 6-3](#listing6-3)):'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 编写一个可以自动执行这个交换和检查过程的函数非常简单（[列表 6-3](#listing6-3)）：
 - en: '[PRE20]'
+  id: totrans-92
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: '[Listing 6-3:](#listinganchor6-3) A function that makes a small change to an
     itinerary, compares it to the original itinerary, and returns whichever itinerary
     is shorter'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: '[列表 6-3:](#listinganchor6-3) 一个函数，对行程做出小的改变，将其与原始行程进行比较，并返回较短的行程'
 - en: 'The `perturb()` function takes any list of cities and any itinerary as its
     arguments. Then, it defines two variables: `neighborids1` and `neihborids2`, which
     are randomly selected integers between 0 and the length of the itinerary. Next,
@@ -484,16 +670,22 @@
     it always returns an itinerary either as good as or better than the one we sent
     it. We call this function `perturb()` because it perturbs the given itinerary
     in an attempt to improve it.'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: '`perturb()`函数接受任意城市列表和行程作为参数。然后，它定义了两个变量：`neighborids1`和`neighborids2`，这两个变量是从0到行程长度之间随机选取的整数。接下来，它创建一个新的行程`itinerary2`，该行程与原始行程相同，唯一不同的是，`neighborids1`和`neighborids2`的城市交换了位置。然后，它计算`distance1`，即原始行程的总距离，以及`distance2`，即`itinerary2`的总距离。如果`distance2`小于`distance1`，则返回新的行程（包含交换）。否则，返回原始行程。因此，我们将行程传递给该函数，它总是返回一个与我们传入的行程一样好或者更好的行程。我们称这个函数为`perturb()`，因为它通过扰动给定的行程来尝试改进它。'
 - en: 'Now that we have a `perturb()` function, let’s call it repeatedly on a random
     itinerary. In fact, let’s call it not just one time but 2 million times in an
     attempt to get the lowest traveling distance possible:'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们有了`perturb()`函数，让我们在一个随机行程上反复调用它。实际上，我们不仅仅调用一次，而是调用200万次，尝试获得尽可能低的旅行距离：
 - en: '[PRE21]'
+  id: totrans-96
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: We have just implemented something that might be called a *perturb search* algorithm.
     It’s searching through many thousands of possible itineraries in the hopes of
     finding a good one, just like a brute force search. However, it’s better because
@@ -503,18 +695,24 @@
     faster than brute force. We only need to make a few small additions to this perturb
     search algorithm in order to implement simulated annealing, the capstone algorithm
     of this chapter.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们刚刚实现的东西可以称为*扰动搜索*算法。它通过成千上万的可能行程进行搜索，希望找到一个好的行程，就像暴力搜索一样。然而，它更好，因为暴力搜索会毫无差别地考虑每一个可能的行程，而这个算法是一个*引导搜索*，它考虑的是一组旅行距离逐渐减少的行程，因此它应该比暴力搜索更快找到一个好的解决方案。我们只需要对这个扰动搜索算法做一些小的改进，就可以实现模拟退火算法，这是本章的重点算法。
 - en: Before we jump into the code for simulated annealing, we’ll go over what kind
     of improvement it offers over the algorithms we’ve discussed so far. We also want
     to introduce a temperature function that allows us to implement the features of
     simulated annealing in Python.
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们进入模拟退火的代码之前，我们先来回顾一下它相对于我们目前讨论的算法提供了什么样的改进。我们还想介绍一个温度函数，允许我们在Python中实现模拟退火的特性。
 - en: Algorithms for the Avaricious
+  id: totrans-99
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**贪婪算法**的算法'
 - en: The nearest neighbor and perturb search algorithms that we’ve considered so
     far belong to a class of algorithms called *greedy* algorithms. Greedy algorithms
     proceed in steps, and they make choices that are locally optimal at each step
@@ -526,8 +724,10 @@
     once, it may not be globally optimal—it may lead us to take strange paths around
     the map that eventually make the total trip extremely long and expensive for the
     salesman even though each individual step looked good at the time.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，我们考虑过的最近邻和扰动搜索算法属于一种叫做*贪婪*算法的类别。贪婪算法按照步骤进行，每一步都做出局部最优的选择，但一旦考虑所有步骤，可能并不是全局最优的。在我们的最近邻算法中，在每一步，我们都寻找距离当前步骤最近的城市，而不考虑其他城市。访问最近的城市是局部最优的，因为它最小化了我们当前步骤的行程距离。然而，由于它没有同时考虑所有城市，可能并不是全局最优的——它可能会引导我们沿着地图上的奇怪路径行进，最终使得整体行程变得非常长，并且对推销员来说非常昂贵，尽管每个单独的步骤看起来都很合理。
 - en: The “greediness” refers to the shortsightedness of this locally optimizing decision
     process. We can understand these greedy approaches to optimization problems with
     reference to the problem of trying to find the highest point in a complex, hilly
@@ -540,8 +740,10 @@
     ascent of the bigger mountain. Because greedy algorithms search only for local
     improvements, they will never allow us to go down and can get us stuck on local
     extrema. This is exactly the problem discussed in Chapter 3.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: “贪心”指的是这种局部优化决策过程的目光短浅性。我们可以通过尝试在复杂的山地地形中寻找最高点的问题来理解这些贪心的优化方法，其中“高”点类似于更好、更优化的解决方案（TSP中的短距离），而“低”点则类似于更差、次优的解决方案（TSP中的长距离）。在山地中寻找最高点的贪心方法是始终向上走，但这可能会让我们只到达一个小山坡的顶端，而不是最高山峰的顶端。有时候，最好是下到山坡的底部，从而开始更重要的登顶之旅。因为贪心算法只关注局部优化，它们永远不会允许我们下行，并可能让我们陷入局部极值。这正是第三章讨论的问题。
 - en: With that understanding, we’re finally ready to introduce the idea that will
     enable us to resolve the local optimization problem caused by greedy algorithms.
     The idea is to give up the naive commitment to always climbing. In the case of
@@ -549,34 +751,44 @@
     can get the best possible itineraries, just as we go down a foothill in order
     to ultimately go up a mountain. In other words, in order to do better eventually,
     we have to do worse initially.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 在了解这一点后，我们终于准备好引入一个可以帮助我们解决由贪心算法引起的局部优化问题的想法。这个想法就是放弃始终上升的单纯承诺。在旅行商问题（TSP）中，我们有时可能需要扰动到更差的路径，这样我们就能在后期找到最佳路径，就像我们为了最终爬上山顶，有时需要下到山脚一样。换句话说，为了最终做得更好，我们一开始必须做得更差。
 - en: Introducing the Temperature Function
+  id: totrans-103
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 引入温度函数
 - en: To do worse with the intention of eventually doing better is a delicate undertaking.
     If we’re overzealous in our willingness to do worse, we might go downward at every
     step and get to a low point instead of a high one. We need to find a way to do
     worse only a little, only occasionally, and only in the context of learning how
     to eventually do better.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 以做得更差为初衷，最终实现做得更好，这是一个微妙的过程。如果我们在愿意做得更差的态度上过于急功近，我们可能会在每一步都往下走，最终陷入低谷，而不是达到高峰。我们需要找到一种方法，只在少数情况下、偶尔地、并且在学习如何最终做得更好的背景下做得更差。
 - en: Imagine again that we’re in a complex, hilly terrain. We start in the late afternoon
     and know that we have two hours to find the highest point in the whole terrain.
     Suppose we don’t have a watch to keep track of our time, but we know that the
     air gradually cools down in the evening, so we decide to use the temperature as
     a way to gauge approximately how much time we have left to find the highest point.
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 再次想象一下，我们身处复杂的山地地形中。我们在下午晚些时候开始，知道自己有两个小时的时间去找到整个地形的最高点。假设我们没有手表来跟踪时间，但我们知道傍晚空气逐渐变凉，因此我们决定利用温度来大致判断自己剩余的时间，以便找到最高点。
 - en: At the beginning of our two hours, when it’s relatively hot outside, it is natural
     for us to be open to creative exploration. Since we have a long time remaining,
     it’s not a big risk to travel downward a little in order to understand the terrain
     better and see some new places. But as it gets cooler and we near the end of our
     two hours, we’ll be less open to broad exploration. We’ll be more narrowly focused
     on improvements and less willing to travel downward.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们开始的两个小时里，当外面相对较热时，我们自然会更开放于创造性探索。因为我们还有很长的时间，所以稍微向下走一点以更好地了解地形、看到一些新地方，并不是很大的风险。但随着气温变凉，我们接近两个小时的结束时，我们将变得不那么开放于广泛的探索。我们会更加专注于改进，减少了向下走的意愿。
 - en: 'Take a moment to think about this strategy and why it’s the best way to get
     to the highest point. We already talked about why we want to go down occasionally:
     so that we can avoid a “local optimum,” or the top of a foothill next to a huge
@@ -587,6 +799,7 @@
     have time to climb it, and if we make a mistake and slip downward during our last
     10 seconds, we won’t have time to correct it. Thus, the last 10 seconds is when
     we should go directly up and not consider going down at all.'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
 - en: By contrast, consider the first 10 seconds of our two-hour time period. During
@@ -596,6 +809,7 @@
     of time to take advantage of anything we learn or any mountains we find. During
     the first 10 seconds, it pays to be the most open about going down and the least
     zealous about going directly up.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
 - en: 'You can understand the remainder of the two hours by thinking of the same ideas.
@@ -608,6 +822,7 @@
     the mindset we had 10 seconds after the beginning. The full two-hour time period
     will have a gradient of intention: a willingness to sometimes go down at first,
     followed by a gradually strengthening zeal to go only up.'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
 - en: 'In order to model this scenario in Python, we can define a function. We’ll
@@ -615,11 +830,14 @@
     we’ll end with a cool temperature and an unwillingness to go downward. Our temperature
     function is relatively simple. It takes `t` as an argument, where `t` stands for
     time:'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-111
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: You can see a simple plot of the temperature function by running the following
     code in the Python console. This code starts by importing `matplotlib` functionality
     and then defines `ts`, a variable containing a range of `t` values between 1 and
@@ -629,30 +847,39 @@
     represent our maximum temperature, 0 to represent our minimum temperature, 0 to
     represent our minimum time, and 99 to represent our maximum time, without specifying
     units.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE23]'
+  id: totrans-113
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: The plot looks like [Figure 6-4](#figure6-4).
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
 - en: '![figure_6-4](Images/figure_6-4.png)'
+  id: totrans-115
   prefs: []
   type: TYPE_IMG
 - en: '[Figure 6-4:](#figureanchor6-4) The temperature decreases as time goes on'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
 - en: 'This plot shows the temperature we’ll experience during our hypothetical optimization.
     The temperature is used as a schedule that will govern our optimization: our willingness
     to go down is proportional to the temperature at any given time.'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
 - en: We now have all the ingredients we need to fully implement simulated annealing.
     Go ahead—dive right in before you overthink it.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
 - en: Simulated Annealing
+  id: totrans-119
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -663,12 +890,14 @@
     point in the terrain, and a worse solution corresponds to a lower point in the
     terrain. When we apply the `perturb()` function, we’re moving to a different point
     in the terrain, hoping that point is as high as possible.'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
 - en: We’ll use the temperature function to guide our exploration of this terrain.
     When we start, our high temperature will dictate more openness to choosing a worse
     itinerary. Closer to the end of the process, we’ll be less open to choosing worse
     itineraries and more focused on “greedy” optimization.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
 - en: The algorithm we’ll implement, *simulated annealing*, is a modified form of
@@ -676,6 +905,7 @@
     we’re sometimes willing to accept itinerary changes that *increase* the distance
     traveled, because this enables us to avoid the problem of local optimization.
     Our willingness to accept worse itineraries depends on the current temperature.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
 - en: 'Let’s modify our `perturb()` function with this latest change. We’ll add a
@@ -692,13 +922,17 @@
     We’ll call this new function `perturb_sa1()`, where `sa` is short for simulated
     annealing. [Listing 6-4](#listing6-4) shows our new `perturb_sa1()` function with
     these changes.'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE24]'
+  id: totrans-124
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: '[Listing 6-4:](#listinganchor6-4) An updated version of our `perturb()` function
     that takes into account the temperature and a random draw'
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
 - en: 'Just by adding those two short lines, a new argument, and a new `if` condition
@@ -708,11 +942,14 @@
     instead of `time` as part of the denominator argument in our temperature function.
     We can compare the performance of simulated annealing with the perturb search
     algorithm and the nearest neighbor algorithm as follows:'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE25]'
+  id: totrans-127
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: Congratulations! You can perform simulated annealing. You can see that a random
     itinerary has distance 16.81, while a nearest neighbor itinerary has distance
     6.29, just like we observed before. The perturb search itinerary has distance
@@ -727,9 +964,11 @@
     give us significantly better performance than simpler, greedy optimization algorithms.
     The rest of the chapter is concerned with the finer details of simulated annealing,
     including how to tune it to get the best possible performance.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
 - en: Tuning Our Algorithm
+  id: totrans-129
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -739,53 +978,77 @@
     an algorithm in order to get better performance without changing its main approach
     is often called *tuning*, and it can make big differences in difficult cases like
     this one.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前所述，模拟退火是一个敏感的过程。我们引入的代码展示了如何以基本方式进行，但我们希望对细节进行修改，以便做得更好。这个过程中，通过改变算法的小细节或参数来获得更好的性能，而不改变其主要方法，通常被称为*调优*，在像这种困难的情况下，它可能会带来很大的差异。
 - en: 'Our `perturb()` function makes a small change in the itinerary: it switches
     the place of two cities. But this isn’t the only possible way to perturb an itinerary.
     It’s hard to know in advance which perturbing methods will perform best, but we
     can always try a few.'
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的`perturb()`函数对行程做了一个小的改变：它交换了两个城市的位置。但这并不是扰动行程的唯一方式。我们很难提前知道哪种扰动方法表现最佳，但我们总是可以尝试几种。
 - en: 'Another natural way to perturb an itinerary is to reverse some portion of it:
     take a subset of cities, and visit them in the opposite order. In Python, we can
     implement this reversal in one line. If we choose two cities in the itinerary,
     with indices `small` and `big`, the following snippet shows how to reverse the
     order of all the cities between them:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种扰动行程的自然方法是反转其中的一部分：选择一部分城市，并按相反的顺序访问它们。在Python中，我们可以用一行代码来实现这个反转。如果我们选择行程中的两个城市，索引分别是`small`和`big`，下面的代码片段展示了如何反转它们之间所有城市的顺序：
 - en: '[PRE26]'
+  id: totrans-133
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: 'When you run this snippet, you can see that the output shows an itinerary with
     cities 10 through 19 in reverse order:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 当你运行这个代码片段时，你可以看到输出显示了一个城市从10到19按反序排列的行程：
 - en: '[PRE27]'
+  id: totrans-135
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'Another way to perturb an itinerary is to lift a section from where it is and
     place it in another part of the itinerary. For example, we might take the following
     itinerary:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种扰动行程的方法是将某个区间从原位置提升并放到行程的另一部分。例如，我们可能会采用以下行程：
 - en: '[PRE28]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'and move the whole section `[1,2,3,4]` to later in the itinerary by converting
     it to the following new itinerary:'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 并将整个区间`[1,2,3,4]`移到行程后面，通过将其转换为以下新的行程：
 - en: '[PRE29]'
+  id: totrans-139
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'We can do this type of lifting and moving with the following Python snippet,
     which will move a chosen section to a random location:'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过以下Python代码片段来实现这种类型的提升和移动，它将把选定的区间移动到一个随机位置：
 - en: '[PRE30]'
+  id: totrans-141
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: We can update our `perturb()` function so that it randomly alternates between
     these different perturbing methods. We’ll do this by making another random selection
     of a number between 0 and 1\. If this new random number lies in a certain range
@@ -796,15 +1059,22 @@
     between each type of perturbing. We can put this random selection and these types
     of perturbing into our new function, now called `perturb_sa2()`, as shown in [Listing
     6-5](#listing6-5).
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以更新我们的`perturb()`函数，使其在这些不同的扰动方法之间随机切换。我们将通过再次随机选择一个介于0和1之间的数字来实现这一点。如果这个新的随机数位于某个范围内（例如，0–0.45），我们将通过反转一部分城市的顺序来进行扰动；如果它位于另一个范围内（例如，0.45–0.55），我们将通过交换两个城市的位置来进行扰动。如果它位于最终的范围内（例如，0.55–1），我们将通过提升并移动一部分城市来进行扰动。通过这种方式，我们的`perturb()`函数可以在每种扰动类型之间随机切换。我们可以将这个随机选择和这些扰动类型放入我们新的函数中，现在称为`perturb_sa2()`，如[Listing
+    6-5](#listing6-5)所示。
 - en: '[PRE31]'
+  id: totrans-143
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: '[Listing 6-5:](#listinganchor6-5) Now, we use several different methods to
     perturb our itinerary.'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Listing 6-5:](#listinganchor6-5) 现在，我们使用几种不同的方法来扰动我们的行程。'
 - en: 'Our `perturb()` function is now more complex and more flexible; it can make
     several different types of changes to itineraries based on random draws. Flexibility
     is not necessarily a goal worth pursuing for its own sake, and complexity is definitely
@@ -815,9 +1085,11 @@
     a little, listen to how it sounds, and adjust. When you test the changes here
     (shown in bold in [Listing 6-5](#listing6-5)), you’ll be able to see that they
     do improve performance compared to the code we were running before.'
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
 - en: Avoiding Major Setbacks
+  id: totrans-146
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -826,11 +1098,14 @@
     worse off. The way we set up the `perturb()` function, it will accept a worse
     itinerary any time our random selection is less than the temperature. It does
     this using the following conditional (which is not meant to be run alone):'
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE32]'
+  id: totrans-148
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'We may want to change that condition so that our willingness to accept a worse
     itinerary depends not only on the temperature but also on how much worse our hypothetical
     change makes the itinerary. If it makes it just a little worse, we’ll be more
@@ -838,19 +1113,26 @@
     incorporate into our conditional a measurement of how much worse our new itinerary
     is. The following conditional (which is also not meant to be run alone) is an
     effective way to accomplish this:'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE33]'
+  id: totrans-150
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: When we put this conditional in our code, we have the function in [Listing 6-6](#listing6-6),
     where we show only the very end of the `perturb()` function.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE34]'
+  id: totrans-152
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: Allowing Resets
+  id: totrans-153
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -860,13 +1142,17 @@
     reset to that best itinerary under certain conditions. [Listing 6-6](#listing6-6)
     provides the code to do this, highlighted in bold in a new, full perturbing function
     for simulated annealing.
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE35]'
+  id: totrans-155
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: '**[Listing 6-6:](#listinganchor6-6) This function performs the full simulated
     annealing process and returns an optimized itinerary.'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
 - en: Here, we define global variables for the minimum distance achieved so far, the
@@ -882,9 +1168,11 @@
     function as well so that the temperature curve can adjust flexibly to however
     many perturbations we intend to perform. When our time is up, we return the itinerary
     that gave us the best results so far.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
 - en: Testing Our Performance
+  id: totrans-158
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -892,22 +1180,29 @@
     called `siman()` (short for simulated annealing), which will create our global
     variables, and then call our newest `perturb()` function repeatedly, eventually
     arriving at an itinerary with a very low traveling distance ([Listing 6-7](#listing6-7)).
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE36]'
+  id: totrans-160
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: '[Listing 6-7:](#listinganchor6-7) This function performs the full simulated
     annealing process and returns an optimized itinerary.'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
 - en: 'Next, we call our `siman()` function and compare its results to the results
     of our nearest neighbor algorithm:'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE37]'
+  id: totrans-163
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'When we run this code, we find that our final simulated annealing function
     yields an itinerary with distance 5.32\. Compared to the nearest-neighbor itinerary
     distance of 6.29, this is an improvement of more than 15 percent. This may seem
@@ -923,26 +1218,32 @@
     Besides this, the TSP is extremely important academically, as a benchmark for
     comparing optimization methods and as a gateway to investigating advanced theoretical
     ideas.'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
 - en: You can plot the itinerary we got as the final result of simulated annealing
     by running `plotitinerary(cities,simanitinerary,'Traveling Salesman Itinerary
     - Simulated Annealing','figure5')`. You’ll see the plot in [Figure 6-5](#figure6-5).
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
 - en: '![figure_6-5](Images/figure_6-5.png)'
+  id: totrans-166
   prefs: []
   type: TYPE_IMG
 - en: '[Figure 6-5:](#figureanchor6-5) The final result of simulated annealing'
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
 - en: On one hand, it’s just a plot of randomly generated points with lines connecting
     them. On the other, it’s the result of an optimization process that we performed
     over hundreds of thousands of iterations, relentlessly pursuing perfection among
     nearly infinite possibilities, and in that way it is beautiful.
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
 - en: Summary
+  id: totrans-169
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -953,9 +1254,11 @@
     by working through the difficult case of the TSP, you have gained skills that
     you can apply to other optimization problems. There will always be a practical
     need for advanced optimization in business and in science.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
 - en: In the next chapter, we turn our attention to geometry, examining powerful algorithms
     that enable geometric manipulations and constructions. Let the adventure continue!**
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
