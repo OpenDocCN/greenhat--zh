@@ -1,51 +1,72 @@
 - en: '4'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '4'
 - en: POINTS AND VECTORS
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 点和向量
 - en: '![Image](../images/common01.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/common01.jpg)'
 - en: Points and vectors are the basis of geometry. In this book, we’ll use them as
     our *primitives*, the building blocks for the rest of our geometry library. For
     our geometry library to be usable, it’s crucial that we implement points and vectors
     using bug-free code. A bug in our code will not only cause errors in the library’s
     functions but also could propagate to all the other libraries we build on top
     of it, giving us all sorts of false calculations.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 点和向量是几何学的基础。在本书中，我们将它们作为我们的*基本元素*，是构建其余几何库的基石。为了让我们的几何库可用，必须确保我们实现的点和向量代码没有错误。代码中的一个bug不仅会导致库函数出错，还可能传播到我们在其上构建的其他库中，给我们带来各种错误的计算。
 - en: In this chapter, we have two main tasks. First, we need to implement classes
     to represent both points and vectors. Then, we need to make sure our code is bug-free
     by unit testing, a process we’ll repeat throughout this book. Before we can do
     either, though, we need to implement a few useful methods.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们有两个主要任务。首先，我们需要实现类来表示点和向量。然后，我们需要通过单元测试来确保我们的代码没有bug，这是我们在本书中将反复进行的过程。但在做这两件事之前，我们需要实现一些有用的方法。
 - en: '**Comparing Numbers**'
+  id: totrans-5
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**比较数字**'
 - en: 'When it comes to representing real numbers, computers don’t have infinite precision.
     Most computers use floating-point numbers to store these values, which cannot
     represent every rational number, let alone irrational numbers. Thus, when comparing
     floating-point numbers, you have to specify a *tolerance*: a number *ϵ* as small
     as you need such that'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 在表示实数时，计算机并不具有无限精度。大多数计算机使用浮点数来存储这些值，而浮点数无法表示每一个有理数，更不用说无理数了。因此，在比较浮点数时，你必须指定一个*容差*：一个数字
+    *ϵ*，它小到足够可以满足
 - en: '|*a – b*| < *ϵ*'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: '|*a – b*| < *ϵ*'
 - en: where *a* and *b* are the two numbers you want to compare.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 *a* 和 *b* 是你想要比较的两个数字。
 - en: A tolerance’s order of magnitude needs to be consistent with the problem’s magnitudes
     and your desired precision. For example, it wouldn’t make much sense to use a
     tolerance of 1*E*^(–20) mm when working with a planet’s orbital lengths, which
     are on the order of millions of kilometers. Similarly, it would be pointless to
     use a tolerance of 1*E*^(–2) cm when working with atomic distances.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 容差的数量级需要与问题的大小和你所需的精度相一致。例如，在处理行星轨道长度时，使用1*E*^(–20)毫米的容差就没有太大意义，因为这些长度的数量级是数百万公里。同样，在处理原子距离时，使用1*E*^(–2)厘米的容差也是毫无意义的。
 - en: Before we start writing our primitives, we’ll need a way of knowing whether
     two floating-point numbers can be considered equal or not given a tolerance *ϵ*.
     But we can’t rely on the computer to compare floating-point numbers, as a different
@@ -54,180 +75,272 @@
     using a given tolerance. For our geometrical calculations, we’ll use a default
     tolerance of 1*E*^(–10), which is an acceptable level of precision for most of
     the calculations we’ll do throughout the book.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们开始编写我们的基本元素之前，我们需要一种方法来判断两个浮点数在给定的容差 *ϵ* 下是否可以被认为是相等的。但我们不能依赖计算机来比较浮点数，因为百位小数上的不同数字在逻辑上被认为是完全不同的数字。因此，我们将从本章开始，编写一个函数来比较两个数字，使用给定的容差。对于我们的几何计算，我们将使用默认的容差1*E*^(–10)，这是大多数计算中可接受的精度水平。
 - en: Open your project in the IDE, right-click the project’s root folder, and select
     **New** ▸ **Python Package**. Name it *geom2d* and click **OK**. This will be
     the package for all of our geometry code.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 打开你的项目，在IDE中右键点击项目根文件夹，选择**新建** ▸ **Python包**。将其命名为*geom2d*，然后点击**确定**。这将是我们所有几何代码的包。
 - en: '**NOTE**'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**'
 - en: '*Because the package name establishes that everything inside is in 2D, we won’t
     repeat this piece of information when giving names to our files and classes. Inside
     the package, we’ll use names like* point *or* segment *instead of* point2d *or*
     segment2d*. If we wanted to create a three-dimensional geometry package,* geom3d*,
     we’d still use* point *and* segment*, only with different, three-dimensional implementations.*'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: '*因为包名已经确定了包内的内容是二维的，所以我们在命名文件和类时不会重复这个信息。在包内，我们会使用像* point *或* segment *这样的名称，而不是*
+    point2d *或* segment2d*。如果我们要创建一个三维几何包，* geom3d*，我们仍然会使用* point *和* segment*，只是它们会有不同的三维实现。*'
 - en: Create a new file by right-clicking the *geom2d* package folder and selecting
     **New** ▸ **Python File**. Name it *nums*, leave the Kind drop-down as is, and
     click **OK**.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过右键单击*geom2d*包文件夹并选择**新建** ▸ **Python文件**来创建一个新文件。命名为*nums*，保持类型下拉框不变，然后点击**确定**。
 - en: With the file created, let’s implement our first comparison function. [Listing
     4-1](ch04.xhtml#ch4lis1) has the code for our function.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 创建好文件后，让我们实现第一个比较函数。[清单 4-1](ch04.xhtml#ch4lis1)中包含了我们的函数代码。
 - en: '[PRE0]'
+  id: totrans-16
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '*Listing 4-1: Comparing numbers*'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-1：比较数字*'
 - en: First, we import the *math* module, part of Python’s standard library that contains
     useful mathematical functions. Our function takes two numbers, a and b, and an
     optional tolerance parameter that will default to 1*E*^(–10) if no other value
     is provided. Last, we use the math library’s fabs function to check whether the
     absolute value of the difference between a and b is smaller than the tolerance,
     and we return the appropriate boolean.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们导入了*math*模块，这是Python标准库的一部分，包含了有用的数学函数。我们的函数接受两个数字a和b，以及一个可选的容差参数，如果未提供其他值，默认容差为1*E*^(-10)。最后，我们使用math库的fabs函数来检查a和b之间的差值的绝对值是否小于容差，并返回相应的布尔值。
 - en: 'In practice, we’ll find there are two particular values we’re comparing against:
     zero and one. To save us from repeatedly writing something like'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 实际上，我们会发现有两个特定的值需要进行比较：零和一。为了避免重复编写类似的代码，
 - en: '[PRE1]'
+  id: totrans-20
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: or
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 或
 - en: '[PRE2]'
+  id: totrans-22
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: let’s implement them as functions. After the previous function, add the code
     in [Listing 4-2](ch04.xhtml#ch4lis2).
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们将它们作为函数实现。接着上一个函数，添加[清单 4-2](ch04.xhtml#ch4lis2)中的代码。
 - en: '[PRE3]'
+  id: totrans-24
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: '*Listing 4-2: Comparing number to zero or one*'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-2：将数字与零或一进行比较*'
 - en: Functions like the ones in [Listing 4-2](ch04.xhtml#ch4lis2) aren’t strictly
     necessary, but they are convenient, and they make the code more readable.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 像[清单 4-2](ch04.xhtml#ch4lis2)中的函数并非严格必要，但它们非常方便，并使代码更具可读性。
 - en: '**The Point Class**'
+  id: totrans-27
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**点类**'
 - en: A point, according to Euclid’s first volume of the *Elements*, is “that of which
     there is no part.” In other words, a point is an entity with no width, length,
     or depth. It is just a position in space, something you can’t see with your naked
     eye. Points are the basis of all Euclidean geometry, and everything else in his
     writings is based on this simple concept. Accordingly, our geometry library will
     also be based on this powerful primitive.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据欧几里得《几何原本》的第一卷，点是“没有部分的东西”。换句话说，点是没有宽度、长度或深度的实体。它只是空间中的一个位置，是肉眼无法看到的。点是所有欧几里得几何的基础，他所有著作中的其他内容都是建立在这个简单概念上的。因此，我们的几何库也将基于这一强大的原始概念。
 - en: A point consists of two numbers, *x* and *y*. These are its coordinates, sometimes
     also called *projections*. [Figure 4-1](ch04.xhtml#ch4fig1) depicts a point *P*
     and its coordinates in the Euclidean plane.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个点由两个数字*x*和*y*组成。这些是它的坐标，有时也称为*投影*。[图4-1](ch04.xhtml#ch4fig1)描绘了一个点*P*及其在欧几里得平面中的坐标。
 - en: '![Image](../images/04fig01.jpg)'
+  id: totrans-30
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig01.jpg)'
 - en: '*Figure 4-1: A point P in the plane*'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图4-1：平面中的点P*'
 - en: Let’s implement a class representing a two-dimensional point. As before, we’ll
     create a new file by right-clicking the *geom2d* package folder and selecting
     **New** ▸ **Python File**. Name it *point* and click **OK**. Inside the file,
     enter the code in [Listing 4-3](ch04.xhtml#ch4lis3).
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们实现一个表示二维点的类。如之前所述，我们将通过右键单击*geom2d*包文件夹并选择**新建** ▸ **Python文件**来创建一个新文件。命名为*point*，然后点击**确定**。在文件中输入[清单
+    4-3](ch04.xhtml#ch4lis3)中的代码。
 - en: '[PRE4]'
+  id: totrans-33
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: '*Listing 4-3: Our Point class*'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-3：我们的点类*'
 - en: The coordinates are passed to the initializer method (__init__) and stored as
     attributes of the class.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 坐标被传递给初始化方法(__init__)并作为类的属性存储。
 - en: With our initializer written, let’s implement some functionality.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 在编写完初始化器后，让我们实现一些功能。
 - en: '***Calculating Distance Between Points***'
+  id: totrans-37
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***计算点之间的距离***'
 - en: To compute the distance *d*(*P, Q*) between the two points *P* and *Q*, we use
     [Equation 4.1](ch04.xhtml#ch04eqa01).
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了计算两点*P*和*Q*之间的距离*d*(*P, Q*)，我们使用[方程4.1](ch04.xhtml#ch04eqa01)。
 - en: '![Image](../images/04eqa01.jpg)'
+  id: totrans-39
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04eqa01.jpg)'
 - en: Here, *P*[*x*] and *P*[*y*] are *P*’s coordinates, and *Q*[*x*] and *Q*[*y*]
     are *Q*’s coordinates. We can see this graphically in [Figure 4-2](ch04.xhtml#ch4fig2).
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，*P*[*x*]和*P*[*y*]是*P*的坐标，而*Q*[*x*]和*Q*[*y*]是*Q*的坐标。我们可以在[图4-2](ch04.xhtml#ch4fig2)中看到这个图形。
 - en: '![Image](../images/04fig02.jpg)'
+  id: totrans-41
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig02.jpg)'
 - en: '*Figure 4-2: Distance between the points P and Q*'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图4-2：点P和Q之间的距离*'
 - en: 'We can implement our distance calculation in two ways. We could call the method
     on a point p to compute the distance to another point q, as in p.distance_to(q).
     We could also implement the same calculation as a function where both points are
     given as arguments: distance_between(p, q). The former is the object-oriented
     style; the latter is functional. Because we’re doing object-oriented programming
     here, we’ll go with the former.'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过两种方式实现距离计算。我们可以在点 p 上调用方法，计算到另一个点 q 的距离，例如 p.distance_to(q)。我们也可以将相同的计算实现为一个函数，将两个点作为参数传入：distance_between(p,
+    q)。前者是面向对象的风格，后者是函数式的。由于我们在这里做的是面向对象编程，所以我们将选择前者。
 - en: '[Listing 4-4](ch04.xhtml#ch4lis4) has the code to implement [Equation 4.1](ch04.xhtml#ch04eqa01)
     in our class.'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单 4-4](ch04.xhtml#ch4lis4) 包含实现我们类中 [方程 4.1](ch04.xhtml#ch04eqa01) 的代码。'
 - en: '[PRE5]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: '*Listing 4-4: Calculating the distance between two points*'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-4：计算两点之间的距离*'
 - en: 'First, we need to import the *math* module, which loads a bunch of useful mathematical
     operations into our class. We define the distance_to method with self and other
     as arguments: self is the current point, and other is the point we want to calculate
     the distance to. We then calculate the distance (or *delta*) between the two coordinates
     and use the power (**) operator to square both deltas and return the square root
     of their sum.'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们需要导入 *math* 模块，它将许多有用的数学操作加载到我们的类中。我们定义了一个 distance_to 方法，使用 self 和 other
+    作为参数：self 是当前的点，other 是我们要计算距离的点。然后我们计算这两个坐标之间的距离（或 *delta*），并使用幂运算符（**）将两个 delta
+    的平方相加，并返回它们和的平方根。
 - en: 'Now let’s test this out. Open the Python console from the IDE and try the following:'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们测试一下。打开 IDE 中的 Python 控制台，尝试以下操作：
 - en: '[PRE6]'
+  id: totrans-49
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Exciting! We’ve taken the first major step in building our geometry library—Euclid
     would be proud. You can try that same operation with your calculator and see whether
     our implementation yields the correct result. Later in the chapter, we’ll automate
     a test that checks that the distance method yields the right result.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 激动人心！我们已经迈出了构建几何库的第一步——欧几里得会为我们感到骄傲。你可以使用计算器尝试相同的操作，看看我们的实现是否得到了正确的结果。本章稍后我们将自动化测试，检查
+    distance 方法是否得到了正确的结果。
 - en: 'While we have the console open and p and q loaded, try the following:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们打开控制台并加载 p 和 q 后，尝试以下操作：
 - en: '[PRE7]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Evaluating point p yields a string telling us p is an object of the Point class
     at memory position 0x10f8a2588. Note that the memory address you obtain will likely
     be different than mine. Without knowing everything in the computer’s memory (and
@@ -236,16 +349,24 @@
     That gives you more interesting information about the instance. Later in the chapter,
     we’ll be implementing a special method that will help print a cleaner description
     of the object, something like (2, 5).
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 评估点 p 会返回一个字符串，告诉我们 p 是一个在内存位置 0x10f8a2588 的 Point 类对象。注意，你获得的内存地址可能与你的不同。如果不了解计算机内存中的所有内容（并且无法读取十六进制），这种描述帮助不大。你还可以检查任何类的
+    __dict__ 属性，以获取该类持有的所有属性的字典。这会给你更多关于实例的信息。在本章稍后的部分，我们将实现一个特殊的方法，帮助打印一个更简洁的对象描述，例如（2,
+    5）。
 - en: Let’s now focus our attention on overloading the + and – operators for the Point
     class.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们将注意力集中在为 Point 类重载 + 和 – 操作符上。
 - en: '***Addition and Subtraction Operators***'
+  id: totrans-55
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***加法和减法操作符***'
 - en: The next basic operations we’ll need are addition and subtraction, operations
     that we’ll also implement for vectors. We’ll use these basic methods quite often,
     both on their own and to build more complex methods. We could implement them as
@@ -254,64 +375,104 @@
     in “Magic Methods” on [page 43](ch02.xhtml#ch00lev2sec25)) so that we can write
     p + q and p - q and have Python know to add and subtract the points correctly.
     Overloading operators makes code like this much easier to read and understand.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要的下一个基本操作是加法和减法，这些操作我们也将在向量中实现。我们会经常使用这些基本方法，既可以单独使用，也可以用来构建更复杂的方法。我们可以像普通方法那样实现它们，通过
+    p.plus(q) 和 p.minus(q) 来调用，但我们可以做得更好。Python 允许我们重载 + 和 – 操作符（正如我们在“魔法方法”中所学到的，在[第43页](ch02.xhtml#ch00lev2sec25)），这样我们就可以写成
+    p + q 和 p - q，Python 就知道要正确地加法和减法。重载操作符使得像这样的代码更加易读和易懂。
 - en: '*Overloading* an operator in Python involves implementing a method using a
     specific name that corresponds to the operator. Then, when Python finds the operator,
     it will replace it with the method you’ve defined and call it. For the + operator,
     the name is __add__, and for –, it is __sub__. [Table 4-1](ch04.xhtml#ch4tab1)
     contains common operators we can overload in our classes.'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 Python 中重载运算符需要实现一个对应于运算符的特定名称的方法。然后，当 Python 遇到该运算符时，它会用你定义的方法替代并调用它。对于 +
+    运算符，方法名是 __add__，而对于 - 运算符，方法名是 __sub__。[表 4-1](ch04.xhtml#ch4tab1)包含了我们可以在类中重载的常见运算符。
 - en: '**Table 4-1:** Python’s Overloadable Operators'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表 4-1：** Python 可重载的运算符'
 - en: '| **Operator** | **Method Name** | **Description** |'
+  id: totrans-59
   prefs: []
   type: TYPE_TB
+  zh: '| **运算符** | **方法名称** | **描述** |'
 - en: '| + | __add__(self, other) | Addition |'
+  id: totrans-60
   prefs: []
   type: TYPE_TB
+  zh: '| + | __add__(self, other) | 加法 |'
 - en: '| - | __sub__(self, other) | Subtraction |'
+  id: totrans-61
   prefs: []
   type: TYPE_TB
+  zh: '| - | __sub__(self, other) | 减法 |'
 - en: '| * | __mul__(self, other) | Multiplication |'
+  id: totrans-62
   prefs: []
   type: TYPE_TB
+  zh: '| * | __mul__(self, other) | 乘法 |'
 - en: '| / | __truediv__(self, other) | Division |'
+  id: totrans-63
   prefs: []
   type: TYPE_TB
+  zh: '| / | __truediv__(self, other) | 除法 |'
 - en: '| % | __mod__(self, other) | Modulo |'
+  id: totrans-64
   prefs: []
   type: TYPE_TB
+  zh: '| % | __mod__(self, other) | 模运算 |'
 - en: '| == | __eq__(self, other) | Equality |'
+  id: totrans-65
   prefs: []
   type: TYPE_TB
+  zh: '| == | __eq__(self, other) | 等式 |'
 - en: '| != | __ne__(self, other) | Inequality |'
+  id: totrans-66
   prefs: []
   type: TYPE_TB
+  zh: '| != | __ne__(self, other) | 不等式 |'
 - en: '| < | __lt__(self, other) | Less than |'
+  id: totrans-67
   prefs: []
   type: TYPE_TB
+  zh: '| < | __lt__(self, other) | 小于 |'
 - en: '| <= | __le__(self, other) | Less than or equal to |'
+  id: totrans-68
   prefs: []
   type: TYPE_TB
+  zh: '| <= | __le__(self, other) | 小于或等于 |'
 - en: '| > | __gt__(self, other) | Greater than |'
+  id: totrans-69
   prefs: []
   type: TYPE_TB
+  zh: '| > | __gt__(self, other) | 大于 |'
 - en: '| >= | __ge__(self, other) | Greater than or equal to |'
+  id: totrans-70
   prefs: []
   type: TYPE_TB
+  zh: '| >= | __ge__(self, other) | 大于或等于 |'
 - en: Let’s implement the addition and subtraction operations as methods. Inside the
     Point class and after the distance_to method, add the code in [Listing 4-5](ch04.xhtml#ch4lis5).
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们将加法和减法操作实现为方法。在 Point 类内部，在 distance_to 方法之后，添加 [列表 4-5](ch04.xhtml#ch4lis5)
+    中的代码。
 - en: '[PRE8]'
+  id: totrans-72
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: '*Listing 4-5: Adding and subtracting points*'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-5：点的加法和减法*'
 - en: The method __add__ creates and returns a new Point where its projections are
     the sum of the two parameters’ projections. This operation doesn’t make a lot
     of sense algebraically speaking, but we may find it useful later. The method __sub__
@@ -319,104 +480,160 @@
     points’ projections. Subtracting two points *P – Q* yields a vector going from
     *Q* to *P*, but we haven’t created a class for vectors yet. We will refactor this
     code in the next section so that it returns a vector instance.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 方法 __add__ 创建并返回一个新的点，其投影是两个参数投影的和。从代数角度来看，这个操作没有太大意义，但我们以后可能会发现它很有用。方法 __sub__
+    做的是同样的事情，只不过结果的投影是输入点投影的差。两个点相减 *P – Q* 结果是一个从 *Q* 到 *P* 的向量，但我们还没有为向量创建类。我们将在下一节重构这段代码，使其返回一个向量实例。
 - en: 'Let’s implement our next major primitive: the vector.'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们实现下一个主要的基础构件：向量。
 - en: '**The Vector Class**'
+  id: totrans-76
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**向量类**'
 - en: Similar to points, *vectors* in the Euclidean plane are composed of two numbers,
     called the coordinates, that encode a magnitude and a direction. The vector ⟨3,
     5⟩, for instance, can be understood as the displacement achieved by moving 3 units
     in the positive direction of the horizontal axis and 5 units in the positive direction
     of the vertical axis. [Figure 4-3](ch04.xhtml#ch4fig3) depicts a vector ![Image](../images/pvictorit.jpg)
     in the Euclidean plane.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 与点类似，欧几里得平面中的 *向量* 由两个数字组成，称为坐标，它们编码了大小和方向。例如，向量 ⟨3, 5⟩ 可以理解为沿水平方向正向移动 3 个单位，沿垂直方向正向移动
+    5 个单位所得到的位移。[图 4-3](ch04.xhtml#ch4fig3) 展示了欧几里得平面中的向量 ![Image](../images/pvictorit.jpg)。
 - en: '![Image](../images/04fig03.jpg)'
+  id: totrans-78
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig03.jpg)'
 - en: '*Figure 4-3: A vector ![Image](../images/pvictor.jpg) in the plane*'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 4-3：平面中的向量 ![Image](../images/pvictor.jpg)*'
 - en: 'Many physical quantities are vectorial: they require both a magnitude and a
     direction to be completely defined. For example, velocities, accelerations, and
     forces are all vector quantities. Since vectors are so common, let’s create a
     class to represent them.'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多物理量是矢量的：它们需要大小和方向才能完全定义。例如，速度、加速度和力都是矢量量。由于向量如此常见，我们来创建一个类来表示它们。
 - en: Right-click the *geom2d* package folder and select **New** ▸ **Python File**.
     Name it *vector* and click **OK**. Then enter the code in [Listing 4-6](ch04.xhtml#ch4lis6).
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 右键点击 *geom2d* 包文件夹，选择 **新建** ▸ **Python 文件**。将文件命名为 *vector* 并点击 **确定**。然后输入
+    [列表 4-6](ch04.xhtml#ch4lis6) 中的代码。
 - en: '[PRE9]'
+  id: totrans-82
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: '*Listing 4-6: Vector class*'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-6：向量类*'
 - en: The implementation of Vector is similar to that of the Point class. The coordinates
     are named u and v instead of x and y. This is just a convention to avoid mixing
     points and vectors unwittingly.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: Vector类的实现类似于Point类。坐标被命名为u和v，而不是x和y。这只是一个惯例，避免无意中混淆点和向量。
 - en: Before we move on, let’s refactor the Point class’s __sub__ method so that it
     returns a Vector. Recall that subtracting two points *P – Q* yields a vector going
     from *Q* to *P*. Modify your *point.py* file so that it now matches the code in
     [Listing 4-7](ch04.xhtml#ch4lis7).
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 在继续之前，让我们重构Point类的__sub__方法，使其返回一个Vector。回想一下，两个点相减*P - Q*会得到一个从*Q*指向*P*的向量。修改你的*point.py*文件，使其现在与[清单
+    4-7](ch04.xhtml#ch4lis7)中的代码相匹配。
 - en: '[PRE10]'
+  id: totrans-86
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: '*Listing 4-7: Refactoring Point __sub__ method*'
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-7: 重构Point类的__sub__方法*'
 - en: We’ll take a closer look at this operation in “Vector Factories” on [page 89](ch04.xhtml#ch00lev2sec52),
     where we’ll use this operation to create vectors.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在“向量工厂”一节中详细讨论这个操作，见[第89页](ch04.xhtml#ch00lev2sec52)，我们将使用这个操作来创建向量。
 - en: Let’s now implement some useful methods for the Vector class.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们为Vector类实现一些有用的方法。
 - en: '***Addition and Subtraction Operators***'
+  id: totrans-90
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***加法和减法运算符***'
 - en: Like with points, adding vectors and subtracting them are common operations.
     For example, we can get the sum of two forces (which are vector quantities) by
     summing the vectors representing them.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 和点一样，向量的加法和减法是常见操作。例如，我们可以通过对表示两个力的向量求和来得到两个力的和（力是向量量）。
 - en: After the __init__ method, enter the code in [Listing 4-8](ch04.xhtml#ch4lis8).
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 在__init__方法之后，输入[清单 4-8](ch04.xhtml#ch4lis8)中的代码。
 - en: '[PRE11]'
+  id: totrans-93
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: '*Listing 4-8: Vector addition and subtraction*'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-8: 向量的加法和减法*'
 - en: In both the __add__ and __sub__ methods, we create a new instance of Vector
     to hold the addition or subtraction of projections.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 在__add__和__sub__方法中，我们创建了一个新的Vector实例来保存加法或减法的投影结果。
 - en: '[Figure 4-4](ch04.xhtml#ch4fig4) depicts the addition and subtraction operations
     of two vectors, ![Image](../images/pvictorit.jpg) and ![Image](../images/qvictorit.jpg).
     Notice how subtracting ![Image](../images/pvictorit.jpg) – ![Image](../images/qvictorit.jpg)
     can be interpreted as the sum of ![Image](../images/pvictorit.jpg) and –![Image](../images/qvictorit.jpg).'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 4-4](ch04.xhtml#ch4fig4)展示了两个向量的加法和减法操作，![Image](../images/pvictorit.jpg)和![Image](../images/qvictorit.jpg)。注意，减去![Image](../images/pvictorit.jpg)
+    – ![Image](../images/qvictorit.jpg)可以理解为![Image](../images/pvictorit.jpg)加上–![Image](../images/qvictorit.jpg)。'
 - en: '![Image](../images/04fig04.jpg)'
+  id: totrans-97
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig04.jpg)'
 - en: '*Figure 4-4: A sum of two vectors: ![Image](../images/pvictor.jpg) + ![Image](../images/qvictor.jpg)
     and a subtraction of two vectors: ![Image](../images/pvictor.jpg) – ![Image](../images/qvictor.jpg)*'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 4-4: 两个向量的和：![Image](../images/pvictor.jpg) + ![Image](../images/qvictor.jpg)，和两个向量的差：![Image](../images/pvictor.jpg)
+    – ![Image](../images/qvictor.jpg)*'
 - en: 'Now you might be wondering if we’ll do the same thing for the other operators.
     Addition and subtraction translate easily to the world of points and vectors,
     but for something like the __mul__ operator (used to overload the multiplication
@@ -424,168 +641,258 @@
     dot product, the cross product, or a vector scaling operation. Instead of using
     a single operator, we’ll simply implement these operations as methods with descriptive
     names: scaled_by, dot, and cross.'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在你可能会想知道我们是否会对其他运算符做相同的处理。加法和减法在点和向量的世界中很容易理解，但像__mul__运算符（用于重载乘法操作）就没有那么简单了。乘法到底是点积、叉积，还是向量缩放操作，这一点不太明确。我们不会使用单一的运算符，而是简单地将这些操作实现为具有描述性名称的方法：scaled_by、dot和cross。
 - en: We’ll begin with scaling.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将从缩放开始。
 - en: '***Scaling Vectors***'
+  id: totrans-101
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***缩放向量***'
 - en: 'To *scale* a vector ![Image](../images/uvictorit.jpg), you multiply it by a
     magnitude *k* called a *scalar*, which will stretch or shrink the vector. Mathematically,
     the scalar multiplication looks like [Equation 4.2](ch04.xhtml#ch04eqa02):'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 要*缩放*一个向量![Image](../images/uvictorit.jpg)，你需要用一个叫做*标量*的量*k*来乘它，标量会拉伸或缩小这个向量。从数学上讲，标量乘法看起来像[方程
+    4.2](ch04.xhtml#ch04eqa02)：
 - en: '![Image](../images/04eqa02.jpg)'
+  id: totrans-103
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04eqa02.jpg)'
 - en: Let’s create a scaling method in the Vector class. Enter the code in [Listing
     4-9](ch04.xhtml#ch4lis9) under the __sub__ method.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们在Vector类中创建一个缩放方法。在__sub__方法下输入[清单 4-9](ch04.xhtml#ch4lis9)中的代码。
 - en: '[PRE12]'
+  id: totrans-105
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: '*Listing 4-9: Scaling a vector*'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-9: 缩放一个向量*'
 - en: In the previous code, we simply return a new Vector whose u and v attributes
     are multiplied by factor, the passed-in scalar.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前面的代码中，我们简单地返回一个新的Vector，其中的u和v属性被传入的标量因子乘以。
 - en: '***Displacing Points***'
+  id: totrans-108
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***位移点***'
 - en: 'Using the scaled method, we can implement another operation: displacing a point
     *P* by a given vector ![Image](../images/uvictorit.jpg) *k* times. Mathematically,
     that looks like [Equation 4.3](ch04.xhtml#ch04eqa03).'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用缩放方法，我们可以实现另一个操作：将点 *P* 通过给定的向量 ![Image](../images/uvictorit.jpg) 位移 *k* 次。从数学上讲，这看起来像[方程
+    4.3](ch04.xhtml#ch04eqa03)。
 - en: '![Image](../images/04eqa03.jpg)'
+  id: totrans-110
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04eqa03.jpg)'
 - en: Graphically it looks like [Figure 4-5](ch04.xhtml#ch4fig5).
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 从图形上看，效果如[图 4-5](ch04.xhtml#ch4fig5)所示。
 - en: '![Image](../images/04fig05.jpg)'
+  id: totrans-112
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig05.jpg)'
 - en: '*Figure 4-5: Displacing a point P by a vector ![Image](../images/uvictor.jpg)
     a given number of times k (2 in this case)*'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 4-5：通过向量 ![Image](../images/uvictor.jpg) 将点 P 位移给定次数 k（本例中为 2）*'
 - en: Let’s implement it programmatically inside our Point class, as the displacement
     subject is the point ([Listing 4-10](ch04.xhtml#ch4lis10)).
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们在 Point 类中以编程方式实现它，因为位移对象是点（[列表 4-10](ch04.xhtml#ch4lis10)）。
 - en: '[PRE13]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: '*Listing 4-10: Displacing a point P by a vector ![Image](../images/vvictorit.jpg)
     a given number of times k*'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-10：通过向量 ![Image](../images/vvictorit.jpg) 将点 P 位移给定次数 k*'
 - en: 'The method gets passed two arguments: a vector vector and a scalar times. The
     vector is scaled according to times to produce the net displacement. For instance,
     a vector ⟨3, 5⟩ scaled with times = 2 would result in a displacement of ⟨6, 10⟩.
     Note the parameter times gets a default value of 1, as often the passed vector
     already has the desired length. The returned point results from adding the coordinates
     of the source point and the displacement vector’s coordinates.'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 该方法接收两个参数：一个向量 vector 和一个标量 times。向量将根据 times 进行缩放，产生最终的位移。例如，一个向量 ⟨3, 5⟩，如果
+    times = 2，则结果为 ⟨6, 10⟩。请注意，参数 times 默认值为 1，因为通常传入的向量已经具有所需的长度。返回的点是源点坐标与位移向量坐标之和。
 - en: 'Let’s try to move a point in the Python shell. Restart the console so the previously
     imported Point and Vector classes don’t get in the way, and enter the following:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们在 Python shell 中尝试移动一个点。重新启动控制台，以避免先前导入的 Point 和 Vector 类干扰，然后输入以下内容：
 - en: '[PRE14]'
+  id: totrans-119
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: You can use a calculator to confirm that the math works as expected.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以使用计算器来验证数学运算是否如预期工作。
 - en: '***Vector Norms***'
+  id: totrans-121
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***向量范数***'
 - en: 'A *norm* of a vector is its length. A *unitary norm* is a norm whose length
     is exactly one unit. Vectors with a unitary norm are useful for defining directions;
     hence, we’ll frequently want to know whether a vector has a unitary norm (whether
     it’s *normal*). We’ll also frequently want to *normalize* a vector: keep its direction
     but scale it to have a length of 1\. The norm of a two-dimensional vector is given
     by [Equation 4.4](ch04.xhtml#ch04eqa04).'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 向量的 *范数* 是它的长度。*单位范数* 是长度恰好为一个单位的范数。单位范数的向量对于定义方向非常有用；因此，我们通常需要知道一个向量是否具有单位范数（即它是否是
+    *规范的*）。我们还经常需要 *归一化* 一个向量：保持其方向，但将其缩放至长度为 1。二维向量的范数由[方程 4.4](ch04.xhtml#ch04eqa04)给出。
 - en: '![Image](../images/04eqa04.jpg)'
+  id: totrans-123
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04eqa04.jpg)'
 - en: Let’s implement a property that returns the norm of Vector, and let’s implement
     another property that checks whether the vector is normal. Both are included in
     [Listing 4-11](ch04.xhtml#ch4lis11).
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们实现一个返回 Vector 范数的属性，并实现另一个检查向量是否规范的属性。两者都包含在[列表 4-11](ch04.xhtml#ch4lis11)中。
 - en: '[PRE15]'
+  id: totrans-125
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: '*Listing 4-11: Norm of a vector*'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-11：向量的范数*'
 - en: The value obtained from the norm property follows exactly the definition from
     [Equation 4.4](ch04.xhtml#ch04eqa04). To know whether a vector has a norm of 1,
     we use our numeric comparison is_close_to_one and pass in the vector’s norm.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 从范数属性获得的值完全符合[方程 4.4](ch04.xhtml#ch04eqa04)的定义。为了知道一个向量的范数是否为 1，我们使用数值比较方法`is_close_to_one`，并传入该向量的范数。
 - en: 'We’ll implement two other important operations: a method that normalizes a
     vector ![Image](../images/uvictorit.jpg), yielding a vector *û* with the same
     direction but unitary length, and a method that scales a vector to have a given
     length. A normalized version of a vector, which we’ll call a *unit vector* or
     *versor*, can be obtained using [Equation 4.5](ch04.xhtml#ch04eqa05).'
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将实现两个重要操作：一个方法将一个向量 ![Image](../images/uvictorit.jpg) 归一化，得到一个方向相同但长度为单位长度的向量
+    *û*，另一个方法将一个向量缩放到给定的长度。通过[方程 4.5](ch04.xhtml#ch04eqa05)可以获得向量的归一化版本，我们称其为 *单位向量*
+    或 *单位向量*。
 - en: '![Image](../images/04eqa05.jpg)'
+  id: totrans-129
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04eqa05.jpg)'
 - en: A vector computed this way will have a length of 1\. Multiplying that vector
     by a scalar *k* results in a vector ![Image](../images/uvictorit.jpg)*[k]*, which
     has the same direction as the original but with a new length that’s exactly the
     value of the scalar, as shown in [Equation 4.6](ch04.xhtml#ch04eqa06).
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 这样计算出来的向量将具有长度 1。将该向量与标量 *k* 相乘，得到的向量是 ![图片](../images/uvictorit.jpg)*[k]*，它与原向量方向相同，但长度为标量的值，如
+    [方程 4.6](ch04.xhtml#ch04eqa06) 所示。
 - en: '![Image](../images/04eqa06.jpg)'
+  id: totrans-131
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/04eqa06.jpg)'
 - en: In [Listing 4-12](ch04.xhtml#ch4lis12), we’ll turn those equations into code.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 [列表 4-12](ch04.xhtml#ch4lis12) 中，我们将把这些方程转化为代码。
 - en: '[PRE16]'
+  id: totrans-133
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: '*Listing 4-12: Vectors with unit or chosen length*'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-12：单位长度或指定长度的向量*'
 - en: To normalize a vector, we scale it by the inverse of its norm (which is equivalent
     to dividing the vector’s length by its norm). When we want a vector scaled to
     a given length, we simply normalize the vector and then scale it by the desired
     length.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 要归一化一个向量，我们通过它的范数的倒数对其进行缩放（这相当于将向量的长度除以它的范数）。当我们想要将向量缩放到指定长度时，我们只需归一化向量，然后按所需长度进行缩放。
 - en: '***Immutable Design***'
+  id: totrans-136
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***不可变设计***'
 - en: You may have realized by now that we never mutate the attributes of any of our
     objects but rather create and return a new Point or Vector instance. To normalize
     a vector, for instance, we could have used the code in [Listing 4-13](ch04.xhtml#ch4lis13).
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 你现在可能已经意识到，我们从未直接修改任何对象的属性，而是创建并返回一个新的 Point 或 Vector 实例。例如，要归一化一个向量，我们可以使用
+    [列表 4-13](ch04.xhtml#ch4lis13) 中的代码。
 - en: '[PRE17]'
+  id: totrans-138
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: '*Listing 4-13: Normalization of a vector in place*'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-13：就地归一化一个向量*'
 - en: Calling that method would result in a *normalization in place*, that is, a mutation
     of the current object’s attributes. Normalizing in place is faster and requires
     less memory but is also much more error-prone. It’s easier than it seems for your
@@ -594,70 +901,105 @@
     and requires extensive debugging. Furthermore, programs using immutable data are
     much easier to understand and reason about, as you don’t need to keep track of
     how objects change their state with respect to time.
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 调用该方法会导致 *就地归一化*，即当前对象属性的变更。就地归一化速度更快且占用更少内存，但也更容易出错。当程序中的其他部分没有预料到这种变化时，程序很容易错误地修改正在使用的对象。找到这种类型的
+    bug 非常棘手，需要大量的调试。此外，使用不可变数据的程序更容易理解和推理，因为你不需要跟踪对象随时间如何变化其状态。
 - en: Take a look at the following code. It implements the normalize method in a similar
     way to the previous one, but it contains a subtle error. In this case, the normalization
     would yield a wrong result. Can you spot why?
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 看一下以下代码，它实现了与之前类似的归一化方法，但其中包含了一个微妙的错误。在这种情况下，归一化将产生错误的结果。你能找出原因吗？
 - en: '[PRE18]'
+  id: totrans-142
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: This is a tricky one. By mutating the self.x attribute in the first line, the
     second call to get the self.norm property will use the updated value for self.x.
     The first and second calls to self.norm yield different results, which is why
     we had to store the value of self.norm in a variable.
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是一个棘手的例子。在第一行通过改变 self.x 属性，第二次调用获取 self.norm 属性时将使用更新后的 self.x 值。第一次和第二次调用
+    self.norm 的结果不同，这就是我们必须将 self.norm 的值存储在变量中的原因。
 - en: When the amount of data the object has is small, you’re better off avoiding
     mutations altogether. Your program will behave correctly if executed concurrently,
     and your code will be simpler to understand. Reducing mutability to a minimum
     will make your code more robust; as you’ll see throughout the book, we’ll adhere
     to this principle as much as we can.
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 当对象的数据量较小时，最好完全避免变更。你的程序如果并发执行，也会表现得更正确，代码也更容易理解。将可变性减少到最低限度会使代码更加健壮；正如本书中所展示的，我们将尽可能遵循这一原则。
 - en: '***Naming Convention***'
+  id: totrans-145
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***命名约定***'
 - en: 'Notice the naming convention for methods. Methods mutating the state of the
     object upon calling are named as follows:'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意方法的命名约定。修改对象状态的方法命名如下：
 - en: normalize    Normalizes the vector in place
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: normalize    就地归一化向量
 - en: scale_by    Scales the vector in place
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: scale_by    就地缩放向量
 - en: 'Methods creating a new object as their result are named as follows:'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 创建新对象作为结果的方法命名如下：
 - en: normalized    Returns a new normalized vector
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: normalized    返回一个新的归一化向量
 - en: scaled_by    Returns a new scaled vector
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: scaled_by    返回一个新的缩放向量
 - en: Next, we’ll implement the dot and cross products in our Vector class. These
     simple products will open the door to some useful operations such as computing
     the angle between two vectors or testing for perpendicularity.
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们将在我们的 Vector 类中实现点积和叉积。这些简单的运算将为一些有用的操作打开大门，比如计算两个向量之间的角度或测试是否垂直。
 - en: '***Dot Product***'
+  id: totrans-153
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***点积***'
 - en: The *dot product* between two vectors ![Image](../images/uvictorit.jpg) and
     ![Image](../images/vvictorit.jpg) yields a scalar value, a measure of how different
     the directions of the two vectors are. In two dimensions, with *θ* being the angle
     between the vectors, this product is given by [Equation 4.7](ch04.xhtml#ch04eqa07).
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 两个向量 ![Image](../images/uvictorit.jpg) 和 ![Image](../images/vvictorit.jpg) 之间的
+    *点积* 会得到一个标量值，这是衡量这两个向量方向差异的度量。在二维空间中，若 *θ* 为两个向量之间的角度，该点积由[方程 4.7](ch04.xhtml#ch04eqa07)给出。
 - en: '![Image](../images/04eqa07.jpg)'
+  id: totrans-155
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04eqa07.jpg)'
 - en: 'To understand the different values the dot product can have depending on the
     relative directions of the two operand vectors, let’s take a look at [Figure 4-6](ch04.xhtml#ch4fig6).
     This figure depicts a reference vector ![Image](../images/vvictorit.jpg) and three
@@ -672,104 +1014,167 @@
     · ![Image](../images/avictorit.jpg) > 0\. Lastly, ![Image](../images/cvictorit.jpg)
     is on the opposite half-plane of ![Image](../images/vvictorit.jpg); hence, ![Image](../images/vvictorit.jpg)
     · ![Image](../images/cvictorit.jpg) < 0.'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了理解点积在两个操作数向量的相对方向不同的情况下可能具有的不同值，让我们看一下[图 4-6](ch04.xhtml#ch4fig6)。该图描绘了一个参考向量
+    ![Image](../images/vvictorit.jpg) 和三个其他向量：![Image](../images/avictorit.jpg)、![Image](../images/bvictorit.jpg)
+    和 ![Image](../images/cvictorit.jpg)。一条垂直于 ![Image](../images/vvictorit.jpg) 的线将空间分成两个半平面。向量
+    ![Image](../images/bvictorit.jpg) 位于该线上，因此 ![Image](../images/vvictorit.jpg) 与
+    ![Image](../images/bvictorit.jpg) 之间的角度 *θ* 为 90°，由于 cos(90^°) = 0，因此 ![Image](../images/vvictorit.jpg)
+    · ![Image](../images/bvictorit.jpg) = 0。垂直向量的点积为零。向量 ![Image](../images/avictorit.jpg)
+    恰好与 ![Image](../images/vvictorit.jpg) 在同一半平面上；因此，! [Image](../images/vvictorit.jpg)
+    · ![Image](../images/avictorit.jpg) > 0。最后，! [Image](../images/cvictorit.jpg)
+    位于 ![Image](../images/vvictorit.jpg) 的对侧半平面上；因此，! [Image](../images/vvictorit.jpg)
+    · ![Image](../images/cvictorit.jpg) < 0。
 - en: '![Image](../images/04fig06.jpg)'
+  id: totrans-157
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig06.jpg)'
 - en: '*Figure 4-6: Vector directions with respect to ![Image](../images/normal_avictor.jpg)
     yield different dot products.*'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 4-6：与 ![Image](../images/normal_avictor.jpg) 相关的向量方向会产生不同的点积。*'
 - en: Implementing the dot product is straightforward from [Equation 4.7](ch04.xhtml#ch04eqa07).
     Inside the Vector class, enter the code in [Listing 4-14](ch04.xhtml#ch4lis14).
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据[方程 4.7](ch04.xhtml#ch04eqa07)，实现点积是直接的。在 Vector 类内部，输入[列表 4-14](ch04.xhtml#ch4lis14)中的代码。
 - en: '[PRE19]'
+  id: totrans-160
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: '*Listing 4-14: Dot product*'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-14：点积*'
 - en: 'Before we move on to the cross product, let’s stop for a minute and analyze
     one of its applications: obtaining the projection of a vector in a given direction.'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们继续讨论叉积之前，先停下来分析它的一个应用：获取向量在给定方向上的投影。
 - en: '***Projecting Vectors***'
+  id: totrans-163
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***投影向量***'
 - en: 'When one of the vectors involved in a dot product is a unit vector, this operation’s
     result is the length of the projection of one vector over the other vector. To
     see why, let’s use [Equation 4.7](ch04.xhtml#ch04eqa07). Given a vector ![Image](../images/uvictorit.jpg)
     and a unit vector ![Image](../images/vcapit.jpg), the dot product is:'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 当参与点积运算的其中一个向量是单位向量时，运算结果是一个向量在另一个向量上的投影长度。为了理解这一点，参考[方程 4.7](ch04.xhtml#ch04eqa07)。给定一个向量
+    ![Image](../images/uvictorit.jpg) 和一个单位向量 ![Image](../images/vcapit.jpg)，其点积为：
 - en: '![Image](../images/f0078.jpg)'
+  id: totrans-165
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0078.jpg)'
 - en: where ![Image](../images/udouble_line.jpg) · cos*θ* is exactly the projection
     of ![Image](../images/uvictorit.jpg) over the direction of ![Image](../images/vcapit.jpg).
     This will be handy for computing projections over a direction, which we could
     use to obtain the axial component of a force on a truss member, for example, as
     illustrated in [Figure 4-7](ch04.xhtml#ch4fig7). In this case, we’d simply have
     to do ![Image](../images/f0078-1.jpg) to compute the axial component ![Image](../images/fapvictor.jpg).
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中![Image](../images/udouble_line.jpg) · cos*θ*正好是![Image](../images/uvictorit.jpg)在![Image](../images/vcapit.jpg)方向上的投影。这在计算沿某一方向的投影时非常有用，例如，我们可以用它来获取一个桁架构件上力的轴向分量，如[图
+    4-7](ch04.xhtml#ch4fig7)所示。在这种情况下，我们只需做![Image](../images/f0078-1.jpg)来计算轴向分量![Image](../images/fapvictor.jpg)。
 - en: '![Image](../images/04fig07.jpg)'
+  id: totrans-167
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig07.jpg)'
 - en: '*Figure 4-7: Projection of a force ![Image](../images/fvictor.jpg) in the axial
     direction ![Image](../images/ucap.jpg) of a truss member*'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 4-7：力![Image](../images/fvictor.jpg)在桁架构件轴向方向![Image](../images/ucap.jpg)上的投影*'
 - en: Let’s implement this operation as a new method. Enter the code from [Listing
     4-15](ch04.xhtml#ch4lis15) into your class.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们将此操作实现为一个新方法。在你的类中输入[清单 4-15](ch04.xhtml#ch4lis15)中的代码。
 - en: '[PRE20]'
+  id: totrans-170
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: '*Listing 4-15: Projection of a vector over another vector*'
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-15：一个向量在另一个向量上的投影*'
 - en: Note that the direction argument may not be a unit vector. To make sure our
     formula works, we normalize it.
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，方向参数可能不是单位向量。为了确保我们的公式有效，我们将其标准化。
 - en: '***Cross Product***'
+  id: totrans-173
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***叉积***'
 - en: 'The *cross product* of two three-dimensional vectors yields a new vector that
     is perpendicular to the plane containing the other two. The order of operands
     matters and defines the direction of the resulting vector. You can figure out
     the direction of the cross product using the right-hand rule. Notice that this
     product is therefore noncommutative: ![Image](../images/f0079-3.jpg) [Figure 4-8](ch04.xhtml#ch4fig8)
     illustrates this phenomenon.'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 两个三维向量的*叉积*会产生一个新的向量，该向量垂直于包含其他两个向量的平面。操作数的顺序很重要，它决定了结果向量的方向。你可以通过右手定则来确定叉积的方向。请注意，因此这个乘积是非交换的：![Image](../images/f0079-3.jpg)
+    [图 4-8](ch04.xhtml#ch4fig8)说明了这一现象。
 - en: '![Image](../images/04fig08.jpg)'
+  id: totrans-175
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig08.jpg)'
 - en: '*Figure 4-8: Cross products are noncommutative.*'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 4-8：叉积是非交换的。*'
 - en: In 3D space, the cross product can be computed using [Equation 4.8](ch04.xhtml#ch04eqa08).
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 在三维空间中，叉积可以使用[方程 4.8](ch04.xhtml#ch04eqa08)进行计算。
 - en: '![Image](../images/04eqa08.jpg)'
+  id: totrans-178
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04eqa08.jpg)'
 - en: 'When working in two dimensions, every vector is contained in the same plane;
     thus, every cross product yields a vector perpendicular to that plane. That is
     easy to observe from the previous expression by simply noting that *u*[*z*] =
     *v*[*z*] = 0:'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 在二维空间中，每个向量都包含在同一平面内；因此，每个叉积都会生成一个垂直于该平面的向量。从之前的表达式中很容易观察到这一点，只需注意*u*[*z*] =
+    *v*[*z*] = 0：
 - en: '![Image](../images/f0080-01.jpg)'
+  id: totrans-180
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0080-01.jpg)'
 - en: In two-dimensional applications, the cross product is therefore considered to
     yield a scalar value, which is the z-coordinate of the previous expression’s resulting
     vector. You can think of this coordinate as being the length of the resulting
@@ -777,20 +1182,31 @@
     is all we need to keep. Given *θ* as the angle between vectors ![Image](../images/uvictorit.jpg)
     and ![Image](../images/vvictorit.jpg), the cross product operation in two dimensions
     can be obtained by applying [Equation 4.9](ch04.xhtml#ch04eqa09).
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 在二维应用中，叉积被认为会产生一个标量值，它是前面表达式中结果向量的z坐标。你可以把这个坐标看作是结果向量的长度。由于x和y坐标为零，z坐标给出的大小就是我们需要保留的值。给定*θ*为向量![Image](../images/uvictorit.jpg)和![Image](../images/vvictorit.jpg)之间的夹角，可以通过应用[方程
+    4.9](ch04.xhtml#ch04eqa09)来获得二维中的叉积操作。
 - en: '![Image](../images/04eqa09.jpg)'
+  id: totrans-182
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04eqa09.jpg)'
 - en: Let’s implement the cross product. Enter the code in [Listing 4-16](ch04.xhtml#ch4lis16).
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们实现叉积。在[清单 4-16](ch04.xhtml#ch4lis16)中输入代码。
 - en: '[PRE21]'
+  id: totrans-184
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: '*Listing 4-16: Cross product*'
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 4-16：叉积*'
 - en: One important application of the cross product in two dimensions is determining
     the rotational direction of angles. From [Figure 4-8](ch04.xhtml#ch4fig8) you
     can see that ![Image](../images/uvictorit.jpg) × ![Image](../images/vvictorit.jpg)
@@ -801,62 +1217,94 @@
     < 0\. Lastly, note that parallel vectors have a cross product of zero, which is
     easy to see because sin 0 = 0\. Let’s take a closer look at this fact and write
     methods in our class that determine whether two vectors are parallel or perpendicular.
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 在二维中，叉积的一个重要应用是确定角度的旋转方向。从[图 4-8](ch04.xhtml#ch4fig8)可以看到，![Image](../images/uvictorit.jpg)
+    × ![Image](../images/vvictorit.jpg) > 0，因为从![Image](../images/uvictorit.jpg)到![Image](../images/vvictorit.jpg)描述了一个正的（逆时针）角度。相反，从![Image](../images/vvictorit.jpg)到![Image](../images/uvictorit.jpg)描述了一个负角度，导致负的叉积![Image](../images/uvictorit.jpg)
+    × ![Image](../images/vvictorit.jpg) < 0。最后，注意平行向量的叉积为零，这很容易理解，因为sin 0 = 0。让我们更仔细地看一下这个事实，并编写我们类中的方法，判断两个向量是否平行或垂直。
 - en: '***Parallel and Perpendicular Vectors***'
+  id: totrans-187
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***平行和垂直向量***'
 - en: Using the dot and cross products, it’s easy to test whether two vectors are
     parallel or perpendicular to each other. [Listing 4-17](ch04.xhtml#ch4lis17) contains
     the code for these operations.
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用点积和叉积，可以很容易地测试两个向量是否平行或垂直。[列表 4-17](ch04.xhtml#ch4lis17)包含了这些操作的代码。
 - en: '[PRE22]'
+  id: totrans-189
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: '*Listing 4-17: Checking whether vectors are parallel or perpendicular*'
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-17：检查向量是否平行或垂直*'
 - en: Checking whether two vectors are parallel to each other is as simple as checking
     that their cross product is zero. Likewise, checking whether two vectors are perpendicular
     is as simple as checking whether the dot product is zero. Notice that we use the
     function is_close_to_zero to account for floating-point number comparison difficulties
     in the calculations.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 检查两个向量是否平行非常简单，只需要检查它们的叉积是否为零。同样，检查两个向量是否垂直也很简单，只需要检查它们的点积是否为零。注意，我们使用函数is_close_to_zero来解决计算中的浮动点数比较问题。
 - en: '***Angles Between Vectors***'
+  id: totrans-192
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***向量之间的角度***'
 - en: 'Computing the angle between two vectors can be done with the help of the dot
     product expression:'
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算两个向量之间的角度可以通过点积表达式来完成：
 - en: '![Image](../images/f0081-01.jpg)'
+  id: totrans-194
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0081-01.jpg)'
 - en: 'Dividing the dot product term on one side by the norm product on the other
     and taking the inverse of the cosine of that expression, we get [Equation 4.10](ch04.xhtml#ch04eqa10):'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 将一边的点积项除以另一边的范数乘积，并取该表达式余弦的倒数，我们得到[方程 4.10](ch04.xhtml#ch04eqa10)：
 - en: '![Image](../images/04eqa10.jpg)'
+  id: totrans-196
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04eqa10.jpg)'
 - en: This expression computes only the magnitude of the angle; if we want to know
     the direction, we’ll need to make use of the cross product. The sign of the angle
     can be obtained using
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个表达式只计算角度的大小；如果我们想知道方向，则需要利用叉积。角度的符号可以通过以下方式得到：
 - en: '![Image](../images/f0081-02.jpg)'
+  id: totrans-198
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0081-02.jpg)'
 - en: 'where sgn, the sign function, is defined as follows:'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 sgn 是符号函数，定义如下：
 - en: '![Image](../images/f0081-03.jpg)'
+  id: totrans-200
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0081-03.jpg)'
 - en: To understand why we only get the magnitude of the angle using [Equation 4.10](ch04.xhtml#ch04eqa10),
     we need to remember an important property of the cosine function. Recall from
     basic geometry that a unit vector’s angle cosine is exactly the value of its horizontal
@@ -866,53 +1314,80 @@
     once an angle goes through the cosine function, its sign is forever lost. That
     makes it impossible to determine what the angle’s sign is from a computed value
     of the dot product.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 要理解为什么使用[方程 4.10](ch04.xhtml#ch04eqa10)只能得到角度的大小，我们需要记住余弦函数的一个重要特性。从基本几何中回忆一下，单位向量的角度余弦恰好是其水平投影的值。通过检查[图
+    4-9](ch04.xhtml#ch4fig9)中的单位圆可以看到，两个具有相反角度的向量（角度和为零）会分配相同的余弦值。换句话说，cos *α* = cos
+    (–*α*)，这意味着一旦一个角度通过余弦函数处理，它的符号就永远丢失了。因此，无法从计算出的点积值中确定角度的符号。
 - en: '![Image](../images/04fig09.jpg)'
+  id: totrans-202
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig09.jpg)'
 - en: '*Figure 4-9: Cosines of opposite angles are equal.*'
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 4-9：对角的余弦相等。*'
 - en: For many of our applications, we’ll be needing both the magnitude and sign of
     angles; with the help of the cross product, we can bring this information back.
     Let’s create two new methods, one that yields the absolute value of the angle
     (for those cases where the magnitude is enough) and another one that includes
     the sign. Enter the code in [Listing 4-18](ch04.xhtml#ch4lis18) in your Vector
     class.
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于我们的许多应用，我们需要角度的大小和符号；借助叉积，我们可以将这些信息带回来。让我们创建两个新方法，一个返回角度的绝对值（用于那些只需要大小的情况），另一个返回包含符号的角度值。在你的Vector类中输入[清单4-18](ch04.xhtml#ch4lis18)中的代码。
 - en: '[PRE23]'
+  id: totrans-205
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: '*Listing 4-18: Calculating the angle between two vectors*'
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单4-18：计算两个向量之间的角度*'
 - en: The first method, angle_value_to, computes the angle between self and other
     using [Equation 4.10](ch04.xhtml#ch04eqa10). We first obtain the dot product value
     and divide it by the product of norms. The angle is then the arc cosine of the
     result. The second method, angle_to, returns the value of the angle with the sign
     from the cross product. The math.copysign(x, y) function in Python returns the
     magnitude of x with the sign of y.
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个方法angle_value_to计算self和other之间的角度，使用[方程4.10](ch04.xhtml#ch04eqa10)。我们首先获得点积值，并将其除以模的乘积。然后，角度就是结果的反余弦值。第二个方法angle_to返回带有符号的角度值，这个符号来自叉积。Python中的math.copysign(x,
+    y)函数返回x的大小，并使用y的符号。
 - en: 'Let’s try these two methods in the console. Reload it and write the following:'
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们在控制台中尝试这两种方法。重新加载并输入以下内容：
 - en: '[PRE24]'
+  id: totrans-209
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Just for reference, the angle value of 0.78539... is *π*/4 rad (45^°).
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 仅供参考，角度值0.78539...是*π*/4弧度（45^°）。
 - en: Now let’s suppose we have a vector and want to create a new one by rotating
     the original by a certain angle.
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在假设我们有一个向量，并且希望通过旋转原始向量一定角度来创建一个新向量。
 - en: '***Rotating Vectors***'
+  id: totrans-212
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***旋转向量***'
 - en: Imagine that in the case of the bar subject to an external force, as we saw
     in [Figure 4-7](ch04.xhtml#ch4fig7), we’re also interested in knowing the projection
     of force ![Image](../images/fvictorit.jpg) in the direction perpendicular to the
@@ -920,150 +1395,228 @@
     we first need to figure out a vector perpendicular to the direction of the bar
     *û*, which is obtained by rotating this vector *π*/2 radians, as illustrated in
     [Figure 4-10](ch04.xhtml#ch4fig10).
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 想象一下，在棒子受外力作用的情况下，正如我们在[图4-7](ch04.xhtml#ch4fig7)中看到的那样，我们还希望知道外力在与棒子垂直方向上的投影！[Image](../images/fvictorit.jpg)，这就是力的剪切分量。为了找到力的投影，我们首先需要找出一个垂直于棒子方向的向量*û*，这个向量通过将其旋转*π*/2弧度获得，如[图4-10](ch04.xhtml#ch4fig10)所示。
 - en: '![Image](../images/04fig10.jpg)'
+  id: totrans-214
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig10.jpg)'
 - en: '*Figure 4-10: Rotating the bar’s direction vector *π*/2 radians*'
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图4-10：旋转棒的方向向量 *π*/2弧度*'
 - en: 'A rotation preserves the length of the original vector because a rotation is
     a transformation that respects lengths. Assuming *α* is the angle that we want
     the vector rotated by, we can use [Equation 4.11](ch04.xhtml#ch04eqa11):'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 旋转保持原始向量的长度不变，因为旋转是一种尊重长度的变换。假设*α*是我们希望向量旋转的角度，我们可以使用方程[4.11](ch04.xhtml#ch04eqa11)：
 - en: '![Image](../images/04eqa11.jpg)'
+  id: totrans-217
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04eqa11.jpg)'
 - en: which in Python becomes the code in [Listing 4-19](ch04.xhtml#ch4lis19).
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 这在Python中变成[清单4-19](ch04.xhtml#ch4lis19)中的代码。
 - en: '[PRE25]'
+  id: totrans-219
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: '*Listing 4-19: Rotating a vector*'
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单4-19：旋转向量*'
 - en: The rotated_radians function returns a new vector, the result of rotating the
     original one by the given number of radians. Following our immutability guidelines,
     we never mutate the source vector; instead, we return a new one with the rotation
     applied.
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: rotated_radians函数返回一个新向量，这是通过给定的弧度数旋转原始向量得到的结果。遵循我们的不可变性原则，我们从不修改源向量；相反，我们返回一个应用了旋转的新向量。
 - en: 'There’s one angle, *π*/2 rad (90^°), which is quite useful for rotating a vector.
     Using *π*/2 rad, we get a new vector perpendicular to the original one. To avoid
     writing v.rotated_radians(math.pi / 2) over and over again, we can define a new
     method in our Vector class. Knowing that cos (*π*/2) = 0 and sin (*π*/2) = 1,
     the angle in [Equation 4.11](ch04.xhtml#ch04eqa11) simplifies to the following:'
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 有一个角度，*π*/2弧度（90^°），它对于旋转向量非常有用。使用*π*/2弧度，我们得到一个与原始向量垂直的新向量。为了避免一遍又一遍地写v.rotated_radians(math.pi
+    / 2)，我们可以在Vector类中定义一个新方法。知道cos (*π*/2) = 0，sin (*π*/2) = 1，方程[4.11](ch04.xhtml#ch04eqa11)中的角度简化为以下形式：
 - en: '![Image](../images/f0084-01.jpg)'
+  id: totrans-223
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0084-01.jpg)'
 - en: Let’s call the method perpendicular. In Python, it looks like [Listing 4-20](ch04.xhtml#ch4lis20).
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将这个方法命名为perpendicular。在Python中，它看起来像[清单4-20](ch04.xhtml#ch4lis20)。
 - en: '[PRE26]'
+  id: totrans-225
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: '*Listing 4-20: Obtaining a perpendicular vector*'
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单4-20：获取垂直向量*'
 - en: 'There’s another angle we’ll often use for rotations: *π* rad (180^°). Rotating
     a vector *π* rad results in a vector that is colinear but in the opposite direction.
     This time, cos (*π*) = –1 and sin (*π*) = 0\. The angle in [Equation 4.11](ch04.xhtml#ch04eqa11)
     now looks like this:'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们经常用来旋转的另一个角度是 *π* 弧度（180^°）。旋转一个向量 *π* 弧度会得到一个共线但方向相反的向量。这时，cos (*π*) = –1
+    且 sin (*π*) = 0。现在，[方程 4.11](ch04.xhtml#ch04eqa11)中的角度看起来是这样的：
 - en: '![Image](../images/f0084-02.jpg)'
+  id: totrans-228
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0084-02.jpg)'
 - en: Let’s call the method opposite. In Python, it looks like [Listing 4-21](ch04.xhtml#ch4lis21).
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们称这个方法为 opposite。在 Python 中，它看起来像 [列表 4-21](ch04.xhtml#ch4lis21)。
 - en: '[PRE27]'
+  id: totrans-230
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: '*Listing 4-21: Obtaining the opposite vector*'
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-21：获取相反向量*'
 - en: These two methods, perpendicular and opposite, don’t really add anything we
     didn’t have before; we could just use rotated_radians. Nevertheless, they’re convenient,
     and we’ll be using them often.
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 这两个方法——垂直和相反——其实并没有增加我们之前没有的任何东西；我们本可以直接使用 rotated_radians。不过，它们非常方便，我们将经常使用它们。
 - en: '***Sine and Cosine***'
+  id: totrans-233
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***正弦和余弦***'
 - en: To project a vector quantity in the x- and y-axes, we use the sine or cosine
     values of the vector’s angle, as depicted in [Figure 4-11](ch04.xhtml#ch4fig11).
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了将向量量投影到 x 轴和 y 轴上，我们使用向量角度的正弦或余弦值，如 [图 4-11](ch04.xhtml#ch4fig11)所示。
 - en: We’ll use these to compute the stiffness matrices in global coordinates of truss
     structure bars in [Part V](part05.xhtml#part05) of the book. The stiffness matrix
     of a bar is computed relative to a reference frame whose x-axis is in the direction
     of the bar’s directrix, but we’ll need to project this matrix in the direction
     of the global x- and y-axes to build the structure’s global system of equations.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用这些来计算 [第五部分](part05.xhtml#part05)中桁架结构杆件在全局坐标系下的刚度矩阵。杆件的刚度矩阵是相对于一个参考框架计算的，该框架的x轴与杆件的导线方向一致，但我们需要将这个矩阵投影到全局的x轴和y轴方向上，以建立结构的全局方程组。
 - en: If the Vector class didn’t provide these two properties, clients of this class
     could get its angle value and then compute the sine or cosine of it. Even though
     this is perfectly acceptable, it requires a few operations to first compute the
     angle and then one extra sine or cosine operation. But as you know, we can compute
     the sine and cosine values much more efficiently by their mathematical definition.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果向量类没有提供这两个属性，使用该类的客户端可以获取它的角度值，然后计算它的正弦或余弦。尽管这是完全可以接受的，但它需要先计算角度，然后再进行一次额外的正弦或余弦操作。但正如你所知道的，我们可以通过它们的数学定义更高效地计算正弦和余弦值。
 - en: '![Image](../images/04fig11.jpg)'
+  id: totrans-237
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/04fig11.jpg)'
 - en: '*Figure 4-11: Vector projections*'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 4-11：向量投影*'
 - en: 'Say we have vector ![Image](../images/avictorit.jpg) with norm ∥![Image](../images/avictorit.jpg)∥,
     whose projections are labeled *u* and *v*. The sine and cosine can be computed
     as follows:'
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们有一个向量 ![Image](../images/avictorit.jpg)，其范数为 ∥![Image](../images/avictorit.jpg)∥，它的投影分别为
+    *u* 和 *v*。可以通过以下方式计算正弦和余弦：
 - en: '![Image](../images/f0085-01.jpg)'
+  id: totrans-240
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/f0085-01.jpg)'
 - en: Let’s implement these as attributes of the Vector class. Enter the code in [Listing
     4-22](ch04.xhtml#ch4lis22).
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们将这些实现为向量类的属性。输入代码到 [列表 4-22](ch04.xhtml#ch4lis22)。
 - en: '[PRE28]'
+  id: totrans-242
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: '*Listing 4-22: Vector’s direction sine and cosine*'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-22：向量的方向正弦和余弦*'
 - en: The implementation is straightforward given the previous expressions. Let’s
     complete our Point and Vector classes by adding the last touches.
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: 鉴于前面的表达式，实施起来是直接的。让我们通过添加最后的细节来完成我们的点类和向量类。
 - en: '**Completing Our Classes**'
+  id: totrans-245
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**完成我们的类**'
 - en: Our Point and Vector classes are looking good, but they’re missing some small
     details. If we compare two instances of any of them, Python may not be able to
     determine whether they are equivalent; we’ll fix that shortly. Also, if you remember,
     Python prints object instances to the console giving their class name accompanied
     with a memory address, which is not that helpful for us; we’ll also fix this here.
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的点类和向量类看起来不错，但它们缺少一些小细节。如果我们比较它们的两个实例，Python 可能无法确定它们是否相等；我们稍后会解决这个问题。而且，正如你记得的，Python
+    会在控制台打印对象实例，附带类名和内存地址，但这对我们来说不太有用；我们也会在这里修复这个问题。
 - en: '***Checking Equality***'
+  id: totrans-247
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***检查相等性***'
 - en: Try entering the following in the shell (don’t forget to reload it).
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 尝试在 shell 中输入以下内容（不要忘记重新加载）。
 - en: '[PRE29]'
+  id: totrans-249
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'I bet ➊ didn’t surprise you: a Point is equal to itself. What about ➋? Did
     you raise your eyebrows? We are comparing two points with the same coordinates,
     but Python states they are different. Shouldn’t (1, 0) be equal to (1, 0)? It
@@ -1071,11 +1624,17 @@
     our class. By default Python considers two instances of a class to be equal if
     they’re effectively the same instance, that is, if they live in the same memory
     region. To be more explicit, write this to the console:'
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: 我敢打赌 ➊ 并没有让你感到惊讶：一个 Point 与它自己是相等的。那么 ➋ 呢？你是不是皱了皱眉？我们在比较两个具有相同坐标的点，但 Python
+    说它们是不同的。难道 (1, 0) 不应该等于 (1, 0) 吗？它应该是相等的，但首先我们需要教 Python 如何比较两个给定的类实例。默认情况下，Python
+    认为两个类的实例相等，前提是它们实际上是同一个实例，也就是说，它们位于同一内存区域。为了更明确一些，请在控制台上写下这个：
 - en: '[PRE30]'
+  id: totrans-251
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: Python sees instance p as the one on the memory address 0x10baa3f60 and instance
     q on 0x10c63b438. Don’t forget that the memory addresses of your instances will
     differ from these. We must instruct Python to compare our Point instances by checking
@@ -1083,27 +1642,43 @@
     from [Table 4-1](ch04.xhtml#ch4tab1), by implementing a method called __eq__(self,
     other), you are effectively overloading the == operator. Let’s do this for both
     the Point and Vector classes.
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: Python 将实例 p 视为位于内存地址 0x10baa3f60 的实例，实例 q 位于 0x10c63b438。别忘了，你实例的内存地址与这些会有所不同。我们必须指示
+    Python 通过检查投影是否足够接近，来将我们的 Point 实例视为相同。你还记得 [表 4-1](ch04.xhtml#ch4tab1) 吗？通过实现一个名为
+    __eq__(self, other) 的方法，你实际上是在重载 == 运算符。让我们为 Point 和 Vector 类都实现这一点。
 - en: '[Listing 4-23](ch04.xhtml#ch4lis23) contains the code for the Point class (don’t
     forget to import nums).'
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: '[列表 4-23](ch04.xhtml#ch4lis23) 包含了 Point 类的代码（别忘了导入 nums）。'
 - en: '[PRE31]'
+  id: totrans-254
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: '*Listing 4-23: Point equality implementation*'
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-23：Point 类相等性实现*'
 - en: '[Listing 4-24](ch04.xhtml#ch4lis24) contains the code for the Vector class.'
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: '[列表 4-24](ch04.xhtml#ch4lis24) 包含了 Vector 类的代码。'
 - en: '[PRE32]'
+  id: totrans-257
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: '*Listing 4-24: Implementing vector equality*'
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 4-24：实现向量相等性*'
 - en: 'As you can see, in both cases the idea is the same: comparing coordinates against
     another given instance. Prior to that, we do two important checks, though. The
     first one is to check for the case where we are comparing the same instance against
@@ -1114,172 +1689,257 @@
     we try to compare instances from different classes, we return False, and we’re
     done. You’ll see this comparison pattern throughout the book, as all of our classes
     implementing __eq__ will use this same approach.'
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你所看到的，无论哪种情况，思路都是一样的：将坐标与另一个给定实例进行比较。但在此之前，我们要做两个重要的检查。第一个是检查我们是否在比较同一个实例与它自己，在这种情况下我们不需要进一步的比较，因此直接返回
+    True。第二个检查是检查 other 是否不是该类的实例。由于 Python 允许我们比较任何两个对象，我们可能会将一个 Vector 实例与一个字符串进行比较。例如，如果我们检测到这种比较来自不同类的实例，我们就返回
+    False，比较结束。你会在全书中看到这种比较模式，因为我们所有实现了 __eq__ 的类都会使用这种方法。
 - en: 'To make sure we got it right, let’s repeat the experiment. Don’t forget to
     reload the console to import the last version of the code, and enter the following
     code:'
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了确保我们没有犯错，让我们重复实验一次。别忘了重新加载控制台以导入代码的最新版本，并输入以下代码：
 - en: '[PRE33]'
+  id: totrans-261
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: There you go! Now our Point and Vector classes comparison actually works as
     it is supposed to work.
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 就这样！现在我们的 Point 和 Vector 类的比较终于按预期工作了。
 - en: '***String Representation***'
+  id: totrans-263
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***字符串表示***'
 - en: 'As you’ve seen in the console when evaluating an instance of a class, the output
     is not super helpful:'
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你在控制台中评估类实例时看到的，输出并不太有帮助：
 - en: '[PRE34]'
+  id: totrans-265
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'If we try to convert the instance to its string representation using the str
     function, we get the same result:'
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们尝试使用 str 函数将实例转换为其字符串表示，我们会得到相同的结果：
 - en: '[PRE35]'
+  id: totrans-267
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'When printing the string representation of Vector instances to the console,
     we’d find something like the following much more useful:'
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 当将 Vector 实例的字符串表示打印到控制台时，我们会发现如下内容更有用：
 - en: '[PRE36]'
+  id: totrans-269
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: That message has the information of the coordinate values and the value of the
     norm. Function str() in Python converts an instance of a class to its string representation.
     This function first checks whether the passed argument implements method __str__.
     If it does, the function calls it and returns the result. If it doesn’t, the function
     simply returns the default string representation, which in our case is that unhelpful
     memory position mess.
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 该消息包含了坐标值和范数值的信息。Python 中的 str() 函数将类的实例转换为其字符串表示形式。此函数首先检查传入的参数是否实现了 __str__
+    方法。如果实现了，它会调用该方法并返回结果。如果没有实现，它则直接返回默认的字符串表示形式，在我们的案例中就是那个没有用的内存位置。
 - en: Let’s implement __str__ in our classes. Enter [Listing 4-25](ch04.xhtml#ch4lis25)
     inside the Point class.
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们在我们的类中实现 __str__ 方法。进入 Point 类并输入[Listing 4-25](ch04.xhtml#ch4lis25)。
 - en: '[PRE37]'
+  id: totrans-272
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: '*Listing 4-25: Overriding string representation for Point*'
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 4-25: 为 Point 类重写字符串表示*'
 - en: Then enter [Listing 4-26](ch04.xhtml#ch4lis26) inside the Vector class.
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后在 Vector 类中输入[Listing 4-26](ch04.xhtml#ch4lis26)。
 - en: '[PRE38]'
+  id: totrans-275
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: '*Listing 4-26: Overriding string representation for Vector*'
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 4-26: 为 Vector 类重写字符串表示*'
 - en: We include instance attributes in the string using *f-strings* (f’’). The attributes
     are inserted between curly brackets, and Python calls their __str__ methods to
     get their string representation and concatenate the result. For example, you can
     think of the f-string,
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用 *f-strings*（f’’）将实例属性包含在字符串中。属性插入在大括号之间，Python 会调用它们的 __str__ 方法来获取它们的字符串表示并连接结果。例如，你可以将
+    f-string 看作是，
 - en: '[PRE39]'
+  id: totrans-278
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'as being translated by Python to something like this:'
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: 被 Python 翻译成类似这样的内容：
 - en: '[PRE40]'
+  id: totrans-280
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: 'Now when using str() on instances of our classes, a much nicer description
     will be printed. Let’s reload the Python shell and give it a second try:'
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，在我们的类的实例上使用 str() 时，会打印出更好的描述。让我们重新加载 Python shell 并再试一次：
 - en: '[PRE41]'
+  id: totrans-282
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: Much better, isn’t it?
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: 好多了，不是吗？
 - en: '***Vector Factories***'
+  id: totrans-284
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***向量工厂***'
 - en: A *factory function* is just a function that builds an object. Factory functions
     are a good option for initializing objects that require some calculation. An initializer
     should ideally only set its class attributes and avoid any computation; for that
     we will use factories.
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: '*工厂函数* 只是构建对象的一个函数。工厂函数是初始化需要一些计算的对象的好选择。初始化函数理想情况下应该仅设置类的属性，避免任何计算；为此我们将使用工厂函数。'
 - en: A factory function is also helpful to improve the readability of the code. For
     instance, if you wanted to create a Vector from a point *P* to another point *Q*,
     the code
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 工厂函数同样有助于提高代码的可读性。例如，如果你想从点 *P* 到另一个点 *Q* 创建一个向量，代码
 - en: '[PRE42]'
+  id: totrans-287
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: 'reads much better than this code:'
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 比起这段代码，阅读起来好多了：
 - en: '[PRE43]'
+  id: totrans-289
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: Not only that, but the latter is likely to be written many times, which should
     tell you there is an algorithm that needs to be abstracted into its own concept.
     In this particular case, the algorithm is the formula to create a vector between
     two ordered points (see [Equation 4.12](ch04.xhtml#ch04eqa12)).
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 不仅如此，后者很可能会被写多次，这应该告诉你，某个算法需要被抽象为一个独立的概念。在这个特殊的情况下，算法是用来在两个有序点之间创建向量的公式（见[Equation
+    4.12](ch04.xhtml#ch04eqa12)）。
 - en: '**NOTE**'
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**'
 - en: '*A missing abstraction is a common problem. It happens when an algorithm representing
     a concrete concept is not properly encapsulated into its own function or class
     with a descriptive name. Its main hazards are that it takes longer for our brains
     to understand code when abstractions are not well encapsulated and that the same
     algorithm is copied and pasted in many places, making it difficult to maintain.*'
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: '*缺少抽象是一个常见的问题。它发生在一个表示具体概念的算法没有被恰当地封装到其自己的函数或类中，并且没有一个描述性的名称。其主要风险在于，当抽象没有很好地封装时，我们的大脑理解代码的速度变慢，且相同的算法会被复制粘贴到多个地方，导致难以维护。*'
 - en: Create a new file inside *geom2d*, call it *vectors*, and enter the code from
     [Listing 4-27](ch04.xhtml#ch4lis27).
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *geom2d* 中创建一个新文件，命名为 *vectors*，并输入[Listing 4-27](ch04.xhtml#ch4lis27)中的代码。
 - en: '[PRE44]'
+  id: totrans-294
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: '*Listing 4-27: Vector factory functions*'
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 4-27: 向量工厂函数*'
 - en: This file defines several functions, all of which have the purpose of creating
     vectors. The first function we define, make_vector_between, creates a vector going
     from a point p to another point q. We’ve harnessed our Point class’s __sub__ implementation
     to create the vector between the points. That is one handy way of creating vectors,
     expressed mathematically as shown in [Equation 4.12](ch04.xhtml#ch04eqa12).
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
 - en: '![Image](../images/04eqa12.jpg)'
+  id: totrans-297
   prefs: []
   type: TYPE_IMG
 - en: Next, we have a function called make_versor, which creates versors, or vectors
     of unit length. *Versors* are frequently used to express direction or orientation,
     so we’ll want a convenient way of creating them. Note that versors are written
     with a hat over them, as in *û*, signifying their length is unitary.
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
 - en: Lastly, we have make_versor_between to create a versor between two points, which
     reuses the make_vector_between function to return the normalized result of it.
     The resulting versor could also be computed with [Equation 4.13](ch04.xhtml#ch04eqa13).
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
 - en: '![Image](../images/04eqa13.jpg)'
+  id: totrans-300
   prefs: []
   type: TYPE_IMG
 - en: '**Unit Testing**'
+  id: totrans-301
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1288,6 +1948,7 @@
     How can we convince someone else that our code always works as expected? How can
     we be sure what we’ve written works all the time? How can we make sure we don’t
     break anything when we modify existing code or add new code?'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
 - en: 'Often enough, you’ll need to go back to some piece of code you wrote a long
@@ -1296,6 +1957,7 @@
     you may not be aware of what all the code is supposed to be doing, so you end
     up changing something you shouldn’t have and break something else. This phenomenon
     happens so regularly it has its own name: *regression*.'
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
 - en: 'Testing code by hand in the console is tiresome and boring, ensuring that you
@@ -1304,6 +1966,7 @@
     else needs to run them, they’ll have to figure out what to test and how. But still,
     we really need to make sure our changes won’t break anything. Code is entirely
     useless if it doesn’t do what it’s supposed to.'
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
 - en: What would make our lives much easier is an automated test we could execute,
@@ -1314,6 +1977,7 @@
     consider this part of development so vital I want to cover it early in the book
     and make extensive use of it. Writing automated, unitary tests for our code is
     a simple process, and there’s really no excuse for not doing it.
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
 - en: 'Creating unit tests for your code is simple: create a new file, and inside
@@ -1322,52 +1986,68 @@
     given a set of inputs. The test is considered to pass when the assertion succeeds
     and to fail otherwise. When the test class is executed (as we’ll see next), the
     methods are executed, and their assertions are checked.'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
 - en: Don’t worry if this still doesn’t make sense; we’re going to use unit testing
     so much in this book you’ll get to fully understand it.
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
 - en: '***Testing Distances***'
+  id: totrans-308
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'The first method we wrote for Point was distance_to, so let’s start our unit
     test adventure there. In the *geom2d* package, create a new file named *point
     _test.py*. Your project’s structure should look like the following:'
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
 - en: Mechanics
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
 - en: '|- geom2d'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
 - en: '|    |- __init__.py'
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
 - en: '|    |- nums.py'
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
 - en: '|    |- point.py'
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: '|    |- point_test.py'
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
 - en: '|    |- vector.py'
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
 - en: '|    |- vectors.py'
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
 - en: In *point_test.py*, enter the code from [Listing 4-28](ch04.xhtml#ch4lis28).
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE45]'
+  id: totrans-319
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: '*Listing 4-28: Distance between points test*'
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
 - en: We start by importing the *unittest* module, shipped with Python. This module
@@ -1375,6 +2055,7 @@
     tests. After importing our Point class, we define the class TestPoint, which inherits
     unittest.TestCase ➊. The TestCase class defines a good collection of assertion
     methods that we gain access to inside our class when we inherit it.
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: Next we have the test_distance_to method ➋. It’s important that the method name
@@ -1383,15 +2064,18 @@
     but as long as their names don’t start with *test*, they won’t be executed as
     tests. Inside the test we create two points that we know are 5 units apart from
     each other and assert that their distance p.distance_to(q) is close to that value.
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
 - en: '**NOTE**'
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
 - en: '*The* unittest *module’s choice of words may be confusing. The name* UnitTest
     *is used for the class even though the tests themselves are actually the methods
     inside the class. Our class extending* UnitTest *is just a way of grouping related
     test cases.*'
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
 - en: 'The assertion method assertAlmostEqual ➌ (defined in the class we inherited
@@ -1401,13 +2085,16 @@
     to the default (as we didn’t provide any other value). Remember that when dealing
     with floating-point number comparisons, a tolerance must be used or, in this case,
     a given number of decimal positions (see the “Comparing Numbers” on [page 4](ch01.xhtml#page_4)).'
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
 - en: There are several ways to run tests. Let’s explore how to do it from both PyCharm
     and the console.
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
 - en: '**Running the Test from PyCharm**'
+  id: totrans-327
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
@@ -1418,15 +2105,20 @@
     menu, select **Run ‘Unittest for point**.’ The Run pane appears in the lower part
     of the IDE, and the result of executing your tests is displayed. If you did everything
     right, you should see the following:'
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE46]'
+  id: totrans-329
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: Let’s now learn how to run the same test from the console.
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
 - en: '**Running the Test from the Console**'
+  id: totrans-331
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
@@ -1434,44 +2126,59 @@
     of the IDE you use, you can always run tests from the console. Open the console
     or shell and make sure you’re in the *Mechanics* project directory. Then run the
     following command:'
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE47]'
+  id: totrans-333
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: 'You should see the following result:'
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE48]'
+  id: totrans-335
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: We’ll run most of the tests throughout the book from the IDE, but feel free
     to run them from the console if you prefer.
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
 - en: '**Assertion Errors**'
+  id: totrans-337
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
 - en: 'Let’s see what would’ve happened if the assertion detected a wrong result.
     Inside *point_test.py*, change the expected value for the distance:'
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE49]'
+  id: totrans-339
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: 'This assertion is expecting points (1, 2) and (4, 6) to be 567 units apart,
     which is totally wrong. Now execute the test again by clicking the green play
     button beside the class. This is the result you should see:'
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE50]'
+  id: totrans-341
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: The message with the most valuable information is the last one. It’s telling
     us that there was an assertion error; that is, the assertion failed when it found
     5.0 where 567 was expected. It used 7 decimal places in the comparison and still
     found a difference of 562.
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
 - en: Before this assertion error is the *traceback*, the execution path Python took
@@ -1481,44 +2188,56 @@
     This information will prove invaluable when you modify existing code and run the
     tests only to find out whether a test fails, as it can tell you what exactly broke.
     These test failure messages will give you precise information.
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
 - en: Don’t forget to put our unit test back to how we initially wrote it and make
     sure it still runs successfully.
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
 - en: '***Testing Vector Plus and Minus Operations***'
+  id: totrans-345
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'To ensure + and – operations work properly for vectors (doing the same for
     the Point class is left as an exercise for you), let’s use the following test
     cases:'
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
 - en: '![Image](../images/f0094.jpg)'
+  id: totrans-347
   prefs: []
   type: TYPE_IMG
 - en: and
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
 - en: '![Image](../images/f0094a.jpg)'
+  id: totrans-349
   prefs: []
   type: TYPE_IMG
 - en: Create a new file inside package *geom2d* for testing the Vector class. Name
     it *vector_test* and enter the code from [Listing 4-29](ch04.xhtml#ch4lis29).
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE51]'
+  id: totrans-351
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: '*Listing 4-29: Tests for plus and minus operations*'
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
 - en: Run all tests using the green play button to the left of the class definition.
     If you got everything right, your two new tests should succeed. Yay! Our operations
     were properly implemented. The nice thing is, if there had been a bug in the implementation,
     these tests would have pointed out where and why.
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
 - en: 'It’s worth noting that this time we’re using assertion method assertEqual,
@@ -1527,51 +2246,67 @@
     results were right. Try this: comment out the __eq__(self, other) method definition
     (by appending a # character at the beginning of the line) in the Vector class
     and rerun the tests.'
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
 - en: 'You’ll find how the last two tests fail with a message like the following:'
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE52]'
+  id: totrans-356
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: Familiar? That’s Python assuming two objects from the class can be equal only
     if they are the same actual object living in the same memory position. Our __eq__
     operator overload explains to Python the rules to determine when two objects should
     be considered the same. Don’t forget to uncomment the method.
+  id: totrans-357
   prefs: []
   type: TYPE_NORMAL
 - en: '***Testing Vector Product Operations***'
+  id: totrans-358
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'Let’s add two new test cases for dot and cross products using the same two
     vectors defined in the test class:'
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
 - en: '![Image](../images/f0095-p1.jpg)'
+  id: totrans-360
   prefs: []
   type: TYPE_IMG
 - en: and
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
 - en: '![Image](../images/f0095-p2.jpg)'
+  id: totrans-362
   prefs: []
   type: TYPE_IMG
 - en: In code, this looks like [Listing 4-30](ch04.xhtml#ch4lis30).
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE53]'
+  id: totrans-364
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: '*Listing 4-30: Tests vector dot and cross products*'
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
 - en: Run all test cases to make sure the new ones also succeed. Note that, as we’re
     comparing numbers again, we use assertion method assertAlmostEqual.
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
 - en: '***Testing Vector Parallelism and Perpendicularity***'
+  id: totrans-367
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -1581,27 +2316,36 @@
     (a negative test). For the positive case, we’ll rely on the fact that a vector
     is always parallel to itself. Enter the [Listing 4-31](ch04.xhtml#ch4lis31) code
     inside TestVector.
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE54]'
+  id: totrans-369
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: '*Listing 4-31: Testing vector parallelism*'
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
 - en: 'There are two new assertion methods in this listing that are interesting ones:
     assertTrue, which checks whether a given expression evaluates to True; and assertFalse,
     which checks whether a given expression evaluates to False.'
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
 - en: We’ll follow the same pattern for checking perpendicularity. After the last
     two tests, enter the two in [Listing 4-32](ch04.xhtml#ch4lis32).
+  id: totrans-372
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE55]'
+  id: totrans-373
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: '*Listing 4-32: Testing vector perpendicularity*'
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
 - en: Run all tests inside the TestVector class to make sure they succeed. Congratulations!
@@ -1611,14 +2355,17 @@
     just run its tests. Tests also serve to document the expected behavior of your
     code. If at some point you need a reminder about what the code you wrote is supposed
     to do in a particular case, unit tests should help.
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
 - en: Writing good tests is not a simple endeavor. One gets good at it by writing
     many, but there are some guidelines we can follow that will help us. Let’s take
     a look at three simple rules that will make our tests much more resilient.
+  id: totrans-376
   prefs: []
   type: TYPE_NORMAL
 - en: '***Three Golden Rules for Unit Testing***'
+  id: totrans-377
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -1630,6 +2377,7 @@
     didn’t test and write the tests you think are needed to make sure they work properly.
     I encourage you to try, but if you still feel like unit testing is foreign to
     you, don’t worry, we’ll be writing unit tests in other chapters of this book.'
+  id: totrans-378
   prefs: []
   type: TYPE_NORMAL
 - en: As mentioned, I believe writing unit tests is an integral part of coding, and
@@ -1640,21 +2388,25 @@
     is always a good approach, as it’s unlikely anybody is going to take the time
     to think about how to test your code and then open the console and manually try
     it all.
+  id: totrans-379
   prefs: []
   type: TYPE_NORMAL
 - en: You’ll get better at writing reliable unit tests as you practice. For now, I’d
     like to give you some basic rules to follow. Don’t expect to fully grasp their
     meanings now, but come back to this section from time to time as you move through
     the book.
+  id: totrans-380
   prefs: []
   type: TYPE_NORMAL
 - en: '**Rule 1: One Reason to Fail**'
+  id: totrans-381
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
 - en: Unit tests should have one and only one reason to fail. This sounds simple,
     but in many cases the *test subject* (what you are testing) is complex and made
     up of several components working together.
+  id: totrans-382
   prefs: []
   type: TYPE_NORMAL
 - en: 'If tests fail for only one reason, it’s straightforward to find the bug in
@@ -1662,33 +2414,43 @@
     reasons. When that test fails, you’ll find yourself spending too much time reading
     error messages and debugging code, trying to understand what made it fail this
     particular time.'
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
 - en: Some developers and test professionals (testing is a profession on its own,
     which I spent several years doing) state that each test should have one and only
     one assertion. Being pragmatic, sometimes having more than one assertion is not
     that harmful, but if it’s one, that’s much better.
+  id: totrans-384
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s analyze a particular case. Take the test we wrote for checking whether
     two vectors are perpendicular. If instead of
+  id: totrans-385
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE56]'
+  id: totrans-386
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: we had written
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE57]'
+  id: totrans-388
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: then the test could fail because of an error in the is_perpendicular_to method
     or because of an error in the implementation of perpendicular, which we use to
     compute a perpendicular vector to ![Image](../images/uvictorit.jpg). See the difference?
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
 - en: '**Rule 2: Controlled Environment**'
+  id: totrans-390
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
@@ -1701,47 +2463,59 @@
     should be no randomness or dependence on anything out of your control: dates or
     times, operating systems, machine environment variables not set by the test, and
     so on.'
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
 - en: If your tests seem to fail at random, they are useless, and you should get rid
     of them. People get used to random failing tests fast and start ignoring them.
     The problem comes when they also ignore tests that are failing because of a bug
     in the code.
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
 - en: '**Rule 3: Test Independence**'
+  id: totrans-393
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
 - en: Tests should never depend on other tests. Each test should run on its own and
     never depend on a fixture set by other tests.
+  id: totrans-394
   prefs: []
   type: TYPE_NORMAL
 - en: There are at least three reasons for this. First, you’ll want to run or debug
     tests independently. Second, many test frameworks do not guarantee the execution
     order of tests. Finally, it’s much simpler to read and understand tests that don’t
     depend on other surrounding tests.
+  id: totrans-395
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s illustrate this with the TestSwitch class in [Listing 4-33](ch04.xhtml#ch4lis33).
+  id: totrans-396
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE58]'
+  id: totrans-397
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: '*Listing 4-33: Test depending on another test*'
+  id: totrans-398
   prefs: []
   type: TYPE_NORMAL
 - en: See how test_switch_off depends on test_switch_on? By using a method called
     toggle, we could get the wrong result if the tests run in a different order and
     the switch has a state of *off* when this test runs.
+  id: totrans-399
   prefs: []
   type: TYPE_NORMAL
 - en: 'Never rely on test execution order; that results in trouble. Tests should always
     run independently: they should work the same way no matter the order of execution.'
+  id: totrans-400
   prefs: []
   type: TYPE_NORMAL
 - en: '**Summary**'
+  id: totrans-401
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1755,5 +2529,9 @@
     the next chapter, we’ll add two new geometrical abstractions to *geom2d*: lines
     and segments. These provide a new dimension that can be used to construct more
     complex shapes.'
+  id: totrans-402
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们创建了两个重要的类：Point 和 Vector。我们 *geom2d* 库的其余部分将建立在这些简单但强大的抽象概念之上。我们通过实现特殊方法__eq__，教会了
+    Python 如何判断两个给定的 Point 或 Vector 实例是否在逻辑上相等，并通过__str__提供了更好的文本表示。我们通过单元测试覆盖了这些类中的一些方法，并鼓励你自行扩展测试覆盖率。学习编写优秀单元测试的最佳方式是通过实践。在下一章中，我们将向
+    *geom2d* 中添加两个新的几何抽象：线和线段。这些提供了一个新的维度，可以用来构建更复杂的形状。
