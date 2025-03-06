@@ -1,18 +1,26 @@
 - en: '**11'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '**11'
 - en: EVALUATING MODELS**
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '**评估模型**'
 - en: '![image](Images/common.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/common.jpg)'
 - en: So far, we’ve evaluated models by looking at their accuracy on a held-out test
     set. This is natural and intuitive, but as we’ll learn in this chapter, it’s not
     all that we can, or should, do to evaluate a model.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，我们通过查看模型在保留的测试集上的准确率来评估模型。这是自然且直观的，但正如我们在本章中将要学习的那样，这并不是我们能做的、或者应该做的所有评估工作。
 - en: We’ll begin this chapter by defining metrics and delineating some basic assumptions.
     Then we’ll look at why we need more than just accuracy. We’ll introduce the concept
     of a confusion matrix and spend time discussing the metrics we can derive from
@@ -22,32 +30,42 @@
     as this area is still somewhat evolving. However, by the end of this chapter,
     you’ll be familiar with the sorts of numbers that people involved in machine learning
     will throw around and have a good understanding of what they mean.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章开始时，我们将定义指标并阐明一些基本假设。然后我们会讨论为什么我们需要的不仅仅是准确率。我们将引入混淆矩阵的概念，并花时间讨论我们可以从中衍生出的指标。从那里，我们将讨论性能曲线，这是比较不同模型的最佳方式。最后，我们将混淆矩阵的概念扩展到多分类问题。我们不会说完所有关于性能指标的内容，因为这一领域仍在不断发展。然而，在本章结束时，你将熟悉机器学习领域人士常用的各种数字，并能很好地理解它们的含义。
 - en: Definitions and Assumptions
+  id: totrans-5
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 定义与假设
 - en: There are many other metrics besides accuracy that we can use to help us evaluate
     how well a model is performing. These allow us to reasonably compare models. Let’s
     start by defining the word *metric*. For us, a metric is a number or set of numbers
     that represents something about how well the model is doing.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了准确率，我们还有许多其他的指标可以帮助我们评估模型的表现。这些指标使我们能够合理地比较不同的模型。让我们从定义“指标”这个词开始。对我们来说，指标是一个数字或一组数字，代表模型表现的某些方面。
 - en: The value of the metric increases or decreases as the performance of the model
     increases or decreases, or possibly vice versa. At times, we’ll be a bit sloppy
     and refer to graphs as metrics as well since we use them to judge the performance
     of a model.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 当模型的表现增加或减少时，指标的值也会随之增加或减少，或者可能相反。有时我们会有些随意，把图表也称作指标，因为我们用它们来评估模型的表现。
 - en: 'We’re concerned with evaluating a model for which we have a single held-out
     test set. We’ll assume that we followed the advice of [Chapter 4](ch04.xhtml#ch04)
     and built three datasets: a training set to teach the model, a validation set
     to decide when the model was done training, and a held-out test set to evaluate
     the trained model. We’ve now trained our model, thereby utilizing the training
     and validation sets, and want to know how well we’ve done.'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们关注的是评估一个只有单一保留测试集的模型。我们假设我们遵循了[第4章](ch04.xhtml#ch04)的建议，构建了三个数据集：一个训练集来训练模型，一个验证集来决定模型何时训练完成，以及一个保留的测试集来评估训练后的模型。现在，我们已经训练好了模型，利用了训练集和验证集，并希望知道我们的表现如何。
 - en: 'We have another, implicit assumption in this chapter. It’s a crucial one: we
     assume that the held-out test set is a good representation of the parent distribution
     that generated the data. Put another way, the held-out test set must represent
@@ -55,46 +73,66 @@
     For example, the frequency with which particular classes appear in the test set
     should match, as far as is practical, the expected rates that will be encountered
     when the model is used.'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章中还有一个隐含的假设，这是一个至关重要的假设：我们假设保留的测试集能够很好地代表生成数据的母体分布。换句话说，保留的测试集必须尽可能地代表模型在实际应用中可能遇到的数据类型。例如，测试集中各类出现的频率应该与模型实际使用时遇到的预期比例尽可能一致。
 - en: This is necessary because the training set is conditioning the model to expect
     a particular distribution, a particular set of characteristics, and if the data
     given to the model when it’s used has different characteristics, the model won’t
     perform well. A difference in distribution between the training set and the set
     of data presented to the model when it’s used is one of the most common reasons
     deployed machine learning models fail in actual use.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是必要的，因为训练集在训练过程中将模型条件化为期望特定的分布和特定的特征，如果模型在使用时接收到的数据具有不同的特征，模型的表现将不佳。训练集与模型实际使用时接收到的数据集之间的分布差异，是部署的机器学习模型在实际使用中失败的最常见原因之一。
 - en: Why Accuracy Is Not Enough
+  id: totrans-11
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 为什么准确度不足够
 - en: 'A binary classifier outputs a single decision for a particular input: class
     0 or class 1\. Let’s define the following,'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 二分类器对特定输入输出一个决策：类 0 或类 1。我们定义以下内容，
 - en: '*N*[*c*], the number of test examples the model correctly classified'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: '*N*[*c*]，模型正确分类的测试样本数量'
 - en: '*N*[*w*], the number of test examples the model got wrong'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: '*N*[*w*]，模型分类错误的测试样本数量'
 - en: Then, the overall accuracy of this model, a number between 0 and 1, is
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 那么，这个模型的整体准确度是一个介于 0 和 1 之间的数字：
 - en: '![image](Images/252equ01.jpg)'
+  id: totrans-16
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/252equ01.jpg)'
 - en: This is the accuracy as we have been using it throughout the book. Note, in
     this chapter, we will use *ACC* when we mean the overall accuracy.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是我们在整本书中一直使用的准确度。请注意，在本章中，当我们提到整体准确度时，我们将使用 *ACC*。
 - en: This seems like a pretty reasonable metric, but there are a couple of good reasons
     not to trust this number too much. For example, *N*[*c*] and *N*[*w*] tell us
     nothing about the relative frequency of each class. What if one class is rare?
     Let’s see how that might affect things.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个似乎是一个相当合理的度量，但有几个充分的理由不应该过于相信这个数字。例如，*N*[*c*] 和 *N*[*w*] 并没有告诉我们每个类别的相对频率。如果某个类别很稀有呢？让我们看看这会如何影响结果。
 - en: 'If the model is 95 percent accurate (ACC = 0.95), we might be happy. However,
     let’s say the frequency (read *prior probability*) of class 1 is only 5 percent,
     meaning that on average, if we draw 100 samples from the test set, about 5 of
@@ -104,45 +142,71 @@
     we stick with the overall accuracy, we might think we have a good model when,
     in fact, we have a terrible model that we could implement in two lines of Python
     as'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果模型的准确度是 95%（ACC = 0.95），我们可能会感到满意。然而，假设类 1 的频率（即 *先验概率*）只有 5%，意味着平均来说，如果我们从测试集中抽取
+    100 个样本，约有 5 个属于类 1，其余 95 个属于类 0。我们看到一个预测所有输入都是类 0 的模型将有 95% 的正确率。但考虑一下：我们的模型可能会将所有输入都预测为类
+    0。如果我们仅关注整体准确度，我们可能会认为我们有一个好的模型，实际上我们拥有的只是一个糟糕的模型，且用两行 Python 就可以实现：
 - en: 'def predict(x):'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def predict(x):'
 - en: return 0
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回 0
 - en: In this code, we say that the class is 0 regardless of the input feature vector,
     *x*. No one would be satisfied with such a model.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这段代码中，我们说无论输入特征向量 *x* 是什么，类别都是 0。没有人会对这样的模型感到满意。
 - en: The prior probabilities of the classes affect how we should think about the
     overall accuracy. However, if we know the following
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 各类别的先验概率会影响我们如何看待整体准确度。然而，如果我们知道以下内容：
 - en: '*N*[0], the number of class 0 instances in our test set'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: '*N*[0]，测试集中类 0 实例的数量'
 - en: '*N*[1], the number of class 1 instances in our test set'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: '*N*[1]，测试集中类 1 实例的数量'
 - en: '*C*[0], the number of class 0 instances our model found'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: '*C*[0]，我们的模型找到的类 0 实例的数量'
 - en: '*C*[1], the number of class 1 instances our model found'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: '*C*[1]，我们的模型找到的类 1 实例的数量'
 - en: 'we can easily compute the accuracy per class:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以很容易地计算每个类别的准确度：
 - en: '![image](Images/253equ01.jpg)'
+  id: totrans-29
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/253equ01.jpg)'
 - en: The final expression is just another way to compute the overall accuracy because
     it tallies all of the correct classifications divided by the number of samples
     tested.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 最终的表达式只是计算整体准确度的另一种方式，因为它将所有正确分类的数量除以测试的样本数量。
 - en: The per class accuracy is better than the overall accuracy because it accounts
     for any imbalance in the frequency of the respective classes in the test set.
     For our previous hypothetical test set with the frequency of class 1 at 5 percent,
@@ -151,8 +215,12 @@
     We’d get every class 0 sample correct and every class 1 sample wrong (we’d call
     them class 0 anyway). Per class accuracies will show up again when we consider
     evaluating multiclass models.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个类别的准确度比整体准确度更好，因为它考虑了测试集中各类别频率的不平衡。对于我们之前假设的测试集，其中类 1 的频率为 5%，如果分类器对所有输入都预测为类
+    0，我们会发现这一点，因为我们的每个类别的准确度将是 ACC[0] = 1.0 和 ACC[1] = 0.0。这是有道理的。我们会将每个类 0 的样本预测正确，而将每个类
+    1 的样本预测错误（我们无论如何会将其视为类 0）。每个类别的准确度将在我们考虑评估多类模型时再次出现。
 - en: 'A more subtle reason to not just use the overall accuracy is that being wrong
     might bring a much higher cost than being right. This introduces something outside
     just the test set: it introduces the meaning we assign to class 0 and class 1\.
@@ -167,18 +235,25 @@
     life and death. The same could be said of a self-driving car that thinks the child
     playing in the middle of the road is an empty soda can, or any number of other
     real-world examples.'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 不仅仅是因为错误的成本，这种做法更微妙的原因是，错误可能带来的成本远高于正确的结果。这引入了测试集之外的因素：它引入了我们对类别 0 和类别 1 所赋予的意义。例如，如果我们的模型用于乳腺癌检测，可能使用了我们在[第
+    5 章](ch05.xhtml#ch05)中创建的数据集，当实际样本并不是恶性病例时，报告为类别 1（恶性），这可能会导致等待检查结果的女性产生焦虑。然而，经过进一步检测后，结果证明她并没有患乳腺癌。但考虑另一种情况。如果一个良性的结果实际上是恶性的，可能意味着她不会接受治疗，或者治疗过晚，这可能是致命的。不同类别的相对成本并不相同，甚至可能意味着生死之间的差异。对于一辆自驾车来说，这种情况同样成立，如果它认为在路中间玩耍的孩子是一个空的汽水罐，或者其他许多现实世界中的例子。
 - en: We use models in the real world, so their outputs are connected to the real
     world, and sometimes the cost associated with an output is significant. Using
     just the overall accuracy of a model can be misleading because it does not take
     the cost of an error into account.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在现实世界中使用模型，因此它们的输出与现实世界相连接，有时输出的成本是相当大的。仅使用模型的总体准确率可能会产生误导，因为它没有考虑到错误的成本。
 - en: The 2 × 2 Confusion Matrix
+  id: totrans-34
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 2 × 2 混淆矩阵
 - en: 'The models we’ve worked with so far have all ultimately assigned each input
     a class label. For example, a neural network with a logistic output is interpreted
     as a probability of membership of class 1\. Using a typical threshold of 0.5 lets
@@ -186,37 +261,57 @@
     call it class 1\. For other model types, the decision rule is different (for example,
     voting in *k*-NN), but the effect is the same: we get a class assignment for the
     input.'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，我们处理的模型最终都会为每个输入分配一个类别标签。例如，一个具有逻辑输出的神经网络被解释为类别 1 的成员概率。使用常见的 0.5 阈值，我们可以为输入分配一个类别标签：如果输出小于
+    0.5，则将输入标记为类别 0；否则，标记为类别 1。对于其他模型类型，决策规则不同（例如，*k*-最近邻投票法），但效果相同：我们为输入分配一个类别。
 - en: If we run our entire test set through our model and apply the decision rule,
     we get the assigned class label along with the true class label for each sample.
     Again, thinking only of the binary classifier case, we have four possible outcomes
     for each input sample in regards to the assigned class and the true class (see
     [Table 11-1](ch11.xhtml#ch11tab1)).
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们将整个测试集输入到模型中，并应用决策规则，那么每个样本的分配类别标签和真实类别标签就会被给出。同样，假设我们只考虑二分类器的情况，对于每个输入样本，在分配类别和真实类别之间有四种可能的结果（见[表
+    11-1](ch11.xhtml#ch11tab1)）。
 - en: '**Table 11-1:** Possible Relationships Between the True Class Label and the
     Assigned Class Label for a Binary Classifier'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表 11-1：** 二分类器中真实类别标签与分配类别标签之间的可能关系'
 - en: '| **Assigned class** | **True class** | **Case** |'
+  id: totrans-38
   prefs: []
   type: TYPE_TB
+  zh: '| **分配的类别** | **真实类别** | **情况** |'
 - en: '| --- | --- | --- |'
+  id: totrans-39
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- |'
 - en: '| 0 | 0 | True negative (TN) |'
+  id: totrans-40
   prefs: []
   type: TYPE_TB
+  zh: '| 0 | 0 | 真阴性 (TN) |'
 - en: '| 0 | 1 | False negative (FN) |'
+  id: totrans-41
   prefs: []
   type: TYPE_TB
+  zh: '| 0 | 1 | 假阴性 (FN) |'
 - en: '| 1 | 0 | False positive (FP) |'
+  id: totrans-42
   prefs: []
   type: TYPE_TB
+  zh: '| 1 | 0 | 假阳性 (FP) |'
 - en: '| 1 | 1 | True positive (TP) |'
+  id: totrans-43
   prefs: []
   type: TYPE_TB
+  zh: '| 1 | 1 | 真阳性 (TP) |'
 - en: The *Case* label defines how we’ll talk about these situations. If the actual
     class of the input is class 0 and the model assigns class 0, we have a correctly
     identified negative case, so we have a *true negative*, or *TN*. If the actual
@@ -226,32 +321,49 @@
     a negative case, so we have a *false negative*, or *FN*. Finally, if the actual
     class is 0 and the model assigns class 1, we have a negative case wrongly called
     a positive case, so we have a *false positive*, or *FP*.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Case*标签定义了我们如何描述这些情况。如果输入的实际类别是类别0，并且模型分配了类别0，那么我们就有一个正确识别的负例，这就是*真正负例*，或*TN*。如果实际类别是类别1，并且模型分配了类别1，那么我们就有一个正确识别的正例，这就是*真正正例*，或*TP*。然而，如果实际类别是类别1，并且模型分配了类别0，那么我们就有一个正例被错误地称为负例，这就是*假负例*，或*FN*。最后，如果实际类别是类别0，并且模型分配了类别1，那么我们就有一个负例被错误地称为正例，这就是*假正例*，或*FP*。  '
 - en: We can place each of the inputs in our test set into one, and only one, of these
     cases. Doing this lets us tally the number of times each case appears in the test
     set, which we can present nicely as a table (see [Table 11-2](ch11.xhtml#ch11tab2)).
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: '我们可以将测试集中的每个输入放入其中的一个且仅一个情况中。这样做可以让我们统计每个情况在测试集中出现的次数，我们可以将其整齐地展示为一个表格（见[表
+    11-2](ch11.xhtml#ch11tab2)）。  '
 - en: '**Table 11-2:** Definition of the Class Labels in the 2 × 2 Table'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表 11-2：** 2 × 2 表中的类别标签定义  '
 - en: '|  | **Actual class 1** | **Actual class 0** |'
+  id: totrans-47
   prefs: []
   type: TYPE_TB
+  zh: '|  | **实际类别1** | **实际类别0** |  '
 - en: '| --- | --- | --- |'
+  id: totrans-48
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- |  '
 - en: '| *Model assigns class 1* | TP | FP |'
+  id: totrans-49
   prefs: []
   type: TYPE_TB
+  zh: '| *模型分配类别1* | TP | FP |  '
 - en: '| *Model assigns class 0* | FN | TN |'
+  id: totrans-50
   prefs: []
   type: TYPE_TB
+  zh: '| *模型分配类别0* | FN | TN |  '
 - en: I have placed the case labels (TP, FP, and so forth) in the location where the
     actual tally counts would go for each case.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: '我已经将案例标签（TP、FP等）放在了实际计数的位置，以便对应每个案例的计数。  '
 - en: This table is called a 2 × 2 *confusion matrix* (or 2 × 2 *contingency table*).
     It is 2 × 2 because there are two rows and two columns. It is a confusion matrix
     because it shows us at a glance how the classifier is performing and, especially,
@@ -260,69 +372,110 @@
     that are not along the main diagonal of the table (upper left to lower right).
     These are the FP and FN entries. A model that performs flawlessly on the test
     set will have FP = 0 and FN = 0; it will make no mistakes in assigning class labels.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: '这个表格叫做2 × 2 *混淆矩阵*（或2 × 2 *列联表*）。它是2 × 2的，因为有两行两列。它之所以叫做混淆矩阵，是因为它让我们一目了然地看到分类器的表现，尤其是分类器在哪些地方出现了混淆。当分类器将某一类实例误分为另一类时，它就产生了混淆。在2
+    × 2表格中，这种混淆表现为不在主对角线（从左上到右下）上的计数。这些就是FP和FN条目。一个在测试集上表现完美的模型将会有FP = 0 和 FN = 0；它在分配类别标签时不会犯任何错误。  '
 - en: In [Chapter 7](ch07.xhtml#ch07), we experimented with the breast cancer dataset
     built in [Chapter 5](ch05.xhtml#ch05). We reported the performance of classic
     models against this dataset by looking at their overall accuracy. This is what
     the sklearn score method returns. Let’s now instead look at some 2 × 2 tables
     generated from the test set for these models.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: '在[第7章](ch07.xhtml#ch07)中，我们对在[第5章](ch05.xhtml#ch05)构建的乳腺癌数据集进行了实验。我们通过查看模型的整体准确率，报告了经典模型在该数据集上的表现。这就是sklearn得分方法返回的内容。现在，让我们来看看从这些模型的测试集生成的一些2
+    × 2表格。  '
 - en: 'The code we are looking at is in the file *bc_experiments.py*. This code trains
     multiple classic model types. Instead of using the overall accuracy, however,
     let’s introduce a new function that computes the entries in the 2 × 2 table ([Listing
     11-1](ch11.xhtml#ch11lis1)):'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: '我们正在查看的代码在文件*bc_experiments.py*中。此代码训练了多种经典模型类型。然而，我们不再使用整体准确率，而是引入了一个新函数来计算2
+    × 2表中的条目（见[清单 11-1](ch11.xhtml#ch11lis1)）：  '
 - en: 'def tally_predictions(clf, x, y):'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def tally_predictions(clf, x, y):  '
 - en: p = clf.predict(x)
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: p = clf.predict(x)
 - en: score = clf.score(x,y)
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 'score = clf.score(x, y)  '
 - en: tp = tn = fp = fn = 0
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 'tp = tn = fp = fn = 0  '
 - en: 'for i in range(len(y)):'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for i in range(len(y)):  '
 - en: 'if (p[i] == 0) and (y[i] == 0):'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if (p[i] == 0) and (y[i] == 0):  '
 - en: tn += 1
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 'tn += 1  '
 - en: 'elif (p[i] == 0) and (y[i] == 1):'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 'elif (p[i] == 0) and (y[i] == 1):  '
 - en: fn += 1
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 'fn += 1  '
 - en: (*\pagebreak*)
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: '(*\pagebreak*)  '
 - en: 'elif (p[i] == 1) and (y[i] == 0):'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 'elif (p[i] == 1) and (y[i] == 0):  '
 - en: fp += 1
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 'fp += 1  '
 - en: 'else:'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 'else:  '
 - en: tp += 1
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 'tp += 1  '
 - en: return [tp, tn, fp, fn, score]
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 'return [tp, tn, fp, fn, score]  '
 - en: '*Listing 11-1: Generating tally counts*'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 11-1：生成计数统计*  '
 - en: This function accepts a trained sklearn model object (clf), the test samples
     (x), and the corresponding actual test labels (y). The first thing this function
     does is use the sklearn model to predict a class label for each of the test samples;
@@ -330,18 +483,29 @@
     each of the test samples and compares the predicted class label (p) to the actual
     known class label (y) to see if that sample is a true positive, true negative,
     false positive, or false negative. When done, all of these values are returned.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个函数接受一个训练好的 sklearn 模型对象（clf）、测试样本（x）和相应的实际测试标签（y）。该函数首先使用 sklearn 模型对每个测试样本预测一个类别标签；预测结果存储在
+    p 中。然后，它会计算总体得分，并遍历每个测试样本，将预测的类别标签（p）与实际的已知类别标签（y）进行比较，以查看该样本是正例（True Positive）、负例（True
+    Negative）、假正例（False Positive）还是假负例（False Negative）。完成后，所有这些值将被返回。
 - en: Applying tally_predictions to the output of *bc_experiments.py* gives us [Table
     11-3](ch11.xhtml#ch11tab3). Here, the sklearn model type is given.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 将 tally_predictions 应用到 *bc_experiments.py* 的输出上，得到了 [表 11-3](ch11.xhtml#ch11tab3)。这里给出了
+    sklearn 模型类型。
 - en: '**Table 11-3:** 2 × 2 Tables for the Breast Cancer Test Set'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表 11-3：** 乳腺癌测试集的 2 × 2 表格'
 - en: '![image](Images/table11-3.jpg)'
+  id: totrans-74
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/table11-3.jpg)'
 - en: 'In [Table 11-3](ch11.xhtml#ch11tab3), we see four 2 × 2 tables corresponding
     to the test set applied to the respective models: Nearest Centroid, 3-NN, Decision
     Tree, and linear SVM. From the tables alone, we see that the best-performing model
@@ -349,8 +513,11 @@
     that the model never called a true malignant case benign and only once called
     a benign case malignant. Given our discussion in the previous section, we see
     that this is an encouraging result.'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 [表 11-3](ch11.xhtml#ch11tab3) 中，我们可以看到四个 2 × 2 表格，分别对应于应用于各个模型的测试集：最近质心法（Nearest
+    Centroid）、3-NN、决策树（Decision Tree）和线性支持向量机（linear SVM）。仅从表格中，我们可以看到表现最好的模型是 3-NN，因为它只有一个假正例，没有假负例。这意味着该模型从未将真正的恶性病例误判为良性，且只将一个良性病例误判为恶性。根据我们在上一节的讨论，这个结果是令人鼓舞的。
 - en: Look now at the results for the Nearest Centroid and the Decision Tree. The
     overall accuracies for these models are 94.7 percent and 93.9 percent, respectively.
     From the accuracy alone, we might be tempted to say that the Nearest Centroid
@@ -361,12 +528,17 @@
     So, for this dataset, we want to minimize false negatives even if that means we
     need to tolerate a small increase in false positives. Therefore, we’ll select
     the Decision Tree over the Nearest Centroid model.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在来看一下最近质心法和决策树的结果。这两个模型的总体准确率分别为 94.7% 和 93.9%。仅从准确率来看，我们可能会倾向于认为最近质心法模型更好。然而，如果我们查看
+    2 × 2 表格，我们会发现，尽管决策树有更多的假正例（6 个），但它只有一个假负例，而最近质心法有两个假负例。再次强调，在这种情况下，假负例意味着漏诊癌症，可能会导致严重后果。因此，对于这个数据集，我们希望尽量减少假负例，即使这意味着我们需要容忍假正例稍微增多。因此，我们会选择决策树而不是最近质心法模型。
 - en: Metrics Derived from the 2 × 2 Confusion Matrix
+  id: totrans-77
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 从 2 × 2 混淆矩阵派生的度量
 - en: Looking at the raw 2 × 2 table is helpful, but even more helpful are the metrics
     derived from it. Let’s look at several of these in this section to see how they
     can help us interpret the information in the 2 × 2 table. Before we start, however,
@@ -375,35 +547,49 @@
     here is to introduce them via examples, and to describe what it is that they are
     measuring. As a machine learning practitioner, you’ll encounter virtually all
     of these from time to time, so it’s wise to at least be familiar with them.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看原始的 2 × 2 表格很有帮助，但更有帮助的是从中派生出的度量。在本节中，我们将查看几个度量，了解它们如何帮助我们解读 2 × 2 表格中的信息。不过，在我们开始之前，需要记住的是，我们将讨论的度量有时会引起一些争议。关于何时使用哪种度量，学术界仍然存在激烈的讨论。我们在这里的目的是通过示例介绍这些度量，并描述它们衡量的内容。作为机器学习从业者，你几乎会时不时地遇到这些度量，所以至少要对它们有所了解。
 - en: Deriving Metrics from the 2 × 2 Table
+  id: totrans-79
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 从 2 × 2 表格中派生的度量
 - en: 'The first metrics are derived directly from the values in the 2 × 2 table:
     TP, TN, FP, FN. Think of these as the bread-and-butter metrics. They’re easy to
     compute and easy to understand. Recall the general form of the 2 × 2 table from
     [Table 11-2](ch11.xhtml#ch11tab2). We’ll now define two other quantities:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个指标直接来源于 2 × 2 表中的值：TP、TN、FP、FN。可以把这些看作是基础指标。它们计算简单，理解容易。回忆一下 2 × 2 表的一般形式，见[表
+    11-2](ch11.xhtml#ch11tab2)。我们现在将定义另外两个量：
 - en: '![image](Images/257equ01.jpg)'
+  id: totrans-81
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/257equ01.jpg)'
 - en: 'The *true positive rate (TPR)* is the probability that an actual instance of
     class 1 will be correctly identified by the model. The TPR is frequently known
     by other names: *sensitivity*, *recall,* and *hit rate*. You will likely see it
     referred to as *sensitivity* in medical literature.'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: '*真正例率（TPR）*是指实际类 1 的实例被模型正确识别的概率。TPR 常常有其他名称：*敏感度*、*召回率*和*命中率*。你可能在医学文献中看到它被称为*敏感度*。'
 - en: The *true negative rate (TNR)* is the probability that an actual instance of
     class 0 will be correctly identified by the model. The TNR is also known as the
     *specificity,* again, particularly so in medical literature. Both of these quantities,
     as probabilities, have a value between 0 and 1; higher is better. A perfect classifier
     will have TPR = TNR = 1.0; this happens when it makes no mistakes so that FP =
     FN = 0, always.
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: '*真负例率（TNR）*是指实际类 0 的实例被模型正确识别的概率。TNR 也叫做*特异性*，特别是在医学文献中经常使用这个术语。这两个量作为概率，其值介于
+    0 和 1 之间，值越高越好。一个完美的分类器会有 TPR = TNR = 1.0；这发生在它不犯任何错误时，因此 FP = FN = 0，始终如此。'
 - en: The TPR and TNR need to be understood together to assess a model. For example,
     we previously mentioned that if class 1 is rare and the model always predicts
     class 0, it will have high accuracy. If we look at TPR and TNR in that case, we’ll
@@ -412,8 +598,12 @@
     of class 1 will be misidentified as false negatives; they get assigned to class
     0\. Therefore, the two metrics together immediately indicate that the model is
     not a good one.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: TPR 和 TNR 需要一起理解才能评估一个模型。例如，我们之前提到过，如果类 1 很少见，而模型总是预测类 0，那么它的准确率会很高。如果我们查看该情况下的
+    TPR 和 TNR，就会发现 TNR 为 1，因为模型从不将类 0 的实例预测为类 1（FP = 0）。然而，TPR 也是 0，原因恰恰相反，所有实际的类
+    1 实例都会被错误地识别为假阴性；它们被归类为类 0。因此，这两个指标一起立即表明该模型并不好。
 - en: What about the breast cancer case where a false negative might be fatal? How
     do we want the TPR and TNR to look in this case? Ideally, of course, we want them
     to both be as high as possible, but we might be willing to use the model anyway
@@ -424,73 +614,111 @@
     false positives (actual negative instances called malignant by the model), we
     see that the TNR might be well below 1.0 because the denominator of the TNR includes
     the FP counts.
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 那么，在乳腺癌的例子中，假阴性可能是致命的，我们希望在这种情况下 TPR 和 TNR 是怎样的呢？理想情况下，当然是希望它们都尽可能高，但如果 TPR
+    非常高而 TNR 较低，我们可能还是愿意使用该模型。在这种情况下，我们知道实际的乳腺癌几乎总是能被检测到。为什么？因为假阴性（FN）的数量几乎为 0，所以
+    TPR 的分母接近 TP，这意味着 TPR 大约为 1.0。另一方面，如果我们容忍假阳性（实际为负类的实例被模型判定为恶性），我们会发现 TNR 可能远低于
+    1.0，因为 TNR 的分母包含了假阳性计数。
 - en: 'The TPR and TNR tell us something about the likelihood that the model will
     pick up actual class 1 and class 0 instances. What it does not tell us, however,
     is how much faith we should put into the output of the model. For example, if
     the model says “class 1,” should we believe it? To make that assessment, we need
     two other metrics derived directly from the 2 × 2 table:'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: TPR 和 TNR 告诉我们模型识别实际类 1 和类 0 实例的可能性。然而，它们并没有告诉我们我们应该多大程度上相信模型的输出。例如，如果模型说“类
+    1”，我们应该相信吗？为了做出这样的评估，我们需要另外两个直接来源于 2 × 2 表的指标：
 - en: '![image](Images/258equ01.jpg)'
+  id: totrans-87
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/258equ01.jpg)'
 - en: The *positive predictive value (PPV)* is most often known as the *precision*.
     It’s the probability that when the model says the instance is of class 1, it is
     of class 1\. Similarly, the *negative predictive value (NPV)* is the probability
     that the model is correct when it claims an instance is of class 0\. Both of these
     values are also numbers between 0 and 1, where higher is better.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: '*正向预测值（PPV）*通常被称为*精准度（precision）*。它是指当模型预测某个实例为类1时，实际它属于类1的概率。同样，*负向预测值（NPV）*是模型预测某个实例为类0时，该预测是正确的概率。这两个值的范围都是0到1之间，值越大越好。'
 - en: The only difference between the TPR and the PPV is whether we consider false
     negatives or false positives in the denominator. By including the false positives,
     the instances the model says are of class 1 when they are really of class 0; we
     get the probability that the model output is correct.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: TPR和PPV之间唯一的区别是是否考虑假阴性（FN）或假阳性（FP）在分母中的影响。通过包括假阳性，即模型预测为类1但实际为类0的实例，我们可以得到模型输出正确的概率。
 - en: For the case of a model that always predicts class 0, the PPV is undefined because
     both the TP and FP are zero. All of the class 1 instances are pushed into the
     FN count, and the TN count includes all the actual class 0 instances. For the
     case where TPR is high, but TNR is not, we have a nonzero FP count so that the
     PPV goes down. Let’s make up an example to see why this is so and how we might
     understand it.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于一个始终预测为类0的模型，PPV是未定义的，因为TP和FP都是零。所有的类1实例都被计入假阴性（FN），而真阴性（TN）计数包括所有实际为类0的实例。对于TPR很高，但TNR不高的情况，我们有一个非零的FP计数，因此PPV会下降。让我们编造一个例子来看看为什么会这样，以及我们如何理解它。
 - en: Let’s say that our breast cancer model has produced the following 2 × 2 table
     ([Table 11-4](ch11.xhtml#ch11tab4)).
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们的乳腺癌模型生成了以下2 × 2表格（[表11-4](ch11.xhtml#ch11tab4)）。
 - en: '**Table 11-4:** A Hypothetical 2 × 2 Table for a Breast Cancer Dataset'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表11-4：** 乳腺癌数据集的假设2 × 2表格'
 - en: '|  | **Actual 1** | **Actual 0** |'
+  id: totrans-93
   prefs: []
   type: TYPE_TB
+  zh: '|  | **实际 1** | **实际 0** |'
 - en: '| --- | --- | --- |'
+  id: totrans-94
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- |'
 - en: '| *Model assigns 1* | 312 | 133 |'
+  id: totrans-95
   prefs: []
   type: TYPE_TB
+  zh: '| *模型预测为1* | 312 | 133 |'
 - en: '| *Model assigns 0* | 6 | 645 |'
+  id: totrans-96
   prefs: []
   type: TYPE_TB
+  zh: '| *模型预测为0* | 6 | 645 |'
 - en: In this example, the metrics we have covered so far are
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中，我们到目前为止覆盖的指标是
 - en: '*TPR* = 0.9811'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: '*TPR* = 0.9811'
 - en: '*TNR* = 0.8398'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: '*TNR* = 0.8398'
 - en: '*PPV* = 0.7011'
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: '*PPV* = 0.7011'
 - en: '*NPV* = 0.9908'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: '*NPV* = 0.9908'
 - en: This means a truly malignant case will be called malignant by the model 98 percent
     of the time, but a benign case will be called benign only 84 percent of the time.
     The PPV of 70 percent implies that when the model says “malignant,” there is only
@@ -505,138 +733,216 @@
     for the model. Some might call an NPV of only 99.1 percent too low given the potentially
     very high cost of missing a cancer detection. Thoughts like these likely also
     motivate the recommended frequency of screening.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着一个真正恶性的病例，模型有98%的概率将其预测为恶性，而一个良性病例只有84%的概率被预测为良性。70%的PPV意味着当模型说“恶性”时，实际上只有70%的机会该病例是真正的恶性；然而，由于高TPR，我们知道“恶性”输出中几乎包含了所有实际的乳腺癌病例。还要注意，这意味着NPV很高，所以当模型说“良性”时，我们非常有信心该实例不是乳腺癌。这就是为什么即使PPV低于100%，模型仍然有用。在临床环境中，当模型说“恶性”时，可能需要进一步检查，但一般情况下，如果它说“良性”，通常不需要进一步测试。当然，这些指标的可接受水平取决于模型的应用场景。有些人可能认为，考虑到错过癌症检测的潜在高昂成本，99.1%的NPV可能太低了。像这样的思考，可能也促使了推荐的筛查频率。
 - en: 'There are two additional basic metrics we can easily derive from the 2 × 2
     table:'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还可以从2 × 2表格中轻松得出两个额外的基本指标：
 - en: '![image](Images/259equ01.jpg)'
+  id: totrans-104
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/259equ01.jpg)'
 - en: These metrics tell us the likelihood that a sample will be a false positive
     if the actual class is class 0 or a false negative if the actual class is class
     1, respectively. The FPR will show up again later when we talk about using curves
     to assess models. Notice that FPR = 1 – TNR and FNR = 1 – TPR.
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些指标告诉我们，如果实际类别是类别0，则样本为假阳性的可能性，或者如果实际类别是类别1，则样本为假阴性的可能性。FPR将在稍后使用曲线评估模型时再次出现。注意，FPR
+    = 1 – TNR 和 FNR = 1 – TPR。
 - en: 'Calculating these basic metrics is straightforward, especially if we use the
     output of the tally_predictions function defined previously as the input ([Listing
     11-2](ch11.xhtml#ch11lis2)):'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算这些基本指标非常简单，尤其是如果我们使用之前定义的`tally_predictions`函数的输出作为输入（见[清单 11-2](ch11.xhtml#ch11lis2)）：
 - en: 'def basic_metrics(tally):'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def basic_metrics(tally):'
 - en: tp, tn, fp, fn, _ = tally
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: tp, tn, fp, fn, _ = tally
 - en: return {
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: return {
 - en: '"TPR": tp / (tp + fn),'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: '"TPR": tp / (tp + fn),'
 - en: '"TNR": tn / (tn + fp),'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: '"TNR": tn / (tn + fp),'
 - en: '"PPV": tp / (tp + fp),'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: '"PPV": tp / (tp + fp),'
 - en: '"NPV": tn / (tn + fn),'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: '"NPV": tn / (tn + fn),'
 - en: (*\pagebreak*)
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: (*\pagebreak*)
 - en: '"FPR": fp / (fp + tn),'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: '"FPR": fp / (fp + tn),'
 - en: '"FNR": fn / (fn + tp)'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: '"FNR": fn / (fn + tp)'
 - en: '}'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: '}'
 - en: '*Listing 11-2: Calculating basic metrics*'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 11-2：计算基本指标*'
 - en: We break up the list returned by tally_predictions, disregarding the accuracy,
     and then build and return a dictionary containing each of the six basic metrics
     we described. Of course, robust code would check for pathological cases where
     the denominators are zero, but we’ve ignored that code here to preserve clarity
     in the presentation.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将通过`tally_predictions`返回的列表进行分解，忽略准确度，然后构建并返回一个字典，包含我们描述的六个基本指标。当然，健壮的代码应该检查分母为零的病态情况，但为了保持展示的清晰性，我们在此忽略了这些代码。
 - en: Using Our Metrics to Interpret Models
+  id: totrans-120
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 使用我们的指标来解释模型
 - en: Let’s use tally_predictions and basic_metrics to interpret some models. We’ll
     work with the vector form of the MNIST data but keep only digits 3 and 5 so that
     we have a binary classifier. The code is similar to that found in *mnist_experiments.py*,
     which we used in [Chapter 7](ch07.xhtml#ch07).
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用`tally_predictions`和`basic_metrics`来解释一些模型。我们将使用MNIST数据的向量形式，但只保留数字3和5，以便我们有一个二分类器。代码与我们在[第7章](ch07.xhtml#ch07)中使用的
+    *mnist_experiments.py* 中的代码类似。
 - en: Keeping only digits 3 and 5 leaves us with 11,552 training samples (6,131 3s;
     5,421 5s) and 1,902 test samples of which 1,010 are 3s and 892 are 5s. The actual
     code is in *mnist_2x2_tables.py* with selected output in [Table 11-5](ch11.xhtml#ch11tab5).
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 只保留数字3和5后，我们有11,552个训练样本（6,131个3，5,421个5）和1,902个测试样本，其中1,010个是3，892个是5。实际代码位于*mnist_2x2_tables.py*
+    中，选定的输出见[表格 11-5](ch11.xhtml#ch11tab5)。
 - en: '**Table 11-5:** Selected Output from MNIST 3 vs. 5 Models and Corresponding
     Basic Metrics'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表格 11-5：** 来自 MNIST 3 与 5 模型的选定输出及对应的基本指标'
 - en: '| **Model** | **TP** | **TN** | **FP** | **FN** |'
+  id: totrans-124
   prefs: []
   type: TYPE_TB
+  zh: '| **模型** | **TP** | **TN** | **FP** | **FN** |'
 - en: '| --- | --- | --- | --- | --- |'
+  id: totrans-125
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- |'
 - en: '| *Nearest Centroid* | 760 | 909 | 101 | 132 |'
+  id: totrans-126
   prefs: []
   type: TYPE_TB
+  zh: '| *Nearest Centroid* | 760 | 909 | 101 | 132 |'
 - en: '| *3-NN* | 878 | 994 | 16 | 14 |'
+  id: totrans-127
   prefs: []
   type: TYPE_TB
+  zh: '| *3-NN* | 878 | 994 | 16 | 14 |'
 - en: '| *Naïve Bayes* | 612 | 976 | 34 | 280 |'
+  id: totrans-128
   prefs: []
   type: TYPE_TB
+  zh: '| *Naïve Bayes* | 612 | 976 | 34 | 280 |'
 - en: '| *RF 500* | 884 | 1,003 | 7 | 8 |'
+  id: totrans-129
   prefs: []
   type: TYPE_TB
+  zh: '| *RF 500* | 884 | 1,003 | 7 | 8 |'
 - en: '| *LinearSVM* | 853 | 986 | 24 | 39 |'
+  id: totrans-130
   prefs: []
   type: TYPE_TB
+  zh: '| *LinearSVM* | 853 | 986 | 24 | 39 |'
 - en: '| **Model** | **TPR** | **TNR** | **PPV** | **NPV** | **FPR** | **FNR** |'
+  id: totrans-131
   prefs: []
   type: TYPE_TB
+  zh: '| **模型** | **TPR** | **TNR** | **PPV** | **NPV** | **FPR** | **FNR** |'
 - en: '| --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-132
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- | --- | --- |'
 - en: '| *Nearest Centroid* | 0.8520 | 0.9000 | 0.8827 | 0.8732 | 0.1000 | 0.1480
     |'
+  id: totrans-133
   prefs: []
   type: TYPE_TB
+  zh: '| *Nearest Centroid* | 0.8520 | 0.9000 | 0.8827 | 0.8732 | 0.1000 | 0.1480
+    |'
 - en: '| *3-NN* | 0.9843 | 0.9842 | 0.9821 | 0.9861 | 0.0158 | 0.0157 |'
+  id: totrans-134
   prefs: []
   type: TYPE_TB
+  zh: '| *3-NN* | 0.9843 | 0.9842 | 0.9821 | 0.9861 | 0.0158 | 0.0157 |'
 - en: '| *Naïve Bayes* | 0.6851 | 0.9663 | 0.9474 | 0.7771 | 0.0337 | 0.3139 |'
+  id: totrans-135
   prefs: []
   type: TYPE_TB
+  zh: '| *Naïve Bayes* | 0.6851 | 0.9663 | 0.9474 | 0.7771 | 0.0337 | 0.3139 |'
 - en: '| *RF 500* | 0.9910 | 0.9931 | 0.9921 | 0.9921 | 0.0069 | 0.0090 |'
+  id: totrans-136
   prefs: []
   type: TYPE_TB
+  zh: '| *RF 500* | 0.9910 | 0.9931 | 0.9921 | 0.9921 | 0.0069 | 0.0090 |'
 - en: '| *LinearSVM* | 0.9563 | 0.9762 | 0.9726 | 0.9620 | 0.0238 | 0.0437 |'
+  id: totrans-137
   prefs: []
   type: TYPE_TB
+  zh: '| *LinearSVM* | 0.9563 | 0.9762 | 0.9726 | 0.9620 | 0.0238 | 0.0437 |'
 - en: In [Table 11-5](ch11.xhtml#ch11tab5), we see the raw counts at the top and the
     metrics defined in this section at the bottom. Lots of numbers! Let’s parse things
     a bit to see what’s going on. We’ll concentrate on the metrics at the bottom of
     the table. The first two columns show the true positive rate (sensitivity, recall)
     and the true negative rate (specificity). These values should be examined together.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[表格 11-5](ch11.xhtml#ch11tab5)中，我们可以看到顶部的原始计数和底部定义的指标。数字很多！我们稍微解析一下，看看到底发生了什么。我们将重点关注表格底部的指标。前两列显示了真正阳性率（敏感性，召回率）和真正阴性率（特异性）。这些值应该一起考察。
 - en: 'If we look at the Nearest Centroid results, we see TPR = 0.8520 and TNR = 0.9000\.
     Here class 1 is a five, and class 0 is a three. So, the Nearest Centroid classifier
     will call 85 percent of the fives it sees “five.” Similarly, it will call 90 percent
@@ -648,8 +954,13 @@
     FPR = FNR = 0.0\. The closer we get to perfection, the better. If attempting to
     pick the best model for this classifier, we would likely choose the Random Forest
     because it was the closest to perfection on the test set.'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们查看最近质心分类器的结果，我们看到 TPR = 0.8520 和 TNR = 0.9000。这里类 1 是五，类 0 是三。因此，最近质心分类器将
+    85% 的五正确地标为“五”。同样，它会将 90% 的三正确地标为“三”。虽然不算太差，但也不值得大惊小怪。看一下各列数据，我们可以看到两种模型在这些度量上表现得非常好：3-NN
+    和 500 棵树的随机森林。在这两种情况下，TPR 和 TNR 几乎相同，并且接近 1.0。这是模型表现良好的标志。绝对完美的情况是 TPR = TNR =
+    PPV = NPV = 1.0，且 FPR = FNR = 0.0。我们越接近完美，模型就越好。如果要为这个分类器选择最佳模型，我们可能会选择随机森林，因为它在测试集上最接近完美。
 - en: 'Let’s look briefly at the Naïve Bayes results. The TNR (specificity) is reasonably
     high, about 97 percent. However, the TPR (sensitivity) of 68.5 percent is pathetic.
     Roughly speaking, only two out of every three 5’s presented to this model will
@@ -661,68 +972,102 @@
     is happening in this case. The FP count is only 34 out of 1010 threes in the test
     set, but the FN count is high: 280 of the fives were labeled “three.” This is
     the source of the low NPV for this model.'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 简单看一下朴素贝叶斯的结果。TNR（特异性）相当高，大约为 97%。然而，68.5% 的 TPR（敏感性）就显得相当差劲。大致来说，模型只能正确分类每三个五个中的两个。如果我们检查接下来的两列，即正预测值（PPV）和负预测值（NPV），我们可以看到
+    PPV 为 94.7%，这意味着当模型确实预测输入为五时，我们可以有一定信心它是五。然而，负预测值却不那么理想，为 77.7%。查看[表 11-5](ch11.xhtml#ch11tab5)的顶部部分，可以看出这种情况的原因。测试集中
+    1010 个三的样本中，假阳性（FP）只有 34 个，但假阴性（FN）很高：有 280 个五被标记为“三”。这就是该模型负预测值较低的原因。
 - en: 'Here is a good rule of thumb for these metrics: a well-performing model has
     TPR, TNR, PPV, and NPV very close to 1.0, and FPR and FNR very close to 0.0.'
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里有一个关于这些度量的好经验法则：表现良好的模型应具有接近 1.0 的 TPR、TNR、PPV 和 NPV，FPR 和 FNR 应接近 0.0。
 - en: 'Look again at [Table 11-5](ch11.xhtml#ch11tab5), particularly the lower metrics
     for the Random Forest. As their names suggest, the FPR and FNR values are rates.
     We can use them to estimate how often FP and FN will occur when using the model.
     For example, if we present the model with *N* = 1,000 cases that are threes (class
     0), we can use the FPR to estimate how many of them the model will call fives
     (class 1):'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 再看一下[表 11-5](ch11.xhtml#ch11tab5)，特别是随机森林的较低度量值。正如其名称所示，FPR 和 FNR 值是比率。我们可以利用它们来估计在使用该模型时，假阳性（FP）和假阴性（FN）发生的频率。例如，如果我们给模型呈现
+    *N* = 1000 个实际为三（类别 0）的案例，我们可以使用 FPR 来估算模型将多少个三误判为五（类别 1）：
 - en: estimated number of FP = FPR × N = 0.0069(1000) ≈ 7
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 估算的假阳性数 = FPR × N = 0.0069(1000) ≈ 7
 - en: 'A similar calculation gives us the estimated number of FN for *N* = 1000: instances
     that are really 5’s:'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过类似的计算，我们可以得到 *N* = 1000 时的假阴性估算数：实际上是五的实例：
 - en: estimated number of FN = FNR × N = 0.0090(1000) = 9
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 估算的假阴性数 = FNR × N = 0.0090(1000) = 9
 - en: 'The same holds for the TPR and TNR, which also have “rate” in their names (*N*
     = 1000 each for actual threes and fives):'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样适用于 TPR 和 TNR，它们的名称中也包含“比率”一词（*N* = 1000，分别表示实际的三和五）：
 - en: estimated number of TP = TPR × N = 0.9910(1000) = 991
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 估算的真阳性数 = TPR × N = 0.9910(1000) = 991
 - en: estimated number of FN = FNR × N = 0.9931(1000) = 993
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 估算的假阴性数 = FNR × N = 0.9931(1000) = 993
 - en: These calculations show how well this model performs on the test data.
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些计算展示了该模型在测试数据上的表现。
 - en: More Advanced Metrics
+  id: totrans-150
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 更高级的度量
 - en: 'Let’s look in this section at what I’m arbitrarily calling *more advanced metrics*.
     I say they are more advanced because instead of using the 2 × 2 table entries
     directly, they are built from values calculated from the table itself. In particular,
     we’ll examine five advanced metrics: informedness, markedness, F1 score, Cohen’s
     kappa, and the Matthews correlation coefficient (MCC).'
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们在这一部分中看一下我随意称之为*更高级的度量*的内容。我之所以说它们更高级，是因为它们并不是直接使用2×2表格中的条目，而是基于从表格本身计算得出的值。特别地，我们将探讨五个高级度量：知情度、标记度、F1分数、Cohen's
+    kappa和Matthews相关系数（MCC）。
 - en: Informedness and Markedness
+  id: totrans-152
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 知情度和标记度
 - en: '*Informedness* and *markedness* go together. They are somewhat less well known
     than other metrics in this section, but they will hopefully be better known in
     the future. I said earlier that TPR (sensitivity) and TNR (specificity) should
     be interpreted together. The informedness (also called Youden’s *J* statistic)
     does just that:'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: '*知情度*和*标记度*是相互关联的。它们在这一部分中的其他度量可能没有那么知名，但希望它们在未来会被更多人了解。我之前提到过，TPR（敏感性）和TNR（特异性）应该一起解释。知情度（也称为Youden的*J*统计量）正是做到了这一点：'
 - en: Informedness = TPR + TNR − 1
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 知情度 = TPR + TNR − 1
 - en: Informedness is a number in [*–*1,+1] that combines both the TPR and TNR. The
     higher the informedness is, the better. An informedness of 0 implies random guessing,
     while an informedness of 1 implies perfection (on the test set). An informedness
@@ -731,52 +1076,73 @@
     versa. In that case, we could swap the label the model wants to assign to each
     input and get a quite good model. Only pathological models lead to negative informedness
     values.
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 知情度是一个在[*–*1,+1]区间的数字，结合了TPR和TNR。知情度越高越好。知情度为0意味着随机猜测，而知情度为1意味着完美（在测试集上）。知情度小于0可能意味着模型比随机猜测还要差。知情度为–1意味着所有真实正例都被错误地标记为负类，反之亦然。在这种情况下，我们可以交换模型想要分配给每个输入的标签，从而得到一个相当不错的模型。只有病态模型才会导致负的知情度值。
 - en: 'The markedness combines the positive and negative predictive values in the
     same way that informedness combines TPR and TNR:'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 标记度将正预测值和负预测值结合起来，就像知情度将TPR和TNR结合起来一样：
 - en: Markedness = PPV + NPV − 1
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 标记度 = PPV + NPV − 1
 - en: We see that it has the same range as informedness. The informedness says something
     about how well the model is doing at correctly labeling inputs from each class.
     The markedness says something about how well the model is doing at being correct
     when it does claim a particular label for a particular input, be it class 0 or
     class 1\. Random guessing will give a markedness near 0 and perfection a markedness
     near 1.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们看到它与知情度具有相同的范围。知情度说明模型在正确标记来自每个类别的输入时表现如何。标记度说明模型在做出特定标签的预测时，是否能正确预测这个标签，无论它是类别0还是类别1。随机猜测会使标记度接近0，完美的模型则会使标记度接近1。
 - en: 'I like that the informedness and markedness each capture essential aspects
     of the model’s performance in a single number. Some claim that these metrics are
     unbiased by the prior probabilities of the particular classes. This means if class
     1 is significantly less common than class 0, the informedness and markedness are
     not affected. For in-depth details, see “Evaluation: From Precision, Recall and
     F-measure to ROC, Informedness, Markedness, and Correlation” by David Martin Powers.'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 我喜欢知情度和标记度各自能够在一个数字中捕捉到模型性能的关键方面。有人声称，这些度量不受特定类别的先验概率的影响。这意味着如果类别1显著少于类别0，知情度和标记度也不会受到影响。欲了解详细信息，请参见David
+    Martin Powers的《评估：从精确度、召回率和F值到ROC、知情度、标记度和相关性》。
 - en: F1 Score
+  id: totrans-160
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: F1分数
 - en: 'The *F1 score*, rightly or wrongly, is widely used, and we should be familiar
     with it. The F1 score combines two basic metrics into one. Its definition is straightforward
     in terms of precision (PPV) and recall (TPR):'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: '*F1分数*，无论对与错，广泛使用，我们应该对它有所了解。F1分数将两个基本度量合并为一个。它的定义可以通过精确度（PPV）和召回率（TPR）来简单描述：'
 - en: '![image](Images/263equ01.jpg)'
+  id: totrans-162
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/263equ01.jpg)'
 - en: The F1 score is a number in [0,1], where higher is better. Where does this formula
     come from? It’s not obvious in this form, but the the F1 score is the harmonic
     mean of the precision and recall. A *harmonic mean* is the reciprocal of the arithmetic
     mean of the reciprocals. Like this,
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: F1分数是一个位于[0,1]之间的数值，值越高越好。这个公式从哪里来呢？它在这种形式下并不直观，但F1分数是精确度和召回率的调和均值。调和均值是倒数均值的倒数，计算方式如下：
 - en: '![image](Images/263equ02.jpg)'
+  id: totrans-164
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/263equ02.jpg)'
 - en: One criticism of the F1 score is that it does not take the true negatives into
     account as informedness does (via the TNR). If we look at the definition of PPV
     and TPR, we see that both of these quantities depend entirely on the TP, FP, and
@@ -788,162 +1154,255 @@
     when evaluating model performance, and indeed it should. However, if the relative
     costs of a false positive and a false negative are the same, the F1 score will
     have more meaning.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: F1 分数的一个批评是它没有像信息度（informedness）那样考虑真正的负样本（通过 TNR）。如果我们查看 PPV 和 TPR 的定义，我们会发现这两个量完全依赖于来自
+    2 × 2 表格的 TP、FP 和 FN 计数，而不是 TN 计数。此外，F1 分数对精确度和召回率赋予了相等的权重。精确度受假阳性影响，而召回率受假阴性影响。从之前的乳腺癌模型中，我们看到假阴性的人工成本远高于假阳性。有些人认为，在评估模型性能时，必须考虑这一点，确实应该考虑。然而，如果假阳性和假阴性的相对成本相同，那么
+    F1 分数将更具意义。
 - en: Cohen’s Kappa
+  id: totrans-166
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: Cohen’s Kappa
 - en: '*Cohen’s kappa* is another statistic commonly found in machine learning. It
     attempts to account for the possibility that the model might put the input into
     the correct class by accident. Mathematically, the metric is defined as'
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Cohen’s kappa* 是机器学习中常见的另一项统计量。它试图考虑模型可能会因偶然而将输入分配到正确类别的可能性。在数学上，该指标定义为：'
 - en: '![image](Images/263equ03.jpg)'
+  id: totrans-168
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/263equ03.jpg)'
 - en: where *p*[*o*] is the observed accuracy and *p*[*e*] is the accuracy expected
     by chance. For a 2 × 2 table, these values are defined to be
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 *p*[*o*] 是观察到的准确率，*p*[*e*] 是随机情况下的预期准确率。对于 2 × 2 表格，这些值被定义为：
 - en: '![image](Images/264equ01.jpg)'
+  id: totrans-170
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/264equ01.jpg)'
 - en: with N being the total number of samples in the test set.
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 N 是测试集中的样本总数。
 - en: Cohen’s kappa is generally between 0 and 1\. 0 means a complete disagreement
     between the assigned class labels and the given class labels. A negative value
     indicates worse than chance agreement. A value near 1 indicates strong agreement.
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: Cohen’s kappa 通常介于 0 和 1 之间。0 表示分配的类别标签和给定的类别标签之间完全不同。负值表示比随机一致性还差。接近 1 的值表示强一致性。
 - en: Matthews Correlation Coefficient
+  id: totrans-173
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: Matthews 相关系数
 - en: Our final metric is *Matthews correlation coefficient (MCC)*. It is the geometric
     mean of the informedness and markedness. In that sense, it is, like the F1 score,
     a combination of two metrics into one.
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的最终指标是 *Matthews 相关系数 (MCC)*。它是信息度和标记度的几何平均值。从这个意义上说，它就像 F1 分数一样，将两个指标合并成一个。
 - en: The MCC is defined as
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: MCC 定义为：
 - en: '![image](Images/264equ02.jpg)'
+  id: totrans-176
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/264equ02.jpg)'
 - en: 'which, mathematically, works out to the geometric mean of the informedness
     and markedness:'
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 在数学上，它的计算结果是信息度和标记度的几何平均值：
 - en: '![image](Images/264equ03.jpg)'
+  id: totrans-178
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/264equ03.jpg)'
 - en: The MCC is favored by many because it takes the full 2 × 2 table into account,
     including the relative frequency of the two classes (the class prior probabilities).
     This is something that the F1 score does not do because it ignores the true negatives.
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多人青睐 MCC，因为它考虑了完整的 2 × 2 表格，包括两个类别的相对频率（类别先验概率）。这是 F1 分数所没有做的，因为它忽略了真正的负样本。
 - en: The MCC is a number between 0 and 1, with higher being better. If considering
     only one value as a metric for evaluating a binary model, make it the MCC. Note,
     there are four sums in the denominator of the MCC. If one of these sums is 0,
     the entire denominator will be 0, which is a problem since we cannot divide by
     0\. Fortunately, in that case, the denominator can be replaced with 1 to give
     a still meaningful result. A well-performing model has MCC close to 1.0.
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: MCC 是一个介于 0 和 1 之间的数字，值越高越好。如果只考虑一个指标来评估二分类模型，那就选 MCC。请注意，MCC 的分母中有四个求和项。如果其中一个求和项为
+    0，整个分母将为 0，这就成了一个问题，因为我们无法除以 0。幸运的是，在这种情况下，分母可以替换为 1，从而得到一个仍然有意义的结果。表现良好的模型的 MCC
+    接近 1.0。
 - en: Implementing Our Metrics
+  id: totrans-181
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 实现我们的指标
 - en: 'Let’s write a function to construct these metrics from a given 2 × 2 table.
     The code is shown in [Listing 11-3](ch11.xhtml#ch11lis3):'
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们编写一个函数，从给定的 2 × 2 表格构建这些指标。代码见 [Listing 11-3](ch11.xhtml#ch11lis3)：
 - en: from math import sqrt
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: from math import sqrt
 - en: 'def advanced_metrics(tally, m):'
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def advanced_metrics(tally, m):'
 - en: tp, tn, fp, fn, _ = tally
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: tp, tn, fp, fn, _ = tally
 - en: n = tp+tn+fp+fn
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: n = tp+tn+fp+fn
 - en: po = (tp+tn)/n
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: po = (tp+tn)/n
 - en: pe = (tp+fn)*(tp+fp)/n**2 + (tn+fp)*(tn+fn)/n**2
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: pe = (tp+fn)*(tp+fp)/n**2 + (tn+fp)*(tn+fn)/n**2
 - en: return {
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: return {
 - en: '"F1": 2.0*m["PPV"]*m["TPR"] / (m["PPV"] + m["TPR"]),'
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: '"F1"：2.0 * m["PPV"] * m["TPR"] / (m["PPV"] + m["TPR"]),'
 - en: '"MCC": (tp*tn - fp*fn) / sqrt((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn)),'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: '"MCC"： (tp * tn - fp * fn) / sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn +
+    fn)),'
 - en: '"kappa": (po - pe) / (1.0 - pe),'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: '"kappa"： (po - pe) / (1.0 - pe),'
 - en: '"informedness": m["TPR"] + m["TNR"] - 1.0,'
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: '"知情性"：m["TPR"] + m["TNR"] - 1.0,'
 - en: '"markedness": m["PPV"] + m["NPV"] - 1.0'
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: '"标记性"：m["PPV"] + m["NPV"] - 1.0'
 - en: '}'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: '}'
 - en: '*Listing 11-3: Calculating advanced metrics*'
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 11-3：计算高级指标*'
 - en: For the sake of simplicity, we’re not checking if the MCC denominator is 0 as
     a full implementation would.
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了简化，我们不检查 MCC 分母是否为 0，完整实现中会进行此检查。
 - en: This code takes the tallies and basic metrics as arguments and returns a new
     dictionary with the more advanced metrics. Let’s see how our MNIST example from
     [Table 11-5](ch11.xhtml#ch11tab5) looks when we calculate the advanced metrics.
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码将计数和基本指标作为参数，并返回一个包含更高级指标的新字典。让我们看看当我们计算高级指标时，来自 [表 11-5](ch11.xhtml#ch11tab5)
+    的 MNIST 示例表现如何。
 - en: '[Table 11-6](ch11.xhtml#ch11tab6) shows the metrics of this section for the
     MNIST 3 versus 5 models. A few things are worth noticing. First, the F1 score
     is always higher than the MCC or Cohen’s kappa. In a way, the F1 score is overly
     optimistic. As previously noted, the F1 score does not take the true negatives
     into account, while both the MCC and Cohen’s kappa do.'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: '[表 11-6](ch11.xhtml#ch11tab6) 显示了此部分针对 MNIST 3 对 5 模型的指标。有几点值得注意。首先，F1 得分总是高于
+    MCC 或 Cohen 的 *κ*。在某种程度上，F1 得分过于乐观。如前所述，F1 得分没有考虑真正负例，而 MCC 和 Cohen 的 *κ* 都考虑了这一点。'
 - en: '**Table 11-6:** Selected Output from MNIST 3 vs. 5 Models and Corresponding
     Advanced Metrics'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表 11-6：** MNIST 3 对 5 模型的选定输出及其相应的高级指标'
 - en: '| **Model** | **F1** | **MCC** | **Cohen’s *κ*** | **Informedness** | **Markedness**
     |'
+  id: totrans-201
   prefs: []
   type: TYPE_TB
+  zh: '| **模型** | **F1** | **MCC** | **Cohen 的 *κ*** | **知情性** | **标记性** |'
 - en: '| --- | --- | --- | --- | --- | --- |'
+  id: totrans-202
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- | --- |'
 - en: '| *Nearest Centroid* | 0.8671 | 0.7540 | 0.7535 | 0.7520 | 0.7559 |'
+  id: totrans-203
   prefs: []
   type: TYPE_TB
+  zh: '| *最近质心* | 0.8671 | 0.7540 | 0.7535 | 0.7520 | 0.7559 |'
 - en: '| *3-NN* | 0.9832 | 0.9683 | 0.9683 | 0.9685 | 0.9682 |'
+  id: totrans-204
   prefs: []
   type: TYPE_TB
+  zh: '| *3-NN* | 0.9832 | 0.9683 | 0.9683 | 0.9685 | 0.9682 |'
 - en: '| *Naïve Bayes* | 0.7958 | 0.6875 | 0.6631 | 0.6524 | 0.7244 |'
+  id: totrans-205
   prefs: []
   type: TYPE_TB
+  zh: '| *朴素贝叶斯* | 0.7958 | 0.6875 | 0.6631 | 0.6524 | 0.7244 |'
 - en: '| *RF 500* | 0.9916 | 0.9842 | 0.9842 | 0.9841 | 0.9842 |'
+  id: totrans-206
   prefs: []
   type: TYPE_TB
+  zh: '| *RF 500* | 0.9916 | 0.9842 | 0.9842 | 0.9841 | 0.9842 |'
 - en: '| *LinearSVM* | 0.9644 | 0.9335 | 0.9334 | 0.9325 | 0.9346 |'
+  id: totrans-207
   prefs: []
   type: TYPE_TB
+  zh: '| *线性SVM* | 0.9644 | 0.9335 | 0.9334 | 0.9325 | 0.9346 |'
 - en: Another thing to note is that well-performing models, like 3-NN and the Random
     Forest, score highly in all of these metrics. When the model performs well, the
     difference between the F1 score and MCC is smaller than when the model is doing
@@ -952,8 +1411,12 @@
     values in [Table 11-5](ch11.xhtml#ch11tab5) and [Table 11-6](ch11.xhtml#ch11tab6),
     we see that the best-performing model is the Random Forest, based on the MCC of
     0.9842.
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 另外需要注意的是，表现良好的模型，如 3-NN 和随机森林，在所有这些指标中得分都很高。当模型表现良好时，F1 得分和 MCC 之间的差异小于模型表现不佳时的差异（例如，朴素贝叶斯）。还需要注意的是，MCC
+    总是在知情性和标记性之间，正如几何均值所表现的那样。最后，从 [表 11-5](ch11.xhtml#ch11tab5) 和 [表 11-6](ch11.xhtml#ch11tab6)
+    中的数值可以看出，基于 MCC 值 0.9842，表现最好的模型是随机森林。
 - en: In this section, and the two before it, we looked at quite a few metrics and
     saw how they could be calculated and interpreted. A well-performing model will
     score highly on all of these metrics. This is the hallmark of a good model. It’s
@@ -962,42 +1425,59 @@
     when we need to consider specific metric values and the cost associated with the
     mistakes the models are making (FP and FN). In those cases, we have to use our
     judgment and problem-specific factors to decide which model is ultimately selected.
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节以及前两节中，我们查看了许多指标，并了解了它们如何计算和解读。一个表现良好的模型会在所有这些指标上得分很高。这是一个好模型的标志。当我们评估的模型表现不如预期时，各指标之间的相对差异以及这些指标的意义才真正显现出来。这时我们需要考虑特定指标值以及模型错误（FP
+    和 FN）所带来的成本。在这种情况下，我们必须结合判断力和具体问题因素来决定最终选择哪个模型。
 - en: Now, let’s shift gears and take a look at a graphical way of evaluating model
     performance.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，让我们换个角度，看看评估模型性能的图形化方法。
 - en: The Receiver Operating Characteristics Curve
+  id: totrans-211
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 接收者操作特征曲线
 - en: 'They say that a picture is worth a thousand words. In this section, we’ll learn
     that a picture—more accurately, a curve—can be worth upward of a dozen numbers.
     That is, we’ll learn how to turn the output of a model into a curve that captures
     more of the performance than the metrics of the previous sections can. Specifically,
     we’ll learn about the widely used *receiver operating characteristics (ROC) curve*:
     what it is, how to plot it, and how to use sklearn to plot it for us.'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 他们说一张图片胜过千言万语。在这一节中，我们将学习到，事实上，一张图片——更准确地说，是一条曲线——可以比前几节中的度量指标捕捉到更多的模型性能。具体而言，我们将学习一种广泛使用的*接收者操作特征（ROC）曲线*：它是什么，如何绘制，以及如何使用
+    sklearn 来为我们绘制它。
 - en: Gathering Our Models
+  id: totrans-213
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 收集我们的模型
 - en: To make the curve, we need a model that outputs a probability of belonging to
     class 1\. In the previous sections, we used models that output a class label so
     that we could tally the TP, TN, FP, and FN counts. For our ROC curves, we still
     need these counts, but instead of the class label as model output, we need the
     probability of class 1 membership. We’ll apply different thresholds to these probabilities
     to decide what label to give the input.
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了绘制曲线，我们需要一个输出属于类别 1 的概率的模型。在前几节中，我们使用的是输出类别标签的模型，以便我们可以统计 TP、TN、FP 和 FN 的数量。对于我们的
+    ROC 曲线，我们仍然需要这些计数，但与模型输出类别标签不同，我们需要的是类别 1 的概率。我们将对这些概率应用不同的阈值，以决定给输入分配什么标签。
 - en: Fortunately for us, traditional neural networks (and the deep networks we will
     see in [Chapter 12](ch12.xhtml#ch12)) output the necessary probability. If we’re
     using sklearn, other classical models can also be made to output a probability
     estimate, but we’ll ignore that fact here to keep things simple.
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 幸运的是，传统神经网络（以及我们将在[第 12 章](ch12.xhtml#ch12)中看到的深度网络）输出所需的概率。如果我们使用 sklearn，其他经典模型也可以输出概率估计，但为了简化问题，我们在此忽略这一点。
 - en: 'Our test case is a series of neural networks trained to decide between even
     MNIST digits (class 0) and odd MNIST digits (class 1). Our inputs are the vector
     form of the digits that we’ve been using up to this point in the book. We can
@@ -1005,115 +1485,187 @@
     need to recode the labels so that digits 0, 2, 4, 6, and 8 are class 0, while
     digits 1, 3, 5, 7, and 9 are class 1\. That is easily accomplished with a few
     lines of code:'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的测试案例是通过神经网络训练来决定偶数 MNIST 数字（类别 0）和奇数 MNIST 数字（类别 1）之间的区分。我们的输入是我们在本书中一直使用的数字的向量形式。我们可以使用在[第
+    5 章](ch05.xhtml#ch05)中创建的训练和测试数据——我们只需要重新编码标签，将数字 0、2、4、6 和 8 定义为类别 0，而数字 1、3、5、7
+    和 9 定义为类别 1。只需几行代码即可轻松完成：
 - en: old = np.load("mnist_train_labels.npy")
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: old = np.load("mnist_train_labels.npy")
 - en: new = np.zeros(len(old), dtype="uint8")
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: new = np.zeros(len(old), dtype="uint8")
 - en: new[np.where((old % 2) == 0)] = 0
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: new[np.where((old % 2) == 0)] = 0
 - en: new[np.where((old % 2) == 1)] = 1
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: new[np.where((old % 2) == 1)] = 1
 - en: np.save("mnist_train_even_odd_labels.npy", new)
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: np.save("mnist_train_even_odd_labels.npy", new)
 - en: old = np.load("mnist_test_labels.npy")
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: old = np.load("mnist_test_labels.npy")
 - en: new = np.zeros(len(old), dtype="uint8")
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: new = np.zeros(len(old), dtype="uint8")
 - en: new[np.where((old % 2) == 0)] = 0
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: new[np.where((old % 2) == 0)] = 0
 - en: new[np.where((old % 2) == 1)] = 1
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: new[np.where((old % 2) == 1)] = 1
 - en: np.save("mnist_test_even_odd_labels.npy", new)
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: np.save("mnist_test_even_odd_labels.npy", new)
 - en: The directory paths point to the same place the other MNIST data is stored.
     We use the fact that the remainder when an even number is divided by 2 is always
     0 or 1 depending on whether the number is even or odd.
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 目录路径指向存储其他 MNIST 数据的相同位置。我们利用偶数除以 2 的余数总是 0 或 1，具体取决于数字是偶数还是奇数这一事实。
 - en: 'What models will we test? To emphasize the difference between the respective
     models, we’ll intentionally train models that we know are far from ideal. In particular,
     we’ll use the following code to generate the models and produce the probability
     estimates:'
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将测试哪些模型？为了强调各个模型之间的差异，我们将故意训练一些我们知道远非理想的模型。具体而言，我们将使用以下代码来生成模型并生成概率估计：
 - en: import numpy as np
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: import numpy as np
 - en: from sklearn.neural_network import MLPClassifier
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: from sklearn.neural_network import MLPClassifier
 - en: 'def run(x_train, y_train, x_test, y_test, clf):'
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def run(x_train, y_train, x_test, y_test, clf):'
 - en: clf.fit(x_train, y_train)
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: clf.fit(x_train, y_train)
 - en: return clf.predict_proba(x_test)
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: return clf.predict_proba(x_test)
 - en: 'def nn(layers):'
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def nn(layers):'
 - en: return MLPClassifier(solver="sgd", verbose=False, tol=1e-8,
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: return MLPClassifier(solver="sgd", verbose=False, tol=1e-8,
 - en: nesterovs_momentum=False, early_stopping=False, batch_size=64,
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: nesterovs_momentum=False, early_stopping=False, batch_size=64,
 - en: learning_rate_init=0.001, momentum=0.9, max_iter=200,
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: learning_rate_init=0.001, momentum=0.9, max_iter=200,
 - en: hidden_layer_sizes=layers, activation="relu")
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: hidden_layer_sizes=layers, activation="relu")
 - en: 'def main():'
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def main():'
 - en: x_train = np.load("mnist_train_vectors.npy").astype("float64")/256.0
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: x_train = np.load("mnist_train_vectors.npy").astype("float64")/256.0
 - en: y_train = np.load("mnist_train_even_odd_labels.npy")
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: y_train = np.load("mnist_train_even_odd_labels.npy")
 - en: x_test = np.load("mnist_test_vectors.npy").astype("float64")/256.0
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: x_test = np.load("mnist_test_vectors.npy").astype("float64")/256.0
 - en: y_test = np.load("mnist_test_even_odd_labels.npy")
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: y_test = np.load("mnist_test_even_odd_labels.npy")
 - en: x_train = x_train[:1000]
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: x_train = x_train[:1000]
 - en: y_train = y_train[:1000]
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: y_train = y_train[:1000]
 - en: layers = [(2,), (100,), (100,50), (500,250)]
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: layers = [(2,), (100,), (100,50), (500,250)]
 - en: mlayers = ["2", "100", "100x50", "500x250"]
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: mlayers = ["2", "100", "100x50", "500x250"]
 - en: 'for i,layer in enumerate(layers):'
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for i, layer in enumerate(layers):'
 - en: prob = run(x_train, y_train, x_test, y_test, nn(layer))
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: prob = run(x_train, y_train, x_test, y_test, nn(layer))
 - en: np.save("mnist_even_odd_probs_%s.npy" % mlayers[i], prob)
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: np.save("mnist_even_odd_probs_%s.npy" % mlayers[i], prob)
 - en: The code can be found in the file *mnist_even_odd.py*. The run and nn functions
     should be familiar. We used virtually identical versions in [Chapter 10](ch10.xhtml#ch10),
     where nn returns a configured MLPClassifier object and run trains the classifier
@@ -1123,66 +1675,104 @@
     first two are single hidden layer networks with 2 and 100 nodes, respectively.
     The last two are two hidden layer networks with 100 × 50 and 500 × 250 nodes per
     layer.
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码可以在文件 *mnist_even_odd.py* 中找到。run 和 nn 函数应该很熟悉。我们在[第 10 章](ch10.xhtml#ch10)中使用了几乎相同的版本，其中
+    nn 返回配置好的 MLPClassifier 对象，run 训练分类器并返回测试集上的预测概率。主函数加载训练集和测试集，将训练集限制为前 1000 个样本（大约
+    500 个偶数和 500 个奇数），然后循环遍历我们将训练的隐藏层大小。前两个是单隐藏层网络，分别有 2 和 100 个节点。最后两个是双隐藏层网络，每层有
+    100 × 50 和 500 × 250 个节点。
 - en: Plotting Our Metrics
+  id: totrans-252
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 绘制我们的指标
 - en: The output of clf.predict_proba is a matrix with as many rows as there are test
     samples (ten thousand in this case). The matrix has as many columns as there are
     classes; since we’re dealing with a binary classifier, there are two columns per
     sample. The first is the probability that the sample is even (class 0), and the
     second is the probability of the sample being odd (class 1). For example, the
     first 10 outputs for one of the models are shown in [Table 11-7](ch11.xhtml#ch11tab7).
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: clf.predict_proba 的输出是一个矩阵，行数与测试样本的数量相同（此例中为一万）。矩阵的列数与类别的数量相同；由于我们处理的是二分类器，每个样本有两列。第一列是样本为偶数（类别
+    0）的概率，第二列是样本为奇数（类别 1）的概率。例如，某个模型的前 10 个输出见[表 11-7](ch11.xhtml#ch11tab7)。
 - en: '**Table 11-7:** Example Model Output Showing the Assigned per Class Probabilities
     Along with the Actual Original Class Label'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表 11-7：** 示例模型输出，显示每个类别的概率分配及实际原始类别标签'
 - en: '| **Class 0** | **Class 1** | **Actual label** |'
+  id: totrans-255
   prefs: []
   type: TYPE_TB
+  zh: '| **类别 0** | **类别 1** | **实际标签** |'
 - en: '| --- | --- | --- |'
+  id: totrans-256
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- |'
 - en: '| 0.009678 | 0.990322 | 3 |'
+  id: totrans-257
   prefs: []
   type: TYPE_TB
+  zh: '| 0.009678 | 0.990322 | 3 |'
 - en: '| 0.000318 | 0.999682 | 3 |'
+  id: totrans-258
   prefs: []
   type: TYPE_TB
+  zh: '| 0.000318 | 0.999682 | 3 |'
 - en: '| 0.001531 | 0.998469 | 7 |'
+  id: totrans-259
   prefs: []
   type: TYPE_TB
+  zh: '| 0.001531 | 0.998469 | 7 |'
 - en: '| 0.007464 | 0.992536 | 3 |'
+  id: totrans-260
   prefs: []
   type: TYPE_TB
+  zh: '| 0.007464 | 0.992536 | 3 |'
 - en: '| 0.011103 | 0.988897 | 1 |'
+  id: totrans-261
   prefs: []
   type: TYPE_TB
+  zh: '| 0.011103 | 0.988897 | 1 |'
 - en: '| 0.186362 | 0.813638 | 7 |'
+  id: totrans-262
   prefs: []
   type: TYPE_TB
+  zh: '| 0.186362 | 0.813638 | 7 |'
 - en: '| 0.037229 | 0.962771 | 7 |'
+  id: totrans-263
   prefs: []
   type: TYPE_TB
+  zh: '| 0.037229 | 0.962771 | 7 |'
 - en: '| 0.999412 | 0.000588 | 2 |'
+  id: totrans-264
   prefs: []
   type: TYPE_TB
+  zh: '| 0.999412 | 0.000588 | 2 |'
 - en: '| 0.883890 | 0.116110 | 6 |'
+  id: totrans-265
   prefs: []
   type: TYPE_TB
+  zh: '| 0.883890 | 0.116110 | 6 |'
 - en: '| 0.999981 | 0.000019 | 6 |'
+  id: totrans-266
   prefs: []
   type: TYPE_TB
+  zh: '| 0.999981 | 0.000019 | 6 |'
 - en: The first column is the probability of being even, and the second is the probability
     of being odd. The third column is the actual class label for the sample showing
     that the predictions are spot on. The odd digits have high class 1 probabilities
     and low class 0 probabilities, while the opposite is true for the even samples.
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一列是偶数的概率，第二列是奇数的概率。第三列是样本的实际类别标签，显示预测结果完全正确。奇数数字的类别 1 概率较高，类别 0 概率较低，而偶数样本则正好相反。
 - en: When we build a 2 × 2 table from the performance of a model on a held-out test
     set, we get a collection of TP, TN, FP, and FN numbers from which we can calculate
     all the metrics of the previous sections. This includes the true positive rate
@@ -1192,8 +1782,12 @@
     was 0.5\. If the output is ≥ 0.5, we assign the sample to class 1; otherwise,
     we assign it to class 0\. Sometimes you’ll see this threshold added as a subscript
     like TPR[0.5] or FPR[0.5].
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 当我们从一个保留的测试集的模型表现构建一个 2 × 2 表时，我们会得到一组 TP、TN、FP 和 FN 数值，从中可以计算出前面章节中提到的所有指标。这包括真正率（TPR，灵敏度）和假正率（FPR，等于
+    1 - 特异度）。在表中隐含的是我们用来决定模型输出何时应视为类别 1 或类别 0 的阈值。在前面的章节中，这个阈值为 0.5。如果输出值 ≥ 0.5，我们将样本分配给类别
+    1；否则，我们将其分配给类别 0。有时你会看到这个阈值作为下标出现，例如 TPR[0.5] 或 FPR[0.5]。
 - en: Mathematically, we can consider the TPR and FPR calculated from a 2 × 2 table
     to be a point on the FPR (x-axis) versus TPR (y-axis) plane, specifically, the
     point (FPR, TPR). Since both FPR and TPR range from 0 to 1, the point (FPR, TPR)
@@ -1205,8 +1799,13 @@
     class 1, we’ll get a new 2 × 2 table and a new point, (FPR[0.3],TPR[0.3]), on
     the plane. As we systematically change the decision threshold from high to low,
     we generate a sequence of points that we can connect to form a curve.
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 从数学上讲，我们可以将从 2 × 2 表中计算出的 TPR 和 FPR 视为 FPR（x 轴）与 TPR（y 轴）平面上的一个点，具体来说，就是点（FPR，TPR）。由于
+    FPR 和 TPR 都在 0 到 1 之间变化，点（FPR，TPR）将位于边长为 1 的正方形内，该正方形的左下角位于点（0,0），右上角位于点（1,1）。每次我们改变决策阈值时，就会得到一个新的
+    2 × 2 表，进而得到 FPR 与 TPR 平面上的一个新点。例如，如果我们将决策阈值从 0.5 改为 0.3，使得每个输出的类别 1 概率为 0.3 或更高时被归为类别
+    1，我们将得到一个新的 2 × 2 表和一个新点（FPR[0.3]，TPR[0.3]）在平面上。当我们系统地将决策阈值从高到低变化时，我们生成一系列的点，可以将这些点连接起来形成一条曲线。
 - en: 'Curves generated by changing a parameter in this way are called *parametric
     curves*. The points are functions of the threshold. Let’s call the threshold value
     *θ* (theta) and vary it from near 1 to near 0\. Doing so lets us calculate a set
@@ -1214,22 +1813,34 @@
     versus TPR plane. As noted earlier, this curve has a name: the receiver operating
     characteristics (ROC) curve. Let’s look at an ROC curve and explore what such
     a curve can tell us.'
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过这种方式改变参数生成的曲线被称为 *参数曲线*。这些点是阈值的函数。我们将阈值值称为 *θ*（希腊字母 theta），并让其从接近 1 变化到接近
+    0\. 这样，我们可以计算出一组点（FPR[*θ*]，TPR[*θ*]），这些点绘制出来后，会在 FPR 与 TPR 平面上形成一条曲线。正如前面所提到的，这条曲线有一个名字：接收者操作特征（ROC）曲线。让我们来看一下
+    ROC 曲线，并探讨这样的曲线能告诉我们什么。
 - en: Exploring the ROC Curve
+  id: totrans-271
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 探索 ROC 曲线
 - en: '[Figure 11-1](ch11.xhtml#ch11fig1) shows the ROC curve for the MNIST even-versus-odd
     model with a single hidden layer of 100 nodes.'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 11-1](ch11.xhtml#ch11fig1) 显示了带有 100 个节点单隐层的 MNIST 奇偶模型的 ROC 曲线。'
 - en: '![image](Images/11fig01.jpg)'
+  id: totrans-273
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/11fig01.jpg)'
 - en: '*Figure 11-1: An ROC curve with key elements marked*'
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 11-1：标记了关键元素的 ROC 曲线*'
 - en: 'The labeled points represent the FPR and TPR for the given threshold values.
     The dashed line is the diagonal from (0,0) to (1,1). This dashed line represents
     a classifier that guesses its output randomly. The closer our curve is to this
@@ -1240,8 +1851,10 @@
     a curious thing happens: we can turn the entirely wrong model into a perfectly
     correct model by changing all class 1 output to class 0 and all class 0, output
     to class 1\. It’s unlikely that you will run across a model this bad.'
+  id: totrans-275
   prefs: []
   type: TYPE_NORMAL
+  zh: 标记点表示给定阈值下的假阳性率（FPR）和真正率（TPR）。虚线是从(0,0)到(1,1)的对角线。这条虚线表示一个随机猜测输出的分类器。我们的曲线越接近这条虚线，模型的性能就越差。如果你的曲线与虚线重合，那你不如抛个硬币随机分配标签。任何低于虚线的曲线都比随机猜测*差*。如果模型完全错误，即它将所有类1实例都标为类0，*反之亦然*，就会发生一件有趣的事：我们可以通过将所有类1的输出改为类0，所有类0的输出改为类1，将这个完全错误的模型转变为一个完美正确的模型。不过，遇到如此糟糕的模型的可能性不大。
 - en: The ROC curve in [Figure 11-1](ch11.xhtml#ch11fig1) has a single point labeled
     *perfection* in the upper-left corner of the graph. This is the ideal we are striving
     for. We want our ROC curve to move up and to the left toward this point. The closer
@@ -1249,8 +1862,10 @@
     test set. A perfect model will have an ROC curve that jumps up vertically to this
     point and then horizontally to the point (1,1). The ROC curve in [Figure 11-1](ch11.xhtml#ch11fig1)
     is going in the right direction and represents a reasonably well-performing model.
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图11-1](ch11.xhtml#ch11fig1)中的ROC曲线在图表的左上角标有一个点，标记为*完美*。这就是我们所追求的理想状态。我们希望ROC曲线朝着这个点上升并向左移动。曲线越接近这个点，模型在测试集上的表现就越好。一个完美的模型将会有一条ROC曲线，先垂直跃升到这个点，然后水平延伸到(1,1)点。[图11-1](ch11.xhtml#ch11fig1)中的ROC曲线朝着正确的方向移动，代表了一个表现相当不错的模型。'
 - en: 'Notice the labeled *θ* values. We can select a level of performance from the
     model by adjusting *θ*. In this case, the typical default value of 0.5 gives us
     the best performance because that threshold value returns a TPR and FPR with the
@@ -1266,18 +1881,24 @@
     to change the threshold to 0.1\. Think of the previous breast cancer example:
     we never want to call a positive case “negative,” so we tolerate more false positives
     to know we are not mislabeling any actual positives.'
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意标记的*θ*值。我们可以通过调整*θ*来选择模型的表现水平。在这种情况下，典型的默认值0.5能为我们提供最佳的性能，因为该阈值返回的TPR和FPR有最佳的平衡，是图表上最接近左上角的点。然而，我们可能有理由使用不同的*θ*值。如果我们将*θ*设置得很小，比如0.1，我们就会沿着曲线向右移动。这样会发生两件事。首先，TPR上升到约0.99，意味着我们正确地将大约99%的实际类1实例分配给类1。其次，FPR也会上升，达到约0.32，这意味着我们会同时将大约32%的真实负类（类0）错误地标为类1。如果我们的任务是可以容忍将一些负类实例判定为“正类”，而知道我们几乎不会把正类判定为负类，我们可能会选择将阈值改为0.1。以之前的乳腺癌例子为例：我们绝不希望将正类判定为负类，所以我们宁可容忍更多的假阳性，以确保不会错标任何实际的正类。
 - en: 'What does it mean to move the threshold (*θ*) to 0.9? In this case, we’ve moved
     along the curve to the left, to a point with a very low false-positive rate. We
     might do this if we want to know with a high degree of confidence that when the
     model says “class 1,” it is an instance of class 1\. This means we want a high
     positive predictive value (PPV, precision). Recall the definition of the PPV:'
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 将阈值(*θ*)调整为0.9意味着什么？在这种情况下，我们沿着曲线向左移动，来到了一个假阳性率非常低的点。如果我们希望在模型判断为“类1”时，能够以较高的信心确认它确实是类1的实例，我们可能会这么做。这意味着我们希望获得较高的正预测值（PPV，精度）。回想一下PPV的定义：
 - en: '![image](Images/270equ01.jpg)'
+  id: totrans-279
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/270equ01.jpg)'
 - en: The PPV is high if FP is low. Setting *θ* to 0.9 makes the FP low for any given
     test set. For the ROC curve of [Figure 11-1](ch11.xhtml#ch11fig1), moving to *θ*
     = 0.9 implies an FPR of about 0.02 and a TPR of about 0.71 for a PPV of about
@@ -1286,63 +1907,90 @@
     A high threshold can be used in a situation where we are interested in definitely
     locating an example of class 1 without caring that we might not detect all class
     1 instances.
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果FP较低，PPV较高。将*θ*设为0.9可以使任意给定测试集的FP较低。对于[图11-1](ch11.xhtml#ch11fig1)中的ROC曲线，移动到*θ*
+    = 0.9时，FPR约为0.02，TPR约为0.71，PPV约为0.97。在*θ* = 0.9时，当模型输出“类1”时，模型正确的概率为97%。相比之下，在*θ*
+    = 0.1时，PPV约为76%。高阈值可以用于我们关注于确定位于类1的样本，而不在意可能会漏掉某些类1样本的情况。
 - en: Changing the threshold *θ* moves us along the ROC curve. As we do so, we should
     expect the metrics of the previous section to also change as a function of *θ*.
     [Figure 11-2](ch11.xhtml#ch11fig2) shows us how the MCC and PPV change with *θ*.
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: 改变阈值*θ*会让我们沿着ROC曲线移动。这样做时，我们应该预期上一节中的指标也会随着*θ*的变化而变化。[图11-2](ch11.xhtml#ch11fig2)展示了MCC和PPV随着*θ*变化的情况。
 - en: '![image](Images/11fig02.jpg)'
+  id: totrans-282
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/11fig02.jpg)'
 - en: '*Figure 11-2: How MCC (circles) and PPV (squares) change as the decision threshold
     (*θ*) changes for the MNIST even/odd model of [Figure 11-1](ch11.xhtml#ch11fig1)*'
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图11-2：随着决策阈值（*θ*）变化，MNIST奇偶模型的MCC（圆圈）和PPV（方块）如何变化，[图11-1](ch11.xhtml#ch11fig1)中的模型*'
 - en: In the figure, we see that as the threshold goes up, so does the PPV. The model
     becomes more confident when it declares an input a member of class 1\. However,
     this is tempered by the change in MCC, which, as we previously saw, is an excellent
     single metric measure of overall model performance. In this case, the highest
     MCC is at *θ* = 0.5, with MCC falling off as the threshold increases or decreases.
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 在图中，我们看到随着阈值的增大，PPV也在增大。当模型判定一个输入属于类1时，它变得更加自信。然而，这一点被MCC的变化所制约，正如我们之前所看到的，MCC是衡量模型整体表现的优秀单一指标。在这种情况下，最高的MCC出现在*θ*
+    = 0.5时，随着阈值的增加或减少，MCC会下降。
 - en: Comparing Models with ROC Analysis
+  id: totrans-285
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 使用ROC分析比较模型
 - en: The ROC curve gives us a significant amount of information. It’s also handy
     for comparing models, even if those models are radically different from each other
     in architecture or approach. However, care must be taken when making the comparison
     so that the test sets used to generate the curves are ideally the same or very
     nearly the same.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: ROC曲线为我们提供了大量信息。它也非常适合用于比较模型，即使这些模型在架构或方法上有很大的不同。然而，在进行比较时必须小心，确保生成曲线的测试集理想情况下是相同的，或者非常接近。
 - en: Let’s use ROC analysis to compare the different MNIST even/odd digit models
     that we trained previously. We’ll see if this helps us to choose between them.
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们使用ROC分析来比较我们之前训练的不同MNIST奇偶数字模型。我们将看看这是否有助于我们在它们之间做出选择。
 - en: '[Figure 11-3](ch11.xhtml#ch11fig3) shows the ROC curves for these models with
     an inset expanding the upper-left corner of the graph to make it easier to distinguish
     one model from the other. The number of nodes in each hidden layer is indicated
     to identify the models.'
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图11-3](ch11.xhtml#ch11fig3)展示了这些模型的ROC曲线，图中有一个插图，放大了图表的左上角，便于区分不同的模型。每个隐藏层中的节点数量已标明，用于识别模型。'
 - en: '![image](Images/11fig03.jpg)'
+  id: totrans-289
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/11fig03.jpg)'
 - en: '*Figure 11-3: ROC curves for the MNIST even/odd models. The model hidden layer
     sizes are indicated.*'
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图11-3：MNIST奇偶模型的ROC曲线。模型的隐藏层大小已标明。*'
 - en: We immediately see that one ROC curve is significantly different from the other
     three. This is the ROC curve for the model with a single hidden layer with two
     nodes. All the other ROC curves are above this one. As a general rule, if one
     ROC curve is entirely above another, then the model that generated the curve can
     be considered superior. All of the larger MNIST even/odd models are superior to
     the model with only two nodes in its hidden layer.
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们立刻看到一条ROC曲线明显不同于其他三条。这是具有单一隐藏层和两个节点的模型的ROC曲线。所有其他ROC曲线都位于这条曲线之上。一般来说，如果一条ROC曲线完全位于另一条之上，那么生成该曲线的模型可以认为是更优的。所有较大的MNIST奇偶模型都优于只有两个节点的隐藏层模型。
 - en: The other three models are quite close to each other, so how do we choose one?
     The decision isn’t always clear-cut. Following our rule of thumb about ROC curves,
     we should select the two-layer model with 500 and 250 nodes, respectively, as
@@ -1353,14 +2001,19 @@
     processing speed considerations eclipse the small improvement in the overall performance
     of the larger model and select the smaller model. The ROC analysis showed us that
     doing so involves only a minor performance penalty.
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 另外三种模型彼此之间非常接近，那我们该如何选择呢？这个决策并不总是明确的。根据我们关于ROC曲线的经验法则，我们应该选择包含500和250节点的两层模型，因为它的ROC曲线优于其他模型。然而，根据具体应用场景，我们可能会犹豫。这个模型有超过50万个参数，运行它需要使用所有这些参数。而100
+    × 50模型包含略多于80,000个参数，只有大模型的不到五分之一。我们可能会决定，处理速度的考虑超过了大模型性能略微提升的需求，从而选择了较小的模型。ROC分析向我们表明，选择较小模型只会导致轻微的性能损失。
 - en: Another factor to consider when comparing ROC curves visually is the slope of
     the curve when the FPR is small. A perfect model has a vertical slope since it
     jumps immediately from the point (0,0) to (0,1). Therefore, the better model will
     have an ROC curve that has a steeper slope in the low FPR region.
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: 比较ROC曲线时需要考虑的另一个因素是当FPR较小时曲线的斜率。一个完美的模型具有垂直的斜率，因为它会立即从点(0,0)跳到(0,1)。因此，更好的模型会在低FPR区域拥有更陡的斜率。
 - en: A commonly used metric derived from the ROC curve is the area under it. This
     area is usually abbreviated as *AUC* or, in medical circles, *Az*. A perfect ROC
     curve has an AUC of 1.0 since the curve jumps from (0,0) to (0,1) and then over
@@ -1369,8 +2022,10 @@
     triangle formed by the dashed diagonal line. To calculate the area under an arbitrary
     ROC curve, one needs to perform numerical integration. Fortunately for us, sklearn
     knows how to do this, so we don’t need to. We’ll see this shortly.
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 从ROC曲线派生出的一个常用度量是其下方的面积。这个面积通常缩写为*AUC*，在医学领域也称为*Az*。完美的ROC曲线具有AUC为1.0，因为曲线从(0,0)跳到(0,1)，然后到(1,1)，形成一个边长为1的正方形，面积为1。一个随机猜测的模型（ROC图中的对角线）具有AUC为0.5，即由虚线对角线形成的三角形的面积。要计算任意ROC曲线下的面积，需要进行数值积分。幸运的是，sklearn知道如何做到这一点，因此我们不需要自己去做。稍后我们将看到这一点。
 - en: People often report the AUC, but as time goes by, I’m less and less in favor
     of it. The main reason is that AUC replaces the highly informative graph with
     a single number, but different ROC curves can lead to the same AUC. If the AUC
@@ -1379,8 +2034,10 @@
     roughly equivalent in terms of performance, when, in reality, the model with the
     steeper slope is likely the one we want because it will reach a reasonable TPR
     without too many false positives.
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 人们常常报告AUC（曲线下面积），但随着时间的推移，我对它的支持越来越少。主要原因是AUC将高度信息化的图表替换成了一个单一的数字，但不同的ROC曲线可能会产生相同的AUC。如果两条曲线的AUC相同，但一条曲线偏向右侧而另一条在低FPR（假阳性率）区域有较陡的斜率，我们可能会认为这两个模型在性能上大致相当，然而实际上，具有较陡斜率的模型更可能是我们想要的，因为它能在没有过多假阳性的情况下达到合理的TPR（真正率）。
 - en: Another caution when using the AUC is that the AUC changes only a small amount
     for even fairly significant changes in other parameters. This makes it difficult
     for humans to judge well based on AUC values that are only slightly different
@@ -1389,77 +2046,102 @@
     Both are well above 0.9 out of a possible 1.0, so, are they both about the same?
     We know that they are not, since the ROC curves clearly show the two-node model
     to be well below the other.
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用AUC时的另一个注意事项是，AUC在其他参数发生相当显著变化时变化很小。这使得基于AUC值的轻微差异做出准确判断变得非常困难。例如，MNIST偶数/奇数模型的AUC值为0.9373，而隐藏层有100个节点的模型AUC为0.9722。两者都远高于0.9（满分为1.0），那么，它们是否差不多呢？我们知道它们不一样，因为ROC曲线清楚地显示，具有两个节点的模型明显低于另一个。
 - en: Generating an ROC Curve
+  id: totrans-297
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 生成ROC曲线
 - en: 'We are now ready to learn how to create an ROC curve. The easy way to get the
     ROC curve, and AUC, is to use sklearn:'
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
 - en: import os
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
 - en: import sys
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
 - en: import numpy as np
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
 - en: import matplotlib.pylab as plt
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
 - en: from sklearn.metrics import roc_auc_score, roc_curve
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
 - en: 'def main():'
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
 - en: labels = np.load(sys.argv[1])
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
 - en: probs = np.load(sys.argv[2])
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
 - en: pname = sys.argv[3]
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
 - en: auc = roc_auc_score(labels, probs[:,1])
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
 - en: roc = roc_curve(labels, probs[:,1])
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
 - en: print("AUC = %0.6f" % auc)
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
 - en: plt.plot(roc[0], roc[1], color='r')
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
 - en: plt.plot([0,1],[0,1], color='k', linestyle=':')
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
 - en: plt.xlabel("FPR")
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
 - en: plt.ylabel("TPR")
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: plt.tight_layout(pad=0, w_pad=0, h_pad=0)
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
 - en: plt.savefig(pname, dpi=300)
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
 - en: plt.show()
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
 - en: This routine reads a set of labels and the associated per class probabilities,
     such as the output generated by the code in the previous section. It then calls
     the sklearn functions roc_auc_score and roc_curve to return the AUC and the ROC
     points, respectively. The ROC curve is plotted, saved to disk, and displayed.
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
 - en: 'We need not use sklearn as a black box. We can generate the ROC curve points
@@ -1468,134 +2150,176 @@
     values of interest and calculate TP, TN, FP, and FN for each threshold. From these,
     we can directly calculate the FPR and TPR, which gives us the set of points we
     need to plot. The code to do this is straightforward:'
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
 - en: 'def table(labels, probs, t):'
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
 - en: tp = tn = fp = fn = 0
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i,l in enumerate(labels):'
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
 - en: c = 1 if (probs[i,1] >= t) else 0
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (l == 0) and (c == 0):'
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
 - en: tn += 1
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (l == 0) and (c == 1):'
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
 - en: fp += 1
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (l == 1) and (c == 0):'
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
 - en: fn += 1
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (l == 1) and (c == 1):'
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
 - en: tp += 1
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
 - en: return [tp, tn, fp, fn]
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
 - en: 'def main():'
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
 - en: labels = np.load(sys.argv[1])
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
 - en: probs = np.load(sys.argv[2])
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
 - en: pname = sys.argv[3]
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
 - en: th = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
 - en: roc = []
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
 - en: 'for t in th:'
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
 - en: tp, tn, fp, fn = table(labels, probs, t)
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
 - en: tpr = tp / (tp + fn)
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
 - en: fpr = fp / (tn + fp)
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
 - en: roc.append([fpr, tpr])
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
 - en: roc = np.array(roc)
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
 - en: xy = np.zeros((roc.shape[0]+2, roc.shape[1]))
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
 - en: xy[1:-1,:] = roc
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
 - en: xy[0,:] = [0,0]
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
 - en: xy[-1,:] = [1,1]
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
 - en: plt.plot(xy[:,0], xy[:,1], color='r', marker='o')
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
 - en: plt.plot([0,1],[0,1], color='k', linestyle=':')
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
 - en: plt.xlabel("FPR")
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
 - en: plt.ylabel("TPR")
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
 - en: plt.savefig(pname)
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
 - en: plt.show()
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
 - en: The main function loads the labels and probabilities. The loop over th applies
     the different threshold values, accumulating the ROC points in roc by calling
     the table function, which calculates the TP, TN, FP, and FN for the current threshold.
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
 - en: The table function loops over all the per class probabilities assigning a class
     label of 1 if the class 1 probability is greater than or equal to the current
     threshold value. This class assignment is then compared to the actual class label,
     and the appropriate tally counter is incremented.
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
 - en: Once the ROC points are calculated, the plot is made by adding the point (0,0)
     to the beginning of the point list and the point (1,1) to the end of the list.
     Doing this ensures that the plot extends the full range of FPR values. The points
     are plotted and saved to disk.
+  id: totrans-357
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦计算出 ROC 点，就通过在点列表的开头添加 (0,0) 和在列表末尾添加 (1,1) 来绘制图形。这样做可以确保绘图扩展到 FPR 值的完整范围。然后将这些点绘制并保存到磁盘上。
 - en: The Precision–Recall Curve
+  id: totrans-358
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 精确度-召回率曲线
 - en: Before leaving this section, we should mention one other evaluation curve that
     you will run across from time to time in machine learning. This is the *precision-recall
     (PR) curve*. As the name suggests, it plots the PPV (precision) and TPR (recall,
@@ -1603,8 +2327,12 @@
     PR curve moves toward the upper right instead of the upper left as a good ROC
     curve does. The points of this curve are easily generated in sklearn using the
     precision_recall_curve function in the metrics module.
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
+  zh: 在离开这一部分之前，我们应该提到另一种在机器学习中时常遇到的评估曲线。这就是 *精确度-召回率 (PR) 曲线*。顾名思义，它绘制了 PPV（精确度）和
+    TPR（召回率，敏感度）随着决策阈值变化的关系，就像 ROC 曲线一样。一个好的 PR 曲线应该朝向右上角移动，而不是像一个好的 ROC 曲线那样朝向左上角。这个曲线的点可以通过
+    sklearn 中的 metrics 模块的 precision_recall_curve 函数轻松生成。
 - en: We’re not spending time with this curve because it does not take the true negatives
     into account. Consider the definition of the PPV and TPR to see that this is so.
     My bias against the PR curve stems from the same concern as my bias against the
@@ -1613,19 +2341,27 @@
     have utility when the true positive class is rare or when the true negative performance
     is not essential. However, in general, for evaluating classifier performance,
     I claim it is best to stick to the ROC curve and the metrics we have defined.
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们没有花时间讨论这条曲线，因为它没有考虑到真正的负例。请参考 PPV 和 TPR 的定义来验证这一点。 我对 PR 曲线的偏见来源于与我对 F1 分数的偏见相同的担忧。由于没有考虑到真正的负例，PR
+    曲线和 F1 分数未能提供分类器质量的完整图像。当真正的正类稀有或真正的负类性能不重要时，PR 曲线确实有其用途。然而，通常来说，在评估分类器性能时，我认为最好坚持使用
+    ROC 曲线和我们已定义的度量标准。
 - en: Handling Multiple Classes
+  id: totrans-361
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 处理多类
 - en: 'All of the metrics we’ve discussed so far apply to binary classifiers only.
     Of course, we know that many classifiers are multiclass: they output multiple
     labels, not just 0 or 1\. To evaluate these models, we’ll extend our idea of the
     confusion matrix to the multiclass case and see that we can also extend some of
     the metrics we’re already familiar with as well.'
+  id: totrans-362
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，我们讨论的所有度量标准仅适用于二元分类器。当然，我们知道许多分类器是多类的：它们输出多个标签，而不仅仅是 0 或 1。为了评估这些模型，我们将把混淆矩阵的概念扩展到多类情况，并且会看到我们已经熟悉的一些度量标准也可以扩展到多类情况。
 - en: 'We need some multiclass model results to work with. Thankfully, the MNIST data
     is already multiclass. Recall, we went to the trouble of recoding the labels to
     make the dataset binary. Here we’ll train models with the same architectures,
@@ -1634,43 +2370,58 @@
     predict method of the MLPClassifier class. We won’t show the code as it’s identical
     to the code in the previous section except that predict is called in place of
     predict_proba.'
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要一些多类模型的结果。幸运的是，MNIST 数据本身就是多类的。回想一下，我们曾经为了将数据集转换为二元数据而麻烦地重新编码了标签。在这里，我们将使用相同的架构训练模型，但这次我们保留原始标签，使得模型输出十个标签之一：它为测试输入分配的数字标签，作为
+    MLPClassifier 类的 predict 方法的输出。我们不会展示代码，因为它与前一节中的代码完全相同，只不过是调用了 predict 而不是 predict_proba。
 - en: Extending the Confusion Matrix
+  id: totrans-364
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 扩展混淆矩阵
 - en: The basis for our binary metrics was the 2 × 2 confusion matrix. The confusion
     matrix is readily extended to the multiclass case. To do that, we let the rows
     of the matrix represent the actual class labels, while the columns of the matrix
     represent the model’s predictions. The matrix is square with as many rows and
     columns as there are classes in the dataset. For MNIST, then, we arrive at a 10
     × 10 confusion matrix since there are 10 digits.
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的二元度量标准基于 2 × 2 混淆矩阵。混淆矩阵可以很容易地扩展到多类情况。为此，我们让矩阵的行表示实际的类别标签，列表示模型的预测。矩阵是方形的，行数和列数与数据集中类别的数量相等。因此，对于
+    MNIST 数据集，我们得到一个 10 × 10 的混淆矩阵，因为有 10 个数字。
 - en: 'We calculate the confusion matrix from the actual known test labels and the
     predicted labels from the model. There is a function in the metrics module of
     sklearn, confusion_matrix, which we can use, but it’s straightforward enough to
     calculate it ourselves:'
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
 - en: 'def confusion_matrix(y_test, y_predict, n=10):'
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
 - en: cmat = np.zeros((n,n), dtype="uint32")
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i,y in enumerate(y_test):'
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
 - en: cmat[y, y_predict[i]] += 1
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
 - en: return cmat
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
 - en: Here n is the number of classes, fixed at 10 for MNIST. If needed, we could
     instead determine it from the supplied test labels.
+  id: totrans-372
   prefs: []
   type: TYPE_NORMAL
 - en: The code is straightforward. The inputs are vectors of the actual labels (y_test)
@@ -1678,51 +2429,66 @@
     in by incrementing each possible index formed from the actual label and the predicted
     label. For example, if the actual label is 3 and the predicted label is 8, then
     we add one to cmat[3,8].
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s look at the confusion matrix for a model with one hidden layer of 100
     nodes ([Table 11-8](ch11.xhtml#ch11tab8)).
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 11-8:** Confusion Matrix for the Model with a Single Hidden Layer of
     100 Nodes'
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
 - en: '|  | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** | **8**
     | **9** |'
+  id: totrans-376
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-377
   prefs: []
   type: TYPE_TB
 - en: '| **0** | 943 | 0 | 6 | 9 | 0 | 10 | 7 | 1 | 4 | 0 |'
+  id: totrans-378
   prefs: []
   type: TYPE_TB
 - en: '| **1** | 0 | 1102 | 14 | 5 | 1 | 1 | 3 | 1 | 8 | 0 |'
+  id: totrans-379
   prefs: []
   type: TYPE_TB
 - en: '| **2** | 16 | 15 | 862 | 36 | 18 | 1 | 17 | 24 | 41 | 2 |'
+  id: totrans-380
   prefs: []
   type: TYPE_TB
 - en: '| **3** | 3 | 1 | 10 | 937 | 0 | 20 | 3 | 13 | 17 | 6 |'
+  id: totrans-381
   prefs: []
   type: TYPE_TB
 - en: '| **4** | 2 | 8 | 4 | 2 | 879 | 0 | 14 | 1 | 6 | 66 |'
+  id: totrans-382
   prefs: []
   type: TYPE_TB
 - en: '| **5** | 19 | 3 | 3 | 53 | 13 | 719 | 17 | 3 | 44 | 18 |'
+  id: totrans-383
   prefs: []
   type: TYPE_TB
 - en: '| **6** | 14 | 3 | 4 | 2 | 21 | 15 | 894 | 1 | 4 | 0 |'
+  id: totrans-384
   prefs: []
   type: TYPE_TB
 - en: '| **7** | 3 | 21 | 32 | 7 | 10 | 1 | 0 | 902 | 1 | 51 |'
+  id: totrans-385
   prefs: []
   type: TYPE_TB
 - en: '| **8** | 17 | 14 | 11 | 72 | 11 | 46 | 21 | 9 | 749 | 24 |'
+  id: totrans-386
   prefs: []
   type: TYPE_TB
 - en: '| **9** | 10 | 11 | 1 | 13 | 42 | 5 | 2 | 31 | 10 | 884 |'
+  id: totrans-387
   prefs: []
   type: TYPE_TB
 - en: The rows represent the actual test sample label, [0,9]. The columns are the
@@ -1731,6 +2497,7 @@
     of the confusion matrix. Therefore, a perfect model will have entries along the
     main diagonal, and all other elements will be 0\. [Table 11-8](ch11.xhtml#ch11tab8)
     is not perfect, but the largest counts are along the main diagonal.
+  id: totrans-388
   prefs: []
   type: TYPE_NORMAL
 - en: Look at row 4 and column 4\. The place where the row and column meet has the
@@ -1739,12 +2506,14 @@
     other numbers that are not zero. Each of these represents a case where an actual
     4 was called another digit by the model. For example, there were 66 times when
     a 4 was called a “9” but only one case of a 4 being labeled a “7”.
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
 - en: Column 4 represents the cases when the model called the input a “4”. As we saw,
     it was correct 879 times. However, there were other digits that the model accidentally
     labeled as “4”, like the 21 times a 6 was called a “4” or the one time a 1 was
     mistaken for a “4”. There were no cases of a 3 being labeled a “4”.
+  id: totrans-390
   prefs: []
   type: TYPE_NORMAL
 - en: 'The confusion matrix tells us at a glance how well the model is doing on the
@@ -1757,53 +2526,69 @@
     fractions. We can then multiply the entries by 100 to convert to percents. This
     transforms the confusion matrix into what we’ll call an *accuracy matrix*. The
     conversion is straightforward:'
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
 - en: acc = 100.0*(cmat / cmat.sum(axis=1))
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
 - en: Here cmat is the confusion matrix. This produces an accuracy matrix, [Table
     11-9](ch11.xhtml#ch11tab9).
+  id: totrans-393
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 11-9:** A Confusion Matrix Presented as per Class Accuracies'
+  id: totrans-394
   prefs: []
   type: TYPE_NORMAL
 - en: '|  | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** | **8**
     | **9** |'
+  id: totrans-395
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-396
   prefs: []
   type: TYPE_TB
 - en: '| **0** | **96.2** | 0. | 0.6 | 0.9 | 0. | 1.1 | 0.7 | 0.1 | 0.4 | 0. |'
+  id: totrans-397
   prefs: []
   type: TYPE_TB
 - en: '| **1** | 0. | **97.1** | 1.4 | 0.5 | 0.1 | 0.1 | 0.3 | 0.1 | 0.8 | 0. |'
+  id: totrans-398
   prefs: []
   type: TYPE_TB
 - en: '| **2** | 1.6 | 1.3 | **83.5** | 3.6 | 1.8 | 0.1 | 1.8 | 2.3 | 4.2 | 0.2 |'
+  id: totrans-399
   prefs: []
   type: TYPE_TB
 - en: '| **3** | 0.3 | 0.1 | 1. | **92.8** | 0. | 2.2 | 0.3 | 1.3 | 1.7 | 0.6 |'
+  id: totrans-400
   prefs: []
   type: TYPE_TB
 - en: '| **4** | 0.2 | 0.7 | 0.4 | 0.2 | **89.5** | 0. | 1.5 | 0.1 | 0.6 | 6.5 |'
+  id: totrans-401
   prefs: []
   type: TYPE_TB
 - en: '| **5** | 1.9 | 0.3 | 0.3 | 5.2 | 1.3 | **80.6** | 1.8 | 0.3 | 4.5 | 1.8 |'
+  id: totrans-402
   prefs: []
   type: TYPE_TB
 - en: '| **6** | 1.4 | 0.3 | 0.4 | 0.2 | 2.1 | 1.7 | **93.3** | 0.1 | 0.4 | 0. |'
+  id: totrans-403
   prefs: []
   type: TYPE_TB
 - en: '| **7** | 0.3 | 1.9 | 3.1 | 0.7 | 1. | 0.1 | 0. | **87.7** | 0.1 | 5.1 |'
+  id: totrans-404
   prefs: []
   type: TYPE_TB
 - en: '| **8** | 1.7 | 1.2 | 1.1 | 7.1 | 1.1 | 5.2 | 2.2 | 0.9 | **76.9** | 2.4 |'
+  id: totrans-405
   prefs: []
   type: TYPE_TB
 - en: '| **9** | 1. | 1. | 0.1 | 1.3 | 4.3 | 0.6 | 0.2 | 3. | 1. | **87.6** |'
+  id: totrans-406
   prefs: []
   type: TYPE_TB
 - en: The diagonal shows the per class accuracies. The worst performing class is 8
@@ -1812,6 +2597,7 @@
     labeled as a different class by the model. For class 0, the model called a true
     zero class “5” 1.1 percent of the time. The row percentages sum to 100 percent
     (within rounding error).
+  id: totrans-407
   prefs: []
   type: TYPE_NORMAL
 - en: Why did class 8 do so poorly? Looking across the row for class 8, we see that
@@ -1820,11 +2606,13 @@
     the model made, though 6.5 percent of 4 instances were labeled “9” as well. A
     moment’s reflection makes sense of the errors. How often do people confuse 8 and
     3 or 4 and 9? This model is making errors similar to those humans make.
+  id: totrans-408
   prefs: []
   type: TYPE_NORMAL
 - en: The confusion matrix can reveal pathological performance as well. Consider the
     MNIST model in [Figure 11-3](ch11.xhtml#ch11fig3), with a single hidden layer
     of only two nodes. The accuracy matrix it produces is shown in [Table 11-10](ch11.xhtml#ch11tab10).
+  id: totrans-409
   prefs: []
   type: TYPE_NORMAL
 - en: We can immediately see that this is an inferior model. Column 5 is entirely
@@ -1836,54 +2624,69 @@
     Class 8 is rarely correctly labeled (1.3 percent). A poorly performing model will
     have a confusion matrix like this, with oddball outputs and large off-diagonal
     values.
+  id: totrans-410
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 11-10:** Accuracy Matrix for the Model with Only Two Nodes in Its Hidden
     Layer'
+  id: totrans-411
   prefs: []
   type: TYPE_NORMAL
 - en: '|  | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** | **8**
     | **9** |'
+  id: totrans-412
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-413
   prefs: []
   type: TYPE_TB
 - en: '| **0** | **51.0** | 1.0 | 10.3 | 0.7 | 1.8 | 0.0 | 34.1 | 0.7 | 0.0 | 0.4
     |'
+  id: totrans-414
   prefs: []
   type: TYPE_TB
 - en: '| **1** | 0.4 | **88.3** | 0.4 | 1.1 | 0.8 | 0.0 | 0.0 | 9.3 | 1.0 | 0.0 |'
+  id: totrans-415
   prefs: []
   type: TYPE_TB
 - en: '| **2** | 8.6 | 2.8 | **75.2** | 6.9 | 1.7 | 0.0 | 1.4 | 3.0 | 0.3 | 0.6 |'
+  id: totrans-416
   prefs: []
   type: TYPE_TB
 - en: '| **3** | 0.2 | 1.0 | 4.9 | **79.4** | 0.3 | 0.0 | 0.0 | 13.5 | 0.0 | 0.2 |'
+  id: totrans-417
   prefs: []
   type: TYPE_TB
 - en: '| **4** | 28.4 | 31.3 | 7.3 | 2.1 | **9.7** | 0.0 | 0.3 | 13.6 | 1.0 | 0.5
     |'
+  id: totrans-418
   prefs: []
   type: TYPE_TB
 - en: '| **5** | 11.4 | 42.5 | 2.2 | 4.9 | 4.4 | **0.0** | 0.1 | 16.5 | 0.9 | 0.3
     |'
+  id: totrans-419
   prefs: []
   type: TYPE_TB
 - en: '| **6** | 35.4 | 1.0 | 5.4 | 0.2 | 1.4 | 0.0 | **55.0** | 0.0 | 0.0 | 0.1 |'
+  id: totrans-420
   prefs: []
   type: TYPE_TB
 - en: '| **7** | 0.4 | 5.2 | 2.0 | 66.2 | 0.8 | 0.0 | 0.0 | **25.5** | 0.2 | 0.3 |'
+  id: totrans-421
   prefs: []
   type: TYPE_TB
 - en: '| **8** | 10.5 | 41.9 | 2.8 | 8.0 | 4.1 | 0.0 | 0.1 | 22.1 | **1.3** | 0.4
     |'
+  id: totrans-422
   prefs: []
   type: TYPE_TB
 - en: '| **9** | 4.7 | 9.1 | 5.8 | 26.2 | 5.8 | 0.0 | 0.2 | 41.2 | 2.2 | **3.1** |'
+  id: totrans-423
   prefs: []
   type: TYPE_TB
 - en: Calculating Weighted Accuracy
+  id: totrans-424
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -1895,52 +2698,68 @@
     each class divided by the total number of test samples presented to the model.
     Say we have three classes and their frequency and per class accuracies in our
     test set are as in [Table 11-11](ch11.xhtml#ch11tab11):'
+  id: totrans-425
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 11-11:** Hypothetical per Class Accuracies for a Model with Three Classes'
+  id: totrans-426
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Class** | **Frequency** | **Accuracy** |'
+  id: totrans-427
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- |'
+  id: totrans-428
   prefs: []
   type: TYPE_TB
 - en: '| 0 | 4,004 | 88.1 |'
+  id: totrans-429
   prefs: []
   type: TYPE_TB
 - en: '| 1 | 6,502 | 76.6 |'
+  id: totrans-430
   prefs: []
   type: TYPE_TB
 - en: '| 2 | 8,080 | 65.2 |'
+  id: totrans-431
   prefs: []
   type: TYPE_TB
 - en: Here we have *N* = 4,004 + 6,502 + 8,080 = 18586 test samples. Then, the per
     class weights are shown in [Table 11-12](ch11.xhtml#ch11tab12).
+  id: totrans-432
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 11-12:** Example per-class weights'
+  id: totrans-433
   prefs: []
   type: TYPE_NORMAL
 - en: '| Class | Weight |'
+  id: totrans-434
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- |'
+  id: totrans-435
   prefs: []
   type: TYPE_TB
 - en: '| 0 | 4,004 / 18,586 = 0.2154 |'
+  id: totrans-436
   prefs: []
   type: TYPE_TB
 - en: '| 1 | 6,502 / 18,586 = 0.3498 |'
+  id: totrans-437
   prefs: []
   type: TYPE_TB
 - en: '| 2 | 8,080 / 18,586 = 0.4347 |'
+  id: totrans-438
   prefs: []
   type: TYPE_TB
 - en: The average accuracy can be calculated to be
+  id: totrans-439
   prefs: []
   type: TYPE_NORMAL
 - en: ACC = 0.2154 × 88.1 + 0.3498 × 76.6 + 0.4347 × 65.2 = 74.1
+  id: totrans-440
   prefs: []
   type: TYPE_NORMAL
 - en: Philosophically, we should replace the weights with the actual per class prior
@@ -1949,22 +2768,28 @@
     constructed, we’re likely safe using only the per class frequencies. We claim
     that a properly built test set will represent the true prior class probabilities
     reasonably well.
+  id: totrans-441
   prefs: []
   type: TYPE_NORMAL
 - en: 'In code, the weighted mean accuracy can be calculated succinctly from the confusion
     matrix:'
+  id: totrans-442
   prefs: []
   type: TYPE_NORMAL
 - en: 'def weighted_mean_acc(cmat):'
+  id: totrans-443
   prefs: []
   type: TYPE_NORMAL
 - en: N = cmat.sum()
+  id: totrans-444
   prefs: []
   type: TYPE_NORMAL
 - en: C = cmat.sum(axis=1)
+  id: totrans-445
   prefs: []
   type: TYPE_NORMAL
 - en: return ((C/N)*(100*np.diag(cmat)/C)).sum()
+  id: totrans-446
   prefs: []
   type: TYPE_NORMAL
 - en: '*N* is the total number of samples that were tested, which is just the sum
@@ -1974,6 +2799,7 @@
     as a percentage, is calculated from the diagonal elements of the confusion matrix
     (np.diag(cmat)) divided by the number of times each class shows up in the test
     set, *C*. Multiply by 100 to make these percent accuracies.'
+  id: totrans-447
   prefs: []
   type: TYPE_NORMAL
 - en: If we summed these per class and divided by the number of classes, we would
@@ -1981,31 +2807,40 @@
     multiply by *C*/*N*, the fraction of all test samples that were of each class
     (recall, *C* is a vector), and then sum to get the weighted accuracy. This code
     works for any size confusion matrix.
+  id: totrans-448
   prefs: []
   type: TYPE_NORMAL
 - en: For the MNIST models of the previous section, we calculate weighted mean accuracies
     to be those in [Table 11-13](ch11.xhtml#ch11tab13).
+  id: totrans-449
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 11-13:** Weighted Mean Accuracies for the MNIST Models'
+  id: totrans-450
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Architecture** | **Weighted mean accuracy** |'
+  id: totrans-451
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- |'
+  id: totrans-452
   prefs: []
   type: TYPE_TB
 - en: '| 2 | 40.08% |'
+  id: totrans-453
   prefs: []
   type: TYPE_TB
 - en: '| 100 | 88.71% |'
+  id: totrans-454
   prefs: []
   type: TYPE_TB
 - en: '| 100 × 50 | 88.94% |'
+  id: totrans-455
   prefs: []
   type: TYPE_TB
 - en: '| 500 × 250 | 89.63% |'
+  id: totrans-456
   prefs: []
   type: TYPE_TB
 - en: '[Table 11-13](ch11.xhtml#ch11tab13) shows the sort of diminishing returns we’ve
@@ -2020,9 +2855,11 @@
     as we just saw in [Table 11-10](ch11.xhtml#ch11tab10), the confusion matrix for
     this model is quite strange. We certainly would not want to use this model. Nothing
     beats careful consideration of the confusion matrix.'
+  id: totrans-457
   prefs: []
   type: TYPE_NORMAL
 - en: Multiclass Matthews Correlation Coefficient
+  id: totrans-458
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -2030,22 +2867,28 @@
     to extend several of those metrics to the multiclass case, we’ll consider only
     the main metric here: the Matthews correlation coefficient (MCC). For the binary
     case, we saw that the MCC was'
+  id: totrans-459
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/281equ01.jpg)'
+  id: totrans-460
   prefs: []
   type: TYPE_IMG
 - en: This can be extended to the multiclass case by using terms from the confusion
     matrix like so
+  id: totrans-461
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/281equ02.jpg)'
+  id: totrans-462
   prefs: []
   type: TYPE_IMG
 - en: where
+  id: totrans-463
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/281equ03.jpg)'
+  id: totrans-464
   prefs: []
   type: TYPE_IMG
 - en: Here, *K* is the number of classes, and *C* is the confusion matrix. This notation
@@ -2056,31 +2899,40 @@
     value in the range [*–*1,+1]. The multiclass case changes the lower bound based
     on the number of classes, but the upper bound remains 1.0, so the closer the MCC
     is to 1.0, the better the model is doing.
+  id: totrans-465
   prefs: []
   type: TYPE_NORMAL
 - en: Calculating the MCC for the MNIST models, as we did for the weighted mean accuracy,
     gives [Table 11-14](ch11.xhtml#ch11tab14).
+  id: totrans-466
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 11-14:** The MCC for the MNIST Models'
+  id: totrans-467
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Architecture** | **MCC** |'
+  id: totrans-468
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- |'
+  id: totrans-469
   prefs: []
   type: TYPE_TB
 - en: '| 2 | 0.3440 |'
+  id: totrans-470
   prefs: []
   type: TYPE_TB
 - en: '| 100 | 0.8747 |'
+  id: totrans-471
   prefs: []
   type: TYPE_TB
 - en: '| 100 × 50 | 0.8773 |'
+  id: totrans-472
   prefs: []
   type: TYPE_TB
 - en: '| 500 × 250 | 0.8849 |'
+  id: totrans-473
   prefs: []
   type: TYPE_TB
 - en: Again, this shows us that the smallest model is inferior while the other three
@@ -2092,9 +2944,11 @@
     The metrics discussed in this chapter are guides, but they should not be followed
     blindly. In the end, only you know what makes sense for the problem you are trying
     to solve.
+  id: totrans-474
   prefs: []
   type: TYPE_NORMAL
 - en: Summary
+  id: totrans-475
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -2109,11 +2963,13 @@
     models against each other. Finally, we introduced the multiclass confusion matrix,
     giving examples of how to interpret it and how to extend some of the binary classifier
     metrics to the multiclass case.
+  id: totrans-476
   prefs: []
   type: TYPE_NORMAL
 - en: 'In the next chapter, we’ll reach the pinnacle of our machine learning models:
     convolutional neural networks (CNNs). The next chapter introduces the basic ideas
     behind the CNN; later chapters will conduct many experiments using this deep learning
     architecture.'
+  id: totrans-477
   prefs: []
   type: TYPE_NORMAL
