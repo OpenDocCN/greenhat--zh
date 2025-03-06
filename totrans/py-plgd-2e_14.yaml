@@ -1,0 +1,5233 @@
+- en: '[10](nsp-venkitachalam503045-0008.xhtml#rch10)'
+  id: totrans-0
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: '[10](nsp-venkitachalam503045-0008.xhtml#rch10)'
+- en: Conway’s Game of Life on a Torus
+  id: totrans-1
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: 环面上的康威生命游戏
+- en: '![](images/nsp-venkitachalam503045-circle-image.jpg)'
+  id: totrans-2
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-circle-image.jpg)'
+- en: 'In [Chapter 3](nsp-venkitachalam503045-0015.xhtml#ch03), we implemented Conway’s
+    Game of Life using Python and the `matplotlib` library. You may recall one interesting
+    aspect of that project: it used toroidal boundary conditions. [Figure 3-2](nsp-venkitachalam503045-0015.xhtml#fig3-2)
+    on [page 48](nsp-venkitachalam503045-0015.xhtml#p48) showed how we were effectively
+    treating the flat, 2D grid of the simulation as a 3D toroidal surface, thanks
+    to how the boundary conditions stitched the edges together. In the [previous chapter](nsp-venkitachalam503045-0023.xhtml#ch09),
+    you were introduced to OpenGL and learned how to render 3D objects. Let’s now
+    put together your experience with the Game of Life and OpenGL to re-create the
+    Conway’s simulation in 3D, on an actual torus.'
+  id: totrans-3
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在[第3章](nsp-venkitachalam503045-0015.xhtml#ch03)中，我们使用 Python 和 `matplotlib`
+    库实现了康威的生命游戏。你可能还记得那个项目中的一个有趣之处：它使用了环面边界条件。[图3-2](nsp-venkitachalam503045-0015.xhtml#fig3-2)在[第48页](nsp-venkitachalam503045-0015.xhtml#p48)上展示了我们如何有效地将二维平面网格视为三维环面表面，正是因为边界条件将边缘连接在一起。在[上一章](nsp-venkitachalam503045-0023.xhtml#ch09)，你已经接触到
+    OpenGL，并学习了如何渲染三维物体。现在，让我们将你在生命游戏和 OpenGL 中的经验结合起来，在一个真实的环面上重新创建康威的三维模拟。
+- en: In this project, you’ll start by computing the 3D geometry of a torus. Then
+    you’ll arrange the vertices of the torus in a way that’s easy to draw and color
+    in OpenGL. You’ll set up a revolving camera to view the torus from all sides and
+    also implement some basic lighting in the shaders. Finally, you’ll adapt the Game
+    of Life code from [Chapter 3](nsp-venkitachalam503045-0015.xhtml#ch03) to color
+    the grid on the torus. As the simulation proceeds, you’ll see the Game of Life
+    come alive on the surface of the torus!
+  id: totrans-4
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在这个项目中，你将首先计算一个环面（torus）的三维几何形状。然后，你将以一种便于在 OpenGL 中绘制和上色的方式排列环面的顶点。你还将设置一个旋转相机，以从各个角度查看环面，并在着色器中实现一些基本的光照。最后，你将从[第3章](nsp-venkitachalam503045-0015.xhtml#ch03)中改编“生命游戏”代码，以在环面上给网格上色。随着模拟的进行，你将看到生命游戏在环面表面上栩栩如生！
+- en: 'Here are the main topics covered in this project:'
+  id: totrans-5
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 下面是本项目中涉及的主要内容：
+- en: • Using matrix math to construct the 3D geometry of a torus
+  id: totrans-6
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: • 使用矩阵数学构建环面的三维几何形状
+- en: • Implementing a coloring scheme for the Game of Life grid on the torus
+  id: totrans-7
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: • 为环面上的生命游戏网格实现着色方案
+- en: • Implementing a revolving camera in OpenGL
+  id: totrans-8
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: • 在 OpenGL 中实现旋转相机
+- en: • Implementing simple lighting in OpenGL
+  id: totrans-9
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: • 在 OpenGL 中实现简单的光照
+- en: '[How It Works](nsp-venkitachalam503045-0008.xhtml#rah1201)'
+  id: totrans-10
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: '[它是如何工作的](nsp-venkitachalam503045-0008.xhtml#rah1201)'
+- en: Before getting into the code, let’s consider how you can render, light, and
+    view a 3D torus using OpenGL. It all begins with computing the vertices that make
+    up the torus.
+  id: totrans-11
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在开始编写代码之前，让我们先考虑如何使用 OpenGL 渲染、照明和查看一个三维环面。一切从计算构成环面的顶点开始。
+- en: '[Computing Vertices](nsp-venkitachalam503045-0008.xhtml#rbh1201)'
+  id: totrans-12
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: '[计算顶点](nsp-venkitachalam503045-0008.xhtml#rbh1201)'
+- en: A torus is essentially a collection of circles, or rings, arranged in a circle
+    around a central point. However, you can’t actually draw circles with OpenGL;
+    they need to be *discretized*, or represented as a series of vertices connected
+    by straight lines. The simplified model in [Figure 10-1](nsp-venkitachalam503045-0024.xhtml#fig10-1)
+    illustrates how you can begin defining the torus as a collection of vertices.
+  id: totrans-13
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 环面本质上是由多个圆形或环形组成，这些环形围绕一个中心点排列。然而，你不能直接在 OpenGL 中绘制圆形；它们需要被*离散化*，即通过一系列由直线连接的顶点来表示。图[10-1](nsp-venkitachalam503045-0024.xhtml#fig10-1)中的简化模型展示了如何将环面定义为一组顶点。
+- en: '![](images/nsp-venkitachalam503045-f10001.jpg)'
+  id: totrans-14
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f10001.jpg)'
+- en: 'Figure 10-1: A torus rendering model. The simplified torus is on the left.
+    An individual “ring” that makes up the torus is on the right.'
+  id: totrans-15
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 10-1：环面渲染模型。左侧是简化的环面，右侧是构成环面的单个“环”。
+- en: The right side of [Figure 10-1](nsp-venkitachalam503045-0024.xhtml#fig10-1)
+    shows a ring with radius *r* discretized to have *M* = 5 points. The left side
+    of [Figure 10-1](nsp-venkitachalam503045-0024.xhtml#fig10-1) models a simple torus
+    with major radius *R* by arranging *N* = 6 such discretized rings (labeled 0 through 5)
+    around a central point. (The *major radius* is the distance from the center of
+    the torus’s hole to the center of its outer ring.) Don’t worry about the blocky
+    nature of the torus shown in the figure. It gets smoother as you increase the
+    values of *N* and *M*.
+  id: totrans-16
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[图10-1](nsp-venkitachalam503045-0024.xhtml#fig10-1)的右侧显示了一个半径为*r*的环，离散化后有*M*
+    = 5个点。左侧的[图10-1](nsp-venkitachalam503045-0024.xhtml#fig10-1)展示了一个简单的环面，其大半径*R*通过将*N*
+    = 6个这样的离散化环（标记为0到5）围绕中心点排列来建模。（*大半径*是指环面孔的中心到外环中心的距离。）不要担心图中环面的块状特征，随着*N*和*M*值的增加，图形会变得更光滑。'
+- en: The torus is filled out by drawing bands to connect adjacent rings. You’ll draw
+    the bands using `GL_TRIANGLE_STRIP` primitives, and each cell in the Game of Life
+    simulation will consist of two adjacent triangles on a strip, which together form
+    a *quad*, or quadrilateral. When a cell is ON you’ll color its quad black, and
+    when a cell is OFF you’ll color it white.
+  id: totrans-17
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 通过绘制带状物连接相邻的环面，你将使用`GL_TRIANGLE_STRIP`原语来绘制这些带状物，游戏生命模拟中的每个单元格将由带状物上的两个相邻三角形组成，这两个三角形共同形成一个*四边形*。当单元格处于开启状态时，你将把它的四边形涂成黑色，当单元格处于关闭状态时，你将把它涂成白色。
+- en: To compute the vertices of the torus, you first need to define a coordinate
+    system for it. Let’s assume that the torus is on the XY plane, centered at the
+    origin, with the line through the center of the torus aligned along the z-axis,
+    as shown in [Figure 10-2](nsp-venkitachalam503045-0024.xhtml#fig10-2).
+  id: totrans-18
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 要计算环面的顶点，首先需要为其定义一个坐标系。假设环面位于XY平面上，且中心在原点，环面中心的直线与z轴对齐，如[图10-2](nsp-venkitachalam503045-0024.xhtml#fig10-2)所示。
+- en: '![](images/nsp-venkitachalam503045-f10002.jpg)'
+  id: totrans-19
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f10002.jpg)'
+- en: 'Figure 10-2: The rendering strategy for the torus'
+  id: totrans-20
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图10-2：环面的渲染策略
+- en: 'The vertices for a circle *C*[3] on the torus at an angle θ relative to the
+    x-axis can be computed as follows:'
+  id: totrans-21
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在环面上，位于相对于x轴角度θ的圆*C*[3]的顶点可以按以下方式计算：
+- en: 1\. Compute the vertices for a circle *C*[1] of radius *r* in the XZ plane and
+    with the center at the origin.
+  id: totrans-22
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 1\. 计算位于XZ平面上、原点为中心的半径为*r*的圆*C*[1]的顶点。
+- en: 2\. Rotate the circle *C*[1] around the z-axis by the angle θ. This gives you
+    the circle *C*[2].
+  id: totrans-23
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 2\. 将圆*C*[1]围绕z轴旋转角度θ，这样你就得到了圆*C*[2]。
+- en: 3\. Translate the circle *C*[2] by *R* amount along the angle θ to get the circle
+    *C*[3] in the correct position on the torus.
+  id: totrans-24
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 3\. 将圆*C*[2]按*R*的量沿角度θ平移，得到正确位置上的圆*C*[3]，从而确定环面上的圆。
+- en: 'You may recall the use of parametric equations to define a circle in the spirograph
+    project in [Chapter 2](nsp-venkitachalam503045-0013.xhtml#ch02). We’re going to
+    use the same concept here. The vertices marking the circumference of a circle
+    *C*[1] of radius *r* on the XZ plane centered at the origin are given by:'
+  id: totrans-25
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 你可能还记得在[第2章](nsp-venkitachalam503045-0013.xhtml#ch02)的螺旋图项目中使用了参数方程来定义一个圆。在这里，我们将使用相同的概念。标记为圆*C*[1]的顶点，半径为*r*，位于以原点为中心的XZ平面上，给出如下：
+- en: '*P* = (*r* cos(α), 0, *r* sin(α))'
+  id: totrans-26
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*P* = (*r* cos(α), 0, *r* sin(α))'
+- en: Here, α is the angle made by the point *P* with respect to the x-axis. As α
+    varies from 0 to 360 degrees (or 2π radians), a circle will be formed by the *P* points.
+    Notice that the y-coordinates of the points are zero in the previous equation.
+    This is expected, since the circle is on the XZ plane.
+  id: totrans-27
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这里，α是点*P*相对于x轴的角度。当α从0变化到360度（或2π弧度）时，*P*点会形成一个圆。注意，在上述方程中，点的y坐标为零。这是可以预期的，因为圆位于XZ平面上。
+- en: 'You must now rotate the points around the z-axis by angle θ. The rotation matrix
+    for this operation is given by:'
+  id: totrans-28
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在，你必须围绕z轴将点旋转角度θ。该操作的旋转矩阵如下：
+- en: '![](images/nsp-venkitachalam503045-m10001.jpg)'
+  id: totrans-29
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-m10001.jpg)'
+- en: Once you rotate the points, you need to translate them to the right place. This
+    is done using the following translation matrix. (This format was discussed in
+    [Chapter 9](nsp-venkitachalam503045-0023.xhtml#ch09).)
+  id: totrans-30
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 一旦旋转了这些点，你需要将它们平移到正确的位置。可以使用以下平移矩阵来完成此操作。（此格式在[第9章](nsp-venkitachalam503045-0023.xhtml#ch09)中已有讨论。）
+- en: '![](images/nsp-venkitachalam503045-m10002.jpg)'
+  id: totrans-31
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-m10002.jpg)'
+- en: 'Thus, the transformed points on a ring on the torus are given by:'
+  id: totrans-32
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 因此，环面上变换后的点由以下公式给出：
+- en: '*P*ʹ = *T* × *R* [θ,Z] × *P*'
+  id: totrans-33
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*P*ʹ = *T* × *R* [θ,Z] × *P*'
+- en: 'which is the same as:'
+  id: totrans-34
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这与以下内容相同：
+- en: '![](images/nsp-venkitachalam503045-m10003.jpg)'
+  id: totrans-35
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-m10003.jpg)'
+- en: In the previous equation, *P* is first multiplied by the rotation matrix, which
+    aligns it correctly, and is then multiplied by the translation matrix, which “pushes”
+    the points to the right place on the torus. Notice that *P* is represented with
+    *homogeneous* coordinates (*x*, *y*, *z*, 1.0), discussed in the [previous chapter](nsp-venkitachalam503045-0023.xhtml#ch09).
+  id: totrans-36
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在前面的公式中，*P*首先乘以旋转矩阵，使其正确对齐，然后再乘以平移矩阵，将点“推”到圆环的正确位置。请注意，*P*以*齐次*坐标（*x*，*y*，*z*，1.0）表示，这在[前一章](nsp-venkitachalam503045-0023.xhtml#ch09)中讨论过。
+- en: '[Computing Normals for Lighting](nsp-venkitachalam503045-0008.xhtml#rbh1202)'
+  id: totrans-37
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: '[计算光照的法线](nsp-venkitachalam503045-0008.xhtml#rbh1202)'
+- en: For the torus to look nice, you’ll need to apply lighting to the geometry, which
+    in turn means you’ll need to compute the *normal vectors* for the points *P* calculated
+    in the previous section. The lighting on a surface depends on the orientation
+    of the surface to the incoming light, and the orientation can be quantified by
+    the normal vector, which is the vector perpendicular to the surface at a particular
+    point. Take a look at [Figure 10-3](nsp-venkitachalam503045-0024.xhtml#fig10-3)
+    to see an example.
+  id: totrans-38
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 为了让圆环看起来更好，你需要对几何体应用光照，这意味着你需要计算前一部分中计算的点*P*的*法线向量*。表面的光照取决于表面与入射光的方向，而方向可以通过法线向量来量化，法线向量是某一点上垂直于表面的向量。请查看[图
+    10-3](nsp-venkitachalam503045-0024.xhtml#fig10-3)来查看一个示例。
+- en: '![](images/nsp-venkitachalam503045-f10003.jpg)'
+  id: totrans-39
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f10003.jpg)'
+- en: 'Figure 10-3: Computing normal vectors'
+  id: totrans-40
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 10-3：计算法线向量
+- en: 'Because of the geometry of the torus, the normal vector for point *s* on a
+    ring is in the same direction as the line connecting point *s* to the center of
+    the ring. This means that the normal vectors are the same as rotated points. The
+    translation doesn’t matter, as the direction of the normals is unaffected by it.
+    You can therefore compute the normals as follows:'
+  id: totrans-41
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 由于圆环的几何形状，环上点*s*的法线向量与连接点*s*与环中心的直线方向相同。这意味着法线向量与旋转后的点相同。平移不影响法线方向，因此不需要考虑。你可以按照以下步骤计算法线：
+- en: '*N* = *R*[θ,Z] × *P*'
+  id: totrans-42
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*N* = *R*[θ,Z] × *P*'
+- en: Note that you need to *normalize* the normal vectors before doing any lighting
+    computations. You do this by dividing the normal by its magnitude.
+  id: totrans-43
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 注意，在进行任何光照计算之前，你需要先*归一化*法线向量。你可以通过将法线除以其大小来实现这一点。
+- en: The actual lighting will come from a single light source at a fixed position.
+    This will be defined in the vertex shader.
+  id: totrans-44
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 实际的光照将来自一个固定位置的单一光源。这个光源将在顶点着色器中定义。
+- en: '[Rendering](nsp-venkitachalam503045-0008.xhtml#rbh1203)'
+  id: totrans-45
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: '[渲染](nsp-venkitachalam503045-0008.xhtml#rbh1203)'
+- en: Now that you have the vertices and normals for the torus, let’s talk about how
+    to render it using OpenGL. You first need to split it up into bands, as shown
+    in [Figure 10-4](nsp-venkitachalam503045-0024.xhtml#fig10-4). Each band is the
+    region between two adjacent rings on the torus.
+  id: totrans-46
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在你已经有了圆环的顶点和法线，让我们来讨论如何使用OpenGL渲染它。你首先需要将其分割成带状区域，如[图 10-4](nsp-venkitachalam503045-0024.xhtml#fig10-4)所示。每个带状区域是圆环上两个相邻环之间的区域。
+- en: '![](images/nsp-venkitachalam503045-f10004.jpg)'
+  id: totrans-47
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f10004.jpg)'
+- en: 'Figure 10-4: Rendering the torus with triangle strips'
+  id: totrans-48
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 10-4：使用三角带渲染圆环
+- en: 'Each of the bands is rendered using OpenGL as a `GL_TRIANGLE_STRIP` primitive.
+    Besides forming the building blocks of the torus, these triangle strips also provide
+    a convenient way to create the Game of Life simulation grid: each cell in the
+    grid is represented by a quad formed from two adjacent triangles in the strip.
+    [Figure 10-5](nsp-venkitachalam503045-0024.xhtml#fig10-5) gives a closer look
+    at one band in the torus.'
+  id: totrans-49
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 每个带状区域使用OpenGL作为`GL_TRIANGLE_STRIP`原语进行渲染。除了构成圆环的基本结构外，这些三角带还为创建生命游戏模拟网格提供了一种方便的方法：网格中的每个单元格由带中的两个相邻三角形组成的四边形表示。[图
+    10-5](nsp-venkitachalam503045-0024.xhtml#fig10-5)展示了圆环中某一带的特写。
+- en: '![](images/nsp-venkitachalam503045-f10005.jpg)'
+  id: totrans-50
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f10005.jpg)'
+- en: 'Figure 10-5: Rendering a band from triangle strips'
+  id: totrans-51
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 10-5：从三角带渲染带状区域
+- en: 'The band is formed by the adjacent rings *C*⁰ and *C*¹. Each ring has *M* vertices.
+    The triangle strip making up the band is formed as *M* pairs of vertices that
+    zigzag back and forth between the rings:'
+  id: totrans-52
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 带状区域由相邻的环*C*⁰和*C*¹组成。每个环有*M*个顶点。组成带状区域的三角带由*M*对顶点构成，这些顶点在环之间来回“之”字形摆动：
+- en: '![](images/nsp-venkitachalam503045-m10004.jpg)'
+  id: totrans-53
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-m10004.jpg)'
+- en: 'But there’s one additional pair of vertices you need to add: ![](images/nsp-venkitachalam503045-m10005.jpg).
+    You need to repeat the first two vertices to close out the gap at the end of the
+    band. Hence, the total number of vertices in the triangle strip that forms the
+    band is given by 2 × *M* + 2.'
+  id: totrans-54
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 但是你需要再添加一对顶点：![](images/nsp-venkitachalam503045-m10005.jpg)。你需要重复前两个顶点，以封闭带状部分末端的间隙。因此，形成该带的三角形带中的总顶点数为
+    2 × *M* + 2。
+- en: 'The band shown in [Figure 10-5](nsp-venkitachalam503045-0024.xhtml#fig10-5)
+    was composed of rings ![](images/nsp-venkitachalam503045-m10006.jpg). The torus
+    is divided into *N* bands, where *N* is the number of rings:'
+  id: totrans-55
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 如[图10-5](nsp-venkitachalam503045-0024.xhtml#fig10-5)所示，带状结构由环组成 ![](images/nsp-venkitachalam503045-m10006.jpg)。该环面被分为*N*个带状部分，其中*N*是环的数量：
+- en: '![](images/nsp-venkitachalam503045-m10007.jpg)'
+  id: totrans-56
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-m10007.jpg)'
+- en: Notice how the last band wraps around by coming back to the first ring, *C*⁰.
+    This means the total number of vertices needed to render the torus is given by
+    *N* × (2 × *M* + 2). You’ll see more details of the implementation as you look
+    at the code.
+  id: totrans-57
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 注意最后一个带状部分如何通过回到第一个环 *C*⁰ 来封闭。这意味着渲染环面的总顶点数由 *N* × (2 × *M* + 2) 给出。你将在查看代码时看到实现的更多细节。
+- en: Now let’s take a look at the coloring scheme for the torus.
+  id: totrans-58
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在让我们看看环面的上色方案。
+- en: '[Coloring the Triangle Strips](nsp-venkitachalam503045-0008.xhtml#rbh1204)'
+  id: totrans-59
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: '[为三角形带上色](nsp-venkitachalam503045-0008.xhtml#rbh1204)'
+- en: 'You need to color the cells in the Game of Life simulation individually. You
+    know that each cell is a quad—two triangles that are part of a larger triangle
+    strip. As an example, the quad made of vertices ![](images/nsp-venkitachalam503045-m10008.jpg)
+    is composed of two triangles: ![](images/nsp-venkitachalam503045-m10009.jpg) and
+    ![](images/nsp-venkitachalam503045-m10010.jpg). Each vertex has a corresponding
+    color associated with it, which is a triplet of the form (*r*, *g*, *b*), denoting
+    the red, green, and blue components of the color. By default, the color of the
+    first vertex in the quad (in this case, ![](images/nsp-venkitachalam503045-m10011.jpg))
+    sets the value for the first triangle in the quad, and the color of the second
+    vertex (![](images/nsp-venkitachalam503045-m10012.jpg)) sets the value for the
+    second triangle in the quad. As long as you set these two colors to be identical,
+    you’ll color the quad uniformly. We’ll discuss OpenGL’s vertex color convention
+    further when we look at the code.'
+  id: totrans-60
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 你需要单独为《生命游戏》仿真中的每个单元上色。你知道每个单元是一个四边形——由两个三角形组成，构成一个更大的三角形带。举个例子，顶点组成的四边形 ![](images/nsp-venkitachalam503045-m10008.jpg)
+    由两个三角形组成：![](images/nsp-venkitachalam503045-m10009.jpg) 和 ![](images/nsp-venkitachalam503045-m10010.jpg)。每个顶点都有一个与之对应的颜色，该颜色为一个三元组，形式为
+    (*r*, *g*, *b*)，表示颜色的红、绿、蓝分量。默认情况下，四边形中第一个顶点的颜色（在此情况下为 ![](images/nsp-venkitachalam503045-m10011.jpg)）设置四边形第一个三角形的颜色，第二个顶点的颜色（![](images/nsp-venkitachalam503045-m10012.jpg)）设置第二个三角形的颜色。只要你将这两种颜色设置为相同，就能使四边形上色均匀。我们将在查看代码时进一步讨论OpenGL的顶点颜色约定。
+- en: NOTE The OpenGL function called `glProvokingVertex()` changes the convention
+    of which color value is mapped to the vertex.
+  id: totrans-61
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 注意 OpenGL 函数 `glProvokingVertex()` 会改变哪个颜色值被映射到顶点的约定。
+- en: '[Controlling the Camera](nsp-venkitachalam503045-0008.xhtml#rbh1205)'
+  id: totrans-62
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: '[控制相机](nsp-venkitachalam503045-0008.xhtml#rbh1205)'
+- en: To view the torus, you’ll create a camera that revolves around the origin of
+    the 3D scene and looks down at an angle from above. [Figure 10-6](nsp-venkitachalam503045-0024.xhtml#fig10-6)
+    shows the camera setup.
+  id: totrans-63
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 为了查看环面，你将创建一个围绕3D场景原点旋转的相机，并从上方以一定角度俯视。[图10-6](nsp-venkitachalam503045-0024.xhtml#fig10-6)展示了相机的设置。
+- en: '![](images/nsp-venkitachalam503045-f10006.jpg)'
+  id: totrans-64
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f10006.jpg)'
+- en: 'Figure 10-6: Implementing a revolving camera'
+  id: totrans-65
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图10-6：实现旋转相机
+- en: 'Think of the camera, represented by point *E*, as being placed on a cylinder
+    of radius *R* at a height *H* from the origin. The camera points toward the origin
+    *O*. The camera is defined by the mutually perpendicular vectors *V*, *U*, and
+    *N*, where *V* is the *view vector* that points from *E* to *O*; *U* is the *up
+    vector*, which is up relative to the camera; and *N* is a vector perpendicular
+    to both *V* and *U*. For every time step, you move the camera by a constant distance
+    along the rim of the cylinder. This movement is parameterized by the angle β,
+    as shown in [Figure 10-6](nsp-venkitachalam503045-0024.xhtml#fig10-6). As you
+    learned in [Chapter 9](nsp-venkitachalam503045-0023.xhtml#ch09), you use a `lookAt()`
+    method to set up the view, which takes three parameters: the eye, the center,
+    and the up vector. The center is just the origin: (0, 0, 0). The 3D coordinates
+    of the eye are given by:'
+  id: totrans-66
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 将相机看作是代表点*E*，它放置在一个半径为*R*，离原点高度为*H*的圆柱体上。相机指向原点*O*。相机由相互垂直的向量*V*、*U*和*N*定义，其中*V*是从*E*指向*O*的*视线向量*；*U*是*向上向量*，表示相机的上方方向；*N*是与*V*和*U*都垂直的向量。每个时间步长中，你沿着圆柱体的边缘移动相机一个恒定的距离。这个移动由角度β来参数化，如[图10-6](nsp-venkitachalam503045-0024.xhtml#fig10-6)所示。如[第9章](nsp-venkitachalam503045-0023.xhtml#ch09)中所学，你使用`lookAt()`方法来设置视图，它需要三个参数：眼睛、中心和上向量。中心就是原点：(0,
+    0, 0)。眼睛的三维坐标如下：
+- en: '*E* = (*R* cos(β), *R* sin(β), *H*)'
+  id: totrans-67
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*E* = (*R* cos(β), *R* sin(β), *H*)'
+- en: 'As the camera moves along the rim of the cylinder, it will keep its direction
+    pointed to *O*, and the up vector *U* will keep changing as well. To compute the
+    up vector *U*, start with an initial guess *U*ʹ that’s parallel to the z-axis.
+    Then find *N*, the vector perpendicular to the plane given by *U*ʹ and *V*. It
+    can be calculated as:'
+  id: totrans-68
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 当相机沿圆柱体的边缘移动时，它将始终保持朝向*O*，而上向量*U*也会不断变化。为了计算上向量*U*，首先从一个与z轴平行的初始猜测*U*ʹ开始。然后找到*N*，即垂直于由*U*ʹ和*V*所定义的平面的向量。它可以通过以下方式计算：
+- en: '*N* = *V* × *U*ʹ'
+  id: totrans-69
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*N* = *V* × *U*ʹ'
+- en: '*N* is given by the cross product of *V* and *U*ʹ. Now, what happens if you
+    take the cross product of *N* and *V*? You get a vector perpendicular to the NV
+    plane, which is the up vector *U* that you’re looking for!'
+  id: totrans-70
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*N*由*V*和*U*ʹ的叉积给出。那么，如果你计算*N*和*V*的叉积会发生什么呢？你会得到一个垂直于NV平面的向量，这就是你所需要的上向量*U*！'
+- en: '*U* = *N* × *V* = (*V* × *U*ʹ) × *V*'
+  id: totrans-71
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*U* = *N* × *V* = (*V* × *U*ʹ) × *V*'
+- en: 'Once *U* is calculated, make sure that it’s normalized before use. Once that’s
+    done, you’ll have everything you need to set up the camera with `lookAt()`: *E*
+    (the eye), *O* (the center), and *U* (the up vector).'
+  id: totrans-72
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 一旦计算出*U*，确保在使用之前对其进行归一化处理。完成这一步后，你就可以用`lookAt()`方法来设置相机：*E*（眼睛）、*O*（中心）和*U*（上向量）。
+- en: '[Mapping the Grid to the Torus](nsp-venkitachalam503045-0008.xhtml#rbh1206)'
+  id: totrans-73
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: '[将网格映射到环面](nsp-venkitachalam503045-0008.xhtml#rbh1206)'
+- en: Finally, let’s look at how the 2D Game of Life simulation grid maps to the 3D
+    torus because of the grid’s toroidal boundary conditions. [Figure 10-7](nsp-venkitachalam503045-0024.xhtml#fig10-7)
+    shows the mapping.
+  id: totrans-74
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最后，让我们来看一下二维《生命游戏》仿真网格如何因网格的环面边界条件而映射到三维环面。[图10-7](nsp-venkitachalam503045-0024.xhtml#fig10-7)展示了这个映射。
+- en: '![](images/nsp-venkitachalam503045-f10007.jpg)'
+  id: totrans-75
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f10007.jpg)'
+- en: 'Figure 10-7: Mapping the simulation grid to a torus'
+  id: totrans-76
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图10-7：将仿真网格映射到环面
+- en: 'The two-dimensional Game of Life grid has *NX* columns and *NY* rows. You can
+    see on the right of the figure how the *NX* points that divide each row wrap around
+    the tube of the torus. The point indices go from 0 to *NX* − 1\. The next index,
+    *NX*, is the same as 0 because of the wrap. A similar wrap happens in the y-direction,
+    where you have *NY* cells: the point with index *NY* is the same as the point
+    with index 0.'
+  id: totrans-77
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 二维《生命游戏》网格有*NX*列和*NY*行。你可以在图的右侧看到，分隔每一行的*NX*个点是如何围绕环形管道缠绕的。点的索引从0到*NX* − 1。下一个索引，*NX*，因为缠绕的缘故与0相同。y方向也会发生类似的缠绕，你有*NY*个单元格：索引为*NY*的点与索引为0的点相同。
+- en: You saw earlier how each ring in the torus is discretized to have *M* points.
+    To go from the two-dimensional grid to the torus, set *NX* = *M*. Similarly, set
+    *NY* = *N*, where *N* is the number of bands on the torus.
+  id: totrans-78
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 你之前看到每个环面中的每个环是如何离散化的，拥有*M*个点。从二维网格到环面的转换，可以设置*NX* = *M*。类似地，设置*NY* = *N*，其中*N*是环面上的带数。
+- en: '[Requirements](nsp-venkitachalam503045-0008.xhtml#rah1202)'
+  id: totrans-79
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: '[需求](nsp-venkitachalam503045-0008.xhtml#rah1202)'
+- en: We’ll use `PyOpenGL` and GLFW for OpenGL rendering, as in [Chapter 9](nsp-venkitachalam503045-0023.xhtml#ch09),
+    and `numpy` for matrix/vector computations.
+  id: totrans-80
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将使用`PyOpenGL`和GLFW进行OpenGL渲染，如[第9章](nsp-venkitachalam503045-0023.xhtml#ch09)所示，并使用`numpy`进行矩阵/向量计算。
+- en: '[The Code](nsp-venkitachalam503045-0008.xhtml#rah1203)'
+  id: totrans-81
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: '[代码](nsp-venkitachalam503045-0008.xhtml#rah1203)'
+- en: 'The code for this project is organized into several files:'
+  id: totrans-82
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 本项目的代码被组织在多个文件中：
+- en: torus.py This contains the geometry computation and rendering code for the torus.
+  id: totrans-83
+  prefs: []
+  type: TYPE_NORMAL
+  zh: torus.py 该文件包含环面的几何计算和渲染代码。
+- en: gol.py This implements Conway’s Game of Life, adapted from [Chapter 3](nsp-venkitachalam503045-0015.xhtml#ch03).
+  id: totrans-84
+  prefs: []
+  type: TYPE_NORMAL
+  zh: gol.py 该文件实现了康威的生命游戏，改编自[第3章](nsp-venkitachalam503045-0015.xhtml#ch03)。
+- en: camera.py This contains the implementation for the revolving camera for viewing
+    the torus.
+  id: totrans-85
+  prefs: []
+  type: TYPE_NORMAL
+  zh: camera.py 该文件包含实现旋转相机的代码，用于查看环面。
+- en: gol_torus.py This is the main file that sets up OpenGL and GLFW and calls the
+    rendering code from other modules.
+  id: totrans-86
+  prefs: []
+  type: TYPE_NORMAL
+  zh: gol_torus.py 这是主文件，设置了OpenGL和GLFW，并从其他模块调用渲染代码。
+- en: The full project code is available online at [https://github.com/mkvenkit/pp2e/blob/main/gol_torus](https://github.com/mkvenkit/pp2e/blob/main/gol_torus).
+  id: totrans-87
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 完整的项目代码可以在[https://github.com/mkvenkit/pp2e/blob/main/gol_torus](https://github.com/mkvenkit/pp2e/blob/main/gol_torus)在线获取。
+- en: '[Rendering the Torus](nsp-venkitachalam503045-0008.xhtml#rbh1207)'
+  id: totrans-88
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: '[渲染环面](nsp-venkitachalam503045-0008.xhtml#rbh1207)'
+- en: We’ll first consider the code for rendering the torus, which is encapsulated
+    in a class called `Torus` defined in the file *torus.py*. To see the complete
+    code listing, skip ahead to [“The Complete Torus Rendering Code”](nsp-venkitachalam503045-0024.xhtml#ah1207)
+    on [page 203](nsp-venkitachalam503045-0024.xhtml#p203).
+  id: totrans-89
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们首先考虑渲染环面的代码，该代码封装在一个名为`Torus`的类中，定义在文件*torus.py*中。要查看完整的代码列表，请跳至[“完整的环面渲染代码”](nsp-venkitachalam503045-0024.xhtml#ah1207)，位于[第203页](nsp-venkitachalam503045-0024.xhtml#p203)。
+- en: Defining the Shaders
+  id: totrans-90
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 定义着色器
+- en: 'First, define the GLSL shaders for the torus. Here’s the vertex shader, which
+    takes the per-vertex attributes of position, color, and normal and computes the
+    transformed inputs for the fragment shader:'
+  id: totrans-91
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 首先，定义环面的GLSL着色器。这里是顶点着色器，它获取每个顶点的位置信息、颜色和法向量，并计算出传递给片段着色器的变换输入：
+- en: strVS = """
+  id: totrans-92
+  prefs: []
+  type: TYPE_NORMAL
+  zh: strVS = """
+- en: version 410 core
+  id: totrans-93
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: version 410 core
+- en: layout(location = 0) in vec3 aVert;
+  id: totrans-94
+  prefs: []
+  type: TYPE_NORMAL
+  zh: layout(location = 0) 输入 vec3 aVert;
+- en: layout(location = 1) in vec3 aColor;
+  id: totrans-95
+  prefs: []
+  type: TYPE_NORMAL
+  zh: layout(location = 1) 输入 vec3 aColor;
+- en: layout(location = 2) in vec3 aNormal;
+  id: totrans-96
+  prefs: []
+  type: TYPE_NORMAL
+  zh: layout(location = 2) 输入 vec3 aNormal;
+- en: uniform mat4 uMVMatrix;
+  id: totrans-97
+  prefs: []
+  type: TYPE_NORMAL
+  zh: uniform mat4 uMVMatrix;
+- en: uniform mat4 uPMatrix;
+  id: totrans-98
+  prefs: []
+  type: TYPE_NORMAL
+  zh: uniform mat4 uPMatrix;
+- en: ❶ flat out vec3 vColor;
+  id: totrans-99
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ flat 输出 vec3 vColor;
+- en: ❷ out vec3 vNormal;
+  id: totrans-100
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ 输出 vec3 vNormal;
+- en: ❸ out vec3 fragPos;
+  id: totrans-101
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ 输出 vec3 fragPos;
+- en: void main() {
+  id: totrans-102
+  prefs: []
+  type: TYPE_NORMAL
+  zh: void main() {
+- en: // transform vertex
+  id: totrans-103
+  prefs: []
+  type: TYPE_NORMAL
+  zh: // 转换顶点
+- en: gl_Position = uPMatrix * uMVMatrix * vec4(aVert, 1.0);
+  id: totrans-104
+  prefs: []
+  type: TYPE_NORMAL
+  zh: gl_Position = uPMatrix * uMVMatrix * vec4(aVert, 1.0);
+- en: ❹ fragPos = aVert;
+  id: totrans-105
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ fragPos = aVert;
+- en: vColor = aColor;
+  id: totrans-106
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vColor = aColor;
+- en: vNormal = aNormal;
+  id: totrans-107
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vNormal = aNormal;
+- en: '}'
+  id: totrans-108
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '}'
+- en: '"""'
+  id: totrans-109
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""'
+- en: You define the vertex shader code as a string stored in `strVS`. The attribute
+    variables for the shader are `aVert`, `aColor`, and `aNormal`, representing the
+    coordinates, color, and normal vector for each vertex. Notice the `flat` qualifier
+    when you initialize `vColor`, one of the outputs of the vertex shader ❶, indicating
+    that this variable won’t be interpolated in the fragment shader. In effect, we’re
+    saying that this variable will remain constant across the primitive (one of the
+    triangles in a triangle strip). This ensures that every Game of Life cell will
+    be a single color. This type of shading across a primitive is called *flat shading*.
+    The next vertex shader output is `vNormal` ❷, which by default will be interpolated
+    in the fragment shader. You need this so you can compute lighting across a primitive,
+    but later you’ll see how to modify this shader code to support flat shading. The
+    other output is called `fragPos` ❸. In the main shader code, you set this output
+    to `aVert` ❹ so it can be passed into the fragment shader for lighting calculations.
+    The shader also computes `gl_Position` and passes to the fragment shader the color
+    and normal data as it is received.
+  id: totrans-110
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 你将顶点着色器代码定义为一个存储在`strVS`中的字符串。着色器的属性变量有`aVert`、`aColor`和`aNormal`，分别表示每个顶点的坐标、颜色和法向量。注意，在初始化`vColor`时使用了`flat`限定符，它是顶点着色器的一个输出❶，表示该变量在片段着色器中不会被插值。实际上，我们是在说，这个变量将在整个图元（一个三角形带中的三角形）中保持不变。这确保了每个“生命游戏”单元格都将具有单一的颜色。这种在图元中的着色方式称为*平面着色*。下一个顶点着色器的输出是`vNormal`
+    ❷，它默认会在片段着色器中插值。你需要这个变量来计算图元上的光照，稍后你会看到如何修改这个着色器代码来支持平面着色。另一个输出叫做`fragPos` ❸。在主着色器代码中，你将这个输出设置为`aVert`
+    ❹，以便将其传递到片段着色器进行光照计算。着色器还计算`gl_Position`，并将颜色和法向数据按接收到的方式传递给片段着色器。
+- en: Here’s the fragment shader, which applies lighting and computes the final color
+    of the fragment. It’s defined as another string, called `strFS`.
+  id: totrans-111
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这是片段着色器，它应用光照并计算片段的最终颜色。它被定义为另一个字符串，名为`strFS`。
+- en: strFS = """
+  id: totrans-112
+  prefs: []
+  type: TYPE_NORMAL
+  zh: strFS = """
+- en: version 410 core
+  id: totrans-113
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: version 410 core
+- en: flat in vec3 vColor;
+  id: totrans-114
+  prefs: []
+  type: TYPE_NORMAL
+  zh: flat in vec3 vColor;
+- en: in vec3 vNormal;
+  id: totrans-115
+  prefs: []
+  type: TYPE_NORMAL
+  zh: in vec3 vNormal;
+- en: in vec3 fragPos;
+  id: totrans-116
+  prefs: []
+  type: TYPE_NORMAL
+  zh: in vec3 fragPos;
+- en: out vec4 fragColor;
+  id: totrans-117
+  prefs: []
+  type: TYPE_NORMAL
+  zh: out vec4 fragColor;
+- en: void main() {
+  id: totrans-118
+  prefs: []
+  type: TYPE_NORMAL
+  zh: void main() {
+- en: ❶ vec3 lightPos = vec3(10.0, 10.0, 10.0);
+  id: totrans-119
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ vec3 lightPos = vec3(10.0, 10.0, 10.0);
+- en: ❷ vec3 lightColor = vec3(1.0, 1.0, 1.0);
+  id: totrans-120
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ vec3 lightColor = vec3(1.0, 1.0, 1.0);
+- en: ❸ vec3 lightDir = normalize(lightPos - fragPos);
+  id: totrans-121
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ vec3 lightDir = normalize(lightPos - fragPos);
+- en: float diff = max(dot(vNormal, lightDir), 0.0);
+  id: totrans-122
+  prefs: []
+  type: TYPE_NORMAL
+  zh: float diff = max(dot(vNormal, lightDir), 0.0);
+- en: vec3 diffuse = diff * lightColor;
+  id: totrans-123
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vec3 diffuse = diff * lightColor;
+- en: float ambient = 0.1;
+  id: totrans-124
+  prefs: []
+  type: TYPE_NORMAL
+  zh: float ambient = 0.1;
+- en: ❹ vec3 result = (ambient + diffuse) * vColor.xyz;
+  id: totrans-125
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ vec3 result = (ambient + diffuse) * vColor.xyz;
+- en: fragColor = vec4(result, 1.0);
+  id: totrans-126
+  prefs: []
+  type: TYPE_NORMAL
+  zh: fragColor = vec4(result, 1.0);
+- en: '}'
+  id: totrans-127
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '}'
+- en: '"""'
+  id: totrans-128
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""'
+- en: Notice that the color, normal, and fragment position variables, which were outputs
+    from the vertex shader, are now inputs to the fragment shader. In the main shader
+    code, you define the position ❶ and color ❷ for a light source. Then you compute
+    the light direction ❸. The resulting color ❹ is a mix of ambient and diffuse components
+    of the light and is set as the output from the fragment shader.
+  id: totrans-129
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 注意，颜色、法向量和片段位置变量，这些是顶点着色器的输出，现在是片段着色器的输入。在主着色器代码中，你定义了一个光源的位置❶和颜色❷。然后计算光照方向❸。最终的颜色❹是光源的环境光和漫反射光分量的混合，并作为片段着色器的输出设置。
+- en: Keep in mind that `fragPos` and `vNormal` are computed for each fragment via
+    interpolation, whereas `vColor` is constant for a given primitive. The net effect
+    is that the intrinsic color of a primitive (a triangle strip, in this case) remains
+    constant, while the perceived color varies across the primitive based on its orientation
+    with respect to the light source. This is exactly what you need to set each Game
+    of Life cell to a solid color, while varying that color to create the appearance
+    of lighting.
+  id: totrans-130
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 请记住，`fragPos`和`vNormal`是通过插值为每个片段计算出来的，而`vColor`对于给定的图元来说是常量。最终的效果是，图元的内在颜色（在此为三角形带）保持不变，而根据图元与光源的相对位置，感知到的颜色会有所变化。这正是你需要的，以便将每个“生命游戏”单元格设置为一种纯色，同时通过变化该颜色来创建光照效果。
+- en: Initializing the Torus Class
+  id: totrans-131
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 初始化 Torus 类
+- en: 'Now let’s look at the initialization code in the `Torus` class constructor:'
+  id: totrans-132
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在让我们来看一下`Torus`类构造函数中的初始化代码：
+- en: 'class Torus:'
+  id: totrans-133
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '类 Torus:'
+- en: '""" OpenGL 3D scene class"""'
+  id: totrans-134
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '""" OpenGL 3D 场景类"""'
+- en: '# initialization'
+  id: totrans-135
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 初始化'
+- en: '❶ def __init__(self, R, r, NX, NY):'
+  id: totrans-136
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❶ def __init__(self, R, r, NX, NY):'
+- en: global strVS, strFS
+  id: totrans-137
+  prefs: []
+  type: TYPE_NORMAL
+  zh: global strVS, strFS
+- en: '# modify shader for flat shading'
+  id: totrans-138
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 修改着色器以支持平面着色'
+- en: '# create shader'
+  id: totrans-139
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 创建着色器'
+- en: ❷ self.program = glutils.loadShaders(strVS, strFS)
+  id: totrans-140
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ self.program = glutils.loadShaders(strVS, strFS)
+- en: glProvokingVertex(GL_FIRST_VERTEX_CONVENTION)
+  id: totrans-141
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glProvokingVertex(GL_FIRST_VERTEX_CONVENTION)
+- en: self.pMatrixUniform = glGetUniformLocation(self.program,
+  id: totrans-142
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.pMatrixUniform = glGetUniformLocation(self.program,
+- en: b'uPMatrix')
+  id: totrans-143
+  prefs: []
+  type: TYPE_NORMAL
+  zh: b'uPMatrix')
+- en: self.mvMatrixUniform = glGetUniformLocation(self.program,
+  id: totrans-144
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.mvMatrixUniform = glGetUniformLocation(self.program,
+- en: b'uMVMatrix')
+  id: totrans-145
+  prefs: []
+  type: TYPE_NORMAL
+  zh: b'uMVMatrix')
+- en: '# torus geometry'
+  id: totrans-146
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 圆环几何'
+- en: self.R = R
+  id: totrans-147
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.R = R
+- en: self.r = r
+  id: totrans-148
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.r = r
+- en: '# grid size'
+  id: totrans-149
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 网格大小'
+- en: self.NX = NX
+  id: totrans-150
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.NX = NX
+- en: self.NY = NY
+  id: totrans-151
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.NY = NY
+- en: '# no. of points'
+  id: totrans-152
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 点的数量'
+- en: ❸ self.N = self.NX
+  id: totrans-153
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ self.N = self.NX
+- en: self.M = self.NY
+  id: totrans-154
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.M = self.NY
+- en: '# time'
+  id: totrans-155
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 时间'
+- en: self.t = 0
+  id: totrans-156
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.t = 0
+- en: '# compute parameters for glMultiDrawArrays'
+  id: totrans-157
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算 glMultiDrawArrays 的参数'
+- en: M1 = 2*self.M + 2
+  id: totrans-158
+  prefs: []
+  type: TYPE_NORMAL
+  zh: M1 = 2*self.M + 2
+- en: ❹ self.first_indices = [2*M1*i for i in range(self.N)]
+  id: totrans-159
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ self.first_indices = [2*M1*i for i in range(self.N)]
+- en: self.counts = [2*M1 for i in range(self.N)]
+  id: totrans-160
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.counts = [2*M1 for i in range(self.N)]
+- en: '# colors: {(i, j) : (r, g, b)}'
+  id: totrans-161
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 颜色：{(i, j) : (r, g, b)}'
+- en: '# with NX * NY entries'
+  id: totrans-162
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 包含 NX * NY 个条目'
+- en: ❺ self.colors_dict = self.init_colors(self.NX, self.NY)
+  id: totrans-163
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❺ self.colors_dict = self.init_colors(self.NX, self.NY)
+- en: '# create an empty array to hold colors'
+  id: totrans-164
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 创建一个空数组以保存颜色'
+- en: ❻ self.colors = np.zeros((3*self.N*(2*self.M + 2), ), np.float32)
+  id: totrans-165
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❻ self.colors = np.zeros((3*self.N*(2*self.M + 2), ), np.float32)
+- en: '# get vertices, normals, indices'
+  id: totrans-166
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 获取顶点、法线、索引'
+- en: ❼ vertices, normals = self.compute_vertices()
+  id: totrans-167
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❼ vertices, normals = self.compute_vertices()
+- en: ❽ self.compute_colors()
+  id: totrans-168
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❽ self.compute_colors()
+- en: '# set up vertex buffer objects'
+  id: totrans-169
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置顶点缓冲对象'
+- en: ❾ self.setup_vao(vertices, normals, self.colors)
+  id: totrans-170
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❾ self.setup_vao(vertices, normals, self.colors)
+- en: 'The `Torus` class has the following parameters in its constructor ❶: the radius
+    `R` of the outer ring of the torus, the radius `r` of the torus tube, and `NX`
+    and `NY` for the number of Game of Life simulation cells in the x- and y-directions.
+    The constructor’s first order of business is to load the shaders. You use the
+    `loadShaders()` method ❷ defined in the common *glutils.py* file. In the subsequent
+    lines, you store the variables passed into the `Torus` constructor in instance
+    variables such as `self.R` so they can be accessed later from other methods. Then
+    you set `N`, the number of points on the outer circle of the torus, to be `NX`,
+    the number of cells in the x-direction ❸. You similarly set `M`, the number of
+    points along the smaller radius `r` of the torus, to `NY`. This scheme is discussed
+    in the [“Mapping the Grid to the Torus”](nsp-venkitachalam503045-0024.xhtml#bh1206)
+    section.'
+  id: totrans-171
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`Torus` 类的构造函数包含以下参数 ❶：圆环外半径 `R`，圆环管道半径 `r`，以及用于表示“生命游戏”模拟单元格数目的 `NX` 和 `NY`，分别对应
+    x 轴和 y 轴的方向。构造函数的第一步是加载着色器。你将使用在公共的 *glutils.py* 文件中定义的 `loadShaders()` 方法 ❷。接下来，你将传递给
+    `Torus` 构造函数的变量存储在实例变量中，例如 `self.R`，以便在其他方法中访问。然后，你将 `N`（圆环外圈上的点的数量）设置为 `NX`，即
+    x 方向上的单元格数量 ❸。类似地，你将 `M`（圆环小半径 `r` 上的点的数量）设置为 `NY`。这一方案在 [“将网格映射到圆环”](nsp-venkitachalam503045-0024.xhtml#bh1206)
+    章节中有讨论。'
+- en: Next, you do some additional preparation for rendering the triangle strips that
+    will form the bands along the outer ring of the torus. You’ll eventually be using
+    the `glMultiDrawArrays()` OpenGL method to render all the triangle strips at once.
+    This method is an efficient way to draw multiple triangle strip primitives using
+    just one function call. As you saw in the [“Rendering”](nsp-venkitachalam503045-0024.xhtml#bh1203)
+    section, each triangle strip has 2*M* + 2 vertices, and you have *N* of these
+    strips. So, the starting indices for these triangle strips will be [0, (2*M* +
+    2), (2*M* + 2) × 2, . . . , (2*M* + 2) × *N*]. Accordingly, you set `first_indices`
+    and `counts` ❹, which will be required parameters when you call `glMultiDrawArrays()`.
+  id: totrans-172
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 接下来，你为渲染将形成圆环外带的三角形条带做一些额外准备。你最终将使用 `glMultiDrawArrays()` OpenGL 方法一次性渲染所有三角形条带。该方法是一种高效的方式，通过一次函数调用绘制多个三角形条带原语。如同你在
+    [“渲染”](nsp-venkitachalam503045-0024.xhtml#bh1203) 章节中看到的，每个三角形条带包含 2*M* + 2 个顶点，而你有
+    *N* 条这样的条带。因此，这些三角形条带的起始索引将是 [0, (2*M* + 2), (2*M* + 2) × 2, . . . , (2*M* + 2)
+    × *N*]。因此，你设置了 `first_indices` 和 `counts` ❹，这些将是调用 `glMultiDrawArrays()` 时需要的参数。
+- en: The `init_colors()` method ❺ initializes `color_dict`, which maps each grid
+    cell to a color—black or white. We’ll look at the details of the `init_colors()`
+    method soon. You initialize the `numpy` array `colors` to zeros ❻. You’ll later
+    populate this array with the correct values. You conclude the constructor by computing
+    the vertices and normals for the torus ❼, as well as the colors ❽, and by setting
+    up the vertex array object (VAO) for rendering the torus ❾.
+  id: totrans-173
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`init_colors()` 方法 ❺ 初始化了 `color_dict`，它将每个网格单元映射到一个颜色——黑色或白色。我们很快会详细查看 `init_colors()`
+    方法。你首先将 `numpy` 数组 `colors` 初始化为零 ❻，然后会用正确的值填充这个数组。最后，你通过计算环形体的顶点和法线 ❼，以及颜色 ❽，并设置渲染环形体的顶点数组对象（VAO）
+    ❾ 来结束构造函数。'
+- en: 'Now let’s look at the `Torus` class’s `init_colors()` method that was just
+    mentioned:'
+  id: totrans-174
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在让我们看看刚才提到的 `Torus` 类中的 `init_colors()` 方法：
+- en: 'def init_colors(self, NX, NY):'
+  id: totrans-175
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def init_colors(self, NX, NY):'
+- en: '"""initialize color dictionary"""'
+  id: totrans-176
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""初始化颜色字典"""'
+- en: colors = {}
+  id: totrans-177
+  prefs: []
+  type: TYPE_NORMAL
+  zh: colors = {}
+- en: c1 = [1.0, 1.0, 1.0]
+  id: totrans-178
+  prefs: []
+  type: TYPE_NORMAL
+  zh: c1 = [1.0, 1.0, 1.0]
+- en: 'for i in range(NX):'
+  id: totrans-179
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i in range(NX):'
+- en: 'for j in range(NY):'
+  id: totrans-180
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for j in range(NY):'
+- en: ❶ colors[(i, j)] = c1
+  id: totrans-181
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ colors[(i, j)] = c1
+- en: return colors
+  id: totrans-182
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return colors
+- en: The `init_colors()` method creates a dictionary called `colors` mapping from
+    simulation cell index (*i*, *j*) to the color that should be applied to the cell.
+    To begin, you simply set all the cell color values to `c1`, which is just plain
+    white ❶. As the Game of Life simulation unfolds, the values in this dictionary
+    will be updated to turn cells on and off.
+  id: totrans-183
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`init_colors()` 方法创建了一个名为 `colors` 的字典，映射从模拟单元格的索引（*i*, *j*）到应该应用于该单元格的颜色。开始时，你只需将所有单元格的颜色值设置为
+    `c1`，即纯白色 ❶。随着生命游戏模拟的展开，这个字典中的值将被更新，用于开启或关闭单元格。'
+- en: Calculating the Vertices
+  id: totrans-184
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 计算顶点
+- en: 'The next few methods we’ll consider work together to compute all the torus
+    vertices. We begin with the `compute_vertices()` method:'
+  id: totrans-185
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 接下来我们将考虑的几个方法一起工作，用于计算所有的环形体顶点。我们从`compute_vertices()`方法开始：
+- en: 'def compute_vertices(self):'
+  id: totrans-186
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def compute_vertices(self):'
+- en: R, r, N, M = self.R, self.r, self.N, self.M
+  id: totrans-187
+  prefs: []
+  type: TYPE_NORMAL
+  zh: R, r, N, M = self.R, self.r, self.N, self.M
+- en: '# create an empty array to hold vertices/normals'
+  id: totrans-188
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 创建一个空数组来存储顶点/法线'
+- en: vertices = []
+  id: totrans-189
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vertices = []
+- en: normals = []
+  id: totrans-190
+  prefs: []
+  type: TYPE_NORMAL
+  zh: normals = []
+- en: 'for i in range(N):'
+  id: totrans-191
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i in range(N):'
+- en: '# for all M points around a ring'
+  id: totrans-192
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 对于环上的所有 M 个点'
+- en: 'for j in range(M+1):'
+  id: totrans-193
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for j in range(M+1):'
+- en: '# compute angle theta of point'
+  id: totrans-194
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算点的角度 theta'
+- en: ❶ theta = (j % M) *2*math.pi/M
+  id: totrans-195
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ theta = (j % M) *2*math.pi/M
+- en: '#---ring #1------'
+  id: totrans-196
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '#---环 #1------'
+- en: '# compute angle'
+  id: totrans-197
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算角度'
+- en: ❷ alpha1 = i*2*math.pi/N
+  id: totrans-198
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ alpha1 = i*2*math.pi/N
+- en: '# compute transforms'
+  id: totrans-199
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算变换'
+- en: ❸ RM1, TM1 = self.compute_rt(R, alpha1)
+  id: totrans-200
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ RM1, TM1 = self.compute_rt(R, alpha1)
+- en: '# compute points'
+  id: totrans-201
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算点'
+- en: ❹ Pt1, NV1 = self.compute_pt(r, theta, RM1, TM1)
+  id: totrans-202
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ Pt1, NV1 = self.compute_pt(r, theta, RM1, TM1)
+- en: '#---ring #2------'
+  id: totrans-203
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '#---环 #2------'
+- en: '# index of next ring'
+  id: totrans-204
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 下一个环的索引'
+- en: ❺ ip1 = (i + 1) % N
+  id: totrans-205
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❺ ip1 = (i + 1) % N
+- en: '# compute angle'
+  id: totrans-206
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算角度'
+- en: ❻ alpha2 = ip1*2*math.pi/N
+  id: totrans-207
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❻ alpha2 = ip1*2*math.pi/N
+- en: '# compute transforms'
+  id: totrans-208
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算变换'
+- en: RM2, TM2 = self.compute_rt(R, alpha2)
+  id: totrans-209
+  prefs: []
+  type: TYPE_NORMAL
+  zh: RM2, TM2 = self.compute_rt(R, alpha2)
+- en: '# compute points'
+  id: totrans-210
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算点'
+- en: Pt2, NV2 = self.compute_pt(r, theta, RM2, TM2)
+  id: totrans-211
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Pt2, NV2 = self.compute_pt(r, theta, RM2, TM2)
+- en: '# store vertices/normals in right order for GL_TRIANGLE_STRIP'
+  id: totrans-212
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 按照正确的顺序存储顶点/法线以便用于 GL_TRIANGLE_STRIP'
+- en: ❼ vertices.append(Pt1[0:3])
+  id: totrans-213
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❼ vertices.append(Pt1[0:3])
+- en: vertices.append(Pt2[0:3])
+  id: totrans-214
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vertices.append(Pt2[0:3])
+- en: '# add normals'
+  id: totrans-215
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 添加法线'
+- en: normals.append(NV1[0:3])
+  id: totrans-216
+  prefs: []
+  type: TYPE_NORMAL
+  zh: normals.append(NV1[0:3])
+- en: normals.append(NV2[0:3])
+  id: totrans-217
+  prefs: []
+  type: TYPE_NORMAL
+  zh: normals.append(NV2[0:3])
+- en: '# return vertices and colors in correct format'
+  id: totrans-218
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 返回正确格式的顶点和颜色'
+- en: ❽ vertices = np.array(vertices, np.float32).reshape(-1)
+  id: totrans-219
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❽ vertices = np.array(vertices, np.float32).reshape(-1)
+- en: normals = np.array(normals, np.float32).reshape(-1)
+  id: totrans-220
+  prefs: []
+  type: TYPE_NORMAL
+  zh: normals = np.array(normals, np.float32).reshape(-1)
+- en: '# print(vertices.shape)'
+  id: totrans-221
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# print(vertices.shape)'
+- en: return vertices, normals
+  id: totrans-222
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return vertices, normals
+- en: The `compute_vertices()` method begins by creating empty lists to store the
+    vertices and normals. Then you compute the vertices and normals for the torus,
+    using a nested loop to implement the strategy we discussed in the [“Rendering”](nsp-venkitachalam503045-0024.xhtml#bh1203)
+    section. The outer loop iterates over the `N` rings that make up the torus. The
+    inner loop iterates over the `M` points on each of those rings. Within the loops,
+    you first compute the angle `theta` subtended by a point on the ring with index
+    `j` ❶. You use `j % M` and have the inner loop iterate over range `[0, M+1)` so
+    that when *j* is equal to `M`, `(j % M)` rolls back to `0`. This is to complete
+    the last segment of the ring.
+  id: totrans-223
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`compute_vertices()`方法首先创建空列表来存储顶点和法线。然后，你使用嵌套循环计算圆环的顶点和法线，使用我们在[“渲染”](nsp-venkitachalam503045-0024.xhtml#bh1203)部分讨论的策略。外层循环遍历组成圆环的`N`个环。内层循环遍历每个环上的`M`个点。在循环中，你首先计算在索引`j`
+    ❶处，环上某点所对的角度`theta`。你使用`j % M`，并让内层循环遍历范围`[0, M+1)`，这样当*j*等于`M`时，`(j % M)`会回到`0`。这是为了完成圆环的最后一个段。'
+- en: The torus is rendered as a set of bands (triangle strips), and each band consists
+    of two adjacent rings of points. You compute `alpha1`, the angle subtended by
+    the first ring in a band, at index `i` ❷, and use `alpha1` to compute the rotation
+    and translation matrices for this first ring using the `compute_rt()` method ❸.
+    Then you pass these matrices to the `compute_pt()` method to calculate the vertex
+    and normal for the point on the ring at angle `theta` ❹. We’ll look at how the
+    `compute_rt()` and `compute_pt()` methods work soon.
+  id: totrans-224
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 圆环被渲染为一组带状带（三角形条带），每个带状带由两个相邻的点环组成。你计算`alpha1`，即在索引`i` ❷处，第一个带状带中第一个环所对的角度，并利用`alpha1`通过`compute_rt()`方法
+    ❸计算该第一个环的旋转和平移矩阵。然后，将这些矩阵传递给`compute_pt()`方法，以计算在角度`theta` ❹处环上的顶点和法线。我们稍后将讨论`compute_rt()`和`compute_pt()`方法的工作原理。
+- en: Next, you move on to the adjacent ring at index `i+1`, using `ip1 = (i+1) %
+    N` to ensure that you roll back to zero at the end ❺. You compute the angle `alpha2`
+    of the ring at index `ip1` ❻ and then compute the vertex and normal for the point
+    on the `ip1` ring at angle `theta`, just as you did for the first ring.
+  id: totrans-225
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 接下来，你转到索引`i+1`处的相邻环，使用`ip1 = (i+1) % N`来确保在结束时回到零 ❺。你计算索引`ip1`处环的角度`alpha2`
+    ❻，然后像计算第一个环一样，计算`ip1`环上在角度`theta`处的顶点和法线。
+- en: Beginning at ❼, you append the vertices and normals for the adjacent rings to
+    the lists you created at the beginning of the method. You pick only the first
+    three coordinates of each vertex and normal, as in `Pt1[0:3]`, since all the matrix
+    transformations are done with homogeneous coordinates in the form (*x*, *y*, *z*,
+    *w*), and you need only (*x*, *y*, *z*). This action stores the vertices and normals
+    in a Python list of triplets of the form `[[x1, y1, z1], [x2, y2, z2], ...]`.
+    However, OpenGL expects vertex attributes to be provided in a flat array with
+    a known size. Therefore, you convert the `vertices` and `normals` lists into `numpy`
+    arrays of 32-bit floats ❽, using `reshape(-1)` to ensure that they’re flat arrays
+    of the form `[x1, y1, z1, x2, y2, z2, ...]`.
+  id: totrans-226
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 从❼开始，你将相邻环的顶点和法线添加到方法开始时创建的列表中。你只选择每个顶点和法线的前三个坐标，如`Pt1[0:3]`，因为所有的矩阵变换都是用齐次坐标形式（*x*,
+    *y*, *z*, *w*）进行的，而你只需要(*x*, *y*, *z*)。这个操作将顶点和法线以三元组的形式`[[x1, y1, z1], [x2, y2,
+    z2], ...]`存储在Python列表中。然而，OpenGL期望顶点属性以已知大小的扁平数组提供。因此，你将`vertices`和`normals`列表转换为32位浮点的`numpy`数组
+    ❽，并使用`reshape(-1)`确保它们是扁平数组，形式为`[x1, y1, z1, x2, y2, z2, ...]`。
+- en: 'Now let’s look at the `compute_rt()` and `compute_pt()` methods that helped
+    you compute the vertices and normals. We’ll start with `compute_rt()`, which calculates
+    the rotation and translation matrices needed to render a given ring in the torus:'
+  id: totrans-227
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在让我们来看一下`compute_rt()`和`compute_pt()`方法，它们帮助你计算顶点和法线。我们从`compute_rt()`开始，它计算渲染圆环所需的旋转和平移矩阵：
+- en: 'def compute_rt(self, R, alpha):'
+  id: totrans-228
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def compute_rt(self, R, alpha):'
+- en: '# compute position of ring'
+  id: totrans-229
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算环的位置'
+- en: ❶ Tx = R*math.cos(alpha)
+  id: totrans-230
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ Tx = R*math.cos(alpha)
+- en: Ty = R*math.sin(alpha)
+  id: totrans-231
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Ty = R*math.sin(alpha)
+- en: Tz = 0.0
+  id: totrans-232
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Tz = 0.0
+- en: '# rotation matrix'
+  id: totrans-233
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 旋转矩阵'
+- en: ❷ RM = np.array([
+  id: totrans-234
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ RM = np.array([
+- en: '[math.cos(alpha), -math.sin(alpha), 0.0, 0.0],'
+  id: totrans-235
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[math.cos(alpha), -math.sin(alpha), 0.0, 0.0],'
+- en: '[math.sin(alpha), math.cos(alpha), 0.0, 0.0],'
+  id: totrans-236
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[math.sin(alpha), math.cos(alpha), 0.0, 0.0],'
+- en: '[0.0, 0.0, 1.0, 0.0],'
+  id: totrans-237
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[0.0, 0.0, 1.0, 0.0],'
+- en: '[0.0, 0.0, 0.0, 1.0]'
+  id: totrans-238
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[0.0, 0.0, 0.0, 1.0]'
+- en: '], dtype=np.float32)'
+  id: totrans-239
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '], dtype=np.float32)'
+- en: '# translation matrix'
+  id: totrans-240
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 平移矩阵'
+- en: ❸ TM = np.array([
+  id: totrans-241
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ TM = np.array([
+- en: '[1.0, 0.0, 0.0, Tx],'
+  id: totrans-242
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[1.0, 0.0, 0.0, Tx],'
+- en: '[0.0, 1.0, 0.0, Ty],'
+  id: totrans-243
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[0.0, 1.0, 0.0, Ty],'
+- en: '[0.0, 0.0, 1.0, Tz],'
+  id: totrans-244
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[0.0, 0.0, 1.0, Tz],'
+- en: '[0.0, 0.0, 0.0, 1.0]'
+  id: totrans-245
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[0.0, 0.0, 0.0, 1.0]'
+- en: '], dtype=np.float32)'
+  id: totrans-246
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '], dtype=np.float32)'
+- en: return (RM, TM)
+  id: totrans-247
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return (RM, TM)
+- en: You first calculate the translation components of the matrix ❶, using parametric
+    equations. Then you create the rotation matrix ❷ and translation matrix ❸ as `numpy`
+    arrays. You’ve seen these matrices before in the [“Computing Vertices”](nsp-venkitachalam503045-0024.xhtml#bh1201)
+    section. You return the arrays at the end of the method.
+  id: totrans-248
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 你首先使用参数方程计算矩阵❶的平移分量。然后，你创建旋转矩阵❷和平移矩阵❸，将它们作为`numpy`数组。你之前在[“计算顶点”](nsp-venkitachalam503045-0024.xhtml#bh1201)部分见过这些矩阵。你在方法的最后返回这些数组。
+- en: 'Here’s the other helper method, `compute_pt()`, which uses the translation
+    and rotation matrices to determine the vertex and normal vector of a given point
+    on a ring of the torus:'
+  id: totrans-249
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这是另一个辅助方法，`compute_pt()`，它利用平移和旋转矩阵来确定环面上一给定点的顶点和法线向量：
+- en: 'def compute_pt(self, r, theta, RM, TM):'
+  id: totrans-250
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def compute_pt(self, r, theta, RM, TM):'
+- en: '# compute point coords'
+  id: totrans-251
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算点坐标'
+- en: ❶ P = np.array([r*math.cos(theta), 0.0, r*math.sin(theta), 1.0],
+  id: totrans-252
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ P = np.array([r*math.cos(theta), 0.0, r*math.sin(theta), 1.0],
+- en: dtype=np.float32)
+  id: totrans-253
+  prefs: []
+  type: TYPE_NORMAL
+  zh: dtype=np.float32)
+- en: '# print(P)'
+  id: totrans-254
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# print(P)'
+- en: '# apply rotation - this also gives us the vertex normals'
+  id: totrans-255
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 应用旋转——这也给我们顶点法线'
+- en: ❷ NV = np.dot(RM, P)
+  id: totrans-256
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ NV = np.dot(RM, P)
+- en: '# apply translation'
+  id: totrans-257
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 应用平移'
+- en: ❸ Pt = np.dot(TM, NV)
+  id: totrans-258
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ Pt = np.dot(TM, NV)
+- en: return (Pt, NV)
+  id: totrans-259
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return (Pt, NV)
+- en: You compute the point `P` at angle `theta` on a ring lying on the XZ plane ❶.
+    Then you apply a rotation to this point by multiplying it by the rotation matrix
+    ❷. This also gives you the point’s normal vector. You multiply the normal by the
+    translation matrix to give you the vertex on the torus ❸.
+  id: totrans-260
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 你计算角度`theta`下环面上的点`P`❶。然后，通过将其与旋转矩阵❷相乘，应用旋转到该点。这也会给出该点的法线向量。你将法线与平移矩阵相乘，得到环面上的顶点❸。
+- en: Managing Cell Colors
+  id: totrans-261
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 管理单元格颜色
+- en: Now we’ll examine some methods that help set the colors of the cells on the
+    torus. First is the `compute_colors()` method, which we originally called as part
+    of the `Torus` class’s constructor. It sets the color of each triangle in the
+    triangle strips that make up the torus, based on the values determined by the
+    Game of Life simulation.
+  id: totrans-262
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在我们将检查一些有助于设置环面单元格颜色的方法。首先是`compute_colors()`方法，我们最初将其作为`Torus`类构造函数的一部分调用。该方法基于“生命游戏”模拟确定的值，设置构成环面的三角形条带中每个三角形的颜色。
+- en: 'def compute_colors(self):'
+  id: totrans-263
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def compute_colors(self):'
+- en: R, r, N, M = self.R, self.r, self.N, self.M
+  id: totrans-264
+  prefs: []
+  type: TYPE_NORMAL
+  zh: R, r, N, M = self.R, self.r, self.N, self.M
+- en: '# the points on the ring are generated on the X-Z plane'
+  id: totrans-265
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 环上的点生成在 X-Z 平面上'
+- en: '# then they are rotated and translated into the correct'
+  id: totrans-266
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 然后它们被旋转和平移到正确的位置'
+- en: '# position on the torus'
+  id: totrans-267
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 环面上的位置'
+- en: '# for all N rings around the torus'
+  id: totrans-268
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 环面上的所有 N 个环'
+- en: 'for i in range(N):'
+  id: totrans-269
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i in range(N):'
+- en: '# for all M points around a ring'
+  id: totrans-270
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 所有环上 M 个点'
+- en: 'for j in range(M+1):'
+  id: totrans-271
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for j in range(M+1):'
+- en: '# j value'
+  id: totrans-272
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# j 值'
+- en: jj = j % M
+  id: totrans-273
+  prefs: []
+  type: TYPE_NORMAL
+  zh: jj = j % M
+- en: '# store colors - same color applies to (V_i_j, V_ip1_j)'
+  id: totrans-274
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 存储颜色——相同颜色应用于 (V_i_j, V_ip1_j)'
+- en: ❶ col = self.colors_dict[(i, jj)]
+  id: totrans-275
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ col = self.colors_dict[(i, jj)]
+- en: '# get index into array'
+  id: totrans-276
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 获取数组中的索引'
+- en: ❷ index = 3*(2*i*(M+1) + 2*j)
+  id: totrans-277
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ index = 3*(2*i*(M+1) + 2*j)
+- en: '# set color'
+  id: totrans-278
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置颜色'
+- en: ❸ self.colors[index:index+3] = col
+  id: totrans-279
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ self.colors[index:index+3] = col
+- en: ❹ self.colors[index+3:index+6] = col
+  id: totrans-280
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ self.colors[index+3:index+6] = col
+- en: This method follows the logic described in [“Coloring the Triangle Strips”](nsp-venkitachalam503045-0024.xhtml#bh1204)
+    on [page 185](nsp-venkitachalam503045-0024.xhtml#p185) to update the values in
+    the `colors` array, which was initialized as an array of all zeros. You retrieve
+    the color for cell `(i, jj)` from `colors_dict`, the dictionary mapping cells
+    to colors that you created earlier ❶. (You define `jj = j % M` so it rolls over
+    to zero at the end.) Then you compute the index into the `colors` array at which
+    you should update the new computed values ❷. Each pair of rings that makes up
+    a band has `2*(M+1)` vertices, and there are `N` of these pairs. Starting at each
+    location in the array, you store three sequential values (the RGB components of
+    a cell’s color). Hence, the index of the *j*th color in a ring for the *i*th segment
+    of the torus will be given by `3*(2*i*(M+1) + 2*j)`. Note that you use `j` and
+    not `jj` in computing the index, since you’re storing the computed values here
+    and you don’t want the index to roll over to zero. Now that you have the index,
+    you update the `colors` array with the new computed values. You update the array
+    both at `[index:index+3]` ❸ and at `[index+3:index+6]` ❹ since each cell on the
+    torus is a quad, made of two adjacent triangles.
+  id: totrans-281
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这个方法遵循了[“三角形带的着色”](nsp-venkitachalam503045-0024.xhtml#bh1204)中描述的逻辑，在[第185页](nsp-venkitachalam503045-0024.xhtml#p185)中更新了
+    `colors` 数组的值，该数组最初初始化为全零数组。你从 `colors_dict` 获取细胞 `(i, jj)` 的颜色，`colors_dict`
+    是你之前创建的字典，它将细胞与颜色进行了映射❶。（你定义了 `jj = j % M`，这样当 `j` 达到最大值时，`jj` 会重置为零。）然后，你计算出应该更新新计算值的
+    `colors` 数组中的索引❷。每对环形带的环都有 `2*(M+1)` 个顶点，并且有 `N` 对这样的环。你从数组中的每个位置开始，存储三个连续的值（一个细胞颜色的
+    RGB 分量）。因此，环面上第 *i* 个段的第 *j* 个颜色的索引将是 `3*(2*i*(M+1) + 2*j)`。注意，在计算索引时你使用 `j` 而不是
+    `jj`，因为你在这里存储的是计算值，并且不希望索引重置为零。现在你有了索引，你用新计算的值更新 `colors` 数组。你在 `[index:index+3]`
+    ❸ 和 `[index+3:index+6]` ❹ 这两个位置更新数组，因为环面上的每个细胞都是一个四边形，由两个相邻的三角形组成。
+- en: 'Let’s now look at `recalc_colors()`, a method for updating the color values
+    stored on the GPU at each step in the Game of Life simulation:'
+  id: totrans-282
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在我们来看一下 `recalc_colors()` 方法，这是一个在生命游戏模拟的每一步中更新存储在 GPU 上的颜色值的方法：
+- en: 'def recalc_colors(self):'
+  id: totrans-283
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def recalc_colors(self):'
+- en: '# get colors'
+  id: totrans-284
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 获取颜色'
+- en: self.compute_colors()
+  id: totrans-285
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.compute_colors()
+- en: '# bind VAO'
+  id: totrans-286
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 绑定 VAO'
+- en: glBindVertexArray(self.vao)
+  id: totrans-287
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glBindVertexArray(self.vao)
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.colorBuffer)
+  id: totrans-288
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glBindBuffer(GL_ARRAY_BUFFER, self.colorBuffer)
+- en: '# set buffer data'
+  id: totrans-289
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置缓冲区数据'
+- en: ❶ glBufferSubData(GL_ARRAY_BUFFER, 0, 4*len(self.colors), self.colors)
+  id: totrans-290
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ glBufferSubData(GL_ARRAY_BUFFER, 0, 4*len(self.colors), self.colors)
+- en: '# unbind VAO'
+  id: totrans-291
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 解除绑定 VAO'
+- en: glBindVertexArray(0)
+  id: totrans-292
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glBindVertexArray(0)
+- en: For every step of the simulation, the colors of the cells are updated, which
+    means you need to update the colors of all the triangle strips on the torus, and
+    you need to do it efficiently so you don’t slow down the rendering. The `recalc_colors()`
+    method does this using the OpenGL `glBufferSubData()` method ❶. The vertices,
+    normals, and colors are stored in attribute arrays on the GPU. The vertices and
+    normals don’t change, so you computed them only once in the beginning, with a
+    call to `compute_vertices()` in the class’s constructor method. When the colors
+    change, `glBufferSubData()` updates the color attribute arrays rather than creating
+    them afresh.
+  id: totrans-293
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在每一步模拟中，细胞的颜色会被更新，这意味着你需要更新环面上所有三角形带的颜色，并且需要高效地进行更新，以免拖慢渲染速度。`recalc_colors()`
+    方法使用 OpenGL 的 `glBufferSubData()` 方法❶来完成这个任务。顶点、法线和颜色存储在 GPU 上的属性数组中。由于顶点和法线不会变化，因此只需在开始时通过类的构造方法调用
+    `compute_vertices()` 来计算它们。当颜色发生变化时，`glBufferSubData()` 会更新颜色属性数组，而不是重新创建它们。
+- en: Drawing the Torus
+  id: totrans-294
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 绘制环面
+- en: 'Finally, here’s the `render()` method that draws the torus:'
+  id: totrans-295
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最后，这是 `render()` 方法，用于绘制环面：
+- en: 'def render(self, pMatrix, mvMatrix):'
+  id: totrans-296
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def render(self, pMatrix, mvMatrix):'
+- en: '# use shader'
+  id: totrans-297
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 使用着色器'
+- en: ❶ glUseProgram(self.program)
+  id: totrans-298
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ glUseProgram(self.program)
+- en: '# set proj matrix'
+  id: totrans-299
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置投影矩阵'
+- en: ❷ glUniformMatrix4fv(self.pMatrixUniform, 1, GL_FALSE, pMatrix)
+  id: totrans-300
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ glUniformMatrix4fv(self.pMatrixUniform, 1, GL_FALSE, pMatrix)
+- en: '# set modelview matrix'
+  id: totrans-301
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置模型视图矩阵'
+- en: ❸ glUniformMatrix4fv(self.mvMatrixUniform, 1, GL_FALSE, mvMatrix)
+  id: totrans-302
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ glUniformMatrix4fv(self.mvMatrixUniform, 1, GL_FALSE, mvMatrix)
+- en: '# bind VAO'
+  id: totrans-303
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 绑定 VAO'
+- en: ❹ glBindVertexArray(self.vao)
+  id: totrans-304
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ glBindVertexArray(self.vao)
+- en: '# draw'
+  id: totrans-305
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 绘制'
+- en: ❺ glMultiDrawArrays(GL_TRIANGLE_STRIP, self.first_indices,
+  id: totrans-306
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❺ glMultiDrawArrays(GL_TRIANGLE_STRIP, self.first_indices,
+- en: self.counts, self.N)
+  id: totrans-307
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.counts, self.N)
+- en: '# unbind VAO'
+  id: totrans-308
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 解除绑定 VAO'
+- en: glBindVertexArray(0)
+  id: totrans-309
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glBindVertexArray(0)
+- en: This method is similar to the render methods you saw in the [previous chapter](nsp-venkitachalam503045-0023.xhtml#ch09).
+    You make a call to use the shader program ❶ and set the projection ❷ and modelview
+    ❸ matrix uniform variables. Then you bind to the vertex array object ❹, which
+    you created by calling `setup_vao()` in the class’s constructor. The VAO has all
+    the attribute array buffers you need. Next, you use the `glMultiDrawArrays()`
+    method to draw `N` triangle strips ❺. You already computed `first_indices` and
+    `counts` in the `Torus` constructor.
+  id: totrans-310
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这个方法类似于你在[前一章](nsp-venkitachalam503045-0023.xhtml#ch09)中看到的渲染方法。你会调用使用着色器程序❶并设置投影❷和模型视图❸矩阵的统一变量。接着，你绑定到顶点数组对象❹，这个对象是通过在类的构造函数中调用`setup_vao()`方法创建的。VAO包含了你所需要的所有属性数组缓冲区。然后，你使用`glMultiDrawArrays()`方法来绘制`N`个三角形带❺。你已经在`Torus`构造函数中计算了`first_indices`和`counts`。
+- en: '[Implementing the Game of Life Simulation](nsp-venkitachalam503045-0008.xhtml#rbh1208)'
+  id: totrans-311
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: '[实现生命游戏模拟](nsp-venkitachalam503045-0008.xhtml#rbh1208)'
+- en: In [Chapter 3](nsp-venkitachalam503045-0015.xhtml#ch03), you implemented Conway’s
+    Game of Life (GOL) by using `matplotlib` to visualize the updated values of the
+    simulation grid. Here you’ll adapt the earlier implementation to update a dictionary
+    of cell colors instead, which will be used to update the colors of the torus.
+    The relevant code is encapsulated in a class called `GOL`, declared in the file
+    *gol.py*. To see the complete code listing, skip ahead to [“The Complete Game
+    of Life Simulation Code”](nsp-venkitachalam503045-0024.xhtml#ah1208) on [page
+    209](nsp-venkitachalam503045-0024.xhtml#p209).
+  id: totrans-312
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在[第3章](nsp-venkitachalam503045-0015.xhtml#ch03)中，你通过使用`matplotlib`来可视化模拟网格更新后的值，从而实现了康威的生命游戏（GOL）。在这里，你将修改之前的实现，改为更新单元格颜色的字典，而不是直接更新网格的值，这些颜色将用于更新环形网格的颜色。相关代码被封装在一个名为`GOL`的类中，声明在文件*gol.py*中。要查看完整的代码清单，请跳转到[“完整的生命游戏模拟代码”](nsp-venkitachalam503045-0024.xhtml#ah1208)，在[第209页](nsp-venkitachalam503045-0024.xhtml#p209)。
+- en: The Class Constructor
+  id: totrans-313
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 类的构造函数
+- en: 'First, let’s look at the `GOL` class constructor:'
+  id: totrans-314
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 首先，让我们看看`GOL`类的构造函数：
+- en: 'class GOL:'
+  id: totrans-315
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'class GOL:'
+- en: '❶ def __init__(self, NX, NY, glider):'
+  id: totrans-316
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❶ def __init__(self, NX, NY, glider):'
+- en: '"""GOL constructor"""'
+  id: totrans-317
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""GOL构造函数"""'
+- en: '# a grid of NX x NY random values'
+  id: totrans-318
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 一个NX x NY的随机值网格'
+- en: self.NX, self.NY = NX, NY
+  id: totrans-319
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.NX, self.NY = NX, NY
+- en: 'if glider:'
+  id: totrans-320
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if glider:'
+- en: ❷ self.addGlider(1, 1, NX, NY)
+  id: totrans-321
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ self.addGlider(1, 1, NX, NY)
+- en: 'else:'
+  id: totrans-322
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'else:'
+- en: ❸ self.grid = np.random.choice([1, 0], NX * NY,
+  id: totrans-323
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ self.grid = np.random.choice([1, 0], NX * NY,
+- en: p=[0.2, 0.8]).reshape(NX, NY)
+  id: totrans-324
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p=[0.2, 0.8]).reshape(NX, NY)
+- en: The `GOL` constructor takes as input the grid dimensions `NX` and `NY`, as well
+    as a Boolean flag `glider` ❶. If this flag is set, you initialize the simulation
+    grid with the “glider” pattern using the `addGlider()` method ❷. Since we already
+    discussed this method in [Chapter 3](nsp-venkitachalam503045-0015.xhtml#ch03),
+    we won’t examine it here. If the `glider` flag isn’t set, you just initialize
+    the grid to random ones and zeros ❸.
+  id: totrans-325
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`GOL`构造函数接受输入参数网格尺寸`NX`和`NY`，以及一个布尔值标志`glider`❶。如果该标志被设置，你将使用`addGlider()`方法❷初始化带有“滑行者”图案的模拟网格。由于我们已经在[第3章](nsp-venkitachalam503045-0015.xhtml#ch03)中讨论过这个方法，因此在这里不再详细探讨。如果`glider`标志未设置，你则将网格初始化为随机的1和0❸。'
+- en: The `GOL` class uses an `update()` method to update the simulation grid at each
+    time step. Again, this is identical to the previous implementation.
+  id: totrans-326
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`GOL`类使用`update()`方法来更新每个时间步的模拟网格。这个方法与之前的实现完全相同。'
+- en: The get_colors() Method
+  id: totrans-327
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: get_colors()方法
+- en: 'The `get_colors()` method is what distinguishes this chapter’s Game of Life
+    implementation from that of [Chapter 3](nsp-venkitachalam503045-0015.xhtml#ch03).
+    The method builds up a dictionary mapping of each Game of Life cell to its color
+    value at a given step in the simulation: black for ON or white for OFF. This dictionary
+    is passed to the `Torus` object when the scene is updated.'
+  id: totrans-328
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`get_colors()`方法是本章生命游戏实现与[第3章](nsp-venkitachalam503045-0015.xhtml#ch03)中的区别所在。该方法构建了一个字典，将每个生命游戏单元格与其在模拟中的颜色值进行映射：开启时为黑色，关闭时为白色。这个字典将在场景更新时传递给`Torus`对象。'
+- en: 'def get_colors(self):'
+  id: totrans-329
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def get_colors(self):'
+- en: colors = {}
+  id: totrans-330
+  prefs: []
+  type: TYPE_NORMAL
+  zh: colors = {}
+- en: ❶ c1 = np.array([1.0, 1.0, 1.0], np.float32)
+  id: totrans-331
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ c1 = np.array([1.0, 1.0, 1.0], np.float32)
+- en: ❷ c2 = np.array([0.0, 0.0, 0.0], np.float32)
+  id: totrans-332
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ c2 = np.array([0.0, 0.0, 0.0], np.float32)
+- en: 'for i in range(self.NX):'
+  id: totrans-333
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i in range(self.NX):'
+- en: 'for j in range (self.NY):'
+  id: totrans-334
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for j in range (self.NY):'
+- en: 'if self.grid[i, j] == 1:'
+  id: totrans-335
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if self.grid[i, j] == 1:'
+- en: colors[(i, j)] = c2
+  id: totrans-336
+  prefs: []
+  type: TYPE_NORMAL
+  zh: colors[(i, j)] = c2
+- en: 'else :'
+  id: totrans-337
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'else:'
+- en: colors[(i, j)] = c1
+  id: totrans-338
+  prefs: []
+  type: TYPE_NORMAL
+  zh: colors[(i, j)] = c1
+- en: return colors
+  id: totrans-339
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return colors
+- en: Here you iterate through all the cells in the simulation grid and set the RGB
+    colors based on whether the grid value is `0` or `1`. The possible colors are
+    defined as `c1` for white ❶ or `c2` for black ❷. These colors will be used while
+    rendering the torus.
+  id: totrans-340
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在这里，你遍历仿真网格中的所有单元格，并根据网格值是`0`还是`1`来设置RGB颜色。可能的颜色定义为`c1`表示白色❶或`c2`表示黑色❷。这些颜色将在渲染环面时使用。
+- en: '[Creating the Camera](nsp-venkitachalam503045-0008.xhtml#rbh1209)'
+  id: totrans-341
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: '[创建摄像机](nsp-venkitachalam503045-0008.xhtml#rbh1209)'
+- en: In [“Controlling the Camera”](nsp-venkitachalam503045-0024.xhtml#bh1205) on
+    [page 185](nsp-venkitachalam503045-0024.xhtml#p185), we discussed how to build
+    a camera that orbits around the torus. Now let’s look at the implementation. The
+    code is encapsulated in the class `OrbitCamera`, which is declared in the file
+    *camera.py*. To see the complete code listing, skip ahead to [“The Complete Camera
+    Code”](nsp-venkitachalam503045-0024.xhtml#ah1209) on [page 211](nsp-venkitachalam503045-0024.xhtml#p211).
+  id: totrans-342
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在[“控制摄像机”](nsp-venkitachalam503045-0024.xhtml#bh1205)一节中，我们讨论了如何构建一个围绕环面旋转的摄像机。现在让我们来看一下实现代码。代码封装在`OrbitCamera`类中，该类在文件*camera.py*中声明。要查看完整的代码列表，请跳转到[“完整摄像机代码”](nsp-venkitachalam503045-0024.xhtml#ah1209)一节，位于[第211页](nsp-venkitachalam503045-0024.xhtml#p211)。
+- en: Constructing the Class
+  id: totrans-343
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 构造类
+- en: 'Here’s the constructor for the `OrbitCamera` class:'
+  id: totrans-344
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这是`OrbitCamera`类的构造函数：
+- en: 'class OrbitCamera:'
+  id: totrans-345
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'class OrbitCamera:'
+- en: '"""helper class for viewing"""'
+  id: totrans-346
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""用于查看的辅助类"""'
+- en: 'def __init__(self, height, radius, beta_step=1):'
+  id: totrans-347
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def __init__(self, height, radius, beta_step=1):'
+- en: ❶ self.radius = radius
+  id: totrans-348
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ self.radius = radius
+- en: ❷ self.beta = 0
+  id: totrans-349
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ self.beta = 0
+- en: ❸ self.beta_step = beta_step
+  id: totrans-350
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ self.beta_step = beta_step
+- en: ❹ self.height = height
+  id: totrans-351
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ self.height = height
+- en: '# initial eye vector is (-R, 0, -H)'
+  id: totrans-352
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 初始眼睛向量为(-R, 0, -H)'
+- en: rr = radius/math.sqrt(2.0)
+  id: totrans-353
+  prefs: []
+  type: TYPE_NORMAL
+  zh: rr = radius/math.sqrt(2.0)
+- en: ❺ self.eye = np.array([rr, rr, height], np.float32)
+  id: totrans-354
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❺ self.eye = np.array([rr, rr, height], np.float32)
+- en: '# compute up vector'
+  id: totrans-355
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算上向量'
+- en: ❻ self.up = self.__compute_up_vector(self.eye )
+  id: totrans-356
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❻ self.up = self.__compute_up_vector(self.eye)
+- en: '# center is origin'
+  id: totrans-357
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 中心为原点'
+- en: ❼ self.center = np.array([0, 0, 0], np.float32)
+  id: totrans-358
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❼ self.center = np.array([0, 0, 0], np.float32)
+- en: You start by setting the camera parameters passed into the `OrbitCamera` constructor.
+    These include the camera’s orbit radius ❶ and `beta`, the angle that the view
+    vector (projected on the XY plane) makes with the x-axis ❷. You also set the amount
+    `beta` should increment with each time step of the camera rotation ❸ and the height
+    of the camera from the XY plane ❹.
+  id: totrans-359
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 你首先通过设置传入`OrbitCamera`构造函数的摄像机参数来开始。这些参数包括摄像机的轨道半径❶和`beta`，即视线向量（投影到XY平面）与x轴之间的角度❷。你还需要设置`beta`在每次摄像机旋转的时间步长中应增加的量❸以及摄像机距离XY平面的高度❹。
+- en: 'Next, you set the initial value of the eye position to be midway between the
+    positive x- and positive y-axis, at a distance `R` from the origin, suspended
+    at the specified `height` ❺. You can calculate this as:'
+  id: totrans-360
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 接下来，你将眼睛位置的初始值设置为位于正x轴和正y轴之间的中点，距离原点`R`的距离，悬挂在指定的`height`高度❺。你可以通过以下方式计算：
+- en: '![](images/nsp-venkitachalam503045-m10013.jpg)'
+  id: totrans-361
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-m10013.jpg)'
+- en: Finally, you compute the camera’s up vector ❻ and set the center as the origin
+    (0, 0, 0) ❼. Remember that these are the pieces of information, along with the
+    eye position, that OpenGL needs to model a camera.
+  id: totrans-362
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最后，你计算摄像机的上向量❻并将中心设置为原点(0, 0, 0)❼。记住，这些信息连同眼睛位置一起，都是OpenGL用于建模摄像机的必要数据。
+- en: Calculating the Up Vector
+  id: totrans-363
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 计算上向量
+- en: 'Here’s the method that you call in the `OrbitCamera` class constructor to compute
+    the up vector:'
+  id: totrans-364
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这是你在`OrbitCamera`类构造函数中调用的方法，用于计算上向量：
+- en: 'def __compute_up_vector(self, E):'
+  id: totrans-365
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def __compute_up_vector(self, E):'
+- en: '# N = (E x k) x E'
+  id: totrans-366
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# N = (E x k) x E'
+- en: Z = np.array([0, 0, 1], np.float32)
+  id: totrans-367
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Z = np.array([0, 0, 1], np.float32)
+- en: ❶ U = np.cross(np.cross(E, Z), E)
+  id: totrans-368
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ U = np.cross(np.cross(E, Z), E)
+- en: '# normalize'
+  id: totrans-369
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 归一化'
+- en: ❷ U = U / np.linalg.norm(U)
+  id: totrans-370
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ U = U / np.linalg.norm(U)
+- en: return U
+  id: totrans-371
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return U
+- en: The `__compute_up_vector()` method calculates the up vector `U` based on the
+    method we discussed earlier in [“Controlling the Camera”](nsp-venkitachalam503045-0024.xhtml#bh1205)
+    on [page 185](nsp-venkitachalam503045-0024.xhtml#p185). Specifically, you use
+    cross products and the initial up vector guess of (0, 0, 1) to compute the correct
+    up vector ❶. Then you normalize the up vector ❷ before returning it.
+  id: totrans-372
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`__compute_up_vector()`方法基于我们在[“控制摄像机”](nsp-venkitachalam503045-0024.xhtml#bh1205)一节中讨论的方法来计算上向量`U`。具体来说，你使用叉乘和初始的上向量猜测(0,
+    0, 1)来计算正确的上向量❶。然后，你对上向量进行归一化❷，最后返回它。'
+- en: Rotating the Camera
+  id: totrans-373
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 旋转摄像机
+- en: 'The `OrbitCamera` class’s `rotate()` method is called every time you need to
+    rotate the camera around the torus by one step. Here’s the method’s definition:'
+  id: totrans-374
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`OrbitCamera` 类的 `rotate()` 方法在每次需要绕环形体旋转相机一步时被调用。以下是该方法的定义：'
+- en: 'def rotate(self):'
+  id: totrans-375
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def rotate(self):'
+- en: '"""rotate by one step and compute new camera parameters"""'
+  id: totrans-376
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""旋转一步并计算新的相机参数"""'
+- en: ❶ self.beta = (self.beta + self.beta_step) % 360
+  id: totrans-377
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ self.beta = (self.beta + self.beta_step) % 360
+- en: '# recalculate eye E'
+  id: totrans-378
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 重新计算视角 E'
+- en: ❷ self.eye = np.array([self.radius*math.cos(math.radians(self.beta)),
+  id: totrans-379
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ self.eye = np.array([self.radius*math.cos(math.radians(self.beta)),
+- en: self.radius*math.sin(math.radians(self.beta)),
+  id: totrans-380
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.radius*math.sin(math.radians(self.beta)),
+- en: self.height], np.float32)
+  id: totrans-381
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.height], np.float32)
+- en: '# up vector'
+  id: totrans-382
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# up 向量'
+- en: ❸ self.up = self.__compute_up_vector(self.eye)
+  id: totrans-383
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ self.up = self.__compute_up_vector(self.eye)
+- en: You increase the angle `beta` by the increment `beta_step`, using the `%` operator
+    to ensure that the angle rolls over to 0 when it reaches 360 degrees ❶. Then you
+    use the new `beta` value to compute the updated eye position ❷, and you use the
+    new eye position to compute the new up vector with the `__compute_up_vector()`
+    method ❸.
+  id: totrans-384
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 你通过增量 `beta_step` 增加角度 `beta`，使用 `%` 运算符确保当角度达到 360 度时会回绕到 0 ❶。然后，你使用新的 `beta`
+    值计算更新后的视角位置 ❷，并使用新的视角位置通过 `__compute_up_vector()` 方法计算新的 up 向量 ❸。
+- en: '[Putting Everything Together](nsp-venkitachalam503045-0008.xhtml#rbh1210)'
+  id: totrans-385
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: '[将一切整合在一起](nsp-venkitachalam503045-0008.xhtml#rbh1210)'
+- en: You’ve built all the classes necessary for rendering the torus. Now you need
+    some code to bring those classes together, create and manage the OpenGL window,
+    and coordinate the rendered objects. Create the class `RenderWindow` (defined
+    in *gol_torus.py*) for this purpose. It’s similar to the `RenderWindow` class
+    used in [Chapter 9](nsp-venkitachalam503045-0023.xhtml#ch09), so we’ll discuss
+    only the parts of the code that are unique to the current project. To see the
+    complete code listing, skip ahead to [“The Complete RenderWindow Code”](nsp-venkitachalam503045-0024.xhtml#ah1210)
+    on [page 211](nsp-venkitachalam503045-0024.xhtml#p211).
+  id: totrans-386
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 你已经构建了所有必要的类来渲染环形体。接下来，你需要一些代码来将这些类组合起来，创建和管理 OpenGL 窗口，并协调渲染的对象。为此创建 `RenderWindow`
+    类（定义在 *gol_torus.py* 中）。它类似于在[第 9 章](nsp-venkitachalam503045-0023.xhtml#ch09)中使用的
+    `RenderWindow` 类，因此我们将只讨论当前项目中代码的独特部分。要查看完整的代码清单，请跳到[“完整的 RenderWindow 代码”](nsp-venkitachalam503045-0024.xhtml#ah1210)，位于[第
+    211 页](nsp-venkitachalam503045-0024.xhtml#p211)。
+- en: The main() Function
+  id: totrans-387
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: main() 函数
+- en: Before we examine the `RenderWindow` class, let’s look the program’s `main()`
+    function, which sets the whole simulation in motion. This function is also defined
+    in *gol_torus.py*.
+  id: totrans-388
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在我们检查 `RenderWindow` 类之前，先来看一下程序的 `main()` 函数，它启动了整个模拟。该函数也定义在 *gol_torus.py*
+    中。
+- en: 'def main():'
+  id: totrans-389
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def main():'
+- en: print("Starting GOL. Press ESC to quit.")
+  id: totrans-390
+  prefs: []
+  type: TYPE_NORMAL
+  zh: print("开始 GOL。按 ESC 退出。")
+- en: '# parse arguments'
+  id: totrans-391
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 解析参数'
+- en: parser = argparse.ArgumentParser(description="Runs Conway's Game of Life
+  id: totrans-392
+  prefs: []
+  type: TYPE_NORMAL
+  zh: parser = argparse.ArgumentParser(description="运行康威的生命游戏
+- en: simulation on a Torus.")
+  id: totrans-393
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在环形体上进行模拟。")
+- en: '# add arguments'
+  id: totrans-394
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 添加参数'
+- en: ❶ parser.add_argument('--glider', action='store_true', required=False)
+  id: totrans-395
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ parser.add_argument('--glider', action='store_true', required=False)
+- en: args = parser.parse_args()
+  id: totrans-396
+  prefs: []
+  type: TYPE_NORMAL
+  zh: args = parser.parse_args()
+- en: glider = False
+  id: totrans-397
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glider = False
+- en: 'if args.glider:'
+  id: totrans-398
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if args.glider:'
+- en: ❷ glider = True
+  id: totrans-399
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ glider = True
+- en: ❸ rw = RenderWindow(glider)
+  id: totrans-400
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ rw = RenderWindow(glider)
+- en: ❹ rw.run()
+  id: totrans-401
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ rw.run()
+- en: You add a command line argument called `--glider` so you can bring up the torus
+    with just a glider pattern on it ❶ and set the corresponding flag ❷. Then you
+    create a `RenderWindow` object ❸, which initializes all the other objects needed
+    for the program, and start the rendering with a call to the `RenderWindow` object’s
+    `run()` method ❹.
+  id: totrans-402
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 你添加了一个名为 `--glider` 的命令行参数，这样你就可以仅用一个滑行器模式启动环形体 ❶ 并设置相应的标志 ❷。然后，你创建一个 `RenderWindow`
+    对象 ❸，它初始化程序所需的所有其他对象，并通过调用 `RenderWindow` 对象的 `run()` 方法 ❹ 来开始渲染。
+- en: The RenderWindow Constructor
+  id: totrans-403
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: RenderWindow 构造函数
+- en: 'The constructor on the `RenderWindow` class starts with the standard GLFW OpenGL
+    setup you saw in [Chapter 9](nsp-venkitachalam503045-0023.xhtml#ch09), including
+    setting the window size, calling the render methods, and handling window and keyboard
+    events. Then the constructor goes on with the following Game of Life–specific
+    initializations:'
+  id: totrans-404
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`RenderWindow` 类的构造函数从你在[第 9 章](nsp-venkitachalam503045-0023.xhtml#ch09)看到的标准
+    GLFW OpenGL 设置开始，包括设置窗口大小、调用渲染方法和处理窗口与键盘事件。然后，构造函数继续进行以下与生命游戏相关的初始化：'
+- en: 'class RenderWindow:'
+  id: totrans-405
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'class RenderWindow:'
+- en: 'def __init__(self, glider):'
+  id: totrans-406
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def __init__(self, glider):'
+- en: --`snip`--
+  id: totrans-407
+  prefs: []
+  type: TYPE_NORMAL
+  zh: --`snip`--
+- en: '# create 3D'
+  id: totrans-408
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 创建 3D'
+- en: NX = 64
+  id: totrans-409
+  prefs: []
+  type: TYPE_NORMAL
+  zh: NX = 64
+- en: NY = 64
+  id: totrans-410
+  prefs: []
+  type: TYPE_NORMAL
+  zh: NY = 64
+- en: R = 4.0
+  id: totrans-411
+  prefs: []
+  type: TYPE_NORMAL
+  zh: R = 4.0
+- en: r = 1.0
+  id: totrans-412
+  prefs: []
+  type: TYPE_NORMAL
+  zh: r = 1.0
+- en: ❶ self.torus = Torus(R, r, NX, NY)
+  id: totrans-413
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ self.torus = Torus(R, r, NX, NY)
+- en: ❷ self.gol = GOL(NX, NY, glider)
+  id: totrans-414
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ self.gol = GOL(NX, NY, glider)
+- en: '# create a camera'
+  id: totrans-415
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 创建相机'
+- en: ❸ self.camera = OrbitCamera(5.0, 10.0)
+  id: totrans-416
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ self.camera = OrbitCamera(5.0, 10.0)
+- en: '# exit flag'
+  id: totrans-417
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 退出标志'
+- en: ❹ self.exitNow = False
+  id: totrans-418
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ self.exitNow = False
+- en: '# rotation flag'
+  id: totrans-419
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 旋转标志'
+- en: ❺ self.rotate = True
+  id: totrans-420
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❺ self.rotate = True
+- en: '# skip count'
+  id: totrans-421
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 跳过计数'
+- en: ❻ self.skip = 0
+  id: totrans-422
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❻ self.skip = 0
+- en: First you set some parameters for the simulation, including the number of cells
+    in the grid and the inner and outer radiuses of the torus. Then you create the
+    `Torus` object using these parameters ❶, as well as the `GOL` object that will
+    manage the simulation ❷. You also create the orbiting camera at a radius of 5
+    units from the origin and a height of 10 units from the XY plane ❸.
+  id: totrans-423
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 首先，你设置一些模拟参数，包括网格中的单元数以及圆环的内外半径。然后，你使用这些参数 ❶ 创建 `Torus` 对象，以及将管理模拟的 `GOL` 对象
+    ❷。你还创建了一个绕轴旋转的相机，距离原点 5 个单位，离 XY 平面 10 个单位 ❸。
+- en: Next, you set the exit flag used to quit the program ❹, and you initialize the
+    rotation flag to `True` ❺. Finally, you set a `skip` variable ❻, which you’ll
+    use to control the frequency at which the simulation updates. You’ll see how the
+    `skip` variable works later in this section.
+  id: totrans-424
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 接下来，你设置退出标志，用于退出程序 ❹，并将旋转标志初始化为 `True` ❺。最后，你设置一个 `skip` 变量 ❻，用于控制模拟更新的频率。你将在本节后面看到
+    `skip` 变量如何工作。
+- en: The run() and step() Methods
+  id: totrans-425
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: '`run()` 和 `step()` 方法'
+- en: 'The `run()` method of the `RenderWindow` object is responsible for running
+    the simulation, with help from the `step()` method. Let’s take a look at the `run()`
+    method first:'
+  id: totrans-426
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`run()` 方法属于 `RenderWindow` 对象，负责运行模拟过程，并借助 `step()` 方法。我们先来看一下 `run()` 方法：'
+- en: 'def run(self):'
+  id: totrans-427
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def run(self):'
+- en: '# initializer timer'
+  id: totrans-428
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 初始化计时器'
+- en: glfw.glfwSetTime(0)
+  id: totrans-429
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwSetTime(0)
+- en: t = 0.0
+  id: totrans-430
+  prefs: []
+  type: TYPE_NORMAL
+  zh: t = 0.0
+- en: '❶ while not glfw.glfwWindowShouldClose(self.win) and not self.exitNow:'
+  id: totrans-431
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❶ while not glfw.glfwWindowShouldClose(self.win) and not self.exitNow:'
+- en: '# update every x seconds'
+  id: totrans-432
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 每隔 x 秒更新一次'
+- en: currT = glfw.glfwGetTime()
+  id: totrans-433
+  prefs: []
+  type: TYPE_NORMAL
+  zh: currT = glfw.glfwGetTime()
+- en: '❷ if currT - t > 0.05:'
+  id: totrans-434
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❷ if currT - t > 0.05:'
+- en: '# update time'
+  id: totrans-435
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 更新时间'
+- en: t = currT
+  id: totrans-436
+  prefs: []
+  type: TYPE_NORMAL
+  zh: t = currT
+- en: '# set viewport'
+  id: totrans-437
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置视口'
+- en: ❸ self.width, self.height = glfw.glfwGetFramebufferSize(self.win)
+  id: totrans-438
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ self.width, self.height = glfw.glfwGetFramebufferSize(self.win)
+- en: self.aspect = self.width/float(self.height)
+  id: totrans-439
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.aspect = self.width/float(self.height)
+- en: glViewport(0, 0, self.width, self.height)
+  id: totrans-440
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glViewport(0, 0, self.width, self.height)
+- en: '# clear'
+  id: totrans-441
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 清除'
+- en: glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+  id: totrans-442
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+- en: '# build projection matrix'
+  id: totrans-443
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 构建投影矩阵'
+- en: pMatrix = glutils.perspective(60.0, self.aspect, 0.1, 100.0)
+  id: totrans-444
+  prefs: []
+  type: TYPE_NORMAL
+  zh: pMatrix = glutils.perspective(60.0, self.aspect, 0.1, 100.0)
+- en: mvMatrix = glutils.lookAt(self.camera.eye, self.camera.center,
+  id: totrans-445
+  prefs: []
+  type: TYPE_NORMAL
+  zh: mvMatrix = glutils.lookAt(self.camera.eye, self.camera.center,
+- en: self.camera.up)
+  id: totrans-446
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.camera.up)
+- en: '# render'
+  id: totrans-447
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 渲染'
+- en: ❹ self.torus.render(pMatrix, mvMatrix)
+  id: totrans-448
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ self.torus.render(pMatrix, mvMatrix)
+- en: '# step'
+  id: totrans-449
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 步骤'
+- en: '❺ if self.rotate:'
+  id: totrans-450
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❺ if self.rotate:'
+- en: self.step()
+  id: totrans-451
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.step()
+- en: glfw.glfwSwapBuffers(self.win)
+  id: totrans-452
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwSwapBuffers(self.win)
+- en: '# poll for and process events'
+  id: totrans-453
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 轮询并处理事件'
+- en: glfw.glfwPollEvents()
+  id: totrans-454
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwPollEvents()
+- en: '# end'
+  id: totrans-455
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 结束'
+- en: glfw.glfwTerminate()
+  id: totrans-456
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwTerminate()
+- en: The rendering scheme is designed to keep rendering frames in a loop until the
+    window is closed or the ESC key is pressed ❶. Before you proceed, you check whether
+    the time elapsed since the last render is greater than 0.05 seconds ❷. This helps
+    maintain a maximum frame rate. Starting at ❸, you perform some standard OpenGL
+    operations, such as setting the viewport, clearing the screen, and computing the
+    current transformation that needs to be set into the vertex shader. Then you render
+    the torus ❹ and call the `step()` method ❺, which will rotate the camera and update
+    the Game of Life simulation by one time step. Once the rendering is done, you
+    swap the OpenGL buffers and poll for further window events. If you exit the loop,
+    you call the `glfwTerminate()` method for cleanup.
+  id: totrans-457
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 渲染方案的设计是为了保持渲染帧在一个循环中，直到窗口关闭或按下 ESC 键 ❶。在继续之前，你会检查自上次渲染以来的时间是否大于 0.05 秒 ❷。这有助于保持最大帧率。从 ❸
+    开始，你执行一些标准的 OpenGL 操作，比如设置视口、清除屏幕，并计算需要设置到顶点着色器中的当前变换。然后，你渲染圆环 ❹ 并调用 `step()`
+    方法 ❺，该方法将旋转相机并更新“生命游戏”模拟的一步。渲染完成后，你交换 OpenGL 缓冲区并等待进一步的窗口事件。如果退出循环，你将调用 `glfwTerminate()`
+    方法进行清理。
+- en: 'Here’s the `step()` method that increments the camera and the simulation:'
+  id: totrans-458
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这是 `step()` 方法，用于递增相机和模拟：
+- en: 'def step(self):'
+  id: totrans-459
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def step(self):'
+- en: '❶ if self.skip == 9:'
+  id: totrans-460
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❶ if self.skip == 9:'
+- en: '# update GOL'
+  id: totrans-461
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 更新 GOL'
+- en: ❷ self.gol.update()
+  id: totrans-462
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ self.gol.update()
+- en: ❸ colors = self.gol.get_colors()
+  id: totrans-463
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ colors = self.gol.get_colors()
+- en: ❹ self.torus.set_colors(colors)
+  id: totrans-464
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ self.torus.set_colors(colors)
+- en: '# step'
+  id: totrans-465
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 步骤'
+- en: ❺ self.torus.step()
+  id: totrans-466
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❺ self.torus.step()
+- en: '# reset'
+  id: totrans-467
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 重置'
+- en: ❻ self.skip = 0
+  id: totrans-468
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❻ self.skip = 0
+- en: '# update skip'
+  id: totrans-469
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 更新跳过计数'
+- en: ❼ self.skip += 1
+  id: totrans-470
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❼ self.skip += 1
+- en: '# rotate camera'
+  id: totrans-471
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 旋转相机'
+- en: ❽ self.camera.rotate()
+  id: totrans-472
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❽ self.camera.rotate()
+- en: Every time this method is called, it rotates the camera by one step ❽. You also
+    want to update the Game of Life simulation, but doing so at the same rate that
+    the camera moves would not be visually pleasing. You therefore use the `skip`
+    variable to slow down the simulation by a factor of 9 relative to the camera motion.
+    This variable starts from `0` and is incremented each time the `step()` method
+    is called ❼. When `skip` gets to `9` ❶, you update the simulation by one time
+    step. To do this, you first call the `GOL` class’s `update()` method ❷, which
+    turns cells on or off according to the Conway’s Game of Life rules. Then you get
+    the updated cell colors from the simulation ❸, set them to the torus ❹, and call
+    `torus.step()` ❺, which will update the attribute buffers with the new colors.
+    Finally, you reset the `skip` variable to `0` so the process can repeat ❻.
+  id: totrans-473
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 每次调用此方法时，它会使相机旋转一步❽。你还想更新“生命游戏”模拟，但如果以与相机移动相同的速度进行更新，视觉效果将不太理想。因此，你使用`skip`变量来使模拟速度相对于相机的移动变慢9倍。该变量从`0`开始，每次调用`step()`方法时递增❼。当`skip`达到`9`时❶，你就更新模拟一次。为此，你首先调用`GOL`类的`update()`方法❷，根据康威的生命游戏规则打开或关闭单元格。然后，你从模拟中获取更新后的单元格颜色❸，将它们设置到环面上❹，并调用`torus.step()`❺，它将使用新颜色更新属性缓冲区。最后，你将`skip`变量重置为`0`，以便该过程可以重复❻。
+- en: '[Running the 3D Game of Life Simulation](nsp-venkitachalam503045-0008.xhtml#rah1204)'
+  id: totrans-474
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: '[运行3D生命游戏模拟](nsp-venkitachalam503045-0008.xhtml#rah1204)'
+- en: 'Now we’re ready to run the code. Enter the following at the terminal:'
+  id: totrans-475
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在我们准备运行代码。在终端输入以下命令：
+- en: $ `python gol_torus.py`
+  id: totrans-476
+  prefs: []
+  type: TYPE_NORMAL
+  zh: $ `python gol_torus.py`
+- en: '[Figure 10-8](nsp-venkitachalam503045-0024.xhtml#fig10-8) shows the output.'
+  id: totrans-477
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[图 10-8](nsp-venkitachalam503045-0024.xhtml#fig10-8)展示了输出结果。'
+- en: '![](images/nsp-venkitachalam503045-f10008.jpg)'
+  id: totrans-478
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f10008.jpg)'
+- en: 'Figure 10-8: A rendering of the Game of Life on a torus'
+  id: totrans-479
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 10-8：环面上的生命游戏渲染
+- en: The program will open a window that shows the torus you meticulously constructed,
+    with the Game of Life simulation running on its surface! As the simulation evolves,
+    try to find some of the familiar Game of Life patterns you saw in [Chapter 3](nsp-venkitachalam503045-0015.xhtml#ch03).
+    Notice that the light direction remains constant while the camera orbits the torus.
+    As the camera turns, you’ll be able to see the light and dark portions of the
+    torus.
+  id: totrans-480
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 程序将打开一个窗口，展示你精心构建的环面，并在其表面运行生命游戏模拟！随着模拟的发展，尝试找出一些你在[第3章](nsp-venkitachalam503045-0015.xhtml#ch03)中看到的熟悉的生命游戏图案。注意，在相机绕环面旋转时，光照方向保持不变。当相机转动时，你将能够看到环面的明暗部分。
+- en: 'Now let’s try the glider option:'
+  id: totrans-481
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在让我们尝试滑翔机选项：
+- en: $ `python gol_torus.py --glider`
+  id: totrans-482
+  prefs: []
+  type: TYPE_NORMAL
+  zh: $ `python gol_torus.py --glider`
+- en: '[Figure 10-9](nsp-venkitachalam503045-0024.xhtml#fig10-9) shows the output.'
+  id: totrans-483
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[图 10-9](nsp-venkitachalam503045-0024.xhtml#fig10-9)展示了输出结果。'
+- en: '![](images/nsp-venkitachalam503045-f10009.jpg)'
+  id: totrans-484
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f10009.jpg)'
+- en: 'Figure 10-9: A Game of Life glider on a torus'
+  id: totrans-485
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 10-9：生命游戏滑翔机在环面上的演示
+- en: Sit back and enjoy watching the lone glider make its way along the surface of
+    the torus!
+  id: totrans-486
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 坐下来，享受观看那个孤独的滑翔机沿着环面表面移动的过程吧！
+- en: '[Summary](nsp-venkitachalam503045-0008.xhtml#rah1205)'
+  id: totrans-487
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: '[摘要](nsp-venkitachalam503045-0008.xhtml#rah1205)'
+- en: In this chapter, you implemented Conway’s Game of Life on a torus. You learned
+    how to compute the vertices of a torus and how to render it using OpenGL, and
+    you saw how code can be adapted from one context (a flat rendering of the Game
+    of Life simulation) to another (a 3D rendering of the same simulation). In the
+    process, I hope you’ve gotten a more intuitive feeling for how the toroidal boundary
+    conditions we discussed in [Chapter 3](nsp-venkitachalam503045-0015.xhtml#ch03) work.
+  id: totrans-488
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 本章中，你在环面上实现了康威的生命游戏。你学习了如何计算环面的顶点，以及如何使用OpenGL渲染它，并且你看到代码如何从一个上下文（生命游戏模拟的平面渲染）适应到另一个上下文（同一模拟的3D渲染）。在这个过程中，我希望你能对我们在[第3章](nsp-venkitachalam503045-0015.xhtml#ch03)讨论的环形边界条件有更直观的理解。
+- en: '[Experiments!](nsp-venkitachalam503045-0008.xhtml#rah1206)'
+  id: totrans-489
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: '[实验！](nsp-venkitachalam503045-0008.xhtml#rah1206)'
+- en: 'Here are a few experiments you can try with this project:'
+  id: totrans-490
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这里有几个你可以尝试的实验：
+- en: 1\. In this chapter’s implementation, the torus is lit by a single light source.
+    Try adding another light source in the shader code. Now the computed color of
+    a vertex will be the sum of contributions from both light sources. Try changing
+    the positions and colors of the light sources and see the effect on the torus
+    lighting.
+  id: totrans-491
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 1\. 在本章的实现中，环面由一个光源照亮。尝试在着色器代码中添加另一个光源。现在，顶点的计算颜色将是两个光源贡献的总和。尝试更改光源的位置和颜色，并观察光照效果。
+- en: 2\. To get a representative view of the simulation, you defined a camera that
+    revolves around the z-axis of the torus, in a plane parallel to the XY plane.
+    Now create a camera that flies over the torus instead. Your camera will start
+    by looking down at the torus along the negative z-axis and will move in a circle
+    along the XZ plane, at a fixed distance from the center of the torus. Think about
+    how you will compute the eye point, view direction, and up vector for each step
+    of the movement.
+  id: totrans-492
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 2. 为了获得模拟的代表性视图，你定义了一个围绕圆环 z 轴旋转的相机，平行于 XY 平面的一个平面。现在创建一个相机，它将飞越圆环。你的相机将从沿负
+    z 轴俯视圆环开始，并在 XZ 平面上沿着一个固定距离圆环中心的圆圈移动。想想你如何为每一步计算眼睛位置、视线方向和上向量。
+- en: '[The Complete Torus Rendering Code](nsp-venkitachalam503045-0008.xhtml#rah1207)'
+  id: totrans-493
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: '[完整的圆环渲染代码](nsp-venkitachalam503045-0008.xhtml#rah1207)'
+- en: 'Here’s the complete listing for the file *torus.py*:'
+  id: totrans-494
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这是 *torus.py* 文件的完整代码：
+- en: '"""'
+  id: totrans-495
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""'
+- en: torus.py
+  id: totrans-496
+  prefs: []
+  type: TYPE_NORMAL
+  zh: torus.py
+- en: A Python OpenGL program that generates a torus.
+  id: totrans-497
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 一个生成圆环的 Python OpenGL 程序。
+- en: 'Author: Mahesh Venkitachalam'
+  id: totrans-498
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 作者：Mahesh Venkitachalam
+- en: '"""'
+  id: totrans-499
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""'
+- en: import OpenGL
+  id: totrans-500
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import OpenGL
+- en: from OpenGL.GL import *
+  id: totrans-501
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from OpenGL.GL import *
+- en: import numpy as np
+  id: totrans-502
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import numpy as np
+- en: import math, sys, os
+  id: totrans-503
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import math, sys, os
+- en: import glutils
+  id: totrans-504
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import glutils
+- en: import glfw
+  id: totrans-505
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import glfw
+- en: strVS = """
+  id: totrans-506
+  prefs: []
+  type: TYPE_NORMAL
+  zh: strVS = """
+- en: version 330 core
+  id: totrans-507
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: version 330 core
+- en: layout(location = 0) in vec3 aVert;
+  id: totrans-508
+  prefs: []
+  type: TYPE_NORMAL
+  zh: layout(location = 0) in vec3 aVert;
+- en: layout(location = 1) in vec3 aColor;
+  id: totrans-509
+  prefs: []
+  type: TYPE_NORMAL
+  zh: layout(location = 1) in vec3 aColor;
+- en: layout(location = 2) in vec3 aNormal;
+  id: totrans-510
+  prefs: []
+  type: TYPE_NORMAL
+  zh: layout(location = 2) in vec3 aNormal;
+- en: uniform mat4 uMVMatrix;
+  id: totrans-511
+  prefs: []
+  type: TYPE_NORMAL
+  zh: uniform mat4 uMVMatrix;
+- en: uniform mat4 uPMatrix;
+  id: totrans-512
+  prefs: []
+  type: TYPE_NORMAL
+  zh: uniform mat4 uPMatrix;
+- en: flat out vec3 vColor;
+  id: totrans-513
+  prefs: []
+  type: TYPE_NORMAL
+  zh: flat out vec3 vColor;
+- en: out vec3 vNormal;
+  id: totrans-514
+  prefs: []
+  type: TYPE_NORMAL
+  zh: out vec3 vNormal;
+- en: out vec3 fragPos;
+  id: totrans-515
+  prefs: []
+  type: TYPE_NORMAL
+  zh: out vec3 fragPos;
+- en: void main() {
+  id: totrans-516
+  prefs: []
+  type: TYPE_NORMAL
+  zh: void main() {
+- en: // transform vertex
+  id: totrans-517
+  prefs: []
+  type: TYPE_NORMAL
+  zh: // 变换顶点
+- en: gl_Position = uPMatrix * uMVMatrix * vec4(aVert, 1.0);
+  id: totrans-518
+  prefs: []
+  type: TYPE_NORMAL
+  zh: gl_Position = uPMatrix * uMVMatrix * vec4(aVert, 1.0);
+- en: fragPos = aVert;
+  id: totrans-519
+  prefs: []
+  type: TYPE_NORMAL
+  zh: fragPos = aVert;
+- en: vColor = aColor;
+  id: totrans-520
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vColor = aColor;
+- en: vNormal = aNormal;
+  id: totrans-521
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vNormal = aNormal;
+- en: '}'
+  id: totrans-522
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '}'
+- en: '"""'
+  id: totrans-523
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""'
+- en: strFS = """
+  id: totrans-524
+  prefs: []
+  type: TYPE_NORMAL
+  zh: strFS = """
+- en: version 330 core
+  id: totrans-525
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: version 330 core
+- en: flat in vec3 vColor;
+  id: totrans-526
+  prefs: []
+  type: TYPE_NORMAL
+  zh: flat in vec3 vColor;
+- en: in vec3 vNormal;
+  id: totrans-527
+  prefs: []
+  type: TYPE_NORMAL
+  zh: in vec3 vNormal;
+- en: in vec3 fragPos;
+  id: totrans-528
+  prefs: []
+  type: TYPE_NORMAL
+  zh: in vec3 fragPos;
+- en: out vec4 fragColor;
+  id: totrans-529
+  prefs: []
+  type: TYPE_NORMAL
+  zh: out vec4 fragColor;
+- en: void main() {
+  id: totrans-530
+  prefs: []
+  type: TYPE_NORMAL
+  zh: void main() {
+- en: vec3 lightPos = vec3(10.0, 10.0, 10.0);
+  id: totrans-531
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vec3 lightPos = vec3(10.0, 10.0, 10.0);
+- en: vec3 lightColor = vec3(1.0, 1.0, 1.0);
+  id: totrans-532
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vec3 lightColor = vec3(1.0, 1.0, 1.0);
+- en: vec3 lightDir = normalize(lightPos - fragPos);
+  id: totrans-533
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vec3 lightDir = normalize(lightPos - fragPos);
+- en: float diff = max(dot(vNormal, lightDir), 0.0);
+  id: totrans-534
+  prefs: []
+  type: TYPE_NORMAL
+  zh: float diff = max(dot(vNormal, lightDir), 0.0);
+- en: vec3 diffuse = diff * lightColor;
+  id: totrans-535
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vec3 diffuse = diff * lightColor;
+- en: float ambient = 0.1;
+  id: totrans-536
+  prefs: []
+  type: TYPE_NORMAL
+  zh: float ambient = 0.1;
+- en: vec3 result = (ambient + diffuse) * vColor.xyz;
+  id: totrans-537
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vec3 result = (ambient + diffuse) * vColor.xyz;
+- en: fragColor = vec4(result, 1.0);
+  id: totrans-538
+  prefs: []
+  type: TYPE_NORMAL
+  zh: fragColor = vec4(result, 1.0);
+- en: '}'
+  id: totrans-539
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '}'
+- en: '"""'
+  id: totrans-540
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""'
+- en: 'class Torus:'
+  id: totrans-541
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'class Torus:'
+- en: '""" OpenGL 3D scene class"""'
+  id: totrans-542
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '""" OpenGL 3D 场景类"""'
+- en: '# initialization'
+  id: totrans-543
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 初始化'
+- en: 'def __init__(self, R, r, NX, NY):'
+  id: totrans-544
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def __init__(self, R, r, NX, NY):'
+- en: global strVS, strFS
+  id: totrans-545
+  prefs: []
+  type: TYPE_NORMAL
+  zh: global strVS, strFS
+- en: '# create shader'
+  id: totrans-546
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 创建着色器'
+- en: self.program = glutils.loadShaders(strVS, strFS)
+  id: totrans-547
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.program = glutils.loadShaders(strVS, strFS)
+- en: glProvokingVertex(GL_FIRST_VERTEX_CONVENTION)
+  id: totrans-548
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glProvokingVertex(GL_FIRST_VERTEX_CONVENTION)
+- en: self.pMatrixUniform = glGetUniformLocation(self.program,
+  id: totrans-549
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.pMatrixUniform = glGetUniformLocation(self.program,
+- en: b'uPMatrix')
+  id: totrans-550
+  prefs: []
+  type: TYPE_NORMAL
+  zh: b'uPMatrix')
+- en: self.mvMatrixUniform = glGetUniformLocation(self.program,
+  id: totrans-551
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.mvMatrixUniform = glGetUniformLocation(self.program,
+- en: b'uMVMatrix')
+  id: totrans-552
+  prefs: []
+  type: TYPE_NORMAL
+  zh: b'uMVMatrix')
+- en: '# torus geometry'
+  id: totrans-553
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 圆环几何'
+- en: self.R = R
+  id: totrans-554
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.R = R
+- en: self.r = r
+  id: totrans-555
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.r = r
+- en: '# grid size'
+  id: totrans-556
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 网格大小'
+- en: self.NX = NX
+  id: totrans-557
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.NX = NX
+- en: self.NY = NY
+  id: totrans-558
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.NY = NY
+- en: '# no. of points'
+  id: totrans-559
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 点数'
+- en: self.N = self.NX
+  id: totrans-560
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.N = self.NX
+- en: self.M = self.NY
+  id: totrans-561
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.M = self.NY
+- en: '# time'
+  id: totrans-562
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 时间'
+- en: self.t = 0
+  id: totrans-563
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.t = 0
+- en: '# compute parameters for glMultiDrawArrays'
+  id: totrans-564
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算 glMultiDrawArrays 的参数'
+- en: M1 = 2*self.M + 2
+  id: totrans-565
+  prefs: []
+  type: TYPE_NORMAL
+  zh: M1 = 2*self.M + 2
+- en: self.first_indices = [2*M1*i for i in range(self.N)]
+  id: totrans-566
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.first_indices = [2*M1*i for i in range(self.N)]
+- en: self.counts = [2*M1 for i in range(self.N)]
+  id: totrans-567
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.counts = [2*M1 for i in range(self.N)]
+- en: '# colors: {(i, j) : (r, g, b)}'
+  id: totrans-568
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 颜色：{(i, j) : (r, g, b)}'
+- en: '# with NX * NY entries'
+  id: totrans-569
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 带有 NX * NY 项'
+- en: self.colors_dict = self.init_colors(self.NX, self.NY)
+  id: totrans-570
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.colors_dict = self.init_colors(self.NX, self.NY)
+- en: '# create an empty array to hold colors'
+  id: totrans-571
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 创建一个空数组来保存颜色'
+- en: self.colors = np.zeros((3*self.N*(2*self.M + 2), ), np.float32)
+  id: totrans-572
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.colors = np.zeros((3*self.N*(2*self.M + 2), ), np.float32)
+- en: '# get vertices, normals, indices'
+  id: totrans-573
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 获取顶点、法线、索引'
+- en: vertices, normals = self.compute_vertices()
+  id: totrans-574
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vertices, normals = self.compute_vertices()
+- en: self.compute_colors()
+  id: totrans-575
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.compute_colors()
+- en: '# set up vertex buffer objects'
+  id: totrans-576
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置顶点缓冲对象'
+- en: self.setup_vao(vertices, normals, self.colors)
+  id: totrans-577
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.setup_vao(vertices, normals, self.colors)
+- en: 'def init_colors(self, NX, NY):'
+  id: totrans-578
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def init_colors(self, NX, NY):'
+- en: '"""initialize color dictionary"""'
+  id: totrans-579
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""初始化颜色字典"""'
+- en: colors = {}
+  id: totrans-580
+  prefs: []
+  type: TYPE_NORMAL
+  zh: colors = {}
+- en: c1 = [1.0, 1.0, 1.0]
+  id: totrans-581
+  prefs: []
+  type: TYPE_NORMAL
+  zh: c1 = [1.0, 1.0, 1.0]
+- en: 'for i in range(NX):'
+  id: totrans-582
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i in range(NX):'
+- en: 'for j in range (NY):'
+  id: totrans-583
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for j in range (NY):'
+- en: colors[(i, j)] = c1
+  id: totrans-584
+  prefs: []
+  type: TYPE_NORMAL
+  zh: colors[(i, j)] = c1
+- en: return colors
+  id: totrans-585
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return colors
+- en: 'def compute_rt(self, R, alpha):'
+  id: totrans-586
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def compute_rt(self, R, alpha):'
+- en: '# compute position of ring'
+  id: totrans-587
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算环的位置'
+- en: Tx = R*math.cos(alpha)
+  id: totrans-588
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Tx = R*math.cos(alpha)
+- en: Ty = R*math.sin(alpha)
+  id: totrans-589
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Ty = R*math.sin(alpha)
+- en: Tz = 0.0
+  id: totrans-590
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Tz = 0.0
+- en: '# rotation matrix'
+  id: totrans-591
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 旋转矩阵'
+- en: RM = np.array([
+  id: totrans-592
+  prefs: []
+  type: TYPE_NORMAL
+  zh: RM = np.array([
+- en: '[math.cos(alpha), -math.sin(alpha), 0.0, 0.0],'
+  id: totrans-593
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[math.cos(alpha), -math.sin(alpha), 0.0, 0.0],'
+- en: '[math.sin(alpha), math.cos(alpha), 0.0, 0.0],'
+  id: totrans-594
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[math.sin(alpha), math.cos(alpha), 0.0, 0.0],'
+- en: '[0.0, 0.0, 1.0, 0.0],'
+  id: totrans-595
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[0.0, 0.0, 1.0, 0.0],'
+- en: '[0.0, 0.0, 0.0, 1.0]'
+  id: totrans-596
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[0.0, 0.0, 0.0, 1.0]'
+- en: '], dtype=np.float32)'
+  id: totrans-597
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '], dtype=np.float32)'
+- en: '# translation matrix'
+  id: totrans-598
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 平移矩阵'
+- en: TM = np.array([
+  id: totrans-599
+  prefs: []
+  type: TYPE_NORMAL
+  zh: TM = np.array([
+- en: '[1.0, 0.0, 0.0, Tx],'
+  id: totrans-600
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[1.0, 0.0, 0.0, Tx],'
+- en: '[0.0, 1.0, 0.0, Ty],'
+  id: totrans-601
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[0.0, 1.0, 0.0, Ty],'
+- en: '[0.0, 0.0, 1.0, Tz],'
+  id: totrans-602
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[0.0, 0.0, 1.0, Tz],'
+- en: '[0.0, 0.0, 0.0, 1.0]'
+  id: totrans-603
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[0.0, 0.0, 0.0, 1.0]'
+- en: '], dtype=np.float32)'
+  id: totrans-604
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '], dtype=np.float32)'
+- en: return (RM, TM)
+  id: totrans-605
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return (RM, TM)
+- en: 'def compute_pt(self, r, theta, RM, TM):'
+  id: totrans-606
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def compute_pt(self, r, theta, RM, TM):'
+- en: '# compute point coords'
+  id: totrans-607
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算点坐标'
+- en: P = np.array([r*math.cos(theta), 0.0, r*math.sin(theta), 1.0],
+  id: totrans-608
+  prefs: []
+  type: TYPE_NORMAL
+  zh: P = np.array([r*math.cos(theta), 0.0, r*math.sin(theta), 1.0],
+- en: dtype=np.float32)
+  id: totrans-609
+  prefs: []
+  type: TYPE_NORMAL
+  zh: dtype=np.float32)
+- en: '# print(P)'
+  id: totrans-610
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 打印(P)'
+- en: '# apply rotation - this also gives us the vertex normals'
+  id: totrans-611
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 应用旋转 - 这也给我们带来了顶点法线'
+- en: NV = np.dot(RM, P)
+  id: totrans-612
+  prefs: []
+  type: TYPE_NORMAL
+  zh: NV = np.dot(RM, P)
+- en: '# normalize'
+  id: totrans-613
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 归一化'
+- en: '# NV = NV / np.linalg.norm(NV)'
+  id: totrans-614
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# NV = NV / np.linalg.norm(NV)'
+- en: '# apply translation'
+  id: totrans-615
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 应用平移'
+- en: Pt = np.dot(TM, NV)
+  id: totrans-616
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Pt = np.dot(TM, NV)
+- en: return (Pt, NV)
+  id: totrans-617
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return (Pt, NV)
+- en: 'def compute_vertices(self):'
+  id: totrans-618
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def compute_vertices(self):'
+- en: '"""compute vertices for the torus'
+  id: totrans-619
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""计算圆环的顶点'
+- en: 'returns np float32 array of n coords (x, y, z): shape (3*n, )'
+  id: totrans-620
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'returns np float32 array of n coords (x, y, z): shape (3*n, )'
+- en: '"""'
+  id: totrans-621
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""'
+- en: R, r, N, M = self.R, self.r, self.N, self.M
+  id: totrans-622
+  prefs: []
+  type: TYPE_NORMAL
+  zh: R, r, N, M = self.R, self.r, self.N, self.M
+- en: '# create an empty array to hold vertices/normals'
+  id: totrans-623
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 创建一个空数组以保存顶点/法线'
+- en: vertices = []
+  id: totrans-624
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vertices = []
+- en: normals = []
+  id: totrans-625
+  prefs: []
+  type: TYPE_NORMAL
+  zh: normals = []
+- en: '# the points on the ring are generated on the X-Z plane'
+  id: totrans-626
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 圆环上的点生成在 X-Z 平面上'
+- en: '# then they are rotated and translated into the correct'
+  id: totrans-627
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 然后它们被旋转和平移到正确的位置'
+- en: '# position on the torus'
+  id: totrans-628
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 圆环上的位置'
+- en: '# for all N rings around the torus'
+  id: totrans-629
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 所有 N 个环围绕圆环'
+- en: 'for i in range(N):'
+  id: totrans-630
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i in range(N):'
+- en: '# for all M points around a ring'
+  id: totrans-631
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 所有 M 个点围绕一个环'
+- en: 'for j in range(M+1):'
+  id: totrans-632
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for j in range(M+1):'
+- en: '# compute angle theta of point'
+  id: totrans-633
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算点的角度 theta'
+- en: theta = (j % M) *2*math.pi/M
+  id: totrans-634
+  prefs: []
+  type: TYPE_NORMAL
+  zh: theta = (j % M) *2*math.pi/M
+- en: '#---ring #1------'
+  id: totrans-635
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '#---环 #1------'
+- en: '# compute angle'
+  id: totrans-636
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算角度'
+- en: alpha1 = i*2*math.pi/N
+  id: totrans-637
+  prefs: []
+  type: TYPE_NORMAL
+  zh: alpha1 = i*2*math.pi/N
+- en: '# compute transforms'
+  id: totrans-638
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算变换'
+- en: RM1, TM1 = self.compute_rt(R, alpha1)
+  id: totrans-639
+  prefs: []
+  type: TYPE_NORMAL
+  zh: RM1, TM1 = self.compute_rt(R, alpha1)
+- en: '# compute points'
+  id: totrans-640
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算点'
+- en: Pt1, NV1 = self.compute_pt(r, theta, RM1, TM1)
+  id: totrans-641
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Pt1, NV1 = self.compute_pt(r, theta, RM1, TM1)
+- en: '#---ring #2------'
+  id: totrans-642
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '#---环 #2------'
+- en: '# index of next ring'
+  id: totrans-643
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 下一个环的索引'
+- en: ip1 = (i + 1) % N
+  id: totrans-644
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ip1 = (i + 1) % N
+- en: '# compute angle'
+  id: totrans-645
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算角度'
+- en: alpha2 = ip1*2*math.pi/N
+  id: totrans-646
+  prefs: []
+  type: TYPE_NORMAL
+  zh: alpha2 = ip1*2*math.pi/N
+- en: '# compute transforms'
+  id: totrans-647
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算变换'
+- en: RM2, TM2 = self.compute_rt(R, alpha2)
+  id: totrans-648
+  prefs: []
+  type: TYPE_NORMAL
+  zh: RM2, TM2 = self.compute_rt(R, alpha2)
+- en: '# compute points'
+  id: totrans-649
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 计算点'
+- en: Pt2, NV2 = self.compute_pt(r, theta, RM2, TM2)
+  id: totrans-650
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Pt2, NV2 = self.compute_pt(r, theta, RM2, TM2)
+- en: '# store vertices/normals in right order for GL_TRIANGLE_STRIP'
+  id: totrans-651
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 按正确顺序存储顶点/法线以供 GL_TRIANGLE_STRIP 使用'
+- en: vertices.append(Pt1[0:3])
+  id: totrans-652
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vertices.append(Pt1[0:3])
+- en: vertices.append(Pt2[0:3])
+  id: totrans-653
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vertices.append(Pt2[0:3])
+- en: '# add normals'
+  id: totrans-654
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 添加法线'
+- en: normals.append(NV1[0:3])
+  id: totrans-655
+  prefs: []
+  type: TYPE_NORMAL
+  zh: normals.append(NV1[0:3])
+- en: normals.append(NV2[0:3])
+  id: totrans-656
+  prefs: []
+  type: TYPE_NORMAL
+  zh: normals.append(NV2[0:3])
+- en: '# return vertices and colors in correct format'
+  id: totrans-657
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 返回正确格式的顶点和颜色'
+- en: vertices = np.array(vertices, np.float32).reshape(-1)
+  id: totrans-658
+  prefs: []
+  type: TYPE_NORMAL
+  zh: vertices = np.array(vertices, np.float32).reshape(-1)
+- en: normals = np.array(normals, np.float32).reshape(-1)
+  id: totrans-659
+  prefs: []
+  type: TYPE_NORMAL
+  zh: normals = np.array(normals, np.float32).reshape(-1)
+- en: '# print(vertices.shape)'
+  id: totrans-660
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 打印(vertices.shape)'
+- en: return vertices, normals
+  id: totrans-661
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return vertices, normals
+- en: 'def compute_colors(self):'
+  id: totrans-662
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def compute_colors(self):'
+- en: '"""compute vertices for the torus'
+  id: totrans-663
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""计算圆环的顶点'
+- en: 'returns np float32 array of n coords (x, y, z): shape (3*n, )'
+  id: totrans-664
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'returns np float32 array of n coords (x, y, z): shape (3*n, )'
+- en: '"""'
+  id: totrans-665
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"""'
+- en: R, r, N, M = self.R, self.r, self.N, self.M
+  id: totrans-666
+  prefs: []
+  type: TYPE_NORMAL
+  zh: R, r, N, M = self.R, self.r, self.N, self.M
+- en: '# the points on the ring are generated on the X-Z plane'
+  id: totrans-667
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 圆环上的点生成在 X-Z 平面上'
+- en: '# then they are rotated and translated into the correct'
+  id: totrans-668
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 然后它们被旋转和平移到正确的位置'
+- en: '# position on the torus'
+  id: totrans-669
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 圆环上的位置'
+- en: '# for all N rings around the torus'
+  id: totrans-670
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 所有 N 个环围绕圆环'
+- en: 'for i in range(N):'
+  id: totrans-671
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i in range(N):'
+- en: '# for all M points around a ring'
+  id: totrans-672
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 所有 M 个点围绕一个环'
+- en: 'for j in range(M+1):'
+  id: totrans-673
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for j in range(M+1):'
+- en: '# j value'
+  id: totrans-674
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# j 值'
+- en: jj = j % M
+  id: totrans-675
+  prefs: []
+  type: TYPE_NORMAL
+  zh: jj = j % M
+- en: '# store colors - same color applies to (V_i_j, V_ip1_j)'
+  id: totrans-676
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 存储颜色 - 相同的颜色应用于 (V_i_j, V_ip1_j)'
+- en: col = self.colors_dict[(i, jj)]
+  id: totrans-677
+  prefs: []
+  type: TYPE_NORMAL
+  zh: col = self.colors_dict[(i, jj)]
+- en: '# get index into array'
+  id: totrans-678
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 获取数组索引'
+- en: index = 3*(2*i*(M+1) + 2*j)
+  id: totrans-679
+  prefs: []
+  type: TYPE_NORMAL
+  zh: index = 3*(2*i*(M+1) + 2*j)
+- en: '# set color'
+  id: totrans-680
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置颜色'
+- en: self.colors[index:index+3] = col
+  id: totrans-681
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.colors[index:index+3] = col
+- en: self.colors[index+3:index+6] = col
+  id: totrans-682
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.colors[index+3:index+6] = col
+- en: 'def setup_vao(self, vertices, normals, colors):'
+  id: totrans-683
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def setup_vao(self, vertices, normals, colors):'
+- en: '# set up vertex array object (VAO)'
+  id: totrans-684
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置顶点数组对象 (VAO)'
+- en: self.vao = glGenVertexArrays(1)
+  id: totrans-685
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.vao = glGenVertexArrays(1)
+- en: glBindVertexArray(self.vao)
+  id: totrans-686
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glBindVertexArray(self.vao)
+- en: '# --------'
+  id: totrans-687
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# --------'
+- en: '# vertices'
+  id: totrans-688
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 顶点'
+- en: '# --------'
+  id: totrans-689
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# --------'
+- en: self.vertexBuffer = glGenBuffers(1)
+  id: totrans-690
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.vertexBuffer = glGenBuffers(1)
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.vertexBuffer)
+  id: totrans-691
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glBindBuffer(GL_ARRAY_BUFFER, self.vertexBuffer)
+- en: '# set buffer data'
+  id: totrans-692
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置缓冲区数据'
+- en: glBufferData(GL_ARRAY_BUFFER, 4*len(vertices), vertices,
+  id: totrans-693
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glBufferData(GL_ARRAY_BUFFER, 4*len(vertices), vertices,
+- en: GL_STATIC_DRAW)
+  id: totrans-694
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# enable vertex attribute array'
+  id: totrans-695
+  prefs: []
+  type: TYPE_NORMAL
+- en: glEnableVertexAttribArray(0)
+  id: totrans-696
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set buffer data pointer'
+  id: totrans-697
+  prefs: []
+  type: TYPE_NORMAL
+- en: glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
+  id: totrans-698
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# normals'
+  id: totrans-699
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# --------'
+  id: totrans-700
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.normalBuffer = glGenBuffers(1)
+  id: totrans-701
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.normalBuffer)
+  id: totrans-702
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set buffer data'
+  id: totrans-703
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferData(GL_ARRAY_BUFFER, 4*len(normals), normals,
+  id: totrans-704
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_STATIC_DRAW)
+  id: totrans-705
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# enable vertex attribute array'
+  id: totrans-706
+  prefs: []
+  type: TYPE_NORMAL
+- en: glEnableVertexAttribArray(2)
+  id: totrans-707
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set buffer data pointer'
+  id: totrans-708
+  prefs: []
+  type: TYPE_NORMAL
+- en: glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, None)
+  id: totrans-709
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# --------'
+  id: totrans-710
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# colors'
+  id: totrans-711
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# --------'
+  id: totrans-712
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.colorBuffer = glGenBuffers(1)
+  id: totrans-713
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.colorBuffer)
+  id: totrans-714
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set buffer data'
+  id: totrans-715
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferData(GL_ARRAY_BUFFER, 4*len(colors), colors,
+  id: totrans-716
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_STATIC_DRAW)
+  id: totrans-717
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# enable color attribute array'
+  id: totrans-718
+  prefs: []
+  type: TYPE_NORMAL
+- en: glEnableVertexAttribArray(1)
+  id: totrans-719
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set buffer data pointer'
+  id: totrans-720
+  prefs: []
+  type: TYPE_NORMAL
+- en: glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, None)
+  id: totrans-721
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind VAO'
+  id: totrans-722
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(0)
+  id: totrans-723
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def set_colors(self, colors):'
+  id: totrans-724
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.colors_dict = colors
+  id: totrans-725
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.recalc_colors()
+  id: totrans-726
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def recalc_colors(self):'
+  id: totrans-727
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# get colors'
+  id: totrans-728
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.compute_colors()
+  id: totrans-729
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind VAO'
+  id: totrans-730
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(self.vao)
+  id: totrans-731
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# --------'
+  id: totrans-732
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# colors'
+  id: totrans-733
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# --------'
+  id: totrans-734
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.colorBuffer)
+  id: totrans-735
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set buffer data'
+  id: totrans-736
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferSubData(GL_ARRAY_BUFFER, 0, 4*len(self.colors), self.colors)
+  id: totrans-737
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind VAO'
+  id: totrans-738
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(0)
+  id: totrans-739
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# step'
+  id: totrans-740
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def step(self):'
+  id: totrans-741
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# recompute colors'
+  id: totrans-742
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.recalc_colors()
+  id: totrans-743
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# render'
+  id: totrans-744
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def render(self, pMatrix, mvMatrix):'
+  id: totrans-745
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# use shader'
+  id: totrans-746
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUseProgram(self.program)
+  id: totrans-747
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set proj matrix'
+  id: totrans-748
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniformMatrix4fv(self.pMatrixUniform, 1, GL_FALSE, pMatrix)
+  id: totrans-749
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set modelview matrix'
+  id: totrans-750
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniformMatrix4fv(self.mvMatrixUniform, 1, GL_FALSE, mvMatrix)
+  id: totrans-751
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind VAO'
+  id: totrans-752
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(self.vao)
+  id: totrans-753
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# draw'
+  id: totrans-754
+  prefs: []
+  type: TYPE_NORMAL
+- en: glMultiDrawArrays(GL_TRIANGLE_STRIP, self.first_indices,
+  id: totrans-755
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.counts, self.N)
+  id: totrans-756
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind VAO'
+  id: totrans-757
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(0)
+  id: totrans-758
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Complete Game of Life Simulation Code](nsp-venkitachalam503045-0008.xhtml#rah1208)'
+  id: totrans-759
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here’s the full code listing for the file *gol.py*.
+  id: totrans-760
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  id: totrans-761
+  prefs: []
+  type: TYPE_NORMAL
+- en: gol.py
+  id: totrans-762
+  prefs: []
+  type: TYPE_NORMAL
+- en: Implements Conway's Game of Life.
+  id: totrans-763
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Author: Mahesh Venkitachalam'
+  id: totrans-764
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  id: totrans-765
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  id: totrans-766
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class GOL:'
+  id: totrans-767
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""GOL - class that implements Conway''s Game of Life'
+  id: totrans-768
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  id: totrans-769
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, NX, NY, glider):'
+  id: totrans-770
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""GOL constructor"""'
+  id: totrans-771
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# a grid of NX x NY random values'
+  id: totrans-772
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.NX, self.NY = NX, NY
+  id: totrans-773
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if glider:'
+  id: totrans-774
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.addGlider(1, 1, NX, NY)
+  id: totrans-775
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  id: totrans-776
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.grid = np.random.choice([1, 0], NX * NY, p=[0.2, 0.8]).reshape(NX, NY)
+  id: totrans-777
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def addGlider(self, i, j, NX, NY):'
+  id: totrans-778
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""adds a glider with top left cell at (i, j)"""'
+  id: totrans-779
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.grid = np.zeros(NX * NY).reshape(NX, NY)
+  id: totrans-780
+  prefs: []
+  type: TYPE_NORMAL
+- en: glider = np.array([[0,    0, 1],
+  id: totrans-781
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[1,  0, 1],'
+  id: totrans-782
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[0,  1, 1]])'
+  id: totrans-783
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.grid[i:i+3, j:j+3] = glider
+  id: totrans-784
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def update(self):'
+  id: totrans-785
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""update the GOL simulation by one time step"""'
+  id: totrans-786
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# copy grid since we require 8 neighbors for calculation'
+  id: totrans-787
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# and we go line by line'
+  id: totrans-788
+  prefs: []
+  type: TYPE_NORMAL
+- en: newGrid = self.grid.copy()
+  id: totrans-789
+  prefs: []
+  type: TYPE_NORMAL
+- en: NX, NY = self.NX, self.NY
+  id: totrans-790
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(NX):'
+  id: totrans-791
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for j in range(NY):'
+  id: totrans-792
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# compute 8-neighbor sum'
+  id: totrans-793
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# using toroidal boundary conditions - x and y wrap around'
+  id: totrans-794
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# so that the simulation takes place on a toroidal surface'
+  id: totrans-795
+  prefs: []
+  type: TYPE_NORMAL
+- en: total = (self.grid[i, (j-1) % NY] + self.grid[i, (j+1) % NY] +
+  id: totrans-796
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.grid[(i-1) % NX, j] + self.grid[(i+1) % NX, j] +
+  id: totrans-797
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.grid[(i-1) % NX, (j-1) % NY] + self.grid[(i-1) % NX, (j+1) % NY] +
+  id: totrans-798
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.grid[(i+1) % NX, (j-1) % NY] + self.grid[(i+1) % NX, (j+1) % NY])
+  id: totrans-799
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# apply Conway''s rules'
+  id: totrans-800
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if self.grid[i, j]  == 1:'
+  id: totrans-801
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (total < 2) or (total > 3):'
+  id: totrans-802
+  prefs: []
+  type: TYPE_NORMAL
+- en: newGrid[i, j] = 0
+  id: totrans-803
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  id: totrans-804
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if total == 3:'
+  id: totrans-805
+  prefs: []
+  type: TYPE_NORMAL
+- en: newGrid[i, j] = 1
+  id: totrans-806
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# update data'
+  id: totrans-807
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.grid[:] = newGrid[:]
+  id: totrans-808
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def get_colors(self):'
+  id: totrans-809
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""returns a dictionary of colors"""'
+  id: totrans-810
+  prefs: []
+  type: TYPE_NORMAL
+- en: colors = {}
+  id: totrans-811
+  prefs: []
+  type: TYPE_NORMAL
+- en: c1 = np.array([1.0, 1.0, 1.0], np.float32)
+  id: totrans-812
+  prefs: []
+  type: TYPE_NORMAL
+- en: c2 = np.array([0.0, 0.0, 0.0], np.float32)
+  id: totrans-813
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(self.NX):'
+  id: totrans-814
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for j in range (self.NY):'
+  id: totrans-815
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if self.grid[i, j] == 1:'
+  id: totrans-816
+  prefs: []
+  type: TYPE_NORMAL
+- en: colors[(i, j)] = c2
+  id: totrans-817
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else :'
+  id: totrans-818
+  prefs: []
+  type: TYPE_NORMAL
+- en: colors[(i, j)] = c1
+  id: totrans-819
+  prefs: []
+  type: TYPE_NORMAL
+- en: return colors
+  id: totrans-820
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Complete Camera Code](nsp-venkitachalam503045-0008.xhtml#rah1209)'
+  id: totrans-821
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Here’s the complete code in the file *camera.py*:'
+  id: totrans-822
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  id: totrans-823
+  prefs: []
+  type: TYPE_NORMAL
+- en: camera.py
+  id: totrans-824
+  prefs: []
+  type: TYPE_NORMAL
+- en: A simple camera class for OpenGL rendering.
+  id: totrans-825
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Author: Mahesh Venkitachalam'
+  id: totrans-826
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  id: totrans-827
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  id: totrans-828
+  prefs: []
+  type: TYPE_NORMAL
+- en: import math
+  id: totrans-829
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class OrbitCamera:'
+  id: totrans-830
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""helper class for viewing"""'
+  id: totrans-831
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, height, radius, beta_step=1):'
+  id: totrans-832
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.radius = radius
+  id: totrans-833
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.beta = 0
+  id: totrans-834
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.beta_step = beta_step
+  id: totrans-835
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height = height
+  id: totrans-836
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# initial eye vector is (-R, 0, -H)'
+  id: totrans-837
+  prefs: []
+  type: TYPE_NORMAL
+- en: rr = radius/math.sqrt(2.0)
+  id: totrans-838
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.eye = np.array([rr, rr, height], np.float32)
+  id: totrans-839
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# compute up vector'
+  id: totrans-840
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.up = self.__compute_up_vector(self.eye )
+  id: totrans-841
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# center is origin'
+  id: totrans-842
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.center = np.array([0, 0, 0], np.float32)
+  id: totrans-843
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __compute_up_vector(self, E):'
+  id: totrans-844
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""compute up vector'
+  id: totrans-845
+  prefs: []
+  type: TYPE_NORMAL
+- en: N = (E x k) x E
+  id: totrans-846
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  id: totrans-847
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# N = (E x k) x E'
+  id: totrans-848
+  prefs: []
+  type: TYPE_NORMAL
+- en: Z = np.array([0, 0, 1], np.float32)
+  id: totrans-849
+  prefs: []
+  type: TYPE_NORMAL
+- en: U = np.cross(np.cross(E, Z), E)
+  id: totrans-850
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# normalize'
+  id: totrans-851
+  prefs: []
+  type: TYPE_NORMAL
+- en: U = U / np.linalg.norm(U)
+  id: totrans-852
+  prefs: []
+  type: TYPE_NORMAL
+- en: return U
+  id: totrans-853
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def rotate(self):'
+  id: totrans-854
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""rotate by one step and compute new camera parameters"""'
+  id: totrans-855
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.beta = (self.beta + self.beta_step) % 360
+  id: totrans-856
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# recalculate eye E'
+  id: totrans-857
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.eye = np.array([self.radius*math.cos(math.radians(self.beta)),
+  id: totrans-858
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.radius*math.sin(math.radians(self.beta)),
+  id: totrans-859
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height], np.float32)
+  id: totrans-860
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# up vector'
+  id: totrans-861
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.up = self.__compute_up_vector(self.eye)
+  id: totrans-862
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Complete RenderWindow Code](nsp-venkitachalam503045-0008.xhtml#rah1210)'
+  id: totrans-863
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The complete code listing for *gol_torus.py*, including the `RenderWindow` class
+    and the `main()` function, follows.
+  id: totrans-864
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  id: totrans-865
+  prefs: []
+  type: TYPE_NORMAL
+- en: gol_torus.py
+  id: totrans-866
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python OpenGL program that displays a torus.
+  id: totrans-867
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Author: Mahesh Venkitachalam'
+  id: totrans-868
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  id: totrans-869
+  prefs: []
+  type: TYPE_NORMAL
+- en: import OpenGL
+  id: totrans-870
+  prefs: []
+  type: TYPE_NORMAL
+- en: from OpenGL.GL import *
+  id: totrans-871
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy, math, sys, os
+  id: totrans-872
+  prefs: []
+  type: TYPE_NORMAL
+- en: import argparse
+  id: totrans-873
+  prefs: []
+  type: TYPE_NORMAL
+- en: import glutils
+  id: totrans-874
+  prefs: []
+  type: TYPE_NORMAL
+- en: import glfw
+  id: totrans-875
+  prefs: []
+  type: TYPE_NORMAL
+- en: from torus import Torus
+  id: totrans-876
+  prefs: []
+  type: TYPE_NORMAL
+- en: from camera import OrbitCamera
+  id: totrans-877
+  prefs: []
+  type: TYPE_NORMAL
+- en: from gol import GOL
+  id: totrans-878
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class RenderWindow:'
+  id: totrans-879
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""GLFW Rendering window class"""'
+  id: totrans-880
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, glider):'
+  id: totrans-881
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# save current working directory'
+  id: totrans-882
+  prefs: []
+  type: TYPE_NORMAL
+- en: cwd = os.getcwd()
+  id: totrans-883
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# initialize glfw - this changes cwd'
+  id: totrans-884
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwInit()
+  id: totrans-885
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# restore cwd'
+  id: totrans-886
+  prefs: []
+  type: TYPE_NORMAL
+- en: os.chdir(cwd)
+  id: totrans-887
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# version hints'
+  id: totrans-888
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwWindowHint(glfw.GLFW_CONTEXT_VERSION_MAJOR, 3)
+  id: totrans-889
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwWindowHint(glfw.GLFW_CONTEXT_VERSION_MINOR, 3)
+  id: totrans-890
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwWindowHint(glfw.GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE)
+  id: totrans-891
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwWindowHint(glfw.GLFW_OPENGL_PROFILE, glfw.GLFW_OPENGL_CORE_PROFILE)
+  id: totrans-892
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# make a window'
+  id: totrans-893
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width, self.height = 640, 480
+  id: totrans-894
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.aspect = self.width/float(self.height)
+  id: totrans-895
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.win = glfw.glfwCreateWindow(self.width, self.height, b'gol_torus')
+  id: totrans-896
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# make context current'
+  id: totrans-897
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwMakeContextCurrent(self.win)
+  id: totrans-898
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwMakeContextCurrent(self.win)
+- en: '# initialize GL'
+  id: totrans-899
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 初始化 GL'
+- en: glViewport(0, 0, self.width, self.height)
+  id: totrans-900
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glViewport(0, 0, self.width, self.height)
+- en: glEnable(GL_DEPTH_TEST)
+  id: totrans-901
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glEnable(GL_DEPTH_TEST)
+- en: '#glClearColor(0.2, 0.2, 0.2, 1.0)'
+  id: totrans-902
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '#glClearColor(0.2, 0.2, 0.2, 1.0)'
+- en: glClearColor(0.11764706, 0.11764706, 0.11764706, 1.0)
+  id: totrans-903
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glClearColor(0.11764706, 0.11764706, 0.11764706, 1.0)
+- en: '# set window callbacks'
+  id: totrans-904
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置窗口回调'
+- en: glfw.glfwSetMouseButtonCallback(self.win, self.onMouseButton)
+  id: totrans-905
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwSetMouseButtonCallback(self.win, self.onMouseButton)
+- en: glfw.glfwSetKeyCallback(self.win, self.onKeyboard)
+  id: totrans-906
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwSetKeyCallback(self.win, self.onKeyboard)
+- en: '# create 3D'
+  id: totrans-907
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 创建 3D'
+- en: NX = 64
+  id: totrans-908
+  prefs: []
+  type: TYPE_NORMAL
+  zh: NX = 64
+- en: NY = 64
+  id: totrans-909
+  prefs: []
+  type: TYPE_NORMAL
+  zh: NY = 64
+- en: R = 4.0
+  id: totrans-910
+  prefs: []
+  type: TYPE_NORMAL
+  zh: R = 4.0
+- en: r = 1.0
+  id: totrans-911
+  prefs: []
+  type: TYPE_NORMAL
+  zh: r = 1.0
+- en: self.torus = Torus(R, r, NX, NY)
+  id: totrans-912
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.torus = Torus(R, r, NX, NY)
+- en: self.gol = GOL(NX, NY, glider)
+  id: totrans-913
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.gol = GOL(NX, NY, glider)
+- en: '# create a camera'
+  id: totrans-914
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 创建相机'
+- en: self.camera = OrbitCamera(5.0, 10.0)
+  id: totrans-915
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.camera = OrbitCamera(5.0, 10.0)
+- en: '# exit flag'
+  id: totrans-916
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 退出标志'
+- en: self.exitNow = False
+  id: totrans-917
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.exitNow = False
+- en: '# rotation flag'
+  id: totrans-918
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 旋转标志'
+- en: self.rotate = True
+  id: totrans-919
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.rotate = True
+- en: '# skip count'
+  id: totrans-920
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 跳过计数'
+- en: self.skip = 0
+  id: totrans-921
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.skip = 0
+- en: 'def onMouseButton(self, win, button, action, mods):'
+  id: totrans-922
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def onMouseButton(self, win, button, action, mods):'
+- en: '# print ''mouse button: '', win, button, action, mods'
+  id: totrans-923
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 打印 ''鼠标按钮: '', win, button, action, mods'
+- en: pass
+  id: totrans-924
+  prefs: []
+  type: TYPE_NORMAL
+  zh: pass
+- en: 'def onKeyboard(self, win, key, scancode, action, mods):'
+  id: totrans-925
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def onKeyboard(self, win, key, scancode, action, mods):'
+- en: '# print ''keyboard: '', win, key, scancode, action, mods'
+  id: totrans-926
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 打印 ''键盘: '', win, key, scancode, action, mods'
+- en: 'if action == glfw.GLFW_PRESS:'
+  id: totrans-927
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if action == glfw.GLFW_PRESS:'
+- en: '# ESC to quit'
+  id: totrans-928
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# ESC 退出'
+- en: 'if key == glfw.GLFW_KEY_ESCAPE:'
+  id: totrans-929
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if key == glfw.GLFW_KEY_ESCAPE:'
+- en: self.exitNow = True
+  id: totrans-930
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.exitNow = True
+- en: 'elif key == glfw.GLFW_KEY_R:'
+  id: totrans-931
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'elif key == glfw.GLFW_KEY_R:'
+- en: self.rotate = not self.rotate
+  id: totrans-932
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.rotate = not self.rotate
+- en: 'def run(self):'
+  id: totrans-933
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def run(self):'
+- en: '# initializer timer'
+  id: totrans-934
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 初始化定时器'
+- en: glfw.glfwSetTime(0)
+  id: totrans-935
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwSetTime(0)
+- en: t = 0.0
+  id: totrans-936
+  prefs: []
+  type: TYPE_NORMAL
+  zh: t = 0.0
+- en: 'while not glfw.glfwWindowShouldClose(self.win) and not self.exitNow:'
+  id: totrans-937
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'while not glfw.glfwWindowShouldClose(self.win) and not self.exitNow:'
+- en: '# update every x seconds'
+  id: totrans-938
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 每隔 x 秒更新'
+- en: currT = glfw.glfwGetTime()
+  id: totrans-939
+  prefs: []
+  type: TYPE_NORMAL
+  zh: currT = glfw.glfwGetTime()
+- en: 'if currT - t > 0.05:'
+  id: totrans-940
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if currT - t > 0.05:'
+- en: '# update time'
+  id: totrans-941
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 更新时间'
+- en: t = currT
+  id: totrans-942
+  prefs: []
+  type: TYPE_NORMAL
+  zh: t = currT
+- en: '# set viewport'
+  id: totrans-943
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置视口'
+- en: self.width, self.height = glfw.glfwGetFramebufferSize(self.win)
+  id: totrans-944
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.width, self.height = glfw.glfwGetFramebufferSize(self.win)
+- en: self.aspect = self.width/float(self.height)
+  id: totrans-945
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.aspect = self.width/float(self.height)
+- en: glViewport(0, 0, self.width, self.height)
+  id: totrans-946
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glViewport(0, 0, self.width, self.height)
+- en: '# clear'
+  id: totrans-947
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 清除'
+- en: glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+  id: totrans-948
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+- en: '# build projection matrix'
+  id: totrans-949
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 构建投影矩阵'
+- en: pMatrix = glutils.perspective(60.0, self.aspect, 0.1, 100.0)
+  id: totrans-950
+  prefs: []
+  type: TYPE_NORMAL
+  zh: pMatrix = glutils.perspective(60.0, self.aspect, 0.1, 100.0)
+- en: mvMatrix = glutils.lookAt(self.camera.eye, self.camera.center, self.camera.up)
+  id: totrans-951
+  prefs: []
+  type: TYPE_NORMAL
+  zh: mvMatrix = glutils.lookAt(self.camera.eye, self.camera.center, self.camera.up)
+- en: '# render'
+  id: totrans-952
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 渲染'
+- en: self.torus.render(pMatrix, mvMatrix)
+  id: totrans-953
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.torus.render(pMatrix, mvMatrix)
+- en: '# step'
+  id: totrans-954
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 步骤'
+- en: 'if self.rotate:'
+  id: totrans-955
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if self.rotate:'
+- en: self.step()
+  id: totrans-956
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.step()
+- en: glfw.glfwSwapBuffers(self.win)
+  id: totrans-957
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwSwapBuffers(self.win)
+- en: '# poll for and process events'
+  id: totrans-958
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 查询并处理事件'
+- en: glfw.glfwPollEvents()
+  id: totrans-959
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwPollEvents()
+- en: '# end'
+  id: totrans-960
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 结束'
+- en: glfw.glfwTerminate()
+  id: totrans-961
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glfw.glfwTerminate()
+- en: 'def step(self):'
+  id: totrans-962
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def step(self):'
+- en: 'if self.skip == 9:'
+  id: totrans-963
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if self.skip == 9:'
+- en: '# update GOL'
+  id: totrans-964
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 更新 GOL'
+- en: self.gol.update()
+  id: totrans-965
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.gol.update()
+- en: colors = self.gol.get_colors()
+  id: totrans-966
+  prefs: []
+  type: TYPE_NORMAL
+  zh: colors = self.gol.get_colors()
+- en: self.torus.set_colors(colors)
+  id: totrans-967
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.torus.set_colors(colors)
+- en: '# step'
+  id: totrans-968
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 步骤'
+- en: self.torus.step()
+  id: totrans-969
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.torus.step()
+- en: '# reset'
+  id: totrans-970
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 重置'
+- en: self.skip = 0
+  id: totrans-971
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.skip = 0
+- en: '# update skip'
+  id: totrans-972
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 更新跳过计数'
+- en: self.skip += 1
+  id: totrans-973
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.skip += 1
+- en: '# rotate camera'
+  id: totrans-974
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 旋转相机'
+- en: self.camera.rotate()
+  id: totrans-975
+  prefs: []
+  type: TYPE_NORMAL
+  zh: self.camera.rotate()
+- en: main() function
+  id: totrans-976
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: main() function
+- en: 'def main():'
+  id: totrans-977
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def main():'
+- en: print("Starting GOL. Press ESC to quit.")
+  id: totrans-978
+  prefs: []
+  type: TYPE_NORMAL
+  zh: print("开始 GOL。按 ESC 退出。")
+- en: '# parse arguments'
+  id: totrans-979
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 解析参数'
+- en: parser = argparse.ArgumentParser(description="Runs Conway's Game of Life simulation
+  id: totrans-980
+  prefs: []
+  type: TYPE_NORMAL
+  zh: parser = argparse.ArgumentParser(description="运行康威的生命游戏模拟
+- en: on a Torus.")
+  id: totrans-981
+  prefs: []
+  type: TYPE_NORMAL
+  zh: on a Torus.")
+- en: '# add arguments'
+  id: totrans-982
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 添加参数'
+- en: parser.add_argument('--glider', action='store_true', required=False)
+  id: totrans-983
+  prefs: []
+  type: TYPE_NORMAL
+  zh: parser.add_argument('--glider', action='store_true', required=False)
+- en: args = parser.parse_args()
+  id: totrans-984
+  prefs: []
+  type: TYPE_NORMAL
+  zh: args = parser.parse_args()
+- en: '# set args'
+  id: totrans-985
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '# 设置参数'
+- en: glider = False
+  id: totrans-986
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glider = False
+- en: 'if args.glider:'
+  id: totrans-987
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if args.glider:'
+- en: glider = True
+  id: totrans-988
+  prefs: []
+  type: TYPE_NORMAL
+  zh: glider = True
+- en: rw = RenderWindow(glider)
+  id: totrans-989
+  prefs: []
+  type: TYPE_NORMAL
+  zh: rw = RenderWindow(glider)
+- en: rw.run()
+  id: totrans-990
+  prefs: []
+  type: TYPE_NORMAL
+  zh: rw.run()
+- en: call main
+  id: totrans-991
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: call main
+- en: 'if __name__ == ''__main__'':'
+  id: totrans-992
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if __name__ == ''__main__'':'
+- en: main()
+  id: totrans-993
+  prefs: []
+  type: TYPE_NORMAL
+  zh: main()
