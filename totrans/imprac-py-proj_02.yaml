@@ -1,0 +1,1094 @@
+- en: '**2'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: FINDING PALINGRAM SPELLS**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Radar. Kayak. Rotator. Sexes. What do these words all have in common? They’re
+    *palindromes*, words that are spelled the same forward and backward. Even better
+    are *palingrams*, whole phrases that behave the same way. Napoleon is the author
+    of the most famous palingram. When he first saw Elba, the island of his exile,
+    he said, “Able was I ere I saw Elba.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In 2011, DC Comics published an interesting story that made clever use of palingrams.
+    The superhero sorceress Zatanna was cursed so that she could cast spells only
+    by speaking palindromically. She managed to think up just enough two-word phrases
+    like *nurses run*, *stack cats*, and *puff up* to defeat her sword-wielding attacker.
+    This got me wondering: just how many “combative” palingrams are there? And are
+    there better choices for Zatanna?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, you’ll load dictionary files from the internet and use Python
+    to discover first palindromes and then the more complex palingrams in those files.
+    Then you’ll use a tool called cProfile to analyze your palingram code so that
+    you can make it more performant. Finally, you’ll sift through the palingrams to
+    see how many have an “aggressive” nature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Finding and Opening a Dictionary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: All the projects in this chapter require a listing of words in a text file format,
+    commonly referred to as a *dictionary file*, so let’s start by learning how to
+    load one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Despite their name, dictionary files contain only words—no pronunciation, syllable
+    count, definitions, and so on. This is good news, as those things would just get
+    in our way. And even better, dictionary files are available online for free.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can find suitable dictionary files at the locations listed in [Table 2-1](ch02.xhtml#ch02tab1).
+    Download one of the files or, if it opens directly, copy and paste the contents
+    into a text editor like Notepad or WordPad (TextEdit on macOS) and save it as
+    a *.txt* file. Keep the dictionary in the same folder as the Python code. I used
+    the *2of4brif.txt* file to prepare this project. It can be found in the downloadable
+    *12dicts-6.0.2.zip* file on the website listed first in [Table 2-1](ch02.xhtml#ch02tab1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 2-1:** Downloadable Dictionary Files'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **File** | **Number of words** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *[http://wordlist.aspell.net/12dicts/](http://wordlist.aspell.net/12dicts/)*
+    | 60,388 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *[https://inventwithpython.com/dictionary.txt](https://inventwithpython.com/dictionary.txt)*
+    | 45,000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *[http://www-personal.umich.edu/~jlawler/wordlist.html](http://www-personal.umich.edu/~jlawler/wordlist.html)*
+    | 69,903 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *[http://greenteapress.com/thinkpython2/code/words.txt](http://greenteapress.com/thinkpython2/code/words.txt)*
+    | 113,809 |'
+  prefs: []
+  type: TYPE_TB
+- en: In addition to the files in [Table 2-1](ch02.xhtml#ch02tab1), Unix and Unix-like
+    operating systems come packaged with a large newline-delimited word file of more
+    than 200,000 words. It is usually stored in */usr/share/dict/words* or */usr/dict/words*.
+    On Debian GNU/Linux, word lists are in */usr/share/opendict/dictionaries*. The
+    macOS dictionaries are generally found in */Library/Dictionaries*, and non-English
+    dictionaries are included. You may need to do an online search for your operating
+    system and version to find the exact directory path if you want to use one of
+    these files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some dictionary files exclude *a* and *I* as words. Others may include every
+    letter in the dictionary as a single word “header” (such as *d* at the start of
+    words beginning with *d*). We’ll ignore one-letter palindromes in these projects,
+    so these issues shouldn’t be a problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Handling Exceptions When Opening Files***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Whenever you load an external file, your program should automatically check
+    for I/O issues, like missing files or incorrect filenames, and let you know if
+    there is a problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Use the following try and except statements to catch and handle *exceptions*,
+    which are errors detected during execution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ try:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ with open(file) as in_file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: do something
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'except IOError➌ as e:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ print("{}\nError opening {}. Terminating program.".format(e, file),
+  prefs: []
+  type: TYPE_NORMAL
+- en: file=sys.stderr)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ sys.exit(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: The try clause is executed first ➊. The with statement will automatically close
+    the file after the nested block of code, regardless of how the block exits ➋.
+    Closing files prior to terminating a process is a good practice. If you don’t
+    close those files, you could run out of file descriptors (mainly a problem with
+    large scripts that run for a long time), lock the file from further access in
+    Windows, corrupt the files, or lose data if you are writing to the file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If something goes wrong and if the type of error matches the exception named
+    after the except keyword ➌, the rest of the try clause is skipped, and the except
+    clause is executed ➍. If nothing goes wrong, the try clause is executed, and the
+    except clause is skipped. The print statement in the except clause lets you know
+    there’s a problem, and the file=sys.stderr argument colors the error statement
+    red in the IDLE interpreter window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sys.exit(1) ➎ statement is used to terminate the program. The 1 in sys.exit(1)
+    indicates that the program experienced an error and did not close successfully.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If an exception occurs that *doesn’t* match the named exception in the except
+    clause, it is passed to any outer try statements or the main program execution.
+    If no handler is found, the *unhandled exception* causes the program to stop with
+    a standard “traceback” error message.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Loading the Dictionary File***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[Listing 2-1](ch02.xhtml#ch02list1) loads a dictionary file as a list. Manually
+    enter this script or download it as *load_dictionary.py* from *[https://nostarch.com/impracticalpython/](https://nostarch.com/impracticalpython/)*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can import this file into other programs as a module and run it with a one-line
+    statement. Remember, a module is simply a Python program that can be used in another
+    Python program. As you’re probably aware, modules represent a form of *abstraction*.
+    Abstraction means you don’t have to worry about all the coding details. A principle
+    of abstraction is *encapsulation*, the act of hiding the details. We encapsulate
+    the file-loading code in a module so you don’t have to see or worry about the
+    detailed code in another program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*load_dictionary.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""Load a text file as a list.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Arguments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -text file name (and directory path, if needed)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Exceptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -IOError if filename not found.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -A list of all words in a text file in lower case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Requires-import sys
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ import sys
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ def load(file):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""Open a text file & return a list of lowercase strings."""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'try:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'with open(file) as in_file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ loaded_txt = in_file.read().strip().split('\n')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ loaded_txt = [x.lower() for x in loaded_txt]
+  prefs: []
+  type: TYPE_NORMAL
+- en: return loaded_txt
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'except IOError as e:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ print("{}\nError opening {}. Terminating program.".format(e, file),
+  prefs: []
+  type: TYPE_NORMAL
+- en: file=sys.stderr)
+  prefs: []
+  type: TYPE_NORMAL
+- en: sys.exit(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 2-1: The module for loading a dictionary file as a list*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After the docstring, we import system functions with sys so that our error-handling
+    code will work ➊. The next block of code defines a function based on the previous
+    file-opening discussion ➋. The function takes a filename as an argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If no exceptions are raised, the text file’s whitespace is removed, and its
+    items are split into separate lines and added to a list ➌. We want each word to
+    be a separate item in the list, before the list is returned. And since case matters
+    to Python, the words in the list are converted to lowercase via *list comprehension*
+    ➍. List comprehension is a shorthand way to convert a list, or other iterable,
+    into another list. In this case, it replaces a for loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If an I/O error is encountered, the program displays the standard error message,
+    designated by the e, along with a message describing the event and informing the
+    user that the program is ending ➎. The sys.exit(1) command then terminates the
+    program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code example is for illustrative purposes, to show how these steps work
+    together. Generally, you wouldn’t call sys.exit() from a module, as you may want
+    your program to do something—like write a log file—prior to terminating. In later
+    chapters, we’ll move both the try-except blocks and sys.exit() into a main() function
+    for clarity and control.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Project #2: Finding Palindromes**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You’ll start by finding single-word palindromes in a dictionary and then move
+    on to the more difficult palindromic phrases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**THE OBJECTIVE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use Python to search an English language dictionary file for palindromes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Strategy and Pseudocode***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Before you get into the code, step back and think about what you want to do
+    conceptually. Identifying palindromes is easy: simply compare a word to itself
+    sliced backward. Here is an example of slicing a word front to back and then back
+    to front:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> word = ''NURSES'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> word[:]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''NURSES'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> word[::-1]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''SESRUN'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you don’t provide values when slicing a string (or any sliceable type), the
+    default is to use the start of the string, the end of the string, and a positive
+    step equal to 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 2-1](ch02.xhtml#ch02fig1) illustrates the reverse slicing process.
+    I’ve provided a starting position of 2 and a step of –1. Because no end index
+    is provided (there is no index or space between the colons), the implication is
+    to go backward (because the index step is –1) until there are no more characters
+    left.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f0023-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 2-1: An example of negative slicing for* word = ''NURSES'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: Negative slicing doesn’t behave exactly the same way as forward slicing, and
+    the positive and negative position values and endpoints are asymmetrical. This
+    can lead to confusion, so let’s restrict our negative slicing to the simple [::-1]
+    format.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finding palindromes in the dictionary will take fewer lines of code than loading
+    the dictionary file! Here’s the pseudocode:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Load digital dictionary file as a list of words
+  prefs: []
+  type: TYPE_NORMAL
+- en: Create an empty list to hold palindromes
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Loop through each word in the word list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If word sliced forward is the same as word sliced backward:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Append word to palindrome list
+  prefs: []
+  type: TYPE_NORMAL
+- en: Print palindrome list
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Palindrome Code***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[Listing 2-2](ch02.xhtml#ch02list2), *palindromes.py*, reads in an English
+    dictionary file, identifies which words are palindromes, saves them to a list,
+    and prints the list as stacked items. You can download this code from the book’s
+    resources at *[https://www.nostarch.com/impracticalpython/](https://www.nostarch.com/impracticalpython/)*.
+    You will also need *load_dictionary.py* and a dictionary file; save all three
+    files in the same folder.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*palindromes.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""Find palindromes (letter palingrams) in a dictionary file."""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ import load_dictionary
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ word_list = load_dictionary.load('2of4brif.txt')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ pali_list = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➍ for word in word_list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if len(word) > 1 and word == word[::-1]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pali_list.append(word)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("\nNumber of palindromes found = {}\n".format(len(pali_list)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ print(*pali_list, sep='\n')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 2-2: Finds palindromes in loaded dictionary file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start by importing *load_dictionary.py* as a module ➊. Note that the *.py* extension
+    is not used for importing. Also, the module is in the same folder as this script,
+    so we don’t have to specify a directory path to the module. And since the module
+    contains the required import sys line, we don’t need to repeat it here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To populate our word list with words from the dictionary, call the load() function
+    in the load_dictionary module with dot notation ➋. Pass it the name of the external
+    dictionary file. Again, you don’t need to specify a path if the dictionary file
+    is in the same folder as the Python script. The filename you use may be different
+    depending on the dictionary you downloaded.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, create an empty list to hold the palindromes ➌ and start looping through
+    every word in word_list ➍, comparing the forward slice to the reverse slice. If
+    the two slices are identical, append the word to pali_list. Notice that only words
+    with more than one letter are allowed (len(word) > 1), which follows the strictest
+    definition of a palindrome.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, print the palindromes in an attractive way—stacked and with no quotation
+    marks or commas ➎. You can accomplish this by looping through every word in the
+    list, but there is a more efficient way to do it. You can use the *splat* operator
+    (designated by the *), which takes a list as input and expands it into positional
+    arguments in the function call. The last argument is the separator used between
+    multiple list values for printing. The default separator is a space (sep=' '),
+    but instead, print each item on a new line (sep='\n').
+  prefs: []
+  type: TYPE_NORMAL
+- en: Single-word palindromes are rare, at least in English. Using a 60,000-word dictionary
+    file, you’ll be lucky to find about 60, or only 0.1 percent of all the words.
+    Despite their rarity, however, they’re easy enough to find with Python. So, let’s
+    move on to the more interesting, and more complicated, palingrams.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Project #3: Finding Palingrams**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Finding palingrams requires a bit more effort than finding one-word palindromes.
+    In this section, we’ll plan and write code to find word-pair palingrams.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**THE OBJECTIVE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use Python to search an English language dictionary for two-word palingrams.
+    Analyze and optimize the palingram code using the cProfile tool.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Strategy and Pseudocode***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Example word-pair palingrams are *nurses run* and *stir grits*. (In case you’re
+    wondering, grits are a ground-corn breakfast dish, similar to Italian polenta.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Like palindromes, palingrams read the same forward and backward. I like to think
+    of these as a *core* word, like *nurses*, from which a *palindromic sequence*
+    and *reversed word* are derived (see [Figure 2-2](ch02.xhtml#ch02fig2)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f0025-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 2-2: Dissecting word-pair palingrams*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Our program will examine the core word. Based on [Figure 2-2](ch02.xhtml#ch02fig2),
+    we can make the following inferences about the core word:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It can have either an odd or even number of letters.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: One contiguous part of the word spells a real word when read backward.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: This contiguous part can occupy part or all of the core word.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The other contiguous part contains a palindromic sequence of letters.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The palindromic sequence can occupy part or all of the core word.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The palindromic sequence does not have to be a real word (unless it occupies
+    the *whole* word).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The two parts cannot overlap or share letters.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The sequence is reversible.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*If the reversed word occupies the whole core word and is not a palindrome,
+    it’s called a* semordnilap*. A semordnilap is similar to a palindrome except for
+    one key difference: rather than spelling the* same *word when read backward, it
+    spells a* different *word. Examples are* bats *and* stab*, and* wolf *and* flow*.
+    Semordnilap, by the way, is* palindromes *spelled backward.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 2-3](ch02.xhtml#ch02fig3) represents an arbitrary word of six letters.
+    The Xs represent the part of the word that *might* form a real word when read
+    backward (like *run* in *nurses*). The Os represent the *possible* palindromic
+    sequence (like *ses* in *nurses*). The word represented in the left column in
+    [Figure 2-3](ch02.xhtml#ch02fig3) behaves like *nurses* in [Figure 2-2](ch02.xhtml#ch02fig2),
+    with the reversed word at the start. The word represented by the right column
+    behaves like *grits*, with the reversed word at the end. Note that the number
+    of combinations in each column is the total number of letters in the word plus
+    one; note too that the top and bottom rows represent an identical circumstance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The top row in each column represents a semordnilap. The bottom row in each
+    represents a palindrome. These are both reversed words, just different *types*
+    of reversed words. Hence, they count as one entity and both can be identified
+    with a single line of code in a single loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f0026-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 2-3: Possible positions for letters of the reversed word (X) and the
+    palindromic sequence (O) in a six-letter core word*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To see the diagram in action, consider [Figure 2-4](ch02.xhtml#ch02fig4), which
+    shows the palingrams *devils lived* and *retro porter*. *Devils* and *porter*
+    are both core words and mirror images of each other with respect to palindromic
+    sequences and reversed words. Compare this to the semordnilap *evil* and the palindrome
+    *kayak*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f0027-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 2-4: Reversed words (Xs) and palindromic sequences (Os) in words, semordnilaps,
+    and palindromes.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Palindromes are both reversed words *and* palindromic sequences. Since they
+    have the same pattern of Xs as in semordnilaps, they can be handled with the same
+    code used for semordnilaps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: From a strategy perspective, you’ll need to loop through each word in the dictionary
+    and evaluate it for *all of the combinations* in [Figure 2-3](ch02.xhtml#ch02fig3).
+    Assuming a 60,000-word dictionary, the program will need to take about 500,000
+    passes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To understand the loops, take a look at the core word for the palingram *stack
+    cats* in [Figure 2-5](ch02.xhtml#ch02fig5). Your program needs to loop through
+    the letters in the word, starting with an end letter and adding a letter with
+    each iteration. To find palingrams like *stack cats*, it will simultaneously evaluate
+    the word for the presence of a palindromic sequence at the end of the core word,
+    *stack*, and a reversed word at the start. Note that the first loop in [Figure
+    2-5](ch02.xhtml#ch02fig5) will be successful, as a single letter (*k*) can serve
+    as a palindrome in this situation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f0027-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 2-5: Example loops through a core word, simultaneously looking for
+    palindromes and reversed words*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: But you’re not through yet. To capture the “mirror image” behavior in [Figure
+    2-3](ch02.xhtml#ch02fig3), you have to run the loops in reverse, looking for palindromic
+    sequences at the start of the word and reversed words at the end. This will allow
+    you to find palingrams like *stir grits*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is the pseudocode for a palingram-finding algorithm:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Load digital dictionary as a list of words
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start an empty list to hold palingrams
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For word in word list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Get length of word
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If length > 1:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Loop through the letters in the word:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If reversed word fragment at front of word is in word list and letters
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'after form a palindromic sequence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Append word and reversed word to palingram list
+  prefs: []
+  type: TYPE_NORMAL
+- en: If reversed word fragment at end of word is in word list and letters
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'before form a palindromic sequence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Append reversed word and word to palingram list
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sort palingram list alphabetically
+  prefs: []
+  type: TYPE_NORMAL
+- en: Print word-pair palingrams from palingram list
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Palingrams Code***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[Listing 2-3](ch02.xhtml#ch02list3), *palingrams.py*, loops through a word
+    list, identifies which words form word-pair palingrams, saves those pairs to a
+    list, and prints the list as stacked items. You can download the code from *[https://www.nostarch.com/impracticalpython/](https://www.nostarch.com/impracticalpython/)*.
+    I suggest you use the *2of4brif.txt* dictionary file to start so that your results
+    will match mine. Store your dictionary and *load_dictionary.py* in the same folder
+    as the palingrams script.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*palingrams.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""Find all word-pair palingrams in a dictionary file."""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import load_dictionary
+  prefs: []
+  type: TYPE_NORMAL
+- en: word_list = load_dictionary.load('2of4brif.txt')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# find word-pair palingrams'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ def find_palingrams():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""Find dictionary palingrams."""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pali_list = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for word in word_list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ end = len(word)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ rev_word = word[::-1]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➍ if end > 1:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➎ for i in range(end):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➏ if word[i:] == rev_word[:end-i] and rev_word[end-i:] in word_list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pali_list.append((word, rev_word[end-i:]))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➐ if word[:i] == rev_word[end-i:] and rev_word[:end-i] in word_list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pali_list.append((rev_word[:end-i], word))
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➑ return pali_list
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➒ palingrams = find_palingrams()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# sort palingrams on first word'
+  prefs: []
+  type: TYPE_NORMAL
+- en: palingrams_sorted = sorted(palingrams)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# display list of palingrams'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➓ print("\nNumber of palingrams = {}\n".format(len(palingrams_sorted)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for first, second in palingrams_sorted:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("{} {}".format(first, second))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 2-3: Finds and prints word-pair palingrams in loaded dictionary*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After repeating the steps you used in the *palindromes.py* code to load a dictionary
+    file, define a function to find palingrams ➊. Using a function will allow you
+    to isolate the code later and time how long it takes to process all the words
+    in the dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Immediately start a list called pali_list to hold all the palingrams the program
+    discovers. Next, start a for loop to evaluate the words in word_list. For each
+    word, find its length and assign its length to the variable end ➋. The word’s
+    length determines the indexes the program uses to slice through the word, looking
+    for every possible reversed word-palindromic sequence combination, as in [Figure
+    2-3](ch02.xhtml#ch02fig3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, negatively slice through the word and assign the results to the variable
+    rev_word ➌. An alternative to word[::-1] is ''.join(reversed(word)), which some
+    consider more readable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since you are looking for word-pair palingrams, exclude single-letter words
+    ➍. Then nest another for statement to loop through the letters in the current
+    word ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, run a conditional requiring the back end of the word to be palindromic
+    and the front end to be a reverse word in the word list (in other words, a “real”
+    word) ➏. If a word passes the test, it is appended to the palingram list, immediately
+    followed by the reversed word.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Based on [Figure 2-3](ch02.xhtml#ch02fig3), you know you have to repeat the
+    conditional, but change the slicing direction and word order to reverse the output.
+    In other words, you must capture palindromic sequences at the start of the word
+    rather than at the end ➐. Return the list of palingrams to complete the function
+    ➑.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the function defined, call it ➒. Since the order in which dictionary words
+    are added to the palingram list switches during the loop, the palingrams won’t
+    be in alphabetical order. So, sort the list so that the first words in the word
+    pair are in alphabetical order. Print the length of the list ➓, then print each
+    word-pair on a separate line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As written, *palingrams.py* will take about three minutes to run on a dictionary
+    file with about 60,000 words. In the next sections, we’ll investigate the cause
+    of this long runtime and see what we can do to fix it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Palingram Profiling***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '*Profiling* is an analytical process that gathers statistics on a program’s
+    behavior—for example, the number and duration of function calls—as the program
+    executes. Profiling is a key part of the optimization process. It tells you exactly
+    what parts of a program are taking the most time or memory. That way, you’ll know
+    where to focus your efforts to improve performance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Profiling with cProfile**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: A *profile* is a measurement output—a record of how long and how often parts
+    of a program are executed. The Python standard library provides a handy profiling
+    interface, cProfile, which is a C extension suitable for profiling long-running
+    programs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Something in the find_palingrams() function probably accounts for the relatively
+    long runtime of the *palingrams.py* program. To confirm, let’s run cProfile.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Copy the following code into a new file named *cprofile_test.py* and save it
+    in the same folder as *palingrams.py* and the dictionary file. This code imports
+    cProfile and the palingrams program, and it runs cProfile on the find_palingrams()
+    function—called with dot notation. Note again that you don’t need to specify the
+    *.py* extension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import cProfile
+  prefs: []
+  type: TYPE_NORMAL
+- en: import palingrams
+  prefs: []
+  type: TYPE_NORMAL
+- en: cProfile.run('palingrams.find_palingrams()')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Run *cprofile_test.py* and, after it finishes (you will see the >>> in the
+    interpreter window), you should see something similar to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 62622 function calls in 199.452 seconds
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Ordered by: standard name'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1    0.000    0.000  199.451  199.451 <string>:1(<module>)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1  199.433  199.433  199.451  199.451 palingrams.py:7(find_palingrams)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1    0.000    0.000  199.452  199.452 {built-in method builtins.exec}
+  prefs: []
+  type: TYPE_NORMAL
+- en: 60388    0.018    0.000    0.018    0.000 {built-in method builtins.len}
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2230    0.001    0.000    0.001    0.000 {method 'append' of 'list' objects}
+  prefs: []
+  type: TYPE_NORMAL
+- en: All that looping, slicing, and searching took 199.452 seconds on my machine,
+    but of course your times may differ from mine. You also get additional information
+    on some of the built-in functions, and since each palingram called the built-in
+    append() function, you can even see the number of palingrams found (2,230).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*The most common way to run* cProfile *is directly in the interpreter. This
+    lets you dump your output to a text file and view it with a web viewer. For more
+    information, visit* [https://docs.python.org/3/library/profile.html](https://docs.python.org/3/library/profile.html).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Profiling with time**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Another way to time the program is to use time.time(), which returns an *epoch
+    timestamp*—the number of seconds since 12 AM on January 1, 1970 UTC (the *Unix
+    epoch*). Copy *palingrams.py* to a new file, save it as *palingrams_timed.py*,
+    and insert the following code at the very top:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import time
+  prefs: []
+  type: TYPE_NORMAL
+- en: start_time = time.time()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now go to the end of the file and add the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: end_time = time.time()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("Runtime for this program was {} seconds.".format(end_time - start_time))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Save and run the file. You should get the following feedback at the bottom
+    of the interpreter window—give or take a few seconds:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Runtime for this program was 222.73954558372498 seconds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The runtime is longer than before, as you are now evaluating the whole program,
+    including printing, rather than just the find_palingrams() function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unlike cProfile, time doesn’t provide detailed statistics, but like cProfile,
+    it can be run on individual code components. Edit the file you just ran, moving
+    the start and end time statements (as shown below in bold) so they bracket our
+    long-running find_palingrams() function. Leave the import and print statements
+    unchanged at the top and bottom of the file, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: start_time = time.time()
+  prefs: []
+  type: TYPE_NORMAL
+- en: palingrams = find_palingrams()
+  prefs: []
+  type: TYPE_NORMAL
+- en: end_time = time.time()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Save and run the file. You should get the following feedback at the bottom
+    of the interpreter window:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Runtime for this program was 199.42786622047424 seconds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This now matches the initial results using cProfile. You won’t get the exact
+    same time if you rerun the program or use a different timer, but don’t get hung
+    up on it. It’s the *relative* times that are important for guiding code optimization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Palingram Optimization***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: I’m sorry, but three minutes of my life is too long to wait for palingrams.
+    Armed with our profiling results, we know that the find_palingrams() function
+    accounts for most of the processing time. This probably has something to do with
+    reading and writing to lists, slicing over lists, or searching in lists. Using
+    an alternative data structure to lists—like tuples, sets, or dictionaries—might
+    speed up the function. Sets, in particular, are significantly faster than lists
+    when using the in keyword. Sets use a hashtable for very fast lookups. With hashing,
+    strings of text are converted to unique numbers that are much smaller than the
+    referenced text and much more efficient to search. With a list, on the other hand,
+    you have to do a linear search through each item.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Think of it this way: if you’re searching your house for your lost cell phone,
+    you could emulate a list by looking through every room before finding it (in the
+    proverbial last place you look). But by emulating a set, you can basically dial
+    your cell number from another phone, listen for the ringtone, and go straight
+    to the proper room.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A downside to using sets is that the order of the items in the set isn’t controllable
+    and duplicate values aren’t allowed. With lists, the order is preserved and duplicates
+    are allowed, but lookups take longer. Fortunately for us, we don’t care about
+    order or duplicates, so sets are the way to go!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 2-4](ch02.xhtml#ch02list4) is the find_palingrams() function from
+    the original *palingrams.py* program, edited to use a set of words rather than
+    a list of words. You can find it in a new program named *palingrams_optimized.py*,
+    which you can download from *[https://www.nostarch.com/impracticalpython/](https://www.nostarch.com/impracticalpython/)*,
+    or just make these changes to your copy of *palingrams_timed.py* if you want to
+    check the new runtime yourself.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*palingrams_optimized.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def find_palingrams():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""Find dictionary palingrams."""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pali_list = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ words = set(word_list)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ for word in words:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: end = len(word)
+  prefs: []
+  type: TYPE_NORMAL
+- en: rev_word = word[::-1]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if end > 1:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(end):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➌ if word[i:] == rev_word[:end-i] and rev_word[end-i:] in words:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pali_list.append((word, rev_word[end-i:]))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➍ if word[:i] == rev_word[end-i:] and rev_word[:end-i] in words:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pali_list.append((rev_word[:end-i], word))
+  prefs: []
+  type: TYPE_NORMAL
+- en: return pali_list
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 2-4: The* find_palingrams() *function optimized with sets*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Only four lines change. Define a new variable, words, which is a set of word_list
+    ➊. Then loop through the set ➋, looking for membership of word slices in this
+    set ➌➍, rather than in a list as before.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the new runtime for the find_palingrams() function in *palingrams_optimized.py*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Runtime for this program was 0.4858267307281494 seconds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wow! From over three minutes to under a second! *That’s* optimization! And the
+    difference is in the data structure. Verifying the membership of a word in a *list*
+    was the thing that was killing us.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Why did I first show you the “incorrect” way to do this? Because that’s how
+    things happen in the real world. You get the code to work, and then you optimize
+    it. This is a simple example that an experienced programmer would have gotten
+    right from the start, but it is emblematic of the overall concept of optimization:
+    get it to work as best as you can, then make it better.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**dnE ehT**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You’ve written code to find palindromes and palingrams, profiled code using
+    cProfile, and optimized code by using the appropriate data structure for the task.
+    So how did we do with respect to Zatanna? Does she have a fighting chance?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here I’ve listed some of the more “aggressive” palingrams found in the *2of4brif*
+    dictionary file—everything from the unexpected *sameness enemas* to the harsh
+    *torsos rot* to my personal favorite as a geologist: *eroded ore*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| dump mud | drowsy sword | sameness enemas |'
+  prefs: []
+  type: TYPE_TB
+- en: '| legs gel | denims mined | lepers repel |'
+  prefs: []
+  type: TYPE_TB
+- en: '| sleet eels | dairy raid | slam mammals |'
+  prefs: []
+  type: TYPE_TB
+- en: '| eroded ore | rise sir | pots nonstop |'
+  prefs: []
+  type: TYPE_TB
+- en: '| strafe farts | torsos rot | swan gnaws |'
+  prefs: []
+  type: TYPE_TB
+- en: '| wolfs flow | partner entrap | nuts stun |'
+  prefs: []
+  type: TYPE_TB
+- en: '| slaps pals | flack calf | knobs bonk |'
+  prefs: []
+  type: TYPE_TB
+- en: '**Further Reading**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*Think Python, 2nd Edition* (O’Reilly, 2015) by Allen Downey has a short and
+    lucid description of hashtables and why they are so efficient. It’s also an excellent
+    Python reference book.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Practice Project: Dictionary Cleanup**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Data files available on the internet are not always “plug and play.” You may
+    find you need to massage the data a bit before applying it to your project. As
+    mentioned earlier, some online dictionary files include each letter of the alphabet
+    as a word. These will cause problems if you want to permit the use of one-letter
+    words in palingrams like *acidic a*. You could always remove them by directly
+    editing the dictionary text file, but this is tedious and for losers. Instead,
+    write a short script that removes these after the dictionary has been loaded into
+    Python. To test that it works, edit your dictionary file to include a few one-letter
+    words like *b* and *c*. For a solution, see the appendix, or find a copy (*dictionary_cleanup_practice.py*)
+    online at *[https://www.nostarch.com/impracticalpython/](https://www.nostarch.com/impracticalpython/)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Challenge Project: Recursive Approach**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: With Python, there is usually more than one way to skin a cat. Take a look at
+    the discussion and pseudocode at the Khan Academy website (*[https://www.khanacademy.org/computing/computer-science/algorithms/recursive-algorithms/a/using-recursion-to-determine-whether-a-word-is-a-palindrome/](https://www.khanacademy.org/computing/computer-science/algorithms/recursive-algorithms/a/using-recursion-to-determine-whether-a-word-is-a-palindrome/)*).
+    Then rewrite the *palindrome.py* program so that it uses recursion to identify
+    palindromes.
+  prefs: []
+  type: TYPE_NORMAL

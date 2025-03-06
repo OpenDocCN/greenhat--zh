@@ -1,0 +1,1187 @@
+- en: '17'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: READING INPUT FROM A FILE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Any engineering application we develop will require some data input. For example,
+    to solve a truss structure using the algorithm we developed in the previous chapter,
+    we first need to construct the structure model. It’d be tedious to manually instantiate
+    the classes to construct the model every time we want to solve a structure; it’d
+    be more convenient to simply pass our app a plaintext file that follows a given
+    and well-defined scheme defining the structure we want to solve. In this chapter,
+    we’ll equip our app with a file parser function that reads text files, interprets
+    them, and constructs the model that the app uses internally.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Defining the Input Format**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For our application to work, the files we feed it need to have a well-defined
+    structure. The text file has to include the definition of the nodes, the loads
+    applied to them, and the bars of the structure. Let’s decide on a format for each
+    of these parts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Nodes Format***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Each node will be defined in its own line, following this format,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*node_id* is the ID given to the node.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*x_coord* is the x position of the node.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*y_coord* is the y position of the node.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*external_constraints* is a set of the constrained movements.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Here’s an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: This defines a node with an ID of 1, at position (250, 400), with its x and
+    y displacements externally constrained.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Loads Format***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Loads will be defined separately from the nodes they’re applied to, so we’ll
+    have to indicate the ID of the node where the load is applied. Having the nodes
+    and loads defined in different lines allows us to simplify the input parsing process
+    by using two simple regular expressions (one for the nodes and another for the
+    loads) instead of one long and complicated regular expression. Each load will
+    be defined on a separate line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s use the following format for loads,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*node_id* is the node where the load is applied.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Fx* is the x component of the load.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Fy* is the y component of the load.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Here’s an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: This defines a load ⟨500,–1000⟩ applied to the node with an ID of 3\. We’re
+    using the -> character sequence to separate the node ID from the load components
+    instead of a colon so that it’s clear we’re not assigning an ID to the load itself.
+    Rather, we’re applying the load to the node with that ID.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Bars Format***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Bars are defined between two nodes and have a section and Young’s modulus. As
+    with nodes and loads, each bar will be defined on its own line. We can give bars
+    the following format,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*bar_id* is the ID given to the bar.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*start_node_id* is the ID of the start node.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*end_node_id* is the ID of the end node.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*A* is the cross-section area.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*E* is the Young’s modulus.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Here’s an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: This defines a bar between nodes 1 and 2, with a cross section of 30 and a Young’s
+    modulus of 20000000. This bar is given an ID of 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The File Format***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now that we’ve come up with a format for the nodes, loads, and bars, let’s see
+    how we can put them all together in one file. We’re looking for a file structure
+    that’s simple to write by hand but that’s also easy to parse.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One interesting idea is to divide the file into sections, each opened by a
+    header:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Each section should contain only the lines defining entities of the same type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given that our structure definition files will have three different kinds of
+    entities—nodes, loads, and bars—they’ll need three different sections. For example,
+    the structure we used for the unit tests in the previous chapter, included here
+    as [Figure 17-1](ch17.xhtml#ch17fig1), would be defined as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/17fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 17-1: Structure from previous chapter’s unit tests*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now that we’ve defined a format for our structure definition files, we need
+    to work on a parser. A *parser* is a component (a function or class) that reads
+    text, interprets it, and translates it into a data structure or model. In this
+    case, the model is our truss structure class: Structure. We’ll use regular expressions,
+    as we did in [Chapter 9](ch09.xhtml#ch09).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Finding the Regular Expressions**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If we know the structure ahead of time, regular expressions are a reliable
+    way of extracting all the information we need from plaintext. We’ll need three
+    different regular expressions: one for the nodes, one for the loads, and one for
+    the bars. If you need a refresher on regular expressions, take a moment to review
+    “Regular Expressions” on [page 9](ch01.xhtml#page_9). Let’s design these regular
+    expressions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Nodes Regex***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To match nodes defined in our format, we can use the following regular expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /(?P<id>\d+)\s*:\s*
+  prefs: []
+  type: TYPE_NORMAL
+- en: \((?P<pos>[\d\s\.,\-]+)\)\s*
+  prefs: []
+  type: TYPE_NORMAL
+- en: \((?P<ec>[xy]{0,2})\)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is one scary regular expression. It’s split between several lines because
+    it was too long to fit in a single line, but you can imagine it as being just
+    one line. Let’s break down this regular expression into its parts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (?P<id>\d+) This matches the node’s ID, a number with one or more digits (\d+),
+    and captures it in a group named id.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \s*:\s* This matches the colon after the ID with arbitrary and optional spaces
+    around it (\s*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: \((?P<pos>[\d\s\.,\-]+)\) This matches the node’s position coordinates inside
+    the parentheses and captures them in a group named pos. Note that we match the
+    whole expression between the parentheses; that includes the two coordinates and
+    the comma that separates them. We’ll split the two numbers in code. We do it this
+    way so that our already monstrous regular expression doesn’t become even scarier.
+    Combining regular expressions with Python’s string manipulation methods is a powerful
+    technique.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \s* This matches zero or more spaces separating the coordinates group from the
+    external constraints group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \((?P<ec>[xy]{0, 2})\) This last part matches the external constraints defined
+    between parentheses and captures them in a group named ec. The contents inside
+    the parentheses are limited to the character group [xy], that is, the characters
+    “x” and “y.” There’s also a constraint in the number of characters allowed, which
+    is any number between 0 and 2 ({0, 2}).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll see this regular expression in action soon. [Figure 17-2](ch17.xhtml#ch17fig2)
+    may help you understand each of the subparts in the regular expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/17fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 17-2: Node regular expression visualized*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s take a look at how to parse the loads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Loads Regex***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To match loads written with the format we defined, we’ll use the following
+    regular expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /(?P<node_id>\d+)\s*->\s*\((?P<vec>[\d\s\.,\-]+)\)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: This regular expression isn’t quite as scary as the previous one; let’s break
+    it down into its subparts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (?P<node_id>\d+) This matches the node ID and captures it in a group named node_id.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \s*->\s* This matches the -> character sequence and the optional blank spaces
+    around it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \((?P<vec>[\d\s\.,\-]+)\) This matches the entire expression between the parentheses,
+    where the force vector components are defined. The character set [\d\s\.,\-] inside
+    the parentheses is allowed; this includes digits, spaces, dots, commas, and minus
+    signs. Whatever is captured is stored in a capture group named vec.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 17-3](ch17.xhtml#ch17fig3) is a breakdown of the regular expression’s
+    different parts. Make sure you understand each of them.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/17fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 17-3: Load regular expression visualized*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, let’s take a look at the regular expression for the bars.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Bars Regex***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To match bars written using the format we defined earlier, we’ll use the following
+    regular expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /(?P<id>\d+)\s*:\s*
+  prefs: []
+  type: TYPE_NORMAL
+- en: \((?P<start_id>\d+)\s*->\s*(?P<end_id>\d+)\)\s*
+  prefs: []
+  type: TYPE_NORMAL
+- en: (?P<sec>[\d\.]+)\s+
+  prefs: []
+  type: TYPE_NORMAL
+- en: (?P<young>[\d\.]+)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This regular expression was also broken down into several lines because of
+    its length, but you can imagine it as being written in one line. Let’s break it
+    down piece by piece:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (?P<id>\d+) This matches the ID assigned to the bar and captures it in the group
+    named id.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \s*:\s* This matches the colon character and the optional blank space around
+    it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \((?P<start_id>\d+)\s*->\s*(?P<end_id>\d+)\) This matches the two node IDs separated
+    by the -> character sequence and the optional space around it. The IDs are captured
+    in the groups named start_id and end_id. This whole expression is required to
+    appear between parentheses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \s* This matches the optional blank space between the last parenthesis and the
+    next value, the section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (?P<sec>[\d\.]+) This captures a decimal number and assigns it to the group
+    named sec.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \s+ This matches the required blank space between the last parenthesis and the
+    next value, the Young modulus. Recall that, in this case we need at least one
+    space. Otherwise, there would be no way to know where the value for the section
+    ends and the value for the Young modulus begins.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (?P<young>[\d\.]+) This captures a decimal number and assigns it to the group
+    named young.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is the largest and most complex regular expression we’ve seen in the book.
+    [Figure 17-4](ch17.xhtml#ch17fig4) should help you identify each of its parts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/17fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 17-4: Bar regular expression visualized*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that we have our regular expressions, let’s start writing the code to parse
+    our structure files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Setup**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Right now, our *structures* package has the following subdirectories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: structures
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- model'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- solution'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- tests'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s create a new package folder named *parse* by right-clicking *structures*
+    and choosing **New** ▸ **Python Package**. If you’re doing this from outside the
+    IDE, don’t forget to create an empty *__init__.py* file in the folder. Our *structures*
+    package directory should look like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: structures
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- model'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- parse'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- solution'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- tests'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re ready to start implementing the code. We’ll first implement the logic
+    for parsing nodes, loads, and bars. Each will be defined in its own function along
+    with unit tests. Then, we’ll put it all together in a function that reads the
+    entire file’s contents, splits it into lines, and parses each line into the right
+    model class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Parsing Nodes**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We’ll start with the nodes. In *structures/parse*, create a new file named *node_parse.py*.
+    In this file, enter the code in [Listing 17-1](ch17.xhtml#ch17lis1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-1: Parsing a node from a string*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start by defining the regular expression we saw earlier. It needs to be broken
+    down into multiple lines because it’s too long for a single line, but since we’re
+    using the continuation backslash character (\), Python will read all the contents
+    into a single line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then comes the parse_node function, which accepts a string parameter as input.
+    This string should be formatted following the node’s format we defined earlier.
+    We look for a match in the node_str string against the node’s regular expression
+    ➊. If there’s no match, we raise a ValueError with a message that includes the
+    offending string so that it’s easier to debug errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then we extract the ID from the capture group named id and store it in the _id
+    variable ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we parse the x and y position coordinates: we read the contents of the
+    pos capture group and split the string using the comma character.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: This yields the two strings representing the numbers defining the node’s position.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using a list comprehension, we map each of the strings to a float number:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Then we destructure the result into variables x and y ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The last named capture group is ec. It contains the definition of the external
+    constraints. We read its contents and store them in the variable ext_const ➍.
+    Lastly, we create the node instance passing it all the parameters it expects ➎.
+    We pass the ID, the position point, a None for the loads (this will be added later),
+    and the external constraints. The external constraints are added by checking whether
+    the character “x” or “y” is in the constraints string. For this, we use Python’s
+    in operator, which checks whether a given value exists in a sequence. Here’s an
+    example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s use some unit tests to make sure our code parses nodes correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Testing the Node Parser***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s create a new test file in the *structures/tests* directory named *node_parse
+    _test.py*. In the file, enter the code in [Listing 17-2](ch17.xhtml#ch17lis2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-2: Testing the parsing of a node*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This file defines a new test class: NodeParseTest. We’ve defined a string with
+    the correct format so we can test whether we can parse all of its parts. That
+    string is node_str ➊. We’ve written all of our tests to work with the node that
+    results when we parse the string ➋; we did this to avoid repeating the same parsing
+    operation in every test.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then we have a test to ensure the ID is correctly set in the resulting node,
+    another one that checks the node’s position, and two more to test whether the
+    external constraints have been added or not.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s run our tests to make sure they all pass. You can do so from the IDE
+    or from the shell with the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s now work on parsing the bars.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Parsing Bars**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In *structures/parse*, create a new file named *bar_parse.py*. In this file,
+    enter the code in [Listing 17-3](ch17.xhtml#ch17lis3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-3: Parsing a bar from a string*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The regular expression to match the bar definition (__BAR_REGEX) is a bit long
+    and complex. Make sure you enter it carefully. We’ll write some unit tests later,
+    so any error here will come to light there.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ve written the parse_bar function, which takes two parameters: the string
+    defining the bar and a dictionary of nodes. In this dictionary, the keys are the
+    IDs of the nodes, and the values are the nodes themselves. The bar needs to have
+    a reference to its end nodes, so these have to be parsed first and then passed
+    to the parse_bar function. This adds a constraint in the way we parse structure
+    files: nodes should appear first.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As with the nodes, we start by matching the passed-in string against our regular
+    expression ➊. If there is no match, we raise a ValueError with a helpful message
+    including the string that couldn’t be parsed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we retrieve and parse the capture groups: id parsed as an integer ➋,
+    start_id ➌ and end_id ➍ parsed as integers, and sec ➎ and young ➏ parsed as floats.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then we look for the start node in the nodes dictionary ➐ and raise an error
+    if it’s not found: we can’t build a bar whose nodes don’t exist. We do the same
+    thing for the end node, and then we create and return the bar instance in the
+    last line ➑, passing it all the parsed values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s test this code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Testing the Bar Parser***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To test the bar parsing process, create a new file in *structures/tests* named
+    *bar_parse_test.py*. Enter the new tests in [Listing 17-4](ch17.xhtml#ch17lis4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-4: Testing the parsing of a bar*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this test, we define a bar using its string representation ➊. The parse _bar
+    function requires a dictionary containing the nodes by ID as its second argument;
+    we create a dummy (recall the types from the 16 [page 447](ch16.xhtml#ch00lev1sec97))
+    called nodes_dict ➋. This dictionary contains the two node IDs mapped to a string.
+    Our parsing code doesn’t really do anything with the nodes or even check their
+    types; it simply adds them to the bar instance. So for the tests, a string mocking
+    the node is enough.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Again, we parse ➌ first and store the result in the bar variable. We then create
+    five tests that check that we’ve correctly parsed the ID, both start and end nodes,
+    the cross section, and Young’s modulus.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Run the tests to make sure they all pass. You can do so from the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Lastly, we need to parse the loads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Parsing Loads**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We’ll now write a function to parse the load strings, but we won’t apply the
+    loads to the nodes here. That’ll happen later when we put all the pieces together.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Create a new file in *structures/parse* named *load_parse.py*. Enter the code
+    in [Listing 17-5](ch17.xhtml#ch17lis5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-5: Parsing a load from a string*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this listing we define the regular expression that matches the loads as __LOAD_REGEX.
+    Then comes the parse_load function, which first looks for a match in the passed-in
+    string (load_str) ➊. We raise an error if the string doesn’t match __LOAD_REGEX.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The regular expression defines two capturing groups: node_id and vec. The first
+    group is the ID of the node where the load needs to be applied. We convert the
+    value for this first group into an integer and store it in the node_id variable
+    ➋.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To extract the force components, we split the value matched by the vec capture
+    group and then parse each part, convert it to a float value, and use destructuring
+    to extract the components into the fx and fy variables ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, we return a tuple of the node ID and a vector with the force components
+    ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s test this logic to make sure it parses loads correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Testing the Load Parser***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the *structures/tests* folder, create a new file named *load_parse_test.py*.
+    Enter the test code in [Listing 17-6](ch17.xhtml#ch17lis6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-6: Testing the parsing of a load*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This test defines a string representing a load applied to a node with an ID
+    of 1 and whose components are ⟨250.0,–3500.0⟩. The string is stored in the load_str
+    variable and passed to the parse_load function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the first test, we check that we’ve correctly parsed the node ID, which is
+    returned by the function as the tuple’s first value. Then, we check that we’ve
+    correctly parsed the tuple’s second value, the vector. These two simple tests
+    are enough to make sure our function does its job.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Run the tests from the IDE or from the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now that we have functions that can parse the structure’s individual parts from
+    their string representations, it’s time to put them together. In the next section,
+    we’ll work on a function that reads all the lines of a structure definition file
+    and generates the corresponding model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Parsing the Structure**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Our structure files define each entity on its own line, and entities appear
+    grouped by sections. If you recall, we defined three sections for the three different
+    entities we need to parse: nodes, bars, and loads. Here’s the previous example
+    of a structure file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Because these files will mostly be written by hand, it would be nice if we
+    allowed the inclusion of comments: lines that are ignored by the parsing mechanism
+    but explain something to someone reading the file, just like comments in code.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We’ll borrow Python’s syntax and use the # symbol to mark the start of a comment.
+    Comments will have to appear on their own lines.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Overview***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Because we’ll need to write a few functions, it may be helpful to have a diagram
+    of the structure parsing process with the function names annotated after the steps.
+    Take a look at [Figure 17-5](ch17.xhtml#ch17fig5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/17fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 17-5: Structure parsing process*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this diagram, we show each step of the parsing process. We start with a structure
+    file defining the structure in plaintext following our standard format.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first step is to read the file contents into a string. We’ll implement this
+    part in our application in [Chapter 19](ch19.xhtml#ch19).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second step consists of splitting the big string into multiple lines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The third step is parsing those lines into a dictionary of the structural primitives.
+    This step is handled by the private __parse_lines function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The fourth and final step is aggregating those parsed structural items into
+    a structure instance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The parse_structure_from_lines function is a combination of steps 3 and 4:
+    it transforms a list of definition lines into a complete structure. The parse
+    _structure function goes one step further and splits a single string into multiple
+    lines.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Setup***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In the *structures/parse* directory, create a new file named *str_parse.py*.
+    The *structures* package should now look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: structures
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- model'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    | ...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- parse'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- bar_parse.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- load_parse.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- node_parse.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- str_parse.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- solution'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    | ...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- tests'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    | ...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s start the implementation with a function that determines whether a line
+    in the file is blank or a comment. This function will let us know whether a given
+    line can be ignored or whether it has to be parsed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Ignoring Blank Lines and Comments***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In *str_parse.py*, enter the code in [Listing 17-7](ch17.xhtml#ch17lis7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-7: Function to determine the lines that need to be ignored*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We define a constant, __COMMENT_INDICATOR, with the # character for its value.
+    If we ever want to change the way comments are identified, we’ll simply need to
+    edit this line.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next is the __should_ignore_line function. This function receives a string and
+    removes any surrounding blank spaces (in other words, it strips the string). Then,
+    if the line has a length of zero or starts with the comment indicator, the function
+    returns a True value, and a False otherwise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Parsing the Lines***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now that we have a way to filter out the lines that don’t need to be parsed,
+    let’s look at the ones that do. We’re going to define a function that receives
+    a list of strings representing the lines and identifies whether the line is a
+    section header (“nodes,” “bars,” or “loads”) or an entity. In the case of a section
+    header, the function will set a flag to keep track of the current section being
+    read. The rest of the function will take care of parsing each line using the corresponding
+    parser.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the file *str_parse.py*, enter the code in [Listing 17-8](ch17.xhtml#ch17lis8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-8: Parsing the lines*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We first add three variables with the names of the file headers: __NODES _HEADER,
+    __LOADS_HEADER, and __BARS_HEADER. These constants define the names of the sections.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then comes the __parse_lines function definition, which takes one parameter:
+    the list of lines in the structure file. The function declares a variable named
+    reading ➊. This variable indicates what structure section the later loop is currently
+    in. For example, when its value is ’bars’, the subsequent lines should be parsed
+    using the parse_bar function until the end of the file or a new section is encountered.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next comes the definition of the result dictionary ➋. It’s initialized with
+    three keys: ’nodes’, ’loads’, and ’bars’. We’ll add the parsed elements to this
+    dictionary, in their corresponding key’s collection. Loads and bars are stored
+    in a list and nodes in a dictionary, with the keys being their IDs. We store nodes
+    mapped to their keys in a dictionary because both loads and bars refer to them
+    by ID in the structure file; thus, when we link them, it’ll be more convenient
+    to look them up by ID.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next is the loop that iterates over the lines’ enumeration. Recall that Python’s
+    enumerate function returns an iterable sequence that includes the original objects
+    along with their index. We’ll use the index only if we encounter an error, using
+    the line number in the error message to make looking for the error in the input
+    file easier. The first thing we do with each line is check whether it’s blank
+    or a comment ➌, in which case we skip it using the continue statement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we have a couple of if-else statements. The first block of them is for
+    matching header lines ➍. When a line is found to match one of the three possible
+    headers, we set the reading variable to the header’s value. The later if-else
+    statements evaluate reading to determine which structural element to parse ➎.
+    If reading has the value ’nodes’, we use the parse_node function to parse the
+    line and store the result in the result dictionary, under the ’nodes’ key:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The same goes for bars and loads, but remember that in their case, they’re
+    stored in a list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: The function then returns the result dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ve implemented a function that reads a sequence of text lines and converts
+    each of them into a structure class instance (what we know as parsing). These
+    instances represent the nodes, bars, and loads of the structure. The function
+    returns a dictionary that bundles these instances by type. The next step is using
+    these parsed objects to construct a Structure instance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Splitting the Lines and Instantiating the Structure***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Given the contents of a structure file as a string, we want to split this string
+    into its lines. We’ll pass those lines to the __parse_lines function we wrote
+    earlier, and using the parsed objects we can construct an instance of our Structure
+    class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the *str_parse.py* file, before the __parse_lines function, enter the code
+    in [Listing 17-9](ch17.xhtml#ch17lis9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-9: Splitting the lines*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ve written three new functions. The first of them, parse_structure, splits
+    the passed-in string into its lines ➊ and forwards those lines to the parse_structure_from_lines
+    function defined afterward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This second function, parse_structure_from_lines, passes the lines to __parse_lines
+    and saves the result in a variable called parsed ➋. It then extracts the contents
+    of this result dictionary to the variables: nodes_dict, loads, and bars.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The loads are defined separately from the nodes they’re applied to; thus, we
+    need to add each load to its respective node ➌. To do this, we’ve written another
+    small function: __apply_loads_to_nodes. Recall that the loads were defined using
+    the format'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and are parsed by our parse_load function as a tuple consisting of the node
+    ID and the load components as a vector:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: It’s important to keep this in mind to understand the loop in __apply _loads_to_nodes
+    ➎. The loop iterates over the load tuples, and on each iteration, it stores the
+    node ID and load vector into the node_id and load variables, respectively. Because
+    our nodes are stored in a dictionary whose keys are the node IDs, applying the
+    loads is a piece of cake.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once the loads have been applied to the nodes (back in parse_structure _from_lines),
+    the last step is to return an instance of the Structure class. The class’s constructor
+    expects a list of nodes and a list of bars. The bars are already parsed as a list,
+    but the nodes were in a dictionary. To turn the values of a dictionary into a
+    list, we simply need to use Python’s list function on the dictionary values, which
+    we extract using the values() method ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With this, our parsing logic is ready!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Result***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: For your reference, [Listing 17-10](ch17.xhtml#ch17lis10) shows the complete
+    code for *str_parse.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-10: Parsing the structure*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Before we move to the next section, open the *__init__.py* file in *parse*,
+    and enter the following import:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: This allows us to import the parse_structure function like this,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'instead of this slightly longer version:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s make sure our parsing function is working correctly by implementing some
+    automated tests.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Testing the Structure Parser***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To make sure the parse_structure function works as expected, we’ll now add
+    a few unit tests. First, we want to create a structure definition file to use
+    in the test. In the *structures/tests* directory, create a new file, *test_str.txt*,
+    with the following contents:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We’ve added comment lines and some extra blank lines; our function should ignore
+    those. Create a new test file: *str_parse_test.py* ([Listing 17-11](ch17.xhtml#ch17lis11)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-11: Setting up the structure parsing test*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The file defines a new test class: StructureParseTest. In the setUp method,
+    we load the *test_str.txt* file as bytes using the resource_string function. Then,
+    we decode those bytes into a UTF-8 encoded Python string. Lastly, using parse_structure,
+    we parse the structure string and store the result in a class attribute: self.structure.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Testing the Node Parser**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Let’s add some test cases to ensure the structure that we parsed from the *test_str.txt*
+    file contains the expected nodes. After the setUp method, enter the first tests
+    ([Listing 17-12](ch17.xhtml#ch17lis12)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-12: Testing the structure parsing: the nodes*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ve written three tests. The first one checks that there are three nodes in
+    the structure. The next test ensures that those three nodes have the correct position.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s one interesting thing to note here. Since the __nodes list is private
+    to the Structure class, Python uses a trick to try to hide it from us. Python
+    prepends an underscore and the name of the class to the name of its private attributes.
+    The __nodes attribute will therefore be called _Structure__nodes, and not __nodes
+    as we’d expect. This is why, to access it from our tests, we use this name ➊.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The third and last test checks if the external constraints in the nodes have
+    the right values as defined in the structure definition file. Let’s run the tests.
+    You can click the green play button in the IDE or use the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: A success message should be displayed in the shell.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Testing the Bar Parser**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Let’s now test if the bars are also parsed correctly. After the test cases we
+    just wrote, enter the ones in [Listing 17-13](ch17.xhtml#ch17lis13).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-13: Testing the structure parsing: the bars*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first test asserts that there are three bars in the structure. The second
+    test checks that every bar in the structure is linked to the correct node IDs.
+    Same as before, to access the private list of bars, we need to prepend _Structure
+    to the attribute name: _Structure__bars.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I invite you to add two more tests that check that the values for the cross
+    section and Young’s modulus are correctly parsed into the bars. We won’t include
+    them here for brevity reasons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Run the test class again to make sure our new tests also pass. From the shell,
+    run this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Testing the Load Parser**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Let’s add the two last tests to ensure the loads are properly parsed. Enter
+    the code in [Listing 17-14](ch17.xhtml#ch17lis14).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-14: Testing the structure parsing: the loads*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In these two last tests, we check that the number of loads in the structure
+    is 1 and that it’s being correctly applied to the second node.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s run all the tests to make sure all pass:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If your code is well implemented, all the tests should pass, and you should
+    see the following in the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Test Class Result**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: We’ve done a few tests, so [Listing 17-15](ch17.xhtml#ch17lis15) shows the resulting
+    test class for your reference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 17-15: Testing the structure parsing*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our structure parsing logic is ready and tested!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we first defined a format for our structure files. It’s a simple
+    plaintext format that can be written by hand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We then implemented functions to parse each of the lines in our structure files
+    into its appropriate structural element: nodes, loads, and bars. Regular expressions
+    were the stars of the show; with them, parsing well-structured text was a breeze.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, we put everything together into a function that splits a big string
+    into its lines and decides which parser to use for each line. We’ll use this function
+    to read structure files and create the structural model that our truss resolution
+    application will work with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s now time to work on producing the output diagrams for the structure solution.
+    That’s exactly what we’ll do in the next chapter.
+  prefs: []
+  type: TYPE_NORMAL

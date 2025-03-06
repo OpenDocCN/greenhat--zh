@@ -1,0 +1,719 @@
+- en: '**11**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**SCALING AND ARCHITECTURE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Sooner or later, your development process will have to consider resiliency and
+    scalability. An application’s scalability, concurrency, and parallelism depend
+    largely on its initial architecture and design. As we’ll see in this chapter,
+    there are some paradigms—such as multithreading—that don’t apply correctly to
+    Python, whereas other techniques, such as service-oriented architecture, work
+    better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Covering scalability in its entirety would take an entire book, and has in fact
+    been covered by many books. This chapter covers the essential scaling fundamentals,
+    even if you’re not planning to build applications with millions of users.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Multithreading in Python and Its Limitations**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: By default, Python processes run on only one thread, called the *main thread*.
+    This thread executes code on a single processor. *Multithreading* is a programming
+    technique that allows code to run concurrently inside a single Python process
+    by running several threads simultaneously. This is the primary mechanism through
+    which we can introduce concurrency in Python. If the computer is equipped with
+    multiple processors, you can even use *parallelism*, running threads in parallel
+    over several processors, to make code execution faster.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Multithreading is most commonly used (though not always appropriately) when:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You need to run background or I/O-oriented tasks without stopping your main
+    thread’s execution. For example, the main loop of a graphical user interface is
+    busy waiting for an event (e.g., a user click or keyboard input), but the code
+    needs to execute other tasks.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You need to spread your workload across several CPUs.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The first scenario is a good general case for multithreading. Though implementing
+    multithreading in this circumstance would introduce extra complexity, controlling
+    multithreading would be manageable, and performance likely wouldn’t suffer unless
+    the CPU workload was intensive. The performance gain from using concurrency with
+    workloads that are I/O intensive gets more interesting when the I/O has high latency:
+    the more often you have to wait to read or write, the more beneficial it is to
+    do something else in the meantime.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the second scenario, you might want to start a new thread for each new request
+    instead of handling them one at a time. This may seem like a good use for multithreading.
+    However, if you spread your workload out like this, you will encounter the Python
+    *global interpreter lock (GIL),* a lock that must be acquired each time CPython
+    needs to execute bytecode. The lock means that only one thread can have control
+    of the Python interpreter at any one time. This rule was introduced originally
+    to prevent race conditions, but it unfortunately means that if you try to scale
+    your application by making it run multiple threads, you’ll always be limited by
+    this global lock.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So, while using threads seems like the ideal solution, most applications running
+    requests in multiple threads struggle to attain 150 percent CPU usage, or usage
+    of the equivalent of 1.5 cores. Most computers have 4 or 8 cores, and servers
+    offer 24 or 48 cores, but the GIL prevents Python from using the full CPU. There
+    are some initiatives underway to remove the GIL, but the effort is extremely complex
+    because it requires performance and backward compatibility trade-offs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although CPython is the most commonly used implementation of the Python language,
+    there are others that do not have a GIL. *Jython*, for example, can efficiently
+    run multiple threads in parallel. Unfortunately, projects such as Jython by their
+    very nature lag behind CPython and so are not really useful targets; innovation
+    happens in CPython, and the other implementations are just following in CPython’s
+    footsteps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So, let’s revisit our two use cases with what we now know and figure out a
+    better solution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you need to run background tasks, you *can* use multithreading, but the
+    easier solution is to build your application around an event loop. There are a
+    lot of Python modules that provide for this, and the standard is now asyncio.
+    There are also frameworks, such as Twisted, built around the same concept. The
+    most advanced frameworks will give you access to events based on signals, timers,
+    and file descriptor activity—we’ll talk about this later in the chapter in “[Event-Driven
+    Architecture](ch11.xhtml#lev1sec63)” on [page 181](ch11.xhtml#page_181).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When you need to spread the workload, using multiple processes is the most efficient
+    method. We’ll look at this technique in the next section.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Developers should always think twice before using multithreading. As one example,
+    I once used multithreading to dispatch jobs in rebuildd, a Debian-build daemon
+    I wrote a few years ago. While it seemed handy to have a different thread to control
+    each running build job, I very quickly fell into the threading-parallelism trap
+    in Python. If I had the chance to begin again, I’d build something based on asynchronous
+    event handling or multiprocessing and not have to worry about the GIL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multithreading is complex, and it’s hard to get multithreaded applications right.
+    You need to handle thread synchronization and locking, which means there are a
+    lot of opportunities to introduce bugs. Considering the small overall gain, it’s
+    better to think twice before spending too much effort on it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Multiprocessing vs. Multithreading**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Since the GIL prevents multithreading from being a good scalability solution,
+    look to the alternative solution offered by Python’s *multiprocessing* package.
+    The package exposes the same kind of interface you’d achieve using the multithreading
+    module, except that it starts new *processes* (via os.fork()) instead of new system
+    threads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 11-1](ch11.xhtml#ch11list1) shows a simple example in which one million
+    random integers are summed eight times, with this activity spread across eight
+    threads at the same time.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: import threading
+  prefs: []
+  type: TYPE_NORMAL
+- en: results = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def compute():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: results.append(sum(
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[random.randint(1, 100) for i in range(1000000)]))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'workers = [threading.Thread(target=compute) for x in range(8)] for worker in
+    workers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: worker.start()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for worker in workers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: worker.join()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Results: %s" % results)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-1: Using multithreading for concurrent activity*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Listing 11-1](ch11.xhtml#ch11list1), we create eight threads using the threading.Thread
+    class and store them in the workers array. Those threads will execute the compute()
+    function. They then use the start() method to start. The join() method only returns
+    once the thread has terminated its execution. At this stage, the result can be
+    printed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Running this program returns the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ time python worker.py
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Results: [50517927, 50496846, 50494093, 50503078, 50512047, 50482863,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 50543387, 50511493]
+  prefs: []
+  type: TYPE_NORMAL
+- en: python worker.py  13.04s user 2.11s system 129% cpu 11.662 total
+  prefs: []
+  type: TYPE_NORMAL
+- en: This has been run on an idle four-core CPU, which means that Python could potentially
+    have used up to 400 percent of CPU. However, these results show that it was clearly
+    unable to do that, even with eight threads running in parallel. Instead, its CPU
+    usage maxed out at 129 percent, which is just 32 percent of the hardware’s capabilities
+    (129/400).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, let’s rewrite this implementation using *multiprocessing*. For a simple
+    case like this, switching to multiprocessing is pretty straightforward, as shown
+    in [Listing 11-2](ch11.xhtml#ch11list2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import multiprocessing
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def compute(n):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return sum(
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[random.randint(1, 100) for i in range(1000000)])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start 8 workers
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: pool = multiprocessing.Pool(processes=8)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Results: %s" % pool.map(compute, range(8)))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-2: Using multiprocessing for concurrent activity*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The multiprocessing module offers a Pool object that accepts as an argument
+    the number of processes to start. Its map() method works in the same way as the
+    native map() method, except that a different Python process will be responsible
+    for the execution of the compute() function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Running the program in [Listing 11-2](ch11.xhtml#ch11list2) under the same
+    conditions as [Listing 11-1](ch11.xhtml#ch11list1) gives the following result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ time python workermp.py
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Results: [50495989, 50566997, 50474532, 50531418, 50522470, 50488087, 0498016,
+    50537899]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: python workermp.py  16.53s user 0.12s system 363% cpu 4.581 total
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multiprocessing reduces the exectution time by 60 percent. Moreover, we’ve been
+    able to consume up to 363 percent of CPU power, which is more than 90 percent
+    (363/400) of the computer’s CPU capacity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each time you think that you can parallelize some work, it’s almost always better
+    to rely on multiprocessing and to fork your jobs in order to spread the workload
+    across several CPU cores. This wouldn’t be a good solution for very small execution
+    times, as the cost of the fork() call would be too big, but for larger computing
+    needs, it works well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Event-Driven Architecture**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*Event-driven programming* is characterized by the use of events, such as user
+    input, to dictate how control flows through a program, and it is a good solution
+    for organizing program flow. The event-driven program listens for various events
+    happening on a queue and reacts based on those incoming events.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s say you want to build an application that listens for a connection on
+    a socket and then processes the connection it receives. There are basically three
+    ways to approach the problem:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fork a new process each time a new connection is established, relying on something
+    like the multiprocessing module.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Start a new thread each time a new connection is established, relying on something
+    like the threading module.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add this new connection to your event loop and react to the event it will generate
+    when it occurs.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Determining how a modern computer should handle tens of thousands of connections
+    simultaneously is known as the *C10K problem*. Among other things, the C10K resolution
+    strategies explain how using an event loop to listen to hundreds of event sources
+    is going to scale much better than, say, a one-thread-per-connection approach.
+    This doesn’t mean that the two techniques are not compatible, but it does mean
+    that you can usually replace the multiple-threads approach with an event-driven
+    mechanism.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Event-driven architecture uses an event loop: the program calls a function
+    that blocks execution until an event is received and ready to be processed. The
+    idea is that your program can be kept busy doing other tasks while waiting for
+    inputs and outputs to complete. The most basic events are “data ready to be read”
+    and “data ready to be written.”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In Unix, the standard functions for building such an event loop are the system
+    calls select(2) or poll(2). These functions expect a list of file descriptors
+    to listen for, and they will return as soon as at least one of the file descriptors
+    is ready to be read from or written to.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In Python, we can access these system calls through the select module. It’s
+    easy enough to build an event-driven system with these calls, though doing so
+    can be tedious. [Listing 11-3](ch11.xhtml#ch11list3) shows an event-driven system
+    that does our specified task: listening on a socket and processing any connections
+    it receives.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import select
+  prefs: []
+  type: TYPE_NORMAL
+- en: import socket
+  prefs: []
+  type: TYPE_NORMAL
+- en: server = socket.socket(socket.AF_INET,
+  prefs: []
+  type: TYPE_NORMAL
+- en: socket.SOCK_STREAM)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Never block on read/write operations
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: server.setblocking(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bind the socket to the port
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: server.bind(('localhost', 10000))
+  prefs: []
+  type: TYPE_NORMAL
+- en: server.listen(8)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# select() returns 3 arrays containing the object (sockets, files...)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# that are ready to be read, written to or raised an error'
+  prefs: []
+  type: TYPE_NORMAL
+- en: inputs,
+  prefs: []
+  type: TYPE_NORMAL
+- en: outputs, excepts = select.select([server], [], [server])
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if server in inputs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: connection, client_address = server.accept()
+  prefs: []
+  type: TYPE_NORMAL
+- en: connection.send("hello!\n")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-3: Event-driven program that listens for and processes connections*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Listing 11-3](ch11.xhtml#ch11list3), a server socket is created and set
+    to *non-blocking*, meaning that any read or write operation attempted on that
+    socket won’t block the program. If the program tries to read from the socket when
+    there is no data ready to be read, the socket recv() method will raise an OSError
+    indicating that the socket is not ready. If we did not call setblocking(0), the
+    socket would stay in blocking mode rather than raise an error, which is not what
+    we want here. The socket is then bound to a port and listens with a maximum backlog
+    of eight connections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main loop is built using select(), which receives the list of file descriptors
+    we want to read (the socket in this case), the list of file descriptors we want
+    to write to (none in this case), and the list of file descriptors we want to get
+    exceptions from (the socket in this case). The select() function returns as soon
+    as one of the selected file descriptors is ready to read, is ready to write, or
+    has raised an exception. The returned values are lists of file descriptors that
+    match the requests. It’s then easy to check whether our socket is in the ready-to-be-read
+    list and, if so, accept the connection and send a message.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Other Options and asyncio**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Alternatively, there are many frameworks, such as Twisted or Tornado, that provide
+    this kind of functionality in a more integrated manner; Twisted has been the de
+    facto standard for years in this regard. C libraries that export Python interfaces,
+    such as libevent, libev, or libuv, also provide very efficient event loops.
+  prefs: []
+  type: TYPE_NORMAL
+- en: These options all solve the same problem. The downside is that, while there
+    are a wide variety of choices, most of them are not interoperable. Many are also
+    *callback based*, meaning that the program flow is not very clear when reading
+    the code; you have to jump to a lot of different places to read through the program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another option would be the gevent or greenlet libraries, which avoid callback
+    use. However, the implementation details include CPython x86–specific code and
+    dynamic modification of standard functions at runtime, meaning you wouldn’t want
+    to use and maintain code using these libraries over the long term.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In 2012, Guido Van Rossum began work on a solution code-named *tulip*, documented
+    under PEP 3156 (*[https://www.python.org/dev/peps/pep-3156](https://www.python.org/dev/peps/pep-3156)*).
+    The goal of this package was to provide a standard event loop interface that would
+    be compatible with all frameworks and libraries and be interoperable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The tulip code has since been renamed and merged into Python 3.4 as the asyncio
+    module, and it is now the de facto standard. Not all libraries are compatible
+    with asyncio, and most existing bindings need to be rewritten.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As of Python 3.6, asyncio has been so well integrated that it has its own await
+    and async keywords, making it straightforward to use. [Listing 11-4](ch11.xhtml#ch11list4)
+    shows how the aiohttp library, which provides an asynchronous HTTP binding, can
+    be used with asyncio to run several web page retrievals concurrently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import aiohttp
+  prefs: []
+  type: TYPE_NORMAL
+- en: import asyncio
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'async def get(url):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'async with aiohttp.ClientSession() as session:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'async with session.get(url) as response:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return response
+  prefs: []
+  type: TYPE_NORMAL
+- en: loop = asyncio.get_event_loop()
+  prefs: []
+  type: TYPE_NORMAL
+- en: coroutines = [get("http://example.com") for _ in range(8)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: results = loop.run_until_complete(asyncio.gather(*coroutines))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Results: %s" % results)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-4: Retrieving web pages concurrently with aiohttp*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We define the get() function as asynchronous, so it is technically a coroutine.
+    The get() function’s two steps, the connection and the page retrieval, are defined
+    as asynchronous operations that yield control to the caller until they are ready.
+    That makes it possible for asyncio to schedule another coroutine at any point.
+    The module resumes the execution of a coroutine when the connection is established
+    or the page is ready to be read. The eight coroutines are started and provided
+    to the event loop at the same time, and it is asyncio’s job to schedule them efficiently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The asyncio module is a great framework for writing asynchronous code and leveraging
+    event loops. It supports files, sockets, and more, and a lot of third-party libraries
+    are available to support various protocols. Don’t hesitate to use it!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Service-Oriented Architecture**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Circumventing Python’s scaling shortcomings can seem tricky. However, Python
+    *is* very good at implementing *service-oriented architecture (SOA),* a style
+    of software design in which different components provide a set of services through
+    a communication protocol. For example, OpenStack uses SOA architecture in all
+    of its components. The components use HTTP REST to communicate with external clients
+    (end users) and an abstracted remote procedure call (RPC) mechanism that is built
+    on top of the Advanced Message Queuing Protocol (AMQP).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In your development situations, knowing which communication channels to use
+    between those blocks is mainly a matter of knowing with whom you will be communicating.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When exposing a service to the outside world, the preferred channel is HTTP,
+    especially for stateless designs such as REST-style (REpresentational State Transfer–style)
+    architectures. These kinds of architectures make it easier to implement, scale,
+    deploy, and comprehend services.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, when exposing and using your API internally, HTTP may be not the best
+    protocol. There are many other communication protocols and fully describing even
+    one would likely fill an entire book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In Python, there are plenty of libraries for building RPC systems. Kombu is
+    interesting because it provides an RPC mechanism on top of a lot of backends,
+    AMQ protocol being the main one. It also supports Redis, MongoDB, Beanstalk, Amazon
+    SQS, CouchDB, or ZooKeeper.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the end, you can indirectly gain a huge amount of performance from using
+    such loosely coupled architecture. If we consider that each module provides and
+    exposes an API, we can run multiple daemons that can also expose that API, allowing
+    multiple processes—and therefore CPUs—to handle the workload. For example, *Apache
+    httpd* would create a new worker using a new system process that handles new connections;
+    we could then dispatch a connection to a different worker running on the same
+    node. To do so, we just need a system for dispatching the work to our various
+    workers, which this API provides. Each block will be a different Python process,
+    and as we’ve seen previously, this approach is better than multithreading for
+    spreading out your workload. You’ll be able to start multiple workers on each
+    node. Even if stateless blocks are not strictly necessary, you should favor their
+    use anytime you have the choice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Interprocess Communication with ZeroMQ**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As we’ve just discussed, a messaging bus is always needed when building distributed
+    systems. Your processes need to communicate with each other in order to pass messages.
+    ZeroMQ is a socket library that can act as a concurrency framework. [Listing 11-5](ch11.xhtml#ch11list5)
+    implements the same worker seen in [Listing 11-1](ch11.xhtml#ch11list1) but uses
+    ZeroMQ as a way to dispatch work and communicate between processes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import multiprocessing
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: import zmq
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def compute():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return sum(
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[random.randint(1, 100) for i in range(1000000)])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def worker():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: context = zmq.Context()
+  prefs: []
+  type: TYPE_NORMAL
+- en: work_receiver = context.socket(zmq.PULL)
+  prefs: []
+  type: TYPE_NORMAL
+- en: work_receiver.connect("tcp://0.0.0.0:5555")
+  prefs: []
+  type: TYPE_NORMAL
+- en: result_sender = context.socket(zmq.PUSH)
+  prefs: []
+  type: TYPE_NORMAL
+- en: result_sender.connect("tcp://0.0.0.0:5556")
+  prefs: []
+  type: TYPE_NORMAL
+- en: poller = zmq.Poller()
+  prefs: []
+  type: TYPE_NORMAL
+- en: poller.register(work_receiver, zmq.POLLIN)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: socks = dict(poller.poll())
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if socks.get(work_receiver) == zmq.POLLIN:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: obj = work_receiver.recv_pyobj()
+  prefs: []
+  type: TYPE_NORMAL
+- en: result_sender.send_pyobj(obj())
+  prefs: []
+  type: TYPE_NORMAL
+- en: context = zmq.Context()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# Build a channel to send work to be done'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ work_sender = context.socket(zmq.PUSH)
+  prefs: []
+  type: TYPE_NORMAL
+- en: work_sender.bind("tcp://0.0.0.0:5555")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# Build a channel to receive computed results'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ result_receiver = context.socket(zmq.PULL)
+  prefs: []
+  type: TYPE_NORMAL
+- en: result_receiver.bind("tcp://0.0.0.0:5556")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# Start 8 workers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: processes = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for x in range(8):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌     p = multiprocessing.Process(target=worker)
+  prefs: []
+  type: TYPE_NORMAL
+- en: p.start()
+  prefs: []
+  type: TYPE_NORMAL
+- en: processes.append(p)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# Send 8 jobs'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for x in range(8):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: work_sender.send_pyobj(compute)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# Read 8 results'
+  prefs: []
+  type: TYPE_NORMAL
+- en: results = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for x in range(8):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➍     results.append(result_receiver.recv_pyobj()) # Terminate all processes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for p in processes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: p.terminate()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Results: %s" % results)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-5: workers using ZeroMQ*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We create two sockets, one to send the function (work_sender) ➊ and one to receive
+    the job (result_receiver) ➋. Each worker started by multiprocessing.Process ➌
+    creates its own set of sockets and connects them to the master process. The worker
+    then executes whatever function is sent to it and sends back the result. The master
+    process just has to send eight jobs over its sender socket and wait for eight
+    results to be sent back via the receiver socket ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see, ZeroMQ provides an easy way to build communication channels.
+    I’ve chosen to use the TCP transport layer here to illustrate the fact that we
+    could run this over a network. It should be noted that ZeroMQ also provides an
+    interprocess communication channel that works locally (without any network layer
+    involved) by using Unix sockets. Obviously, the communication protocol built upon
+    ZeroMQ in this example is very simple for the sake of being clear and concise,
+    but it shouldn’t be hard to imagine building a more sophisticated communication
+    layer on top of it. It’s also easy to imagine building an entirely distributed
+    application communication with a network message bus such as ZeroMQ or AMQP.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that protocols such as HTTP, ZeroMQ, and AMQP are language agnostic: you
+    can use different languages and platforms to implement each part of your system.
+    While we all agree that Python is a good language, other teams might have other
+    preferences, or another language might be a better solution for some part of a
+    problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the end, using a transport bus to decouple your application into several
+    parts is a good option. This approach allows you to build both synchronous and
+    asynchronous APIs that can be distributed from one computer to several thousand.
+    It doesn’t tie you to a particular technology or language, so you can evolve everything
+    in the right direction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The rule of thumb in Python is to use threads only for I/O-intensive workloads
+    and to switch to multiple processes as soon as a CPU-intensive workload is on
+    the table. Distributing workloads on a wider scale—such as when building a distributed
+    system over a network—requires external libraries and protocols. These are supported
+    by Python, though provided externally.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,1613 @@
+- en: '6'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: POLYGONS
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Our next primitive, polygons, builds on points and segments. Polygons can be
+    used to describe colliding geometries, portions of the screen that need redrawing,
+    body boundaries, and much more. It turns out these primitives are extremely useful
+    when it comes to processing images, as you can use them to figure out whether
+    different parts of the image overlap. In dynamics simulations, they help determine
+    when two bodies collide. In user interfaces for graphic-intensive applications,
+    you can use simple polygons to easily figure out whether the user’s mouse is over
+    an entity that may be selected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we’ll be implementing three primitives: generic polygons,
+    described by their vertices; circles, defined by a center point and a radius;
+    and rectangles, defined by an origin point, a width, and a height. Because it
+    may be more convenient in some applications to work only with generic polygons,
+    both the circle and the rectangle will implement a method to convert themselves
+    into a generic polygon. We’ll also write a few other algorithms, including one
+    that determines whether a polygon overlaps with another of its class and one that
+    tests whether a polygon contains a given point.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Polygon Class**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A *polygon* is a two-dimensional figure defined by a sequence of a minimum of
+    three ordered and noncoincident vertices connected to form a closed *polygonal
+    chain*. Each connection is a segment going from one vertex to the next one, where
+    the last vertex is connected back to the first. Given vertices [*V*[1], *V*[2],
+    …, *V*[*n*]], each of the segments defined as [(*V*[1] → *V*[2]),(*V*[2] → *V*[3]),
+    …, (*V*[*n*] → *V*[1])] is called a *side* (see [Figure 6-1](ch06.xhtml#ch6fig1)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-1: A polygon defined by its vertices*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'At this point, your *geom2d* package should look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mechanics
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- geom2d'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- line.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- line_test.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- nums.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- point.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- point_test.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- segment.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- segment_test.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- vector.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- vector_test.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- vectors.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s create a class to represent polygons defined by their vertices as a sequence
+    of points (instances of class Point). Create a new file inside the package *geom2d*,
+    name it *polygon.py*, and enter the code from [Listing 6-1](ch06.xhtml#ch6lis1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-1: Polygon initialization*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First we import Point from geom2d.point. Then we define class Polygon with an
+    initializer that accepts a sequence of points ordered according to the polygonal
+    chain; connected vertices should be adjacent in the sequence. If the list contains
+    fewer than three points, we raise an exception of type ValueError. Remember the
+    fail fast strategy? We want to fail as soon as we detect something that doesn’t
+    make sense and may cause trouble, such as a polygon with fewer than three vertices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*According to Python’s documentation, a* ValueError *should be raised when
+    “an operation or function receives an argument that has the right type but an
+    inappropriate value, and the situation is not described by a more precise exception.”*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Sides***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A *side* is a segment going from one vertex to the next in a polygon’s sequence
+    of vertices. The sides of a polygon together make up its *perimeter*. To close
+    the polygonal chain, the last vertex needs to connect with the first. Generating
+    the sides of a polygon thus requires pairing up a sequence of vertices. This sounds
+    like a generic operation we could use for any sequence of objects, not just vertices,
+    so we want to implement it in its own module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the sections that follow, you’ll need a good understanding of Python’s list
+    comprehensions. You can refer to “List Comprehensions” on [page 35](ch02.xhtml#ch00lev2sec23)
+    for a refresher.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Pairing Vertices**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Given a list of items (of whatever type),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[A, B, C]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'the pairing algorithm should create a new list where each item is a tuple of
+    the original item at that position paired up with the next, including a pair of
+    the last element with the first, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[(A, B), (B, C), (C, A)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s write this code in a new package inside our Python project. Create a
+    new package at the same level as *geom2d* and name it *utils*. In this package
+    we’ll keep small pieces of generic logic that are potentially reusable by the
+    rest of our project modules. Your project’s folder structure should look like
+    the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mechanics
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- geom2d'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- line.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    | ...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- utils'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Many software projects end up having a *utils* package or module where all kinds
+    of unrelated algorithms are bundled together. Although convenient, this practice
+    is ultimately doomed and hinders the project’s maintainability. A *utils* package
+    is for pieces of code that aren’t big enough to be promoted to their own package
+    but are still reused by many other parts inside the project. When related code
+    inside *utils* starts to grow, you’re better off moving it to its own dedicated
+    package. For example, if our pairing logic started to specialize, covering lots
+    of different cases and types of collections, we would move it to a new package
+    called *pairs*. That’s not the case here, so we’ll keep it simple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the package create a new file named *pairs.py* and include the function in
+    [Listing 6-2](ch06.xhtml#ch6lis2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-2: Pairing up list elements*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The function uses a *list comprehension* to create a new list from a range
+    of values, starting from 0 and going all the way to length ➋. For each value it
+    creates a tuple with two items ➊: the element at index i from the original list
+    and the next one at i + 1. When we reach index i = length, i + 1 would be out
+    of bounds in sequence, so we want to wrap around and go back to index 0 so that
+    the last and first elements are also paired up. We do this with the modulo operator
+    (%), which returns the remainder when you divide one number by another. The neat
+    thing is that *n* % *m* returns *n* for every *n* < *m*, and it returns 0 for
+    *n* = *m*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To better understand modulo, try this in the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'See how for *n* = 4 the result is 0, but for all other values the result is
+    *n* itself? Try to increase the range parameter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Numbers in a modulo 4 operation never go beyond 3\. Once that number is reached,
+    the next one wraps around to 0 again.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*If you want to know more about this “wrapping around” phenomenon resulting
+    from the modulo operator, search for* modular arithmetic*. It’s widely used in
+    modern cryptography and has some really interesting properties.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re now ready to implement the method that will generate the sides for our
+    Polygon class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Generating Sides**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Once vertices are properly paired, writing the code to generate the sides is
+    simple: we just need to create a Segment instance per pair of vertices. To compute
+    them, first add the following imports in your file *polygon.py*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Then, enter the method in [Listing 6-3](ch06.xhtml#ch6lis3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-3: Computing polygon sides*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the make_round_pairs function, we pair vertices up such that each tuple
+    in vertex_pairs contains the start and end points of a segment. Then, using a
+    list comprehension, each of these tuples is mapped into a segment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Testing Sides**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Let’s create a unit test for the sides attribute. Create a new file named *polygon_test.py*
+    inside the package *geom2d* and enter the code for class TestPolygon ([Listing
+    6-4](ch06.xhtml#ch6lis4)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-4: Testing sides of a polygon*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Inside the test class we create a list of vertices—(0, 0), (30, 0), and (0,
+    30)—that make a triangle. We use these points as vertices for the creation of
+    the test subject: polygon. [Figure 6-2](ch06.xhtml#ch6fig2) illustrates the polygon.
+    To ensure the sides are properly computed, we construct the list of expected sides
+    using the original vertices properly paired up.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-2: The polygon used in the test*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since we overloaded the *==* operator in the Segment class (by implementing
+    the special method __eq__), the equality comparison will work as intended. If
+    we hadn’t done so, the equality assertion would consider segments different even
+    if bounded by the same end points, and thus the test would fail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Run the test using the following command to make sure it succeeds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If everything went well, you should get this output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '***Centroid***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A noteworthy point in a polygon is its *centroid*, the arithmetic mean of the
+    position of all vertices. Assuming *n* is the number of vertices, the *centroid*
+    can be expressed using [Equation 6.1](ch06.xhtml#ch06eqa01).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06eqa01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, *x*[*i*] and *y*[*i*] are the coordinates of vertex *i*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Implementing the Centroid**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Let’s implement the centroid property. To do so, we first need to import the
+    following at the top of our Polygon class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Once imported, add the code in [Listing 6-5](ch06.xhtml#ch6lis5) beneath the
+    sides method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-5: Calculating a centroid of a polygon*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first store the length of the list of vertices in the variable vtx_count
+    ➊. Then, we reduce the list of vertices by summing them into a resulting point
+    called vtx_sum ➋. You may want to read “Filter, Map, and Reduce” on [page 29](ch02.xhtml#ch00lev2sec22)
+    to review the reduce function and how we use operator. Note that the operator
+    operator.add works for the reduce function because our Point class overloads the
+    + operator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last thing we do is construct the resulting point by dividing each of the
+    projections of vtx_sum by vtx_count ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Testing the Centroid**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Let’s write a unit test to make sure the centroid is properly computed. In your
+    file *polygon_test.py* enter the code in [Listing 6-6](ch06.xhtml#ch6lis6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-6: Testing the centroid center of a polygon*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using [Equation 6.1](ch06.xhtml#ch06eqa01), we can calculate the centroid by
+    hand to see where the projections in (10, 10) come from. Knowing that the vertices
+    of our polygon test subject are (0, 0), (30, 0), and (0, 30), we have this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0138-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: You can inspect this visually in [Figure 6-3](ch06.xhtml#ch6fig3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-3: The test polygon’s centroid*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Run all tests in file *polygon_test.py* to make sure everything is working
+    as expected. To run them from the shell, you can use the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If both tests pass, you should get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s try one thing before moving on. Remember that to compute the centroid
+    we reduced the list of vertices like so,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We said that this reduction using the operator.add works because our Point
+    class overloads the + operator? Let’s see what would have happened if we hadn’t
+    overloaded this operator. Open *point.py* and comment out the __add__ method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Run the tests again. This time you’ll see an error in the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: The TypeError with its message (unsupported operand type(s)...) is very descriptive
+    about what the error is. Two Point instances cannot be added if they don’t implement
+    the __add__ method. Uncomment the __add__ method we commented for the experiment
+    and rerun the tests just to make sure it’s all back to how it was.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Contains Point***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Now comes an interesting problem: How do we determine whether a given point
+    is inside a polygon? A widely used procedure is the *ray casting algorithm*, which
+    counts how many sides of the polygon are intersected by a ray going through the
+    point in any direction. An even number of intersections (including zero) means
+    the point is outside of the polygon, whereas an odd number means the point is
+    inside. Take a look at [Figure 6-4](ch06.xhtml#ch6fig4).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The drawing on the left depicts a complex polygon and a point *P* outside of
+    it. Every ray cast from that point in any direction intersects zero or an even
+    number of sides. The case on the right depicts the point *P* inside the polygon.
+    This time, the ray always intersects an odd number of sides.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-4: The ray casting algorithm*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another commonly used algorithm, and the one we’ll be using, is the *winding
+    number algorithm*. This algorithm works by summing angles between vectors that
+    go from the point under test to the vertices of the polygon. This is how it works.
+    To know whether a point *P* is inside a polygon with vertices *V*[1], *V*[2],
+    …, *V*[*n*], our algorithm looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Create a vector going from *P* to each of the vertices:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00140-p1.jpg): Vector from *P* to vertex *V*[1]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00140-p2.jpg): Vector from *P* to vertex *V*[2]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: . . .
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00140-p3.jpg): Vector from *P* to vertex *V*[*n*]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Compute the angle from each vector ![Image](../images/rivictorit.jpg) to the
+    next ![Image](../images/riplus1victorit.jpg), wrapping around and computing the
+    angle between the last vector and the first:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00140-p4.jpg): Angle from ![Image](../images/r1victorit.jpg)
+    to ![Image](../images/r2victorit.jpg)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: '![Image](../images/f00140-p5.jpg): Angle from ![Image](../images/r2victorit.jpg)
+    to ![Image](../images/r3victorit.jpg)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: . . .
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00140-p6.jpg): Angle from ![Image](../images/rnvictorit.jpg)
+    to ![Image](../images/r1victorit.jpg)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: Sum all angles computed in the previous step.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The point *P* is inside the polygon if the angle is 2*π*, outside if 0.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Take a look at [Figure 6-5](ch06.xhtml#ch6fig5) to better understand how this
+    algorithm works. It’s easy to see how the sum of angles is 2*π* in the case where
+    the point is inside the polygon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Although we could just as well implement the *ray casting algorithm*, I chose
+    the *winding number algorithm* because it makes good use of three key functions
+    we’ve created in this book: the make_vector_between factory function, make_round_pairs,
+    and the angle_to method from the Vector class. Let’s implement it.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-5: Testing whether a polygon contains a point*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Implementing the Winding Number Algorithm**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'There are a few modules we need to import. Your imports at the top of file
+    *polygon.py* should look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Once you’ve imported everything, enter the code in [Listing 6-7](ch06.xhtml#ch6lis7)
+    as a new method for the Polygon class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-7: Polygon contains_point algorithm*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first compute the list of ![Image](../images/rvictorit.jpg) vectors ➊ using
+    a list comprehension, which maps each of the vertices of the polygon into a vector
+    going from point to the vertex. Then, using make_round_pairs, we pair the vectors
+    and store the result in paired_vecs ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We map paired vectors to the angle each pair forms using another list comprehension
+    ➍. We reduce the resulting list by adding together each of the computed angles
+    ➌, and finally, we check whether the computed angle sum (angle_sum) is close enough
+    to 2*π* ➎, in which case the point is inside the polygon. We’ll consider any other
+    value of the angle to mean the point is outside the polygon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Testing contains_point**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Let’s make sure this algorithm works by adding two unit tests in file *polygon_test.py*
+    (see [Listing 6-8](ch06.xhtml#ch6lis8)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-8: Testing whether the polygon contains point*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can run the tests using the green play button in the IDE or from the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the first test, we take a point we know is outside the triangular polygon
+    and assert that it’s actually outside. The second test asserts the point (15,
+    10) is inside the triangle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Testing an Edge Case**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Let’s try one more test, just to see what happens. What about vertices of the
+    polygon? Are they considered to be inside or outside the polygon? This is what
+    we know as an *edge case*, a situation that requires special treatment in our
+    code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Enter the innocent-looking test in [Listing 6-9](ch06.xhtml#ch6lis9) and run
+    all the tests in file *rect_test.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-9: Proposed test of whether a polygon contains one of its vertices*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output from running the test is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Oops! We must have done something wrong. Can you guess what by reading the
+    traceback? Starting from the last line we find the originator: ZeroDivisionError.
+    Apparently we attempted to divide by zero in method angle_value_to. To be specific,
+    we did so in this line:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This means norm_product was zero; hence, the norm of at least one of the vectors
+    used to compute the angle had a length of 0\. Going a bit up in the traceback
+    we find the line where the angle method was being used before the error happened:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: So, it appears that when we attempted to compute the angle between two of the
+    vectors, one of them had a length of 0\. The vector going from point *P*, this
+    time a vertex of the polygon, to itself is obviously a zero vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To handle this particular edge case, we can consider vertices to be inside the
+    polygon as a convention. At the beginning of method contains_point, let’s check
+    whether the point passed as an argument is a vertex of the polygon, in which case
+    we simply return True. Modify the method to accommodate this new condition ([Listing
+    6-10](ch06.xhtml#ch6lis10)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-10: Corrected algorithm to check whether a point is inside a polygon*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As you see, dealing with edge cases requires individualized pieces of code.
+    Run all the tests to make sure they all succeed now:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output this time should be as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '***Polygon Factory***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In practice, we commonly need to construct polygons from a list of numbers representing
+    the coordinates of its vertices. This is done, for example, when reading a polygon
+    from a text file, which we’ll see in [Chapter 12](ch12.xhtml#ch12). To do this,
+    we first need to pair up the numbers and map them into instances of Point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For instance, the list
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'could be used to define the three vertices of a triangle:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let’s implement a factory function to create polygons given a sequence of floating-point
+    numbers. Create a new file named *polygons.py*. Our project’s structure currently
+    looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mechanics
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- geom2d'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- line.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- line_test.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- nums.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- point.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- point_test.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- polygon.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- polygon_test.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- polygons.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- segment.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- segment_test.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- vector.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- vector_test.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- vectors.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- utils'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- pairs.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inside the new file, enter the code in [Listing 6-11](ch06.xhtml#ch6lis11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-11: Polygon factory function*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function make_polygon_from_coords takes in a list of coordinates and first
+    checks that there are an even number of them (otherwise, they can’t be paired
+    up). If the length of the list of coordinates is divisible by 2 with a remainder
+    of 0, we have an even number of coordinates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the number of coordinates is found to be uneven, we raise a ValueError. If
+    not, we then construct a list of the indices at which we’ll find the x-coordinate
+    of the vertices in the coords list. We achieve this with a range going from 0
+    to len(coords) (noninclusive) with a step of 2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To better understand how we’re doing this, try the following in Python’s shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: With these indices we can easily obtain a list of vertices using a list comprehension.
+    Recall that Python’s range function returns a half-open interval that doesn’t
+    include the upper bound, which is why we didn’t get the number 10 in the resulting
+    list. The list comprehension maps each index to an instance of Point class. We
+    create the polygon passing this list to its constructor. As you can see from the
+    code, the x-coordinate is the number from the input list at each index i, whereas
+    the y-coordinate is the number to the right of it, that is, i + 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With that out of the way, let’s take a look at how to compare polygons for equality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Polygon Equality***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To make sure we can check whether polygons are equal, let’s implement the __eq__
+    method inside the Polygon class (see [Listing 6-12](ch06.xhtml#ch6lis12)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-12: Polygon equality*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first check whether the passed-in other is the same instance as self, in
+    which case we return True. Second, if other is not an instance of Polygon, there’s
+    not much we can compare; we already know the equality is impossible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since Point already implements the __eq__ method, we just need to compare the
+    list of vertices from both polygons if the two previous checks haven’t returned
+    anything yet. Python will check whether both lists contain the same vertices in
+    the same order. Lists are ordered collections; thus, ordering is important when
+    checking for equality. Try the following experiment in the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Even though l1 and l2 contain the same numbers, they are considered different
+    by Python as they appear in a different order (don’t forget that order matters
+    for lists and tuples). By contrast, l2 and l3 do contain the numbers in the same
+    order and hence are considered equal. Polygons are made of an ordered collection
+    of vertices: different orderings of the same set of vertices would result in unequal
+    polygons. This is the reason why we used a list, which is a collection where the
+    order is a key factor.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you followed along, your *polygon.py* file should look like [Listing 6-13](ch06.xhtml#ch6lis13).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-13: Polygon class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now let’s take a look at circles.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Circle Class**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A *circle* is the set of all points in the plane a given distance (the *radius*)
+    from a single point called the *center*. A circle is therefore defined by the
+    position of its center *C* and the value of its radius *r* (see [Figure 6-6](ch06.xhtml#ch6fig6)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-6: A circle defined by a center point *C* and radius *r**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As you may remember from high school, the area of a circle is calculated as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*A = π ⋅ r*²'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'And a circle’s circumference is calculated as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*l*[c] = 2π ⋅ *r*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Create a new file named *circle.py* in the package *geom2d*. In the file, enter
+    the code in [Listing 6-14](ch06.xhtml#ch6lis14).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-14: Circle class initialization*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Great! We now have a class to represent circles with the properties center and
+    radius. We’ve also defined properties named area and circumference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*To keep the length of the chapter reasonable, we won’t include any more unit
+    testing sections. The accompanying code does include unit tests, and I encourage
+    you to come up with them yourself.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Contains Point***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Testing whether a point *P* was inside a generic polygon required a few steps,
+    but in the case of a circle, the logic is extremely simple. We compute the distance
+    from the center *C* to point *P*: *d*(*C,P*). If this distance is smaller than
+    the radius, *d*(*C,P*) < *r*, the point is inside the circle. For values of *d*(*C,P*)
+    greater than *r*, the point is farther from the center than the radius and thus
+    outside the circle. Inside Circle, enter the code in [Listing 6-15](ch06.xhtml#ch6lis15).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-15: Checking whether a circle contains a point*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Can you come up with test cases to ensure method contains_point is bug free?
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Circle to Polygon***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In [Chapter 7](ch07.xhtml#ch07) we’ll be transforming a polygon’s geometry by
+    rotating, scaling, and skewing it. After such transformations, circles may not
+    be circles anymore, and the mathematical representation for the result can become
+    complex.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because accounting for all possible shapes using a specific geometry class would
+    be arduous, and because our generic polygons work the same no matter their shape,
+    why not try approximating the circle using a polygon with enough sides?
+  prefs: []
+  type: TYPE_NORMAL
+- en: To convert a circle to a polygon, a number of divisions have to be chosen, say
+    *n*. The entire 2*π* angle is divided into *n* subangles *θ* = 2*π*/*n*. Starting
+    at angle 0 and incrementing it by *θ* each time, we can compute *n* points in
+    the circumference, which will then become the vertices of a polygon inscribed
+    in the circle. We can compute a vertex *V* at a given angle *α* using [Equation
+    6.2](ch06.xhtml#ch06eqa02),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06eqa02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where *C* is the center of the circle and *r* is the radius. [Figure 6-7](ch06.xhtml#ch6fig7)
+    shows the result of choosing *n* = 8, which converts the circle into an octagon
+    with vertices *V*[1], *V*[2], …, *V*[8].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-7: Converting a circle to a polygon*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also note how for small numbers of *n* the resulting polygon poorly approximates
+    the circle. In [Figure 6-8](ch06.xhtml#ch6fig8), for example, *n* was chosen to
+    be 3, 4, and 5, respectively. As you can see, the inscribed polygons only look
+    remotely like the circles they approximate. We’ll typically choose *n* values
+    ranging from 30 to 200 to yield an acceptable result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-8: Number of divisions when converting a circle to a polygon*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inside Circle, implement to_polygon as in [Listing 6-16](ch06.xhtml#ch6lis16).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-16: Creating a polygon from a circle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This time we divided the algorithm in two: the main logic handled by to_polygon
+    and a private method __point_at_angle, which, given an angle, returns the point
+    in the circumference at that angle ➌. Such a point is computed according to [Equation
+    6.2](ch06.xhtml#ch06eqa02).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The to_polygon method first computes the angle delta (or angle increment) for
+    the given number of divisions ➊. Then, using a list comprehension, it maps each
+    integer number in the range [0,*n*) to a point in the circumference at incremental
+    angles ➋. This list of points is passed as the vertices for the initialization
+    of a polygon. Note how we convert the range [0, *n*) into an angle by multiplying
+    the current number in the range by the angle increment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Equality and String Representation***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s implement equality comparison and string representation methods in our
+    Circle class. Enter the code in [Listing 6-17](ch06.xhtml#ch6lis17).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-17: Circle equality and string representation*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you followed along, your *circle.py* file should look like [Listing 6-18](ch06.xhtml#ch6lis18).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-18: The Circle class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Circle Factories***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'We’ll typically construct circles from a center point and a radius, but there
+    are a few more ways we can construct them. In this section, we’ll look at one
+    such case: generating a circle out of three points. We’ll do this mostly for fun,
+    but it also gives a sense of how powerful the geometrical primitives we’re building
+    are.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: So, say we’re given three non-collinear points, namely, *A*, *B*, and *C*. As
+    you can see in [Figure 6-9](ch06.xhtml#ch6fig9), you can find a circle such that
+    it passes through all three points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-9: Defining a circle with three points*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To solve the problem, we need to find the center and radius, but the latter
+    is straightforward since if we know where the center is, the distance of any of
+    the three points to it yields the radius. So, the problem boils down to finding
+    the center of a circle passing through the given points. Here’s one way we can
+    find it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compute the segment going from *A* to *B*; let’s call it *seg*[1].
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Compute the segment going from *B* to *C*; let’s call it *seg*[2].
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Find the intersection between bisectors of *seg*[1] and *seg*[2].
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The intersection point *O* is the center of the circle (see [Figure 6-10](ch06.xhtml#ch6fig10)).
+    And, as previously stated, finding the radius of the circle is as simple as measuring
+    the distance between *O* and *A*, *B*, or *C*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-10: The center and radius of a circle defined by three points*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re ready to implement the logic. Create a new file in the *geom2d* package
+    and name it *circles.py*. In the file, enter the code in [Listing 6-19](ch06.xhtml#ch6lis19).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-19: Circle from three points*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Recall that the chord of a circle is a segment whose endpoints lie on the
+    circumference and cut across the circle.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you were asked to simplify the function, could you? Each line tells you exactly
+    what it’s doing; you can read the lines one by one and match them with the description
+    of the algorithm. Self-explanatory code that clearly states its intent is commonly
+    referred to as *clean code*, which is such a celebrated concept in the software
+    industry that there are several books devoted to the topic. Two of my all-time
+    favorites include [6] and [1], which I recommend you also read if you want to
+    write truly readable code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Rect Class**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The last geometric primitive we’ll implement in this chapter is a rectangle,
+    but it’s not any sort of rectangle—it’s the kind whose sides are always horizontal
+    and vertical. Rotated rectangles can be represented using the Polygon primitive
+    from earlier in the chapter. The reason behind this seemingly restrictive rule
+    has to do with what this primitive is typically used for.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Rectangles like this are often used in two-dimensional graphic applications
+    for things like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Representing a portion of the screen that needs to be redrawn
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Determining the position on the screen where something needs to be drawn
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Determining the size of the geometry that has to be drawn
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Testing whether two objects are likely to collide
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Testing whether the mouse cursor is over a region of the screen
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'A *rectangle* can be defined by a point (called the *origin*) and a size, which
+    in turn has two properties: width and height (see [Figure 6-11](ch06.xhtml#ch6fig11)).
+    By convention, the origin point will be located at the bottom-left corner of the
+    rectangle, assuming a coordinate system with an y-axis that points upward.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-11: A rectangle defined by an origin point *O*, width *w*, and height
+    *h**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s start with a class to represent sizes. Inside package *geom2d*, create
+    a new file named *size.py* including the definition in [Listing 6-20](ch06.xhtml#ch6lis20).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-20: The Size class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using this representation of a size, let’s create the initial definition of
+    Rect. Create a new file named *rect.py* and enter the code in [Listing 6-21](ch06.xhtml#ch6lis21).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-21: The Rect class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The class stores a Point instance for the origin point and a Size instance
+    encoding its width and length. We defined some interesting properties in the class,
+    namely:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: left    The x-coordinate of the left-most side of the rectangle
+  prefs: []
+  type: TYPE_NORMAL
+- en: right    The x-coordinate of the right-most side of the rectangle
+  prefs: []
+  type: TYPE_NORMAL
+- en: bottom    The y-coordinate of the bottom-most side of the rectangle
+  prefs: []
+  type: TYPE_NORMAL
+- en: top    The y-coordinate of the top-most side of the rectangle
+  prefs: []
+  type: TYPE_NORMAL
+- en: area    The area of the rectangle
+  prefs: []
+  type: TYPE_NORMAL
+- en: perimeter    The perimeter of the rectangle
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s create one of our rectangles in the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And let’s inspect some of its properties:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: '***Contains Point***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The next logical step is implementing a method to test whether a point is inside
+    the rectangle. To test whether a point *P* lies inside a rectangle, we’ll use
+    the following two conditions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00158-p1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Thanks to the attributes we added to the class, this is a piece of cake (see
+    [Listing 6-22](ch06.xhtml#ch6lis22)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-22: Testing whether a rectangle contains a point*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice Python’s beautiful syntax for compound inequalities,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'which in most other languages would have to be expressed as two different conditions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: '***Intersections***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Suppose we have two rectangles and we want to know if they overlap. Since Rect
+    represents rectangles with sides that are always horizontal and vertical, the
+    problem simplifies a lot. Testing whether two Rects overlap is the same as testing
+    whether their projections in both the x- and y-axes overlap. By *projections*,
+    we mean the shadows they cast on the axis lines. Each shadow is an interval starting
+    in the position of the value of the rectangle’s origin, with a length that’s either
+    its width or its height (see [Figure 6-12](ch06.xhtml#ch6fig12)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-12: Projections of a rectangle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, the shadow in the horizontal axis of [Figure 6-12](ch06.xhtml#ch6fig12)
+    can be represented as the following interval,
+  prefs: []
+  type: TYPE_NORMAL
+- en: (*O*[x], *O*[x] + *w*)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'where *O* is the origin point and *w* is the width of the rectangle. Similarly,
+    the vertical shadow or projection would be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (*O*[y], *O*[y] + *h*)
+  prefs: []
+  type: TYPE_NORMAL
+- en: where *h* is the height this time. Note that the result of *O*[*x*] + *w* is
+    exactly the right property as we’ve defined it in our Rect class, and *O*[*y*]
+    + *h* is top.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 6-13](ch06.xhtml#ch6fig13) depicts two rectangles whose vertical projections
+    overlap but whose horizontal projections don’t. Thus, the rectangles don’t overlap.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-13: Two nonintersecting rectangles*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 6-14](ch06.xhtml#ch6fig14), on the other hand, depicts two rectangles
+    with vertical and horizontal projections that overlap. As you can see, this layout
+    does generate an overlapping region, shaded in gray. We can observe that overlapping
+    rectangles always result in rectangular overlapping regions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig14.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-14: Two intersecting rectangles*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the nomenclature from the previous figures, we can numerically define
+    the condition using *open intervals*, intervals where the end points are excluded.
+    Two rectangles overlap if
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0160-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where ∩ is the intersection binary operator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Open Intervals**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Now that we’ve reduced the problem to computing the intersection between intervals,
+    let’s create a new class OpenInterval to implement this logic. Note that writing
+    the implementation of the algorithm to find the intersection between two intervals
+    inside the Rect class would be conceptually wrong. Each class must only contain
+    logic related to its domain of knowledge, and it seems obvious that interval intersection
+    is not specifically about rectangles. A rectangle should know nothing about how
+    the intersection of two intervals is performed; it’s not part of its domain of
+    knowledge. If it needs to compute one, like in our case, it should delegate it
+    to the subject’s expert: OpenRange.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you respect this simple guideline, your code will be much easier to reason
+    about and extend. Every piece of knowledge in your code should live exactly where
+    it’s supposed to, and only there. One of the worst enemies of software is *knowledge
+    duplication*, a phenomenon where one piece of knowledge (call it an algorithm
+    if you prefer) is written in more than one place. When the core of such logic
+    needs to change, you need to remember to change it everywhere. Trust me when I
+    say this problem is much worse than it sounds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Most authors use the phrase* duplication of code*, but I prefer to call it*
+    duplication of knowledge*. The choice of words is intentional as I’ve noticed
+    some developers tend to misinterpret the concept, probably because the word* code
+    *is quite generic. It’s the knowledge expressed by the code that should not be
+    duplicated.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Create a new file named *open_interval.py* in *geom2d*, and inside, define the
+    OpenInterval class as in [Listing 6-23](ch06.xhtml#ch6lis23).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-23: The OpenInterval class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An OpenInterval is created with start and end properties. We make sure that
+    start is smaller than end; otherwise, we raise a ValueError exception. Recall
+    our failing fast convention; we don’t want an ill-constructed interval lying around.
+    Next, we define the length of the interval as a property ➊ and a method to test
+    whether a given value is inside the range ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s now include two more methods: one for checking whether intervals overlap
+    and another one for actually computing the resulting overlap (see [Listing 6-24](ch06.xhtml#ch6lis24)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-24: Open interval overlapping*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first method, overlaps_interval, returns a boolean that will be True if
+    the interval overlaps with other passed as an argument. To do this, we first check
+    whether the two intervals have the same start and end values ➊, in which case
+    we return True. Then we check whether any of the four ends is contained in the
+    other interval ➋. If you’re confused by this piece of logic, take a pen and some
+    paper and draw every possible combination of two overlapping intervals (I’ve done
+    this for you in [Figure 6-15](ch06.xhtml#ch6fig15), excluding the case where the
+    two intervals have the same start and end values).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig15.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-15: The possible cases for interval positions*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second method, compute_overlap_with, starts by making sure there’s actually
+    an overlap, returning None if there isn’t ➌. The overlap is simply a new interval
+    where the start is the maximum between both start values, and the end is the minimum
+    between the two end values ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I encourage you to write unit tests for this overlapping logic. It’s a wonderful
+    opportunity to develop your testing skills. There are a bunch of combinations
+    of overlapping intervals; try to cover them all.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Computing Intersections**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'With the help of OpenInterval, rectangle intersections become simple to solve.
+    Go back to *rect.py* and import the OpenInterval class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now, underneath the contains_point method, enter the code from [Listing 6-25](ch06.xhtml#ch6lis25).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-25: Intersection between two rectangles*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two private helper methods that compute both the horizontal and vertical
+    overlaps; we’ll take a look at those in a moment. The method first computes the
+    horizontal overlap between self and other ➊. If it finds it to be None, there’s
+    no horizontal overlap; therefore, the rectangles don’t intersect. None is returned.
+    The same procedure goes for the vertical overlap ➋. Only if both are not None,
+    which means we found both horizontal and vertical projections overlapping, will
+    we reach the last return where the resulting rectangle is computed ➌. How do we
+    go about finding the origin and size of such a rectangle? It’s easy: the origin
+    coordinates are the start values from both horizontal and vertical overlap intervals,
+    the width is the length of the horizontal overlap, and the height is the length
+    of the vertical overlap.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: So, the only missing part is the implementation of the private methods that
+    finds the horizontal and vertical interval overlaps, if they exist. The code for
+    that is in [Listing 6-26](ch06.xhtml#ch6lis26).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-26: Intersection private methods*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s now take a look at how to build a generic polygon based on the rectangle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Convert to Polygon***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As with circles, applying an affine transformation to a rectangle may result
+    in some nonrectangular shape. In fact, after a generic affine transformation,
+    a rectangle gets transformed into a parallelogram, as depicted in [Figure 6-16](ch06.xhtml#ch6fig16),
+    and these shapes can’t be described by our Rect class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig16.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-16: A rectangle after an affine transformation*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Implementing a method to create a polygon from a rectangle is straightforward,
+    as the vertices of such polygons are the four corners of the rectangle. In Rect
+    class, add the method in [Listing 6-27](ch06.xhtml#ch6lis27). Don’t forget to
+    import the Polygon class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-27: Creating a polygon from a rectangle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Needless to say, vertices should be given in order, clockwise or counterclockwise,
+    but respecting the order nevertheless. It’s really easy to mess up the order of
+    vertices and end up with crossing sides. To make sure this never happens, we should
+    write a test, which is left for you as an exercise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Equality***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You’re already an expert at implementing __eq__ methods, aren’t you? [Listing
+    6-28](ch06.xhtml#ch6lis28) shows the code for it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-28: Rectangle equality*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The only thing to note is that we were able to directly compare sizes using
+    == because we also implemented __eq__ on class Size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that implementing __\textit{eq}__ in *Rect* like are_close_enough(self.size.width,other.size.width)
+    ... would not be ideal. Remember the law of Demeter? That knowledge belongs to
+    class *Size* and should be implemented there and only there.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For reference, [Listing 6-29](ch06.xhtml#ch6lis29) shows how your *rect.py*
+    file should look.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-29: The Rect implementation*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Rectangle Factories***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We’ll often use rectangles to approximate the outside bounds of a set of geometries.
+    In future chapters of the book, for example, we’ll be generating diagrams as part
+    of the solution for mechanics problems. To fit the diagrams inside an image of
+    the right size, we’ll create a rectangle that can contain everything. To do this,
+    we’ll create a factory function that returns a rectangle that contains a given
+    list of points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, if we’re given the list of points [*A, B, C, D, E*], the rectangle
+    will look like the left illustration from [Figure 6-17](ch06.xhtml#ch6fig17).
+    We’ll also need another factory function that does something similar but also
+    adds some margin to the rectangle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/06fig17.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-17: A rectangle containing points*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inside package *geom2d*, create a new file and name it *rects.py*. Add the first
+    factory function (in [Listing 6-30](ch06.xhtml#ch6lis30)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-30: Creating a rectangle containing a list of points*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first step is checking that the list points contains at least one point
+    ➊. You may be surprised about the syntax; the trick here is that Python evaluates
+    empty lists as False in boolean contexts. In fact, that’s a Pythonic idiom used
+    to check whether a list is empty.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we need to look for the bounds of the rectangle: the minimum and maximum
+    x and y projections. Four variables store those values ➋ ➌ initialized with the
+    coordinates of the first point in the list. Then we iterate through all points
+    except for this first one, as it was already used to initialize the aforementioned
+    variables. To avoid passing through the first point, we slice the points list
+    starting at index 1 and going all the way to the end of the list: points[1:].
+    (You can refer to “Lists” on [page 15](ch01.xhtml#ch00lev2sec15) for a refresher
+    on slicing lists.) For each point, the minimum and maximum x ➍ and y ➎ projections
+    are compared to the values currently stored.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once we have these four values, we construct the resulting rectangle ➏ using
+    the minimum x and y projections for the origin and the difference between each
+    maximum and minimum for the size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s now implement a similar function with the addition of a margin around
+    the points. After make_rect_containing, enter the code in [Listing 6-31](ch06.xhtml#ch6lis31).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-31: Creating a rectangle containing a list of points and a given
+    margin*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function starts with a rectangle computed by the previous function ➊. The
+    new rectangle is then computed by displacing rect’s origin by the width of the
+    margin to the left and downward ➋ and increasing the size by two times the width
+    of the margin ➌. Recall that the margin is added to the left and to the right,
+    which is why we add it twice to the width—the same goes for the height.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There’s one last way we may want to build a rectangle: using its center and
+    size. The implementation is straightforward, as you can see in [Listing 6-32](#ch6lis32).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 6-32: Creating a rectangle given its center and size*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With these three factory methods we have convenient ways of creating rectangles.
+    We’ll be using these in further chapters, so we want to make sure they yield the
+    expected rectangle with some automated unit tests. I’ll leave this as an exercise
+    for you. You’ll find the tests I wrote in *rects_test.py* in the source code accompanying
+    the book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We started the chapter implementing a generic polygon, described by a sequence
+    of at least three vertices. We wrote an algorithm to pair sequences of objects
+    such that the last and first elements are also paired up and used this logic to
+    generate the sides of the polygon. We also implemented the winding number algorithm
+    to check whether the polygon contains a point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second geometric primitive we created in this chapter was the circle. As
+    you saw, checking whether a point is inside a circle was much simpler to implement
+    than in the case of generic polygons. We came up with a way of constructing a
+    generic polygon that approximates the geometry of the circle using a given number
+    of divisions or sides. We’ll make use of this method in the next chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, we implemented a rectangle. To compute intersection between rectangles,
+    we needed a way of figuring out the overlap between two intervals; thus, we created
+    an abstraction of an open interval to handle this logic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our geometry library is almost complete. We have all the primitives that we
+    need for the book; the only thing missing is a way of transforming them, which
+    is the topic of the next chapter.
+  prefs: []
+  type: TYPE_NORMAL

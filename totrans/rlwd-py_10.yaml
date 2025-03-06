@@ -1,0 +1,834 @@
+- en: '10'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: RESTRICTING ACCESS WITH FACE RECOGNITION
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/common.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In the previous chapter, you were a technician in the Coalition Marines, a branch
+    of the Space Force. In this chapter, you’re that same technician, only your job
+    just got harder. Your role is now to *recognize* faces, rather than just detect
+    them. Your commander, Captain Demming, has discovered the lab containing the mutant-producing
+    interdimensional portal, and he wants access to it restricted to just himself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As in the previous chapter, you’ll need to act quickly, so you’ll rely on Python
+    and OpenCV for speed and efficiency. Specifically, you’ll use OpenCV’s local binary
+    pattern histogram (LBPH) algorithm, one of the oldest and easiest to use face
+    recognition algorithms, to help lock down the lab. If you haven’t installed and
+    used OpenCV before, check out “Installing the Python Libraries” on [page 6](ch01.xhtml#page_6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Recognizing Faces with Local Binary Pattern Histograms**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The LBPH algorithm relies on feature vectors to recognize faces. Remember from
+    [Chapter 5](ch05.xhtml) that a feature vector is basically a list of numbers in
+    a specific order. In the case of LBPH, the numbers represent some qualities of
+    a face. For instance, suppose you could discriminate between faces with just a
+    few measurements, such as the separation of the eyes, the width of the mouth,
+    the length of the nose, and the width of the face. These four measurements, in
+    the order listed and expressed in centimeters, could compose the following feature
+    vector: (5.1, 7.4, 5.3, 11.8). Reducing faces in a database to these vectors enables
+    rapid searches, and it allows us to express the difference between them as the
+    numerical difference, or *distance*, between two vectors.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recognizing faces computationally requires more than four features, of course,
+    and the many available algorithms work on different features. Among these algorithms
+    are Eigenfaces, LBPH, Fisherfaces, scale-invariant feature transform (SIFT), speeded-up
+    robust features (SURF), and various neural network approaches. When the face images
+    are acquired under controlled conditions, these algorithms can have a high accuracy
+    rate, about as high as that of humans.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Controlled conditions for images of faces might involve a frontal view of each
+    face with a normal, relaxed expression and, to be usable by all algorithms, consistent
+    lighting conditions and resolutions. The face should be unobscured by facial hair
+    and glasses, assuming the algorithm was taught to recognize the face under those
+    conditions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Face Recognition Flowchart***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Before getting into the details of the LBPH algorithm, let’s look at how face
+    recognition works in general. The process consists of three main steps: capturing,
+    training, and predicting.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the capture phase, you gather the images that you’ll use to train the face
+    recognizer ([Figure 10-1](ch10.xhtml#ch010fig1)). For each face you want to recognize,
+    you should take a dozen or more images with multiple expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig10_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-1: Capturing facial images to train the face recognizer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next step in the capture process is to detect the face in the image, draw
+    a rectangle around it, crop the image to the rectangle, resize the cropped images
+    to the same dimensions (depending on the algorithm), and convert them to grayscale.
+    The algorithms typically keep track of faces using integers, so each subject will
+    need a unique ID number. Once processed, the faces are stored in a single folder,
+    which we’ll call the database.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next step is to train the face recognizer ([Figure 10-2](ch10.xhtml#ch010fig2)).
+    The algorithm —in our case, LBPH—analyzes each of the training images and then
+    writes the results to a YAML (*.yml*) file, a human-readable data-serialization
+    language used for data storage. YAML originally meant “Yet Another Markup Language”
+    but now stands for “YAML Ain’t Markup Language” to stress that it’s more than
+    just a document markup tool.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig10_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-2: Training the face recognizer and writing the results to a file'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the face recognizer trained, the final step is to load a new, untrained
+    face and predict its identity ([Figure 10-3](ch10.xhtml#ch010fig3)). These unknown
+    faces are prepped in the same manner as the training images—that is, cropped,
+    resized, and converted to grayscale. The recognizer then analyzes them, compares
+    the results to the faces in the YAML file, and predicts which face matches best.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig10_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-3: Predicting unknown faces using the trained recognizer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that the recognizer will make a prediction about the identity of every
+    face. If there’s only one trained face in the YAML file, the recognizer will assign
+    every face the trained face’s ID number. It will also output a *confidence* factor,
+    which is really a measurement of the distance between the new face and the trained
+    face. The larger the number, the worse the match. We’ll talk about this more in
+    a moment, but for now, know that you’ll use a threshold value to decide whether
+    the predicted face is correct. If the confidence exceeds the accepted threshold
+    value, the program will discard the match and classify the face as “unknown” (see
+    [Figure 10-3](ch10.xhtml#ch010fig3)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Extracting Local Binary Pattern Histograms***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The OpenCV face recognizer you’ll use is based on local binary patterns. These
+    texture descriptors were first used around 1994 to describe and classify surface
+    textures, differentiating concrete from carpeting, for example. Faces are also
+    composed of textures, so the technique works for face recognition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before you can extract histograms, you first need to generate the binary patterns.
+    An LBP algorithm computes a local representation of texture by comparing each
+    pixel with its surrounding neighbors. The first computational step is to slide
+    a small window across the face image and capture the pixel information. [Figure
+    10-4](ch10.xhtml#ch010fig4) shows an example window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig10_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-4: Example 3×3 pixel sliding window used to capture local binary
+    patterns'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next step is to convert the pixels into a binary number, using the central
+    value (in this case 90) as a threshold. You do this by comparing the eight neighboring
+    values to the threshold. If a neighboring value is equal to or higher than the
+    threshold, assign it 1; if it’s lower than the threshold, assign it 0\. Next,
+    ignoring the central value, concatenate the binary values line by line (some methods
+    use a clockwise rotation) to form a new binary value (11010111). Finish by converting
+    this binary number into a decimal number (215) and storing it at the central pixel
+    location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Continue sliding the window until all the pixels have been converted to LBP
+    values. In addition to using a square window to capture neighboring pixels, the
+    algorithm can use a radius, a process called *circular LBP*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now it’s time to extract histograms from the LBP image produced in the previous
+    step. To do this, you use a grid to divide the LBP image into rectangular regions
+    ([Figure 10-5](ch10.xhtml#ch010fig5)). Within each region, you construct a histogram
+    of the LBP values (labeled “Local Region Histogram” in [Figure 10-5](ch10.xhtml#ch010fig5)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig10_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-5: Extracting the LBP histograms'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After constructing the local region histograms, you follow a predetermined order
+    to normalize and concatenate them into one long histogram (shown truncated in
+    [Figure 10-5](ch10.xhtml#ch010fig5)). Because you’re using a grayscale image with
+    intensity values between 0 and 255, there are 256 positions in each histogram.
+    If you’re using a 10×10 grid, as in [Figure 10-5](ch10.xhtml#ch010fig5), then
+    there are 10×10×256 = 25,600 positions in the final histogram. The assumption
+    is that this composite histogram includes diagnostic features needed to recognize
+    a face. They are thus *representations* of a face image, and face recognition
+    consists of comparing these representations, rather than the images themselves.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To predict the identity of a new, unknown face, you extract its concatenated
+    histogram and compare it to the existing histograms in the trained database. The
+    comparison is a measure of the distance between histograms. This calculation may
+    use various methods, including Euclidian distance, absolute distance, chi-square,
+    and so on. The algorithm returns the ID number of the trained image with the closest
+    histogram match, along with the confidence measurement. You can then apply a threshold
+    to the confidence value, as in [Figure 10-3](ch10.xhtml#ch010fig3). If the confidence
+    for the new image is below the threshold value, assume you have a positive match.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because OpenCV encapsulates all these steps, the LBPH algorithm is easy to implement.
+    It also produces great results in a controlled environment and is unaffected by
+    changes in lighting conditions ([Figure 10-6](ch10.xhtml#ch010fig6)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig10_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-6: LBPs are robust against changes in illumination'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The LBPH algorithm handles changes to lighting conditions well because it relies
+    on comparisons among pixel intensities. Even if illumination is much brighter
+    in one image than another, the relative reflectivity of the face remains the same,
+    and LBPH can capture it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Project #14: Restricting Access to the Alien Artifact**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Your squad has fought its way to the lab containing the portal-producing alien
+    artifact. Captain Demming orders it locked down immediately, with access restricted
+    to just him. Another technician will override the current system with a military
+    laptop. Captain Demming will gain access through this laptop using two levels
+    of security: a typed password and face verification. Aware of your skills with
+    OpenCV, he’s ordered *you* to handle the facial verification part.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: THE OBJECTIVE
+  prefs: []
+  type: TYPE_NORMAL
+- en: Write a Python program that recognizes Captain Demming’s face.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Strategy***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You’re pressed for time and working under adverse conditions, so you want to
+    use a fast and easy tool with a good performance record, like OpenCV’s LBPH face
+    recognizer. You’re aware that LBPH works best under controlled conditions, so
+    you’ll use the same laptop webcam to capture both the training images and the
+    face of anyone trying to access the lab.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to pictures of Demming’s face, you’ll want to capture some faces
+    that don’t belong to Captain Demming. You’ll use these faces to ensure that all
+    the positive matches really belong to the captain. Don’t worry about setting up
+    the password, isolating the program from the user, or hacking into the current
+    system; the other technician will handle these tasks while you go out and blast
+    some mutants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Supporting Modules and Files***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You’ll use both OpenCV and NumPy to do most of the work in this project. If
+    you don’t already have them installed, see “Installing the Python Libraries” on
+    [page 6](ch01.xhtml#page_6). You’ll also need playsound, for playing sounds, and
+    pyttsx3, for text-to-speech functionality. You can find out more about these modules,
+    including installation instructions, in “The Code” on [page 207](ch09.xhtml#page_207).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code and supporting files are in the *Chapter_10* folder from the book’s
+    website, *[https://nostarch.com/real-world-python/](https://nostarch.com/real-world-python/)*.
+    Keep the folder structure and filenames the same after downloading them ([Figure
+    10-7](ch10.xhtml#ch010fig7)). Note that the *tester* and *trainer* folders are
+    created later and will not be included in the download.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig10_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-7: File structure for Project 14'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The *demming_trainer* and *demming_tester* folders contain images of Captain
+    Demming and others that you can use for this project. The code currently references
+    these folders.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you want to supply your own images—for example, to use your own face to represent
+    Captain Demming’s—then you’ll use the folders named *trainer* and *tester*. The
+    code that follows will create the *trainer* folder for you. You’ll need to manually
+    create the *tester* folder and add some images of yourself, as described later.
+    Of course, you’ll need to edit the code so that it points to these new folders.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Video Capture Code***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The first step (performed by the *1_capture.py* code) is to capture the facial
+    images that you’ll need for training the recognizer. You can skip this step if
+    you plan to use the images provided in the *demming_trainer* folder.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To use your own face for Captain Demming, use your computer’s camera to record
+    about a dozen face shots with various expressions and no glasses. If you don’t
+    have a webcam, you can skip this step, take selfies with your phone, and save
+    them to a folder named *trainer*, as shown in [Figure 10-7](ch10.xhtml#ch010fig7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Importing Modules, and Setting Up Audio, a Webcam, Instructions, and File
+    Paths**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Listing 10-1](ch10.xhtml#ch010list1) imports modules, initializes and sets
+    up the audio engine and the Haar cascade classifier, initializes the camera, and
+    provides user instructions. You need the Haar cascades because you must detect
+    a face before you can recognize it. For a refresher on Haar cascades and face
+    detection, see “Detecting Faces in Photographs” on [page 204](ch09.xhtml#page_204).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 10-1: Importing modules and setting up audio and detector files, a
+    webcam, and instructions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The imports are the same as those used to detect faces in the previous chapter.
+    You’ll use the operating system (via the os module) to manipulate file paths,
+    pyttsx3 to play text-to-speech audio instructions, cv to work with images and
+    run the face detector and recognizer, and playsound to play a tone that lets users
+    know when the program has finished capturing their image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, set up the text-to-speech engine. You’ll use this to tell the user how
+    to run the program. The default voice is dependent on your particular operating
+    system. The engine’s rate parameter is currently optimized for the American “David”
+    voice on Windows ➊. You may want to edit the argument if you find the speech to
+    be too fast or too slow. If you want to change the voice, see the instructions
+    accompanying [Listing 9-1](ch09.xhtml#ch09list1) on [page 209](ch09.xhtml#page_209).
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ll use a tone to alert the user that the video capture process has ended.
+    Set up the path to the *tone.wav* audio file as you did in [Chapter 9](ch09.xhtml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, provide the path to the Haar cascade file ➋ and assign the classifier to
+    a variable named face_detector. The path shown here is for my Windows machine;
+    your path may be different. On macOS, for example, you can find the files under
+    *opencv/data/haarcascades*. You can also find them online at *[https://github.com/opencv/opencv/tree/master/data/haarcascades/](https://github.com/opencv/opencv/tree/master/data/haarcascades/)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Chapter 9](ch09.xhtml), you learned how to capture your face using your
+    computer’s webcam. You’ll use similar code in this program, starting with a call
+    to cv.VideoCapture(0). The 0 argument refers to the active camera. If you have
+    multiple cameras, you may need to use another number, such as 1, which you can
+    determine through trial and error. Use a conditional to check that the camera
+    opened, and if it did, set the frame width and height, respectively ➌. The first
+    argument in both methods refers to the position of the width or height parameter
+    in the list of arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For security reasons, you’ll be present to supervise the video capture phase
+    of the process. Nevertheless, use the pyttsx3 engine to explain the procedure
+    to the user (this way you don’t have to remember it). To control the acquisition
+    conditions to ensure accurate recognition later, the user will need to remove
+    any glasses or face coverings and adopt multiple expressions. Among these should
+    be the expression they plan to use each time they access the lab.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, they’ll need to follow some printed instructions on the screen. First,
+    they’ll enter their last name ➍. You don’t need to worry about duplicates right
+    now, as Captain Demming will be the only user. Plus, you’ll assign the user a
+    unique ID number. OpenCV will use this variable, user_id, to keep track of all
+    the faces during training and prediction. Later, you’ll create a dictionary so
+    you can keep track of which user ID belongs to which person, assuming more people
+    are granted access in the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As soon as the user enters their ID number and presses ENTER, the camera will
+    turn on and begin capturing images, so let them know this with another call to
+    print(). Remember from the previous chapter that the Haar cascade face detector
+    is sensitive to head orientation. For it to function properly, the user must look
+    right at the webcam and keep their head as straight as possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Capturing the Training Images**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Listing 10-2](ch10.xhtml#ch010list2) uses the webcam and a while loop to capture
+    a specified number of face images. The code saves the images to a folder and sounds
+    a tone when the operation is complete.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 10-2: Capturing video images using a loop'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start by checking for a directory named *trainer*. If it doesn’t exist, use
+    the operating system module’s mkdir() method to make the directory. Then change
+    the current working directory to this *trainer* folder.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, initialize a frame_count variable to 0\. The code will capture and save
+    a video frame only if it detects a face. To know when to end the program, you’ll
+    need to keep count of the number of captured frames.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, start a while loop set to True. Then call the cap object’s read() method.
+    As noted in the previous chapter, this method returns a tuple consisting of a
+    Boolean return code and a numpy ndarray object representing the current frame.
+    The return code is typically used to check whether you’ve run out of frames when
+    reading from a file. Since we’re not reading from a file here, assign it to an
+    underscore to indicate an unused variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Both face detection and face recognition work on grayscale images, so convert
+    the frame to grayscale and name the resulting array gray. Then, call the detectMultiscale()
+    method to detect faces in the image ➊. You can find details of how this method
+    works in the discussion of [Listing 9-2](ch09.xhtml#ch09list2) on [page 212](ch09.xhtml#page_212).
+    Because you’re controlling conditions by having the user look into a laptop’s
+    webcam, you can rest assured that the algorithm will work well, though you should
+    certainly check the results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The previous method should output the coordinates for a rectangle around the
+    face. Start a for loop through each set of coordinates and immediately advance
+    the frame_count variable by 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Use OpenCV’s imwrite() method to save the image to the *trainer* folder. The
+    folders use the following naming logic: *name.user_id.frame_count.jpg* (such as
+    *demming.1.9.jpg*). Save only the portion of the image within the face rectangle.
+    This will help ensure you aren’t training the algorithm to recognize background
+    features.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next two lines draw a face rectangle on the original frame and show it.
+    This is so the user—Captain Demming—can check that his head is upright and his
+    expressions are suitable. The waitKey() method delays the capture process enough
+    for the user to cycle through multiple expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even if Captain Demming will always adopt a relaxed, neutral expression when
+    having his identity verified, training the software on a range of expressions
+    will lead to more robust results. Along these lines, it’s also helpful if the
+    user tilts their head *slightly* from side to side during the capture phase.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, check whether the target frame count has been reached, and if it has,
+    break out of the loop ➋. Note that, if no one is looking at the camera, the loop
+    will run forever. It counts frames only if the cascade classifier detects a face
+    and returns a face rectangle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let the user know that the camera has turned off by printing a message and sounding
+    the tone. Then end the program by releasing the camera and destroying all the
+    image windows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At this point, the *trainer* folder should contain 30 images of the user’s closely
+    cropped face. In the next section, you’ll use these images—or the set provided
+    in the *demming_trainer* folder—to train OpenCV’s face recognizer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Face Trainer Code***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The next step is to use OpenCV to create an LBPH-based face recognizer, train
+    it with the training images, and save the results as a reusable file. If you’re
+    using your own face to represent Captain Demming’s, you’ll point the program to
+    the *trainer* folder. Otherwise, you’ll need to use the *demming _trainer* folder,
+    which, along with the *2_train.py* file containing the code, is in the downloadable
+    *Chapter_10* folder.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-3](ch10.xhtml#ch010list3) sets up paths to the Haar cascades used
+    for face detection and the training images captured by the previous program. OpenCV
+    keeps track of faces using label integers, rather than name strings, and the listing
+    also initializes lists to hold the labels and their related images. It then loops
+    through the training images, loads them, extracts a user ID number from the filename,
+    and detects the faces. Finally, it trains the recognizer and saves the results
+    to a file.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 10-3: Training and saving the LBPH face recognizer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ve seen the imports and the face detector code before. Although you’ve already
+    cropped the training images to face rectangles in *1_capture.py*, it doesn’t hurt
+    to repeat this procedure. Since *2_train.py* is a stand-alone program, it’s best
+    not to take anything for granted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, you must choose which set of training images to use: the ones you captured
+    yourself in the *trainer* folder or the set provided in the *demming_trainer*
+    folder ➊. Comment out or delete the line for the one you don’t use. Remember,
+    because you’re not providing a full path to the folder, you’ll need to launch
+    your program from the folder containing it, which should be one level above the
+    *trainer* and *demming_trainer* folders.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Create a list named image_paths using list comprehension. This will hold the
+    directory path and filename for each image in the training folder. Then create
+    empty lists for the images and their labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start a for loop through the image paths. Read the image in grayscale; then
+    extract its numeric label from the filename and convert it to an integer ➋. Remember
+    that the label corresponds to the user ID input through *1_capture.py* right before
+    it captured the video frames.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s take a moment to unpack what’s happening in this extraction and conversion
+    process. The os.path.split() method takes a directory path and returns a tuple
+    of the directory path and the filename, as shown in the following snippet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can then select the last item in the tuple, using an index of -1, and split
+    it on the dot. This yields a list with four items (the user’s name, user ID, frame
+    number, and file extension).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: To extract the label value, you choose the second item in the list using index
+    1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Repeat this process to extract the name and frame_num for each image. These
+    are all strings at this point, which is why you need to turn the user ID into
+    an integer for use as a label.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, call the face detector on each training image ➌. This will return a numpy.ndarray,
+    which you’ll call faces. Start looping through the array, which contains the coordinates
+    of the detected face rectangles. Append the part of the image in the rectangle
+    to the images list you made earlier. Also append the image’s user ID to the labels
+    list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let the user know what’s going on by printing a message in the shell. Then,
+    as a check, show each training image for 50 milliseconds. If you’ve ever seen
+    Peter Gabriel’s popular 1986 music video for “Sledgehammer,” you’ll appreciate
+    this display.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s time to train the face recognizer. Just as you do when using OpenCV’s face
+    detector, you start by instantiating a recognizer object ➍. Next, you call the
+    train() method and pass it the images list and the labels list, which you turn
+    into a NumPy array on the fly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You don’t want to train the recognizer every time someone verifies their face,
+    so write the results of the training process to a file called *lbph_trainer.yml*.
+    Then let the user know the program has ended.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Face Predictor Code***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: It’s time to start recognizing faces, a process we’ll call *predicting*, because
+    it all comes down to probability. The program in *3_predict.py* will first calculate
+    the concatenated LBP histogram for each face. It will then find the distance between
+    this histogram and all the histograms in the training set. Next, it will assign
+    the new face the label and name of the trained face that’s closest to it, but
+    only if the distance falls below a threshold value that you specify.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Importing Modules and Preparing the Face Recognizer**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Listing 10-4](ch10.xhtml#ch010list4) imports modules, prepares a dictionary
+    to hold user ID numbers and names, sets up the face detector and recognizer, and
+    establishes the path to the test data. The test data includes images of Captain
+    Demming, along with several other faces. An image of Captain Demming from the
+    training folder is included to test the results. If everything is working as it
+    should, the algorithm should positively identify this image with a low distance
+    measurement.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 10-4: Importing modules and preparing for face detection and recognition'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After some familiar imports, create a dictionary to link user ID numbers to
+    usernames. Although there’s only one entry currently, this name dictionary makes
+    it easy to add more entries in the future. If you’re using your own face, feel
+    free to change the last name, but leave the ID number set to 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, repeat the code that sets up the face_detector object. You’ll need to
+    input your own cascade_path (see [Listing 10-1](ch10.xhtml#ch010list1) on [page
+    233](ch10.xhtml#page_233)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Create a recognizer object as you did in the *2_train.py* code ➊. Then use the
+    read() method to load the *.yml* file that contains the training information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ll want to test the recognizer using face images in a folder. If you’re
+    using the Demming images provided, set up a path to the *demming_tester* folder
+    ➋. Otherwise, use the *tester* folder you created earlier. You can add your own
+    images to this blank folder. If you’re using your face to represent Captain Demming’s,
+    you shouldn’t reuse the training images here, although you might consider using
+    one as a control. Instead, use the *1_capture.py* program to produce some new
+    images. If you wear glasses, include some images of you with and without them.
+    You’ll want to include some strangers from the *demming_tester* folder, as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Recognizing Faces and Updating an Access Log**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Listing 10-5](ch10.xhtml#ch010list5) loops through the images in the test
+    folder, detects any faces present, compares the face histogram to those in the
+    training file, names the face, assigns a confidence value, and then logs the name
+    and access time in a persistent text file. As part of this process, the program
+    would theoretically unlock the lab if the ID is positive, but since we don’t have
+    a lab, we’ll skip that part.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 10-5: Running face recognition and updating the access log file'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start by looping through the images in the test folder. This will be either
+    the *demming_tester* folder or the *tester* folder. Read each image in as grayscale
+    and assign the resulting array to a variable named predict_image. Then run the
+    face detector on it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now loop through the face rectangles, as you’ve done before. Print a message
+    about access being requested; then use OpenCV to resize the face subarray to 100×100
+    pixels ➊. This is close to the dimensions of the training images in the *demming_trainer*
+    folder. Synchronizing the size of the images isn’t strictly necessary but helps
+    to improve results in my experience. If you’re using your own images to represent
+    Captain Demming, you should check that the training image and test image dimensions
+    are similar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now it’s time to predict the identity of the face. Doing so takes only one line.
+    Just call the predict() method on the recognizer object and pass it the face subarray.
+    This method will return an ID number and a distance value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The lower the distance value, the more likely the predicted face has been correctly
+    identified. You can use the distance value as a threshold: all images that are
+    predicted to be Captain Demming and score *at or below* the threshold will be
+    positively identified as Captain Demming. All the others will be assigned to ''unknown''.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To apply the threshold, use an if statement ➋. If you’re using your own training
+    and test images, set the distance value to 1,000 the first time you run the program.
+    Review the distance values for all the images in the test folder, both known and
+    unknown. Find a threshold value below which all the faces are correctly identified
+    as Captain Demming. This will be your discriminator going forward. For the images
+    in the *demming_trainer* and *demming_tester* folders, the threshold distance
+    should be 95.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, get the name for the image by using the predicted_id value as a key in
+    the names dictionary. Print a message in the shell stating that the image has
+    been identified and include the image filename, the name from the dictionary,
+    and the distance value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the log, print a message indicating that name (in this case, Captain Demming)
+    has been granted access to the lab and include the time using the datetime module
+    ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You’ll want to keep a persistent file of people’s comings and goings. Here’s
+    a neat trick for doing so: just write to a file using the print() function. Open
+    the *lab_access_log.txt* file and include the a parameter for “append.” This way,
+    instead of overwriting the file for each new image, you’ll add a new line at the
+    bottom. Here’s an example of the file contents:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the conditional is not met, set name to 'unknown' and print a message to
+    that effect. Then draw a rectangle around the face and post the user’s name using
+    OpenCV’s putText() method. Show the image for two seconds before destroying it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Results***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You can see some example results, from the 20 images in the *demming_tester*
+    folder, in [Figure 10-8](ch10.xhtml#ch010fig8). The predictor code correctly identified
+    the eight images of Captain Demming with no false positives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig10_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-8: Demmings and non-Demmings'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the LBPH algorithm to be highly accurate, you need to use it under controlled
+    conditions. Remember that by forcing the user to gain access through the laptop,
+    you controlled their pose, the size of their face, the image resolution, and the
+    lighting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, you got to work with OpenCV’s local binary pattern histogram
+    algorithm for recognizing human faces. With only a few lines of code, you produced
+    a robust face recognizer that can easily handle variable lighting conditions.
+    You also used the Standard Library’s os.path.split() method to break apart directory
+    paths and filenames to produce customized variable names.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Further Reading**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: “Local Binary Patterns Applied to Face Detection and Recognition” (Polytechnic
+    University of Catalonia, 2010), by Laura María Sánchez López, is a thorough review
+    of the LBPH approach. The PDF can be found online at sites such as *[https://www.semanticscholar.org/](https://www.semanticscholar.org/)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: “Look at the LBP Histogram,” on the AURlabCVsimulator site (*[https://aurlabcvsimulator.readthedocs.io/en/latest/](https://aurlabcvsimulator.readthedocs.io/en/latest/)*),
+    includes Python code that lets you visualize an LBPH image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you’re a macOS or Linux user, be sure to check out Adam Geitgey’s face_recognition
+    library, a simple-to-use and highly accurate face recognition system that utilizes
+    deep learning. You can find installation instructions and an overview at the Python
+    Software Foundation site: *[https://pypi.org/project/face_recognition/](https://pypi.org/project/face_recognition/)*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '“Machine Learning Is Fun! Part 4: Modern Face Recognition with Deep Learning”
+    (Medium, 2016), by Adam Geitgey, is a short and enjoyable overview of modern face
+    recognition using Python, OpenFace, and dlib.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: “Liveness Detection with OpenCV” (PyImageSearch, 2019), by Adrian Rosebrock,
+    is an online tutorial that teaches you how to protect your face recognition system
+    against spoofing by fake faces, such as a photograph of Captain Demming held up
+    to the webcam.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cities and colleges around the world have begun banning facial recognition systems.
+    Inventors have also gotten into the act, designing clothing that can confound
+    the systems and protect your identity. “These Clothes Use Outlandish Designs to
+    Trick Facial Recognition Software into Thinking You’re Not Human” (Business Insider,
+    2020), by Aaron Holmes, and “How to Hack Your Face to Dodge the Rise of Facial
+    Recognition Tech” (Wired, 2019), by Elise Thomas, review some recent practical—and
+    impractical— solutions to the problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: “OpenCV Age Detection with Deep Learning” (PyImageSearch, 2020) by Adrian Rosebrock,
+    is an online tutorial for using OpenCV to predict a person’s age from their photograph.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Challenge Project: Adding a Password and Video Capture**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The *3_predict.py* program you wrote in Project 14 loops through a folder of
+    photographs to perform face recognition. Rewrite the program so that it dynamically
+    recognizes faces in the webcam’s video stream. The face rectangle and name should
+    appear in the video frame as they do on the folder images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To start the program, have the user enter a password that you verify. If it’s
+    correct, add audio instructions telling the user to look at the camera. If the
+    program positively identifies Captain Demming, use audio to announce that access
+    is granted. Otherwise, play an audio message stating that access is denied.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you need help with identifying the face from the video stream, see the *challenge_video_recognize.py*
+    program in the appendix. Note that you may need to use a higher confidence value
+    for the video frame than the value you used for the still photographs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So that you can keep track of who has tried to enter the lab, save a single
+    frame to the same folder as the *lab_access_log.txt* file. Use the logged results
+    from datetime.now() as the filename so you can match the face to the access attempt.
+    Note that you’ll need to reformat the string returned from datetime.now() so that
+    it only contains characters acceptable for filenames, as defined by your operating
+    system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Challenge Project: Look-Alikes and Twins**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Use the code from Project 14 to compare celebrity look-alikes and twins. Train
+    it with images from the internet and see whether you can fool the LBPH algorithm.
+    Some pairings to consider are Scarlett Johansson and Amber Heard, Emma Watson
+    and Kiernan Shipka, Liam Hemsworth and Karen Khachanov, Rob Lowe and Ian Somerhalder,
+    Hilary Duff and Victoria Pedretti, Bryce Dallas Howard and Jessica Chastain, and
+    Will Ferrell and Chad Smith.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For famous twins, look at astronaut twins Mark and Scott Kelly and celebrity
+    twins Mary-Kate and Ashley Olsen.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Challenge Project: Time Machine**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If you ever watch reruns of old shows, you’ll encounter famous actors in their
+    younger—sometimes *much* younger—days. Even though humans excel at face recognition,
+    we may still struggle to identify a young Ian McKellen or Patrick Stewart. That’s
+    why sometimes it takes a certain inflection of voice or curious mannerism to send
+    us scurrying to Google to check the cast members.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Face recognition algorithms are also prone to fail when identifying faces across
+    time. To see how the LBPH algorithm performs under these conditions, use the code
+    from Project 14 and train it on faces of yourself (or your relatives) at a certain
+    age. Then test it with images over a range of ages.
+  prefs: []
+  type: TYPE_NORMAL

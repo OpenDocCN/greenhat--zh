@@ -1,0 +1,2377 @@
+- en: '**14'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: EXPERIMENTS WITH CIFAR-10**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/common.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In this chapter, we’ll perform a series of experiments with the CIFAR-10 dataset
+    we built in [Chapter 5](ch05.xhtml#ch05). First, we’ll see how two models, one
+    shallow, the other deeper, perform on the full dataset. After that, we’ll work
+    with grouped subsets of the entire dataset to see if we can tell the difference
+    between animals and vehicles. Next, we’ll answer the question of what’s better
+    for the CIFAR-10 dataset, a single multiclass model or a set of binary models,
+    one per class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll close the chapter by introducing transfer learning and fine-tuning. These
+    are important concepts, often confounded, that are widely used in the machine
+    learning community, so we should develop an intuitive feel for how they work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A CIFAR-10 Refresher
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Before we dive into the experiments, let’s refamiliarize ourselves with the
+    dataset we’re working with. CIFAR-10 is a 10-class dataset from the Canadian Institute
+    for Advanced Research (CIFAR). We built this dataset in [Chapter 5](ch05.xhtml#ch05)
+    but deferred its use until now. CIFAR-10 consists of 32×32-pixel RGB images of
+    animals (six classes) and vehicles (four classes). Take a look at [Figure 5-4](ch05.xhtml#ch5fig4)
+    for some sample images. The training set has 50,000 images, 5,000 from each class,
+    so it is a balanced dataset. The test set consists of 10,000 images, 1,000 from
+    each class. CIFAR-10 is probably the second most widely used standard dataset
+    in machine learning after MNIST. There is also a 100-class version, CIFAR-100,
+    that we’ll not work with in this book, but you’ll see it pop up often in the literature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As of this writing, the best performing model on unaugmented CIFAR-10 has achieved
+    a 1 percent error on the test set ([benchmarks.ai](http://benchmarks.ai)). The
+    model that did this has 557 million parameters. Our models will be significantly
+    smaller and have a much larger test error. However, this is a true image dataset,
+    unlike MNIST, which is very clean and has a uniform black background for every
+    digit. Because of the variation in natural images, especially in their backgrounds,
+    we might expect models to have a harder time learning the CIFAR-10 classes compared
+    to MNIST.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For reference throughout the chapter, here are CIFAR-10 classes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Label** | **Class** | **Label** | **Class** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0 | airplane | 5 | dog |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | automobile | 6 | frog |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | bird | 7 | horse |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | cat | 8 | ship |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4 | deer | 9 | truck |'
+  prefs: []
+  type: TYPE_TB
+- en: Working with the Full CIFAR-10 Dataset
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let’s train two different models on the entire CIFAR-10 dataset. The first model
+    is the same one we used in [Chapter 13](ch13.xhtml#ch13) for the MNIST dataset.
+    We’ll refer to this model as our *shallow model* because it has only two convolutional
+    layers. We’ll need to adapt it a touch for the 32 × 32 RGB inputs, but that’s
+    straightforward enough to do. The second model, which we’ll call our *deep model*,
+    uses multiple convolutional layers before the pooling and fully connected layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additionally, we’ll experiment with both stochastic gradient descent and Adadelta
+    as our optimization algorithms. We’ll fix the minibatch size at 64 and train for
+    60 epochs for a total of 46,875 gradient descent steps. For SGD, we’ll use a learning
+    rate of 0.01 and a momentum of 0.9\. Recall, Adadelta is adaptive and alters the
+    learning rate on the fly. We can decrease the learning rate for SGD as training
+    progresses, but 0.01 is relatively small, and we have a large number of gradient
+    descent steps, so we’ll just leave it a constant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The shallow model has 1,626,442 parameters, while the deep model has only 1,139,338\.
+    The deep model is deep because it has more layers, but because each convolutional
+    layer is using exact convolution, the output decreases by two each time (for a
+    3 × 3 kernel). Therefore, the flatten layer after the pooling layer has only 7,744
+    values compared to 12,544 for the shallow model. The weight matrix between the
+    flatten layer and the dense layer of 128 nodes contains the vast majority of the
+    parameters, 7,744 × 128 = 991,232 compared to 12,544 × 128 = 1,605,632\. Thus,
+    going deeper has actually reduced the number of parameters to learn. This slightly
+    counterintuitive result reminds us of the large expense incurred by fully connected
+    layers and some of the initial motivation for the creation of CNNs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building the Models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You’ll find the code for the shallow model in *cifar10_cnn.py* (Adadelta) and
+    *cifar10_cnn_SGD.py* (SGD). We’ll work through the code in pieces. The shallow
+    model starts in much the same way as for the MNIST dataset, as shown in [Listing
+    14-1](ch14.xhtml#ch14lis1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import keras
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.models import Sequential
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.layers import Dense, Dropout, Flatten
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.layers import Conv2D, MaxPooling2D
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras import backend as K
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size = 64
+  prefs: []
+  type: TYPE_NORMAL
+- en: num_classes = 10
+  prefs: []
+  type: TYPE_NORMAL
+- en: epochs = 60
+  prefs: []
+  type: TYPE_NORMAL
+- en: img_rows, img_cols = 32, 32
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = np.load("cifar10_train_images.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("cifar10_train_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("cifar10_test_images.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("cifar10_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if K.image_data_format() == ''channels_first'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = x_train.reshape(x_train.shape[0], 3, img_rows, img_cols)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = x_test.reshape(x_test.shape[0], 3, img_rows, img_cols)
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape = (3, img_rows, img_cols)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape = (img_rows, img_cols, 3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = x_train.astype('float32')
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = x_test.astype('float32')
+  prefs: []
+  type: TYPE_NORMAL
+- en: (*\newpage*)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train /= 255
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test /= 255
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = keras.utils.to_categorical(y_train, num_classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = keras.utils.to_categorical(y_test, num_classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-1: Preparing the CIFAR-10 dataset*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We import the necessary modules and load the CIFAR-10 dataset from the NumPy
+    files we created in [Chapter 5](ch05.xhtml#ch05). Notice that the image dimensions
+    are now 32 × 32, not 28 × 28, and that the number of channels is 3 (RGB) instead
+    of 1 (grayscale). As before, we scale the inputs by 255 to map the images to [0,1]
+    and convert the label numbers to one-hot vectors using to_categorical.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we define the model architecture ([Listing 14-2](ch14.xhtml#ch14lis2)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: model = Sequential()
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(32, kernel_size=(3, 3),
+  prefs: []
+  type: TYPE_NORMAL
+- en: activation='relu',
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape=input_shape))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(64, (3, 3), activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling2D(pool_size=(2, 2)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Flatten())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(128, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(num_classes, activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.compile(loss=keras.losses.categorical_crossentropy,
+  prefs: []
+  type: TYPE_NORMAL
+- en: optimizer=keras.optimizers.Adadelta(),
+  prefs: []
+  type: TYPE_NORMAL
+- en: metrics=['accuracy'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-2: Building the shallow CIFAR-10 model*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This step is identical to the MNIST version for the shallow model (see [Listing
+    13-1](ch13.xhtml#ch13lis1)). For the deep model, we add more convolutional layers,
+    as shown in [Listing 14-3](ch14.xhtml#ch14lis3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: model = Sequential()
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(32, kernel_size=(3, 3),
+  prefs: []
+  type: TYPE_NORMAL
+- en: activation='relu',
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape=input_shape))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(64, (3,3), activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(64, (3,3), activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(64, (3,3), activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(64, (3,3), activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling2D(pool_size=(2,2)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Flatten())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(128, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(128, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(num_classes, activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.compile(loss=keras.losses.categorical_crossentropy,
+  prefs: []
+  type: TYPE_NORMAL
+- en: optimizer=keras.optimizers.Adadelta(),
+  prefs: []
+  type: TYPE_NORMAL
+- en: metrics=['accuracy'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-3: Building the deep CIFAR-10 model*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The extra convolutional layers give the model the opportunity to learn a better
+    representation of the input data, which for CIFAR-10 is more complex than the
+    simple MNIST images. The representation might be better because a deeper network
+    can learn more abstract representations that encompass larger structures in the
+    inputs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code snippets in [Listings 14-2](ch14.xhtml#ch14lis2) and [14-3](ch14.xhtml#ch14lis3)
+    compile the model using Adadelta as the optimization algorithm. We also want a
+    version of each that uses SGD. If we replace the reference to Adadelta() in the
+    compile method with the following
+  prefs: []
+  type: TYPE_NORMAL
+- en: optimizer=keras.optimizers.SGD(lr=0.01, momentum=0.9)
+  prefs: []
+  type: TYPE_NORMAL
+- en: we’ll use SGD with the learning rate and momentum values we indicated earlier.
+    For completeness, the rest of the code for both shallow and deep models is shown
+    in [Listing 14-4](ch14.xhtml#ch14lis4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("Model parameters = %d" % model.count_params())
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(model.summary())
+  prefs: []
+  type: TYPE_NORMAL
+- en: history = model.fit(x_train, y_train,
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size=batch_size,
+  prefs: []
+  type: TYPE_NORMAL
+- en: epochs=epochs,
+  prefs: []
+  type: TYPE_NORMAL
+- en: verbose=1,
+  prefs: []
+  type: TYPE_NORMAL
+- en: validation_data=(x_test[:1000], y_test[:1000]))
+  prefs: []
+  type: TYPE_NORMAL
+- en: score = model.evaluate(x_test[1000:], y_test[1000:], verbose=0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Test loss:', score[0])
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Test accuracy:', score[1])
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.save("cifar10_cnn_model.h5")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-4: Training and testing the CIFAR-10 models*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code summarizes the model architecture and number of parameters, trains
+    by calling the fit method using the first 1,000 test samples for validation, and
+    then evaluates the trained model on the remaining 9,000 test samples by calling
+    the evaluate method. We report the test loss and accuracy. Then we write the model
+    to disk (save), and store the history showing the per epoch loss and accuracy
+    during training. We’ll use the history files to generate plots showing the loss
+    and error (1 – accuracy) as a function of the training epoch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 14-4](ch14.xhtml#ch14lis4) gives us four files: shallow model + Adadelta,
+    shallow model + SGD, deep model + Adadelta, and deep model + SGD. Let’s run each
+    of these to see our final test accuracy and then look at plots of the training
+    process to see what we can learn.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running the code trains and evaluates the models. This takes some time on our
+    CPU-only system, about eight hours total. The random initialization Keras uses
+    means that when you run the code yourself, you should see slightly different answers.
+    When I ran the code, I got [Table 14-1](ch14.xhtml#ch14tab1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 14-1:** Test Set Accuracies by Model Size and Optimizer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | **Shallow** | **Deep** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Adadelta | 71.9% | 74.8% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SGD | 70.0% | 72.8% |'
+  prefs: []
+  type: TYPE_TB
+- en: The table tells us that using Adadelta gave us a more accurate model for both
+    shallow and deep models compared to SGD. We also see that the deep model outperforms
+    the shallow model regardless of optimizer. Adaptive optimizers like Adadelta and
+    Adam (also in Keras) are generally preferred to plain old SGD for this reason.
+    However, I have seen claims that SGD is ultimately just as good or better once
+    the learning rate is set up right and decreased as training proceeds. Of course,
+    nothing prevents us from starting with an adaptive optimizer and then switching
+    to SGD after some number of epochs. The idea here is that the adaptive optimizer
+    “gets close” to a minimum of the loss function while SGD fine-tunes the process
+    at that point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analyzing the Models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s look at how the loss changes during training. [Figure 14-1](ch14.xhtml#ch14fig1)
+    shows the loss per epoch for the shallow and deep models using Adadelta (top)
+    and SGD (bottom).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/14fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 14-1: Training loss for shallow and deep models using Adadelta (top)
+    and SGD (bottom)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Starting with the Adadelta loss plot, we see that compared to SGD, the loss
+    is not as low. We also see that for the shallow model, the loss is increasing
+    slightly per epoch. This is a counterintuitive result and seems to contradict
+    conventional wisdom that the training loss should only decrease. There are reports
+    of this happening with Adam, another adaptive optimizer, so it is likely an artifact
+    of the adaptation algorithm. Regardless, as we saw in [Table 14-1](ch14.xhtml#ch14tab1),
+    Adadelta leads to higher accuracies for both shallow and deep models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the bottom of [Figure 14-1](ch14.xhtml#ch14fig1), we see that SGD leads to
+    a smaller loss for the shallow model compared to the deep model. This is typically
+    interpreted as a hint for potential overfitting. The model is learning the details
+    of the training set as the loss tends to 0\. The shallow model using SGD was the
+    least performant model according to [Table 14-1](ch14.xhtml#ch14tab1). The deep
+    model using SGD did not have such a small loss, at least up to 60 training epochs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What about the validation set accuracy during training? [Figure 14-2](ch14.xhtml#ch14fig2)
+    plots the *error* by epoch. The error is easier to understand visually; it should
+    tend toward 0 as accuracy increases. Again, the Adadelta models are on the top,
+    and the SGD models are on the bottom.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As expected, regardless of optimizer, the deeper model performed better and
+    had a lower validation set error during training. Note, the validation set error
+    is not the final, held-out test set error, but instead the portion of the test
+    set used during training, the first 1,000 samples in this case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The SGD curves on the bottom of [Figure 14-2](ch14.xhtml#ch14fig2) follow what
+    our intuition should tell us: as the model trains, it gets better, leading to
+    a smaller error. The deep model quickly overtakes the shallow model—again, an
+    intuitive result. Also, the curves are relatively smooth as the model gets better
+    and better.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Adadelta error plots on the top of [Figure 14-2](ch14.xhtml#ch14fig2) are
+    a different story. There is an obvious decrease in the error after the first few
+    epochs. However, after that, the validation set error jumps around somewhat chaotically
+    though still following our intuition that the deep model should have a smaller
+    error than the shallow model. This chaotic result is due to the adaptive nature
+    of the Adadelta algorithm, which is adjusting the learning rate on the fly to
+    search for a better minimum. From the results of [Table 14-1](ch14.xhtml#ch14tab1),
+    it’s clear that Adadelta is finding better-performing models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/14fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 14-2: Validation set error for shallow and deep models using Adadelta
+    (top) and SGD (bottom)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These experiments tell us that adaptive optimization algorithms and deeper networks
+    (to a point) tend toward better-performing models. While recognizing the danger
+    inherent in attempting to offer advice in this field, it seems safe to say that
+    one should start with adaptive optimization and use a large enough model. To find
+    out just what *large enough* means, I suggest starting with a modest model and,
+    after training, making it deeper and seeing if that improves things. Eventually,
+    the model will be too large for the training set, so there will be a cutoff point
+    where increasing the size of the model no longer helps. In that case, get more
+    training data, if possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s now shift our attention to working with subsets of CIFAR-10.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Animal or Vehicle?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Four of the ten classes in CIFAR-10 are vehicles; the remaining six are animals.
+    Let’s build a model to separate the two and see what we can learn from it. We
+    already have the images; all we need do is recode the labels so that all the vehicles
+    are marked as class 0 and all the animals as class 1\. Doing this is straightforward,
+    as shown in [Listing 14-5](ch14.xhtml#ch14lis5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("cifar10_train_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test  = np.load("cifar10_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y_train)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (y_train[i] in [0,1,8,9]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train[i] = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train[i] = 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y_test)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (y_test[i] in [0,1,8,9]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test[i] = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test[i] = 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_train_animal_vehicle_labels.npy", y_train)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_test_animal_vehicle_labels.npy", y_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-5: Adjusting the labels of CIFAR-10 into vehicles (class 0) and
+    animals (class 1)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We load the existing train and test label files, already matched in order with
+    the train and test image files, and build new label vectors mapping the vehicle
+    classes—classes 0, 1, 8, and 9—to 0 and all the others to 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code in the previous section for building and training the model remains
+    the same except for the definition of the model architecture and the particular
+    file we load for the train and test labels. The number of classes (num_classes)
+    is set to 2, the minibatch size is 128, and we’ll train for 12 epochs. The training
+    set isn’t completely balanced—there are 20,000 vehicles and 30,000 animals—but
+    the imbalance isn’t severe, so we should be in good shape. Remember that when
+    one class is scarce, it becomes difficult for the model to learn it well. We’ll
+    stick with Adadelta as the optimizer and use the first 1,000 test samples for
+    validation and the remaining 9,000 for final test. We’ll use the same shallow
+    architecture used in the previous section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training this model on the CIFAR-10 images with the recoded labels gives us
+    a final test accuracy of 93.6 percent. Let’s be a little pedantic and calculate
+    all the performance metrics from [Chapter 11](ch11.xhtml#ch11). To do this, we
+    update the tally_predictions function defined in that chapter ([Listing 11-1](ch11.xhtml#ch11lis1))
+    to work with a Keras model. We’ll also use basic_metrics ([Listing 11-2](ch11.xhtml#ch11lis2))
+    and advanced_metrics ([Listing 11-3](ch11.xhtml#ch11lis3)) from [Chapter 11](ch11.xhtml#ch11).
+    The updated code for tally_predictions is shown in [Listing 14-6](ch14.xhtml#ch14lis6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def tally_predictions(model, x, y):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pp = model.predict(x)
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = np.zeros(pp.shape[0], dtype="uint8")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❶ for i in range(pp.shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: p[i] = 0 if (pp[i,0] > pp[i,1]) else 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: tp = tn = fp = fn = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (p[i] == 0) and (y[i] == 0):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: tn += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif (p[i] == 0) and (y[i] == 1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fn += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif (p[i] == 1) and (y[i] == 0):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fp += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: tp += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: score = float(tp+tn) / float(tp+tn+fp+fn)
+  prefs: []
+  type: TYPE_NORMAL
+- en: return [tp, tn, fp, fn, score]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-6: Calculating basic metrics for Keras models*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We pass in the model, test samples (x), and test labels (y). Unlike the sklearn
+    version of tally_predictions, here we first use the model to predict per class
+    probabilities (pp). This returns a 2D array, one row for each sample in x, where
+    the columns are the probabilities assigned per class. Here there are two columns
+    because there are only two classes: vehicle or animal.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before we can tally the true positives, true negatives, false positives (vehicle
+    classified as animal), and false negatives (animal classified as vehicle), we
+    need to assign a class label to each test sample. We do this by looping over the
+    predictions, row by row, and asking whether the probability for class 0 is greater
+    than class 1 or not ❶. Once we have assigned a predicted class label (p), we can
+    calculate the tallies and return them along with the overall score (accuracy).
+    We pass the list returned by tally_predictions to basic_metrics and then pass
+    the output of both of these functions to advanced_metrics, as in [Chapter 11](ch11.xhtml#ch11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The full set of binary classifier metrics gives us the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Metric** | **Result** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TP | 5,841 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FP | 4,80 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TN | 3,520 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FN | 159 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TPR (sensitivity, recall) | 0.9735 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TNR (specificity) | 0.8800 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PPV (precision) | 0.9241 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| NPV | 0.9568 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FPR | 0.1200 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FNR | 0.0265 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| F1 | 0.9481 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MCC | 0.8671 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *κ* | 0.8651 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Informedness | 0.8535 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Markedness | 0.8808 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Accuracy | 0.9361 |'
+  prefs: []
+  type: TYPE_TB
+- en: We see that this is a well-performing model although a specificity of 88 percent
+    is a little on the low side. As argued in [Chapter 11](ch11.xhtml#ch11), the Matthews
+    correlation coefficient (MCC) is possibly the best single number for characterizing
+    a binary classifier. Here we have an MCC of 0.8671 out of 1.0, indicative of a
+    good model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recall that the *sensitivity* is the probability that an animal is called an
+    “animal” by this model, and the *specificity* is the probability that a vehicle
+    is called a “vehicle.” The *precision* is the probability that when the model
+    assigns a label of “animal,” it is correct, and the *NPV (negative predictive
+    value)* is the probability of the model being correct when it assigns a label
+    of “vehicle.” Note also that the false positive rate (FPR) is 1 – specificity,
+    and the false negative rate (FNR) is 1 – sensitivity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A little more code will calculate the ROC curve and its area:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.metrics import roc_auc_score, roc_curve
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def roc_curve_area(model, x, y):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pp = model.predict(x)
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = np.zeros(pp.shape[0], dtype="uint8")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(pp.shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: p[i] = 0 if (pp[i,0] > pp[i,1]) else 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: auc = roc_auc_score(y,p)
+  prefs: []
+  type: TYPE_NORMAL
+- en: roc = roc_curve(y,pp[:,1])
+  prefs: []
+  type: TYPE_NORMAL
+- en: return [auc, roc]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Again, we pass in the trained model, the test samples (x), and the animal or
+    vehicle labels (y). We also convert the output probabilities to class predictions,
+    as we did in [Listing 14-6](ch14.xhtml#ch14lis6). The AUC is 0.9267, and [Figure
+    14-3](ch14.xhtml#ch14fig3) shows the ROC curve (note the zoomed axes). This curve
+    is steep and close to the upper-left corner of the plot—all good signs of a well-performing
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/14fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 14-3: ROC curve for the animal or vehicle model*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We grouped animals and vehicles and asked a single model to learn something
+    about the difference between them. Clearly, some characteristics differentiate
+    the two classes, and the model has learned to use them successfully. However,
+    unlike most binary classifiers, we know finer label assignments for the test data.
+    For example, we know which of the animals are birds or deer or frogs. Likewise,
+    we know which samples are airplanes, ships, or trucks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the model makes a mistake, the mistake is either a false positive (calling
+    a vehicle an animal) or a false negative (calling an animal a vehicle). We chose
+    animals to be class 1, so false positives are cases where a vehicle was called
+    an animal. The converse is true for false negatives. We can use the full class
+    labels to tell us how many of the false positives are represented by which vehicle
+    classes, and we can do the same for the false negatives to tell us which animal
+    classes were assigned to the vehicle class. A few lines of code in [Listing 14-7](ch14.xhtml#ch14lis7)
+    give us what we are after.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.models import load_model
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("cifar10_test_images.npy")/255.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_label= np.load("cifar10_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("cifar10_test_animal_vehicle_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: model = load_model("cifar10_cnn_animal_vehicle_model.h5")
+  prefs: []
+  type: TYPE_NORMAL
+- en: pp = model.predict(x_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = np.zeros(pp.shape[0], dtype="uint8")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(pp.shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: p[i] = 0 if (pp[i,0] > pp[i,1]) else 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: hp = []; hn = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❶ for i in range(len(y_test)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (p[i] == 0) and (y_test[i] == 1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: hn.append(y_label[i])
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif (p[i] == 1) and (y_test[i] == 0):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: hp.append(y_label[i])
+  prefs: []
+  type: TYPE_NORMAL
+- en: hp = np.array(hp)
+  prefs: []
+  type: TYPE_NORMAL
+- en: hn = np.array(hn)
+  prefs: []
+  type: TYPE_NORMAL
+- en: a = np.histogram(hp, bins=10, range=[0,9])[0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: b = np.histogram(hn, bins=10, range=[0,9])[0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("vehicles as animals: %s" % np.array2string(a))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("animals as vehicles: %s" % np.array2string(b))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-7: Using the fine class labels to determine which classes account
+    for false positives and false negatives*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we load the test set images, actual labels (y_label), and animal or vehicle
+    labels (y_test). Then, as before, we load the model and get the model predictions
+    (p). We want to keep track of the actual class label for each false positive and
+    false negative, the mistakes the classifier has made. We do this by looping over
+    the predictions and comparing them to the animal or vehicle labels ❶. When there
+    is an error, we keep the actual label of the sample, be it an FN (hn) or FP (hp).
+    Note that this works because when we defined the animal or vehicle labels, we
+    were careful to keep the order the same as the original label set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once we have the actual labels for all FP and FN cases, we use histogram to
+    do the tallying for us. There are 10 actual class labels, so we tell histogram
+    that we want to use 10 bins. We also need to specify the range for the bins (range=[0,9]).
+    We want only the counts themselves, so we need to keep only the first array returned
+    by histogram, hence the [0] at the end of the call. Finally, we print the arrays
+    to get
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'vehicles as animals: [189  69   0   0   0   0   0   0 105 117]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'animals as vehicles: [ 0  0 64 34 23 11 12 15  0  0]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This means that of the vehicles the model called “animal,” 189 of them were
+    of class 0, airplane. The vehicle class least likely to be identified as an animal
+    is class 1, automobile. Ships and trucks were similarly likely to be mistaken
+    for an animal. Going the other way, we see that class 2, birds, were most likely
+    to be mistaken for vehicles and class 5, dogs, were least likely to be misclassified,
+    though frogs were a close second.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'What to make of this? The most commonly misclassified vehicle is an airplane,
+    while the most commonly misclassified animal is a bird. This makes sense: a picture
+    of an airplane and a picture of a bird flying do look similar. I’ll leave it to
+    you to make connections among the other categories.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Binary or Multiclass?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Conventional wisdom in machine learning is that a multiclass model will generally
+    outperform multiple binary models. While this is almost certainly true for large
+    datasets, large models, and situations with many classes, like the ImageNet dataset
+    of 1,000 classes, how does it pan out for small models like the ones we’re working
+    with in this chapter? Let’s find out.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are 5,000 instances of each class in the CIFAR-10 dataset and 10 classes.
+    This means we can train 10 binary models where the target class (class 1) is one
+    of the 10 classes, and the other class is everything else. This is known as a
+    *one-vs-rest* approach. To classify an unknown sample, we run it through each
+    of the 10 classifiers and assign the label of the model returning the most confident
+    answer. The datasets are all imbalanced, 5,000 class 1 instances to 45,000 class
+    0, but, as we’ll see, there is still enough data to learn the difference between
+    classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We need some code to train 10 one-vs-rest models. We’ll use the shallow architecture
+    we’ve used before, with a minibatch size of 128, and we’ll train for 12 epochs.
+    Before we can train, however, we need to reassign the class labels for the train
+    and test sets so that all instances of the target class are a 1 and everything
+    else is a 0\. To build the per class labels, we’ll use [Listing 14-8](ch14.xhtml#ch14lis8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import sys
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ class1 = eval("["+sys.argv[1]+"]")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("cifar10_train_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test  = np.load("cifar10_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y_train)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (y_train[i] in class1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train[i] = 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train[i] = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y_test)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (y_test[i] in class1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test[i] = 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test[i] = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save(sys.argv[2], y_train)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save(sys.argv[3], y_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-8: Building the per class labels*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code makes use of the command line. To call it, use something like
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ python3 make_label_files.py 1 train_1.npy test_1.npy
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first argument is the desired target class label, here 1 for automobiles,
+    and the next two arguments are the names in which to store the new label assignments
+    for the train and test images. The code itself loops over the actual train and
+    test labels, and if the label is the target class, the corresponding output label
+    is 1; otherwise, it is 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code is more flexible than mapping a single class. By using eval ❶, we
+    can pass in a comma-separated string of all the CIFAR-10 labels we want to treat
+    as the target class. For example, to use this code to make labels for the animal
+    versus vehicle example of the previous section, we’d make the first argument 2,3,4,5,6,7.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once we have new labels for each of the 10 classes, we can use them to train
+    10 models. All we need do is change num_classes to 2 and load each of the respective
+    reassigned label files for y_train and y_test. At the bottom of the file, we need
+    to change the call to model.save to store the per class models as well. We’ll
+    assume the models are in files named *cifar10_cnn_<X>_model.h5* where *<X>* is
+    a digit, 0–9, representing a CIFAR-10 class label. Our multiclass model is the
+    shallow architecture trained on the full CIFAR-10 dataset for 12 epochs (*cifar10_cnn_model.h5*).
+    To train the binary models, use the train_single_models script. This script calls
+    *cifar10_cnn_arbitrary.py* to train a model using a specified binary dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To test the models, we need to first load them all from disk along with the
+    test set data. Then we need to run all the data through the multiclass model and
+    each of the individual class models keeping the predictions. From the predictions,
+    we can assign class labels and build confusion matrices to see how well each approach
+    does. First, let’s load the test set and the models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("cifar10_test_images.npy")/255.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("cifar10_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: mm = load_model("cifar10_cnn_model.h5")
+  prefs: []
+  type: TYPE_NORMAL
+- en: m = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(10):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: m.append(load_model("cifar10_cnn_%d_model.h5" % i))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice that we are scaling the test set by 255, as we did with the training
+    data. We’ll keep the multiclass model in mm and load the 10 single class models
+    into the list, m.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we apply the models to each test set sample:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: mp = np.argmax(mm.predict(x_test), axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = np.zeros((10,10000), dtype="float32")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(10):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: p[i,:] = m[i].predict(x_test)[:,1]
+  prefs: []
+  type: TYPE_NORMAL
+- en: bp = np.argmax(p, axis=0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calling predict with the 10,000 test samples returns a 10,000 × 10 matrix for
+    the multiclass model or 10,000 × 2 for the individual models. Each row corresponds
+    to a test sample, and each column is the model’s output for each class. For the
+    multiclass case, we set mp to the maximum value across the columns (axis=1) to
+    get a vector of 10,000 values, each of which is the predicted class label.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We loop over the individual models and call predict, keeping only the class
+    1 probabilities. These are placed into p, where the rows are the individual model
+    outputs for that class label, and the columns are the specific class 1 prediction
+    probabilities for each of the 10,000 test samples. If we return the maximum value
+    across the rows by using argmax and axis=0, we’ll get the class label of the model
+    that had the highest predicted probability for each test sample. This is what
+    is in bp.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With our predictions in hand, we can generate the confusion matrices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cm = np.zeros((10,10), dtype="uint16")
+  prefs: []
+  type: TYPE_NORMAL
+- en: cb = np.zeros((10,10), dtype="uint16")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(10000):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cm[y_test[i],mp[i]] += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: cb[y_test[i],bp[i]] += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_multiclass_conf_mat.npy", cm)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_binary_conf_mat.npy", cb)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here rows represent the true class label, and columns represent the model’s
+    predicted label. We also store the confusion matrices for future use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can display the confusion matrices with the code in [Listing 14-9](ch14.xhtml#ch14lis9):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("One-vs-rest confusion matrix (rows true, cols predicted):")
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("%s" % np.array2string(100*(cb/1000.0), precision=1))
+  prefs: []
+  type: TYPE_NORMAL
+- en: print()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("Multiclass confusion matrix:")
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("%s"  % np.array2string(100*(cm/1000.0), precision=1))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-9: Displaying the confusion matrices. See* cifar10_one_vs_many.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We divide the counts in cb and cm by 1,000 because each class is represented
+    by that many samples in the test set. This converts the confusion matrix entries
+    to a fraction and then a percent when multiplied by 100.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So, how did we do? The multiple one-vs-rest classifiers produced
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | **75.0** | 2.8 | 3.4 | 2.1 | 1.7 | 0.4 | 2.3 | 0.2 | 4.1 | 8.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 0.8 | **84.0** | 0.2 | 0.9 | 0.3 | 0.3 | 1.1 | 0.0 | 1.2 | 11.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 6.5 | 1.6 | **54.0** | 6.3 | 9.5 | 5.3 | 9.1 | 2.3 | 0.8 | 4.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 1.6 | 3.6 | 3.8 | **52.1** | 7.1 | 12.9 | 10.6 | 2.2 | 0.9 | 5.2
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 1.8 | 0.8 | 3.6 | 6.5 | **67.6** | 2.3 | 8.6 | 5.3 | 1.3 | 2.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 1.4 | 1.4 | 3.5 | 16.9 | 4.7 | **61.8** | 4.0 | 2.6 | 0.5 | 3.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 0.8 | 0.7 | 1.4 | 3.4 | 2.8 | 1.0 | **86.4** | 0.2 | 0.3 | 3.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 1.5 | 1.3 | 1.7 | 4.9 | 5.2 | 5.2 | 1.5 | **71.5** | 0.1 | 7.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 5.3 | 4.4 | 0.1 | 1.1 | 0.5 | 0.6 | 1.1 | 0.5 | **79.1** | 7.3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 1.7 | 4.0 | 0.2 | 0.8 | 0.1 | 0.4 | 0.5 | 0.3 | 0.8 | **91.2** |'
+  prefs: []
+  type: TYPE_TB
+- en: And the multiclass classifier came up with
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | **70.2** | 1.6 | 6.0 | 2.6 | 3.3 | 0.5 | 1.8 | 0.9 | 9.8 | 3.3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 2.0 | **79.4** | 1.0 | 1.3 | 0.5 | 0.5 | 1.3 | 0.4 | 2.8 | 10.8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 5.2 | 0.6 | **56.2** | 6.6 | 13.5 | 6.1 | 7.3 | 2.6 | 1.4 | 0.5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 1.2 | 1.1 | 7.2 | **57.7** | 10.2 | 11.5 | 7.3 | 1.7 | 1.2 | 0.9
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 1.9 | 0.2 | 5.2 | 4.6 | **77.4** | 1.6 | 4.8 | 2.7 | 1.5 | 0.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 1.0 | 0.2 | 6.4 | 20.7 | 7.7 | **56.8** | 2.7 | 3.5 | 0.8 | 0.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 0.3 | 0.1 | 4.5 | 5.2 | 5.7 | 1.5 | **82.4** | 0.0 | 0.0 | 0.3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 1.4 | 0.2 | 4.0 | 6.3 | 10.1 | 4.1 | 0.9 | **71.7** | 0.1 | 1.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 4.7 | 3.0 | 0.8 | 2.0 | 1.3 | 0.6 | 1.0 | 0.6 | **82.6** | 3.4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 2.4 | 6.1 | 0.7 | 2.6 | 1.2 | 0.7 | 1.2 | 1.6 | 3.2 | **80.3** |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The diagonals are the correct class assignments. Ideally, the matrix would
+    be only diagonal elements. All other elements are mistakes, cases where the model
+    or models chose the wrong label. Since each class is equally represented in the
+    test set, we can calculate an overall accuracy for both models by using the unweighted
+    average of the diagonals. If we do this, we get the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'one-vs-rest: 72.3%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'multiclass: 71.5%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The one-vs-rest classifiers have the slight edge in this case, though the difference
+    is less than 1 percent. Of course, we needed to do 10 times the work to get the
+    one-vs-rest confusion matrix—ten classifiers were used instead of just one. The
+    multiclass model was about 10 percent better on class 4 (deer) than the one-vs-rest
+    models, but it was approximately 11 percent worse on class 9 (trucks). These are
+    the two most substantial per class differences in accuracy. The multiclass model
+    is confusing trucks with class 8, ships (3.2 percent), and class 1, cars (6.1
+    percent), more often than the one-vs-rest models. We can see how this might happen.
+    Trucks and cars have wheels, and trucks and ships are (especially at the low resolution
+    of CIFAR-10) both box-like.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Did we arrive at a definitive answer regarding one-vs-rest or multiclass models?
+    No, nor could we in general. However, we did, objectively, get slightly better
+    performance by using the multiple models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One argument given against using multiple models, besides the extra computation
+    necessary, is that using a single model for multiple classes provides the model
+    with the opportunity to see examples that are similar to a particular class but
+    are not instances of that class. These hard negatives serve to regularize the
+    model by forcing it to (indirectly) pay attention to features that are dissimilar
+    between classes instead of features that might be strongly associated with a class
+    but are also present in other classes. We first encountered hard negatives in
+    [Chapter 4](ch04.xhtml#ch04).
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, in this case, it’s difficult to say that the argument holds. For the
+    multiclass model, class 9 (trucks) was more likely to be confused with class 1
+    (car, 6.1 percent) than one-vs-rest models (4.0 percent). One possible explanation
+    might be that the multiclass model was forced, with limited training data, to
+    try to learn the difference between trucks, cars, and other vehicles, while the
+    one-vs-rest models were, individually, trying to learn only the difference between
+    a truck and any other vehicle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Transfer Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We’ll use the term *transfer learning* to refer to taking a pretrained deep
+    network and using it to produce new features for another machine learning model.
+    Our transfer learning example will be a toy model meant to show the process, but
+    many models have been built using features generated by large pretrained networks
+    that used huge datasets. In particular, many models have been built using features
+    generated by AlexNet and the various ResNet architectures, which were pretrained
+    on the ImageNet dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ll use the pretrained model to turn input images into output feature vectors,
+    which we’ll then use to train classical machine learning models. When a model
+    is used to turn an input into another feature representation, typically a new
+    feature vector, the output is often called an *embedding*: we are using the pretrained
+    network to embed the inputs we want to classify into another space—one that we
+    hope will let us build a useful model. We can use transfer learning when the model
+    we want to develop has too few training examples to make a good model on its own.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When using transfer learning, it is helpful to know or believe that both models
+    were trained using similar data. If you read the literature, you’ll find that
+    this is true for many of the typical transfer learning examples. The inputs are
+    natural images of some class, and the embedding models were trained on natural
+    images. By natural image, I mean a photograph of something in the world as opposed
+    to an x-ray or other medical image. Clearly, the CIFAR-10 images and the MNIST
+    images are quite different from each other, so we shouldn’t hope for too much
+    success with transfer learning. We’re using what we have on hand to demonstrate
+    the technique.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll use a shallow CIFAR-10 model like the ones we just saw to generate the
+    embedding vectors. This model was trained on the full CIFAR-10 dataset for 12
+    epochs. We’ll embed the MNIST dataset by passing the MNIST digit images through
+    the pretrained model, keeping the output of the Dense layer, the 128-node vectors
+    used to generate the 10-class softmax predictions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We need to consider a few things before making the embedding. First, the CIFAR-10
+    model was trained on 32 × 32 RGB images. Therefore, we need to make the MNIST
+    digit images fit this input expectation. Second, even though there are 10 classes
+    for both CIFAR-10 and MNIST, this is only a coincidence; in practice, the number
+    of classes between the two datasets do not need to match.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How should we get the 28 × 28 MNIST images into a model that’s expecting 32
+    × 32 RGB images? Typically, when working with image data and transfer learning,
+    we’ll resize the images to make them fit. Here, since the MNIST digits are smaller
+    than the CIFAR-10 images, we can center the 28 × 28 digit image in the middle
+    of a 32 × 32 input. Moreover, we can turn a grayscale image into an RGB image
+    by setting each channel (red, green, and blue) to the single grayscale input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The code for all of the following is in *transfer_learning.py*. Setting up
+    the embedding process looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.models import load_model
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras import backend as K
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.datasets import mnist
+  prefs: []
+  type: TYPE_NORMAL
+- en: (x_train, y_train), (x_test, y_test) = mnist.load_data()
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = x_train/255.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = x_test/255.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: model = load_model("cifar10_cnn_model.h5")
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first load the modules we need from Keras. Then we load the Keras model file,
+    *cifar10_cnn_model.h5*, which contains a shallow model from the first section
+    of this chapter trained for 12 epochs on the full CIFAR-10 dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once we have the data loaded and scaled, we can pass each MNIST train and test
+    image through the Keras model and extract the 128-node vector from the Dense layer.
+    This turns each MNIST image into a 128-element vector; see [Listing 14-10](ch14.xhtml#ch14lis10).
+  prefs: []
+  type: TYPE_NORMAL
+- en: train = np.zeros((60000,128))
+  prefs: []
+  type: TYPE_NORMAL
+- en: k = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(600):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: t = np.zeros((100,32,32,3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ t[:,2:30,2:30,0] = x_train[k:(k+100)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[:,2:30,2:30,1] = x_train[k:(k+100)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[:,2:30,2:30,2] = x_train[k:(k+100)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: _ = model.predict(t)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ out = [model.layers[5].output]
+  prefs: []
+  type: TYPE_NORMAL
+- en: func = K.function([model.input, K.learning_phase()], out)
+  prefs: []
+  type: TYPE_NORMAL
+- en: (*\newpage*)
+  prefs: []
+  type: TYPE_NORMAL
+- en: train[k:(k+100),:] = func([t, 1.])[0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: k += 100
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("mnist_train_embedded.npy", train)
+  prefs: []
+  type: TYPE_NORMAL
+- en: test = np.zeros((10000,128))
+  prefs: []
+  type: TYPE_NORMAL
+- en: k = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(100):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: t = np.zeros((100,32,32,3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[:,2:30,2:30,0] = x_test[k:(k+100)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[:,2:30,2:30,1] = x_test[k:(k+100)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[:,2:30,2:30,2] = x_test[k:(k+100)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: _ = model.predict(t)
+  prefs: []
+  type: TYPE_NORMAL
+- en: out = [model.layers[5].output]
+  prefs: []
+  type: TYPE_NORMAL
+- en: func = K.function([model.input, K.learning_phase()], out)
+  prefs: []
+  type: TYPE_NORMAL
+- en: test[k:(k+100),:] = func([t, 1.])[0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: k += 100
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("mnist_test_embedded.npy", test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-10: Running the MNIST images through the pretrained CIFAR-10 model*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are 60,000 MNIST training images. We pass each through the Keras model
+    in blocks of 100 to be more efficient than processing each image individually;
+    this means we need to process 600 sets of 100\. We do the same for the test images,
+    of which there are 10,000, so we process 100 sets of 100\. We’ll store the output
+    vectors in train and test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The processing loop for both the train and test images first creates a temporary
+    array, t, to hold the current set of 100 images. To use the Keras model predict
+    method, we need a four-dimensional input: the number of images, height, width,
+    and number of channels. We load t by copying the current set of 100 train or test
+    images, indexed by k, to t; we do that three times, once for each channel ❶. With
+    t loaded, we call the predict method of the model. We throw the output away, since
+    we’re after the values output by the Dense layer of the Keras model. This is layer
+    5 for the shallow architecture ❷. The output of func is the 100 output vectors
+    of the Dense layer we get after passing the inputs through the network. We assign
+    these to the current block of 100 in train and move to the next set of 100\. When
+    we’ve processed the entire MNIST dataset, we keep the embedded vectors in a NumPy
+    file. Then we repeat every step we used to process the training set for the test
+    set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: At this point, we have our embedded vectors, so it’s natural to ask whether
+    or not the embedding is helping separate the classes. We can see if this is true
+    by using a t-SNE plot of the vectors by class label ([Figure 14-4](ch14.xhtml#ch14fig4)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/14fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 14-4: t-SNE plot showing the separation by class for the embedded MNIST
+    digit vectors*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compare this figure with [Figure 12-10](ch12.xhtml#ch12fig10), which shows the
+    separation for a model trained explicitly on MNIST digits. That model shows a
+    clear, unambiguous separation of the classes, but [Figure 14-4](ch14.xhtml#ch14fig4)
+    is far less clear. However, even though there is overlap, there are concentrations
+    of the classes in different parts of the plot, so we have some reason to hope
+    that a model might be able to learn how to classify digits using these vectors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s train some models using the embedded vectors. For this, we’ll head back
+    into the world of classical machine learning. We’ll train some of the models we
+    trained in [Chapter 7](ch07.xhtml#ch07) by using the vector form of the MNIST
+    digits images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code to train and test the models is straightforward. We’ll train a Nearest
+    Centroid, 3-Nearest Neighbor, Random Forest with 50 trees, and a linear SVM with
+    *C* = 0.1, as shown in [Listing 14-11](ch14.xhtml#ch14lis11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.neighbors import KNeighborsClassifier
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.ensemble import RandomForestClassifier
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.neighbors import NearestCentroid
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.svm import LinearSVC
+  prefs: []
+  type: TYPE_NORMAL
+- en: clf0 = NearestCentroid()
+  prefs: []
+  type: TYPE_NORMAL
+- en: clf0.fit(train, y_train)
+  prefs: []
+  type: TYPE_NORMAL
+- en: nscore = clf0.score(test, y_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: clf1 = KNeighborsClassifier(n_neighbors=3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: clf1.fit(train, y_train)
+  prefs: []
+  type: TYPE_NORMAL
+- en: kscore = clf1.score(test, y_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: clf2 = RandomForestClassifier(n_estimators=50)
+  prefs: []
+  type: TYPE_NORMAL
+- en: clf2.fit(train, y_train)
+  prefs: []
+  type: TYPE_NORMAL
+- en: rscore = clf2.score(test, y_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: clf3 = LinearSVC(C=0.1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: clf3.fit(train, y_train)
+  prefs: []
+  type: TYPE_NORMAL
+- en: sscore = clf3.score(test, y_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Nearest Centroid    : %0.2f" % nscore)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("3-NN                : %0.2f" % kscore)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Random Forest       : %0.2f" % rscore)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("SVM                 : %0.2f" % sscore)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-11: Training classical models using the MNIST embedded vectors*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We load the relevant sklearn modules, create the specific model instances, and
+    call fit, passing in the 128-element training vectors and the associated class
+    labels. The score method returns the overall accuracy of the now trained model
+    on the test set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running this code gives us scores of
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Model** | **Score** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Nearest Centroid | 0.6799 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3-Nearest Neighbors | 0.9010 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Random Forest (50) | 0.8837 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SVM (C=0.1) | 0.8983 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'which we can compare to the scaled scores for same models in [Table 7-10](ch07.xhtml#ch7tab10):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Model** | **Score** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Nearest Centroid | 0.8203 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3-Nearest Neighbors | 0.9705 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Random Forest (50) | 0.9661 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SVM (C =0.1) | 0.9181 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Clearly, in this case, our embedding is not giving us a head start over the
+    raw data. We should not be surprised by this: we knew our two datasets were fairly
+    distinct, and the t-SNE plot showed that the pretrained CIFAR-10 model was not
+    ideally suited to separating the MNIST images in the embedding space. The poor
+    separation of the classes in [Figure 14-4](ch14.xhtml#ch14fig4) explains the poor
+    performance of the Nearest Centroid model: 68 percent accuracy versus 82 percent
+    when trained on the digit images themselves. Moreover, by their very nature, digit
+    images are already distinct from each other, especially on a uniform background,
+    since the digits were intended by humans to be easily distinguished by sight.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A bit of code gives us the confusion matrix for any of these models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def conf_mat(clf,x,y):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = clf.predict(x)
+  prefs: []
+  type: TYPE_NORMAL
+- en: c = np.zeros((10,10))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(p.shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: c[y[i],p[i]] += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: return c
+  prefs: []
+  type: TYPE_NORMAL
+- en: cs = conf_mat(clf, test, y_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: cs = 100.0*cs / cs.sum(axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.set_printoptions(suppress=True)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(np.array2string(cs, precision=1, floatmode="fixed"))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here clf is any of the models, test is the embedded test set, and y_test is
+    the labels. We return the confusion matrix with counts in each element, so we
+    divide by the sum of the rows, since the row represents the true label, and multiply
+    by 100 to get percents. Then we print the array using NumPy commands to get a
+    single digit of accuracy and no scientific notation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We know already why the Nearest Centroid result is so poor. What about the
+    Random Forest and SVM? The confusion matrix for the Random Forest model is shown
+    here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | 96.7 | 0.0 | 0.5 | 0.5 | 0.4 | 0.2 | 0.9 | 0.0 | 0.4 | 0.3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 0.0 | 98.6 | 0.5 | 0.0 | 0.4 | 0.1 | 0.4 | 0.0 | 0.1 | 0.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 1.8 | 0.2 | 87.0 | 2.5 | 1.0 | 1.0 | 1.7 | 0.8 | 4.1 | 0.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 1.1 | 0.1 | 2.5 | **80.8** | 0.2 | **6.7** | 0.9 | 1.1 | **6.0**
+    | 1.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 0.3 | 0.4 | 1.3 | 0.0 | 88.3 | 0.1 | 1.9 | 1.7 | 0.6 | 5.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 0.6 | 0.8 | 0.7 | **9.8** | 1.6 | **78.8** | **1.8** | 1.1 | 1.6
+    | 0.8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 3.0 | 0.4 | 0.6 | 0.0 | 0.7 | 1.0 | 93.5 | 0.2 | 0.4 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 0.2 | 1.0 | 2.9 | 0.1 | 2.7 | 0.4 | 0.0 | 87.7 | 0.7 | 4.4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 1.4 | 0.1 | 2.7 | 5.0 | 1.5 | 1.6 | 0.6 | 0.8 | 84.0 | 2.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 2.2 | 0.2 | 1.3 | 1.6 | 2.9 | 0.6 | 0.3 | 3.4 | 1.5 | 86.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: We’ve highlighted the two lowest-performing classes, 3 and 5, along with the
+    two digits they are most often confused with. We see that the model is confusing
+    3’s with 5’s and 8’s. The SVM confusion matrix shows the same effect. If we take
+    [Figure 14-4](ch14.xhtml#ch14fig4) and show only classes 3, 5, and 8, then we
+    get [Figure 14-5](ch14.xhtml#ch14fig5). Considerable mixing between the classes
+    is plain to see.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/14fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 14-5: t-SNE plot showing class 3 (plus), class 5 (cross), and class
+    8 (triangle right)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The purpose of this section was to introduce the idea of transfer learning through
+    an example that used the datasets we had on hand. As you can see, this experiment
+    was not a success. The datasets we used were very different from each other, so
+    we might have expected this to be the case, but it was useful to verify for ourselves.
+    In the next section, we’ll see how we can go one step beyond transfer learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fine-Tuning a Model
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the previous section, we defined transfer learning as using weights from
+    a model trained on one dataset with data from a (hopefully very similar) dataset.
+    We used the weights to map the inputs to a new space and trained models on the
+    mapped data. In this section, we’ll do something similar, but instead of leaving
+    the weights as they are, we’ll let the weights vary while we continue training
+    the model with a new, smaller dataset. We are calling this *fine-tuning*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In fine-tuning, we are training a neural network, but instead of initializing
+    the weights to random values, selected according to an intelligent initialization
+    scheme, we start with the weights from a model trained on a similar but different
+    dataset. We might use fine-tuning when we do not have a lot of training data,
+    but we believe our data comes from a distribution that’s very similar to one for
+    which we have either a lot of data or a trained model. For example, we might have
+    access to the weights of a large model trained with a large dataset, like the
+    ImageNet dataset we’ve mentioned previously. It is quite simple to download such
+    a pretrained model. Additionally, we might have a small dataset of images for
+    classes that are not in ImageNet; say, photographs of guppies, angelfish, and
+    tetras. These are popular freshwater aquarium fish not in ImageNet. We can start
+    with a larger model pretrained on ImageNet and fine-tune using the smaller fish
+    dataset. That way, we can take advantage of the fact that the model is already
+    well adapted to inputs of this kind and, hopefully, get a good model with a small
+    dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our experiment will use CIFAR-10\. Our goal is to train a model to differentiate
+    between images of dogs and cats using the deep architecture from the first section
+    of this chapter. However, our dataset is small; we have approximately 500 images
+    of each class to work with. We also have a larger dataset, all the vehicles from
+    CIFAR-10.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Therefore, we’ll train the following models with this data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The shallow architecture using the small dog and cat dataset.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The deep architecture using the small dog and cat dataset.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The deep architecture pretrained on the vehicle data and fine-tuned on the small
+    dog and cat dataset.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: For the last case, we’ll train several variations using different combinations
+    of frozen weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building Our Datasets
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Before we get to fine-tuning, we need to build our datasets. We’ll use unaugmented
+    CIFAR-10 to construct the small dog and cat dataset. We’ll use *augmented* CIFAR-10
+    to construct the vehicle dataset. We augmented CIFAR-10 in [Chapter 5](ch05.xhtml#ch05).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building the small dog and cat dataset is straightforward, as shown in [Listing
+    14-12](ch14.xhtml#ch14lis12).
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = np.load("cifar10_train_images.npy")[:,2:30,2:30,:]
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("cifar10_train_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("cifar10_test_images.npy")[:,2:30,2:30,:]
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("cifar10_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: xtrn = []; ytrn = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: xtst = []; ytst = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(y_train.shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (y_train[i]==3):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: xtrn.append(x_train[i])
+  prefs: []
+  type: TYPE_NORMAL
+- en: ytrn.append(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (y_train[i]==5):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: xtrn.append(x_train[i])
+  prefs: []
+  type: TYPE_NORMAL
+- en: ytrn.append(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(y_test.shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (y_test[i]==3):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: xtst.append(x_test[i])
+  prefs: []
+  type: TYPE_NORMAL
+- en: ytst.append(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (y_test[i]==5):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: xtst.append(x_test[i])
+  prefs: []
+  type: TYPE_NORMAL
+- en: ytst.append(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_train_cat_dog_small_images.npy", np.array(xtrn)[:1000])
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_train_cat_dog_small_labels.npy", np.array(ytrn)[:1000])
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_test_cat_dog_small_images.npy", np.array(xtst)[:1000])
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_test_cat_dog_small_labels.npy", np.array(ytst)[:1000])
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-12: Building the small dog and cat dataset*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We load the full CIFAR-10 data, train and test, and then loop over each sample.
+    If the class is 3, cat, or 5, dog, we add the image and label to our lists, making
+    sure to recode the class label so that 0 is cat and 1 is dog. When all the samples
+    have been added, we keep the first 1,000 and write them to disk to be our small
+    dog and cat training and test sets. Keeping the first 1,000 samples gives us a
+    dataset that is close to split 50/50 between classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice that immediately after loading the CIFAR-10 images, we subscript them
+    with [:,2:30,2:30,:]. Recall, the augmented version of the dataset includes small
+    shifts of the image, so when we built it in [Chapter 5](ch05.xhtml#ch05), we reduced
+    the size from 32 × 32 to 28 × 8\. Therefore, when we build our vehicle dataset,
+    we’ll be working with images that are 28×28 pixels. The subscript extracts the
+    center 28 × 28 region of each image. The first dimension is the number of images
+    in the train or test set. The last dimension is the number of channels—three since
+    these are RGB images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building the vehicle dataset is equally straightforward ([Listing 14-13](ch14.xhtml#ch14lis13)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = np.load("cifar10_aug_train_images.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("cifar10_aug_train_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("cifar10_aug_test_images.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("cifar10_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: vehicles= [0,1,8,9]
+  prefs: []
+  type: TYPE_NORMAL
+- en: xv_train = []; xv_test = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: yv_train = []; yv_test = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(y_train.shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (y_train[i] in vehicles):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: xv_train.append(x_train[i])
+  prefs: []
+  type: TYPE_NORMAL
+- en: yv_train.append(vehicles.index(y_train[i]))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(y_test.shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (y_test[i] in vehicles):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: xv_test.append(x_test[i])
+  prefs: []
+  type: TYPE_NORMAL
+- en: yv_test.append(vehicles.index(y_test[i]))
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_train_vehicles_images.npy", np.array(xv_train))
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_train_vehicles_labels.npy", np.array(yv_train))
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_test_vehicles_images.npy", np.array(xv_test))
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("cifar10_test_vehicles_labels.npy", np.array(yv_test))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-13: Building the vehicle dataset*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here we work with the augmented versions. The augmented test set is 28×28 pixels
+    per image using the central region of the original test set. Also, as we loop
+    through the train and test sets looking for samples that are in one of the vehicle
+    classes, we can do our recoding of the class label by asking for the index into
+    the vehicles list of the element matching the current sample’s class label, hence
+    using index on vehicles. The vehicle dataset has 200,000 samples in the training
+    set, 50,000 from each of the four classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To proceed then, we need to (1) train the deep model on the vehicle dataset;
+    (2) adapt the model to the dog and cat dataset; and (3) train the deep model initialized
+    with the weights from the vehicle model. We’ll also train the shallow and deep
+    models from scratch, using the dog and cat dataset for comparison purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We gave the code for the deep model in the first section of this chapter so
+    we won’t reproduce it here. In particular, see [Listing 14-3](ch14.xhtml#ch14lis3).
+    The code itself is in the file *cifar10_cnn_vehicles.py*. The relevant changes
+    for the vehicle model are shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size = 64
+  prefs: []
+  type: TYPE_NORMAL
+- en: num_classes = 4
+  prefs: []
+  type: TYPE_NORMAL
+- en: epochs = 12
+  prefs: []
+  type: TYPE_NORMAL
+- en: img_rows, img_cols = 28,28
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = np.load("cifar10_train_vehicles_images.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("cifar10_train_vehicles_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("cifar10_test_vehicles_images.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("cifar10_test_vehicles_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: We use a minibatch size of 64\. There are four classes (airplane, automobile,
+    ship, truck), and we’ll train for 12 epochs. When we’re done training, we’ll store
+    the model in *cifar10_cnn_vehicles_model.h5* so we can use its weights and biases
+    for fine-tuning the dog and cat model. Training this model takes several hours
+    on our CPU system. The final test accuracy is 88.2 percent, so it is performing
+    well enough for our purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adapting Our Model for Fine-Tuning
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now we need to adapt the vehicle model for the dog and cat dataset and fine-tuning.
+    Specifically, we need to replace the top softmax layer that expects four classes
+    with one that expects two. We also need to decide which layer’s weights we’ll
+    freeze and which we’ll update during training. This step is essential, and we’ll
+    see how our choices affect the fine-tuning results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When fine-tuning, it’s standard practice to freeze lower-level weights; they
+    are not updated at all when training. The idea here is that if our new data is
+    similar to the data used for the pretraining step, the lower levels of the model
+    are already adapted, and we should not change them. We allow only the higher-level
+    layers to change as these are the ones that need to learn about the representation
+    of the new data. Which layers we freeze and which we allow to train depends on
+    the size of the model and the data itself. Experimentation is required. Note that
+    the transfer learning of the previous section can be considered fine-tuning with
+    all the weights frozen.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that if we’re using SGD with fine-tuning, we typically reduce the learning
+    rate by a factor of, say, 10\. The rationale is the same as for freezing the lower-level
+    weights: the model is already “close” to a desired minimum of the error function,
+    so we don’t need big steps to find it. Our experiment will use Adadelta, which
+    will adjust the learning rate step size for us.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The deep model has multiple convolutional layers. We’ll experiment with freezing
+    the first two; these are the lowest and are most likely already tuned to the low-level
+    features of the CIFAR-10 dataset, at least the vehicles. Of course, since our
+    dog and cat images come from CIFAR-10 as well, we know that they are from the
+    same parent distribution or domain as the vehicle images. We’ll also experiment
+    with a model that freezes all the convolutional layers and allows only the dense
+    layers to be adapted during training. Doing this is reminiscent of transfer learning,
+    though we’ll allow the dense layers to update their weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s create the code for fine-tuning by using the vehicle model that we trained
+    earlier ([Listing 14-14](ch14.xhtml#ch14lis14)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import keras
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.models import load_model
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.layers import Dense
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras import backend as K
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size = 64
+  prefs: []
+  type: TYPE_NORMAL
+- en: num_classes = 2
+  prefs: []
+  type: TYPE_NORMAL
+- en: epochs = 36
+  prefs: []
+  type: TYPE_NORMAL
+- en: img_rows, img_cols = 28,28
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = np.load("cifar10_train_cat_dog_small_images.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("cifar10_train_cat_dog_small_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("cifar10_test_cat_dog_small_images.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("cifar10_test_cat_dog_small_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if K.image_data_format() == ''channels_first'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = x_train.reshape(x_train.shape[0], 3, img_rows, img_cols)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = x_test.reshape(x_test.shape[0], 3, img_rows, img_cols)
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape = (3, img_rows, img_cols)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape = (img_rows, img_cols, 3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = x_train.astype('float32')
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = x_test.astype('float32')
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train /= 255
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test /= 255
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = keras.utils.to_categorical(y_train, num_classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = keras.utils.to_categorical(y_test, num_classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-14: Fine-tuning the vehicle model. See* cifar10_cnn_cat_dog_fine_tune_3.py.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These lines should be familiar by now. First we load and preprocess the small
+    dog and cat dataset. Note that we are using a minibatch size of 64, two classes
+    (0 = cat, 1 = dog), and 36 epochs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we need to load the vehicle model, strip off its top layer, and replace
+    it with a two-class softmax ([Listing 14-15](ch14.xhtml#ch14lis15)). This is also
+    where we will freeze some combination of the first two convolutional layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: model = load_model("cifar10_cnn_vehicles_model.h5")
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ model.layers.pop()
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ model.outputs = [model.layers[-1].output]
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.layers[-1].outbound_nodes = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ model.add(Dense(num_classes, name="softmax", activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ model.layers[0].trainable = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.layers[1].trainable = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.compile(loss=keras.losses.categorical_crossentropy,
+  prefs: []
+  type: TYPE_NORMAL
+- en: optimizer=keras.optimizers.Adadelta(),
+  prefs: []
+  type: TYPE_NORMAL
+- en: metrics=['accuracy'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-15: Adjusting the vehicle model for dogs and cats*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After we load the model, we use Keras to remove the top layer ❶. We need to
+    patch the model to make the next-to-top layer look like the top layer; this allows
+    the add method to work correctly ❷. Then, we add a new softmax layer for two classes
+    ❸. This example is set to freeze the weights of the first two convolutional layers
+    ❹. We’ll test each possible combination involving the first two convolutional
+    layers. Finally, we compile the updated model and specify the Adadelta optimizer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We train the model by calling the fit method, as before as shown in [Listing
+    14-16](ch14.xhtml#ch14lis16).
+  prefs: []
+  type: TYPE_NORMAL
+- en: score = model.evaluate(x_test[100:], y_test[100:], verbose=0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Initial test loss:', score[0])
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Initial test accuracy:', score[1])
+  prefs: []
+  type: TYPE_NORMAL
+- en: history = model.fit(x_train, y_train,
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size=batch_size,
+  prefs: []
+  type: TYPE_NORMAL
+- en: epochs=epochs,
+  prefs: []
+  type: TYPE_NORMAL
+- en: verbose=0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: validation_data=(x_test[:100], y_test[:100]))
+  prefs: []
+  type: TYPE_NORMAL
+- en: score = model.evaluate(x_test[100:], y_test[100:], verbose=0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Test loss:', score[0])
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Test accuracy:', score[1])
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.save("cifar10_cnn_cat_dog_fine_tune_3_model.h5")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-16: Training and testing the dog and cat model*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We are calling evaluate using the last 90 percent of the test data, *before*
+    calling fit. This will give us an indication of how well the dog and cat model
+    does when using the vehicle weights as they are. Then we call fit and evaluate
+    a second time. Finally, we save the model and the training history. This model
+    froze both of the first two convolutional layers. Other models will freeze or
+    unfreeze these layers for the remaining three possibilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We mentioned earlier that we’d also train a model by freezing all of the convolutional
+    layers. In essence, this is saying that we want to preserve whatever new representation
+    the vehicle model learned and apply it directly to the dog and cat model , allowing
+    only the top fully connected layers to adjust themselves. This is almost the same
+    as the transfer learning approach of the previous section. To freeze all the convolutional
+    layers, we replace the direct assignments to specific layers’ trainable property
+    with a loop over all the layers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(5):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.layers[i].trainable = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: Testing Our Model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s run the fine-tuning tests. We’ll train each possible combination six times
+    so we can get statistics on the mean accuracies. This accounts for the stochastic
+    nature of the initialization process. Although we initialized the model with pretrained
+    weights, we added a new top softmax layer with two outputs. The output of the
+    dense layer below it has 128 nodes, so each model needs to randomly initialize
+    128 × 2 + 2 = 258 weights and biases for the new layer. This is the source of
+    the difference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Without training, the initial model accuracy hovers around 50 to 51 percent,
+    with each model slightly different because of the initialization we just mentioned.
+    This is a two-class model, so this means that without any training, it is randomly
+    guessing between dog and cat.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After we have trained all of the models and tallied all of the per model accuracies,
+    we get [Table 14-2](ch14.xhtml#ch14tab2), where we present accuracy as mean ±
+    standard error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 14-2:** Dog and Cat Test Set Accuracies for the Shallow, Deep, and
+    Fine-Tuned Deep Models'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Model** | **Freeze Conv0** | **Freeze Conv1** | **Accuracy (%)** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Shallow | – | – | 64.375 ± 0.388 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Deep | – | – | 61.142 ± 0.509 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Fine-tune 0 | False | False | 62.683 ± 3.689 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Fine-tune 1 | True | False | 69.142 ± 0.934 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Fine-tune 2 | False | True | 68.842 ± 0.715 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Fine-tune 3 | True | True | 70.050 ± 0.297 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Freeze all | – | – | 57.042 ± 0.518 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'What to make of these results? First, we see that training the deep architecture
+    from scratch with the small dog and cat dataset is not particularly effective:
+    only about 61 percent accurate. Training the shallow architecture from scratch
+    does better, with an accuracy of around 64 percent. These are our baselines. Will
+    fine-tuning a model trained on different data help? From looking at the fine-tune
+    results, the answer is “yes,” but clearly, not all the fine-tuning options are
+    equally effective: two are even worse than the best from-scratch result (“Fine-tune
+    0” and “Freeze all”). So, we do not want to freeze all the convolutional layers,
+    nor do we want to be free to update all of them.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This leaves fine-tune models 1, 2, and 3 to consider. The “Fine-tune 3” model
+    performed best, though the differences between these models are not statistically
+    significant. Let’s go with freezing the first two convolutional layers, then.
+    What might be happening to make this approach better than the other models? By
+    freezing these lowest layers, we are fixing them and preventing them from being
+    changed by training. These layers were trained on a much larger vehicle dataset
+    that included standard augmentations like shifts and rotates. And, as we already
+    saw in [Figure 12-4](ch12.xhtml#ch12fig4), the kernels learned by these lower
+    layers are edge and texture detectors. They have been conditioned to learn about
+    the sorts of structures present in CIFAR-10 images, and, since our dog and cat
+    dataset is also from CIFAR-10, it is reasonable to believe that the same kernels
+    will be useful with those images as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, when we froze all the convolutional layers of the deep architecture,
+    we saw a significant decrease in performance. This implies that higher-level convolutional
+    layers are not well-adapted to the dog and cat structures, which, again, makes
+    perfect sense. Because of their effective receptive fields, higher layers are
+    learning about larger structures in the input images; these are also the larger
+    structures that distinguish dogs from cats. If we cannot modify these layers,
+    there is no opportunity for them to be conditioned on the very things that we
+    need them to learn.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This fine-tuning example shows the power of the technique when it is applicable.
+    However, like most things in machine learning, there is only intuition as to why
+    and when it’s successful. Recent work has shown that sometimes, fine-tuning a
+    large model trained on a dataset that is not very close to the intended dataset
+    can lead to performance that is no better than training a shallower model, provided
+    enough data is present. For example, see “Transfusion: Understanding Transfer
+    Learning for Medical Imaging” by Maithra Raghu et al. This paper uses transfer
+    learning/fine-tuning between pretrained ImageNet models and medical images and
+    shows that shallow models trained from scratch are often just as good.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This chapter explored convolutional neural networks applied to the CIFAR-10
+    dataset. We started by training two architectures, one shallow, the other deep,
+    on the full dataset. We then asked whether or not we can train a model to distinguish
+    between animals and vehicles. Next, we answered the question of whether or not
+    a single multiclass model or multiple binary models performed better for CIFAR-10\.
+    After this, we introduced two fundamental techniques, transfer learning and fine-tuning,
+    and showed how to implement them in Keras. These techniques should be understood
+    and in your deep learning bag of tricks going forward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we’ll present a case study with a dataset we have not yet
+    worked with. We’ll assume the role of data scientists tasked with making a model
+    for this dataset and work our way through, from initial data processing to model
+    exploration and final model construction.
+  prefs: []
+  type: TYPE_NORMAL

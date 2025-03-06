@@ -1,0 +1,844 @@
+- en: '9'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Recommendation Systems
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Every talented salesperson knows how to make intelligent, targeted recommendations
+    to customers, and as online retailers have grown in size and sophistication, they
+    have enthusiastically automated this sales tactic. But these recommendations are
+    hard to make. For this reason, many businesses create automated *recommendation
+    systems* that analyze data about products and customers to determine which customers
+    would be most receptive to which products.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we’ll go over recommendation systems in detail. We’ll start
+    with the simplest possible recommendation system: one that merely recommends the
+    most popular items to every customer. We’ll go on to discuss an important technique
+    called *collaborative filtering* that enables us to make unique, personalized
+    recommendations for each customer and each product. We’ll go over two types of
+    collaborative filtering: item based and user based. We’ll conclude with a case
+    study and advanced ideas related to recommendation systems.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Popularity-Based Recommendations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Before we write code for recommendation systems, we should consider how to make
+    recommendations in general. Imagine that you’re a salesperson and you want to
+    make recommendations to a customer who walks into your store. If you’re acquainted
+    with the customer, you could make recommendations based on your knowledge of the
+    customer’s tastes and situation. If a new customer walks into your store and you
+    want to make recommendations without knowing anything about the person, you could
+    observe what they’re browsing and make a recommendation based on that. But it’s
+    possible that you’ll be asked to make a recommendation before they’ve browsed
+    anything at all. The dilemma of needing to make intelligent recommendations without
+    any specific knowledge about the customer is referred to as the *cold-start problem*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One reasonable thing to do when faced with the cold-start problem is to recommend
+    the most popular items. Doing this is simple and easy. It doesn’t have the sophistication
+    of knowing everything about a customer and making a personalized recommendation,
+    but if something is popular with the general public, it’s reasonable to think
+    it could be appealing to your new customer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Online retailers have an analogous challenge: new visitors visit their websites,
+    and maybe those visitors don’t have browsing history or are unfamiliar to the
+    online retailers. The retailers want to make personalized recommendations based
+    on detailed knowledge about customers, but when they face the cold-start problem,
+    they have to fall back on something else like general popularity. The cold-start
+    problem is especially common for online retailers, since it’s easy for prospective
+    customers to view a website anonymously without giving any personal information
+    to the website or its sales team.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s think about the code that we would use to make a popularity-based recommendation.
+    For this, or any other recommendation system, having data related to transaction
+    history is helpful. We can download, read, and look at some fabricated transaction
+    history data as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we import the pandas package to do data wrangling. We read a *.csv* file
+    from the internet into the `interaction` variable, and we store it as a pandas
+    dataframe. We specify that the first column of the data should be the index (the
+    row name) and print the dataframe. The output we see at the end is shown in [Listing
+    9-1](#listing9-1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 9-1: An interaction matrix, showing the history of purchases for each
+    item'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 9-1](#listing9-1) shows a matrix representing the sales history of
+    a retailer that has five customers and five items for sale. Note we’re calling
+    the customers *users*, assuming that they’re users of the retailer’s website.
+    But whatever we call them, the recommendation techniques we use will be the same.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The matrix contains a `0` if a user did not purchase a particular item and a
+    `1` if a user did. For example, you can see that `user2` purchased `item3` but
+    not `item2`, and `user3` purchased `item2` but not `item3`. This type of 0/1 matrix
+    is a common format to encounter when we’re building recommendation systems. We
+    can call this matrix the *interaction matrix*; it represents information about
+    interactions between users and items. Since nearly every company has records related
+    to its items and their purchase histories, building recommendation systems based
+    on interaction matrices is an extremely common practice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Suppose that a new customer, whom we’ll call `user6`, walks into your store
+    (or visits your website). You face a cold start, since you know nothing about
+    `user6`. If you want to make recommendations for items that `user6` can purchase,
+    you could make a list of the most popular items, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here we create a copy of our interaction matrix called `interaction_withcounts`.
+    We’ll use this copy to find the most popular items by counting the number of users
+    who have ever purchased each item. Note that our matrix doesn’t record whether
+    a user purchased an item multiple times or only once, so our analysis will look
+    at only whether users have purchased items at all; we won’t analyze how many times
+    each user purchased each item.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since each row of our matrix records purchases of a unique item, we use the
+    `sum()` method to take the sum of purchases in each row and store the result in
+    a new column called `counts`. We then use the `sort_values()` method, which sorts
+    the rows of our matrix from the highest to lowest purchase counts. By sorting
+    from most to least purchased, it is ordering the items by popularity. Finally,
+    we print out the index of our sorted matrix, which tells us the item names of
+    all of our items, sorted from most to least popular:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can interpret this to mean that `item1` is the most popular item (in fact,
+    tied with `item3`), `item2` is the third-most popular, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now that you have this list, you’re ready to make recommendations to unfamiliar
+    customers. The way you present your recommendations will depend on your business
+    strategy, your web development team’s capabilities, and your marketing team’s
+    preferences. The data science portion of a recommendation system project is to
+    create the list of prioritized recommendations and let marketers or web developers
+    present these to users. This is one reason that recommendation system projects
+    can be challenging: they require cooperation among several teams.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can create a function that generates popularity-based recommendations for
+    any interaction matrix by putting together all of our code so far:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: This function merely wraps up the capabilities we’ve written code for previously
+    in the chapter. It takes an interaction matrix as its input. It sums up the counts
+    of purchases for each item, sorts by number of purchases, and returns a list of
+    item names that is sorted from most to least popular. This final sorted list can
+    be used to make recommendations to customers, even if you’re unfamiliar with the
+    customers. You can call this function on your interaction matrix by running `print(popularity_based(interaction))`
+    in Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A popularity-based recommendation system is a simple, reasonable way to solve
+    the cold-start problem and make some kind of recommendation to users. You can
+    see popularity-based recommendations on many websites today, where *trending*
+    content is highlighted. You can also see popularity-based recommendations in brick-and-mortar
+    retailers, like bookstores that prominently display bestsellers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But popularity-based recommendations are not as effective as personalized ones.
+    Recommendation systems that can use detailed information about people and items
+    can be more successful than generic popularity-based recommendation systems. Let’s
+    take a look at one now.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Item-Based Collaborative Filtering
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Suppose that you don’t face a completely cold start. Instead, you have just
+    a little information about a sixth customer: in particular, you know that they’re
+    interested in `item1`. This information is all you need to make recommendations
+    when using *collaborative filtering*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s look at our interaction matrix again to get some ideas for how we should
+    make recommendations to someone who’s interested in `item1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: If we look at the first row of our interaction matrix, we can see the full history
+    of customer interactions with `item1`. This item was purchased by `user1`, `user2`,
+    `user4`, and `user5`, and it was not purchased by `user3`. If we look at `item3`,
+    we can see that it has exactly the same purchase history as `item1`. They could
+    be similar items, like two James Bond movies, or they could be complementary,
+    like peanut butter and jelly. Regardless, if two items were purchased together
+    in the past, they’re likely to be purchased together in the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'By contrast, look at the purchase histories of `item1` and `item2`; they have
+    less overlap in customers. These items do not have highly similar purchase histories.
+    Since they haven’t been purchased together often in the past, they won’t likely
+    be purchased together often in the future. One way to make intelligent recommendations
+    is by using this idea: if a user is interested in an item, recommend to that customer
+    other items whose purchase histories have the most in common with the item they’re
+    interested in. This method is called *item-based collaborative filtering*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To recommend items with the most similar purchase histories, we need a way to
+    quantitatively measure exactly how similar two purchase histories are. We saw
+    that `item1` and `item3` have very similar (identical) purchase histories, while
+    `item1` and `item2` have more different purchase histories. If we compare `item1`
+    and `item5`, we can see some similarity in their histories and some differences.
+    But instead of making qualitative judgments that two purchase histories are *very
+    similar* or *not very similar*, using numbers to precisely quantify that similarity
+    will be useful. If we can find a metric that quantifies the similarity of two
+    items, we can use that metric to recommend items.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Measuring Vector Similarity
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Let’s look more closely at one item’s purchase history to get ideas for ways
+    to quantitatively measure similarities:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This line of code prints out the purchase history of `item1`. The output looks
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can think of this purchase history in several ways. It may seem like nothing
+    more than a collection of numbers. Since the numbers are sandwiched between square
+    brackets, Python will interpret this collection as a list. We could also think
+    of it as a row of a matrix (our interaction matrix). Most importantly, we can
+    think of this collection of numbers as a *vector*. You may remember from math
+    class that a vector is a directed line segment. One way to write a vector is as
+    a collection of coordinate numbers. For example, [Figure 9-1](#figure9-1) depicts
+    two vectors, *A⃗* and *B⃗*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c09/f09001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-1: Two vectors, represented by coordinate pairs'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this example, *A⃗* and *B⃗* are directed line segments, or vectors. They
+    are both two-dimensional. Just like every vector, both can be fully described
+    by their coordinates: after we know that both vectors start at the origin, the
+    coordinate pair (3,7) fully describes vector *A⃗*, and the coordinate pair (8,4)
+    fully describes vector *B⃗*. The purchase history we looked at previously, `[1,1,0,1,1]`,
+    can be thought of as the vector representing the purchase history of `item1`.
+    In fact, all the rows of our interaction matrix, or any interaction matrix, can
+    be thought of as vectors.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since we have vectors representing items, we may want to draw our vectors in
+    a plot like [Figure 9-1](#figure9-1). However, in our interaction matrix, our
+    item vectors have five coordinates each, so if we wanted to draw them, we would
+    have to draw them in a five-dimensional plot, which is not possible to do in a
+    way that humans can easily comprehend. Since we can’t draw our item vectors, let’s
+    look at the *A⃗* and *B⃗* vectors in [Figure 9-1](#figure9-1) to understand how
+    to measure vector similarity, then apply what we learn to our item vectors later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can see that vectors *A⃗* and *B⃗* are somewhat similar: both are pointing
+    generally upward and generally toward the right. We want to find a quantitative
+    measurement that signifies exactly how similar the two vectors are. All we need
+    to do is measure the angle between the two vectors, as in [Figure 9-2](#figure9-2).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c09/f09002.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-2: An angle between two vectors, represented by the Greek letter theta'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Every pair of vectors will have an angle between them that we can measure. In
+    two dimensions, we can get out a protractor and physically measure the angle between
+    two vectors. In [Figure 9-2](#figure9-2), the angle is labeled with the Greek
+    letter theta. If the angle theta is small, we conclude that the two vectors are
+    similar. If theta is large, we conclude that the two vectors are very different.
+    The smallest possible angle between two vectors is 0; a 0-degree angle between
+    two vectors means that they’re pointing in exactly the same direction (they overlap).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This isn’t a geometry book, but try to remember just one more thing from your
+    math and geometry classes: the *cosine*. The cosine is a function that we can
+    measure for every angle. The cosine of a 0-degree angle is 1; that’s the maximum
+    value a cosine can be. As an angle gets larger than 0, its cosine decreases. For
+    a 90-degree angle (also called a *perpendicular*, or *right*, angle), the cosine
+    will be 0.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The cosine is important because we can use it to measure the similarity of two
+    vectors. If two vectors are similar, the angle between them will be small, so
+    the cosine of the angle between them will be large (1 or close to 1). If two vectors
+    are perpendicular, they’re quite different, and the cosine of the angle between
+    them will be 0\. Vectors like *A⃗* and *B⃗* in [Figure 9-1](#figure9-1) are not
+    completely similar and not completely different, so the cosine of the angle between
+    them will be between 0 and 1\. When comparing vectors, we often refer to the *cosine
+    similarity* of the two vectors (the cosine of the angle between the vectors).
+    Similar vectors will have high cosine similarity, and different vectors will have
+    low cosine similarity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When vectors have many dimensions, like the five-dimensional vectors in our
+    purchase histories, we don’t physically measure the angles. Instead, we can use
+    a special formula that enables us to calculate the cosine of the angle between
+    any pair of vectors without requiring the physical use of a protractor; see [Figure
+    9-3](#figure9-3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c09/f09003.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-3: A formula for calculating the cosine of the angle between two vectors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll unpack this formula in the next section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calculating Cosine Similarity
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Let’s look more closely at the formula in [Figure 9-3](#figure9-3). The numerator
+    is *A* · *B*. In this case the dot between the vectors *A⃗* and *B⃗* is indicating
+    a *dot product*, a special way to multiply vectors together. The following function
+    calculates the dot product of any two vectors that are the same length:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The denominator of the formula in [Figure 9-3](#figure9-3) shows pipe symbols
+    (`||`) surrounding both *A* and *B*. These pipe symbols indicate the respective
+    sizes of vectors *A⃗* and *B⃗*, also called their vector *norms*. The following
+    function calculates the vector norm of any vector:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The cosine of the angle between any two vectors (that is, the cosine similarity
+    of the two vectors) is the dot product of the two vectors, divided by the product
+    of the norms of the vectors. We can create a Python function that calculates the
+    cosine similarity of any two vectors by using the two functions we just defined,
+    combined as shown in the formula in [Figure 9-3](#figure9-3):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: The cosine similarity that this function calculates is a common similarity measurement
+    that’s used in many data science applications, not just for recommendation systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s try to calculate some cosine similarity measurements for our item vectors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This snippet yields a simple output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can see that `item1` and `item3` have a cosine similarity of `1.0`, meaning
+    that the angle between these vectors is 0\. Therefore, they’re identical vectors,
+    and they’re as similar as it is possible to be. By contrast, you can check the
+    cosine similarity of `item2` and `item5` by running the following snippet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'These have a cosine similarity of `0.3333`, meaning that the angle between
+    these vectors is relatively large—about 71 degrees, not far from a right angle.
+    Therefore, these two items are very different from each other. We can see that
+    when we look at their vectors: only one user out of five purchased both items.
+    If we follow a similar process to check the cosine similarity of `item3` and `item5`,
+    we find that it’s `0.866`, indicating that these vectors are similar but not completely
+    identical.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that we can measure the similarity of any two items’ histories, we’re ready
+    to use this calculation to create a recommendation system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Implementing Item-Based Collaborative Filtering
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let’s think back to our hypothetical salesperson and a hypothetical sales scenario.
+    You have an interaction matrix that describes the purchase history of all five
+    of your customers and all five of your items. You observe a new, unfamiliar customer
+    entering your store (or visiting your website), and all you know about the new
+    customer is that they are interested in `item1`. How should you make recommendations
+    to them?
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can rank every item based on how similar its purchase history is to the
+    purchase history of `item1`. Your recommendations will be an ordered list of items,
+    ranked from the item whose purchase history is the most similar to `item1` to
+    the item whose purchase history is the least similar to `item1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s write Python code for this, using cosine similarity. We can start by
+    defining the vectors we’ll need to do our calculations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next, we can calculate how similar each item is to our selected item and make
+    recommendations by finding the other items that are most similar to our selected
+    item:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this snippet, we create a `similarities` variable, which starts as an empty
+    list. Then we create a loop that calculates the cosine similarity between our
+    item and every other item. After that, we get our final list of recommendations:
+    a list of all other items, sorted from most similar to least similar to our item.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can check the recommendations by running `print(recommendations)`, which
+    will show you the following list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This list is the output of your recommendation system. This final output is
+    similar to the output of our popularity-based recommendation system: just a list
+    of items, sorted in order of most relevant to least relevant (the highest-priority
+    to the lowest-priority recommendations). The difference is that instead of measuring
+    relevance in terms of overall popularity, we are measuring relevance in terms
+    of the similarity of purchase histories: the more similar purchase histories are
+    rated as more relevant, and therefore a higher priority to recommend to users.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can also create a function that combines all of these capabilities together:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can run `get_item_recommendations(interaction,'item1')` to see the items
+    recommended for any user who’s interested in `item1`. You could also substitute
+    any other item for `item1` to see recommendations for users interested in other
+    items.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The recommendation system we have created here is *item-based collaborative
+    filtering*. It’s *filtering* because instead of recommending every item to users,
+    we filter and show only the most relevant. It’s *collaborative* because we’re
+    using information related to all items and all users, so it’s as if the users
+    and items are collaborating to help us determine relevance. It’s *item-based*
+    because our recommendations are based on the similarity between items’ purchase
+    histories, rather than similarity between users or anything else.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Item-based collaborative filtering is relatively simple to implement, and it
+    can be used to make “warm” recommendations even if we know only one fact about
+    a potential customer (a single item that they’re interested in). You can see that
+    it can be implemented with just a few lines of code, and the only input data that’s
+    needed is an interaction matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Item-based collaborative filtering has a reputation for making *obvious* recommendations.
+    Multiple James Bond films are likely to have high overlap in their purchase histories,
+    so using item-based collaborative filtering to make recommendations related to
+    one James Bond film will likely yield a recommendation to view a different James
+    Bond film. But James Bond fans are already familiar with James Bond films and
+    don’t need to get a recommendation to watch a film that they’re already familiar
+    with. Recommendation systems can be more valuable when they recommend items that
+    are less obvious. Next, let’s take a look at a method that has a reputation for
+    generating some less obvious recommendations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: User-Based Collaborative Filtering
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Suppose you want to make recommendations for a customer you’re already familiar
+    with. For example, suppose that our fifth customer, `user5`, walks into your store
+    (or visits your website). Your interaction matrix already has detailed records
+    related to `user5` and everything they’ve purchased before. We can use this detailed
+    information to make intelligent, “warm” recommendations for `user5` with *user-based
+    collaborative filtering*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This approach is based on the idea that people who are similar may be interested
+    in the same items. If we need to make recommendations for a particular customer,
+    we find the customers who are most similar to that customer and recommend items
+    that those similar customers purchased.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s start by looking at our interaction matrix yet again:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This time, instead of thinking of the *rows* as vectors related to *items*,
+    let’s think of the *columns* as vectors related to *customers*. The vector `[1,0,1,1,1]`
+    (the last column of the matrix) represents the full purchase history of `user5`.
+    If we look at other customer purchase history vectors, we can see that `user2`
+    has a purchase history that’s similar to `user5`’s purchase history. We can see
+    that `user3` has a purchase history that’s very different from the purchase history
+    of `user5`—almost no overlap. Just as we did when we were implementing item-based
+    collaborative filtering, we can calculate the similarity of customers based on
+    their purchase histories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output of this snippet is `0.866`, indicating that `user2` and `user5`
+    have relatively high cosine similarity (remember that the closer to 1 this measurement
+    is, the more similar two vectors are). We can change the users whose similarity
+    we calculate by making small adjustments to this snippet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we find that `user3` and `user5` have cosine similarity 0.3536, which
+    is relatively low, just as expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can also create a function that calculates the most similar customers to
+    a given customer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: This function takes a customer name and an interaction matrix as its inputs.
+    It calculates the similarity of the input customer to all other customers specified
+    in the interaction matrix. The final output is a ranked list of customers, sorted
+    from the most similar customer to the least similar customer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can use this function in several ways to get recommendations. Here’s one
+    way to get recommendations for `user5`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calculate how similar every user is to `user5`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Rank customers from most similar to least similar to `user5`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Find the most similar customer to `user5`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Recommend everything the most similar customer has purchased that `user5` has
+    not purchased.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'We can write code that implements this algorithm as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this snippet, we have a function that takes an interaction matrix and a user
+    name as its inputs. It finds the most similar user to the input user, and it stores
+    the purchase history of that user in a variable called `purchase_history`. Next,
+    it finds everything that the most similar user purchased (stored in the variable
+    `purchased`) and everything that the input user purchased (stored in the variable
+    `purchased2`). Then it finds everything that the most similar user purchased that
+    was not purchased by the input user. It does this by using the `set()` function.
+    The `set()` function creates a collection of the unique elements in a list. So
+    when you run `set(purchased) - set(purchased2)`, you’ll get the unique elements
+    of `purchased` that are not also elements of `purchased2`. Finally, it returns
+    the list of these elements as the final recommendations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can run this function simply, by running `get_user_recommendations(interaction,''user2'')`.
+    You should see the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, `item4` is our recommendation because it was purchased by `user5`,
+    the user who’s most similar to `user2`, and it hasn’t yet been purchased by `user2`.
+    We’ve created a function that performs user-based collaborative filtering!
+  prefs: []
+  type: TYPE_NORMAL
+- en: You could make many adjustments to this function. For example, you might want
+    more recommendations than you get by looking at one similar customer. If so, you
+    could look at more similar customers than just one. You could also add item-based
+    similarity calculations so that you recommend only items that were purchased by
+    similar users and are also similar to the items that have been purchased by the
+    focal user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ensuring that you understand the similarities and differences between user-based
+    and item-based collaborative filtering is worthwhile. Both rely on cosine similarity
+    calculations, and both rely on an interaction matrix as input. In item-based collaborative
+    filtering, we calculate the cosine similarity between items and recommend items
+    that are similar to an item of interest. In user-based collaborative filtering,
+    we calculate the cosine similarity between users and recommend items from the
+    purchase histories of similar users. Both can lead to good recommendations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To determine which method is right for your business, you could try both and
+    check which one leads to better results: either more revenue, more profit, more
+    satisfied customers, more customer engagement, or more of whatever metric you
+    want to maximize. The best way to do this type of experimental comparison is with
+    an A/B test, which you’ve already learned in Chapter 4.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: User-based collaborative filtering has a reputation for giving more surprising
+    results than item-based collaborative filtering. However, it also tends to be
+    more computationally difficult. Most retailers have more customers than items,
+    so user-based collaborative filtering usually requires more calculations than
+    item-based collaborative filtering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So far, we’ve been working with an unrealistically tiny and entirely fabricated
+    dataset. Applying the ideas we’ve gone over so far to data that comes from a real
+    business would be more beneficial, with real users and their real interaction
+    histories. In the next section, we’ll do just that: we’ll go through a case study
+    of generating recommendations for real users and the real items that we expect
+    will interest them.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Case Study: Music Recommendations'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We’ll use data from Last.fm ([https://last.fm](https://last.fm)). This website
+    allows people to log in and listen to music. In this case, the “items” in our
+    interaction matrix will be musical artists, and a 1 in the interaction matrix
+    will indicate that a user has listened to an artist, rather than representing
+    a purchase. Despite these minor differences, we can use all the methods we’ve
+    discussed in this chapter to make recommendations about music that users should
+    listen to next.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s read some data related to Last.fm users and look at it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As usual, we import the pandas package, read our *.csv* file, and store the
+    data in the `lastfm` variable. When we print out the top few rows of the data,
+    we see the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this data, every row represents a unique (anonymous) user. Every column
+    represents a musical artist. The entries in the matrix can be interpreted in the
+    same way as the entries in our previous interaction matrix: every entry equal
+    to `1` means that a particular user has listened to a particular artist, and every
+    entry equal to `0` means that the user has not listened to that artist. In this
+    case, we can talk about a user’s or an item’s listening history instead of purchase
+    history. Regardless, the entries of this matrix show the history of interactions
+    between users and items. We don’t need the first column (the user ID number),
+    so we can drop it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Before we proceed, notice the difference between this interaction matrix and
+    the previous one. In our previous interaction matrix, the rows corresponded to
+    items, and the columns corresponded to users. This interaction matrix is reversed:
+    the rows correspond to users, and the columns correspond to items (songs). The
+    functions we wrote are meant to work with interaction matrices that have the former
+    shape (rows for items, columns for users). To make sure our interaction matrix
+    can work with our functions, we should *transpose* it, or rewrite its rows as
+    columns and its columns as rows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This snippet uses our matrix’s `T` attribute to transpose our interaction matrix,
+    and it stores the result in the variable `lastfmt`. Let’s check the number of
+    rows and columns in this data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output here is `(285,1257)`: the data has 285 rows and 1,257 columns. So,
+    we’re looking at information about 1,257 real users and 285 real artists whose
+    music these users listened to. This is much more substantial than our previous,
+    fabricated data. Let’s get recommendations for these users. It’s as simple as
+    calling a function we already created earlier in the chapter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You’ll see the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For people who are interested in music by ABBA, these artists are recommended
+    via item-based collaborative filtering. They’re listed in order of most relevant
+    to least relevant. Remember, these artists were selected based on similar purchase
+    histories: out of all artists, Madonna’s listening history was the most similar
+    to ABBA’s, and Robbie Williams’s listening history was the second most similar,
+    and so on.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is all it takes; we can call the recommendation function for any artist
+    that interests us. Going from fabricated to real data is quite simple. We can
+    also call our user recommendation function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output shows us three recommendations for the first user (the user with
+    index 0 in the dataset):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'These recommendations were obtained using user-based collaborative filtering.
+    Remember what that means: our code found the user whose listening history is the
+    most similar to the listening history of the first user. The final recommendations
+    are artists that the most similar user listened to but the focal user has not
+    yet listened to.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating Recommendations with Advanced Systems
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Collaborative filtering is the most common way to build recommendation systems,
+    but it’s not the only one. Several other techniques allow generation of intelligent
+    recommendations. One approach, called *singular value decomposition*, relies on
+    matrix algebra to *decompose* the interaction matrix into several smaller matrices.
+    These smaller matrices can be multiplied in various ways to predict which products
+    will appeal to which customers. Singular-value decomposition is one of several
+    methods that use linear algebra to predict customer preferences. Another such
+    linear algebra method is called *alternating least squares*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The clustering methods we discussed in Chapter 7 can also be used to generate
+    recommendation systems. These clustering-based recommendation systems use an approach
+    like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generate clusters of users.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Find the most popular items in each cluster of users.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Recommend those popular items, but only within each cluster.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'This method is the same as the popularity-based recommendation system we discussed
+    at the beginning of the chapter, with one improvement: we look at popularity within
+    clusters of similar customers, instead of global popularity.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other recommendation systems rely on the analysis of content. For example, to
+    make recommendations about songs on a music-streaming service, you might download
+    a database of song lyrics. You could use some NLP tools to measure the similarity
+    between distinct songs’ lyrics. If a user listened to Song X, you could recommend
+    that they listen to the songs whose lyrics have the highest similarity to Song
+    X’s lyrics. This is an item-based recommendation system, but instead of using
+    purchase histories, it uses item attributes to find relevant recommendations.
+    *Attribute-based systems* (also called *content-based recommender systems*) like
+    this can work effectively in some situations. Many corporations that implement
+    recommendation systems today collect a wide variety of data to use as inputs,
+    and a wide variety of prediction methods, including neural networks, to predict
+    what each user will like. The problem with a content-based approach is that it
+    can be difficult to get attribute data that’s reliable and comparable across items.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Attribute data is not the only kind of data that can be added to recommendation
+    systems. Using dates in your recommendation systems could also be valuable. In
+    a popularity-based system, dates or timestamps can enable you to replace *all-time
+    most popular* lists with *today’s most popular* lists, or lists that show trending
+    content across the most recent hour, week, or any other time frame.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You may also need to build recommendation systems with interaction matrices
+    that are not 0/1 matrices. For example, you could have an interaction matrix whose
+    entries indicate the number of times a song has been played, rather than a 0/1
+    indicator of whether a song has been played. You might also find an interaction
+    matrix that contains ratings rather than interactions. The same methods you implemented
+    in this chapter can be applied to these alternative types of interaction matrices:
+    you can still calculate cosine similarities and make recommendations based on
+    the most similar items and users.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The world of recommendation systems is big. There’s room for creativity and
+    new approaches, and you can open your mind while trying to discover new ways to
+    improve the field.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this chapter, we discussed recommendation systems. We started with popularity-based
+    systems to show how to recommend trending items and bestsellers. We continued
+    with collaborative filtering, including how to measure the similarity of items
+    and customers and how to use similarity to make item-based and user-based recommendations.
+    We presented a case study in which we used our collaborative-filtering code to
+    get recommendations related to a music-streaming service. We concluded with some
+    advanced considerations, including other approaches that could be used and other
+    data that can be leveraged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we’ll go over some advanced natural language processing methods for analysis
+    of text.
+  prefs: []
+  type: TYPE_NORMAL

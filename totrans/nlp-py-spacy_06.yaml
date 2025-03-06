@@ -1,0 +1,1592 @@
+- en: '**6'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: FINDING PATTERNS AND WALKING DEPENDENCY TREES**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../Images/comm1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: If you want your application to categorize a text, extract specific phrases
+    from it, or determine how semantically similar it is to another text, it must
+    be able to “understand” an utterance submitted by a user and generate a meaningful
+    response to it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You’ve already learned some techniques for performing these tasks. This chapter
+    discusses two more approaches: using word sequence patterns to classify and generate
+    text, and walking the syntactic dependency tree of an utterance to extract necessary
+    pieces of information from it. I’ll introduce you to spaCy’s Matcher tool to find
+    patterns. I’ll also discuss when you might still need to rely on context to determine
+    the proper processing approach.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Word Sequence Patterns**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A *word sequence pattern* consists of features of words that impose a certain
+    requirement on each word in the sequence. For example, the phrase “I can” will
+    match the following word sequence pattern: “pronoun + modal auxiliary verb.” By
+    searching for word sequence patterns, you can recognize word sequences with similar
+    linguistic features, making it possible to categorize input and handle it properly.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, when you receive a question that begins with a word sequence that
+    uses the pattern “modal auxiliary verb + proper noun,” such as “Can George,” you
+    know that this question is about the ability, possibility, permission, or obligation
+    of someone or something that the proper noun refers to.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following sections, you’ll learn to classify sentences by identifying
+    common patterns of linguistic features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Finding Patterns Based on Linguistic Features***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We need to find patterns in texts because, in most cases, we won’t be able to
+    find even two identical sentences within a text. Typically, a text is composed
+    of different sentences, each of which contains different words. It would be impractical
+    to write the code to process each sentence in a text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Fortunately, some sentences that look completely different might follow the
+    same word sequence patterns. For example, consider the following two sentences:
+    “We can overtake them.” and “You must specify it.”. These sentences have no words
+    in common. But if you look at the syntactic dependency labels assigned to the
+    words in the sentences, a pattern emerges, as shown in the following script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc1 = nlp(u'We can overtake them.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc2 = nlp(u'You must specify it.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ for i in range(len(doc1)-1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ if doc1[i].dep_ == doc2[i].dep_:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ print(doc1[i].text, doc2[i].text, doc1[i].dep_, spacy.explain(doc1[i].dep_))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because both sentences have the same number of words, we can iterate over the
+    words in both sentences within a single loop ➊. If the dependency label is the
+    same for the words that have the same index in both sentences ➋, we print these
+    words along with the label assigned to them, as well as a description for each
+    label ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output should look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We       You     nsubj  nominal subject
+  prefs: []
+  type: TYPE_NORMAL
+- en: can      must    aux    auxiliary
+  prefs: []
+  type: TYPE_NORMAL
+- en: overtake specify ROOT   None
+  prefs: []
+  type: TYPE_NORMAL
+- en: them     it      dobj   direct object
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As you can see, the list of dependency labels is identical for both sentences.
+    This means that these sentences follow the same word sequence pattern based on
+    the following syntactic dependency labels: “subject + auxiliary + verb + direct
+    object.”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Also notice that the list of part-of-speech tags (coarse-grained and fined-grained)
+    is also identical for these sample sentences. If we replace all references to
+    .dep_ with .pos_ in the previous script, we’ll get the following results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We       You     PRON  pronoun
+  prefs: []
+  type: TYPE_NORMAL
+- en: can      must    VERB  verb
+  prefs: []
+  type: TYPE_NORMAL
+- en: overtake specify VERB  verb
+  prefs: []
+  type: TYPE_NORMAL
+- en: them     it      PRON  pronoun
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sample sentences match not only the syntactic dependency label pattern,
+    but also the pattern of part-of-speech tags.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the previous example, we created two Doc objects—one for each sample sentence.
+    But in practice, a text usually consists of numerous sentences, which makes a
+    Doc-per-sentence approach impractical. Rewrite the script so it creates a single
+    Doc object. Then use the doc.sents property introduced in [Chapter 2](../Text/ch02.xhtml#ch02)
+    to operate on each sentence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But note that doc.sents is a generator object, which means it’s not subscriptable—you
+    can’t refer to its items by index. To solve this issue, convert the doc.sents
+    to a list, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: sents = list(doc.sents)
+  prefs: []
+  type: TYPE_NORMAL
+- en: And, of course, you can iterate over a doc.sents in a for loop to obtain the
+    sents in order, as they’re requested by the loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Checking an Utterance for a Pattern***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the preceding example, we compared two sample sentences to find a pattern
+    based on their shared linguistic features. But in practice, we’ll rarely want
+    to compare sentences to one another to determine whether they share a common pattern.
+    Instead, it’ll be more useful to check a submitted sentence against the pattern
+    we’re already interested in.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, let’s say we were trying to find utterances in user input that
+    express one of the following: ability, possibility, permission, or obligation
+    (as opposed to utterances that describe real actions that have occurred, are occurring,
+    or occur regularly). For instance, we want to find “I can do it.” but not “I’ve
+    done it.”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To distinguish between utterances, we might check whether an utterance satisfies
+    the following pattern: “subject + auxiliary + verb + . . . + direct object . .
+    .”. The ellipses indicate that the direct object isn’t necessarily located immediately
+    behind the verb, making this pattern a little different from the one in the preceding
+    example.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following sentence satisfies the pattern: “I might send them a card as
+    a reminder.”. In this sentence, the noun “card” is a direct object, and the pronoun
+    “them” is an indirect object that separates it from the verb “send.” The pattern
+    doesn’t specify a position for the direct object in the sentence; it simply requires
+    its presence.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 6-1](../Text/ch06.xhtml#ch06fig01) shows a graphical depiction of this
+    design:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig6-1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-1: Checking submitted utterances against a word sequence pattern
+    based on linguistic features*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following script, we define a function that implements this pattern,
+    and then test it on a sample sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ def dep_pattern(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ for i in range(len(doc)-1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ if doc[i].dep_ == 'nsubj' and doc[i+1].dep_ == 'aux' and
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'doc[i+2].dep_ == ''ROOT'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➍ for tok in doc[i+2].children:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if tok.dep_ == ''dobj'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ return True
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➏ return False
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➐ doc = nlp(u'We can overtake them.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if ➑dep_pattern(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Found')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Not found')
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this script, we define the dep_pattern function that takes a Doc object as
+    parameter ➊. In the function, we iterate over the Doc object’s tokens ➋, searching
+    for a “subject + auxiliary + verb” pattern ➌. If we find this pattern, we check
+    whether the verb has a direct object among its syntactic children ➍. Finally,
+    if we find a direct object, the function returns True ➎. Otherwise, it returns
+    False ➏.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the main code, we apply the text-processing pipeline to the sample sentence
+    ➐ and send the Doc object to the dep_pattern function ➑, outputting Found if the
+    sample satisfies the pattern implemented in the function or Not found otherwise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Because the sample used in this example satisfies the pattern, the script should
+    produce the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Found
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ll see some examples of using the dep_pattern function in some of the following
+    sections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Using spaCy’s Matcher to Find Word Sequence Patterns***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In the previous section, you learned how to find a word sequence pattern in
+    a doc by iterating over its tokens and checking their linguistic features. In
+    fact, spaCy has a predefined feature for this task called *Matcher*, a tool that
+    is specially designed to find sequences of tokens based on pattern rules. For
+    example, an implementation of the “subject + auxiliary + verb” pattern with Matcher
+    might look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: from spacy.matcher import Matcher
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load("en")
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ matcher = Matcher(nlp.vocab)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ pattern = [{"DEP": "nsubj"}, {"DEP": "aux"}, {"DEP": "ROOT"}]
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ matcher.add("NsubjAuxRoot", None, pattern)
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(u"We can overtake them.")
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ matches = matcher(doc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➎ for match_id, start, end in matches:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: span = doc[start:end]
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➏ print("Span: ", span.text)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("The positions in the doc are: ", start, "-", end)
+  prefs: []
+  type: TYPE_NORMAL
+- en: We create a Matcher instance, passing in the vocabulary object shared with the
+    documents the Matcher will work on ➊. Then we define a pattern, specifying the
+    dependency labels that a word sequence should match ➋. We add the newly created
+    pattern to the Matcher ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we can apply the Matcher to a sample text and obtain the matching tokens
+    in a list ➍. Then we iterate over this list ➎, printing out the start and end
+    positions of the pattern tokens in the text ➏.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script should produce the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Span: We can overtake'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The positions in the doc are: 0 - 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Matcher allows you to find a pattern in a text without iterating explicitly
+    over the text’s tokens, thus hiding implementation details from you. As a result,
+    you can obtain the start and end positions of the words composing a sequence that
+    satisfies the specified pattern. This approach can be very useful when you’re
+    interested in a sequence of words that immediately follow one another.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But often you need a pattern that includes words scattered over the sentence.
+    For example, you might need to implement such patterns as the “subject + auxiliary
+    + verb + . . . + direct object . . .” pattern we used in “[Checking an Utterance
+    for a Pattern](../Text/ch06.xhtml#lev73)” on [page 77](../Text/ch06.xhtml#page_77).
+    The problem is that you don’t know in advance how many words can occur between
+    the “subject + auxiliary + verb” sequence and the direct object. Matcher doesn’t
+    allow you to define such patterns. For this reason, I’ll define patterns manually
+    for the remainder of this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Applying Several Patterns***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'You can apply several matching patterns to an utterance to make sure it satisfies
+    all your conditions. For example, you might check an utterance against two patterns:
+    one that implements a dependency label sequence (as discussed in “[Checking an
+    Utterance for a Pattern](../Text/ch06.xhtml#lev73)” on [page 77](../Text/ch06.xhtml#page_77))
+    and one that checks against a sequence of part-of-speech tags. This might be helpful,
+    if, say, you want to make sure that the direct object in an utterance is a personal
+    pronoun. If so, you can start the procedure of determining the noun that gives
+    its meaning to the pronoun and is mentioned elsewhere in the discourse.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Diagrammatically, this design might look like [Figure 6-2](../Text/ch06.xhtml#ch06fig02).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig6-2.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-2: Applying several matching patterns to user input*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In addition to using the dependency label sequence defined in “[Checking an
+    Utterance for a Pattern](../Text/ch06.xhtml#lev73)”, you can define a new function
+    by implementing a pattern based on part-of-speech tags. The part-of-speech tag
+    pattern might search the sentence to make sure that the subject and the direct
+    object are personal pronouns. This new function might implement the following
+    pattern: “personal pronoun + modal auxiliary verb + base form verb + . . . + personal
+    pronoun . . .”.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is the code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#Insert the dep_pattern function from a previous listing here'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ def pos_pattern(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ for token in doc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.dep_ == ''nsubj'' and token.tag_ != ''PRP'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.dep_ == ''aux'' and token.tag_ != ''MD'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.dep_ == ''ROOT'' and token.tag_ != ''VB'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.dep_ == ''dobj'' and token.tag_ != ''PRP'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return False
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ return True
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#Testing code'
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(u'We can overtake them.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➍ if dep_pattern(doc) and pos_pattern(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Found')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Not found')
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start by adding the code for the dep_pattern function defined in a previous
+    script. To create the second pattern, we define the pos_pattern function ➊, which
+    contains a for loop with a series of if statements in it ➋. Each if statement
+    checks whether a certain part of a sentence matches a certain part-of-speech tag.
+    When the function detects a mismatch, it returns False. Otherwise, after all the
+    checks have occurred and no mismatch has been detected, the function returns True
+    ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To test the patterns, we apply the pipeline to a sentence, and then check whether
+    the sentence matches both patterns ➍. Because the sample used in this example
+    matches both patterns, we should see the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Found
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But if we replace the sample sentence with this one: “I might send them a card
+    as a reminder.”, we should see this output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Not found
+  prefs: []
+  type: TYPE_NORMAL
+- en: The reason is that the sentence doesn’t match the part-of-speech tag pattern,
+    because the direct object “card” isn’t a personal pronoun, even though the sentence
+    fully satisfies the conditions of the first pattern.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Creating Patterns Based on Customized Features***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: When creating a word sequence pattern, you might need to enhance the functionality
+    of the linguistic features spaCy provides by customizing them for your needs.
+    For example, you might want the preceding script to recognize another pattern
+    that distinguishes pronouns according to number (whether they’re singular or plural).
+    Once again, this could be useful when you need to find the noun in a previous
+    utterance to which the pronoun refers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Although spaCy separates nouns by number, it doesn’t do this for pronouns.
+    But the ability to recognize whether a pronoun is plural or singular can be very
+    useful in the task of meaning recognition or information extraction. For example,
+    consider the following discourse:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The trucks are traveling slowly. We can overtake them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we can establish that the direct object “them” in the second sentence is
+    a plural pronoun, we’ll have reason to believe that it refers to the plural noun
+    “trucks” in the first sentence. We often use this technique to recognize a pronoun’s
+    meaning based on the context.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following script defines a pron_pattern function, which finds any direct
+    object in the submitted sentence, determines whether that direct object is a personal
+    pronoun, and then determines whether the pronoun is singular or plural. The script
+    then applies the function to a sample sentence after testing for the two patterns
+    defined in “[Checking an Utterance for a Pattern](../Text/ch06.xhtml#lev73)” on
+    [page 77](../Text/ch06.xhtml#page_77) and “[Applying Several Patterns](../Text/ch06.xhtml#lev75)”
+    on [page 80](../Text/ch06.xhtml#page_80).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#Insert the dep_pattern and pos_pattern functions from the previous'
+  prefs: []
+  type: TYPE_NORMAL
+- en: listings here
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ def pron_pattern(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ plural = ['we','us','they','them']
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for token in doc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➌ if token.dep_ == ''dobj'' and token.tag_ == ''PRP'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➍ if token.text in plural:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ return 'plural'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➏ return 'singular'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➐ return 'not found'
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(u'We can overtake them.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if dep_pattern(doc) and pos_pattern(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Found:', 'the pronoun in position of direct object is',
+  prefs: []
+  type: TYPE_NORMAL
+- en: pron_pattern(doc))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Not found')
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start by adding the dep_pattern and pos_pattern functions defined in “[Checking
+    an Utterance for a Pattern](../Text/ch06.xhtml#lev73)” and “[Applying Several
+    Patterns](../Text/ch06.xhtml#lev75)” to the script. In the pron_pattern function
+    ➊, we define a Python list that includes all the possible plural personal pronouns
+    ➋. Next, we define a loop that iterates over the tokens in the submitted sentence,
+    looking for a direct object that is a personal pronoun ➌. If we find such a token,
+    we check whether it’s in the list of plural personal pronouns ➍. If so, the function
+    returns plural ➎. Otherwise, it returns singular ➏. If the function either failed
+    to detect a direct object or found one that isn’t a personal pronoun, it returns
+    Not found ➐.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the sentence “We can overtake them.”, we should get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Found: the pronoun in position of direct object is plural'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We could use this information to find a corresponding noun for the pronoun in
+    the previous sentence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Choosing Which Patterns to Apply***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Once you define these patterns, you can choose which ones to apply for each
+    situation. Notice that even if a sentence fails to fully satisfy the dep_pattern
+    and pos_pattern functions, it might still match the pron_pattern function. For
+    example, the sentence “I know it.” doesn’t match either the dep_pattern or pos_pattern
+    functions, because it doesn’t have a modal auxiliary verb. But it satisfies pron_pattern
+    because it contains a personal pronoun that is the direct object of the sentence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This loose coupling between the patterns lets you use them with other patterns
+    or independently. For example, you might use dep_pattern, which checks a sentence
+    against the “subject + auxiliary + verb + . . . + direct object . . .” pattern
+    in conjunction with, say, a “noun + modal auxiliary verb + base form verb + .
+    . . + noun . . .” pattern, if you wanted to be sure that the subject and the direct
+    object in the sentence are nouns. These two patterns would match the following
+    example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Developers might follow this rule.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you might guess, the ability to combine patterns in different ways allows
+    you to handle more scenarios with less code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Using Word Sequence Patterns in Chatbots to Generate Statements***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As stated earlier, the most challenging tasks in NLP are understanding and generating
+    natural language text. A chatbot must understand a user’s input and then generate
+    a proper response to it. Word sequence patterns based on linguistic features can
+    help you implement these functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Chapter 4](../Text/ch04.xhtml#ch04), you learned how to turn a statement
+    into a relevant question to continue a conversation with a user. Using word sequence
+    patterns, you could generate other kinds of responses, too, such as relevant statements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Suppose your chatbot has received the following user input:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The symbols are clearly distinguishable. I can recognize them promptly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The chatbot might react as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I can recognize symbols promptly too.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can use the patterns implemented in the previous sections to accomplish
+    this text generation task. The list of steps might look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Check the conversational input against the dep_pattern and pos_pattern functions
+    defined previously to find an utterance that follows the “subject + auxiliary
+    + verb + . . . + direct object . . .” and “pronoun + modal auxiliary verb + base
+    form verb + . . . + pronoun . . .” patterns, respectively.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Check the utterance found in step 1 against the pron_pattern pattern to determine
+    whether the direct object personal pronoun is plural or singular.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Find the noun that gives its meaning to the pronoun by searching for a noun
+    that has the same number as the personal pronoun.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Replace the pronoun that acts as the direct object in the sentence located in
+    step 1 with the noun found in step 3.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Append the word “too” to the end of the generated utterance.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The following script implements these steps. It uses the dep_pattern, pos_pattern,
+    and pron_pattern functions defined earlier in this chapter (their code is omitted
+    to save space). It also introduces two new functions: find_noun and gen_utterance.
+    For convenience, we’ll walk through the code in three steps: the initial operations
+    and the find_noun function, which finds the noun that matches the personal pronoun;
+    the gen_utterance function, which generates a relevant statement from that question;
+    and finally, the code that tests an utterance. Here is the first part:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#Insert the dep_pattern, pos_pattern and pron_pattern functions from the'
+  prefs: []
+  type: TYPE_NORMAL
+- en: previous listings here
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ def find_noun(➋sents, ➌num):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if num == ''plural'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ taglist = ['NNS','NNPS']
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if num == ''singular'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ taglist = ['NN','NNP']
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➏ for sent in reversed(sents):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➐ for token in sent:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➑ if token.tag_ in taglist:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return token.text
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 'Noun not found'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After inserting the code of the dep_pattern, pos_pattern, and pron_pattern functions,
+    we define the find_noun function, which takes two parameters ➊. The first one
+    contains a list of the sentences from the beginning of the discourse up to the
+    sentence that satisfies all the patterns here. In this example, this list will
+    include all the sentences from the discourse, because only the last sentence satisfies
+    all the patterns ➋. But the noun that gives its meaning to the pronoun can be
+    found in one of the previous sentences.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second parameter sent to find_noun is the number of the direct object pronoun
+    in the sentence that satisfies all the patterns ➌. The pron_pattern function determines
+    this. If the value of this argument is 'plural', we define a Python list containing
+    fine-grained part-of-speech tags used in spaCy to mark plural nouns ➍. If it’s
+    'singular', we create a tag list containing fine-grained part-of-speech tags used
+    to mark singular nouns ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In a for loop, we iterate over the sentences in reverse order, starting from
+    the sentence that is the closest to the sentence containing the pronoun to be
+    replaced ➏. We start with the closest sentence, because the noun we’re searching
+    for will most likely be there. Here, we use Python’s reversed function that returns
+    a reverse iterator over the list. In the inner loop, we iterate over the tokens
+    in each sentence ➐, looking for a token whose fine-grained part-of-speech tag
+    is in the tag list defined earlier ➑.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then we define the gen_utterance function, which generates our new statement:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def gen_utterance(doc, noun):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: sent = ''
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ for i,token in enumerate(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ if token.dep_ == ''dobj'' and token.tag_ == ''PRP'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ sent = doc[:i].text + ' ' + noun + ' ' + doc[i+1:len(doc)-2].text + 'too.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ return sent
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ return 'Failed to generate an utterance'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We use a for loop to iterate over the tokens in the sentence ➊, looking for
+    a direct object that is a personal pronoun ➋. Once we’ve found one, we generate
+    a new utterance. We change the original sentence by replacing the personal pronoun
+    with the matching noun and appending “too” to the end of it ➌. The function then
+    returns this newly generated utterance ➍. If we haven’t found a direct object
+    in the form of a personal pronoun, the function returns an error message ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now that we have all the functions in place, we can test them on a sample utterance
+    using the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ doc = nlp(u'The symbols are clearly distinguishable. I can recognize them
+  prefs: []
+  type: TYPE_NORMAL
+- en: promptly.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ sents = list(doc.sents)
+  prefs: []
+  type: TYPE_NORMAL
+- en: response = ''
+  prefs: []
+  type: TYPE_NORMAL
+- en: noun = ''
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➌ for i, sent in enumerate(sents):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if dep_pattern(sent) and pos_pattern(sent):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ noun = find_noun(sents[:i], pron_pattern(sent))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if noun != ''Noun not found'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ response = gen_utterance(sents[i],noun)
+  prefs: []
+  type: TYPE_NORMAL
+- en: break
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(response)
+  prefs: []
+  type: TYPE_NORMAL
+- en: After applying the pipeline to the sample discourse ➊, we convert it to the
+    list of sentences ➋. Then we iterate over this list ➌, searching for the sentence
+    that matches the patterns defined in the dep_pattern and pos_pattern functions.
+    Next, we determine the noun that gives the meaning to the pronoun in the sentence
+    found in the previous step, using the find_noun function ➍. Finally, we call the
+    get_utterance function to generate a response utterance ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output of the preceding code should look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I can recognize symbols too.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Notice that there’s still room for improvement in the preceding code, because
+    the original statement included the article “the” in front of the noun “symbols.”
+    A better output would include the same article in front of the noun. To generate
+    a statement that makes the most sense in this context, expand on the script so
+    that it inserts the article “the” in front of the noun, making it “I can recognize
+    the symbols too.” For that, you’ll need to check whether the noun is preceded
+    by an article, and then add that article.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Extracting Keywords from Syntactic Dependency Trees**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Finding a sequence of words in an utterance that satisfies a certain pattern
+    allows you to construct a grammatically correct response—either a statement or
+    a question, based on the submitted text. But these patterns aren’t always useful
+    for extracting the meaning of texts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, in the ticket-booking application in [Chapter 2](../Text/ch02.xhtml#ch02),
+    a user might submit a sentence like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I need an air ticket to Berlin.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You could easily find the user’s intended destination by searching for the pattern
+    “to + GPE” where GPE is a named entity for countries, cities, and states. This
+    pattern would match phrases like “to London,” “to California,” and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But suppose the user submitted one of the following utterances instead:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I am going to the conference in Berlin. I need an air ticket.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I am going to the conference, which will be held in Berlin. I would like to
+  prefs: []
+  type: TYPE_NORMAL
+- en: book an air ticket.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As you can see, the “to + GPE” pattern wouldn’t find the destination in either
+    example. In both cases, “to” directly refers to “the conference,” not to Berlin.
+    You’d need something like “to + . . . + GPE” instead. But how would you know what’s
+    required—or what’s allowed—between “to” and “GPE”? For example, the following
+    sentence contains the “to + . . . + GPE” pattern but has nothing to do with booking
+    a ticket to Berlin:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I want to book a ticket on a direct flight without landing in Berlin.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Often, you need to examine relations between the words in a sentence to obtain
+    necessary pieces of information. This is where walking the dependency tree of
+    the sentence could help a lot.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Walking a dependency tree means navigating through it in custom order—not necessarily
+    from the first token to the last one. For example, you can stop iterating a dependency
+    tree just after the required component is found. Remember that a sentence’s dependency
+    tree shows the syntactic relationships between pairs of words. We often represent
+    these as arrows connecting the head with the child of a relation. Every word in
+    a sentence is involved in at least one of the relations. This guarantees that
+    you’ll pass through each word in a sentence when walking through the entire dependency
+    tree generated for that sentence if you start from ROOT.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we’ll examine a sentence’s structure to figure out a user’s
+    intended meaning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Walking a Dependency Tree for Information Extraction***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s return to the ticket-booking application example. To find a user’s intended
+    destination, you might need to iterate over the dependency tree of a sentence
+    to determine whether “to” is semantically related to “Berlin.” This is easy to
+    accomplish if you remember the head/child syntactic relations that compose a dependency
+    tree, which was introduced in the “Head and Child” box on [page 25](../Text/ch02.xhtml#page_25).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 6-3](../Text/ch06.xhtml#ch06fig03) shows the dependency tree for the
+    sentence, “I am going to the conference in Berlin”:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig6-3.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-3: A syntactic dependency tree of an utterance*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The verb “going” is the root of the sentence, meaning it’s not a child of any
+    other word. Its child to the immediate right is “to.” If you walk through the
+    dependency tree, moving to the child to the immediate right of each word, you’ll
+    finally reach “Berlin.” This shows that there’s a semantic connection between
+    “to” and “Berlin” in this sentence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Iterating over the Heads of Tokens***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now let’s figure out how to express the relation between “to” and “Berlin” in
+    the sentence programmatically. One way is to walk the dependency tree from left
+    to right, starting from “to,” choosing only the immediate right child of each
+    word along the way. If you can go from “to” to “Berlin” this way, you can reasonably
+    assume that there’s a semantic connection between the two words.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But this approach has a drawback. In some cases, a word might have more than
+    one right child. For example, in the sentence “I am going to the conference on
+    spaCy, which will be held in Berlin,” the word “conference” has two immediate
+    right children: the words “on” and “held.” This forces you to check multiple branches,
+    complicating the code.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'On the other hand, although a head can have multiple children, each word in
+    a sentence has exactly one head. This means you can instead move from right to
+    left, starting from “Berlin” and trying to reach “to.” The following script implements
+    this process in the det_destination function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#Here''s the function that figures out the destination'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ def det_destination(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i, token in enumerate(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ if token.ent_type != 0 and token.ent_type_ == ''GPE'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➌ while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ token = token.head
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.text == ''to'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ return doc[i].text
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➏ if token.head == token:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 'Failed to determine'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 'Failed to determine'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#Testing the det_destination function'
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(u'I am going to the conference in Berlin.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➐ dest = det_destination(doc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('It seems the user wants a ticket to ' + dest)
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the det_destination function ➊, we iterate over the tokens in the submitted
+    utterance, looking for a GPE entity ➋. If it’s found, we start a while loop ➌
+    that iterates over the head of each token, starting from the token containing
+    the GPE entity ➍. The loop stops when it reaches either the token containing “to”
+    ➎ or the root of the sentence. We can check for the root by comparing a token
+    to its head ➏, because the head of the root token always refers to itself. (Alternatively,
+    we can check for the ROOT tag.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: To test this function, we apply the pipeline to the sample sentence and then
+    invoke the det_destination function on it ➐.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script should generate the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It seems the user wants a ticket to Berlin
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If we change the sample sentence so it doesn’t contain “to” or a GPE named
+    entity, we should get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It seems the user wants a ticket to Failed to determine
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can improve the script so it uses another message for cases when it fails
+    to determine the user’s destination.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Condensing a Text Using Dependency Trees***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The syntactic dependency tree approach isn’t limited to chatbots, of course.
+    You could use it, for example, in report-processing applications. Say, you need
+    to develop an application that has to condense retail reports by extracting only
+    the most important information from them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, you might want to select the sentences containing numbers, producing
+    a concise summary of the data on sales volume, revenue, and costs. (You learned
+    how to extract numbers in [Chapter 4](../Text/ch04.xhtml#ch04).) Then, to make
+    your new report more concise, you might shorten the selected sentences.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As a quick example, consider the following sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The product sales hit a new record in the first quarter, with 18.6 million units
+    sold.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After processing, it should look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The product sales hit 18.6 million units sold.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To accomplish this, you can analyze the dependency trees of sentences by following
+    these steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extract the entire phrase containing the number (it’s 18.6 in this example)
+    by walking the heads of tokens, starting from the token containing the number
+    and moving from left to right.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Walk the dependency tree from the main word of the extracted phrase (the one
+    whose head is out of the phrase) to the main verb of the sentence, iterating over
+    the heads and picking them up to be used in a new sentence.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Pick up the main verb’s subject, along with its leftward children, which typically
+    include a determiner and possibly some other modifiers.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[Figure 6-4](../Text/ch06.xhtml#ch06fig04) represents this process.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig6-4.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-4: An example of condensing a sentence to include only important
+    elements*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s start with the first step, which in this example should extract the phrase
+    “18.6 million units sold.”. The following code snippet illustrates how to do this
+    programmatically:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(u"The product sales hit a new record in the first quarter, with 18.6
+    million units sold.")
+  prefs: []
+  type: TYPE_NORMAL
+- en: phrase = ''
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for token in doc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ if token.pos_ == ''NUM'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: phrase = phrase + ' ' + token.text
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ token = token.head
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➌ if token not in list(token.head.lefts):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: phrase = phrase + ' ' + token.text
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ break
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ break
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(phrase.strip())
+  prefs: []
+  type: TYPE_NORMAL
+- en: We iterate over the sentence’s tokens, looking for one that represents a number
+    ➊. If we find one, we start a while loop that iterates over right-hand heads ➋,
+    starting from the number token and then appending the text of each head to the
+    phrase variable to form a new phrase. To make sure the head of the next token
+    is to the right of that token, we check whether the token is in the list of its
+    head’s left children ➌. Once this condition returns false, we break from the while
+    loop ➍ and then from the outer for loop ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we walk the heads of tokens, starting from the main word of the phrase
+    containing the number (“sold” in this example) until we reach the main verb of
+    the sentence (“hit” in this example), excluding the adposition (“with” in this
+    example). We can implement this as shown in the following listing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ token = doc[token.i].head
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.pos_ != ''ADP'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ phrase = token.text + phrase
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➌ if token.dep_ == ''ROOT'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ break
+  prefs: []
+  type: TYPE_NORMAL
+- en: We walk the heads of tokens ➊ in a while loop, appending the text of each head
+    to the phrase being formed ➋. After reaching the main verb (marked as ROOT) ➌,
+    we break from the loop ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, we pick up the subject of the sentence, along with its left children:
+    “The” and “product.” In this example, the subject is “sales,” so we pick up the
+    following noun chunk: “The product sales.” This can be done with the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ for tok in token.lefts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ if tok.dep_ == ''nsubj'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ phrase = ' '.join([tok.text for tok in tok.lefts]) + ' ' + tok.text + ' '
+  prefs: []
+  type: TYPE_NORMAL
+- en: + phrase
+  prefs: []
+  type: TYPE_NORMAL
+- en: break
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ print(phrase)
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start by iterating over the main verb’s children ➊, searching for the subject
+    ➋. Then we prepend the subject’s children and the subject of the phrase ➌. To
+    see the resulting phrase, we print it ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output should look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The product sales hit 18.6 million units sold.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The result is a condensed version of the original sentence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Write a script that condenses financial reports by extracting only those sentences
+    that contain phrases referring to an amount of money. Also, the script needs to
+    condense the selected sentences so they include only the subject, the main verb,
+    the phrase referring to an amount of money, and the tokens you can pick up when
+    walking the heads starting from the main word of the money phrase up to the main
+    verb of the sentence. For example, given the following sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The company, whose profits reached a record high this year, largely attributed
+  prefs: []
+  type: TYPE_NORMAL
+- en: to changes in management, earned a total revenue of $4.26 million.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Your script should return this sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The company earned revenue of $4.26 million.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, “million” is the main word in the phrase “$4.26 million.” The
+    head of “million” is “of,” which is a child of “revenue,” which, in turn, is a
+    child of “earned,” the main verb of the sentence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Using Context to Improve the Ticket-Booking Chatbot**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As you’ve no doubt realized by now, there’s no single solution for all intelligent
+    text-processing tasks. For example, the ticket-booking script shown earlier in
+    this chapter will only find a destination if the submitted sentence contains the
+    word “to.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One way to make these scripts more useful is to take context into account to
+    determine an appropriate response. Let’s increase the functionality of the ticket-booking
+    script so it can handle a wider set of user input, including utterances that don’t
+    contain a “to + GPE” pair in any combination. For example, look at the following
+    utterance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I am attending the conference in Berlin.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here, the user has expressed an intention to go to Berlin without “to.” Only
+    the GPE entity “Berlin” is in the sentence. In such cases, it would be reasonable
+    for a chatbot to ask a confirmatory question, such as the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You want a ticket to Berlin, right?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The improved ticket-booking chatbot should produce different outputs based
+    on three different situations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The user expresses a clear intention to book a ticket to a certain destination.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It’s not immediately clear whether the user wants a ticket to the destination
+    mentioned.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The user doesn’t mention any destination.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Depending on which category the user input falls under, the chatbot generates
+    an appropriate response. [Figure 6-5](../Text/ch06.xhtml#ch06fig05) illustrates
+    how to represent this user input handling on a diagram.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig6-5.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-5: An example of user input handling in a ticket-booking application*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following script implements this design. For convenience, the code is divided
+    into several parts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first snippet contains the guess_destination function, which searches a
+    sentence for a GPE entity. Also, we’ll need to insert the dep_destination function
+    defined and discussed in “[Iterating Over the Heads of Tokens](../Text/ch06.xhtml#lev82)”
+    on [page 87](../Text/ch06.xhtml#page_87). Recall that this function searches a
+    sentence for the “to + GPE” pattern. We’ll need the dep_destination and guess_destination
+    functions to handle the first and second scenarios of user input, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#Insert the dep_destination function from a previous listing here'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def guess_destination(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for token in doc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ if token.ent_type != 0 and token.ent_type_ == ''GPE'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ return token.text
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ return 'Failed to determine'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code in the guess_destination function iterates over the tokens in a sentence,
+    looking for a GPE entity ➊. Once it finds one, the function returns it to the
+    calling code ➋. If it fails to find one, the function returns 'Failed to determine'
+    ➌, meaning the sentence doesn’t contain a GPE entity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the gen_function that follows, we generate a response based on what the functions
+    defined in the preceding snippet return.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def gen_response(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ dest = det_destination(doc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if dest != ''Failed to determine'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ return 'When do you need to be in ' + dest + '?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ dest = guess_destination(doc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if dest != ''Failed to determine'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ return 'You want a ticket to ' + dest +', right?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ return 'Are you flying somewhere?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code in the gen_response function starts by invoking the det_destination
+    function ➊, which determines whether an utterance contains a “to + GPE” pair.
+    If one is found, we assume that the user wants a ticket to the destination and
+    they need to clarify their departure time ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the det_destination function hasn’t found a “to + GPE” pair in the utterance,
+    we invoke the guess_destination function ➌. This function tries to find a GPE
+    entity. If it finds such an entity, it asks the user a confirmatory question about
+    whether they want to fly to that destination ➍. Otherwise, if it finds no GPE
+    entity in the utterance, the script asks the user whether they want to fly somewhere
+    ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To test the code, we apply the pipeline to a sentence and then send the doc
+    to the gen_response function we used in the previous listing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(u'I am going to the conference in Berlin.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(gen_response(doc))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the utterance submitted in this example, you should see the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When do you need to be in Berlin?
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can experiment with the sample utterance to see different output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Making a Smarter Chatbot by Finding Proper Modifiers**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'One way to make your chatbot smarter is to use dependency trees to find modifiers
+    for particular words. For example, you might teach your application to recognize
+    the adjectives that are applicable to a given noun. Then you could tell the bot,
+    “I’d like to read a book,” to which the smart bot could respond like this: “Would
+    you like a fiction book?”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A *modifier* is an optional element in a phrase or a clause used to change
+    the meaning of another element. Removing a modifier doesn’t typically change the
+    basic meaning of the sentence, but it does make it less specific. As a quick example,
+    consider the following two sentences:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I want to read a book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I want to read a book on Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first sentence doesn’t use modifiers. The second uses the modifier “on Python,”
+    making your request more detailed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you want to be specific, you must use modifiers. For example, to generate
+    a proper response to a user, you might need to learn which modifiers you can use
+    in conjunction with a given noun or verb.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider the following phrase:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: That exotic fruit from Africa.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this noun phrase, “fruit” is the head, “that” and “exotic” are *premodifiers*—modifiers
+    located in front of the word being modified—and “from Africa” is a *postmodifier*
+    phrase—a modifier that follows the word it limits or qualifies. [Figure 6-6](../Text/ch06.xhtml#ch06fig06)
+    shows the dependency tree for this phrase.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig6-6.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-6: An example of premodifiers and postmodifiers*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Suppose you want to determine possible adjectival modifiers for the word “fruit.”
+    (Adjectival modifiers are always premodifiers.) Also, you want to look at what
+    GPE entities you can find in the postmodifiers of this same word. This information
+    could later help you generate an utterance during a conversation on fruits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following script implements this design:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ doc = nlp(u"Kiwano has jelly-like flesh with a refreshingly fruity taste.
+    This
+  prefs: []
+  type: TYPE_NORMAL
+- en: is a nice exotic fruit from Africa. It is definitely worth trying.")
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ fruit_adjectives = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ fruit_origins = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for token in doc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➍ if token.text == ''fruit'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ fruit_adjectives = fruit_adjectives + [modifier.text for modifier in
+  prefs: []
+  type: TYPE_NORMAL
+- en: token.lefts if modifier.pos_ == 'ADJ']
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➏ fruit_origins = fruit_origins + [doc[modifier.i + 1].text for modifier
+  prefs: []
+  type: TYPE_NORMAL
+- en: in token.rights if modifier.text == 'from' and doc[modifier.i + 1].ent_
+  prefs: []
+  type: TYPE_NORMAL
+- en: type != 0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('The list of adjectival modifiers for word fruit:', fruit_adjectives)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('The list of GPE names applicable to word fruit as postmodifiers:',
+  prefs: []
+  type: TYPE_NORMAL
+- en: fruit_origins)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We start by applying the pipeline to a short text that contains the word “fruit”
+    with both premodifiers and postmodifiers ➊. We define two empty lists: fruit_adjectives
+    ➋ and fruit_origins ➌. The first one will hold any adjectival modifiers found
+    for the word “fruit.” The second list will hold any GPE entities found among the
+    postmodifiers of “fruit.”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, in a loop iterating over the tokens of the entire text, we look for the
+    word “fruit” ➍. Once this word is found, we first determine its adjectival premodifiers
+    by picking up its syntactic children to the left and choosing only adjectives
+    (determiners and compounds can also be premodifiers). We append the adjectival
+    modifiers to the fruit_adjectives list ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then we search for postmodifiers by checking the right-hand syntactic children
+    of the word “fruit.” In particular, we look for named entities, and then append
+    them to the fruit_origins list ➏.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script outputs the following two lists:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The list of adjectival modifiers for word fruit: [''nice'', ''exotic'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The list of GPE names applicable to word fruit as postmodifiers: [''Africa'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now your bot “knows” that a fruit can be nice, exotic (or both nice and exotic),
+    and might come from Africa.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When you need to process an utterance, or even just a phrase, it’s often important
+    to look at its structure to determine which general patterns it matches. Using
+    spaCy’s linguistic features, you can detect these patterns, allowing your script
+    to understand the user’s intention and respond properly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using patterns based on linguistic features works well when you need to recognize
+    the general structure of a sentence, which involves the subject, modal auxiliary
+    verb, main verb, and direct object. But a real-world application needs to recognize
+    more complicated sentence structures and be prepared for a wider set of user input.
+    This is where the syntactic dependency tree of a sentence becomes very useful.
+    You can walk the dependency tree of a sentence in different ways, extracting necessary
+    pieces of information from it. For example, you can use dependency trees to find
+    modifiers for particular words, and then use this information later to generate
+    intelligent text.
+  prefs: []
+  type: TYPE_NORMAL

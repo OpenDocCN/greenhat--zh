@@ -1,0 +1,1004 @@
+- en: '8'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Web Scraping
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: You need data to do data science, and when you don’t have a dataset on hand,
+    you can try *web scraping*, a set of techniques for reading information directly
+    from public websites and converting it to usable datasets. In this chapter, we’ll
+    cover some common web-scraping techniques.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ll start with the simplest possible kind of scraping: downloading a web
+    page’s code and looking for relevant text. We’ll then discuss regular expressions,
+    a set of methods for searching logically through text, and Beautiful Soup, a free
+    Python library that can help you parse websites more easily by directly accessing
+    HyperText Markup Language (HTML) elements and attributes. We’ll explore tables
+    and conclude by going over some advanced topics related to scraping. Let’s start
+    by looking at how websites work.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Understanding How Websites Work
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Suppose you want to see the website of No Starch Press, the publisher of this
+    book. You open a browser like Mozilla Firefox, Google Chrome, or Apple Safari.
+    You enter the URL of No Starch’s home page, [https://nostarch.com](https://nostarch.com).
+    Then your browser shows you the page, which, at the time of writing, looks like
+    [Figure 8-1](#figure8-1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c08/f08001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8-1: The home page of the publisher of this book, accessible at [https://nostarch.com](https://nostarch.com)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can see a lot on this page, including text, images, and links, all arranged
+    and formatted carefully so that the page is easy for humans to read and understand.
+    This careful formatting doesn’t happen by accident. Every web page has source
+    code that specifies the page’s text and images, as well as its formatting and
+    arrangement. When you visit a website, you see a browser’s *interpretation* of
+    this code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re interested in seeing the actual code of a website, rather than the
+    browser’s visual interpretation of it, you can use special commands. In Chrome
+    and Firefox, you can see the source code for [https://nostarch.com](https://nostarch.com)
+    by opening the page, right-clicking (in Windows, or CTRL+clicking in macOS) on
+    blank space on the page, and then clicking View Page Source. When you do that,
+    you’ll see a tab that looks like [Figure 8-2](#figure8-2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c08/f08002.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8-2: The HTML source code of the No Starch Press home page'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This tab contains the code that specifies all the content on the No Starch Press
+    home page. It’s in the form of raw text, without the visual interpretation that
+    browsers usually provide. Code for web pages is usually written in the HTML and
+    JavaScript languages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, we’re interested in this raw data. We’re going to write Python
+    scripts that automatically scan through HTML code, like the code shown in [Figure
+    8-2](#figure8-2), to find useful information that can be used for data science
+    projects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating Your First Web Scraper
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Let’s start with the simplest possible scraper. This scraper will take a URL,
+    get the source code of the page associated with that URL, and print out the first
+    part of the source code it got:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: This snippet starts by importing the `requests` package, which we used in Chapter
+    7; here we’ll use it to get a page’s source code. Next, we specify the `urltoget`
+    variable, which will be the URL of the web page whose code we want to request.
+    In this case, we’re requesting an archived page from my personal website. Finally,
+    we use the `requests.get()` method to get the code of our web page. We store this
+    code in the `pagecode` variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `pagecode` variable has a `text` attribute that contains all of the web
+    page’s code. If you run `print(pagecode.text)`, you should be able to see all
+    the HTML code of the page, stored as one long text string. Some pages have a huge
+    amount of code, so printing out all the code at once may be unwieldy. If so, you
+    can specify that you want to print only part of the code. That’s why we specify
+    that we want only the first 600 characters of the page’s code by running `print(pagecode.text[0:600])`
+    in the preceding snippet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: This output is HTML, which consists largely of *elements* that are marked with
+    angle brackets (`<` and `>`). Each element gives a browser like Firefox or Chrome
+    information about how to display the website to visitors. For example, you can
+    see a `<title>` tag in the output; also called a *start tag*, this marks the beginning
+    of the title element. At the end of the seventh line, `</title>` is another tag,
+    this time called an *end tag*, which marks the end of the title element. The actual
+    title of the site is the text that appears between the beginning and ending tags;
+    in this case, it’s `Bradford Tuckfield`. When a browser visits the site, it will
+    interpret the meaning of the start and end tags of the title element and then
+    display the title text `Bradford Tuckfield` at the top of the browser tab. This
+    isn’t an HTML book, so we’re not going to go over every detail of the code we
+    see here. We can be successful at scraping even without deep HTML expertise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that we’ve scraped a web page, you may feel like you have all the scraping
+    skills you need. However, you have much more to learn. Most web pages have a great
+    deal of HTML code and content, but a data scientist rarely needs a web page’s
+    entire source code. In business scenarios, you’ll more likely need only one specific
+    piece of information or data on a web page. To find the specific information you
+    need, it will be useful to be able to quickly and automatically search through
+    long strings of HTML code. In other words, you will need to *parse* the HTML code.
+    Let’s look at how to do this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parsing HTML Code
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In the previous section, we went over how to download any public web page’s
+    code to a Python session. Now let’s talk about how to parse the downloaded code
+    to get the exact data you need.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scraping an Email Address
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Suppose you’re interested in automatically harvesting email addresses to create
+    a marketing list. You might use the scraper we introduced previously to download
+    the source code for many web pages. But you won’t need all the information in
+    the long strings that represent the full code for each page. Instead, you will
+    want only the small substrings that represent the email addresses that appear
+    on the pages you scraped. So you will want to search through each page you scrape
+    to find these smaller substrings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Suppose that one of the pages whose code you’ve downloaded is [https://bradfordtuckfield.com/contactscrape.xhtml](https://bradfordtuckfield.com/contactscrape.xhtml).
+    If you visit this web page, you’ll see that a browser displays its content, as
+    in [Figure 8-3](#figure8-3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c08/f08003.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8-3: The content of a demo page that can be scraped easily'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This page displays only one email address, which is not hard to find after
+    glancing at the page content for a moment. If we want to write a script that finds
+    the email address on pages that are formatted like this one, we could search for
+    the text `Email:` and look at the characters immediately following that text.
+    Let’s do this, with a simple text search through the page’s code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first two lines of this snippet follow the same scraping process used in
+    the previous section: we specify a URL, download the page code for that URL, and
+    store the code in the `pagecode` variable. After that, we use `find()` to search
+    for the email text. This method takes a string of text as its input and returns
+    the location of that text as its output. In this case, we use the `Email:` string
+    as the input to the `find()` method, and we store the location of this text in
+    the `mail_beginning` variable. The final output is `511`, indicating that the
+    text `Email:` begins at the 511th character in the page’s code.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After we know the location of the `Email:` text, we can try to get the actual
+    email address by looking at characters just after that text:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we print out the 80 characters that immediately follow the beginning
+    of the `Email:` text (which starts at the 511th character). The output looks like
+    this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can see that the code contains more than just the text visible in [Figure
+    8-3](#figure8-3). In particular, an HTML element called `label` appears between
+    the `Email:` text and the actual email address. If you want the email address
+    alone, you have to skip the characters associated with the `<label>` tag, and
+    you also have to remove the characters that appear after the email address:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: This snippet will print out `demo@bradfordtuckfield.com`, exactly the text we
+    wanted to find on the page, since it skips the 38 characters of the `Email:` text
+    and the `<label>` tag, and it trims off the final characters after the email address,
+    which ends at 64 characters after the `Email:` text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Searching for Addresses Directly
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We were able to find the email address in the page’s HTML code by looking for
+    the 38th through 64th characters after the `Email:` text. The problem with this
+    approach is that it’s not likely to work automatically when we try it on a different
+    web page. If other pages don’t have the same `<label>` tag we found, looking at
+    the 38th character after `Email:` won’t work. Or if the email address has a different
+    length, stopping our search at the 64th character after `Email:` won’t work. Since
+    scraping is usually supposed to be performed on many websites in rapid, automatic
+    succession, it probably won’t be feasible to manually check for which characters
+    we should look at instead of the 38th and 64th characters. So this technique probably
+    won’t work for a scraper in an actual business scenario.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead of searching for the text `Email:` and looking at the following characters,
+    we could try searching for the at sign (`@`) itself. Every email address should
+    contain an `@`, so if we find this, we’re likely to have found an email address.
+    There won’t be any HTML tags in the middle of an email address, so we won’t have
+    to worry about skipping HTML tags to find the address. We can search for the `@`
+    in the same way we searched for the `Email:` text:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is the same scraping code we used before. The only difference is that
+    we are searching for `@` instead of `Email:`. The final output shows that `@`
+    appears as the 553rd character in the code. We can print out the characters immediately
+    before and after the `@` to get the email address itself:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There were no HTML tags to skip over. But we still have a problem: to get the
+    email address without other extra characters, we have to know the number of characters
+    before and after the `@` (4 and 22, respectively). Again, this wouldn’t work if
+    we tried to repeat it to automatically scrape multiple email addresses from many
+    websites.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Our searches would be more successful and easier to automate if we had a way
+    to do intelligent searches. For example, imagine that we could search for text
+    that matches the following pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`<characters matching the beginning of an email address>`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`@`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`<characters matching the end of an email address>`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In fact, there is a way to perform automated searches through text in a way
+    that can recognize patterns like the one described here. We’ll introduce this
+    approach now.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performing Searches with Regular Expressions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '*Regular expressions* are special strings that enable advanced, flexible, custom
+    searches of patterns in text. In Python, we can do regular expression searches
+    by using the `re` module, which is part of the Python standard library that comes
+    preinstalled with Python. The following is an example of a regular expression
+    search that uses the `re` module:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this snippet, we import the `re` module. As its abbreviation indicates,
+    this module is used for regular expressions. This module provides a `search()`
+    method that can be used to search for text in any string. In this case, we specify
+    two arguments: the string `recommend` and a string of text that contains the word
+    *recommend*. We’re asking the method to search for the substring `recommend` within
+    the larger string that also has some irrelevant text. Note that we add a single
+    `r` character before the `recommend` string. This `r` tells Python to treat the
+    `recommend` string as a *raw* string, meaning that Python won’t process or adjust
+    it before using it in a search. The `span()` method will give us the beginning
+    and end locations of this substring.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The output, `(18,27)`, indicates that `recommend` exists in the second string,
+    starting at index 18 in the string and ending at index 27\. This `search()` method
+    is similar to the `find()` method that we used in the previous section; both are
+    finding the locations of substrings within longer strings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But suppose you are searching a web page written by someone who has a tendency
+    to misspell words. By default, the `re.search()` method looks for exact matches,
+    so if you’re searching a web page that contains `recommend` spelled incorrectly,
+    you won’t find any matches. In this case, we may want to ask Python to look for
+    `recommend`, but to look for different spellings of it. The following is one way
+    to accomplish this with regular expressions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we change the argument of our code: instead of searching for `recommend`
+    spelled correctly, we search for `rec+om+end`. This works because the `re` module
+    interprets the plus sign (`+`) as a *metacharacter*. When this special type of
+    character is used in a search, it has a special logical interpretation that can
+    help you do flexible searches instead of requiring exact matches. The `+` metacharacter
+    indicates repetition: it specifies that Python should search for one or more repetitions
+    of the preceding character. So when we write `c+`, Python knows that it should
+    search for one or more repetitions of the letter `c`, and when we write `m+`,
+    Python knows that it should search for one or more repetitions of the letter `m`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A string that uses a metacharacter like `+` with a special, logical meaning
+    is called a *regular expression*. Regular expressions are used in every major
+    programming language and are extremely important in all code applications that
+    deal with text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You should try to experiment with the `+` metacharacter to get more comfortable
+    with the way it works. For example, you could try to search for various misspellings
+    of `recommend` as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: This snippet contains four regular expression searches. The output of the first
+    search is `(18,26)`, indicating that the misspelled word `recomend` matches the
+    regular expression `rec+om+end` that we searched for. Remember that the `+` metacharacter
+    searches for one or more repetitions of the preceding character, so it will match
+    the single `c` and single `m` in the misspelled `recomend`. The output of the
+    second search is `(18,28)`, indicating that the misspelling `reccommend` also
+    matches the regular expression `rec+om+end`, again because the `+` metacharacter
+    specifies one or more repetitions of a character, and `c` and `m` are both repeated
+    twice here. In this case, our regular expression using `+` has provided flexibility
+    to our search so it can match multiple alternative spellings of a word.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But the flexibility of regular expressions is not absolute. Our third and fourth
+    searches return errors when you run them in Python, because the regular expression
+    `rec+om+end` doesn’t match any part of the specified strings (`reommend` and `recomment`).
+    The third search doesn’t return any matches because `c+` specifies one or more
+    repetitions of `c`, and there are zero repetitions of `c` in `reommend`. The fourth
+    search doesn’t return any matches because, even though the number of `c` and `m`
+    characters is correct, searching for `rec+om+end` requires a `d` character at
+    the end, and `recomment` doesn’t have a match for the `d`. When you use regular
+    expressions, you need to be careful to make sure that they’re expressing precisely
+    what you want, with the exact amount of flexibility you want.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using Metacharacters for Flexible Searches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In addition to `+`, several other important metacharacters can be used in Python
+    regular expressions. Several metacharacters, like `+`, are used to specify repetitions.
+    For example, the asterisk (`*`) specifies that the preceding character is repeated
+    *zero* or more times. Notice that this is different from `+`, which represents
+    a character repeated *one* or more times. We can use `*` in a regular expression
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This regular expression would find the location of a bank balance in a string
+    that specifies 1, 10, 100, 1,000, or indeed any number of 0s (even zero 0s). Here
+    are examples of using `*` as a metacharacter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this snippet, we again perform searches for the regular expression `10*`
+    in four strings. We find matches for the first, second, and fourth strings, because,
+    though all specify different amounts of money, each contains the character `1`
+    followed by zero or more repetitions of the character `0`. The third string also
+    contains repetitions of the `0` character, but no match occurs because the string
+    doesn’t contain a `1` character adjacent to the 0s.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In practice, having characters in plaintext that repeat more than twice is
+    uncommon, so the `*` may not always be useful to you. If you don’t want to allow
+    more than one repetition of a character, the question mark (`?`) is useful as
+    a metacharacter. The `?`, when used as a metacharacter, specifies that the preceding
+    character appears either zero or one times:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, we use the `?` because we want to search for either Clark or Clarke,
+    but not for Clarkee or Clarkeee or Clark with more *e*’s.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fine-Tuning Searches with Escape Sequences
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Metacharacters enable you to perform useful, flexible text searches, allowing
+    for many spellings and formats. However, they can also lead to confusion. For
+    example, suppose that you want to search some text for a particular math equation,
+    like 99 + 12 = 111\. You could try to search for it as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When you run this code, you’ll get an error, because Python doesn’t find any
+    matches for the search string. This may surprise you, since it’s easy to see an
+    exact match for the equation we specified in the string we searched. This search
+    returns no results because the default interpretation of `+` is as a metacharacter,
+    not a literal addition sign. Remember that `+` specifies that the preceding character
+    is repeated one or more times. We would find a match if we did a search like this
+    one:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this case, Python finds an exact match by interpreting the `+` sign as a
+    metacharacter, since `9` is repeated in the string on the right. If you want to
+    search for an actual addition sign rather than using `+` as a metacharacter, you
+    need to use yet another metacharacter to specify this preference. You can do it
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we use the backslash (`\`) as a special metacharacter. The `\` is called
+    an *escape character*. It allows the `+` addition sign to “escape” from its metacharacter
+    status and be interpreted literally instead. We call the `\+` string an *escape
+    sequence*. In the preceding snippet, we find a match for our math equation because
+    we escape the `+` addition sign, so Python looks for a literal addition sign instead
+    of interpreting `+` as a metacharacter and looking for repetitions of the `9`
+    character.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can do a literal search for any metacharacter by using an escape sequence.
+    For example, imagine that you want to look for a question mark, instead of doing
+    a search with a question mark as a metacharacter. You could do the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: This finds a match for `Clarke?`, but it won’t find a match for `Clark?` Because
+    we escape the question mark, Python searches for a literal question mark instead
+    of interpreting it as a metacharacter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you ever need to search for a backslash, you’ll need two backslashes—one
+    to escape from metacharacter interpretation and another to tell Python which literal
+    character to search for:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this snippet, we use the `r` character again to specify that we want to
+    interpret the strings as raw text and to make sure Python doesn’t do any adjustment
+    or processing before our search. Escape sequences are common and useful in regular
+    expressions. Some escape sequences give special meaning to standard characters
+    (not metacharacters). For example, `\d` will search for any digit (numbers 0 to
+    9) in a string, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This snippet finds the location of the character `1` because the `\d` escape
+    sequence refers to any digit. The following are other useful escape sequences
+    using non-metacharacters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`\D` Searches for anything that’s not a digit'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`\s` Searches for whitespace (spaces, tabs, and newlines)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`\w` Searches for any alphabetic characters (letters, numbers, or underscores)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Other important metacharacters are the square brackets `[` and `]`. These can
+    be used as a pair in regular expressions to represent types of characters. For
+    example, we can look for any lowercase alphabetic character as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This snippet is specifying that we want to find any characters that are in
+    the “class” of characters between `a` and `z`. This returns the output `(1,2)`,
+    which consists of only the character `y`, since this is the first lowercase character
+    in the string. We could search for any uppercase characters similarly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: This search outputs `(0,1)`, because the first uppercase character it finds
+    is the `M` at the beginning of the string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another important metacharacter is the pipe (`|`), which can be used as an
+    *or* logical expression. This can be especially useful if you’re not sure which
+    of two ways is the correct way to spell something. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we specify that we want the string `Manchac` with either an `a` or a `k`
+    at the end. It would also return a match if we searched `Lets drive on Manchack.`
+  prefs: []
+  type: TYPE_NORMAL
+- en: Combining Metacharacters for Advanced Searches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The following are other metacharacters you should know:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`$` For the end of a line or string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`^` For the beginning of a line or string'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`.` For a wildcard, meaning any character except the end of a line (`\n`)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can combine text and metacharacters for advanced searches. For example,
+    suppose you have a list of all the files on your computer. You want to search
+    through all the filenames to find a certain *.pdf* file. Maybe you remember that
+    the name of your *.pdf* has something to do with *school*, but you can’t remember
+    anything else about the name. You could use this flexible search to find the file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let’s look at the regular expression in this snippet. It starts with `school`
+    since you remember that the filename contains that word. Then, it has two metacharacters
+    together: `.*`. The `.` is a wildcard metacharacter, and the `*` refers to any
+    amount of repetition. So, `.*` specifies any number of any other characters coming
+    after `school`. Next, we have an escaped period (full stop): `\.`, which refers
+    to an actual period sign rather than a wildcard. Next, we search for the string
+    `pdf`, but only if it appears at the end of the filename (specified by `$`). In
+    summation, this regular expression specifies a filename that starts with `school`,
+    ends with `.pdf`, and may have any other characters in between.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s search different strings for this regular expression to make sure you’re
+    comfortable with the patterns it’s searching for:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Some of these searches will find matches, and some will throw errors because
+    they don’t find matches. Look closely at the searches that throw errors to make
+    sure you understand why they’re not finding matches. As you get more comfortable
+    with regular expressions and the metacharacters they use, you’ll be able to quickly
+    grasp the logic of any regular expression you see instead of seeing it as a meaningless
+    jumble of punctuation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can use regular expressions for many kinds of searches. For example, you
+    can specify a regular expression that searches for street addresses, URLs, particular
+    types of filenames, or email addresses. As long as a logical pattern occurs in
+    the text you’re searching for, you can specify that pattern in a regular expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To learn more about regular expressions, you can check out the official Python
+    documentation at [https://docs.python.org/3/howto/regex.xhtml](https://docs.python.org/3/howto/regex.xhtml).
+    But really, the best way to get comfortable with regular expressions is to simply
+    practice them on your own.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using Regular Expressions to Search for Email Addresses
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Regular expressions enable you to search flexibly and intelligently for many
+    types of patterns. Let’s return to our initial example of searching for email
+    addresses and see how we can use regular expressions there. Remember that we want
+    to search for text that matches the following pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`<some text>``@``<some more text>`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s a regular expression that will accomplish this search:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let’s look closely at the elements of this snippet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It starts with `[a-zA-Z]`. This includes the square bracket metacharacters,
+    which specify a class of characters. In this case, it will look for the characters
+    represented by `a-zA-Z`, which refers to any lowercase or uppercase alphabetic
+    character.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The `[a-zA-Z]` is followed by `+`, specifying one or more instances of any alphabetic
+    character.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The `@` is next. This is not a metacharacter but rather searches for the literal
+    at sign (`@`).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Next, we have `[a-zA-Z]+` again, specifying that after the `@`, any number of
+    alphabetic characters should appear. This should be the first part of an email
+    domain, like the *protonmail* in *protonmail.com*.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The `\.` specifies a period or full-stop character, to search for this character
+    in *.com* or *.org* or any other top-level domain.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Finally, we have `[a-zA-Z]+` again, specifying that some alphabetic characters
+    should come after the full stop. This is the *com* in *.com* or the *org* in *.org*
+    addresses.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Together, these six elements specify the general pattern of an email address.
+    If you weren’t familiar with regular expressions, it would be strange to think
+    that `[a-zA-Z]+@[a-zA-Z]+\.[a-zA-Z]+` is specifying an email address. But because
+    of Python’s ability to interpret metacharacters in regular expressions, Python
+    has been able to interpret this search and return email addresses. Just as important,
+    you have learned regular expressions and understand what this regular expression
+    means too.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One important thing to remember is that there are many email addresses in the
+    world. The regular expression in the preceding snippet will identify many email
+    addresses, but not every possible one. For example, some domain names use characters
+    that aren’t part of the standard Roman alphabet used for the English language.
+    The preceding regular expression wouldn’t capture those email addresses. Also,
+    email addresses can include numerals, and our regular expression wouldn’t match
+    those either. A regular expression that could reliably capture every possible
+    combination of characters in every possible email address would be extremely complex,
+    and going to that level of complexity is beyond the scope of this book. If you’re
+    interested in advanced regular expressions, you can look at a regular expression
+    written by a professional that is meant to find email addresses at [https://web.archive.org/web/20220721014244/https://emailregex.com/](https://web.archive.org/web/20220721014244/https://emailregex.com/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Converting Results to Usable Data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Remember that we’re data scientists, not only web scrapers. After scraping web
+    pages, we’ll want to convert the results of our scraping to usable data. We can
+    do this by importing everything we scrape into a pandas dataframe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s scrape all of the (fake) email addresses listed in a paragraph at the
+    following URL: [https://bradfordtuckfield.com/contactscrape2.xhtml](https://bradfordtuckfield.com/contactscrape2.xhtml).
+    We can start by reading all of the text from the site, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is the same code we used before: we simply download the HTML code and
+    store it in our `pagecode` variable. If you’d like, you can look at all the code
+    for this page by running `print(pagecode.text)`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we can specify our regular expression to look for all email addresses
+    in the paragraph:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we use the same characters for our regular expression. But we’re using
+    a new method: `re.finditer()` instead of `re.search()`. We do this because `re.finditer()`
+    is able to obtain multiple matches, and we need to do this to get all of the email
+    addresses. (By default, `re.search()` finds only the first match of any string
+    or regular expression.)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we need to compile these email addresses together:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: We start with an empty list called `alladdresses`. Then we append each element
+    of our `allmatches` object to the list. Finally, we print out the list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can also convert our list to a pandas dataframe:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now that our addresses are in a pandas dataframe, we can use the huge number
+    of methods provided by the pandas library to do anything that we may have done
+    with any other pandas dataframe. For example, we can put it in reverse alphabetical
+    order if that’s useful to us, and then export it to a *.csv* file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s think about what we did so far. Starting with only a URL, we downloaded
+    the full HTML code of the web page specified by the URL. We used a regular expression
+    to find all emails listed on the page. We compiled the emails into a pandas dataframe,
+    which can then be exported to a *.csv* or Excel file or otherwise transformed
+    as we see fit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Downloading HTML code and specifying regular expressions to search for certain
+    information, as we have done, is a reasonable way to accomplish any scraping task.
+    However, in some cases, it may be difficult or inconvenient to write a complex
+    regular expression for a difficult-to-match pattern. In these cases, you can use
+    other libraries that include advanced HTML parsing and scraping capabilities without
+    requiring you to write any regular expressions. One such library is called Beautiful
+    Soup.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using Beautiful Soup
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The *Beautiful Soup library* allows us to search for the contents of particular
+    HTML elements without writing any regular expressions. For example, imagine that
+    you want to collect all the hyperlinks in a page. HTML code uses an *anchor* element
+    to specify hyperlinks. This special element is specified with a simple `<a>` start
+    tag. The following is an example of what an anchor element might look like in
+    the HTML code for a web page:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This snippet specifies the text `Click here`. When users click this text on
+    an HTML web page, their browsers will navigate to [https://bradfordtuckfield.com](https://bradfordtuckfield.com).
+    The HTML element starts with an `<a>`, which indicates that it’s an anchor, or
+    hyperlink, to a web page or file. Then it has an attribute called `href`. In HTML
+    code, an *attribute* is a variable that provides more information about elements.
+    In this case, the `href` attribute contains the URL that a hyperlink should “point”
+    to: when someone clicks the `Click here` text, their browser navigates to the
+    URL contained in the `href` attribute. After the `href` attribute, there’s an
+    angle bracket, then the text that appears on the page. A final `</a>` indicates
+    the end of the hyperlink element.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We could find all the anchor elements in a web page’s code by doing a regular
+    expression search for the `<a>` pattern or by specifying a regular expression
+    to find URLs themselves. However, the Beautiful Soup module enables us to find
+    the anchor elements more easily without worrying about regular expressions. We
+    can find all the URLs that are linked from a website as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we import the `requests` and `BeautifulSoup` modules. Just like every
+    other third-party Python package, you will need to install `BeautifulSoup` before
+    using it in a script. The `BeautifulSoup` module is part of a package called bs4\.
+    The bs4 package has what are called *dependencies*: other packages that need to
+    be installed for bs4 to work correctly. One of its dependencies is a package called
+    lxml. You will need to install lxml before you can use bs4 and `BeautifulSoup`.
+    After importing the modules we need, we use the `requests.get()` method to download
+    a web page’s code, just as we’ve done previously in the chapter. But then we use
+    the `BeautifulSoup()` method to parse the code and store the result in a variable
+    called `soup`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Having the `soup` variable enables us to use particular methods from Beautiful
+    Soup. In particular, we can use the `find_all()` method to look for particular
+    types of elements in the web page code. In this case, we search for all anchor
+    elements, which are identified by the character `a`. After getting all the anchor
+    elements, we print out the value of their `href` attributes—the URLs of the pages
+    or files they’re linking to. You can see that with Beautiful Soup, we can do useful
+    parsing with only a few lines of code, all without using complicated regular expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parsing HTML Label Elements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The anchor element is not the only type of element in HTML code. We saw the
+    `<title>` element earlier in the chapter. Sometimes web pages also use the `<label>`
+    element to put labels on text or content on their page. For example, imagine that
+    you want to scrape contact information from the [http://bradfordtuckfield.com/contactscrape.xhtml](http://bradfordtuckfield.com/contactscrape.xhtml)
+    web page that we saw earlier. We’ve reproduced [Figure 8-3](#figure8-3) as [Figure
+    8-4](#figure8-4) here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c08/f08004.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8-4: The content of a demo page that can be scraped easily'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You may be doing a project to search web pages for email addresses, phone numbers,
+    or websites. Again, you could try to use regular expressions to search for these
+    items. But the phone numbers and email addresses on this page are labeled with
+    an HTML `<label>` element, so Beautiful Soup makes it easier to get the information
+    we need. First, let’s look at how this `<label>` element is used in the HTML code
+    for this web page. Here’s a small sample of this page’s code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As you saw earlier in the chapter, the `<label>` tag is used to indicate that
+    a part of the HTML code is of a particular type. In this case, the `class` attribute
+    identifies that this is a label for an email address. If the web page you’re scraping
+    has these `<label>` elements, you can search for email addresses, phone numbers,
+    and websites as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we use the `soup.find()` method again. But instead of finding only elements
+    labeled with `a`, as we did when we searched for hyperlinks, this time we also
+    search for elements with the `<label>` tag. Each `<label>` tag in the code specifies
+    a different `class`. We find the text with each kind of label (for email and mobile)
+    and print out the text. For the website link, we search for an anchor tag with
+    the `website` class. The final result is that we’ve been able to find every type
+    of data we wanted: an email address, a cell phone number, and a website.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scraping and Parsing HTML Tables
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Tables are common on websites, so it’s worth knowing a little about how to scrape
+    data from website tables. You can see a simple example of an HTML table if you
+    visit [https://bradfordtuckfield.com/user_detailsscrape.xhtml](https://bradfordtuckfield.com/user_detailsscrape.xhtml).
+    This web page contains a table with information about several fictional people,
+    shown in [Figure 8-5](#figure8-5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c08/f08005.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8-5: A table that can be scraped using Beautiful Soup'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Say we want to scrape information about these people from this table. Let’s
+    look at the HTML code that specifies this table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `<table>` tag specifies the beginning of the table, and `</table>` specifies
+    the end of it. Between the beginning and the end are some `<tr>` and `</tr>` tags.
+    Each `<tr>` tag specifies the beginning of a table row (`tr` is an abbreviation
+    for *table row*). Within each table row, the `<td>` tags specify the content of
+    particular table cells (`td` is short for *table data*). You can see that the
+    first row is the header of the table, and it contains the names of every column.
+    After the first row, each subsequent row specifies information about one person:
+    their first name first, their surname second, and their age third, in three different
+    `<td>` elements.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can parse the table as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we use Beautiful Soup again. We create a `soup` variable that contains
+    the parsed version of the website. Then we use the `find_all()` method to find
+    every `tr` element (table row) on the page. For every table row, we use `find_all()`
+    again to look for every `td` element (table data) in the row. After finding the
+    contents of each row, we print them out, with formatting to label first names,
+    last names, and ages. In addition to printing these elements, you could also consider
+    adding them to a pandas dataframe to more easily export them, sort them, or do
+    any other analysis you prefer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Advanced Scraping
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Scraping is a deep topic, and there is more to learn beyond the material covered
+    in this chapter. You could start with a few areas outlined in this section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, consider that some web pages are dynamic; they change depending on interaction
+    from the user, such as clicking elements or scrolling. Often the dynamic parts
+    of web pages are rendered using JavaScript, a language with syntax that’s very
+    different from the HTML we’ve focused on scraping in this chapter. The `requests`
+    package that we used to download HTML code, and the Beautiful Soup module that
+    we used to parse the code, are meant to be used with static web pages. With dynamic
+    web pages, you may want to use another tool such as the Selenium library, which
+    is designed for scraping dynamic web pages. With Selenium, your script can do
+    things like enter information into website forms and click CAPTCHA-type challenges
+    without requiring direct human input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You should also consider strategies to deal with being blocked. Many websites
+    are hostile to all attempts to scrape their data. They have strategies to block
+    scrapers, and if they detect that you’re trying to scrape and harvest their information,
+    they may try to block you. One response to being blocked is to give up; this will
+    avoid any legal problems or ethical issues that may come with scraping hostile
+    websites.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you decide to scrape sites that are trying to block you anyway, you can take
+    some actions to avoid being blocked. One is to set up one or more *proxy servers*.
+    A website might block your IP address from accessing its data, so you can set
+    up a different server with a different IP address that the website hasn’t blocked.
+    If the website continues to try to block the IP address of your proxy server as
+    well, you can set up *rotating proxies* so that you continuously get new IP addresses
+    that are not blocked, and scrape only with those fresh, unblocked IP addresses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When you take this kind of approach, you should consider its ethical implications:
+    Do you feel comfortable using strategies like these to access a site that doesn’t
+    want you to access it? Remember that in rare cases, unauthorized scraping can
+    lead to lawsuits or even criminal prosecution. You should always be cautious and
+    ensure that you’ve thought through the practical and ethical implications of everything
+    you do.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Not all websites are averse to letting people access and scrape their data.
+    Some websites allow scraping, and some even set up an *application programming
+    interface (API)* to facilitate data access. An API allows you to query a website’s
+    data automatically and receive data that’s in a user-friendly format. If you ever
+    need to scrape a website, check whether it has an API that you can access. If
+    a website has an API, the API documentation should indicate the data that the
+    API provides and how you can access it. Many of the tools and ideas we’ve discussed
+    in this chapter also apply to API usage. For example, the `requests` package can
+    be used to interact with APIs, and after getting API data, the data can be used
+    to populate a pandas dataframe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, timing is an important issue to consider when you set up scraping scripts.
+    Sometimes a scraping script makes many requests to a website in quick succession,
+    trying to download as much data as possible, as quickly as possible. This could
+    cause a website to be overwhelmed and crash, or it may block the scraper to avoid
+    getting overwhelmed. To prevent the target site from crashing or blocking you,
+    you can adjust your scraper so that it works more slowly. One way to slow down
+    your script is to deliberately add pauses. For example, after downloading one
+    row from a table, the script can pause and do nothing (the script can *sleep*)
+    for 1 second or 2 seconds or 10 seconds, and then download the next row from the
+    table. Going slowly on purpose can be frustrating for those of us who like to
+    get things done quickly, but it can often make scraping success more likely over
+    the long term.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this chapter, we covered web scraping. We outlined the concept of scraping,
+    including a brief introduction to how HTML code works. We went on to build a simple
+    scraper, one that merely downloads and prints out the code for a web page. We
+    also searched through and parsed a website’s code, including using regular expressions
+    for advanced searches. We showed how to convert the data we scrape from websites
+    to usable datasets. We also used Python’s Beautiful Soup to easily find hyperlinks
+    and tagged information on web pages. Finally, we briefly discussed some advanced
+    applications of scraping skills, including API integrations and scraping dynamic
+    websites. In the next chapter, we’ll be going over recommendation systems. Let’s
+    continue!
+  prefs: []
+  type: TYPE_NORMAL

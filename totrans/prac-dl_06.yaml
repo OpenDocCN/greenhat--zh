@@ -1,0 +1,1028 @@
+- en: '**6'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: CLASSICAL MACHINE LEARNING**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/common.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: It’s satisfying to be able to write “Classical Machine Learning” as it implies
+    that there is something newer that makes older techniques “classical.” Of course,
+    we know by now that there is—deep learning—and we’ll get to it in the chapters
+    that follow. But first, we need to build our intuition by examining older techniques
+    that will help cement concepts for us and, frankly, because the older techniques
+    are still useful when the situation warrants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s tempting to include some sort of history here. To keep to the practical
+    nature of this book, we won’t, but a full history of machine learning is needed,
+    and as of this writing, I have not found one. Historians reading this, please
+    take note. I will say that machine learning is not new; the techniques of this
+    chapter go back decades and have had considerable success on their own.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, the successes were always limited in a way that deep learning has now
+    largely overcome. Still, owning a hammer doesn’t make everything a nail. You will
+    encounter problems that are well suited to these older techniques. This might
+    be because there’s too little data available to train a deep model, because the
+    problem is simple and easily solved by a classical technique, or because the operating
+    environment is not conducive to a large, deep model (think microcontroller). Besides,
+    many of these techniques are easier to understand, conceptually, than a deep model
+    is, and all the comments of earlier chapters about building datasets, as well
+    as the comments in [Chapter 11](ch11.xhtml#ch11) about evaluating models, still
+    apply.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following sections will introduce several popular classical models, not
+    in great detail, but in essence. All of these models are supported by sklearn.
+    In [Chapter 7](ch07.xhtml#ch07), we’ll apply the models to some of the datasets
+    we developed in [Chapter 5](ch05.xhtml#ch05). This will give us an idea of the
+    relative performance of the models when compared to each other as well as giving
+    us a baseline for comparing the performance of deep models in subsequent chapters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll examine six classical models. The order in which we discuss them roughly
+    tracks with the complexity of the type of model. The first three, Nearest Centroid,
+    *k*-Nearest Neighbors, and Naïve Bayes, are quite simple to understand and implement.
+    The last three, Decision Trees, Random Forests, and Support Vector Machines, are
+    harder, but we’ll do our best to explain what’s going on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Nearest Centroid
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Assume we want to build a classifier and that we have a properly designed dataset
+    of *n* classes (see [Chapter 4](ch04.xhtml#ch04)). For simplicity, we’ll assume
+    that we have *m* samples of each of the *n* classes. This isn’t necessary but
+    saves us from adding many subscripts to things. Since our dataset is properly
+    designed, we have training samples and test samples. We don’t need validation
+    samples in this case, so we can throw them into the training set. Our goal is
+    to have a model that uses the training set to learn so we can apply the model
+    to the test set to see how it will do with new, unknown samples. Here the sample
+    is a feature vector of floating-point values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The goal of selecting components for a feature vector is to end up with a feature
+    vector that makes the different classes distinct in the feature space. Let’s say
+    that the feature vector has *w* features. This means we can think of the feature
+    vector as the coordinates of a point in a *w*-dimensional space. If *w* = 2 or
+    *w* = 3, we can graph the feature vectors. However, mathematically, there’s no
+    reason for us to restrict *w* to 2 or 3; all of what we describe here works in
+    100, 500, or 1000 dimensions. Note it won’t work equally well: the dreaded curse
+    of dimensionality will creep in and eventually require an exponentially large
+    training dataset, but we’ll ignore this elephant in the room for now.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the features are well chosen, we might expect a plot of the points in the
+    *w*-dimensional space to group the classes so that all of the samples from class
+    0 are near each other, and all of the samples from class 1 are near each other
+    but distinct from class 0, and so forth. If this is our expectation, then how
+    might we use this knowledge to assign a new, unknown sample to a particular class?
+    Of course, this is the goal of classification, but in this case, given our assumption
+    that the classes are well separated in the feature space, what is something simple
+    we could do?
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 6-1](ch06.xhtml#ch6fig1) shows a hypothetical 2D feature space with
+    four distinct classes. The different classes are clearly separated in this toy
+    example. A new, unknown feature vector will fall into this space as a point. The
+    goal is to assign a class label to the new point, either square, star, circle,
+    or triangle.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/06fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-1: A hypothetical 2D feature space with four distinct classes*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since the points of [Figure 6-1](ch06.xhtml#ch6fig1) are so well grouped, we
+    might think that we could represent each group by an average position in the feature
+    space. Instead of the 10 square points, we’d use a single point to represent the
+    squares. This seems an entirely reasonable thing to do.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It turns out, the average point of a group of points has a name: the *centroid*,
+    the center point. We know how to compute the average of a set of numbers: add
+    them up and divide by how many we added. To find the centroid of a set of points
+    in 2D space, we first find the average of all the x-axis coordinates and then
+    the average of all the y-axis coordinates. If we have three dimensions, we’ll
+    do this for the x-, y-, and z-axes. If we have *w* dimensions, we’ll do it for
+    each of the dimensions. In the end, we’ll have a single point that we can use
+    to represent the entire group. If we do this for our toy example, we get [Figure
+    6-2](ch06.xhtml#ch6fig2), where the centroid is shown as the large marker.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/06fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-2: A hypothetical 2D feature space with four distinct classes and
+    their centroids*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'How is the centroid helpful to us? Well, if a new, unknown sample is given
+    to us, it will be a point in the feature space as mentioned previously. We can
+    then measure the distance between this point and each of the centroids and assign
+    the class label of the closest centroid. The idea of *distance* is somewhat ambiguous;
+    there are many different ways to define distance. One obvious way is to draw straight
+    line between the two points; this distance is known as the *Euclidean distance*,
+    and it’s easy enough to compute. If we have two points, (*x*[0],*y*[0]) and (*x*[1],*y*[1])
+    then the Euclidean distance between them is simply the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/110equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: If we have three dimensions, the distance between two points becomes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/110equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: which can be generalized to *w* dimensions for two points, *x*[0] and *x*[1],
+    as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/110equ03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where ![Image](Images/110equ04.jpg) is the *i*-th component of the point *x*[0].
+    This means, component by component, find the difference between the two points,
+    square it, and add it to the squared difference of all the other components. Then,
+    take the square root.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 6-3](ch06.xhtml#ch6fig3) shows a sample point in the feature space
+    as well as the distances to the centroids. The shortest distance is to the circle
+    class, so we’d assign the new sample to that class.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/06fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-3: A hypothetical 2D feature space with four distinct classes, their
+    centroids, and a new, unknown sample*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The process we just implemented is known as a *Nearest Centroid* classifier.
+    It’s also sometimes called *template matching*. The centroids of the classes learned
+    from the training data are used as a proxy for the class as a whole. Then, new
+    samples use those centroids to decide on a label.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This seems so simple and perhaps even somewhat obvious, so why isn’t this classifier
+    used more? Well, there are several reasons. One has already been mentioned, the
+    curse of dimensionality. As the number of features increases, the space gets larger
+    and larger, and we need exponentially more training data to get a good idea of
+    where the centroids should be. So, a large feature space implies that this might
+    not be the right approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There’s a more severe problem, however. Our toy example had very tight groups.
+    What if the groups are more diffuse, even overlapping? Then the selection of the
+    Nearest Centroid becomes problematic: how would we know whether the closest centroid
+    represents class A or class B?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Still more severe is that a particular class might fall into *two* or more distinct
+    groups. If we calculate the centroid of only the class as a whole, the centroid
+    will be between the groups for the class and not represent either cluster well.
+    We’d need to know that the class is split between groups and use multiple centroids
+    for the class. If the feature space is small, we can plot it and see that the
+    class is divided between groups. However, if the feature space is larger, there’s
+    no easy way for us to decide that the class is divided between multiple groups
+    and that multiple centroids are required. Still, for elementary problems, this
+    approach might be ideal. Not every application deals with difficult data. We might
+    be building an automated system that needs to make simple, easy decisions on new
+    inputs. In that case, this simple classifier might be a perfect fit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: k-Nearest Neighbors
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As we saw earlier, one problem with a centroid approach is that the classes
+    might be divided among multiple groups in the feature space. As the number of
+    groups increases, so would the number of centroids necessary to specify the class.
+    This implies another approach. Instead of computing per class centroids, what
+    if we used the training data as is and selected the class label for a new input
+    sample by finding the closest member of the training set and using its label?
+  prefs: []
+  type: TYPE_NORMAL
+- en: This type of classifier is called a *Nearest Neighbor* classifier. If we look
+    at only the closest sample in the training set, we are using one neighbor, so
+    we call the classifier a *1-Nearest Neighbor* or *1-NN classifier*. But we don’t
+    need to look at only the nearest training point. We might want to look at several
+    and then vote to assign a new sample the most common class label. In the event
+    of a tie, we can select one of the class labels at random. If we use three nearest
+    neighbors, we have a 3-NN classifier, and if we use *k* neighbors, we have a *k*-NN
+    classifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s revisit the hypothetical dataset of [Figure 6-1](ch06.xhtml#ch6fig1) but
+    generate a new version where the tight clusters are more spread out. We still
+    have two features and four classes with 10 examples each. Let’s set *k* = 3, a
+    typical value. To assign a label to a new sample, we plot the sample in the feature
+    space and then find the three closest training data points to it. [Figure 6-4](ch06.xhtml#ch6fig4)
+    shows the three nearest neighbors for three unknown samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The three training data points closest to Sample A are square, square, and
+    star. Therefore, by majority vote, we assign Sample A to the class square. Similarly,
+    the three closest training data points for Sample B are circle, triangle, and
+    triangle. Therefore, we declare Sample B to be of class triangle. Things are more
+    interesting with Sample C. In this case, the three closest training samples are
+    each from a different class: circle, star, and triangle. So, voting is a tie.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When this happens, the *k*-NN implementation has to make a choice. The simplest
+    thing to do is select the class label at random since one might argue that any
+    of the three are equally as likely. Alternatively, one might believe a little
+    more strongly in the value of the distance between the unknown sample and the
+    training data and select the one with the shortest distance. In this case, we’d
+    label Sample C with class star, since that’s the training sample closest to it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/06fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-4: Applying *k*-NN for *k* =3 to three unknown samples A, B, and
+    C*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The beauty of a *k*-NN classifier is that the training data *is* the model—no
+    training step is necessary. Of course, the training data must be carried around
+    with the model and, depending upon the size of the training set, finding the *k*
+    nearest neighbors for a new input sample might be computationally very expensive.
+    People have worked for decades to try to speed up the neighbor search or store
+    the training data more efficiently, but in the end, the curse of dimensionality
+    is still there and still an issue.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, some *k*-NN classifiers have performed very well: if the dimensionality
+    of the feature space is small enough, *k*-NN might be attractive. There needs
+    to be a balance between training data size, which leads to better performance
+    but more storage and more laborious searching for neighbors, and the dimensionality
+    of the feature space. The same sort of scenario that might make Nearest Centroid
+    a good fit will also make *k*-NN a good fit. However, *k*-NN is perhaps more robust
+    to diffuse and somewhat overlapping class groups than Nearest Centroid is. If
+    the samples for a class are split between several groups, *k*-NN will be superior
+    to Nearest Centroid.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Naïve Bayes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Widely used in natural language processing research, the *Naïve Bayes* classifier
+    is simple to implement and straightforward to understand, though we’ll have to
+    include some math to do it. However, I promise, the description of what’s happening
+    will make the math understandable even if the notation isn’t so familiar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The technique uses Bayes’ theorem (see Thomas Bayes’ “An Essay Towards Solving
+    a Problem in the Doctrine of Chances” published in 1763). The theorem relates
+    probabilities, and its modern formulation is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/114equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: which uses some mathematical notation from probability theory that we need to
+    describe to understand how we’ll use this theorem to implement a classifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expression *P*(*A|B*) represents the probability that event A has occurred,
+    given event B has already occurred. In this context, it’s called the *posterior
+    probability*. Similarly, *P*(*B|A*) represents the probability that event B has
+    occurred, given event A has occurred. We call *P*(*B|A*) the *likelihood* of B,
+    given A. Finally, *P*(*A*) and *P*(*B*) represent, respectively, the probability
+    that event A has occurred, regardless of event B, and the probability that event
+    B has occurred, regardless of event A. We call *P*(*A*) the *prior probability*
+    of A. *P*(*B*) is the probability of *B* happening regardless of *A*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Bayes’ theorem gives us the probability of something happening (event A) given
+    that we already know something else has happened (event B). So how does this help
+    us classify? We want to know whether a feature vector belongs to a given class.
+    We know the feature vector, but we don’t know the class. So if we have a dataset
+    of *m* feature vectors, where each feature vector has *n* features, *x* = *{x*[1],*x*[2],*x*[3],…,*x*[*n*]*}*,
+    then we can replace the *B* in Bayes’ theorem with each of the features in the
+    feature vector. We can also replace *A* with *y*, the class label we want to assign
+    to a new, unknown feature vector *x*. The theorem now looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/114equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Let’s explain things a bit. Bayes’ theorem states that if we know the likelihood
+    of having *x* be our feature vector given that *y* is the class, and we know how
+    often class *y* shows up (this is *P*(*y*), the prior probability of *y*), then
+    we can calculate the probability that the class of the feature vector *x* is *y*.
+    If we are able to do this for all the possible classes, all the different *y*
+    values, we can select the highest probability and label the input feature vector
+    *x* as belonging to that class, *y*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recall that a training dataset is a set of pairs, (*x*^(*i*),*y*^(*i*)), for
+    a known feature vector, *x*^(*i*), and a known class it belongs to, *y*^(*i*).
+    Here the *i* superscript is counting the feature vector and label pairs in the
+    training dataset. Now, given a dataset like this, we can calculate *P*(*y*) by
+    making a histogram of how often each class label shows up in the training set.
+    We believe that the training set fairly represents the parent distribution of
+    possible feature vectors so that we can use the training data to calculate the
+    values we need to make use of Bayes’ theorem. (See [Chapter 4](ch04.xhtml#ch04)
+    for techniques to ensure that the dataset is a good one.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once we have *P*(*y*), we need to know the likelihood, *P*(*x*[1],*x*[2],*x*[3],…,*x*[*n*]*|y*).
+    Unfortunately, we can’t calculate this directly. But all is not lost: we’ll make
+    an assumption that will let us move ahead. We’ll assume that each of the features
+    in *x* is *statistically independent*. This means that the fact that we measure
+    a particular *x*[1] has nothing whatsoever to do with the values of any of the
+    other *n –* 1 features. This isn’t true always, or even most of the time, but
+    in practice, it turns out that this assumption is often close enough to true that
+    we can get by. This is why it’s called *Naïve Bayes*, as it’s naïve to assume
+    the features are independent of each other. That assumption is most definitely
+    not true, for example, when our input is an image. The pixels of an image are
+    highly dependent upon each other. Pick one at random, and the pixels next to it
+    are almost certainly within a few values of it.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When two events are independent, their *joint probability*, the probability
+    that they both happen, is simply the product of their individual probabilities.
+    The independence assumption lets us change the likelihood portion of Bayes’ theorem
+    like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/115equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The ∏ symbol means *multiplied together*, much like the ∑ symbol means *added
+    together*. The right side of the equation is saying that if we know the probability
+    of measuring a particular value of a feature, say feature *x*[*i*], given that
+    the class label is *y*, we can get the likelihood of the entire feature vector
+    *x*, given class label *y*, by multiplying each of the per feature probabilities
+    together.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If our dataset consists of categorical values, or discrete values like integers
+    (for example, age), then we can use the dataset to calculate the *P*(*x*[*i*]*|y*)
+    values by building a histogram for each feature for each class. For example, if
+    feature *x*[2] for class 1 has the following values
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7, 4, 3, 1, 6, 5, 2, 8, 5, 4, 4, 2, 7, 1, 3, 1, 1, 3, 3, 3, 0, 3,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4, 4, 2, 3, 4, 5, 2, 4, 2, 3, 2, 4, 4, 1, 3, 3, 3, 2, 2, 4, 6, 5,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2, 6, 5, 2, 6, 6, 3, 5, 2, 4, 2, 4, 5, 4, 5, 5, 2, 5, 3, 4, 3, 1,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6, 6, 5, 3, 4, 3, 3, 4, 1, 1, 3, 5, 4, 4, 7, 0, 6, 2, 4, 7, 4, 3,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4, 3, 5, 4, 6, 2, 5, 4, 4, 5, 6, 5
+  prefs: []
+  type: TYPE_NORMAL
+- en: then each value occurs with the following probability
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0: 0.02'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1: 0.08'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2: 0.15'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3: 0.20'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4: 0.24'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '5: 0.16'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '6: 0.10'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '7: 0.04'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '8: 0.01'
+  prefs: []
+  type: TYPE_NORMAL
+- en: which comes from the number of times each value occurs divided by 100, the total
+    number of values in the dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This histogram is exactly what we need to find *P*(*x*[2]*|y* = 1), the probability
+    for feature 2 when the class label is 1\. For example, we can expect a new feature
+    vector of class 1 to have *x*[2] = 4 about 24 percent of the time and to have
+    *x*[2] = 1 about 8 percent of the time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By building tables like this for each feature and each class label, we can complete
+    our classifier for the categorical and discrete cases. For a new feature vector,
+    we use the tables to find the probability that each feature would have that value.
+    We multiply each of those probabilities together and then multiply by the prior
+    probability of that class. This, repeated for each of the *m* classes in the dataset,
+    will give us a set of *m* posterior probabilities. To classify the new feature
+    vector, select the largest of these *m* values, and assign the corresponding class
+    label.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How do we calculate *P*(*x*[*i*]*|y*) if the feature values are continuous?
+    One way would be to bin the continuous values and then make tables as in the discrete
+    case. Another is to make one more assumption. We need to make an assumption about
+    the distribution of possible *x*[*i*] feature values that we could measure. Most
+    natural phenomena seem to follow a normal distribution. We discussed the normal
+    distribution in [Chapter 1](ch01.xhtml#ch01). Let’s assume, then, that the features
+    all follow normal distributions. A normal distribution is defined by its mean
+    value (*μ*, mu) and a standard deviation (*σ*, sigma). The mean value is just
+    the average value we’d expect if we drew samples from the distribution repeatedly.
+    The standard deviation is a measure of how wide the distribution is—how spread
+    out it is around the mean value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mathematically, what we want to do is replace each *P*(*x*[*i*]*|y*) like so
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*P*(*x*[*i*]|*y*) ≈ *N*(*μ*[*i*], *σ*[*i*])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: for each feature in our feature vector. Here N(*μ*[*i*],*σ*[*i*]) is notation
+    meaning a normal distribution centered around some mean value (*μ*) and defined
+    by a spread (*σ*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We don’t really know the exact *μ* and *σ* values, but we can approximate them
+    from the training data. For example, assume the training data consists of 25 samples,
+    where the class label is 0\. Further, assume that the following are the values
+    of feature 3, that is, *x*[3], in those cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.21457111,  4.3311102,   5.50481251,  0.80293956,  2.5051598,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.37655204,  2.4296739,   2.84224169, -0.11890662,  3.18819152,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.6843311,   4.05982237,  4.14488722,  4.29148855,  3.22658406,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.45507675,  0.40046778,  1.81796124,  0.2732696,   2.91498336,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.42561983,  2.73483704,  1.68382843,  3.80387653,  1.53431146
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then we’d use *μ*[3] = 2.58 and *σ*[3] = 1.64 when setting up the normal distribution
+    for feature 3 for class 0 since the average of these values is 2.58, and the standard
+    deviation, the spread around the mean value, is 1.64.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When a new unknown sample is given to the classifier, we would compute the probability
+    of the given *x*[3] happening if the actual class was class 0 by using the following
+    equation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/117equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This equation comes from the definition of a normal distribution with mean *μ*
+    and standard deviation *σ*. It says that the likelihood of a particular feature
+    value, given the class is *y*, is distributed around the mean value we measured
+    from the training data according to the normal distribution. This is an assumption
+    we are making on top of the independence assumption between features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We use this equation for each of the features in the unknown feature vector.
+    We’d then multiply the resulting probabilities together, and multiply that value
+    by the prior probability of class 0 happening. We’d repeat this process for each
+    of the classes. In the end, we’ll have *m* numbers, the probabilities of the feature
+    vector belonging to each of the *m* classes. To make a final decision, we’d do
+    what we did before: select the largest of these probabilities and label the input
+    as being of the corresponding class.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some readers may complain that we ignored the denominator of Bayes’ theorem.
+    We did that because it’s a constant across all the calculations, and since we
+    always select the largest posterior probability, we really don’t care whether
+    we divide each value by a constant. We’ll select the same class label, regardless.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, for the discrete case, it’s possible that our training set does not have
+    any instances of a value that rarely shows up. We ignored that, too, but it is
+    a problem since if the value never shows up, the *P*(*x*[*i*]*|y*) we use would
+    be 0, making the entire posterior probability 0\. This often happens in natural
+    language processing, where a particular word is rarely used. A technique called
+    *Laplace smoothing* gets around this, but for our purposes, we claim that a “good”
+    training set will represent *all* possible values for the features and simply
+    press ahead. The sklearn MultinomialNB Naïve Bayes classifier for discrete data
+    uses Laplace smoothing by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Decision Trees and Random Forests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The left side of [Figure 6-5](ch06.xhtml#ch6fig5) shows an x-ray image of a
+    puppy with a malformed right hip socket. Since the puppy is on its back in the
+    x-ray, the right hip socket is on the left side of the image. The right side of
+    [Figure 6-5](ch06.xhtml#ch6fig5) shows the corresponding histogram of the pixel
+    intensities (8-bit values, [0,255]). There are two modes to this histogram, corresponding
+    to the dark background and the lighter-intensity x-ray data. If we want to classify
+    each pixel of the image into either background or x-ray, we can do so with the
+    following rule: “If the pixel intensity is less than 11, call the pixel background.”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/06fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-5: An x-ray image of a puppy (left). The corresponding histogram
+    of 8-bit pixel values [0,255] (right).*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This rule implements a decision made about the data based on one of the features,
+    in this case, the pixel intensity value. Simple decisions like this are at the
+    heart of *Decision Trees*, the classification algorithm we’ll explore in this
+    section. For completeness, if we apply the decision rule to each pixel in the
+    image and output 0 or 255 (maximum pixel value) for background versus x-ray data,
+    we get a mask showing us which pixels are part of the image. See [Figure 6-6](ch06.xhtml#ch6fig6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/06fig06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-6: An x-ray image of a puppy (left). The corresponding pixel mask
+    generated by the decision rule. White pixels are part of the x-ray image (right).*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A Decision Tree is a set of nodes. The nodes either define a condition and branch
+    based on the truth or falsehood of the condition, or select a particular class.
+    Nodes that do not branch are called *leaf nodes*. Decision Trees are called *trees*
+    because, especially for the binary case we’ll consider here, they branch like
+    trees. [Figure 6-7](ch06.xhtml#ch6fig7) shows a Decision Tree learned by the sklearn
+    DecisionTreeClassifier class for the full iris dataset using the first three features.
+    See [Chapter 5](ch05.xhtml#ch05).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/06fig07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-7: A Decision Tree classifier for the iris dataset*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By convention, the first node in the tree, the *root*, is drawn at the top.
+    For this tree, the root node asks the question, “Is the petal length ≤ 2.45?”
+    If it is, the left branch is taken, and the tree immediately reaches a leaf node
+    and assigns a label of “virginica” (class 0). We’ll discuss the other information
+    in the nodes shortly. If the petal length is not ≤ 2.45, the right branch is taken,
+    leading to a new node that asks, “Is the petal length ≤ 4.75?” If so, we move
+    to a node that asks a question about the sepal length. If not, we move to the
+    right node and consider the petal length again. This process continues until a
+    leaf is reached, which determines the class label.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The process just described is exactly how a Decision Tree is used after it’s
+    created. For any new feature vector, the series of questions is asked starting
+    with the root node, and the tree is traversed until a leaf node is reached to
+    decide the class label. This is a human-friendly way to move through the classification
+    process, which is why Decision Trees are handy in situations where the “why” of
+    the class assignment is as important to know as the class assignment itself. A
+    Decision Tree can explain itself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using a Decision Tree is simple enough, but how is the tree created in the first
+    place? Unlike the simple algorithms in the previous sections, the tree-building
+    process is more involved, but not so involved that we can’t follow through the
+    main steps to build some intuition as to what goes into defining the tree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recursion Primer
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Before we talk about the Decision Tree algorithm, however, we need to discuss
+    the concept of *recursion*. If you’re familiar with computer science, you probably
+    already know that tree-like data structures and recursion go hand in hand. If
+    not, don’t worry; recursion is a straightforward but powerful concept. The essence
+    of a recursive algorithm is that the algorithm repeats itself at different levels.
+    When implemented as a function in a programming language, this generally means
+    that the function calls itself on a smaller version of the problem. Naturally,
+    if the function calls itself indefinitely, we’ll have an infinite loop, so the
+    recursion needs a stopping condition—something that says we no longer need to
+    recurse.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s introduce the idea of recursion mathematically. The factorial of an integer,
+    *n*, denoted *n*!, is defined to be
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*n*! = *n*(*n* – 1)(*n* – 2)(*n* – 3) . . . (*n* – *n* + 1)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: which just means multiply together all the integers from 1 to *n*. By definition,
+    0! = 1\. Therefore, the factorial of 5 is 120 because
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5! = 5 × 4 × 3 × 2 × 1 = 120
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we look at 5! we see that it is nothing more than 5 × 4! or, in general,
+    that, *n*! = *n* × (*n –* 1)!. Now, let’s write a Python function to calculate
+    factorials recursively using this insight. The code is simple, also a hallmark
+    of many recursive functions, as [Listing 6-1](ch06.xhtml#ch6lis1) shows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def fact(n):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (n <= 1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return n*fact(n-1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 6-1: Calculating the factorial*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code is a direct implementation of the rule that the factorial of *n* is
+    *n* times the factorial of *n –* 1\. To find the factorial of n, we first ask
+    if n is 1\. If it is, we know the factorial is 1 so we return 1—this is our stopping
+    condition. If n is not 1, we know that the factorial of n is simply n times the
+    factorial of n-1, which we find by calling fact with n-1 as the argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building Decision Trees
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The algorithm to build a Decision Tree is also recursive. Let’s walk through
+    what happens at a high level. The algorithm starts with the root node, determines
+    the proper rule for that node, and then calls itself on the left and right branches.
+    The call to the left branch will start again as if the left branch is the root
+    node. This will continue until a stopping condition is met.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a Decision Tree, the stopping condition is a leaf node (we’ll discuss how
+    a Decision Tree knows whether to create a leaf node next). Once a leaf node is
+    created, the recursion terminates, and the algorithm returns to that leaf’s parent
+    node and calls itself on the right branch. The algorithm then starts again as
+    if the right branch were the root node. Once both recursive calls terminate, and
+    a node’s left and right subtrees are created, the algorithm returns to that node’s
+    parent, and so on and so forth until the entire tree is constructed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now to get a little more specific. How is the training data used to build the
+    tree? When the root node is defined, all the training data is present—say, all
+    *n* samples. This is the set of samples used to pick the rule the root node implements.
+    Once that rule has been selected and applied to the training samples, we have
+    two new sets of samples: one for the left side (the true side) and one for the
+    right side (the false side).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The recursion then works with these nodes, using their respective set of training
+    samples, to define the rule for the left and right branches. Every time a branch
+    node is created, the training set for that branch node gets split into samples
+    that meet the rule and samples that don’t meet the rule. A leaf node is declared
+    when the set of training samples is either too small, of a sufficiently high proportion
+    of one class, or the maximum tree depth has been reached.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By now you’re probably wondering, “How do we select the rule for a branch node?”
+    The rule relates a single input feature, like the petal length, to a particular
+    value. The Decision Tree is a *greedy* algorithm; this means that at every node
+    it selects the best rule for the current set of information available to it. In
+    this case, this is the current set of training samples that are available to the
+    node. The best rule is the one that best separates the classes into two groups.
+    This implies that we need a way to select possible candidate rules and that we
+    have a way to determine that a candidate rule is “best.” The Decision Tree algorithm
+    uses brute force to locate candidate rules. It runs through all possible combinations
+    of features and values, making continuous values discrete by binning, and evaluates
+    the purity of the left and right training sets after the rule is applied. The
+    best-performing rule is the one kept at that node.
+  prefs: []
+  type: TYPE_NORMAL
+- en: “Best performing" is determined by the *purity* of the split into left and right
+    training sample subsets. One way to measure purity is to use the *Gini index*.
+    This is the metric sklearn uses. The Gini index of each node in the iris example
+    of [Figure 6-7](ch06.xhtml#ch6fig7) is shown. It’s calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/122equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where *P*(*y*[*i*]) is the fraction of training examples in the subset for the
+    current node that are of class *i*. A perfect split between classes, all of one
+    class and none of the other, will result in a Gini index of 0\. A 50-50 split
+    has a Gini index of 0.5\. The algorithm seeks to minimize the Gini index at each
+    node by selecting the candidate rule that results in the smallest Gini index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, in [Figure 6-7](ch06.xhtml#ch6fig7) the right-hand node below the
+    root has a Gini index of 0.5\. This means that the rule for *the node above*,
+    the root, will result in a subset of the training data that has petal length >
+    2.45, and that subset will be evenly divided between classes 1 and 2\. This is
+    the meaning of the “value” line in the node text. It shows the number of training
+    samples in the subset that defined the node. The “class” line is the class that
+    would be assigned if the tree were stopped at that node. It’s simply the class
+    label of the class that has the largest number of training samples in the node’s
+    subset. When the tree is used on new, unknown samples, it’s run from root to a
+    leaf, always.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Random Forests
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Decision Trees are useful when the data is discrete or categorical or has missing
+    values. Continuous data needs to be binned first (sklearn does this for you).
+    Decision Trees have a bad habit, however, of *overfitting* the training data.
+    This means that they are likely to learn meaningless statistical nuances of the
+    training data that you happened to use, instead of learning meaningful general
+    features of the data that are useful when applied to unknown data samples. Decision
+    Trees also grow very large, as the number of features grows, unless managed by
+    depth parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Decision Tree overfitting can be mitigated by using *Random Forests*. In fact,
+    unless your problem is simple, you probably want to look at using a Random Forest
+    from the start. The following three concepts lead from a Decision Tree to a Random
+    Forest:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ensembles of classifiers and voting between them
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Resampling of the training set by selecting samples *with replacement*
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Selection of random feature subsets
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If we have a set of classifiers, each trained on different data or of a different
+    type, like a *k*-NN and a Naïve Bayes, we can use their outputs to vote on the
+    actual category to assign to any particular unknown sample. This is called an
+    *ensemble* and, with diminishing returns as the number of classifiers increases,
+    it will, in general, improve the performance over that of any individual classifier.
+    We can employ a similar idea and imagine an ensemble, or *forest*, of Decision
+    Trees, but unless we do something more with the training set, we’ll have a forest
+    of *exactly* the same tree because a particular set of training examples will
+    always lead to the exact same Decision Tree. The algorithm to create a Decision
+    Tree is deterministic—it always returns the same results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A way to deal with the particular statistical nuances of the training set you
+    have to work with is to select a new training set from the original training set
+    but allow the same training set sample to be selected more than once. This is
+    selection with replacement. Think of it as choosing colored marbles from a bag,
+    but before you select the next marble, put the one you just selected back in the
+    bag so you might pick it again. A new dataset selected in this way is known as
+    a *bootstrap sample*. Building a collection of new datasets in this way is known
+    as *bagging*, and it is models built from this collection of resampled datasets
+    that build the Random Forest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we train multiple trees, each with a resampled training set with replacement,
+    we’ll get a forest of trees, each one slightly different from the others. This
+    alone, along with ensemble voting, will probably improve things. However, there’s
+    one issue. If some of the features are highly predictive, they will dominate,
+    and the resulting forest of trees will be very similar to one another and therefore
+    suffer from very similar weaknesses. This is where the *random* of *Random Forest*
+    comes into play.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instead of just bagging, which changes the distribution of samples in the per
+    tree training set but not the set of features examined, what if we also randomly
+    selected, for each tree in the forest, a subset of the *features* themselves and
+    trained on only those features? Doing this would break the correlation between
+    the trees and increase the overall robustness of the forest. In practice, if there
+    are *n* features per feature vector, each tree will randomly select ![Image](Images/nsqt.jpg)
+    of them over which to build the tree. Random Forests are supported in sklearn
+    as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support Vector Machines
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Our final classical machine learning model is the one that held neural networks
+    at bay for most of the 1990s, the *Support Vector Machine (SVM)*. If the neural
+    network is a highly data-driven, empirical approach to generating a model, the
+    SVM is a highly elegant, mathematically founded, approach. We’ll discuss the performance
+    of an SVM at a conceptual level as the mathematics involved is beyond what we
+    want to introduce here. If you’re so inclined, the classic reference is “Support-Vector
+    Networks” by Cortes and Vapnik (1995).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can summarize what a Support Vector Machine is doing by gaining intuition
+    about the concepts of margins, support vectors, optimization, and kernels. Let’s
+    look at each concept in turn.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Margins
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[Figure 6-8](ch06.xhtml#ch6fig8) shows a two-class dataset with two features.
+    We’ve plotted each sample in the dataset with feature 1 along the x-axis and feature
+    2 along the y-axis. Class 0 is shown as circles, class 1 as diamonds. This is
+    obviously a contrived dataset, one that’s easily separated by plotting a line
+    between the circles and the diamonds.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/06fig08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-8: A toy dataset with two classes, circles and diamonds, and two
+    features, x-axis and y-axis*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A classifier can be thought of as locating one or more *planes* that split the
+    space of the training data into homogeneous groups. In the case of [Figure 6-8](ch06.xhtml#ch6fig8)
+    the separating “plane” is a line. If we had three features, the separating plane
+    would be a 2D plane. With four features, the separating plane would be three-dimensional,
+    and for *n* dimensions the separating plane is *n –* 1 dimensional. Since the
+    plane is multidimensional, we refer to it as a *hyperplane* and say that the goal
+    of the classifier is to separate the training feature space into groups using
+    hyperplanes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we look again at [Figure 6-8](ch06.xhtml#ch6fig8), we can imagine an infinite
+    set of lines that separate the training data into two groups, with all of class
+    0 on one side and all of class 1 on the other. Which one do we want to use? Well,
+    let’s think a bit about what the position of a line separating the two classes
+    implies. If we draw a line more to the right side, just before any of the diamonds,
+    we’ll have separated the training data, but only barely so. Recall, we’re using
+    the training data as a surrogate for the true distribution of samples of each
+    class. The more training data we have, the more faithfully we’ll know that true
+    distribution. However, we don’t really know it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A new, unknown sample, which must be of class 0 or class 1, will fall somewhere
+    on the graph. It’s reasonable to believe that there are class 1 (diamond) samples
+    in the wild that will fall even closer to the circles than any of the samples
+    in the training set. If the separating line is too close to the diamonds, we run
+    the risk of calling valid class 1 samples *class 0* because the separating line
+    is too far to the right. We can make a similar claim if we place the separating
+    line very close to the class 0 points (circles). Then we run the risk of mislabeling
+    class 0 samples as *class 1* (diamonds).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Therefore, in the absence of more training data, it seems most reasonable to
+    choose the separating line that is as far from both classes as possible. This
+    is the line that is farthest from the rightmost circles while still being as far
+    to the left of the diamonds as possible. This line is the maximal margin location,
+    where the *margin* is defined as the distance from the closest sample points.
+    [Figure 6-9](ch06.xhtml#ch6fig9) shows the maximal margin location as the heavy
+    line with the maximum margin indicated by the two dotted lines. The goal of an
+    SVM is to locate the maximum margin position, as this is the location where we
+    can be most certain to not misclassify new samples, given the knowledge gained
+    from the training set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/06fig09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 6-9: The toy dataset of [Figure 6-8](ch06.xhtml#ch6fig8) with the maximal
+    margin separating line (heavy) and the maximum margins (dotted)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support Vectors
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Look again at [Figure 6-9](ch06.xhtml#ch6fig9). Notice the four training data
+    points on the margin? These are the training samples that define the margin, or,
+    in other words, support the margin; hence they are *support vectors*. This is
+    the origin of the name *Support Vector Machine*. The support vectors define the
+    margin, but how can we use them to locate the margin position? Here is where we’ll
+    simplify things a bit to avoid a large amount of complex vector mathematics that
+    will only muddy the waters for us. For a more mathematical treatment, see “A Tutorial
+    on Support Vector Machines for Pattern Recognition” by Christopher Burges (1998).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Optimization
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Mathematically, we can find the maximum margin hyperplane by solving an optimization
+    problem. Recall that in an optimization problem, we have a quantity that depends
+    on certain parameters, and we want to find the set of parameter values that makes
+    the quantity as small or as large as possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the SVM case, the orientation of the hyperplane can be specified by a vector,
+    ![Image](Images/wbar.jpg). There is also an offset, *b*, which we must find. Finally,
+    before we can do the optimization, we need to change the way we specify the class
+    labels. Instead of using 0 or 1 for *y*[*i*], the label of the *i*-th training
+    sample, *x*[*i*], we’ll use –1 or +1\. This will let us define the condition of
+    the optimization problem more simply.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So, mathematically, what we want is to find ![Image](Images/wbar.jpg) and *b*
+    so that the quantity ![Image](Images/126equ01.jpg) is as small as possible, given
+    that ![Image](Images/126equ02.jpg) for all *y*[*i*] labels and *x*[*i*] training
+    vectors in the dataset. This sort of optimization problem is readily solved via
+    a technique called *quadratic programming*. (We’re ignoring another important
+    mathematical step here: the actual optimization problem solved uses a Lagrangian
+    to solve the dual form, but again, we’ll try to avoid muddying the waters too
+    much.)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The preceding formulation is for a case where the dataset, assumed to have only
+    two classes, can be separated by a hyperplane. This is the linearly separable
+    case. In reality, as we well appreciate by now, not every dataset can be separated
+    this way. So, the full form of the optimization problem includes a fudge factor,
+    *C*, which affects the size of the margin found. This factor shows up in the sklearn
+    SVM class and needs to be specified to some level. From a practical point of view,
+    *C* is a *hyperparameter* of the SVM, a value that we need to set to get the SVM
+    to train properly. The right value of *C* is problem dependent. In general, any
+    parameter of a model that is not learned by the model but must be set to use the
+    model, like *C* for an SVM or *k* for *k*-NN, is a hyperparameter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Kernels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: There’s one more mathematical concept we need to introduce, with suitable hand
+    waving. The preceding description is for a linear SVM and uses the training data
+    directly (the ![Image](Images/127equ01.jpg)). The nonlinear case maps the training
+    data to another space by passing it through a function, typically called ![Image](Images/127equ02.jpg),
+    that produces a new version of the training data vector, ![Image](Images/xbar1.jpg).
+    The SVM algorithm uses inner products, ![Image](Images/127equ03.jpg), which means
+    that the mapped version will use ![Image](Images/127equ04.jpg). In this notation,
+    vectors are thought of as a column of numbers so that *T*, the transpose, produces
+    a row vector. Then normal matrix multiplication of a 1 × *n* row vector and an
+    *n* × 1 column vector will result in a 1 × 1 output, which is a scalar. The inner
+    product is typically written as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/127equ05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and the function ![Image](Images/127equ06.jpg) is called a *kernel*. The linear
+    kernel is simply ![Image](Images/127equ07.jpg), but other kernels are possible.
+    The *Gaussian kernel* is a popular one, also known as a *radial basis function
+    (RBF)* kernel. In practical use, this kernel introduces a new parameter, apart
+    from *C*, which is *γ*. This parameter relates to how spread out the Gaussian
+    kernel is around a particular training point, with smaller values extending the
+    range of influence of the training sample. Typically, one uses a grid search over
+    *C* and, if using the RBF kernel, *γ*, to locate the best performing model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To summarize, then, a Support Vector Machine uses the training data, mapped
+    through a kernel function, to optimize the orientation and location of a hyperplane
+    that produces the maximum margin between the hyperplane and the support vectors
+    of the training data. The user needs to select the kernel function and associated
+    parameters like *C* and *γ* so that the model best fits the training data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support Vector Machines dominated machine learning in the 1990s and early 2000s,
+    before the advent of deep learning. This is because they’re trained efficiently
+    and don’t need extensive computational resources to be successful. Since the arrival
+    of deep learning, however, SVMs have fallen somewhat by the wayside because powerful
+    computers have enabled neural networks to do what previously was not possible
+    with more limited computing resources. Still, SVMs have a place at the table.
+    One popular approach uses a large neural network trained on a particular dataset
+    as a preprocessor for a different dataset with an SVM trained on the output of
+    the neural network (minus the top layers).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In this chapter, we introduced six of the most common classic machine learning
+    models: Nearest Centroid, *k*-NN, Näive Bayes, Decision Tree, Random Forest, and
+    SVMs. These models are classic because they have been used for decades. They are
+    also still relevant if the conditions they support best are present. At times,
+    the classic model is still the correct choice. An experienced machine learning
+    practitioner will know when to fall back to the classics.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we’ll use each of these models, via sklearn, to perform
+    a number of experiments that will build our intuition of how the models work and
+    when to use them.
+  prefs: []
+  type: TYPE_NORMAL

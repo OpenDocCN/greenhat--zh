@@ -1,0 +1,1585 @@
+- en: '9'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: BUILDING A CIRCLE FROM THREE POINTS
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In this chapter, we’ll build an entire command line program to solve a well-known
+    problem: finding a circle passing through three given points. You may have solved
+    this problem graphically in high school using a ruler and compass; you may have
+    even solved it numerically. This time, we’ll be using the computer to solve it
+    for us and produce an SVG image with the result. We already implemented the algorithm
+    in [Chapter 6](ch06.xhtml#ch06); in this chapter, we’ll use the algorithm inside
+    an application.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s a simple problem, but it is good for understanding how to code a complete
+    application. We’ll read the three input points from a file using regular expressions,
+    which we’ll learn about later in the chapter. We’ll also read in a configuration
+    file with the values for the colors and sizes for the program’s output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then we’ll build the *model*: a group of objects that implement what we call
+    the *domain logic* of our application, that is, the knowledge needed to solve
+    the problem. In this case, the model consists of three points and the factory
+    function that creates a circle passing through the three of them. Thanks to our
+    previous work in [Chapter 6](ch06.xhtml#ch06), this shouldn’t be complicated.
+    We’ll present the results graphically, with a vector image showing the input points
+    and resulting circle.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is our first complete command line program, and it has all the ingredients
+    of an engineering application: reading from an input file, solving a problem,
+    and outputting a result diagram. After building this program, you should feel
+    empowered to build your own. The possibilities are endless!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Application Architecture**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Most of the command line applications we’ll build together in this book, and
+    probably many others you may build on your own, will use a similar architecture.
+    The concept of *software architecture* refers to the organization and design of
+    the components that make up a software application. *Architecture* deals with
+    both the design of each individual piece of the program and the system of communication
+    and interaction between each piece.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To decide what components should make up the architecture of our application,
+    let’s think about what our program has to do. Our application will generally consist
+    of three big phases, each performed by a different set of components or architectural
+    building blocks:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Input parsing** We read the problem definition data from a file passed to
+    our program. This phase may also include reading an external configuration file
+    to tweak the program’s behavior or outputs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Problem resolution** Using the model we parse from the input definition data,
+    we find a solution to the problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Output generation** We present the solution to the user. Depending on what
+    kind of report we need, we may choose to produce diagrams, text files with data,
+    simulations, or a combination of them. As important as solving the problem is,
+    producing an output that is easy to understand and contains all the relevant pieces
+    of information is crucial for our program to be of any use.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since our problem for this chapter is fairly simple, we’ll divide the three
+    phases into three files: *input.py*, *main.py*, and *output.py*. [Figure 9-1](ch09.xhtml#ch9fig1)
+    shows the main architectural blocks of our application graphically.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/09fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-1: The application architecture diagram*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The input file will contain the three points and should have the following format,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'where x and y are the coordinates of a point, separated by a space and each
+    on a different line. An example input file could look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This file defines three points: *A*(300, 300), *B*(700, 400), and *C*(300,
+    500). We’ll put a specification for the values of the coordinates and say they
+    need to be positive integers. This simplifies the parsing logic a bit as there
+    won’t be decimal separators or minus signs in the numbers, which is good to get
+    us started with regular expressions, but don’t worry: we’ll learn to identify
+    floating-point numbers and minus signs in [Chapter 12](ch12.xhtml#ch12).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using plaintext files as the input to our programs has a big advantage: we
+    can write them by hand. Also, we can easily inspect and edit them. The downside
+    is that plaintext files usually take up more space than their binary counterparts,
+    but that won’t be an issue for us. We’ll go with ease of creation and manipulation
+    over file size. Just remember, whenever you’re working with plaintext files, always
+    use a plaintext editor and never a rich-text editor. Rich-text editors (such as
+    Word) have their own storage format that includes much more than you actually
+    write to them, such as information about what goes in bold, what font face is
+    used, or what size the font is. We need our input files to have in them only what
+    we’ve written.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Setup**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Since we’ll be creating other applications throughout the book, let’s create
+    a new package at the top level of our Python project (the same level as the *geom2d*,
+    *graphic*, and *utils* packages). Right-click the *Mechanics* folder, and from
+    the menu choose **New** ▸ **Python Package**, name it *apps*, and click **OK**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *apps*, create a new package, this time named *circle_from_points*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Your project’s directory structure should look similar to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mechanics
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- apps'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- circle_from_points'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- geom2d'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- tests'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- graphic'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- svg'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s create our main file. This is the file we’ll execute from the command
+    line to run the application. Create a file named *main.py* in *circle_from _points*.
+    Enter the code in [Listing 9-1](ch09.xhtml#ch9lis1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-1: Main file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you recall from [Chapter 1](ch01.xhtml#ch01) (in the “Running Files” section),
+    we’re using the “if name is main” pattern to execute our main application script.
+    We want to run this code only if we detect the file is being run by itself, and
+    not when it’s imported by some other file. For now we’ll only print a message
+    to the shell to make sure our setup works.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This should print to the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is working
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*This time, our main file doesn’t define any function that could be imported
+    and used by other files. But thanks to the “if name is main” pattern, if this
+    file was imported (presumably by mistake), nothing would be exported, and no code
+    would be run either. All of our “runnable” scripts will use this pattern.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ll need a file containing the definition of three points to test our progress.
+    Create a new file inside *circle_from_points* named *test.txt*. In it, enter the
+    following coordinates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Next, we’ll need to configure our IDE so we can test our application locally
+    inside it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Creating a Run Configuration***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To test our application’s code using the data in the *test.txt* file we just
+    wrote, we need to create what’s known as a *run configuration* inside PyCharm
+    (refer to section “Creating Run Configurations” on page liv for a refresher).
+    Run configurations are a convenience that will save us time when we are developing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*You may want to refer to the documentation online to better understand run
+    configurations:* [https://www.jetbrains.com/help/pycharm/run-debug-configuration.html](https://www.jetbrains.com/help/pycharm/run-debug-configuration.html)*.
+    If you happen to be using an IDE other than PyCharm, refer to its documentation.
+    Most IDEs include a similar concept to run configurations to configure test runs
+    for your programs.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To create a run configuration, first make sure the navigation bar is visible
+    by choosing **View** ▸ **Navigation Bar**. From the top menu, choose **Run** ▸
+    **Edit Configurations**. The dialog shown in [Figure 9-2](ch09.xhtml#ch9fig2)
+    will open.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/09fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-2: The run configuration dialog*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Click the **+** icon on the top left, which opens the Add New Configuration
+    drop-down, and choose **Python** (see [Figure 9-3](ch09.xhtml#ch9fig3)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/09fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-3: The new Python run configuration*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Run Configuration form should appear on the right side of the window. Enter
+    the name *circle-three-points* in the Name field at the top. This will be the
+    name you’ll use to refer to the configuration. On the Configuration tab, you should
+    see the Script path field. This is the path to our *main.py* file: our program’s
+    entry point. Click the folder icon inside the field and select *main.py*. Near
+    the end of the Configuration tab, find the Execution section. Select the **Redirect
+    input from** checkbox, and in the field click the folder icon and select our test
+    file containing the definition of the points: *test.txt*. This way, the run configuration
+    will always pass *test.txt* to the program’s standard input. Your configuration
+    dialog should look like [Figure 9-4](ch09.xhtml#ch9fig4).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/09fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-4: The run configuration data*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We need to do one last thing. If we executed the run configuration as it is
+    now, the output of the program would be printed to the shell (standard output).
+    That is fine, but since we’ll be outputting SVG code, we want to redirect the
+    standard output to a file with the *.svg* extension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Go to the Logs tab to the right of Configuration. Check **Save console output
+    to file**; then click the folder icon, and select any file in *circle_from _points*.
+    Once the file is selected, just change its name to *result.svg*. Alternatively,
+    you can copy and paste the path to the package *circle_from_points* and then append
+    the name of the *result.svg* file. You could also create an empty *result.svg*
+    file and then select it here. Whatever way you choose, the result should look
+    something like [Figure 9-5](ch09.xhtml#ch9fig5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/09fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-5: Redirecting output to a file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re all set, so click **OK**. In your navigation bar you should see the newly
+    created run configuration selected (see [Figure 9-6](ch09.xhtml#ch9fig6)). Click
+    the green play button to its right. This executes the run configuration, which
+    should result in the message “This is working” written in a file named *result.svg*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/09fig06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-6: The run configuration in the navigation bar*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s do a quick recap of what we’ve just done. We’ve created a configuration
+    in PyCharm that instructs it on how to run our project. We told the configuration
+    that *main.py* is the entry point to start executing our project. Then, we said
+    we wanted the file *test.txt* containing our test data to be passed to the standard
+    input of the program and the output of the program redirected to a file named
+    *result.svg*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Why Use a Run Configuration?***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You may be asking yourself, why do we want to create a run configuration instead
+    of just executing our script from the command line?
+  prefs: []
+  type: TYPE_NORMAL
+- en: That’s a good question. There are two good reasons why we use run configurations.
+    The first is that we’ll be much more productive during development. We won’t need
+    to enter commands into the shell to run the program, redirecting its standard
+    input and output as necessary. Besides, this configuration allows us to debug
+    the program, something that would be considerably harder from the shell. If you
+    set a breakpoint somewhere in the code, you can click the bug-like button next
+    to the green play button and the program should stop once the breakpoint is reached.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second reason is that, as we’ll see later in the chapter, if you try to
+    run *main.py* from the shell, once we start importing our packages (such as *geom2d*)
+    it simply won’t work. Yes, that’s kind of surprising, but we’ll learn why this
+    happens and, more importantly, how to fix it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Reading the Input and Configuration Files**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: So far we have a *main.py* file and a run configuration that passes it *test.txt*
+    using the standard input. Right now we’re doing nothing with that file’s contents,
+    so a good next step would be reading the contents of the file and parsing each
+    line as an instance of the Point class. How do we go about doing this? We need
+    to use regular expressions, a powerful technology for reading and extracting information
+    from a text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before we explore regular expressions, let’s create a new file in our project
+    to read both the input and configuration files. Let’s also take some time to learn
+    to read files passed to the standard input of our program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In *circle_from_points*, create a new file named *input.py*. Your *circle_from
+    _points* directory should look like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: circle_from_points
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- input.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- main.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- test.txt'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s start small and go one step at a time. Enter the code in [Listing 9-2](ch09.xhtml#ch9lis2)
+    in the newly created file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-2: Reading lines from the input file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The parse_points function is not actually parsing points . . . yet. So far,
+    it returns a tuple consisting of three strings, each of which corresponds to a
+    line obtained from the standard input. Each line is read using Python’s input
+    function, which reads in one line of input at a time. Let’s call parse_points
+    from our main program to see how it reads the test file’s contents. Go back to
+    *main.py* and modify the code to make it match [Listing 9-3](ch09.xhtml#ch9lis3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-3: Printing the points to the shell*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You may be tempted to use Python’s relative imports here like from .input import
+    parse_points but that won’t work properly when the file doing the imports is run
+    from the command line. To get an idea of why that is, take a look at this excerpt
+    from PEP 238:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Relative imports use a module’s __name__ attribute to determine that module’s
+    position in the package hierarchy. If the module’s name does not contain any package
+    information (e.g. it is set to '__main__') then relative imports are resolved
+    as if the module were a top level module, regardless of where the module is actually
+    located on the file system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first thing we do in [Listing 9-3](ch09.xhtml#ch9lis3) is import parse_points
+    from the *input.py* module. In the “if name is main” condition we call the parse_points
+    function and assign its output to a tuple (a, b, c), which *destructures* its
+    elements into the variables a, b, and c.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is the less elegant way of accomplishing the same result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But we’ll go with the former, which is a little cleaner. The last line prints
+    the contents of a, b, and c to the shell, each in its own line. Run the application
+    by clicking the green play button beside the run configuration we created earlier.
+    You should get the following printed to the shell in the IDE:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The two first lines are pretty interesting. They tell us that the configuration
+    used to run the file is receiving input from file *test.txt* and writing the output
+    to file *result.svg*. If you open *result.svg*, you should see the three points
+    the same way they’re defined inside *test.txt*, and also the same way they were
+    printed to the shell. We’re making good progress here! The next step is to convert
+    those space-separated coordinates into instances of our Point class. For that,
+    we need regular expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Regular Expressions***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '*Regular expressions* (*regex* for short) are powerful constructs when it comes
+    to interpreting text. Because the input to most, if not all, applications we’ll
+    be creating in this book will be read from a plaintext file, we want to get acquainted
+    with regular expressions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*If you want to learn more about regular expressions, take a look at this awesome
+    interactive tutorial:* [*https://regexone.com*](https://regexone.com).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s quickly review the problem we’re trying to solve here: given a string
+    of text containing two integer numbers separated by a space, extract them from
+    the string, convert them to numbers, and use them as the coordinates of an instance
+    of Point. How do regular expressions help us here?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A regular expression is a pattern defined as a string. It’s used to search for
+    matches inside other strings and, optionally, extract parts of them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s try an example. Note that regular expressions are denoted by writing them
+    between two slash characters. Imagine we’re looking for this pattern,
+  prefs: []
+  type: TYPE_NORMAL
+- en: /repeat 5 times/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'and we’re interested in knowing whether that pattern appears in any of the
+    following sentences:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Repeat 5 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For each exercise, repeat 5 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For that particular exercise, repeat 7 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s repeat 3301 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The /repeat 5 times/ regular expression compares itself against these strings
+    searching for exactly the text repeat 5 times and thus yielding only the single
+    bold match:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Repeat 5 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For each exercise, **repeat 5 times**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For that particular exercise, repeat 7 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s repeat 3301 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'That’s great, but not very flexible. The first sentence was not a match because
+    the first letter, the *R*, is uppercase; our pattern is lowercased. We can tweak
+    our pattern to accept both:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /[Rr]epeat 5 times/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This time the matches are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Repeat 5 times**.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For each exercise, **repeat 5 times**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For that particular exercise, repeat 7 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s repeat 3301 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To account for both kinds of *r*, we introduced a *character set*: a series
+    of accepted characters in a given position of the text, any of which is considered
+    valid. Character sets are defined between square brackets.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s much more we can do with regular expressions. What about the number
+    of repetitions specified in the sentence? Can we make it so any number of repetitions
+    is considered a match? We sure can. If we modify our pattern to be
+  prefs: []
+  type: TYPE_NORMAL
+- en: /[Rr]epeat \d times/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'we’ll get the following matches:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Repeat 5 times**.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For each exercise, **repeat 5 times**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For that particular exercise, **repeat 7 times**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s repeat 3301 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pattern \d matches a single digit, any number between 0 and 9\. But what
+    about that last sentence? If we wanted to match more than one digit, we’d need
+    to add a *quantifier* to the \d pattern. In this case, the quantifier that makes
+    the most sense is +, which is used to match one or more of the tokens it quantifies.
+    The pattern
+  prefs: []
+  type: TYPE_NORMAL
+- en: /[Rr]epeat \d+ times/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'would then work with any number of repetitions and thus get us the full range
+    of matches we’ve been after:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Repeat 5 times**.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For each exercise, **repeat 5 times**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For that particular exercise, **repeat 7 times**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s **repeat 3301 times**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that you’re starting to see what regular expressions are about, let’s explore
+    some of their basic concepts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Character Sets**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: As we’ve seen, we can include several different characters between square brackets
+    to have our regular expression match any of them. For instance, we could use
+  prefs: []
+  type: TYPE_NORMAL
+- en: /[mbg]ore/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'to match **more**, **bore**, and **gore**. We can also include ranges like
+    all lowercase letters from *a* to *z* like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /[a-z]ore/
+  prefs: []
+  type: TYPE_NORMAL
+- en: This would produce a wide range of matches, for instance **more**, **core**,
+    and exp**lore**. We can also include the range of uppercase letters,
+  prefs: []
+  type: TYPE_NORMAL
+- en: /[a-zA-Z]ore/
+  prefs: []
+  type: TYPE_NORMAL
+- en: to include matches like **More** or **Core**. One thing to keep an eye on is
+    that consecutive ranges are not separated by a space. If you separated them using
+    a space, the set would include the space as a valid character.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Character Classes**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: There are some special characters we can use to match common things such as
+    digits, whitespace, or single letters. The first one is a dot (**.**). We use
+    it to match anything except line breaks. It matches letters (both uppercase and
+    lowercase), numbers, punctuation marks, and whitespace. As you can see, this is
+    quite a powerful *matcher*. For example, the pattern
+  prefs: []
+  type: TYPE_NORMAL
+- en: /the end./
+  prefs: []
+  type: TYPE_NORMAL
+- en: would match **the end.**, **the end?**, **the end!**, and many more. To match
+    a single dot, we need to escape the dot character using a backward slash,
+  prefs: []
+  type: TYPE_NORMAL
+- en: /the end\./
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'which would produce only one match: **the end.**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We already learned about the class \d, which matches a digit. If we want to
+    match everything *but* digits, we can use \D (uppercase). Similarly, to match
+    letters, we can use the class \w, and we can use \W for nonletters. Lastly, for
+    whitespace there’s \s, and there’s \S to match whatever isn’t whitespace.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now let’s combine our knowledge on character classes into a regular expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /code\s\w-\d\d/
+  prefs: []
+  type: TYPE_NORMAL
+- en: This regular expression matches strings like **code f-44**, **code M-81**, and
+    **code p-29**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Quantifiers**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Quantifiers modify the number of matches expected for the token they quantify.
+    There are five quantifiers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ?     Matches zero or one of the preceding tokens
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*     Matches zero or more of the preceding tokens'
+  prefs: []
+  type: TYPE_NORMAL
+- en: +     Matches one or more of the preceding tokens
+  prefs: []
+  type: TYPE_NORMAL
+- en: (n)     Matches exactly n of the preceding tokens
+  prefs: []
+  type: TYPE_NORMAL
+- en: (n,m)     Matches from n to m of the preceding tokens
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example,
+  prefs: []
+  type: TYPE_NORMAL
+- en: /o{2}m/
+  prefs: []
+  type: TYPE_NORMAL
+- en: would match b**oom**, z**oom**, or kab**oom**. But, if instead we use
+  prefs: []
+  type: TYPE_NORMAL
+- en: /o+m/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'our matches could be any of the following: n**om**ad, b**oooo**m, or r**oom**.
+    We’ll be using most of these quantifiers throughout the text, so there will be
+    plenty more examples of them.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Capturing Groups**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: So far we’ve seen how to match text using regular expressions. But sometimes
+    we also want to extract the text we’ve matched. Here’s where groups come in. Groups
+    are defined between parentheses. Let’s try the following regular expression,
+  prefs: []
+  type: TYPE_NORMAL
+- en: /it takes (\d+) hours to go from (\w+) to (\w+)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'which applied to the sentence “it takes 4 hours to go from Barcelona to Pamplona”
+    would match it entirely and capture the following groups:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('4', 'Barcelona', 'Pamplona')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s try it in Python’s shell. Python’s standard library includes a powerful
+    regular expression package: re. Open your IDE’s shell and try entering the code
+    in [Listing 9-4](ch09.xhtml#ch9lis4).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-4: Capturing groups with regular expressions*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We define the pattern using a *raw string literal*, which has the format r’’.
+    These strings treat the backslash (\) as a valid character instead of interpreting
+    it as an escape sequence. Regular expressions need the backslash to define their
+    structure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In [Listing 9-4](ch09.xhtml#ch9lis4), the result is stored in a variable named
+    matches, which we can call the groups method on to yield the three captured groups:
+    4, Barcelona, and Pamplona.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A neat thing about groups is that they can be assigned a name that we can later
+    use to retrieve the matched value. For instance, consider the following pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /(?P<name>\w+), but they call me (?P<nick>\w+)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Applied to a sentence like “my name is Nelson, but they call me Big Head,”
+    this would capture two groups, which we can retrieve by name:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can guess, the syntax used to assign a name to a group is as follows,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: where name is the name assigned to the group and regex is the actual pattern
+    to match the group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Regular Expressions Cheat Sheet***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[Table 9-1](ch09.xhtml#ch9tab1), [Table 9-2](ch09.xhtml#ch9tab2), [Table 9-3](ch09.xhtml#ch9tab3),
+    and [Table 9-4](ch09.xhtml#ch9tab4) summarize the concepts we’ve explored and
+    can be used as references throughout the rest of the book.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 9-1:** Regular Expressions Character Sets'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [abc] | Matches ’a’ or ’b’ or ’c’ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [^ab] | Matches every character except ’a’ and ’b’ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [a-z] | Matches every character between ’a’ and ’z’ |'
+  prefs: []
+  type: TYPE_TB
+- en: '**Table 9-2:** Regular Expressions Character Classes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| \s | Matches whitespace |'
+  prefs: []
+  type: TYPE_TB
+- en: '| \S | Matches every character but whitespace |'
+  prefs: []
+  type: TYPE_TB
+- en: '| \d | Matches digits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| \D | Matches every character but digits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| \w | Matches letters |'
+  prefs: []
+  type: TYPE_TB
+- en: '| \W | Matches every character but letters |'
+  prefs: []
+  type: TYPE_TB
+- en: '**Table 9-3:** Regular Expressions Quantifiers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ? | Zero or one |'
+  prefs: []
+  type: TYPE_TB
+- en: '| * | Zero or more |'
+  prefs: []
+  type: TYPE_TB
+- en: '| + | One or more |'
+  prefs: []
+  type: TYPE_TB
+- en: '| {n} | Exactly n |'
+  prefs: []
+  type: TYPE_TB
+- en: '| {n,m} | Between n and m (both included) |'
+  prefs: []
+  type: TYPE_TB
+- en: '**Table 9-4:** Regular Expressions Capture Groups'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| (...) | A capture group goes between parentheses |'
+  prefs: []
+  type: TYPE_TB
+- en: '| (?P<name>...) | A named capture group |'
+  prefs: []
+  type: TYPE_TB
+- en: '***Matching Points***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'We already know everything we need to match the points defined as their space-separated
+    coordinates and capture them by name. Because coordinates will be defined by integer
+    numbers only, we can use the following regular expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /(?P<x>\d+)\s(?P<y>\d+)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s break that down. There are three parts to it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (?P<x>\d+)   Captures a group named x of one or more digits
+  prefs: []
+  type: TYPE_NORMAL
+- en: \s   Matches a single space
+  prefs: []
+  type: TYPE_NORMAL
+- en: (?P<y>\d+)   Captures a group named y of one or more digits
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s implement this matching pattern in our application’s *input.py* file.
+    Edit the code we wrote so that it looks like [Listing 9-5](ch09.xhtml#ch9lis5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-5: Parsing points*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start by importing re ➊. Then, we modify the parse_points function to map
+    the line we read using input() on an instance of Point. This conversion is handled
+    by the private __point_from_string function, which, using re.match, looks for
+    matches of the pattern in the passed-in string ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: From matches we know there should be two groups named x and y, respectively.
+    The function thus creates and returns an instance of Point whose x-coordinate
+    is the result of parsing the string captured by the group with name x as an integer
+    ➌. The y-coordinate is, in a similar fashion, the result of parsing the group
+    named y ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Run the application (using the *circle-three-points* configuration) by clicking
+    the green play button. You should see something like this printed to the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Congratulations! You just parsed three points from a file containing three lines
+    of plaintext. From here on out, all the command line applications we’ll create
+    can expect the input data from a file, which you already know how to parse and
+    interpret using the almighty regular expressions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Configuration File***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Our application will produce a beautiful vector image of both the input points
+    and the resulting circle. To do this, we’ll use different colors and line thicknesses
+    to help visually distinguish its parts. We could directly hard-code those colors
+    and size values in our code, but that’s not a great idea; our app will be easier
+    to maintain if we separate the configuration values from the actual logic. Instead,
+    we’ll keep the configuration values in a separate JSON file. We’ll use the JSON
+    format because it’s extremely easy to convert to a Python dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*We say something is* hard-coded *into the code when there’s no way of changing
+    it without altering the program’s source code. Configuration values, for instance,
+    are often hard-coded into the main application’s logic, making them impossible
+    to change without the need of reading through the code and potentially recompiling
+    the application. Don’t do that. The fewer times you need to edit and recompile
+    existing code, the better. Always move configuration values out of the program’s
+    logic into a file of its own.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inside *circle_from_points*, create a new file by right-clicking the package
+    name and choosing **New** ▸ **File**. Enter the name *config.json*, and in it,
+    write the contents in [Listing 9-6](ch09.xhtml#ch9lis6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-6: Application configuration inside a JSON file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This file is in JSON, a widely used format. If you happen to be new to it,
+    you can read more about it at [*www.json.org/*](http://www.json.org/). It looks
+    similar to Python dictionaries as it stores data in a key-value fashion. Luckily
+    for us, Python has an easy way of reading in JSON files: the standard library
+    includes the *json* package to handle JSON data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *input.py*, enter the function in [Listing 9-7](ch09.xhtml#ch9lis7) (don’t
+    forget the imports).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-7: Reading the configuration*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the pkg_resources module, this process becomes a breeze. The contents
+    of file *config.json* are read into a binary string using res.resource_string(),
+    which, when passed to json.loads, gets us the resulting Python dictionary with
+    everything parsed and ready to be used. We’ll be using these values soon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Problem Model and Resolution**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We’ve already parsed the problem’s model: the three instances of our Point
+    class. Using these, our application should now compute the circle that passes
+    through all of them. Our earlier work is about to pay off: we already have the
+    code to do this (check out “Circle Factories” on [page 153](ch06.xhtml#ch00lev2sec74)
+    for a refresher).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Open *main.py* and enter the code in [Listing 9-8](ch09.xhtml#ch9lis8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-8: Computing the circle passing through the three points*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'That was easy! We import make_circle_from_points from *geom2d* and simply pass
+    it the three points: a, b, and c. To make sure the circle was correctly computed,
+    we print the resulting circle. Run the application; you should expect the following
+    string representation for the resulting circle:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you open *result.svg*, that should be its content. This file is where we’re
+    redirecting our program’s output. There’s only one thing missing from our program:
+    plotting the output using the SVG format!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Generating Output**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Now that the problem is solved, we need to draw an SVG with the resulting circle
+    and input points. Start by creating a new file in *circle_from_points* named *output.py*.
+    Your *circle_from_points* directory should look like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: circle_from_points
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- input.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- main.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- output.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- test.txt'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In it, enter the code in [Listing 9-9](ch09.xhtml#ch9lis9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-9: First step to generating the output image*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We defined a new function, draw_to_svg, which receives a sequence of points
+    (the input points to the problem), the resulting circle, and a configuration dictionary.
+    Note the type hint for a sequence of points: [Point]; it’s declared by the Point
+    class between square brackets. A sequence type hint defined like this accepts
+    both lists and tuples.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For now, the function simply prints a message to the standard output, but we’ll
+    be updating it one step at a time until it finally draws everything. With this,
+    you can go ahead and give *main.py* its final look. Modify your code so that it
+    looks like [Listing 9-10](ch09.xhtml#ch9lis10).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-10: Main file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code is concise. There are fundamentally three lines, which, respectively,
+    read the input, solve the problem, and draw the output. With our main file all
+    set up, let’s fill out draw_to_svg.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Drawing the Output Circle***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We’ll start by drawing the circle. Open *output.py* and enter the code in [Listing
+    9-11](ch09.xhtml#ch9lis11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-11: Drawing the resulting circle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: That seems like a lot of code, but don’t worry, we’ll break it down. First,
+    we update the draw_to_svg function. Using the output_to_svg function we define
+    later in the code, we create the SVG representation for the circle ➊. Note that
+    we’re passing this function config[’output’], the *output* part of the configuration
+    dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, using make_viewbox, a function we’ve yet to define, we compute the viewBox
+    for the image ➋. Using this viewBox, its size, and svg_output, we generate the
+    image ➌ and print it to the standard output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now let’s look at output_to_svg. This function stores the SVG attributes for
+    the circle using another function we’ll define shortly (style_from_config) in
+    a variable named style ➍. The same happens for the styling attributes we’ll use
+    with the text, generated by label_style_from_config ➎. The function returns an
+    array of three SVG primitives: the circle and two labels.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The circle is straightforward; we use our prewritten circle function ➏. Then
+    comes the label indicating where the center of the circle is ➐, located with its
+    origin at the center point. Lastly, there’s the label with the information about
+    the circle’s radius. This label is located in the center of the circle but displaced
+    ⟨0, 20⟩ so that it appears below the former ➑.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*You may remember we said that when displacing the label by a vector* ⟨0, 20⟩*,
+    it appears below the other. A positive number in the y-coordinate of the vector
+    should produce an upward displacement and hence move the label on top of the other.
+    But remember that in SVG the y-axis points downward. We could fix that by applying
+    an affine transformation, but we won’t right now.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To compute the viewBox, enter the code in [Listing 9-12](ch09.xhtml#ch9lis12)
+    under output_to_svg.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-12: Computing the viewBox for the image*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function computes the rectangle that defines the visible portion of the
+    image. If you need a refresher, go back to section “The viewBox” on [page 207](ch08.xhtml#ch00lev2sec92).
+    To construct the rectangle, we use the make_rect_centered factory function, which
+    is pretty convenient now that we need a rectangle containing a circle. The height
+    of the rectangle is 2.5 times the radius of the circle, that is, the diameter
+    plus some margin. For the width, we use 4 times the radius (or 2 times the diameter),
+    as we need some room for the labels we’ll draw. I came up with these values by
+    pure trial and error, but feel free to adjust them based on your experiments.
+    They’ll basically add more or less margin to your drawing; that’s all.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 9-7](ch09.xhtml#ch9fig7) describes the layout of the SVG image we’re
+    drawing for reference.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/09fig07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-7: The SVG output layout*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s implement the functions that generate the SVG styling attributes. Toward
+    the end of your file *output.py*, enter the code in [Listing 9-13](ch09.xhtml#ch9lis13).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-13: Creating styles from configuration*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The style_from_config function creates a list of SVG attributes using the values
+    from the configuration dictionary. Let’s do the same for the label’s style (see
+    [Listing 9-14](ch09.xhtml#ch9lis14)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-14: Creating label styles from configuration*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: That’s it! We have all the code needed to draw the resulting circle in a cyanish
+    color. If you run the application now, you should see how the shell spits out
+    some SVG code, the same that is written in the file *result.svg*. Open this file
+    using your favorite browser. The result should be something similar to [Figure
+    9-8](ch09.xhtml#ch9fig8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/09fig08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-8: The SVG output circle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There you go! We solved our first geometry problem and plotted the result into
+    a vector image. Isn’t that super exciting? Go ahead and play with the configuration.
+    Try changing the color for the output and rerunning the application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Drawing the Input Points***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: It’s nice that we drew the resulting circle with captions that indicate the
+    position of the center and the radius, but the resulting image doesn’t include
+    information about the input points that generated the circle. Let’s draw those
+    so that one can get all the information from a single glance at the resulting
+    image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s create a new function that is similar to output_to_svg but produces the
+    SVG primitives that represent the input points. We’ll represent these points as
+    circles as well. In *output.py* enter the code in [Listing 9-15](ch09.xhtml#ch9lis15).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-15: Drawing the input points*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The input_to_svg function gets passed a list with the three input points, the
+    radius to use for representing the points, and the input configuration dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you’ll see, we’ll use a fraction of the size of the resulting circle as the
+    radius for the input points. This is so that they look good no matter the size
+    of the resulting image. Using a fixed number for their radius could result in
+    tiny, almost invisible circles for certain inputs and monstrous circles bigger
+    than the resulting one for others.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The styles for both the points and their labels are computed using the same
+    functions we used before: style_from_config and label_style_from_config. The points
+    in the sequence are destructured into variables a, b, and c so that we can conveniently
+    use them ➊.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because we’ll need to move the labels a bit to the right so they don’t overlap
+    with their circle, we construct a displacement vector, disp ➋. The function returns
+    the array of circles with their labels ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now update function draw_to_svg so that it also includes the three points in
+    the resulting image (see [Listing 9-16](ch09.xhtml#ch9lis16)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-16: Drawing to SVG*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As mentioned, the radius for the input points needs to be a fraction of that
+    from the resulting circle, so we chose one-twentieth of its radius ➊. If you think
+    the resulting circles are too big or too small, you can change that value and
+    experiment until you’re happy with the result. This value could be perfectly fine
+    as part of the application’s configuration, but we’ll keep it as an implementation
+    detail for the sake of simplicity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After we compute pt_radius, we compute the SVG primitives for the output as
+    before. Then we compute the SVG primitives for the input using the input_to_svg
+    function and store the result in svg_input ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After creating a viewBox, we update the contents of the SVG image by appending
+    svg_input to svg_output ➌. It’s important that svg_input goes after svg_output,
+    as the image primitives are drawn in order. If you switched the order to this,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: you’d see the input point circles behind the big circle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’re now ready to run the application and then reload the *result.svg* file
+    in the browser. The result should look like [Figure 9-9](ch09.xhtml#ch9fig9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/09fig09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-9: An SVG with the complete result*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Result***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: For your reference, [Listing 9-17](ch09.xhtml#ch9lis17) contains the finished
+    version of *output.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-17: Drawing to SVG result*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Flip the Y-Axis***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As you know by now, the SVG y-axis points downward. Point *C* at *y* = 500,
+    for instance, is below *A* with *y* = 300\. This isn’t necessarily bad, but it
+    may be the opposite of what you’re used to.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s a challenge for you: modify *output.py* so that the SVG produced uses
+    an affine transformation such that the y-axis is flipped and therefore points
+    upward. If you need a clue, go back to the section “Space Transformation” from
+    [Chapter 8](ch08.xhtml#ch08).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that if you choose to add an affine transformation that flips the y-axis
+    of the entire SVG image, as follows,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: all of the text labels will also flip vertically, which makes them impossible
+    to read. Try to address this problem by also adding an affine transformation to
+    all captions so that you basically flip them twice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is challenging, but a great exercise for you to try. Don’t worry, we’ll
+    explore this in depth in [Part V](part05.xhtml#part05).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Distributing Our Application**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The word has spread among your friends, and they’ve all heard about your achievement:
+    you developed an application that computes the circle passing through three points
+    and plots a beautiful vector image with the result. They know you’ve accomplished
+    this all by yourself, without using any third-party library. They are amazed;
+    “That is so hardcore,” you’ve even heard them say. They want to try it, and they’ve
+    prepared a few input files to test your program. You share the code with them,
+    and as they know Python, they open the shell and try to execute your *main.py*
+    script, only to discover there’s a strange error that won’t let the program run.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s unfortunate that to load all the modules that your application uses, there’s
+    a trick that PyCharm does and we need to account for. But don’t worry, we’ll explore
+    why the error happens and give a solution to it. You can use what you’ll learn
+    here to distribute any application that we build in this book, or even those that
+    you write yourself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Understanding the Problem***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s try to run our recently created program from the shell, without any change,
+    to see whether we get the same result as from the IDE. In the bash shell (the
+    one in your IDE or your system’s), navigate to the app’s directory,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and run this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Surprisingly, it doesn’t work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is the error we get:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is telling us that Python couldn’t find the apps module when it tried to
+    import it. But if that’s the case, why was it running correctly from the IDE using
+    the run configuration? Well, PyCharm’s run configurations do a trick under the
+    hood, a trick we now need to do ourselves.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When a script imports modules, Python looks for them in specific directories.
+    To know what those directories are exactly, you can query them at runtime: Python
+    stores them at sys.path, which is a list that contains all the paths where Python
+    looks for libraries in your machine. Python also appends the path to the script
+    itself; this path is known as the *working directory*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The problem that we encountered is that sys.path doesn’t get the parent path
+    of our project appended. That is unfortunate because this is where it should go
+    to find our *geom2d*, *graphic*, and *apps* packages. PyCharm’s run configuration
+    worked fine because it appends this path to sys.path. Let’s check this fact by
+    printing the contents of sys.path to the shell inside the main script and then
+    run it again using the run configuration. Open the *main.py* file and at the top
+    of the file add the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Notice that the print statement goes right after importing sys and before the
+    rest of the imports. You may get a PyCharm warning that doing this is conceptually
+    wrong according to PEP-8 standards—ignore that warning. We want that print right
+    before Python attempts to load anything else; otherwise, we’d get the same error
+    as before when the script is run from the shell and never get to print sys.path.
+    If you now rerun the project using the run configuration, the output you’ll get
+    should be similar to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Can you spot the second line (in bold) from the sys.path list? That line is
+    the key to solving the problem of not finding the included modules inside our
+    program. Let’s run the script now from the shell to see what that list of paths
+    contains. In the IDE’s shell, navigate to the app’s directory and run this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This time the output is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Can you see how the *Mechanics* directory isn’t listed here as a search path?
+    If that directory isn’t included, Python won’t be able to find any module from
+    that route when running our application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Delete the two lines you added to *main.py* so that the file looks like it did
+    before, and let’s explore some possible solutions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Finding a Solution***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The problem is clear: Python can’t load our libraries since it doesn’t have
+    their parent directory listed as a search path. Let’s see how we can solve this.
+    We’ll present two options, so we’ll try to understand their pros and cons before
+    we decide which one works best for us.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Appending to sys.path**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'One possible solution is to do what PyCharm’s run configuration does: append
+    the parent directory of our project to sys.path before Python attempts to import
+    anything from it. We could modify *main.py* so that it looks like [Listing 9-18](ch09.xhtml#ch9lis18).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-18: Appending to sys.path*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first import both the os and sys modules. We then compute the project’s parent
+    path by obtaining the current working directory (os.getcwd()) and navigating two
+    steps back (’..’, ’..’) ➊.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re using the os.path.normpath function to normalize the path so that it doesn’t
+    contain the dots representing a backward movement in the directory tree. This
+    function transforms a path like
+  prefs: []
+  type: TYPE_NORMAL
+- en: /Documents/MechBook/code/Mechanics/../..
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'into the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /Documents/MechBook
+  prefs: []
+  type: TYPE_NORMAL
+- en: That path is appended to sys.path before any other import attempts to load anything
+    from our project ➋. If you run the app from the shell, it should run error free.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This solution works, but it still seems a bit awkward that we have to make
+    users navigate into the *apps/circle_from_points* directory to run our script:
+    it’d be more convenient if we could run the program from the parent directory
+    of our project. Furthermore, the lines we added to *main.py* look a bit ugly and
+    have nothing to do with solving the problem of finding the circle passing through
+    three points. We don’t want to add those lines to every application that we implement;
+    that’s unnecessary complexity we want to avoid.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s try a different approach that doesn’t involve changing the code in our
+    main script: let’s create a bash script that appends the right working directory
+    path to the Python script’s execution. Start by undoing what we did in [Listing
+    9-18](ch09.xhtml#ch9lis18) so your *main.py* file looks the same as in [Listing
+    9-10](ch09.xhtml#ch9lis10).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Wrapping the App with a Script**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: For what we just saw in the previous section, every package that our *main.py*
+    script needs to run should be accessible either from the working directory or
+    from any other path listed in sys.path.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Remember that the working directory is where the executing file (in this case*
+    main.py*) is located.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Apart from appending paths to sys.path inside our Python code, we can also
+    include paths in an *environment variable*: PYTHONPATH. When a Python script is
+    run, it includes all paths defined in PYTHONPATH inside its sys.path.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can therefore create a bash script at the project’s top level, which sets
+    the right paths in PYTHONPATH and then executes our app’s *main.py*. Remember
+    that we use bash scripts to group a set of command line statements and run them
+    together by executing a single file (revisit [Chapter 3](ch03.xhtml#ch03) for
+    a refresher).
+  prefs: []
+  type: TYPE_NORMAL
+- en: At the top level of the project (at the same level as *geom2d* or *apps*), create
+    a new file named *cifpts.sh* (an abbreviation of “circle from points”). In it,
+    write the line in [Listing 9-19](ch09.xhtml#ch9lis19).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 9-19: Wrapper script*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first thing we do in this line is define an environment variable PYTHONPATH
+    with a value set to the current directory; the current directory is stored inside
+    another Unix environment variable: PWD.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, in the same line, we run *main.py* in *apps/circle_from_points*. Having
+    the definition of PYTHONPATH in the same line where the script is run scopes the
+    environment variable to the execution of the script only. This means that once
+    the script is done, the variable doesn’t exist anymore.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s try running the script from the shell passing the file *test.txt*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'That should’ve printed the SVG output to the shell. We can even make the bash
+    script appear as an executable by changing its user rights:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This allows us to further simplify the execution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Remember that the output needs to be redirected to a file if we want the result
+    written to it instead of being printed to the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: This looks more like something we want to share with our friends, all of whom
+    have longed to have a script that computes the circle that passes through any
+    three points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Running the App Without an Input File***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: It’s interesting to note that although we’ve been passing the script a file
+    containing the definition of three points by their coordinates, our code just
+    expects three lines from the standard input. This means we don’t have to create
+    a file to pass our script. We can simply execute the script and write the expected
+    input. If you try this in the shell,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: you’ll get an image named *result.svg* with the result inside the current directory.
+    As you see, you can directly give your program its input data from the shell.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In this chapter, we’ve developed our first application: a command line tool
+    that reads a file, parses it using regular expressions, and produces a beautiful
+    SVG vector image. This application has integrated a lot of knowledge that we’ve
+    been acquiring throughout the past chapters and has taught us about regular expressions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We also analyzed the problem that caused our modules to not be found by Python
+    when the application was run from the shell. We learned that this happened because
+    our project’s root folder, *Mechanics*, wasn’t part of the list of directories
+    Python uses to resolve imports. You can now easily distribute your *Mechanics*
+    project to your friends so that they can play with the applications that we’ll
+    be creating throughout the book, which will conveniently be wrapped into top-level
+    bash scripts.
+  prefs: []
+  type: TYPE_NORMAL

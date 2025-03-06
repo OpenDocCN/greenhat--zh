@@ -1,0 +1,2273 @@
+- en: '**10**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**PERFORMANCES AND OPTIMIZATIONS**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Optimizing is rarely the first thing you think about when developing, but there
+    always comes a time when optimizing for better performance will be appropriate.
+    That’s not to say you should write a program with the idea that it will be slow,
+    but thinking about optimization without first figuring out the right tools to
+    use and doing the proper profiling is a waste of time. As Donald Knuth wrote,
+    “Premature optimization is the root of all evil.”^([1](footnote.xhtml#foot2))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, I’ll show you how to use the right approach to write fast code and where
+    to look when more optimization is needed. Many developers try to guess where Python
+    might be slower or faster. Rather than speculating, this chapter will help you
+    understand how to profile your application so you’ll know what part of your program
+    is slowing things down and where the bottlenecks are.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Data Structures**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Most programming problems can be solved in an elegant and simple manner with
+    the right data structures—and Python provides many data structures to choose from.
+    Learning to leverage those existing data structures results in cleaner and more
+    stable solutions than coding custom data structures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, everybody uses dict, but how many times have you seen code trying
+    to access a dictionary by catching the KeyError exception, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def get_fruits(basket, fruit):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'try:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return basket[fruit]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'except KeyError:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return None
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Or by checking whether the key is present first:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def get_fruits(basket, fruit):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if fruit in basket:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return basket[fruit]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you use the get() method already provided by the dict class, you can avoid
+    having to catch an exception or checking the key’s presence in the first place:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def get_fruits(basket, fruit):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return basket.get(fruit)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The method dict.get() can also return a default value instead of None; just
+    call it with a second argument:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def get_fruits(basket, fruit):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# Return the fruit, or Banana if the fruit cannot be found.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return basket.get(fruit, Banana())
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Many developers are guilty of using basic Python data structures without being
+    aware of all the methods they provide. This is also true for sets; methods in
+    set data structures can solve many problems that would otherwise need to be addressed
+    by writing nested for/if blocks. For example, developers often use for/if loops
+    to determine whether an item is in a list, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def has_invalid_fields(fields):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for field in fields: if field not in [''foo'', ''bar'']:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return True
+  prefs: []
+  type: TYPE_NORMAL
+- en: return False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The loop iterates over each item in the list and checks that all items are
+    either foo or bar. But you can write this more efficiently, removing the need
+    for a loop:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def has_invalid_fields(fields):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return bool(set(fields) - set(['foo', 'bar']))
+  prefs: []
+  type: TYPE_NORMAL
+- en: This changes the code to convert the fields to a set, and it gets the rest of
+    the set by subtracting the set(['foo', 'bar']). It then converts the set to a
+    Boolean value, which indicates whether any items that aren’t foo and bar are left
+    over. By using sets, there is no need to iterate over any list and to check items
+    one by one. A single operation on two sets, done internally by Python, is faster.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python also has more advanced data structures that can greatly reduce the burden
+    of code maintenance. For example, take a look at [Listing 10-1](ch10.xhtml#ch10list1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def add_animal_in_family(species, animal, family):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if family not in species:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: species[family] = set()
+  prefs: []
+  type: TYPE_NORMAL
+- en: species[family].add(animal)
+  prefs: []
+  type: TYPE_NORMAL
+- en: species = {}
+  prefs: []
+  type: TYPE_NORMAL
+- en: add_animal_in_family(species, 'cat', 'felidea')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-1: Adding an entry in a dictionary of sets*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code is perfectly valid, but how many times will your programs require
+    a variation of [Listing 10-1](ch10.xhtml#ch10list1)? Tens? Hundreds?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Python provides the collections.defaultdict structure, which solves the problem
+    in an elegant way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import collections
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def add_animal_in_family(species, animal, family):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: species[family].add(animal)
+  prefs: []
+  type: TYPE_NORMAL
+- en: species = collections.defaultdict(set)
+  prefs: []
+  type: TYPE_NORMAL
+- en: add_animal_in_family(species, 'cat', 'felidea')
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each time you try to access a nonexistent item from your dict, the defaultdict
+    will use the function that was passed as argument to its constructor to build
+    a new value, instead of raising a KeyError. In this case, the set() function is
+    used to build a new set each time we need it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The collections module offers a few more data structures that you can use to
+    solve other kinds of problems. For example, imagine that you want to count the
+    number of distinct items in an iterable. Let’s take a look at the collections.Counter()
+    method, which provides methods that solve this problem:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> import collections'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> c = collections.Counter("Premature optimization is the root of all evil.")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> c'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> c[''P'']  # Returns the name of occurrence of the letter ''P'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> c[''e'']  # Returns the name of occurrence of the letter ''e'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> c.most_common(2)  # Returns the 2 most common letters'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[('' '', 7), (''i'', 5)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The collections.Counter object works with any iterable that has hashable items,
+    removing the need to write your own counting functions. It can easily count the
+    number of letters in a string and return the top *n* most common items of an iterable.
+    You might have tried to implement something like this on your own if you were
+    not aware it was already provided by Python’s Standard Library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the right data structure, the correct methods, and—obviously—an adequate
+    algorithm, your program should perform well. However, if it is not performing
+    well enough, the best way to get clues about where it might be slow and need optimization
+    is to profile your code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Understanding Behavior Through Profiling**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*Profiling* is a form of dynamic program analysis that allows us to understand
+    how a program behaves. It allows us to determine where there might be bottlenecks
+    and a need for optimization. A profile of a program takes the form of a set of
+    statistics that describe how often parts of the program execute and for how long.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python provides a few tools for profiling your program. One, cProfile, is part
+    of the Python Standard Library and does not require installation. We’ll also look
+    at the dis module, which can disassemble Python code into smaller parts, making
+    it easier to understand what is happening under the hood.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***cProfile***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Python has included cProfile by default since Python 2.5\. To use cProfile,
+    call it with your program using the syntax python –m cProfile <program>. This
+    should load and enable the cProfile module, then run the regular program with
+    instrumentation enabled, as shown in [Listing 10-2](ch10.xhtml#ch10list2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ python -m cProfile myscript.py
+  prefs: []
+  type: TYPE_NORMAL
+- en: 343 function calls (342 primitive calls) in 0.000 seconds
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Ordered by: standard name ncalls  tottime  percall  cumtime  percall filename:lineno(function)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1    0.000    0.000    0.000    0.000 :0(_getframe)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1    0.000    0.000    0.000    0.000 :0(len)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 104    0.000    0.000    0.000    0.000 :0(setattr)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1    0.000    0.000    0.000    0.000 :0(setprofile)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1    0.000    0.000    0.000    0.000 :0(startswith)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2/1    0.000    0.000    0.000    0.000 <string>:1(<module>)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1    0.000    0.000    0.000    0.000 StringIO.py:30(<module>)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1    0.000    0.000    0.000    0.000 StringIO.py:42(StringIO)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-2: Default output of cProfile used against a Python script*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-2](ch10.xhtml#ch10list2) shows the output of running a simple script
+    with cProfile. This tells you the number of times each function in the program
+    was called and the time spent on its execution. You can also use the -s option
+    to sort by other fields; for example, -s time would sort the results by internal
+    time.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can visualize the information generated by cProfile using a great tool called
+    KCacheGrind. This tool was created to deal with programs written in C, but luckily
+    we can use it with Python data by converting the data to a call tree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The cProfile module has an -o option that allows you to save the profiling
+    data, and pyprof2calltree can convert data from one format to the other. First,
+    install the converter with the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ pip install pyprof2calltree
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then run the converter as shown in [Listing 10-3](ch10.xhtml#ch10list3) to both
+    convert the data (-i option) and run KCacheGrind with the converted data (-k option).
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ python -m cProfile -o myscript.cprof myscript.py
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ pyprof2calltree -k -i myscript.cprof
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-3: Running cProfile and launching KCacheGrind*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once KCacheGrind opens, it will display information that looks like that in
+    [Figure 10-1](ch10.xhtml#ch10fig1). With these visual results, you can use the
+    call graph to follow the percentage of time spent in each function, allowing you
+    to determine what part of your program might be consuming too many resources.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The easiest way to read KCacheGrind is to start with the table on the left of
+    the screen, which lists all the functions and methods executed by your program.
+    You can sort these by execution time, then identify the one that consumes the
+    most CPU time and click on it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The right panels of KCacheGrind can show you which functions have called that
+    function and how many times, as well as which other functions are being called
+    by the function. The call graph of your program, including the execution time
+    of each part, is easy to navigate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This should allow you to better understand which parts of your code might need
+    optimization. The way to optimize the code is up to you and depends on what your
+    program is trying to achieve!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f10-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-1: Example of KCacheGrind output*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: While retrieving information about how your program runs and visualizing it
+    works well to get a macroscopic view of your program, you might need a more microscopic
+    view of some parts of the code to inspect its elements more closely. In such a
+    case, I find it better to rely on the dis module to find out what’s going on behind
+    the scenes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Disassembling with the dis Module***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The dis module is a disassembler of Python bytecode. Taking code apart can be
+    useful to understand what’s going on behind each line so you can properly optimize
+    it. For example, [Listing 10-4](ch10.xhtml#ch10list4) shows the dis.dis() function,
+    which disassembles whichever function you pass as a parameter and prints the list
+    of bytecode instructions that are run by the function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> def x():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...     return 42'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> import dis'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> dis.dis(x)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2           0 LOAD_CONST               1 (42)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 RETURN_VALUE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-4: Disassembling a function*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In [Listing 10-4](ch10.xhtml#ch10list4), the function x is disassembled and
+    its constituents, made of bytecode instructions, are printed. There are only two
+    operations here: loading a constant (LOAD_CONST), which is 42, and returning that
+    value (RETURN_VALUE).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To see dis in action and how it can be useful, we’ll define two functions that
+    do the same thing—concatenate three letters—and disassemble them to see how they
+    do their tasks in different ways:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: abc = ('a', 'b', 'c')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def concat_a_1():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for letter in abc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: abc[0] + letter
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def concat_a_2():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: a = abc[0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for letter in abc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: a + letter
+  prefs: []
+  type: TYPE_NORMAL
+- en: Both functions appear to do the same thing, but if we disassemble them using
+    dis.dis, as shown in [Listing 10-5](ch10.xhtml#ch10list5), we’ll see that the
+    generated bytecode is a bit different.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> dis.dis(concat_a_1)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2           0 SETUP_LOOP              26 (to 29)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 LOAD_GLOBAL              0 (abc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 GET_ITER
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>    7 FOR_ITER                18 (to 28)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10 STORE_FAST               0 (letter)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3          13 LOAD_GLOBAL              0 (abc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 16 LOAD_CONST               1 (0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 19 BINARY_SUBSCR
+  prefs: []
+  type: TYPE_NORMAL
+- en: 20 LOAD_FAST                0 (letter)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 23 BINARY_ADD
+  prefs: []
+  type: TYPE_NORMAL
+- en: 24 POP_TOP
+  prefs: []
+  type: TYPE_NORMAL
+- en: 25 JUMP_ABSOLUTE            7
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>   28 POP_BLOCK'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>   29 LOAD_CONST               0 (None)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 32 RETURN_VALUE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> dis.dis(concat_a_2)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2           0 LOAD_GLOBAL              0 (abc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 LOAD_CONST               1 (0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 BINARY_SUBSCR
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 STORE_FAST               0 (a)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3          10 SETUP_LOOP              22 (to 35)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13 LOAD_GLOBAL              0 (abc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 16 GET_ITER
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>   17 FOR_ITER                14 (to 34)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 20 STORE_FAST               1 (letter)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4          23 LOAD_FAST                0 (a)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 26 LOAD_FAST                1 (letter)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 29 BINARY_ADD
+  prefs: []
+  type: TYPE_NORMAL
+- en: 30 POP_TOP
+  prefs: []
+  type: TYPE_NORMAL
+- en: 31 JUMP_ABSOLUTE           17
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>   34 POP_BLOCK >>   35 LOAD_CONST               0 (None)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 38 RETURN_VALUE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-5: Disassembling functions that concatenate strings*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the second function in [Listing 10-5](ch10.xhtml#ch10list5), we store abc[0]
+    in a temporary variable before running the loop. This makes the bytecode that’s
+    executed inside the loop a little smaller than the bytecode for the first function,
+    as we avoid having to do the abc[0] lookup for each iteration. Measured using
+    timeit, the second version is 10 percent faster than the first function; it takes
+    a whole microsecond less to execute! Obviously this microsecond is not worth optimizing
+    for unless you call this function billions of times, but this is the kind of insight
+    that the dis module can provide.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whether you rely on “tricks” such as storing the value outside the loop depends
+    on the situation—ultimately, it should be the compiler’s work to optimize this
+    kind of thing. On the other hand, it’s difficult for the compiler to be sure that
+    optimization wouldn’t have negative side effects because Python is heavily dynamic.
+    In [Listing 10-5](ch10.xhtml#ch10list5), using abc[0] will call abc.__getitem__,
+    which could have side effects if it has been overridden by inheritance. Depending
+    on the version of the function you use, the abc.__getitem__ method will be called
+    once or several times, which might make a difference. Therefore, be careful when
+    writing and optimizing your code!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Defining Functions Efficiently**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One common mistake I have found when reviewing code is definitions of functions
+    within functions. This is inefficient because the function is then redefined repeatedly
+    and needlessly. For example, [Listing 10-6](ch10.xhtml#ch10list6) shows the y()
+    function being defined multiple times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>> import dis'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> def x():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...     return 42'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> dis.dis(x)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2           0 LOAD_CONST               1 (42)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 RETURN_VALUE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> def x():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...     def y():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...             return 42'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...     return y()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> dis.dis(x)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2           0 LOAD_CONST               1 (<code object y at
+  prefs: []
+  type: TYPE_NORMAL
+- en: x100ce7e30, file "<stdin>", line 2>)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 MAKE_FUNCTION            0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 STORE_FAST               0 (y)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4           9 LOAD_FAST                0 (y) 12 CALL_FUNCTION            0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 15 RETURN_VALUE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-6: Function redefinition*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-6](ch10.xhtml#ch10list6) shows the calling of MAKE_FUNCTION, STORE_FAST,
+    LOAD_FAST, and CALL_FUNCTION, which requires many more opcodes than those needed
+    to return 42, as seen in [Listing 10-4](ch10.xhtml#ch10list4).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The only case in which you’d need to define a function within a function is
+    when building a function closure, and this is a perfectly identified use case
+    in Python’s opcodes with LOAD_CLOSURE, as shown in [Listing 10-7](ch10.xhtml#ch10list7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> def x():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...     a = 42'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...     def y():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...             return a'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...     return y()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> dis.dis(x)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2           0 LOAD_CONST               1 (42)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 STORE_DEREF              0 (a)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3           6 LOAD_CLOSURE             0 (a)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9 BUILD_TUPLE              1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 12 LOAD_CONST               2 (<code object y at
+  prefs: []
+  type: TYPE_NORMAL
+- en: x100d139b0, file "<stdin>", line 3>)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 15 MAKE_CLOSURE             0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 18 STORE_FAST               0 (y)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5          21 LOAD_FAST                0 (y)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 24 CALL_FUNCTION            0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 27 RETURN_VALUE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-7: Defining a closure*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: While you probably won’t need to use it every day, disassembling code is a handy
+    tool for when you want a closer look at what happens under the hood.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Ordered Lists and bisect**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Next, let’s look at optimizing lists. If a list is unsorted, the worst-case
+    scenario for finding a particular item’s position in the list has a complexity
+    of *O(n)*, meaning that in the worst case, you’ll find your item after iterating
+    over every item of the list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The usual solution for optimizing this problem is to use a *sorted* list instead.
+    Sorted lists use a bisecting algorithm for lookup to achieve a retrieve time of
+    *O(log n)*. The idea is to recursively split the list in half and look on which
+    side, left or right, the item must appear in and so which side should be searched
+    next.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python provides the bisect module, which contains a bisection algorithm, as
+    shown in [Listing 10-8](ch10.xhtml#ch10list8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> farm = sorted([''haystack'', ''needle'', ''cow'', ''pig''])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> bisect.bisect(farm, ''needle'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> bisect.bisect_left(farm, ''needle'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> bisect.bisect(farm, ''chicken'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> bisect.bisect_left(farm, ''chicken'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> bisect.bisect(farm, ''eggs'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> bisect.bisect_left(farm, ''eggs'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-8: Using bisect to find a needle in a haystack*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As shown in [Listing 10-8](ch10.xhtml#ch10list8), the bisect.bisect() function
+    returns the position where an element should be inserted to keep the list sorted.
+    Obviously, this only works if the list is properly sorted to begin with. Initial
+    sorting allows to us get the *theoretical* index of an item: bisect() does not
+    return whether the item is in the list but where the item should be if it is in
+    the list. Retrieving the item at this index will answer the question about whether
+    the item is in the list.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you wish to insert the element into the correct sorted position immediately,
+    the bisect module provides the insort_left() and insort_right() functions, as
+    shown in [Listing 10-9](ch10.xhtml#ch10list9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> farm'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[''cow'', ''haystack'', ''needle'', ''pig'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> bisect.insort(farm, ''eggs'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> farm'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[''cow'', ''eggs'', ''haystack'', ''needle'', ''pig'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> bisect.insort(farm, ''turkey'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> farm'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[''cow'', ''eggs'', ''haystack'', ''needle'', ''pig'', ''turkey'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-9: Inserting an item in a sorted list*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using the bisect module, you could also create a special SortedList class inheriting
+    from list to create a list that is always sorted, as shown in [Listing 10-10](ch10.xhtml#ch10list10):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import bisect
+  prefs: []
+  type: TYPE_NORMAL
+- en: import unittest
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class SortedList(list):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, iterable):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: super(SortedList, self).__init__(sorted(iterable))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def insort(self, item):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'bisect.insort(self, item) def extend(self, other):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for item in other:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.insort(item)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '@staticmethod'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def append(o):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: raise RuntimeError("Cannot append to a sorted list")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def index(self, value, start=None, stop=None):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: place = bisect.bisect_left(self[start:stop], value)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if start:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: place += start
+  prefs: []
+  type: TYPE_NORMAL
+- en: end = stop or len(self)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if place < end and self[place] == value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return place
+  prefs: []
+  type: TYPE_NORMAL
+- en: raise ValueError("%s is not in list" % value)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class TestSortedList(unittest.TestCase):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def setUp(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mylist = SortedList(
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[''a'', ''c'', ''d'', ''x'', ''f'', ''g'', ''w'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: )
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def test_sorted_init(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertEqual(sorted(['a', 'c', 'd', 'x', 'f', 'g', 'w']),
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mylist)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def test_sorted_insort(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mylist.insort('z')
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertEqual(['a', 'c', 'd', 'f', 'g', 'w', 'x', 'z'],
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mylist)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mylist.insort('b')
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertEqual(['a', 'b', 'c', 'd', 'f', 'g', 'w', 'x', 'z'],
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mylist)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def test_index(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertEqual(0, self.mylist.index('a'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertEqual(1, self.mylist.index('c'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertEqual(5, self.mylist.index('w'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertEqual(0, self.mylist.index('a', stop=0))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertEqual(0, self.mylist.index('a', stop=2))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertEqual(0, self.mylist.index('a', stop=20))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertRaises(ValueError, self.mylist.index, 'w', stop=3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertRaises(ValueError, self.mylist.index, 'a', start=3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertRaises(ValueError, self.mylist.index, 'a', start=333)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def test_extend(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mylist.extend(['b', 'h', 'j', 'c'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.assertEqual(
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[''a'', ''b'', ''c'', ''c'', ''d'', ''f'', ''g'', ''h'', ''j'', ''w'', ''x'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mylist)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-10: A SortedList object implementation*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using a list class like this is slightly slower when it comes to inserting
+    the item, because the program has to look for the right spot to insert it. However,
+    this class is faster at using the index() method than its parent. Obviously, one
+    shouldn’t use the list.append() method on this class: you can’t append an item
+    at the end of the list or it could end up unsorted!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Many Python libraries implement various versions of [Listing 10-10](ch10.xhtml#ch10list10)
+    for many more data types, such as binary or red-black tree structures. The blist
+    and bintree Python packages contain code that can be used for these purposes and
+    are a handy alternative to implementing and debugging your own version.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next section, we’ll see how the native tuple data type provided by Python
+    can be leveraged to make your Python code a little faster.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**namedtuple and Slots**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Often in programming, you’ll need to create simple objects that possess only
+    a few fixed attributes. A simple implementation might be something along these
+    lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Point(object):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, x, y):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.x = x
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.y = y
+  prefs: []
+  type: TYPE_NORMAL
+- en: This definitely gets the job done. However, there is a downside to this approach.
+    Here we’re creating a class that inherits from the object class, so by using this
+    Point class, you are instantiating full objects and allocating a lot of memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In Python, regular objects store all of their attributes inside a dictionary,
+    and this dictionary is itself stored in the __dict__ attribute, as shown in [Listing
+    10-11](ch10.xhtml#ch10list11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> p = Point(1, 2)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> p.__dict__'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{''y'': 2, ''x'': 1}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> p.z = 42'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> p.z'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '42'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> p.__dict__'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{''y'': 2, ''x'': 1, ''z'': 42}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-11: How attributes are stored internally in a Python object*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For Python, the advantage of using a dict is that it allows you to add as many
+    attributes as you want to an object. The drawback is that using a dictionary to
+    store these attributes is expensive in terms of memory—you need to store the object,
+    the keys, the value references, and everything else. That makes it slow to create
+    and slow to manipulate, with a high memory cost.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As an example of this unnecessary memory usage, consider the following simple
+    class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Foobar(object):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, x):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.x = x
+  prefs: []
+  type: TYPE_NORMAL
+- en: This creates a simple Point object with a single attribute named x. Let’s check
+    the memory usage of this class using the memory_profiler, a nice Python package
+    that allows us to see the memory usage of a program line by line, and a small
+    script that creates 100,000 objects, as shown in [Listing 10-12](ch10.xhtml#ch10list12).
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ python -m memory_profiler object.py
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Filename: object.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Line #    Mem usage    Increment   Line Contents'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5                             @profile
+  prefs: []
+  type: TYPE_NORMAL
+- en: '6     9.879 MB     0.000 MB   def main():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7    50.289 MB    40.410 MB       f = [ Foobar(42) for i in range(100000) ]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-12: Using memory_profiler on a script using objects*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-12](ch10.xhtml#ch10list12) demonstrates that creating 100,000 of
+    the objects of the Foobar class would consume 40MB of memory. Although 400 bytes
+    per object might not sound that big, when you are creating thousands of objects,
+    the memory adds up.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There is a way to use objects while avoiding this default behavior of dict:
+    classes in Python can define a __slots__ attribute that will list only the attributes
+    allowed for instances of this class. Instead of allocating a whole dictionary
+    object to store the object attributes, you can use a *list* object to store them.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you go through CPython source code and take a look at the *Objects/typeobject.c*
+    file, it is quite easy to understand what Python does when __slots__ is set on
+    a class. [Listing 10-13](ch10.xhtml#ch10list13) is an abbreviated version of the
+    function that handles this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: static PyObject *
+  prefs: []
+  type: TYPE_NORMAL
+- en: type_new(PyTypeObject *metatype, PyObject *args, PyObject *kwds)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{'
+  prefs: []
+  type: TYPE_NORMAL
+- en: --snip--
+  prefs: []
+  type: TYPE_NORMAL
+- en: /* Check for a __slots__ sequence variable in dict, and count it */
+  prefs: []
+  type: TYPE_NORMAL
+- en: slots = _PyDict_GetItemId(dict, &PyId___slots__);
+  prefs: []
+  type: TYPE_NORMAL
+- en: nslots = 0;
+  prefs: []
+  type: TYPE_NORMAL
+- en: if (slots == NULL) {
+  prefs: []
+  type: TYPE_NORMAL
+- en: if (may_add_dict)
+  prefs: []
+  type: TYPE_NORMAL
+- en: add_dict++;
+  prefs: []
+  type: TYPE_NORMAL
+- en: if (may_add_weak)
+  prefs: []
+  type: TYPE_NORMAL
+- en: add_weak++;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '} else {'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /* Have slots */
+  prefs: []
+  type: TYPE_NORMAL
+- en: /* Make it into a tuple */
+  prefs: []
+  type: TYPE_NORMAL
+- en: if (PyUnicode_Check(slots))
+  prefs: []
+  type: TYPE_NORMAL
+- en: slots = PyTuple_Pack(1, slots);
+  prefs: []
+  type: TYPE_NORMAL
+- en: else
+  prefs: []
+  type: TYPE_NORMAL
+- en: slots = PySequence_Tuple(slots);
+  prefs: []
+  type: TYPE_NORMAL
+- en: /* Are slots allowed? */
+  prefs: []
+  type: TYPE_NORMAL
+- en: nslots = PyTuple_GET_SIZE(slots);
+  prefs: []
+  type: TYPE_NORMAL
+- en: if (nslots > 0 && base->tp_itemsize != 0) {
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyErr_Format(PyExc_TypeError,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"nonempty __slots__ "'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"not supported for subtype of ''%s''",'
+  prefs: []
+  type: TYPE_NORMAL
+- en: base->tp_name);
+  prefs: []
+  type: TYPE_NORMAL
+- en: goto error;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /* Copy slots into a list, mangle names and sort them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sorted names are needed for __class__ assignment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convert them back to tuple at the end.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*/'
+  prefs: []
+  type: TYPE_NORMAL
+- en: newslots = PyList_New(nslots - add_dict - add_weak);
+  prefs: []
+  type: TYPE_NORMAL
+- en: if (newslots == NULL)
+  prefs: []
+  type: TYPE_NORMAL
+- en: goto error;
+  prefs: []
+  type: TYPE_NORMAL
+- en: if (PyList_Sort(newslots) == -1) {
+  prefs: []
+  type: TYPE_NORMAL
+- en: Py_DECREF(newslots);
+  prefs: []
+  type: TYPE_NORMAL
+- en: goto error;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: slots = PyList_AsTuple(newslots);
+  prefs: []
+  type: TYPE_NORMAL
+- en: Py_DECREF(newslots);
+  prefs: []
+  type: TYPE_NORMAL
+- en: if (slots == NULL)
+  prefs: []
+  type: TYPE_NORMAL
+- en: goto error;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /* Allocate the type object */
+  prefs: []
+  type: TYPE_NORMAL
+- en: type = (PyTypeObject *)metatype->tp_alloc(metatype, nslots);
+  prefs: []
+  type: TYPE_NORMAL
+- en: --snip--
+  prefs: []
+  type: TYPE_NORMAL
+- en: /* Keep name and slots alive in the extended type object */
+  prefs: []
+  type: TYPE_NORMAL
+- en: et = (PyHeapTypeObject *)type;
+  prefs: []
+  type: TYPE_NORMAL
+- en: Py_INCREF(name);
+  prefs: []
+  type: TYPE_NORMAL
+- en: et->ht_name = name;
+  prefs: []
+  type: TYPE_NORMAL
+- en: et->ht_slots = slots;
+  prefs: []
+  type: TYPE_NORMAL
+- en: slots = NULL;
+  prefs: []
+  type: TYPE_NORMAL
+- en: --snip--
+  prefs: []
+  type: TYPE_NORMAL
+- en: return (PyObject *)type;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-13: An extract from Objects/typeobject.c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see in [Listing 10-13](ch10.xhtml#ch10list13), Python converts the
+    content of __slots__ into a tuple and then into a list, which it builds and sorts
+    before converting the list back into a tuple to use and store in the class. In
+    this way, Python can retrieve the values quickly, without having to allocate and
+    use an entire dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It’s easy enough to declare and use such a class. All you need to do is to
+    set the __slots__ attribute to a list of the attributes that will be defined in
+    the class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Foobar(object):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: __slots__ = ('x',)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, x):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.x = x
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can compare the memory usage of the two approaches using the memory_profiler
+    Python package, as shown in [Listing 10-14](ch10.xhtml#ch10list14).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '% python -m memory_profiler slots.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Filename: slots.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Line #    Mem usage    Increment   Line Contents'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7                             @profile
+  prefs: []
+  type: TYPE_NORMAL
+- en: '8     9.879 MB     0.000 MB   def main():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9    21.609 MB    11.730 MB       f = [ Foobar(42) for i in range(100000) ]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-14: Running memory_profiler on the script using __slots__*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-14](ch10.xhtml#ch10list14) shows that this time, less than 12MB
+    of memory was needed to create 100,000 objects—or fewer than 120 bytes per object.
+    Thus, by using the __slots__ attribute of Python classes, we can reduce memory
+    usage, so when we are creating a large number of simple objects, the __slots__
+    attribute is an effective and efficient choice. However, this technique shouldn’t
+    be used for performing static typing by hardcoding the list of attributes of every
+    class: doing so wouldn’t be in the spirit of Python programs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The drawback here is that the list of attributes is now fixed. No new attribute
+    can be added to the Foobar class at runtime. Due to the fixed nature of the attribute
+    list, it’s easy enough to imagine classes where the attributes listed would always
+    have a value and where the fields would always be sorted in some way.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is exactly what occurs in the namedtuple class from the collection module.
+    This namedtuple class allows us to dynamically create a class that will inherit
+    from the tuple class, thus sharing characteristics such as being immutable and
+    having a fixed number of entries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rather than having to reference them by index, namedtuple provides the ability
+    to retrieve tuple elements by referencing a named attribute. This makes the tuple
+    easier to access for humans, as shown in [Listing 10-15](ch10.xhtml#ch10list15).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> import collections'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> Foobar = collections.namedtuple(''Foobar'', [''x''])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> Foobar = collections.namedtuple(''Foobar'', [''x'', ''y''])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> Foobar(42, 43) Foobar(x=42, y=43)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> Foobar(42, 43).x'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '42'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> Foobar(42, 43).x = 44'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Traceback (most recent call last):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: File "<stdin>", line 1, in <module>
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'AttributeError: can''t set attribute'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> Foobar(42, 43).z = 0'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Traceback (most recent call last):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: File "<stdin>", line 1, in <module>
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'AttributeError: ''Foobar'' object has no attribute ''z'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> list(Foobar(42, 43))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[42, 43]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-15: Using namedtuple to reference tuple elements*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-15](ch10.xhtml#ch10list15) shows how you can create a simple class
+    with just one line of code and then instantiate it. We can’t change any attributes
+    of objects of this class or add attributes to them, both because the class inherits
+    from namedtuple and because the __slots__ value is set to an empty tuple, avoiding
+    the creation of the __dict__. Since a class like this would inherit from tuple,
+    we can easily convert it to a list.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-16](ch10.xhtml#ch10list16) demonstrates the memory usage of the
+    namedtuple class factory.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '% python -m memory_profiler namedtuple.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Filename: namedtuple.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Line #    Mem usage    Increment   Line Contents'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4                             @profile
+  prefs: []
+  type: TYPE_NORMAL
+- en: '5     9.895 MB     0.000 MB   def main():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6    23.184 MB    13.289 MB       f = [ Foobar(42) for i in range(100000) ]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-16: Using namedtuple to run memory_profiler on a script*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'At around 13MB for 100,000 objects, using namedtuple is slightly less efficient
+    than using an object with __slots__, but the bonus is that it is compatible with
+    the tuple class. It can therefore be passed to many native Python functions and
+    libraries that expect an iterable as an argument. A namedtuple class factory also
+    enjoys the various optimizations that exist for tuples: for example, tuples with
+    fewer items than PyTuple_MAXSAVESIZE (20 by default) will use a faster memory
+    allocator in CPython.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The namedtuple class also provides a few extra methods that, even if prefixed
+    by an underscore, are actually intended to be public. The _asdict() method can
+    convert the namedtuple to a dict instance, the _make() method allows you to convert
+    an existing iterable object to this class, and _replace() returns a new instance
+    of the object with some fields replaced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Named tuples are a great replacement for small objects that consists of only
+    a few attributes and do not require any custom methods—consider using them rather
+    than dictionaries, for example. If your data type needs methods, has a fixed list
+    of attributes, and might be instantiated thousands of times, then creating a custom
+    class using __slots__ might be a good idea to save some memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Memoization**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*Memoization* is an optimization technique used to speed up function calls
+    by caching their results. The results of a function can be cached only if the
+    function is *pure*, meaning that it has no side effects and does not depend on
+    any global state. (See [Chapter 8](ch08.xhtml#ch08) for more on pure functions.)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One trivial function that can be memoized is sin(), shown in [Listing 10-17](ch10.xhtml#ch10list17).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> import math'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> _SIN_MEMOIZED_VALUES = {}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> def memoized_sin(x):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...    if x not in _SIN_MEMOIZED_VALUES:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...        _SIN_MEMOIZED_VALUES[x] = math.sin(x)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...    return _SIN_MEMOIZED_VALUES[x]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin(1)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0.8414709848078965'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> _SIN_MEMOIZED_VALUES'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{1: 0.8414709848078965}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin(2)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0.9092974268256817'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin(2)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0.9092974268256817'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> _SIN_MEMOIZED_VALUES'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{1: 0.8414709848078965, 2: 0.9092974268256817}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin(1)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0.8414709848078965'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> _SIN_MEMOIZED_VALUES'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{1: 0.8414709848078965, 2: 0.9092974268256817}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-17: A memoized sin() function*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Listing 10-17](ch10.xhtml#ch10list17), the first time that memoized_sin()
+    is called with an argument that is not stored in _SIN_MEMOIZED_VALUES, the value
+    is computed and stored in this dictionary. If we call the function with the same
+    value again, the result will be retrieved from the dictionary rather than recomputed.
+    While sin() computes very quickly, some advanced functions involving more complicated
+    computations may take longer, and this is where memoization really shines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’ve already read about decorators (if not, see “[Decorators and When to
+    Use Them](ch07.xhtml#lev1sec34)” on [page 100](ch07.xhtml#page_100)), you might
+    see a perfect opportunity to use them here, and you’d be right. PyPI lists a few
+    implementations of memoization through decorators, from very simple cases to the
+    most complex and complete.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Starting with Python 3.3, the functools module provides a *least recently used
+    (LRU)* cache decorator. This provides the same functionality as memoization, but
+    with the benefit that it limits the number of entries in the cache, removing the
+    least recently used one when the cache reaches its maximum size. The module also
+    provides statistics on cache hits and misses (whether something was in the accessed
+    cache or not), among other data. In my opinion, these statistics are must-haves
+    when implementing such a cache. The strength of using memoization, or any caching
+    technique, is in the ability to meter its usage and usefulness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-18](ch10.xhtml#ch10list18) demonstrates how to use the functools.lru_cache()
+    method to implement the memoization of a function. When decorated, the function
+    gets a cache_info() method that can be called to get statistics about the cache
+    usage.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> import functools'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> import math'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> @functools.lru_cache(maxsize=2)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '... def memoized_sin(x):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...     return math.sin(x)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin(2)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0.9092974268256817'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin.cache_info()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: CacheInfo(hits=0, misses=1, maxsize=2, currsize=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin(2)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0.9092974268256817'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin.cache_info()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: CacheInfo(hits=1, misses=1, maxsize=2, currsize=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin(3)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0.1411200080598672'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin.cache_info()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: CacheInfo(hits=1, misses=2, maxsize=2, currsize=2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin(4)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '-0.7568024953079282'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin.cache_info()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: CacheInfo(hits=1, misses=3, maxsize=2, currsize=2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin(3)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0.1411200080598672'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin.cache_info()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: CacheInfo(hits=2, misses=3, maxsize=2, currsize=2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin.cache_clear()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> memoized_sin.cache_info()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: CacheInfo(hits=0, misses=0, maxsize=2, currsize=0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-18: Inspecting cache statistics*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-18](ch10.xhtml#ch10list18) demonstrates how your cache is being
+    used and how to tell whether there are optimizations to be made. For example,
+    if the number of misses is high when the cache is not full, then the cache may
+    be useless because the arguments passed to the function are never identical. This
+    will help determine what should or should not be memoized!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Faster Python with PyPy**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*PyPy* is an efficient implementation of the Python language that complies
+    with standards: you should be able to run any Python program with it. Indeed,
+    the canonical implementation of Python, CPython—so called because it’s written
+    in C—can be very slow. The idea behind PyPy was to write a Python interpreter
+    in Python itself. In time, it evolved to be written in RPython, which is a restricted
+    subset of the Python language.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: RPython places constraints on the Python language such that a variable’s type
+    can be inferred at compile time. The RPython code is translated into C code, which
+    is compiled to build the interpreter. RPython could of course be used to implement
+    languages other than Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What’s interesting in PyPy, besides the technical challenge, is that it is now
+    at a stage where it can act as a faster replacement for CPython. PyPy has a *just-in-time
+    (JIT)* compiler built-in; in other words, it allows the code to run faster by
+    combining the speed of compiled code with the flexibility of interpretation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How fast? That depends, but for pure algorithmic code, it is much faster. For
+    more general code, PyPy claims to achieve three times the speed of CPython most
+    of the time. Unfortunately, PyPy also has some of the limitations of CPython,
+    including the *global interpreter lock (GIL)*, which allows only one thread to
+    execute at a time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Though it’s not strictly an optimization technique, targeting PyPy as one of
+    your supported Python implementations might be a good idea. To make PyPy a support
+    implementation, you need to make sure that you are testing your software under
+    PyPy as you would under CPython. In [Chapter 6](ch06.xhtml#ch06), we discussed
+    tox (see “Using virtualenv with tox” on [page 92](ch06.xhtml#page_92)), which
+    supports the building of virtual environments using PyPy, just as it does for
+    any version of CPython, so putting PyPy support in place should be pretty straightforward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Testing PyPy support right at the beginning of the project will ensure that
+    there’s not too much work to do at a later stage if you decide that you want to
+    be able to run your software with PyPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*For the Hy project discussed in [Chapter 9](ch09.xhtml#ch09), we successfully
+    adopted this strategy from the beginning. Hy always has supported PyPy and all
+    other CPython versions without much trouble. On the other hand, OpenStack failed
+    to do so for its projects and, as a result, is now blocked by various code paths
+    and dependencies that don’t work on PyPy for various reasons; they weren’t required
+    to be fully tested in the early stages.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyPy is compatible with Python 2.7 and Python 3.5, and its JIT compiler works
+    on 32- and 64-bit, x86, and ARM architectures and under various operating systems
+    (Linux, Windows, and Mac OS X). PyPy often lags behind CPython in features, but
+    it regularly catches up. Unless your project is reliant on the latest CPython
+    features, this lag might not be a problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Achieving Zero Copy with the Buffer Protocol**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Often programs have to deal with huge amounts of data in the form of large arrays
+    of bytes. Handling such a large quantity of input in strings can be very ineffective
+    once you start manipulating the data by copying, slicing, and modifying it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s consider a small program that reads a large file of binary data and copies
+    it partially into another file. To examine the memory usage of this program, we
+    will use memory_profiler, as we did earlier. The script to partially copy the
+    file is shown in [Listing 10-19](ch10.xhtml#ch10list19).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '@profile'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def read_random():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'with open("/dev/urandom", "rb") as source:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: content = source.read(1024 * 10000)
+  prefs: []
+  type: TYPE_NORMAL
+- en: content_to_write = content[1024:]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Content length: %d, content to write length %d" %'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (len(content), len(content_to_write)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'with open("/dev/null", "wb") as target:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: target.write(content_to_write)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if __name__ == ''__main__'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: read_random()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-19: Partially copying a file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running the program in [Listing 10-19](ch10.xhtml#ch10list19) using memory_profiler
+    produces the output shown in [Listing 10-20](ch10.xhtml#ch10list20).
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ python -m memory_profiler memoryview/copy.py
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Content length: 10240000, content to write length 10238976'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Filename: memoryview/copy.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mem usage    Increment   Line Contents
+  prefs: []
+  type: TYPE_NORMAL
+- en: '@profile'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '9.883 MB     0.000 MB   def read_random():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '9.887 MB     0.004 MB       with open("/dev/urandom", "rb") as source:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 19.656 MB     9.770 MB           content = source.read(1024 * 10000)➊
+  prefs: []
+  type: TYPE_NORMAL
+- en: 29.422 MB     9.766 MB           content_to_write = content[1024:]➋
+  prefs: []
+  type: TYPE_NORMAL
+- en: '29.422 MB     0.000 MB       print("Content length: %d, content to write length
+    %d" %'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 29.434 MB     0.012 MB             (len(content), len(content_to_write)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '29.434 MB     0.000 MB       with open("/dev/null", "wb") as target:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 29.434 MB     0.000 MB           target.write(content_to_write)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-20: Memory profiling of partial file copy*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: According to the output, the program reads 10MB from *_/dev/urandom* ➊. Python
+    needs to allocate around 10MB of memory to store this data as a string. It then
+    copies the entire block of data, minus the first KB ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What’s interesting in [Listing 10-20](ch10.xhtml#ch10list20) is that the program’s
+    memory usage is increased by about 10MB when building the variable content_to_write.
+    In fact, the slice operator is copying the entirety of content, minus the first
+    KB, into a new string object, allocating a large chunk of the 10MB.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performing this kind of operation on large byte arrays is going to be a disaster
+    since large pieces of memory will be allocated and copied. If you have experience
+    writing in C code, you know that using the memcpy() function has a significant
+    cost in terms of both memory usage and general performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But as a C programmer, you’ll also know that strings are arrays of characters
+    and that nothing stops you from looking at only *part* of an array without copying
+    it. You can do this through the use of basic pointer arithmetic, assuming that
+    the entire string is in a contiguous memory area.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is also possible in Python using objects that implement the *buffer protocol*.
+    The buffer protocol is defined in PEP 3118, as a C API that needs to be implemented
+    on various types for them to provide this protocol. The string class, for example,
+    implements this protocol.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When you implement this protocol on an object, you can then use the memoryview
+    class constructor to build a new memoryview object that will reference the original
+    object memory. For example, [Listing 10-21](ch10.xhtml#ch10list21) shows how to
+    use memoryview to access slice of a string without doing any copying:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> s = b"abcdefgh"'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> view = memoryview(s)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> view[1]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ 98 <1>
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> limited = view[1:3]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> limited'
+  prefs: []
+  type: TYPE_NORMAL
+- en: <memory at 0x7fca18b8d460>
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> bytes(view[1:3])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: b'bc'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-21: Using memoryview to avoid copying data*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: At ➊, you find the ASCII code for the letter *b*. In [Listing 10-21](ch10.xhtml#ch10list21),
+    we are making use of the fact that the memoryview object’s slice operator itself
+    returns a memoryview object. That means it does *not* copy any data but merely
+    references a particular slice of it, saving the memory that would be used by a
+    copy. [Figure 10-2](ch10.xhtml#ch10fig2) illustrates what happens in [Listing
+    10-21](ch10.xhtml#ch10list21).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f10-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-2: Using slice on memoryview objects*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can rewrite the program from [Listing 10-19](ch10.xhtml#ch10list19), this
+    time referencing the data we want to write using a memoryview object rather than
+    allocating a new string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '@profile'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def read_random():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'with open("/dev/urandom", "rb") as source:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: content = source.read(1024 * 10000)
+  prefs: []
+  type: TYPE_NORMAL
+- en: content_to_write = memoryview(content)[1024:]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Content length: %d, content to write length %d" %'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (len(content), len(content_to_write)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'with open("/dev/null", "wb") as target:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: target.write(content_to_write)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if __name__ == ''__main__'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: read_random()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-22: Partially copying a file using memoryview*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The program in [Listing 10-22](ch10.xhtml#ch10list22) uses half the memory
+    of the first version in [Listing 10-19](ch10.xhtml#ch10list19). We can see this
+    by testing it with memory_profiler again, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ python -m memory_profiler memoryview/copy-memoryview.py
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Content length: 10240000, content to write length 10238976'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Filename: memoryview/copy-memoryview.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mem usage    Increment   Line Contents
+  prefs: []
+  type: TYPE_NORMAL
+- en: '@profile'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '9.887 MB     0.000 MB   def read_random():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '9.891 MB     0.004 MB ➊     with open("/dev/urandom", "rb") as source:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 19.660 MB     9.770 MB ➋        content = source.read(1024 * 10000)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 19.660 MB     0.000 MB           content_to_write = memoryview(content)[1024:]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '19.660 MB     0.000 MB       print("Content length: %d, content to write length
+    %d" %'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 19.672 MB     0.012 MB             (len(content), len(content_to_write)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '19.672 MB     0.000 MB       with open("/dev/null", "wb") as target:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 19.672 MB     0.000 MB           target.write(content_to_write)
+  prefs: []
+  type: TYPE_NORMAL
+- en: These results show that we are reading 10,000KB from */dev/urandom* and not
+    doing much with it ➊. Python needs to allocate 9.77MB of memory to store this
+    data as a string ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We reference the entire block of data minus the first KB, because we won’t be
+    writing that first KB to the target file. Because we aren’t copying, no more memory
+    is used!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This kind of trick is especially useful when dealing with sockets. When sending
+    data over a socket, it’s possible that the data might split between calls rather
+    than be sent in a single call: the socket.send methods return the actual data
+    length that was able to be sent by the network, which might be smaller than the
+    data that was intended to be sent. [Listing 10-23](ch10.xhtml#ch10list23) shows
+    how the situation is usually handled.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import socket
+  prefs: []
+  type: TYPE_NORMAL
+- en: s = socket.socket(...)
+  prefs: []
+  type: TYPE_NORMAL
+- en: s.connect(...)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ data = b"a" * (1024 * 100000) <1> while data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: sent = s.send(data)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ data = data[sent:] <2>
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-23: Sending data over a socket*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we build a bytes object that contains the letter *a* more than 100 million
+    times ➊. Then we remove the first sent bytes ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using a mechanism that implemented in [Listing 10-23](ch10.xhtml#ch10list23),
+    a program will copy the data over and over until the socket has sent everything.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can alter the program in [Listing 10-23](ch10.xhtml#ch10list23) to use memoryview
+    to achieve the same functionality with zero copying, and therefore higher performance,
+    as shown in [Listing 10-24](ch10.xhtml#ch10list24).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import socket
+  prefs: []
+  type: TYPE_NORMAL
+- en: s = socket.socket(...)
+  prefs: []
+  type: TYPE_NORMAL
+- en: s.connect(...)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ data = b"a" * (1024 * 100000) <1>
+  prefs: []
+  type: TYPE_NORMAL
+- en: mv = memoryview(data)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'while mv:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: sent = s.send(mv)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ mv = mv[sent:] <2>
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-24: Sending data over a socket using memoryview*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we build a bytes object that contains the letter *a* more than 100 million
+    times ➊. Then, we build a new memoryview object pointing to the data that remains
+    to be sent, rather than copying that data ➋. This program won’t copy anything,
+    so it won’t use any more memory than the 100MB initially needed for the data variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ve seen how memoryview objects can be used to write data efficiently, and
+    this same method can be used to *read* data. Most I/O operations in Python know
+    how to deal with objects implementing the buffer protocol: they can read from
+    those, and also write to those. In this case, we don’t need memoryview objects;
+    we can just ask an I/O function to write into our preallocated object, as shown
+    in [Listing 10-25](ch10.xhtml#ch10list25).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> ba = bytearray(8)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> ba'
+  prefs: []
+  type: TYPE_NORMAL
+- en: bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> with open("/dev/urandom", "rb") as source:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...     source.readinto(ba)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '8'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> ba'
+  prefs: []
+  type: TYPE_NORMAL
+- en: bytearray(b'`m.z\x8d\x0fp\xa1')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-25: Writing into a preallocated bytearray*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Listing 10-25](ch10.xhtml#ch10list25), by using the readinto() method of
+    the opened file, Python can directly read the data from the file and write it
+    to a preallocated bytearray. With such techniques, it’s easy to preallocate a
+    buffer (as you would do in C to mitigate the number of calls to malloc()) and
+    fill it at your convenience. Using memoryview, you can place data at any point
+    in the memory area, as shown in [Listing 10-26](ch10.xhtml#ch10list26).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> ba = bytearray(8)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ >>> ba_at_4 = memoryview(ba)[4:]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> with open("/dev/urandom", "rb") as source:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ ...     source.readinto(ba_at_4)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> ba'
+  prefs: []
+  type: TYPE_NORMAL
+- en: bytearray(b'\x00\x00\x00\x00\x0b\x19\xae\xb2')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-26: Writing into an arbitrary position of bytearray*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We reference the bytearray from offset 4 to its end ➊. Then, we write the content
+    of */dev/urandom* from offset 4 to the end of bytearray, effectively reading just
+    4 bytes ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The buffer protocol is extremely important for achieving low memory overhead
+    and great performances. As Python hides all the memory allocations, developers
+    tend to forget what happens under the hood, at great cost to the speed of their
+    programs!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Both the objects in the array module and the functions in the struct module
+    can handle the buffer protocol correctly and can therefore perform efficiently
+    when targeting zero copying.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As we’ve seen in this chapter, there are plenty of ways to make Python code
+    faster. Choosing the right data structure and using the correct methods for manipulating
+    the data can have a huge impact in terms of CPU and memory usage. That’s why it’s
+    important to understand what happens in Python internally.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, optimization should never be done prematurely, without first performing
+    a proper profiling. It is too easy to waste time rewriting some barely used code
+    with a faster variant while missing central pain points. Don’t miss the big picture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Victor Stinner on Optimization**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Victor is a longtime Python hacker, a core contributor, and the author of many
+    Python modules. He authored PEP 454 in 2013, which proposed a new tracemalloc
+    module to trace memory block allocation inside Python, and he wrote a simple AST
+    optimizer called FAT. He also regularly contributes to the improvement of CPython
+    performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**What’s a good starting strategy for optimizing Python code?**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The strategy is the same in Python as in other languages. First, you need a
+    well-defined use case in order to get a stable and reproducible benchmark. Without
+    a reliable benchmark, trying different optimizations may result in wasted time
+    and premature optimization. Useless optimizations may make the code worse, less
+    readable, or even slower. A useful optimization must speed the program up by at
+    least 5 percent if it’s to be worth pursuing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a specific part of the code is identified as being “slow,” a benchmark should
+    be prepared on this code. A benchmark on a short function is usually called a
+    *micro-benchmark*. The speedup should be at least 20 percent, maybe 25 percent,
+    to justify an optimization on a micro-benchmark.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It may be interesting to run a benchmark on different computers, different operating
+    systems, or different compilers. For example, performances of realloc() may vary
+    between Linux and Windows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**What are your recommended tools for profiling or optimizing Python code?**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python 3.3 has a time.perf_counter() function to measure elapsed time for a
+    benchmark. It has the best resolution available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A test should be run more than once; three times is a minimum, and five may
+    be enough. Repeating a test fills disk cache and CPU caches. I prefer to keep
+    the minimum timing; other developers prefer the geometric mean.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For micro-benchmarks, the timeit module is easy to use and gives results quickly,
+    but the results are not reliable using default parameters. Tests should be repeated
+    manually to get stable results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Optimizing can take a lot of time, so it’s better to focus on functions that
+    use the most CPU power. To find these functions, Python has cProfile and profile
+    modules to record the amount of time spent in each function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Do you have any Python tricks that could improve performance?**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You should reuse the Standard Library as much as possible—it’s well tested
+    and also usually efficient. Built-in Python types are implemented in C and have
+    good performance. Use the correct container to get the best performance; Python
+    provides many different kind of containers: dict, list, deque, set, and so on.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are some hacks for optimizing Python, but you should avoid these because
+    they make the code less readable in exchange for a minor speedup.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Zen of Python (PEP 20) says, “There should be one—and preferably only one—obvious
+    way to do it.” In practice, there are different ways to write Python code, and
+    performances are not the same. Only trust benchmarks on your use case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Which areas of Python have the poorest performance and should be watched
+    out for?**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, I prefer not to worry about performance while developing a new application.
+    Premature optimization is the root of all evil. When you identify slow functions,
+    change the algorithm. If the algorithm and the container types are well chosen,
+    you might rewrite short functions in C to get the best performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One bottleneck in CPython is the global interpreter lock, known as the GIL.
+    Two threads cannot execute Python bytecode at the same time. However, this limitation
+    only matters if two threads are executing pure Python code. If most processing
+    time is spent in function calls, and these functions release the GIL, then the
+    GIL is not the bottleneck. For example, most I/O functions release the GIL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The multiprocessing module can easily be used to work around the GIL. Another
+    option, more complex to implement, is to write asynchronous code. Twisted, Tornado,
+    and Tulip projects, which are network-oriented libraries, make use of this technique.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**What are some often-seen performance mistakes?**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When Python is not well understood, inefficient code can be written. For example,
+    I have seen copy.deepcopy() misused, when no copying was required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another performance killer is an inefficient data structure. With less than
+    100 items, the container type has no impact on performance. With more items, the
+    complexity of each operation (add, get, delete) and its effects must be known.
+  prefs: []
+  type: TYPE_NORMAL

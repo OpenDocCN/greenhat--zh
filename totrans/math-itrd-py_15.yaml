@@ -1,0 +1,2026 @@
+- en: '12'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: SOLVING PROBLEMS USING GENETIC ALGORITHMS
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Steve: We’re lost.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Mike: How lost are we?*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/fintro-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: When many people think of math, they think of equations and operations that
+    are “set in stone” and answers that are either right or wrong. They might be surprised
+    to learn how much guessing and checking we’ve done in our algebra explorations
+    already.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, you learn to crack passwords and hidden messages in an indirect
+    fashion. It’s kind of like the “guess-and-check” method of [Chapter 4](ch04.xhtml#ch04),
+    where we just plugged a bunch of integers into an equation and if any made the
+    equation true, we printed them out. This time, we’ll guess a bunch of values,
+    not just one. It’s not the most elegant way of solving a problem, but with a computer
+    at our disposal, sometimes brute force works best.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To figure out our secret phrase, we generate guesses and then rate them on
+    how well they match the target. But here’s where we depart from a guess-and-check
+    method: we keep the best guesses and mutate them, randomly, again and again until
+    we uncover the message. The program won’t know which letters are right and which
+    letters are wrong, but we get closer and closer by mutating the best guess we’ve
+    made so far. Although this method might not seem promising right now, you’ll see
+    that it helps crack the code surprisingly quickly. This method is called a *genetic
+    algorithm*, which computer scientists use to find solutions to problems based
+    on the theory of natural selection and evolutionary biology. It was inspired by
+    biological organisms that adapt and mutate, and the way they build on tiny advantages,
+    as we saw in the Sheep model in [Chapter 9](ch09.xhtml#ch09), on Classes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more complicated problems, however, random mutating won’t be enough to solve
+    our problem. In those cases, we add *crossover*, which we use to combine the most
+    fit organisms (or best guesses) to improve their likelihood of cracking the code,
+    just like how the fittest organisms are more likely to pass down a combination
+    of their genetic material. All this activity, other than the scoring, will be
+    fairly random, so it might be surprising that our genetic algorithms work so well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: USING A GENETIC ALGORITHM TO GUESS PHRASES
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Open IDLE and create a new file called *geneticQuote.py*. Instead of guessing
+    a number like in [Chapter 4](ch04.xhtml#ch04), this program tries to guess a secret
+    phrase. All we have to tell the program is the number of characters it guessed
+    correctly—not where or which characters, just how many.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our program is going to be able to do much better than guess short passwords.
+  prefs: []
+  type: TYPE_NORMAL
+- en: WRITING THE MAKELIST() FUNCTION
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To see how this works, let’s create a target phrase. Here’s a long sentence
+    that my son came up with from the comic book *Naruto*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: target = "I never go back on my word, because that is my Ninja way."
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In English, we have a bunch of characters we can choose from: lowercase letters,
+    uppercase letters, a space, and some punctuation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: characters = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.',?!"
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s create a function called makeList() that will randomly create a list of
+    characters that’s the same length as target. Later, when we try to guess what
+    the target phrase is, we’ll score the guess by comparing it character by character
+    with the target. A higher score means a guess is closer to the target. Then, we’ll
+    randomly change one of the characters in that guess to see if that increases its
+    score. It seems surprising that such a random method will ever get us to the exact
+    target phrase, but it will.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, import the random module and write the makeList() function, as shown
+    in [Listing 12-1](ch12.xhtml#ch12list1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*genetic'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quote.py*
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: target = "I never go back on my word, because that is my Ninja way."
+  prefs: []
+  type: TYPE_NORMAL
+- en: characters = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.',?!"
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def makeList():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''''''Returns a list of characters the same length'
+  prefs: []
+  type: TYPE_NORMAL
+- en: as the target'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'charList = [] #empty list to fill with random characters'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(target)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: charList.append(random.choice(characters))
+  prefs: []
+  type: TYPE_NORMAL
+- en: return charList
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-1: Writing the makeList() function to create a list of random characters
+    that’s the same length as the target*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, we create an empty list called charList and loop over the list the same
+    number of times as there are characters in the target. On each loop,the program
+    puts a random character from characters into charList. Once the loop is done,
+    it returns charList. Let’s test it to make sure it works.
+  prefs: []
+  type: TYPE_NORMAL
+- en: TESTING THE MAKELIST() FUNCTION
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'First, let’s find out what the length of the target is, and check that our
+    random list is the same length:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> len(target)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '57'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> newList = makeList()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> newList'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[''p'', ''H'', ''Z'', ''!'', ''R'', ''i'', ''e'', ''j'', ''c'', ''F'', ''a'',
+    ''u'', ''F'', ''y'', ''.'','
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''w'', ''u'', ''.'', ''H'', ''W'', ''w'', ''P'', ''Z'', ''D'', ''D'', ''E'',
+    ''H'', ''N'', ''f'', '' '','
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''W'', ''S'', ''A'', ''B'', '','', ''w'', ''?'', ''K'', ''b'', ''N'', ''f'',
+    ''k'', ''g'', ''Q'', ''T'','
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''n'', ''Q'', ''H'', ''o'', ''r'', ''G'', ''h'', ''w'', ''l'', ''l'', ''W'',
+    ''d'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> len(newList)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '57'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We measured the length of the target list, and it’s 57 characters long. Our
+    new list is the same length, 57 characters. Why make a list instead of a string?
+    We make a list because lists are sometimes easier to work with than strings. For
+    example, you can’t simply replace a character in a string with another character.
+    But in a list you can, as you can see here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> a = "Hello"'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> a[0] = "J"'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Traceback (most recent call last):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: File "<pyshell#16>", line 1, in <module>
+  prefs: []
+  type: TYPE_NORMAL
+- en: a[0] = "J"
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TypeError: ''str'' object does not support item assignment'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> b = ["H","e","l","l","o"]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> b[0] = "J"'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> b'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[''J'', ''e'', ''l'', ''l'', ''o'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, when we try to replace the first item in the "Hello" string
+    with "J", Python doesn’t let us, and we get an error. Doing the same thing using
+    a list, however, is no problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the case of our *geneticQuote.py* program, we want to see the random quote
+    as a string because that’s easier to read. Here’s how to print out a list as a
+    string, using Python’s join() function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> print(''''.join(newList))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pHZ!RiejcFauFy.wu.HWwPZDDEHNf WSAB,w?KbNfkgQTnQHorGhwllWd
+  prefs: []
+  type: TYPE_NORMAL
+- en: Those are all the characters in newList, but in string form. It doesn’t look
+    like a very promising start!
+  prefs: []
+  type: TYPE_NORMAL
+- en: WRITING THE SCORE() FUNCTION
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now let’s write a function called score() to score each guess by comparing it
+    character by character with the target, like in [Listing 12-2](ch12.xhtml#ch12list2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*genetic'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quote.py*
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def score(mylist):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''''''Returns one integer: the number of matches with target'''''''
+  prefs: []
+  type: TYPE_NORMAL
+- en: matches = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(target)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if mylist[i] == target[i]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: matches += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: return matches
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-2: Writing the score() function for scoring a guess*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The score() function takes each item in a list we feed it (mylist) and checks
+    if the first character of mylist matches the first character of the target list.
+    Then the function checks whether the second characters match, and so on. For each
+    character matched, we increment matches by 1\. In the end, this function returns
+    a single number, not which ones are right, so we don’t actually know *which* characters
+    we got right!
+  prefs: []
+  type: TYPE_NORMAL
+- en: What’s our score?
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> newList = makeList()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> score(newList)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our first guess was a total strikeout. Not a single match!
+  prefs: []
+  type: TYPE_NORMAL
+- en: WRITING THE MUTATE() FUNCTION
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now we’ll write a function to mutate a list by randomly changing one character.
+    This will allow our program to “make guesses” until we get closer to the target
+    phrase we’re trying to guess. The code is in [Listing 12-3](ch12.xhtml#ch12list3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*genetic'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quote.py*
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def mutate(mylist):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''''''Returns mylist with one letter changed'''''''
+  prefs: []
+  type: TYPE_NORMAL
+- en: newlist = list(mylist)
+  prefs: []
+  type: TYPE_NORMAL
+- en: new_letter = random.choice(characters)
+  prefs: []
+  type: TYPE_NORMAL
+- en: index = random.randint(0,len(target)-1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: newlist[index] = new_letter
+  prefs: []
+  type: TYPE_NORMAL
+- en: return newlist
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-3: Writing the mutate() function for changing one character in
+    a list*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we copy the elements of the list to a variable called newlist. We then
+    randomly choose a character from the characters list to be the new letter that
+    will replace one of the existing characters. We randomly choose a number between
+    0 and the length of the target to be the index of the letter we replace. Then
+    we set the character in newlist at that index to be the new letter. This process
+    repeats over and over again in a loop. If the new list has a higher score, it’ll
+    become the “best” list, and the best list will keep getting mutated in the hope
+    of improving its score even more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: GENERATING A RANDOM NUMBER
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Starting off the program after all the function definitions, we make sure of
+    our randomness by calling random.seed(). Calling random.seed() resets the random
+    number generator to the present time. Then we make a list of characters and, since
+    the first list is the best one so far, declare it the best list. Its score will
+    be the best score.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*genetic'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quote.py*
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.seed()
+  prefs: []
+  type: TYPE_NORMAL
+- en: bestList = makeList()
+  prefs: []
+  type: TYPE_NORMAL
+- en: bestScore = score(bestList)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We keep track of how many guesses we’ve made:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: guesses = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now we start an infinite loop that will mutate bestList to make a new guess.
+    We calculate its score and increment the guesses variable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: guess = mutate(bestList)
+  prefs: []
+  type: TYPE_NORMAL
+- en: guessScore = score(guess)
+  prefs: []
+  type: TYPE_NORMAL
+- en: guesses += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the score of the new guess is less than or equal to the best score so far,
+    the program can “continue,” as shown next. That means it will go back to the beginning
+    of the loop, since it wasn’t a good guess, and we don’t need to do anything else
+    with it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if guessScore <= bestScore:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: continue
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If we’re still in the loop, that means the guess is good enough to print out.
+    We print its score, too. We can print the list (as a string), the score, and how
+    many total guesses were made. If the score of the new guess is the same as the
+    length of the target, then we’ve solved the quote and we can break out of the
+    loop:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(''.join(guess),guessScore,guesses)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if guessScore == len(target):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: break
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Otherwise, the new guess must be better than the best list so far, but not
+    perfect yet, so we can declare it the best list and save its score as the best
+    score:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: bestList = list(guess)
+  prefs: []
+  type: TYPE_NORMAL
+- en: bestScore = guessScore
+  prefs: []
+  type: TYPE_NORMAL
+- en: Listing 12-4 shows the entire code for the *geneticQuote.py* program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*genetic Quote.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: target = "I never go back on my word, because that is my Ninja way."
+  prefs: []
+  type: TYPE_NORMAL
+- en: characters = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.',?!"
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#function to create a "guess" list of characters the same length as target'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def makeList():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''''''Returns a list of characters the same length'
+  prefs: []
+  type: TYPE_NORMAL
+- en: as the target'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'charList = [] #empty list to fill with random characters'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(target)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: charList.append(random.choice(characters))
+  prefs: []
+  type: TYPE_NORMAL
+- en: return charList
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#function to "score" the guess list by comparing it to target'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def score(mylist):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''''''Returns one integer: the number of matches with target'''''''
+  prefs: []
+  type: TYPE_NORMAL
+- en: matches = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(target)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if mylist[i] == target[i]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: matches += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: return matches
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#function to "mutate" a list by randomly changing one letter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def mutate(mylist):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''''''Returns mylist with one letter changed'''''''
+  prefs: []
+  type: TYPE_NORMAL
+- en: newlist = list(mylist)
+  prefs: []
+  type: TYPE_NORMAL
+- en: new_letter = random.choice(characters)
+  prefs: []
+  type: TYPE_NORMAL
+- en: index = random.randint(0,len(target)-1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: newlist[index] = new_letter
+  prefs: []
+  type: TYPE_NORMAL
+- en: return newlist
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#create a list, set the list to be the bestList'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#set the score of bestList to be the bestScore'
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.seed()
+  prefs: []
+  type: TYPE_NORMAL
+- en: bestList = makeList()
+  prefs: []
+  type: TYPE_NORMAL
+- en: bestScore = score(bestList)
+  prefs: []
+  type: TYPE_NORMAL
+- en: guesses = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#make an infinite loop that will create a mutation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#of the bestList, score it'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: guess = mutate(bestList)
+  prefs: []
+  type: TYPE_NORMAL
+- en: guessScore = score(guess)
+  prefs: []
+  type: TYPE_NORMAL
+- en: guesses += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#if the score of the newList is lower than the bestList,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#"continue" on to the next iteration of the loop'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if guessScore <= bestScore:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: continue
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#if the score of the newlist is the optimal score,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#print the list and break out of the loop'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(''.join(guess),guessScore,guesses)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if guessScore == len(target):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: break
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#otherwise, set the bestList to the value of the newList'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#and the bestScore to be the value of the score of the newList'
+  prefs: []
+  type: TYPE_NORMAL
+- en: bestList = list(guess)
+  prefs: []
+  type: TYPE_NORMAL
+- en: bestScore = guessScore
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-4: The complete code for the* geneticQuote.py *program*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now when we run this, we get a very fast solution, with all the guesses that
+    improved the score printed out.
+  prefs: []
+  type: TYPE_NORMAL
+- en: i.fpzgPG.'kHT!NW WXxM?rCcdsRCiRGe.LWVZzhJe zSzuWKV.FfaCAV 1 178
+  prefs: []
+  type: TYPE_NORMAL
+- en: i.fpzgPG.'kHT!N  WXxM?rCcdsRCiRGe.LWVZzhJe zSzuWKV.FfaCAV 2 237
+  prefs: []
+  type: TYPE_NORMAL
+- en: i.fpzgPG.'kHT!N  WXxM?rCcdsRCiRGe.LWVZzhJe zSzuWKV.FfwCAV 3 266
+  prefs: []
+  type: TYPE_NORMAL
+- en: i fpzgPG.'kHT!N  WXxM?rCcdsRCiRGe.LWVZzhJe zSzuWKV.FfwCAV 4 324
+  prefs: []
+  type: TYPE_NORMAL
+- en: --snip--
+  prefs: []
+  type: TYPE_NORMAL
+- en: I nevgP go back on my word, because that is my Ninja way. 55 8936
+  prefs: []
+  type: TYPE_NORMAL
+- en: I neveP go back on my word, because that is my Ninja way. 56 10019
+  prefs: []
+  type: TYPE_NORMAL
+- en: I never go back on my word, because that is my Ninja way. 57 16028
+  prefs: []
+  type: TYPE_NORMAL
+- en: This output shows that the final score was 57, and it took 16,028 total guesses
+    to match the quote exactly. Notice on the first line of output that 178 guesses
+    were needed to get a score of 1! There are more efficient ways of guessing a quote,
+    but I wanted to introduce the idea of genetic algorithms using an easy example.
+    The point was to show how a method of scoring guesses and randomly mutating the
+    “best guess so far” could produce accurate results in a surprisingly short amount
+    of time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, you can use this idea of scoring and mutating thousands of random guesses
+    to solve other problems, too.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '### SOLVING THE TRAVELING SALESPERSON PROBLEM (TSP)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One of my students was unimpressed with the quote-guessing program because “we
+    already know what the quote is.” So let’s use a genetic algorithm to solve a problem
+    we don’t already know the solution for. *The Traveling Salesperson Problem*, or
+    *TSP* for short, is an age-old brainteaser that is easy to understand but can
+    become very difficult to solve. A salesperson has to travel to a given number
+    of cities, and the goal is to find the route with the shortest distance. Sounds
+    easy? And with a computer, we should simply be able to run all the possible routes
+    through a program and measure their distances, right?
+  prefs: []
+  type: TYPE_NORMAL
+- en: It turns out, above a certain number of cities, the computational complexity
+    gets too much even for today’s supercomputers. Let’s see how many possible routes
+    there are when you have six cities, as shown in [Figure 12-1](ch12.xhtml#ch12fig1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f254-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-1: The number of paths between* n *cities for* n *between 2 and
+    6*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When there are two or three cities, there’s only one possible route. Add a fourth
+    city, and it could be visited between any of the previous three, so multiply the
+    previous number of routes by 3\. So between four cities there are three possible
+    routes. Add a fifth city, and it could be visited between any of the previous
+    four, so there are four times as many as the previous step, so 12 possible routes.
+    See the pattern? Between *n* cities, there are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/e254-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: possible routes. So between 10 cities there are 181,440 possible routes. Between
+    20 cities, there are 60,822,550,204,416,000 routes. What’s after a trillion? Even
+    if a computer can check a million routes per second, it would still take almost
+    2,000 years to calculate. That’s too slow for our purposes. There must be a better
+    way.
+  prefs: []
+  type: TYPE_NORMAL
+- en: USING GENETIC ALGORITHMS
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Similar to our quote-guessing program, we’re going to create an object with
+    a route in its “genes” and then score its route by how short it is. The best route
+    will then be mutated randomly, and we’ll score its mutation. We could take a bunch
+    of “best routes,” splice together their lists, and score their “offspring.” The
+    best part of this exploration is we *don’t* know the answer already. We could
+    give the program a set of cities and their locations, or just have it randomly
+    draw cities and try to optimize the route.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Open a new Processing sketch and call it *travelingSalesperson.pyde*. The first
+    thing we should create is a City object. Each city will have its own x- and y-coordinate
+    and a number we use to identify it. That way, we can define a route using a list
+    of city numbers. For example, [5,3,0,2,4,1] means you start at city 5 and go to
+    city 3, then city 0, and so on. The rules are the salesperson has to finally return
+    to the first city. [Listing 12-5](ch12.xhtml#ch12list5) shows the City class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*travelingSales person.pyde*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class City:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self,x,y,num):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.x = x
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.y = y
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.number = num #identifying number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def display(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'fill(0,255,255) #sky blue'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ellipse(self.x,self.y,10,10)
+  prefs: []
+  type: TYPE_NORMAL
+- en: noFill()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-5: Writing the City class for the* travelingSalesperson.pyde *program*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When initializing City, we get an x- and y-coordinate and give each City its
+    own (self) x- and y-component. We also get a number that’s the city’s identifying
+    number. In the display() method, we choose a color (sky blue, in this case) and
+    create an ellipse at that location. We turn off the fill after drawing the city
+    with the noFill() function, since no other shapes need to be filled in with color.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s make sure that works. Let’s create the setup() function, declaring a size
+    for the display window and creating an instance of our City class. Remember, we
+    have to give it a location of two coordinates and an identifying number as in
+    [Listing 12-6](ch12.xhtml#ch12list6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def setup():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: size(600,600)
+  prefs: []
+  type: TYPE_NORMAL
+- en: background(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: city0 = City(100,200,0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: city0.display()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-6: Writing the setup() function for creating one city*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Run this, and you’ll see your first city (see [Figure 12-2](ch12.xhtml#ch12fig2))!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f256-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-2: The first city*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It might help to have the city display its number above it. To do that, add
+    this to the city’s display() method, just before noFill():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: textSize(20)
+  prefs: []
+  type: TYPE_NORMAL
+- en: text(self.number,self.x-10,self.y-10)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We declare the size of the text using Processing’s built-in textSize() function.
+    Then we use the text() function to tell the program what to print (the number
+    of the city) and where to print it (10 pixels to the left and above the city).
+    While we’re creating cities, let’s start a cities list and put a few more cities
+    on the screen in random locations. To use methods from the random module, we have
+    to import random at the top of the file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now we can update our setup() function like in [Listing 12-7](ch12.xhtml#ch12list7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*travelingSalesperson.pyde*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def setup():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: size(600,600)
+  prefs: []
+  type: TYPE_NORMAL
+- en: background(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(6):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities.append(City(random.randint(50,width-50),
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.randint(50,height-50),i))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for city in cities:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: city.display()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-7: Writing the setup() function for creating six random cities*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the setup() function, we’ve added a loop to run six times. It adds a City
+    object at a random location on the screen 50 units from the edges. The next loop
+    iterates over all the elements in the cities list and displays each one. Run this,
+    and you’ll see six cities in random locations, labeled with their ID numbers,
+    as in [Figure 12-3](ch12.xhtml#ch12fig3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f257-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-3: Six cities, labeled with their numbers*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now let’s think about the route between the cities. We put the City objects
+    (containing their locations and numbers) into the cities list, and eventually
+    that list of numbers (our “genetic material”) will consist of the city numbers
+    in a certain order. So the Route object needs a random list of numbers, too: a
+    random sequence of all the city numbers. Of course, the numbers will be range
+    from 0 to 1 less than the number of cities. We don’t want to keep changing numbers
+    here and there in our code whenever we want to change the number of cities, so
+    we’ll create a variable for the number of cities. Put this line at the beginning
+    of the file, before the City class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: N_CITIES = 10
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why is N_CITIES in all capital letters? Throughout all the code, we won’t be
+    changing the number of cities. So it’s not really a variable; instead, it’s a
+    constant. It’s customary in Python to capitalize constant names to set them apart
+    from variables. This doesn’t change the way Python deals with them at all; variables
+    with capitalized names can still be changed. So be careful.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll use N_CITIES wherever we would be using the total number of cities, and
+    we’ll only need to change the value once! Place the code shown in [Listing 12-8](ch12.xhtml#ch12list8)
+    after the City class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Route:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.distance = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#put cities in a list in order:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.cityNums = random.sample(list(range(N_CITIES)),N_CITIES)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-8: The Route class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we set the route’s distance (or length, but length is a keyword in Processing)
+    to zero, and then we create a cityNums list that puts the numbers of the cities
+    in a random order for that route.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can use the random module’s sample() function to give Python a list and
+    then sample a number of items from that list by telling it how many items to choose
+    randomly. It’s like choice(), but it won’t select an item more than once. In probability,
+    it’s called “sampling without replacement.” Enter the following in IDLE to see
+    how sampling works:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> n = list(range(10))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> n'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> import random'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> x = random.sample(n,5)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> x'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2, 0, 5, 3, 8]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, we create a list called n of the numbers between 0 and 9 by calling range(10)
+    and converting it (it’s a “generator”) into a list. We then import the random
+    module and ask Python to use the sample() function to pick a sample of five items
+    from list n and save them to list x. In our Route code in [Listing 12-8](ch12.xhtml#ch12list8),
+    since the variable N_CITIES, representing the number of cities, is 10, we’re choosing
+    10 numbers at random using range(10), the numbers 0 to 9, and assigning them to
+    the Route’s cityNums property.
+  prefs: []
+  type: TYPE_NORMAL
+- en: And how will this display? Let’s draw purple lines between the cities. You can
+    use any color you’d prefer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Drawing lines between cities like this should remind you of drawing lines between
+    the points on a graph in algebra or trigonometry lessons. The only difference
+    is now at the end of the graph we have to return to the starting point. Remember
+    using beginShape, vertex, and endShape in Chapter 6? Just like we used lines to
+    draw a shape, we’ll draw the Route object as the outline of a shape, except this
+    time we just won’t fill it in. Using endshape(CLOSE) will automatically close
+    the loop! Add the code in [Listing 12-9](ch12.xhtml#ch12list9) to the Route class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def display(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: strokeWeight(3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'stroke(255,0,255) #purple'
+  prefs: []
+  type: TYPE_NORMAL
+- en: beginShape()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in self.cityNums:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: vertex(cities[i].x,cities[i].y)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#then display the cities and their numbers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities[i].display()
+  prefs: []
+  type: TYPE_NORMAL
+- en: endShape(CLOSE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-9: Writing the display method of the Route class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The loop makes every city in the Route’s cityNums list a vertex of a polygon.
+    The route is the outline of the polygon. Notice that inside the Route’s display()
+    method we call the city’s display() method. That way, we don’t have to manually
+    command the cities to display separately.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the setup() function, we’ll create a Route object with the cities list and
+    a list of numbers as arguments. Then we’ll display it. The last two lines of code
+    at the bottom of [Listing 12-10](ch12.xhtml#ch12list10) do this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def setup():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: size(600,600)
+  prefs: []
+  type: TYPE_NORMAL
+- en: background(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(N_CITIES):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities.append(City(random.randint(50,width-50),
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.randint(50,height-50),i))
+  prefs: []
+  type: TYPE_NORMAL
+- en: route1 = Route()
+  prefs: []
+  type: TYPE_NORMAL
+- en: route1.display()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-10: Displaying a route*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Run this, and you’ll see a path between the cities, in random order, as shown
+    in [Figure 12-4](ch12.xhtml#ch12fig4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f259-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-4: A random route order*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To change the number of cities, simply change the first line, where we declare
+    N_CITIES, to a different number and then run the program. [Figure 12-5](ch12.xhtml#ch12fig5)
+    shows my output for N_CITIES = 7.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f260-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-5: A route with seven cities*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that you can create and display routes, let’s write a function to measure
+    the distance of each route.
+  prefs: []
+  type: TYPE_NORMAL
+- en: WRITING THE CALCLENGTH() METHOD
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The Route object has a distance property that’s set to zero when it’s created.
+    Each Route object also has a list of cities, in order, called cityNums. We just
+    have to loop through the cityNums list and keep a running total of the distances
+    between each pair of cities. No problem for cities 0 to 4, but we also need to
+    calculate the distance from the last city back to the first one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 12-11](ch12.xhtml#ch12list11) shows the code for the calcLength()
+    method, which goes inside the Route object.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def calcLength(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.distance = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i,num in enumerate(self.cityNums):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# find the distance from the current city to the previous city'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.distance += dist(cities[num].x,
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities[num].y,
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities[self.cityNums[i-1]].x,
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities[self.cityNums[i-1]].y)
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.distance
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-11: Calculating a Route’s length*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, we zero out the distance property of the Route so every time we call
+    this method it’ll start at zero. We use the enumerate() function so we can get
+    not just the number in the cityNums list but also its index. We then increment
+    the distance property by the distance from the current city (num) to the previous
+    city (self.cityNums[i-1]). Next, let’s add this line of code to the end of our
+    setup() function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: println(route1.calcLength())
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can now see the total distance covered by the salesperson in the console,
+    like in [Figure 12-6](ch12.xhtml#ch12fig6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f261-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-6: We’ve calculated the distance . . . I think*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Is this really the distance? Let’s make sure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: TESTING THE CALCLENGTH() METHOD
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Let’s give the program an easy route that’s a square of sidelength 200 and check
+    the distance. First, we change our constant for the number of cities to 4:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: N_CITIES = 4
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we change the setup() function to what’s shown in [Listing 12-12](ch12.xhtml#ch12list12).
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities = [City(100,100,0), City(300,100,1),
+  prefs: []
+  type: TYPE_NORMAL
+- en: City(300,300,2), City(100,300,3)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def setup():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: size(600,600)
+  prefs: []
+  type: TYPE_NORMAL
+- en: background(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''''''for i in range(N_CITIES):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities.append(City(random.randint(0,width),
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.randint(0,height),i))'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: route1 = Route()
+  prefs: []
+  type: TYPE_NORMAL
+- en: route1.cityNums = [0,1,2,3]
+  prefs: []
+  type: TYPE_NORMAL
+- en: route1.display()
+  prefs: []
+  type: TYPE_NORMAL
+- en: println(route1.calcLength())
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-12: Creating a Route manually to test the calcLength() method*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We comment out the loop to create cities at random, because we’ll go back to
+    it after checking the calcLength() method. We create a new cities list containing
+    the vertices of a square of sidelength 200\. We also declare the cityNums list
+    for route1; otherwise, it would randomly mix the cities. We expect the length
+    of this Route to be 800.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When we run the code, we see what’s in [Figure 12-7](ch12.xhtml#ch12fig7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f262-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-7: The calcLength() method works!*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s 800 units, as predicted! You can try some rectangles or some other easy-to-verify
+    routes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: RANDOM ROUTES
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In order to find the shortest possible route to a destination, we need to find all
+    the possible routes. To do this, we need our infinite loop and Processing’s built-in
+    draw() function. We’ll move the route code from setup() to the draw() function.
+    We’ll also create a bunch of random routes and display them and their length.
+    The entire code is shown in [Listing 12-13](ch12.xhtml#ch12list13).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*travelingSales person.pyde*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: N_CITIES = 10
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class City:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self,x,y,num):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.x = x
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.y = y
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.number = num #identifying number'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def display(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'fill(0,255,255) #sky blue'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ellipse(self.x,self.y,10,10)
+  prefs: []
+  type: TYPE_NORMAL
+- en: textSize(20)
+  prefs: []
+  type: TYPE_NORMAL
+- en: text(self.number,self.x-10,self.y-10)
+  prefs: []
+  type: TYPE_NORMAL
+- en: noFill()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Route:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.distance = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#put cities in a list in numList order:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.cityNums = random.sample(list(range(N_CITIES)),N_CITIES)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def display(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: strokeWeight(3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'stroke(255,0,255) #purple'
+  prefs: []
+  type: TYPE_NORMAL
+- en: beginShape()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in self.cityNums:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: vertex(cities[i].x,cities[i].y)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#then display the cities and their numbers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities[i].display()
+  prefs: []
+  type: TYPE_NORMAL
+- en: endShape(CLOSE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def calcLength(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.distance = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i,num in enumerate(self.cityNums):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# find the distance to the previous city'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.distance += dist(cities[num].x,
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities[num].y,
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities[self.cityNums[i-1]].x,
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities[self.cityNums[i-1]].y)
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.distance
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def setup():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: size(600,600)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(N_CITIES):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities.append(City(random.randint(50,width-50),
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.randint(50,height-50),i))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def draw():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: background(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: route1 = Route()
+  prefs: []
+  type: TYPE_NORMAL
+- en: route1.display()
+  prefs: []
+  type: TYPE_NORMAL
+- en: println(route1.calcLength())
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-13: Creating and displaying random routes*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you run this, you should see a bunch of routes being displayed and a bunch
+    of numbers being printed to the console.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But we’re really only interested in keeping the best (shortest) route, so we’ll
+    add some code to save the “bestRoute” and check the new random routes. Change
+    setup() and draw() to what’s shown in [Listing 12-14](ch12.xhtml#ch12list14).
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: random_improvements = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: mutated_improvements = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def setup():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: global best, record_distance
+  prefs: []
+  type: TYPE_NORMAL
+- en: size(600,600)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(N_CITIES):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities.append(City(random.randint(50,width-50),
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.randint(50,height-50),i))
+  prefs: []
+  type: TYPE_NORMAL
+- en: best = Route()
+  prefs: []
+  type: TYPE_NORMAL
+- en: record_distance = best.calcLength()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def draw():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: global best, record_distance, random_improvements
+  prefs: []
+  type: TYPE_NORMAL
+- en: background(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: best.display()
+  prefs: []
+  type: TYPE_NORMAL
+- en: println(record_distance)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'println("random: "+str(random_improvements))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: route1 = Route()
+  prefs: []
+  type: TYPE_NORMAL
+- en: length1 = route1.calcLength()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if length1 < record_distance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: record_distance = length1
+  prefs: []
+  type: TYPE_NORMAL
+- en: best = route1
+  prefs: []
+  type: TYPE_NORMAL
+- en: random_improvements += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-14: Keeping track of random improvements*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before the setup() function, we create a variable to count the number of random
+    improvements that are made by the program. At the same time, we create a variable
+    we’ll use in a few steps to count the mutated improvements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In setup(), we created route1 to be the first Route, we named it the “best route,”
+    and we named its distance the record_distance. Since we want to share these variables
+    with other functions, we declare them to be global variables at the beginning
+    of the function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In draw(), we keep generating new random routes and checking if they’re better
+    than the one we think is the best route so far. Since we’re using only 10 cities,
+    this could pay off with an optimal solution, if we leave it running a while. You’ll
+    see that it only requires around a dozen random improvements. But, remember, there
+    are only 181,440 unique routes through 10 cities. One 10-city route is shown in
+    [Figure 12-8](ch12.xhtml#ch12fig8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you change the number of cities to 20, however, your program will just keep
+    running, for days if you let it, and will probably not get close to an optimal
+    solution. We need to start using the idea from the phrase-guessing program at
+    the beginning of the chapter of scoring our guesses and mutating the best ones.
+    Unlike before, we’ll create a “mating pool” of the best routes and combine their
+    number lists as if they were genes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f265-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-8: Finding an optimal route randomly—if you can wait a few minutes*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: APPLYING THE PHRASE-GUESSING MUTATION IDEA
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The list of numbers (the cities the salesperson will visit in order) will be
+    the genetic material of the Route. First, we see how well some randomly mutated
+    routes solve the Traveling Salesman Problem (just like with our phrase-guessing
+    programs) and then we mutate and “mate” the better routes with each other to (hopefully)
+    create a more optimal route.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MUTATING TWO NUMBERS IN A LIST
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s write a method to randomly mutate two of the numbers in a Route object’s
+    cityNums list. It’s really just a swap. You can probably guess how we’ll randomly
+    choose two numbers and make the city numbers that have those indices in the list
+    trade places.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python has a unique notation for swapping the values of two numbers. You can
+    swap two numbers without creating a temporary variable. For example, if you enter
+    the code in [Listing 12-15](ch12.xhtml#ch12list15) in IDLE, it wouldn’t work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> x = 2'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> y = 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> x = y'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> y = x'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> x'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> y'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-15: The wrong way to swap the values of variables*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you change the value of x to be the same as y by entering x = y, they both
+    become 3\. Now when you try to set y to be the same as x, it’s not set to the
+    original value of x (2), but the current value of x, which is 3\. So both variables
+    ended up as 3.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But you *can* swap the values on the same line, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> x = 2'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> y = 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> x,y = y,x'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> x'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> y'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Swapping the values of two variables like this is very useful for the mutating
+    we’re about to do. Instead of limiting the swapping to only two numbers, we can
+    mutate more cities. We can put the swapping in a loop so the program will choose
+    any number of cities and swap the first two numbers, then the next pair, and so
+    on. The code for the mutateN() method is shown in [Listing 12-16](ch12.xhtml#ch12list16).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def mutateN(self,num):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: indices = random.sample(list(range(N_CITIES)),num)
+  prefs: []
+  type: TYPE_NORMAL
+- en: child = Route()
+  prefs: []
+  type: TYPE_NORMAL
+- en: child.cityNums = self.cityNums[::]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(num-1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: child.cityNums[indices[i]],child.cityNums[indices[(i+1)%num]] = \
+  prefs: []
+  type: TYPE_NORMAL
+- en: child.cityNums[indices[(i+1)%num]],child.cityNums[indices[i]]
+  prefs: []
+  type: TYPE_NORMAL
+- en: return child
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-16: Writing the mutateN() method, for mutating any number of cities*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We give the mutateN() method num, a number of cities to swap. Then the method
+    makes a list of indices to swap by taking a random sample from the range of city
+    numbers. It creates a “child” Route and copies its own city number list to the
+    child. Then it swaps num-1 times. If it swapped the full num times, the first
+    city swapped would simply get swapped with all the other indices and end up where
+    it started.
+  prefs: []
+  type: TYPE_NORMAL
+- en: That long line of code is simply the a,b = b,a syntax we saw before, only with
+    the two cityNums being swapped. The mod (%) operator makes sure your indices don’t
+    exceed num, the number of cities in your sample. So if you’re swapping four cities,
+    for example, when i is 4, it changes i + 1 from 5 to 5 % 4, which is 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we add a section to the end of the draw() function to mutate the best
+    Route’s list of numbers and test the mutated Route’s length, as shown in [Listing
+    12-17](ch12.xhtml#ch12list17).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def draw():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: global best,record_distance,random_improvements
+  prefs: []
+  type: TYPE_NORMAL
+- en: global mutated_improvements
+  prefs: []
+  type: TYPE_NORMAL
+- en: background(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: best.display()
+  prefs: []
+  type: TYPE_NORMAL
+- en: println(record_distance)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'println("random: "+str(random_improvements))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'println("mutated: "+str(mutated_improvements))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: route1 = Route()
+  prefs: []
+  type: TYPE_NORMAL
+- en: length1 = route1.calcLength()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if length1 < record_distance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: record_distance = length1
+  prefs: []
+  type: TYPE_NORMAL
+- en: best = route1
+  prefs: []
+  type: TYPE_NORMAL
+- en: random_improvements += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(2,6):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#create a new Route'
+  prefs: []
+  type: TYPE_NORMAL
+- en: mutated = Route()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#set its number list to the best one'
+  prefs: []
+  type: TYPE_NORMAL
+- en: mutated.cityNums = best.cityNums[::]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'mutated = mutated.mutateN(i) #mutate it'
+  prefs: []
+  type: TYPE_NORMAL
+- en: length2 = mutated.calcLength()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if length2 < record_distance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: record_distance = length2
+  prefs: []
+  type: TYPE_NORMAL
+- en: best = mutated
+  prefs: []
+  type: TYPE_NORMAL
+- en: mutated_improvements += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-17: Mutating the best “organism”*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the for i in range(2,6): loop, we’re telling the program to mutate 2, 3, 4, and
+    5 numbers in the number list and check the results. Now the program often does
+    pretty well on a 20-city route in a few seconds, like in [Figure 12-9](ch12.xhtml#ch12fig9).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f267-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-9: A 20-city route*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The mutated “organisms” are improving the distance much better than the random
+    ones! [Figure 12-10](ch12.xhtml#ch12fig10) shows the printout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f268-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-10: The mutations are doing much better than the random improvements!*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 12-10](ch12.xhtml#ch12fig10) categorizes all the improvements, and
+    here 29 of them were due to mutations and only one was due to a randomly generated
+    Route. This shows that mutating lists is better at finding the optimal route than
+    creating new random ones. I stepped up the mutating to swap anywhere from 2 to
+    10 cities by changing this line:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(2,11):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although this improves its performance for 20-city problems and even for some
+    30-city problems, the program often gets stuck in a non-optimal rut, like in [Figure
+    12-11](ch12.xhtml#ch12fig11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f268-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-11: A 30-city problem stuck in a non-optimal rut*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re going to take the final step and go fully genetic. Now we won’t be restricting
+    ourselves to what we think is the best route so far. Instead, we’ll have an enormous
+    population to choose from.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll make a population list for any number of routes we want, we’ll take the
+    “fittest” ones, cross their number lists, and hopefully make an even better route!
+    Just before the setup() function, after the cities list, add the population list
+    and the constant for the number of routes, as shown in [Listing 12-18](ch12.xhtml#ch12list18).
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: random_improvements = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: mutated_improvements = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: population = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'POP_N = 1000 #number of routes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-18: Starting a population list and a variable for population size*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We just created an empty list to put our population of routes into, and a variable
+    for the total number of routes. In the setup() function, we fill the population
+    list with POP_N routes, as shown in [Listing 12-19](ch12.xhtml#ch12list19).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def setup():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: global best,record_distance,first,population
+  prefs: []
+  type: TYPE_NORMAL
+- en: size(600,600)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(N_CITIES):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cities.append(City(random.randint(50,width-50),
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.randint(50,height-50),i))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#put organisms in population list'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(POP_N):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: population.append(Route())
+  prefs: []
+  type: TYPE_NORMAL
+- en: best = random.choice(population)
+  prefs: []
+  type: TYPE_NORMAL
+- en: record_distance = best.calcLength()
+  prefs: []
+  type: TYPE_NORMAL
+- en: first = record_distance
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-19: Creating a population of routes*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice we had to declare the population list to be a global variable. We put
+    POP_N routes in the population list by using for i in range(POP_N), and then we
+    made a randomly chosen route the best one so far.
+  prefs: []
+  type: TYPE_NORMAL
+- en: CROSSING OVER TO IMPROVE ROUTES
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In the draw() function, we’re going to sort the population list so the Route
+    objects with the lowest lengths are at the beginning. We’ll create a method called
+    crossover() to splice the cityNums lists together at random. Here’s what it’ll
+    do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'a: [6, 0, 7, 8, 2, 1, 3, 9, 4, 5]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'b: [1, 0, 4, 9, 6, 2, 5, 8, 7, 3]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'index: 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'c: [6, 0, 7, 1, 4, 9, 2, 5, 8, 3]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The “parents” are lists a and b. The index is chosen randomly: index 3\. Then
+    a list is sliced off between index 2 (7) and index 3 (8), so the child list starts
+    [6,0,7]. The remaining numbers that aren’t in that slice are added to the child
+    list in the order they occur in list b: [1,4,9,2,5,8,3]. We concatenate those
+    two lists, and that’s the child list. The code for the crossover() method is shown
+    in [Listing 12-20](ch12.xhtml#ch12list20).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def crossover(self,partner):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''''''Splice together genes with partner''s genes'''''''
+  prefs: []
+  type: TYPE_NORMAL
+- en: child = Route()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#randomly choose slice point'
+  prefs: []
+  type: TYPE_NORMAL
+- en: index = random.randint(1,N_CITIES - 2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#add numbers up to slice point'
+  prefs: []
+  type: TYPE_NORMAL
+- en: child.cityNums = self.cityNums[:index]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#half the time reverse them'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if random.random()<0.5:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: child.cityNums = child.cityNums[::-1]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#list of numbers not in the slice'
+  prefs: []
+  type: TYPE_NORMAL
+- en: notinslice = [x for x in partner.cityNums if x not in child.cityNums]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#add the numbers not in the slice'
+  prefs: []
+  type: TYPE_NORMAL
+- en: child.cityNums += notinslice
+  prefs: []
+  type: TYPE_NORMAL
+- en: return child
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-20: Writing the crossover() method of the Route class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The crossover() method requires we specify the partner, the other parent. The
+    child route is created, and an index where the slicing will take place is chosen
+    randomly. The child list gets the numbers in the first slice, and then half the
+    time we reverse those numbers, for genetic diversity. We create a list of the
+    numbers that aren’t in the slice and add each one as it occurs in the other parent’s
+    (or partner’s) list. Finally, concatenate those slices and return the child route.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the draw() function, we need to check the routes in the population list for
+    the shortest one. Do we need to check each one like before? Luckily, Python provides
+    a handy sort() function we can use to sort the population list by calcLength().
+    So the first Route in the list will be the shortest one. The final code for the
+    draw() function is shown in [Listing 12-21](ch12.xhtml#ch12list21).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def draw():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: global best,record_distance,population
+  prefs: []
+  type: TYPE_NORMAL
+- en: background(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: best.display()
+  prefs: []
+  type: TYPE_NORMAL
+- en: println(record_distance)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#println(best.cityNums) #If you need the exact Route through the cities!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ population.sort(key=Route.calcLength)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'population = population[:POP_N] #limit size of population'
+  prefs: []
+  type: TYPE_NORMAL
+- en: length1 = population[0].calcLength()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if length1 < record_distance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: record_distance = length1
+  prefs: []
+  type: TYPE_NORMAL
+- en: best = population[0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#do crossover on population'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ for i in range(POP_N):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: parentA,parentB = random.sample(population,2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#reproduce:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: child = parentA.crossover(parentB)
+  prefs: []
+  type: TYPE_NORMAL
+- en: population.append(child)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#mutateN the best in the population'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➌ for i in range(3,25):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if i < N_CITIES:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: new = best.mutateN(i)
+  prefs: []
+  type: TYPE_NORMAL
+- en: population.append(new)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#mutateN random Routes in the population'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➍ for i in range(3,25):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if i < N_CITIES:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: new = random.choice(population)
+  prefs: []
+  type: TYPE_NORMAL
+- en: new = new.mutateN(i)
+  prefs: []
+  type: TYPE_NORMAL
+- en: population.append(new)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-21: Writing the final draw() function*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We use the sort() function at ➊, and then trim the end of the population list
+    (the longest routes) so the list remains POP_N routes long. Then we check the
+    first item in the population list to see if it’s shorter than the best route.
+    If so, we make it the best, like before. Next, we randomly sample two routes from
+    the population and perform a crossover on their cityNums lists and add the resulting
+    child route to the population ➋. At ➌, we mutate the best route, swapping 3, 4,
+    and 5 numbers, all the way up to 24 numbers (if that’s less than the number of
+    cities in the sketch). Finally, we randomly choose routes from the population
+    and mutate them to try to improve our distance ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, using a population of 10,000 routes, our program can make a pretty good
+    approximation of the optimal route through 100 cities. [Figure 12-12](ch12.xhtml#ch12fig12)
+    shows the program improving a route from an initial length of 26,000 units to
+    under 4,000 units.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/f271-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-12: Improvements of the route through 100 cities*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This took “only” a half an hour to crank through!
+  prefs: []
+  type: TYPE_NORMAL
+- en: SUMMARY
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we didn’t just use Python to answer the types of questions
+    you get in math class whose answers are already known. Instead, we used indirect
+    methods (scoring a string of characters or a route through a bunch of cities)
+    to find solutions to questions without an answer key!
+  prefs: []
+  type: TYPE_NORMAL
+- en: To do this, we mimicked the behavior of organisms whose genes mutate, taking
+    advantage of the fact that some mutations are more useful than others for solving
+    the problem at hand. We knew our target phrase at the beginning of the chapter,
+    but to figure out whether our final route was the optimal one, we had to save
+    the city locations and run the program a few more times. This is because genetic
+    algorithms, just like real organisms, can only work with what they start out with,
+    and they often end up in a non-optimal rut, as you saw.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But these indirect methods are surprisingly effective and are used extensively
+    in machine learning and industrial processes. Equations are good for expressing
+    a very simple relationship, but many situations are not that simple. Now you have
+    plenty of useful tools, like our “sheep and grass” model, fractals, cellular automata,
+    and, finally, genetic algorithms, for studying and modeling very complicated systems.
+  prefs: []
+  type: TYPE_NORMAL

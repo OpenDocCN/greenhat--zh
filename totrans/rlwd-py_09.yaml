@@ -1,0 +1,885 @@
+- en: '9'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: IDENTIFYING FRIEND OR FOE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/common.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Face detection is a machine learning technology that locates human faces in
+    digital images. It’s the first step in the process of face *recognition*, a technique
+    for identifying individual faces using code. Face detection and recognition methods
+    have broad applications, such as tagging photographs on social media, autofocusing
+    digital cameras, unlocking cell phones, finding missing children, tracking terrorists,
+    facilitating secure payments, and more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, you’ll use machine learning algorithms in OpenCV to program
+    a robot sentry gun. Because you’ll be distinguishing between humans and otherworldly
+    mutants, you’ll only need to detect the *presence* of human faces rather than
+    identify specific individuals. In [Chapter 10](ch10.xhtml), you’ll take the next
+    step and identify people by their faces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Detecting Faces in Photographs**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Face detection is possible because human faces share similar patterns. Some
+    common facial patterns are the eyes being darker than the cheeks and the bridge
+    of the nose being brighter than the eyes, as seen in the left image of [Figure
+    9-1](ch09.xhtml#ch09fig1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-1: Example of some consistently bright and dark regions in a face'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can extract these patterns using templates like those in [Figure 9-2](ch09.xhtml#ch09fig2).
+    These yield *Haar features*, a fancy name for the attributes of digital images
+    used in object recognition. To calculate a Haar feature, place one of the templates
+    on a grayscale image, add up the grayscale pixels that overlap with the white
+    part, and subtract them from the sum of the pixels that overlap the black part.
+    Thus, each feature consists of a single intensity value. We can use a range of
+    template sizes to sample all possible locations on the image, making the system
+    scale invariant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-2: Some example Haar feature templates'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the middle image in [Figure 9-1](ch09.xhtml#ch09fig1), an “edge feature”
+    template extracts the relationship between the dark eyes and the bright cheeks.
+    In the far-right image in [Figure 9-1](ch09.xhtml#ch09fig1), a “line feature”
+    template extracts the relationship between the dark eyes and the bright nose.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By calculating Haar features on thousands of *known* face and nonface images,
+    we can determine which combination of Haar features is most effective at identifying
+    faces. This training process is slow, but it facilitates fast detection later.
+    The resulting algorithm, known as a *face classifier*, takes the values of features
+    in an image and predicts whether it contains a human face by outputting 1 or 0\.
+    OpenCV ships with a pretrained face detection classifier based on this technique.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To apply the classifier, the algorithm uses a *sliding window* approach. A small
+    rectangular area is incrementally moved across the image and evaluated using a
+    *cascade classifier* consisting of multiple stages of filters. The filters at
+    each stage are combinations of Haar features. If the window region fails to pass
+    the threshold of a stage, it’s rejected, and the window slides to the next position.
+    Quickly rejecting nonface regions, like the one shown in the right inset in [Figure
+    9-3](ch09.xhtml#ch09fig3), helps speed up the overall process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-3: Images are searched for faces using a rectangular sliding window.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a region passes the threshold for a stage, the algorithm processes another
+    set of Haar features and compares them to the threshold, and so on, until it either
+    rejects or positively identifies a face. This causes the sliding window to speed
+    up or slow down as it moves across an image. You can find a fantastic video example
+    of this at *[https://vimeo.com/12774628/](https://vimeo.com/12774628/)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For each face detected, the algorithm returns the coordinates of a rectangle
+    around the face. You can use these rectangles as the basis for further analysis,
+    such as identifying eyes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Project #13: Programming a Robot Sentry Gun**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Imagine that you’re a technician with the Coalition Marines, a branch of the
+    Space Force. Your squad has been deployed to a secret research base operated by
+    the Wykham-Yutasaki Corporation on planet LV-666\. While studying a mysterious
+    alien apparatus, the researchers have inadvertently opened a portal to a hellish
+    alternate dimension. Anyone who gets near the portal, including dozens of civilians
+    and several of your comrades, mutates into a murderous mindless monstrosity! You’ve
+    even caught security footage of the result ([Figure 9-4](ch09.xhtml#ch09fig4)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-4: Security camera footage of a mutated scientist (left) and marine
+    (right)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: According to the remaining scientists, the mutation affects more than just organic
+    matter. Any gear the victim is wearing, such as helmets and goggles, is also transmogrified
+    and fused into the flesh. Eye tissue is especially vulnerable. All the mutants
+    formed so far are eyeless and blind, though this doesn’t seem to affect their
+    mobility. They’re still ferocious, deadly, and unstoppable without military-grade
+    weapons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: That’s where you come in. It’s your job to set up an automatic firing station
+    to guard Corridor 5, a key access point in the compromised facility. Without it,
+    your small squad is in danger of being outflanked and overrun by hordes of rampaging
+    mutants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The firing station consists of a UAC 549-B automated sentry gun, called a *robot
+    sentry* by the grunts ([Figure 9-5](ch09.xhtml#ch09fig5)). It’s equipped with
+    four M30 autocannons with 1,000 rounds of ammo and multiple sensors, including
+    a motion detector, laser ranging unit, and optical camera. The gun also interrogates
+    targets using an identification friend or foe (IFF) transponder. All Coalition
+    Marines carry these transponders, allowing them to safely pass active sentry guns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-5: A UAC 549-B automated sentry gun'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unfortunately, the squad’s sentry gun was damaged during landing, so the transponders
+    no longer function. Worse, the requisitions corporal forgot to download the software
+    that visually interrogates targets. With the transponder sensor down, there’s
+    no way to positively identify marines and civilians. You’ll need to get this fixed
+    as quickly as possible, because your buddies are badly outnumbered and the mutants
+    are on the move!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fortunately, planet LV-666 has no indigenous life forms, so you need to distinguish
+    between humans and mutants only. Since the mutants are basically faceless, a face
+    detection algorithm is the logical solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: THE OBJECTIVE
+  prefs: []
+  type: TYPE_NORMAL
+- en: Write a Python program that disables the sentry gun’s firing mechanism when
+    it detects human faces in an image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Strategy***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In situations like this, it’s best to keep things simple and leverage existing
+    resources. This means relying on OpenCV’s face detection functionality rather
+    than writing customized code to recognize the humans on the base. But you can’t
+    be sure how well these canned procedures will work, so you’ll need to guide your
+    human targets to make the job as easy as possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sentry gun’s motion detector will handle the job of triggering the optical
+    identification process. To permit humans to pass unharmed, you’ll need to warn
+    them to stop and face the camera. They’ll need a few seconds to do this and a
+    few seconds to proceed past the gun after they’re cleared.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ll also want to run some tests to ensure OpenCV’s training set is adequate
+    and you’re not generating any false positives that would let a mutant sneak by.
+    You don’t want to kill anyone with friendly fire, but you can’t be too cautious,
+    either. If one mutant gets by, everyone could perish.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*In real life, the sentry guns would use a video feed. Since I don’t have my
+    own film studio with special effects and makeup departments, you’ll work off still
+    photos instead. You can think of these as individual video frames. Later in the
+    chapter, you’ll get a chance to detect your own face using your computer’s video
+    camera.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Code***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The *sentry.py* code will loop through a folder of images, identify human faces
+    in the images, and show the image with the faces outlined. It will then either
+    fire or disable the gun depending on the result. You’ll use the images in the
+    *corridor_5* folder in the *Chapter_9* folder, downloadable from *[https://nostarch.com/real-world-python/](https://nostarch.com/real-world-python/)*.
+    As always, don’t move or rename any files after downloading and launch *sentry.py*
+    from the folder in which it’s stored.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ll also need to install two modules, playsound and pyttsx3. The first is
+    a cross-platform module for playing WAV and MP3 format audio files. You’ll use
+    it to produce sound effects, such as machine gun fire and an “all clear” tone.
+    The second is a cross-platform wrapper that supports the native text-to-speech
+    libraries on Windows and Linux-based systems, including macOS. The sentry gun
+    will use this to issue audio warnings and instructions. Unlike other text-to-speech
+    libraries, pyttsx3 reads text directly from the program, rather than first saving
+    it to an audio file. It also works offline, making it reliable for voice-based
+    projects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can install both modules with pip in a PowerShell or Terminal window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you encounter an error installing pyttsx3 on Windows, such as No module named
+    win32.com.client, No module named win32, or No module named win32api, then install
+    pypiwin32.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: You may need to restart the Python shell and editor following this installation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For more on playsound, see *[https://pypi.org/project/playsound/](https://pypi.org/project/playsound/)*.
+    The documentation for pyttsx3 can be found at *[https://pyttsx3.readthedocs.io/en/latest/](https://pyttsx3.readthedocs.io/en/latest/)*
+    and *[https://pypi.org/project/pyttsx3/](https://pypi.org/project/pyttsx3/)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you don’t already have OpenCV installed, see “Installing the Python Libraries”
+    on [page 6](ch01.xhtml#page_6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Importing Modules, Setting Up Audio, and Referencing the Classifier Files
+    and Corridor Images**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Listing 9-1](ch09.xhtml#ch09list1) imports modules, initializes and sets up
+    the audio engine, assigns the classifier files to variables, and changes the directory
+    to the folder containing the corridor images.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 9-1: Importing modules, setting up the audio, and locating the classifier
+    files and corridor images'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Except for datetime, playsound, and pytts3, the imports should be familiar to
+    you if you’ve worked through the earlier chapters ➊. You’ll use datetime to record
+    the exact time at which an intruder is detected in the corridor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To use pytts3, initialize a pyttsx3 object and assign it to a variable named,
+    by convention, engine ➋. According to the pyttsx3 docs, an application uses the
+    engine object to register and unregister event callbacks, produce and stop speech,
+    get and set speech engine properties, and start and stop event loops.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next two lines, set the rate of speech and volume properties. The rate
+    of speech value used here was obtained through trial and error. It should be fast
+    but still clearly understandable. The volume should be set to the maximum value
+    (1.0) so any humans stumbling into the corridor can easily hear the warning instructions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The default voice on Windows is male, but other voices are available. For example,
+    on a Windows 10 machine, you can switch to a female voice using the following
+    voice ID:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: To see a list of voices available on your platform, refer to “Changing voices”
+    at *[https://pyttsx3.readthedocs.io/en/latest/](https://pyttsx3.readthedocs.io/en/latest/)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, set up the audio recording of gunfire, which you’ll play when a mutant
+    is detected in the corridor. Specify the location of the audio file by generating
+    a directory path string that will work on all platforms, which you do by combining
+    the absolute path with the filename using the os.path.join() method. Use the same
+    path for the *tone.wav* file, which you’ll use as an “all clear” signal when the
+    program identifies a human.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pretrained Haar cascade classifiers should download as *.xml* files when
+    you install OpenCV. Assign the path for the folder containing the classifiers
+    to a variable ➌. The path shown is for my Windows machine; your path may be different.
+    On macOS, for example, you may find them under *opencv/data/haarcascades*. You
+    can also find them online at *[https://github.com/opencv/opencv/tree/master/data/haarcascades/](https://github.com/opencv/opencv/tree/master/data/haarcascades/)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another option for finding the path to the cascade classifiers is to use the
+    preinstalled sysconfig module, as in the following snippet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: This should work for Windows inside and outside of virtual environments. However,
+    this will work on Ubuntu only within a virtual environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To load a classifier, use OpenCV’s CascadeClassifier() method. Use string concatenation
+    to add the path variable to the filename string for the classifier and assign
+    the result to a variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that I use only two classifiers, one for frontal faces and one for eyes,
+    to keep things simple. Additional classifiers are available for profiles, smiles,
+    eyeglasses, upper bodies, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finish by pointing the program to the images taken in the corridor you are guarding.
+    Change the directory to the proper folder ➍; then list the folder contents and
+    assign the results to a contents variable. Because you’re not providing a full
+    path to the folder, you’ll need to launch your program from the folder containing
+    it, which should be one level above the folder with the images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Issuing a Warning, Loading Images, and Detecting Faces**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Listing 9-2](ch09.xhtml#ch09list2) starts a for loop to iterate through the
+    folder containing the corridor images. In real life, the motion detectors on the
+    sentry guns would launch your program as soon as something entered the corridor.
+    Since we don’t have any motion detectors, we’ll assume that each loop represents
+    the arrival of a new intruder.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The loop immediately arms the gun and prepares it to fire. It then verbally
+    requests that the intruder stop and face the camera. This would occur at a set
+    distance from the gun, as determined by the motion detector. As a result, you
+    know the faces will all be roughly the same size, making it easy to test the program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The intruder is given a few seconds to comply with the command. After that,
+    the cascade classifier is called and used to search for faces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 9-2: Looping through images, issuing a verbal warning, and searching
+    for faces'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start looping through the images in the folder. Each new image represents a
+    new intruder in the corridor. Print a log of the event and the time at which it
+    occurred ➊. Note the f before the start of the string. This is the new *f-string*
+    format introduced with Python 3.6 (*[https://www.python.org/dev/peps/pep-0498/](https://www.python.org/dev/peps/pep-0498/)*).
+    An f-string is a literal string that contains expressions, such as variables,
+    strings, mathematical operations, and even function calls, inside curly braces.
+    When the program prints the string, it replaces the expressions with their values.
+    These are the fastest and most efficient string formats in Python, and we certainly
+    want this program to be fast!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Assume every intruder is a mutant and prepare to discharge the weapon. Then,
+    verbally warn the intruder to stop and be scanned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use the pyttsx3 engine object’s say() method to speak ➋. It takes a string as
+    an argument. Follow this with the runAndWait() method. This halts program execution,
+    flushes the say() queue, and plays the audio.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*For some macOS users, the program may exit with the second call to runAndWait().
+    If this occurs, download the sentry_for_Mac_bug.py code from the book’s website.
+    This program uses the operating system’s text-to-speech functionality in place
+    of pyttsx3. You’ll still need to update the Haar cascade path variable in this
+    program, as you did at ➌ in [Listing 9-1](ch09.xhtml#ch09list1).*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, use the time module to pause the program for three seconds. This gives
+    the intruder time to squarely face the gun’s camera.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At this point, you’d make a video capture, except we’re not using video. Instead,
+    load the images in the *corridor_5* folder. Call the cv.imread() method with the
+    IMREAD_GRAYSCALE flag ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use the image’s shape attribute to get its height and width in pixels. This
+    will come in handy later, when you post text on the images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Face detection works only on grayscale images, but OpenCV will convert color
+    images behind the scenes when applying the Haar cascades. I chose to use grayscale
+    from the start as the results look creepier when the images display. If you want
+    to see the images in color, just change the two previous lines as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Next, show the image prior to face detection, keep it up for two seconds (input
+    as milliseconds), and then destroy the window. This is for quality control to
+    be sure all the images are being examined. You can comment out these steps later,
+    after you’re satisfied everything is working as planned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Create an empty list to hold any faces found in the current image ➍. OpenCV
+    treats images as NumPy arrays, so the items in this list are the corner- point
+    coordinates (*x*, *y*, width, height) of a rectangle that frames the face, as
+    shown in the following output snippet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now it’s time to detect faces using the Haar cascades. Do this for the face_cascade
+    variable by calling the detectMultiscale() method. Pass the method the image and
+    values for the scale factor and minimum number of neighbors. These can be used
+    to tune the results in the event of false positives or failure to recognize faces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For good results, the faces in an image should be the same size as the ones
+    used to train the classifier. To ensure they are, the scaleFactor parameter rescales
+    the original image to the correct size using a technique called a *scale pyramid*
+    ([Figure 9-6](ch09.xhtml#ch09fig6)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-6: Example “scale pyramid”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The scale pyramid resizes the image downward a set number of times. For example,
+    a scaleFactor of 1.2 means the image will be scaled down in increments of 20 percent.
+    The sliding window will repeat its movement across this smaller image and check
+    again for Haar features. This shrinking and sliding will continue until the scaled
+    image reaches the size of the images used for training. This is 20×20 pixels for
+    the Haar cascade classifier (you can confirm this by opening one of the *.xml*
+    files). Windows smaller than this can’t be detected, so the resizing ends at this
+    point. Note that the scale pyramid will only *downscale* images, as upscaling
+    can introduce artifacts in the resized image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With each rescaling, the algorithm calculates lots of new Haar features, resulting
+    in lots of false positives. To weed these out, use the minNeighbors parameter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To see how this process works, look at [Figure 9-7](ch09.xhtml#ch09fig7). The
+    rectangles in this figure represent faces detected by the haarcascade_frontalface_alt2.xml
+    classifier, with the scaleFactor parameter set to 1.05 and minNeighbors set to
+    0\. The rectangles have different sizes depending on which scaled image—determined
+    by the scaleFactor parameter—was in use when the face was detected. Although there
+    are many false positives, the rectangles tend to cluster around the true face.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-7: Detected face rectangles with minNeighbors=0'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Increasing the value of the minNeighbors parameter will increase the quality
+    of the detections but reduce their number. If you specify a value of 1, only rectangles
+    with one or more closely neighboring rectangles are preserved, and all others
+    are discarded ([Figure 9-8](ch09.xhtml#ch09fig8)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-8: Detected face rectangles with minNeighbors=1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Increasing the number of minimum neighbors to around five generally removes
+    the false positives ([Figure 9-9](ch09.xhtml#ch09fig9)). This may be good enough
+    for most applications, but dealing with terrifying interdimensional monstrosities
+    demands more rigor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-9: Detected face rectangles with minNeighbors=5'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To see why, check out [Figure 9-10](ch09.xhtml#ch09fig10). Despite using a minNeighbor
+    value of 5, the toe region of the mutant is incorrectly identified as a face.
+    With a little imagination, you can see two dark eyes and a bright nose at the
+    top of the rectangle, and a dark, straight mouth at the base. This could allow
+    the mutant to pass unharmed, earning you a dishonorable discharge at best and
+    an excruciatingly painful death at worst.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-10: A mutant’s right toe region incorrectly identified as a face'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fortunately, this problem can be easily remedied. The solution is to search
+    for more than just faces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Detecting Eyes and Disabling the Weapon**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Still in the for loop through the corridor images, [Listing 9-3](ch09.xhtml#ch09list3)
+    uses OpenCV’s built-in eye cascade classifier to search for eyes in the list of
+    detected face rectangles. Searching for eyes reduces false positives by adding
+    a second verification step. And because mutants don’t have eyes, if at least one
+    eye is found, you can assume a human is present and disable the sentry gun’s firing
+    mechanism to let them pass.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 9-3: Detecting eyes in face rectangles and disabling the weapon'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Print the name of the image being searched and start a loop through the rectangles
+    in the face_rect_list. If a rectangle is present, start looping through the tuple
+    of coordinates. Use these coordinates to make a subarray from the image, in which
+    you’ll search for eyes ➊.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Call the eye cascade classifier on the subarray. Because you’re now searching
+    a much smaller area, you can reduce the minNeighbors argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Like the cascade classifiers for faces, the eye cascade returns coordinates
+    for a rectangle. Start a loop through these coordinates, naming them with an e
+    on the end, which stands for “eye,” to distinguish them from the face rectangle
+    coordinates ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, draw a circle around the first eye you find. This is just for your own
+    visual confirmation; as far as the algorithm’s concerned, the eye is already found.
+    Calculate the center of the rectangle and then calculate a radius value that’s
+    slightly larger than an eye. Use OpenCV’s circle() method to draw a white circle
+    on the rect_4_eyes subarray.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, draw a rectangle around the face by calling OpenCV’s rectangle() method
+    and passing it the img_gray array. Show the image for two seconds and then destroy
+    the window. Because the rect_4_eyes subarray is part of img_gray, the circle will
+    show up even though you didn’t explicitly pass the subarray to the im_show() method
+    ([Figure 9-11](ch09.xhtml#ch09fig11)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-11: Face rectangle and eye circle'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With a human identified, disable the weapon ➌ and break out of the for loop.
+    You need to identify only one eye to confirm that you have a face, so it’s time
+    to move on to the next face rectangle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Passing the Intruder or Discharging the Weapon**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Still in the for loop through the corridor images, [Listing 9-4](ch09.xhtml#ch09list4)
+    determines what happens if the weapon is disabled or if it’s allowed to fire.
+    In the disabled case, it shows the image with the detected face and plays the
+    “all clear” tone. Otherwise, it shows the image and plays the gunfire audio file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 9-4: Determining the course of action if the gun is disabled or enabled'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use a conditional to check whether the weapon is disabled. You set the discharge_weapon
+    variable to True when you chose the current image from the *corridor_5* folder
+    (see [Listing 9-2](ch09.xhtml#ch09list2)). If the previous listing found an eye
+    in a face rectangle, it changed the state to False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the weapon is disabled, show the positive detection image (such as in [Figure
+    9-11](ch09.xhtml#ch09fig11)) and play the tone. First, call playsound, pass it
+    the tone_path string, and set the block argument to False. By setting block to
+    False, you allow playsound to run at the same time as OpenCV displays the image.
+    If you set block=True, you won’t see the image until *after* the tone audio has
+    completed. Show the image for two seconds and then destroy it and pause the program
+    for five seconds using time.sleep().
+  prefs: []
+  type: TYPE_NORMAL
+- en: If discharge_weapon is still True, print a message to the shell that the gun
+    is firing. Use OpenCV’s putText() method to announce this in the center of the
+    image and then show the image (see [Figure 9-12](ch09.xhtml#ch09fig12)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-12: Example mutant window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now play the gunfire audio. Use playsound, passing it the gunfire_path string
+    and setting the block argument to False. Note that you have the option of removing
+    the root_dir and gunfire_path lines of code in [Listing 9-1](ch09.xhtml#ch09list1)
+    if you provide the full path when you call playsound. For example, I would use
+    the following on my Windows machine:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Show the window for two seconds and then destroy it. Sleep the program for three
+    seconds to pause between showing the mutant and displaying the next image in the
+    *corridor_5* folder. When the loop completes, stop the pyttsx3 engine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Results***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Your *sentry.py* program repaired the damage to the sentry gun and allowed
+    it to function without the need for transponders. It’s biased to preserve human
+    life, however, which could lead to disastrous consequences: if a mutant enters
+    the corridor at around the same time as a human, the mutant could slip by the
+    defenses ([Figure 9-13](ch09.xhtml#ch09fig13)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-13: A worst-case scenario. Say “Cheese!”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mutants might also trigger the firing mechanism with humans in the corridor,
+    assuming the humans look away from the camera at the wrong moment ([Figure 9-14](ch09.xhtml#ch09fig14)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_14.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-14: You had one job!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ve seen enough sci-fi and horror movies to know that in a real scenario, I’d
+    program the gun to shoot anything that moved. Fortunately, that’s a moral dilemma
+    I’ll never have to *face*!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Detecting Faces from a Video Stream**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You can also detect faces in real time using video cameras. This is easy to
+    do, so we won’t make it a dedicated project. Enter the code in [Listing 9-5](ch09.xhtml#ch09list5)
+    or use the digital version, *video_face_detect.py*, in the *Chapter_9* folder
+    downloadable from the book’s website. You’ll need to use your computer’s camera
+    or an external camera that works through your computer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 9-5: Detecting faces in a video stream'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After importing OpenCV, set up your path to the Haar cascade classifiers as
+    you did at ➌ in [Listing 9-1](ch09.xhtml#ch09list1). I use the *haarcascade_frontalface_alt.xml*
+    file here as it has higher precision (fewer false positives) than the *haarcascade_frontalface_default.xml*
+    file you used in the previous project. Next, instantiate a VideoCapture class
+    object, called cap for “capture.” Pass the constructor the index of the video
+    device you want to use ➊. If you have only one camera, such as your laptop’s built-in
+    camera, then the index of this device should be 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To keep the camera and face detection process running, use a while loop. Within
+    the loop, you’ll capture each video frame and analyze it for faces, just as you
+    did with the static images in the previous project. The face detection algorithm
+    is fast enough to keep up with the continuous stream, despite all the work it
+    must do!
+  prefs: []
+  type: TYPE_NORMAL
+- en: To load the frames, call the cap object’s read() method. It returns a tuple
+    consisting of a Boolean return code and a NumPy ndarray object representing the
+    current frame. The return code is used to check whether you’ve run out of frames
+    when reading from a file. Since we’re not reading from a file here, assign it
+    to an underscore to indicate an insignificant variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, reuse the code from the previous project that finds face rectangles and
+    draws the rectangles on the frame. Display the frame with the OpenCV imshow()
+    method. The program should draw a rectangle on this frame if it detects a face.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To end the loop, you’ll press the Q key, for quit ➋. Start by calling OpenCV’s
+    waitKey() method and passing it a short, one-millisecond time-span. This method
+    will pause the program as it waits for a key press, but we don’t want to interrupt
+    the video stream for too long.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Python’s built-in ord() function accepts a string as an argument and returns
+    the Unicode code point representation of the passed argument, in this case a lowercase
+    *q*. You can see a mapping of characters to numbers here: *[http://www.asciitable.com/](http://www.asciitable.com/)*.
+    To make this lookup compatible with all operating systems, you must include the
+    bitwise AND operator, &, with the hexadecimal number FF (0xFF), which has an integer
+    value of 255\. Using & 0xFF ensures only the last 8 bits of the variable are read.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the loop ends, call the cap object’s release() method. This frees up the
+    camera for other applications. Complete the program by destroying the display
+    window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can add more cascades to the face detection to increase its accuracy, as
+    you did in the previous project. If this slows detection too much, try scaling
+    down the video image. Right after the call to cap.read(), add the following snippet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: The fx and fy arguments are scaling factors for the screen’s *x* and *y* dimensions.
+    Using 0.5 will halve the default size of the window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The program should have no trouble tracking your face unless you do something
+    crazy, like tilt your head slightly to the side. That’s all it takes to break
+    detection and make the rectangle disappear ([Figure 9-15](ch09.xhtml#ch09fig15)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_15.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-15: Face detection using video frames'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Haar cascade classifiers are designed to recognize upright faces, both frontal
+    and profile views, and they do a great job. They can even handle eyeglasses and
+    beards. But tilt your head, and they can quickly fail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An inefficient but simple way to manage tilted heads is to use a loop that rotates
+    the images slightly before passing them on for face detection. The Haar cascade
+    classifiers can handle a bit of tilt ([Figure 9-16](ch09.xhtml#ch09fig16)), so
+    you could rotate the image by 5 degrees or so with each pass and have a good chance
+    of getting a positive result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_16.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-16: Rotating the image facilitates face detection.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Haar feature approach to face detection is popular because it’s fast enough
+    to run in real time with limited computational resources. As you probably suspect,
+    however, more accurate, sophisticated, and resource-intensive techniques are available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, OpenCV ships with an accurate and robust face detector based on
+    the Caffe deep learning framework. To learn more about this detector, see the
+    tutorial “Face Detection with OpenCV and Deep Learning” at *[https://www.pyimagesearch.com/](https://www.pyimagesearch.com/)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another option is to use OpenCV’s LBP cascade classifier for face detection.
+    This technique divides a face into blocks and then extracts local binary pattern
+    histograms (LBPHs) from them. Such histograms have proved effective at detecting
+    *unconstrained* faces in images—that is, faces that aren’t well aligned and with
+    similar poses. We’ll look at LBPH in the next chapter, where we’ll focus on *recognizing*
+    faces rather than simply detecting them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, you got to work with OpenCV’s Haar cascade classifier for detecting
+    human faces; playsound, for playing audio files; and pyttsx3, for text-to-speech
+    audio. Thanks to these useful libraries, you were able to quickly write a face
+    detection program that also issued audio warnings and instructions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Further Reading**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: “Rapid Object Detection Using a Boosted Cascade of Simple Features” (Conference
+    on Computer Vision and Pattern Recognition, 2001), by Paul Viola and Michael Jones,
+    is the first object detection framework to provide practical, real-time object
+    detection rates. It forms the basis for the face detection process used in this
+    chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adrian Rosebrock’s *[https://www.pyimagesearch.com/](https://www.pyimagesearch.com/)*
+    website is an excellent source for building image search engines and finding loads
+    of interesting computer vision projects, such as programs that detect fire and
+    smoke, find targets in drone video streams, distinguish living faces from printed
+    faces, automatically recognize license plates, and do much, much more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Practice Project: Blurring Faces**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Have you ever seen a documentary or news report where a person’s face has been
+    blurred to preserve their anonymity, like in [Figure 9-17](ch09.xhtml#ch09fig17)?
+    Well, this cool effect is easy to do with OpenCV. You just need to extract the
+    face rectangle from a frame, blur it, and then write it back over the frame image,
+    along with an (optional) rectangle outlining the face.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig09_17.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-17: Example of face blurring with OpenCV'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Blurring averages pixels within a local matrix called a *kernel*. Think of the
+    kernel as a box you place on an image. All the pixels in this box are averaged
+    to a single value. The larger the box, the more pixels are averaged, and thus
+    the smoother the image appears. Thus, you can think of blurring as a low-pass
+    filter that blocks high-frequency content, such as sharp edges.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Blurring is the only step in this process you haven’t done before. To blur an
+    image, use the OpenCV blur() method and pass it an image and a tuple of the kernel
+    size in pixels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example, you replace the value of a given pixel in image with the average
+    of all the pixels in a 20×20 square centered on that pixel. This operation repeats
+    for every pixel in image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can find a solution, *practice_blur.py*, in the appendix and in the *Chapter_9*
+    folder downloadable from the book’s website.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Challenge Project: Detecting Cat Faces**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'It turns out there are three animal life forms on planet LV-666: humans, mutants,
+    and cats. The base’s mascot, Mr. Kitty, has free rein of the place and is prone
+    to wander through Corridor 5.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Edit and calibrate *sentry.py* so that Mr. Kitty can freely pass. This will
+    be a challenge, as cats aren’t known for obeying verbal orders. To get him to
+    at least look at the camera, you might add a “Here kitty, kitty” or “Puss, puss,
+    puss” to the pyttsx3 verbal commands. Or better, add the sound of a can of tuna
+    being opened using playsound!
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can find Haar classifiers for cat faces in the same OpenCV folder as the
+    classifiers you used in Project 13, and an empty corridor image, *empty_corridor.png*,
+    in the book’s downloadable *Chapter_9* folder. Select a few cat images from the
+    internet, or your personal collection, and paste them in different places in the
+    empty corridor. Use the humans in the other images to gauge the proper scale for
+    the cat.
+  prefs: []
+  type: TYPE_NORMAL

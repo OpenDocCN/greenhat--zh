@@ -1,0 +1,2598 @@
+- en: '**15'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'A CASE STUDY: CLASSIFYING AUDIO SAMPLES**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/common.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Let’s bring together everything that we’ve learned throughout the book. We’ll
+    be looking at a single case study. The scenario is this: we are data scientists,
+    and our boss has tasked us with building a classifier for audio samples stored
+    as *.wav* files. We’ll begin with the data itself. We first want to build some
+    basic intuition for how it’s structured. From there, we’ll build augmented datasets
+    we can use for training models. The first dataset uses the sound samples themselves,
+    a one-dimensional dataset. We’ll see that this approach isn’t as successful as
+    we would like it to be.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll then turn the audio data into images to allow us to explore two-dimensional
+    CNNs. This change of representation will lead to a big improvement in model performance.
+    Finally, we’ll combine multiple models in ensembles to see how to leverage the
+    relative strengths and weaknesses of the individual models to boost overall performance
+    still more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building the Dataset
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are 10 classes in our dataset, which consists of 400 samples total, 40
+    samples per class, each 5 seconds long. We’ll assume we cannot get any more data
+    because it’s time-consuming and expensive to record the samples and label them.
+    We must work with the data we are given and no more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Throughout this book, we have consistently preached about the necessity of having
+    a good dataset. We’ll assume that the dataset we have been handed is complete
+    in the sense that our system will encounter only types of sound samples in the
+    dataset; there will be no unknown class or classes. Additionally, we’ll also assume
+    that the balanced nature of the dataset is real, and all classes are indeed equally
+    likely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The audio dataset we’ll use is called ESC-10\. For a complete description,
+    see “ESC: Dataset for Environmental Sound Classification” by Karol J. Piczal (2015).
+    The dataset is available at [https://github.com/karoldvl/ESC-50/](https://github.com/karoldvl/ESC-50/).
+    But it needs to be extracted from the larger ESC-50 dataset, which doesn’t have
+    a license we can use. The ESC-10 subset does.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s do some preprocessing to extract the ESC-10 *.wav* files from the larger
+    ESC-50 dataset. Download the single ZIP-file version of the dataset from the preceding
+    URL and expand it. This will create a directory called *ESC-50-master*. Then,
+    use the code in [Listing 15-1](ch15.xhtml#ch15lis1) to build the ESC-10 dataset
+    from it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import sys
+  prefs: []
+  type: TYPE_NORMAL
+- en: import os
+  prefs: []
+  type: TYPE_NORMAL
+- en: import shutil
+  prefs: []
+  type: TYPE_NORMAL
+- en: classes = {
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"rain":0,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"rooster":1,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"crying_baby":2,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"sea_waves":3,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"clock_tick":4,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"sneezing":5,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"dog":6,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"crackling_fire":7,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"helicopter":8,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"chainsaw":9,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'with open("ESC-50-master/meta/esc50.csv") as f:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: lines = [i[:-1] for i in f.readlines()]
+  prefs: []
+  type: TYPE_NORMAL
+- en: lines = lines[1:]
+  prefs: []
+  type: TYPE_NORMAL
+- en: os.system("rm -rf ESC-10")
+  prefs: []
+  type: TYPE_NORMAL
+- en: os.system("mkdir ESC-10")
+  prefs: []
+  type: TYPE_NORMAL
+- en: os.system("mkdir ESC-10/audio")
+  prefs: []
+  type: TYPE_NORMAL
+- en: meta = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for line in lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: t = line.split(",")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (t[-3] == ''True''):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: meta.append("ESC-10/audio/%s %d" % (t[0],classes[t[3]]))
+  prefs: []
+  type: TYPE_NORMAL
+- en: src = "ESC-50-master/audio/"+t[0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: dst = "ESC-10/audio/"+t[0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: shutil.copy(src,dst)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'with open("ESC-10/filelist.txt","w") as f:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for m in meta:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: f.write(m+"\n")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-1: Building the ESC-10 dataset*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code uses the ESC-50 metadata to identify the sound samples that belong
+    to the 10 classes of the ESC-10 dataset and then copies them to the *ESC-10/audio*
+    directory. It also writes a list of the audio files to *filelist.txt*. After running
+    this code, we’ll use only the ESC-10 files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If all is well, we should now have 400 five-second *.wav* files, 40 from each
+    of the 10 classes: rain, rooster, crying baby, sea waves, clock tick, sneezing,
+    dog, crackling fire, helicopter, and chainsaw. We’ll politely refrain from asking
+    our boss exactly why she wants to discriminate between these particular classes
+    of sound.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Augmenting the Dataset
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Our first instinct should be that our dataset is too small. After all, we have
+    only 40 examples of each sound, and we know that some of those will need to be
+    held back for testing, leaving even fewer per class for training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We could resort to *k*-fold validation, but in this case, we’ll instead opt
+    for data augmentation. So, how do we augment audio data?
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recall, the goal of data augmentation is to create new data samples that could
+    plausibly come from the classes in the dataset. With images, we can make obvious
+    changes like shifting, flipping left and right, and so on. With continuous vectors,
+    we’ve seen how to use PCA to augment the data (see [Chapter 5](ch05.xhtml#ch05)).
+    To augment the audio files, we need to think of things we can do that will produce
+    new files that still sound like the original class. Four thoughts come to mind.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we can shift the sample in time, much as we can shift an image to the
+    left or right a few pixels. Second, we can simulate a noisy environment by adding
+    a small amount of random noise to the sound itself. Third, we can shift the pitch
+    of the sound, and make it higher or lower by some small amount. Not surprisingly,
+    this is known as *pitch shifting*. Finally, we can lengthen or compress the sound
+    in time. This is known as *time shifting*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Doing all of this sounds complicated, especially if we haven’t worked with audio
+    data before. I should point out that in practice, being presented with unfamiliar
+    data is a very real possibility; we don’t all get to choose what we need to work
+    with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Fortunately for us, we’re working in Python, and the Python community is vast
+    and talented. It turns out that adding one library to our system will allow us
+    to easily do time stretching and pitch shifting. Let’s install the librosa library.
+    This should do the trick for us:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ sudo pip3 install librosa
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the necessary library installed, we can augment the ESC-10 dataset with
+    the code in [Listing 15-2](ch15.xhtml#ch15lis2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import os
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: from scipy.io.wavfile import read, write
+  prefs: []
+  type: TYPE_NORMAL
+- en: import librosa as rosa
+  prefs: []
+  type: TYPE_NORMAL
+- en: N = 8
+  prefs: []
+  type: TYPE_NORMAL
+- en: os.system("rm -rf augmented; mkdir augmented")
+  prefs: []
+  type: TYPE_NORMAL
+- en: os.system("mkdir augmented/train augmented/test")
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ src_list = [i[:-1] for i in open("ESC-10/filelist.txt")]
+  prefs: []
+  type: TYPE_NORMAL
+- en: z = [[] for i in range(10)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for s in src_list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: _,c = s.split()
+  prefs: []
+  type: TYPE_NORMAL
+- en: z[int(c)].append(s)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ train = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: test = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(10):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = z[i]
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.shuffle(p)
+  prefs: []
+  type: TYPE_NORMAL
+- en: test += p[:8]
+  prefs: []
+  type: TYPE_NORMAL
+- en: train += p[8:]
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.shuffle(train)
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.shuffle(test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: augment_audio(train, "train")
+  prefs: []
+  type: TYPE_NORMAL
+- en: augment_audio(test, "test")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-2: Augmenting the ESC-10 dataset, part 1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code loads the necessary modules, including the librosa module, which we’ll
+    just call rosa, and two functions from the SciPy wavfile module that let us read
+    and write NumPy arrays as *.wav* files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We set the number of samples per class that we’ll hold back for testing (N=8)
+    and create the output directory where the augmented sound files will reside (augmented).
+    Then we read the file list we created with [Listing 15-1](ch15.xhtml#ch15lis1)
+    ❶. Next, we create a nested list (z) to hold the names of the audio files associated
+    with each of the 10 classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the list of files per class, we pull it apart and create train and test
+    file lists ❷. Notice that we randomly shuffle the list of files per class and
+    the final train and test lists. This code follows the convention we discussed
+    in [Chapter 4](ch04.xhtml#ch04) of separating train and test first, then augmenting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can augment the train and test files by calling augment_audio. This function
+    is in [Listing 15-3](ch15.xhtml#ch15lis3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def augment_audio(src_list, typ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: flist = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i,s in enumerate(src_list):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: f,c = s.split()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❶ wav = read(f) # (sample rate, data)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: base = os.path.abspath("augmented/%s/%s" %
+  prefs: []
+  type: TYPE_NORMAL
+- en: (typ, os.path.basename(f)[:-4]))
+  prefs: []
+  type: TYPE_NORMAL
+- en: fname = base+".wav"
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ write(fname, wav[0], wav[1])
+  prefs: []
+  type: TYPE_NORMAL
+- en: flist.append("%s %s" % (fname,c))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for j in range(19):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: d = augment(wav)
+  prefs: []
+  type: TYPE_NORMAL
+- en: fname = base+("_%04d.wav" % j)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ write(fname, wav[0], d.astype(wav[1].dtype))
+  prefs: []
+  type: TYPE_NORMAL
+- en: flist.append("%s %s" % (fname,c))
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.shuffle(flist)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'with open("augmented_%s_filelist.txt" % typ,"w") as f:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for z in flist:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: f.write("%s\n" % z)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-3: Augmenting the ESC-10 dataset, part 2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function loops over all the filenames in the given list (src_list), which
+    will be either train or test. The filename is separated from the class label,
+    and then the file is read from disk ❶. As indicated in the comment, wav is a list
+    of two elements. The first is the sampling rate in Hz (cycles per second). This
+    is how often the analog waveform was digitized to produce the *.wav* file. For
+    ESC-10, the sampling rate is always 44,100 Hz, which is the standard rate for
+    a compact disc. The second element is a NumPy array containing the actual digitized
+    sound samples. These are the values we’ll augment to produce new data files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After setting up some output pathnames, we write the original sound sample to
+    the augmented directory ❷. Then, we start a loop to generate 19 more augmented
+    versions of the current sound sample. The augmented dataset, as a whole, will
+    be 20 times larger, for a total of 8,000 sound files, 6,400 for training and 1,600
+    for testing. Note, the sound samples for an augmented source file are assigned
+    to d. The new sound file is written to disk using the sample rate of 44,100 Hz
+    and the augmented data matching the datatype of the source ❸.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we create the augmented sound files, we also keep track of the filename and
+    class and write them to a new file list. Here typ is a string indicating train
+    or test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This function calls yet another function, augment. This is the function that
+    generates an augmented version of a single sound file by randomly applying some
+    subset of the four augmentation strategies mentioned previously: shifting, noise,
+    pitch shifting, or time-shifting. Some or all of these might be used for any call
+    to augment. The augment function itself is shown in [Listing 15-4](ch15.xhtml#ch15lis4).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def augment(wav):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: sr = wav[0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: d = wav[1].astype("float32")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❶ if (random.random() < 0.5):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: s = int(sr/4.0*(np.random.random()-0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: d = np.roll(d,s)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (s < 0):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: d[s:] = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: d[:s] = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❷ if (random.random() < 0.5):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: d += 0.1*(d.max()-d.min())*np.random.random(d.shape[0])
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❸ if (random.random() < 0.5):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pf = 20.0*(np.random.random()-0.5)
+  prefs: []
+  type: TYPE_NORMAL
+- en: d = rosa.effects.pitch_shift(d, sr, pf)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❹ if (random.random() < 0.5):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: rate = 1.0 + (np.random.random()-0.5)
+  prefs: []
+  type: TYPE_NORMAL
+- en: d = rosa.effects.time_stretch(d,rate)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (d.shape[0] > wav[1].shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: d = d[:wav[1].shape[0]]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: w = np.zeros(wav[1].shape[0], dtype="float32")
+  prefs: []
+  type: TYPE_NORMAL
+- en: w[:d.shape[0]] = d
+  prefs: []
+  type: TYPE_NORMAL
+- en: d = w.copy()
+  prefs: []
+  type: TYPE_NORMAL
+- en: return d
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-4: Augmenting the ESC-10 dataset, part 3*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function separates the samples (d) from the sample rate (sr) and makes
+    sure the samples are floating-point numbers. For ESC-10, the source samples are
+    all of type int16 (signed 16-bit integers). Next come four if statements. Each
+    one asks for a single random float, and if that float is less than 0.5, we execute
+    the body of the if. This means that we apply each possible augmentation with a
+    probability of 50 percent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first if shifts the sound samples in time ❶ by rolling the NumPy array,
+    a vector, by some number of samples, s. This value amounts to at most an eighth
+    of a second, sr/4.0. Note that the shift can be positive or negative. The quantity
+    sr/4.0 is the number of samples in a quarter of a second. However, the random
+    float is in the range [*–*0.5,+0.5], so the ultimate shift is at most an eighth
+    of a second. If the shift is negative, we need to zero samples at the end of the
+    data; otherwise, we zero samples at the start.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Random noise is added by literally adding a random value of up to one-tenth
+    of the range of the audio signal back in ❷. When played, this adds hiss, as you
+    might hear on an old cassette tape.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next comes shifting the pitch of the sample by using librosa. The pitch shift
+    is expressed in musical steps, or fractions thereof. We randomly pick a float
+    in the range [*–*10,+10] (pf) and pass it along with the data (d) and sampling
+    rate (sr) to the librosa pitch_shift effect function ❸.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last augmentation uses the librosa function to stretch or compress time
+    (time_stretch) ❹. We adjust using an amount of time (rate) that is in the range
+    [*–*0.5,+0.5]. If time was stretched, we need to chop off the extra samples to
+    ensure that the sample length remains constant. If time was compressed, we need
+    to add zero samples at the end.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, we return the new, augmented samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running the code in [Listing 15-2](ch15.xhtml#ch15lis2) creates a new *augmented*
+    data directory with subdirectories *train* and *test*. These are the raw sound
+    files that we’ll work with going forward. I encourage you to listen to some of
+    them to understand what the augmentations have done. The filenames should help
+    you quickly tell the originals from the augmentations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Preprocessing Our Data
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Are we ready to start building models? Not yet. Our experience told us that
+    the dataset was too small, and we augmented accordingly. However, we haven’t yet
+    turned the raw data into something we can pass to a model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A first thought is to use the raw sound samples. These are already vectors representing
+    the audio signal, with the time between the samples set by the sampling rate of
+    44,100 Hz. But we don’t want to use them as they are. The samples are all exactly
+    five seconds long. At 44,100 samples per second, that means each sample is a vector
+    of 44,100 × 5 = 220,500 samples. That’s too long for us to work with effectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With a bit more thought, we might be able to convince ourselves that distinguishing
+    between a crying baby and a barking dog might not need such a high sampling rate.
+    What if instead of keeping all the samples, we kept only every 100th sample? Moreover,
+    do we really need five seconds’ worth of data to identify the sounds? What if
+    we kept only the first two seconds worth?
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s keep only the first two seconds of each sound file; that’s 88,200 samples.
+    And let’s keep only every 100th sample, so each sound file now becomes a vector
+    of 882 elements. That’s hardly more than an unraveled MNIST digit image, and we
+    know we can work with those.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 15-5](ch15.xhtml#ch15lis5) has the code to build the actual initial
+    version of the dataset we’ll use to build the models.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import os
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: from scipy.io.wavfile import read
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'sr = 44100 # Hz'
+  prefs: []
+  type: TYPE_NORMAL
+- en: N = 2*sr   # number of samples to keep
+  prefs: []
+  type: TYPE_NORMAL
+- en: w = 100    # every 100
+  prefs: []
+  type: TYPE_NORMAL
+- en: afiles = [i[:-1] for i in open("augmented_train_filelist.txt")]
+  prefs: []
+  type: TYPE_NORMAL
+- en: trn = np.zeros((len(afiles),N//w,1), dtype="int16")
+  prefs: []
+  type: TYPE_NORMAL
+- en: lbl = np.zeros(len(afiles), dtype="uint8")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i,t in enumerate(afiles):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ f,c = t.split()
+  prefs: []
+  type: TYPE_NORMAL
+- en: trn[i,:,0] = read(f)[1][:N:w]
+  prefs: []
+  type: TYPE_NORMAL
+- en: lbl[i] = int(c)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("esc10_raw_train_audio.npy", trn)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("esc10_raw_train_labels.npy", lbl)
+  prefs: []
+  type: TYPE_NORMAL
+- en: afiles = [i[:-1] for i in open("augmented_test_filelist.txt")]
+  prefs: []
+  type: TYPE_NORMAL
+- en: tst = np.zeros((len(afiles),N//w,1), dtype="int16")
+  prefs: []
+  type: TYPE_NORMAL
+- en: lbl = np.zeros(len(afiles), dtype="uint8")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i,t in enumerate(afiles):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: f,c = t.split()
+  prefs: []
+  type: TYPE_NORMAL
+- en: tst[i,:,0] = read(f)[1][:N:w]
+  prefs: []
+  type: TYPE_NORMAL
+- en: lbl[i] = int(c)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("esc10_raw_test_audio.npy", tst)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("esc10_raw_test_labels.npy", lbl)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-5: Building reduced samples dataset*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code builds train and test NumPy files containing the raw data. The data
+    is from the augmented sound files we built in [Listing 15-2](ch15.xhtml#ch15lis2).
+    The file list contains the file location and class label ❶. We load each file
+    in the list and put it into an array, either the train or test array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have a one-dimensional feature vector and a number of train or test files,
+    so we might expect we need a two-dimensional array to store our data, either 6400
+    × 882 for the training set or 1600 × 882 for the test set. However, we know we’ll
+    ultimately be working with Keras, and we know that Keras wants a dimension for
+    the number of channels, so we define the arrays to be 6400 × 882 × 1 and 1600
+    × 882 × 1 instead. The most substantial line in this code is the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: trn[i,:,0] = read(f)[1][:N:w]
+  prefs: []
+  type: TYPE_NORMAL
+- en: It reads the current sound file, keeps only the sound samples ([1]), and from
+    the sound samples keeps only the first two seconds, worth at every 100th sample,
+    [:N:w]. Spend a little time with this code. If you’re confused, I’d suggest experimenting
+    with NumPy at the interactive Python prompt to understand what it’s doing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the end, we have train and test files for the 882 element vectors and associated
+    labels. We’ll build our first models with these. [Figure 15-1](ch15.xhtml#ch15fig1)
+    shows the resulting vector for a crying baby.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/15fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 15-1: Feature vector for a crying baby*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The x-axis is sample number (think “time”), and the y-axis is the sample value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Classifying the Audio Features
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We have our training and test sets. Let’s build some models and see how they
+    do. Since we have feature vectors, we can start quickly with classical models.
+    After those, we can build some one-dimensional convolutional networks and see
+    if they perform any better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using Classical Models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We can test the same suite of classical models we used in [Chapter 7](ch07.xhtml#ch07)
+    with the breast cancer dataset. [Listing 15-6](ch15.xhtml#ch15lis6) has the setup
+    code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.neighbors import NearestCentroid
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.neighbors import KNeighborsClassifier
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.naive_bayes import GaussianNB
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.ensemble import RandomForestClassifier
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.svm import LinearSVC
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = np.load("esc10_raw_train_audio.npy")[:,:,0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("esc10_raw_train_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: (*\pagebreak*)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test  = np.load("esc10_raw_test_audio.npy")[:,:,0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test  = np.load("esc10_raw_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ x_train = (x_train.astype('float32') + 32768) / 65536
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = (x_test.astype('float32') + 32768) / 65536
+  prefs: []
+  type: TYPE_NORMAL
+- en: train(x_train, y_train, x_test, y_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-6: Classifying the audio features with classical models, part 1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here we import the necessary model types, load the dataset, scale it, and then
+    call a train function that we’ll introduce shortly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scaling is crucial here. Consider the y-axis range for [Figure 15-1](ch15.xhtml#ch15fig1).
+    It goes from about –4000 to 4000\. We need to scale the data so that the range
+    is smaller and the values are closer to being centered around 0\. Recall, for
+    the MNIST and CIFAR-10 datasets, we divided by the maximum value to scale to [0,1].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sound samples are 16-bit signed integers. This means the full range of values
+    they can take on covers [*–*32,768,+32,767]. If we make the samples floats, add
+    32,768, and then divide by 65,536 (twice the lower value) ❶, we’ll get samples
+    in the range [0,1), which is what we want.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training and evaluating the classical models is straightforward, as shown in
+    [Listing 15-7](ch15.xhtml#ch15lis7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def run(x_train, y_train, x_test, y_test, clf):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: clf.fit(x_train, y_train)
+  prefs: []
+  type: TYPE_NORMAL
+- en: score = 100.0*clf.score(x_test, y_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("score = %0.2f%%" % score)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def train(x_train, y_train, x_test, y_test):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Nearest Centroid          : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test, NearestCentroid())
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("k-NN classifier (k=3)     : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test, KNeighborsClassifier(n_neighbors=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("k-NN classifier (k=7)     : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test, KNeighborsClassifier(n_neighbors=7))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Naive Bayes (Gaussian)    : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test, GaussianNB())
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Random Forest (trees=  5) : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test,
+  prefs: []
+  type: TYPE_NORMAL
+- en: RandomForestClassifier(n_estimators=5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Random Forest (trees= 50) : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test,
+  prefs: []
+  type: TYPE_NORMAL
+- en: RandomForestClassifier(n_estimators=50))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Random Forest (trees=500) : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test,
+  prefs: []
+  type: TYPE_NORMAL
+- en: RandomForestClassifier(n_estimators=500))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("Random Forest (trees=1000): ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test,
+  prefs: []
+  type: TYPE_NORMAL
+- en: RandomForestClassifier(n_estimators=1000))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("LinearSVM (C=0.01)        : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test, LinearSVC(C=0.01))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("LinearSVM (C=0.1)         : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test, LinearSVC(C=0.1))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("LinearSVM (C=1.0)         : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test, LinearSVC(C=1.0))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("LinearSVM (C=10.0)        : ", end='''')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: run(x_train, y_train, x_test, y_test, LinearSVC(C=10.0))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-7: Classifying the audio features with classical models, part 2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The train function creates the particular model instances and then calls run.
+    We saw this same code structure in [Chapter 7](ch07.xhtml#ch07). The run function
+    uses fit to train the model and score to score the model on the test set. For
+    the time being, we’ll evaluate the models based solely on their overall accuracy
+    (the score). Running this code produces output like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Nearest Centroid          : score = 11.9%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'k-NN classifier (k=3)     : score = 12.1%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'k-NN classifier (k=7)     : score = 10.5%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Naive Bayes (Gaussian)    : score = 28.1%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Random Forest (trees=  5) : score = 22.6%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Random Forest (trees= 50) : score = 30.8%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Random Forest (trees=500) : score = 32.8%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Random Forest (trees=1000): score = 34.4%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'LinearSVM (C=0.01)        : score = 16.5%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'LinearSVM (C=0.1)         : score = 17.5%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'LinearSVM (C=1.0)         : score = 13.4%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'LinearSVM (C=10.0)        : score = 10.2%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can see very quickly that the classical models have performed terribly. Many
+    of them are essentially guessing the class label. There are 10 classes, so random
+    chance guessing should have an accuracy around 10 percent. The best-performing
+    classical model is a Random Forest with 1,000 trees, but even that is performing
+    at only 34.44 percent—far too low an overall accuracy to make the model one we’d
+    care to use in most cases. The dataset is not a simple one, at least not for old-school
+    approaches. Somewhat surprisingly, the Gaussian Naïve Bayes model is right 28
+    percent of the time. Recall that the Gaussian Naïve Bayes expects the samples
+    to be independent from one another. Here the independence assumption between the
+    sound samples for a particular test input is not valid. The feature vector, in
+    this case, represents a signal evolving in time, not a collection of features
+    that are independent of each other.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The models that failed the most are Nearest Centroid, *k*-NN, and the linear
+    SVMs. We have a reasonably high-dimensional input, 882 elements, but only 6,400
+    of them in the training set. That is likely too few samples for the nearest neighbor
+    classifiers to make use of—the feature space is too sparsely populated. Once again,
+    the curse of dimensionality is rearing its ugly head. The linear SVM fails because
+    the features seem not to be linearly separable. We did not try an RBF (Gaussian
+    kernel) SVM, but we’ll leave that as an exercise for the reader. If you do try
+    it, remember that there are now two hyperparameters to tune: *C* and *γ*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using a Traditional Neural Network
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We haven’t yet tried a traditional neural network. We could use the sklearn
+    MLPClassifier class as we did before, but this is a good time to show how to implement
+    a traditional network in Keras. [Listing 15-8](ch15.xhtml#ch15lis8) has the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import keras
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.models import Sequential
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.layers import Dense, Dropout, Flatten
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras import backend as K
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size = 32
+  prefs: []
+  type: TYPE_NORMAL
+- en: num_classes = 10
+  prefs: []
+  type: TYPE_NORMAL
+- en: epochs = 16
+  prefs: []
+  type: TYPE_NORMAL
+- en: nsamp = (882,1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = np.load("esc10_raw_train_audio.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("esc10_raw_train_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test  = np.load("esc10_raw_test_audio.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test  = np.load("esc10_raw_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = (x_train.astype('float32') + 32768) / 65536
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = (x_test.astype('float32') + 32768) / 65536
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = keras.utils.to_categorical(y_train, num_classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = keras.utils.to_categorical(y_test, num_classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: model = Sequential()
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(1024, activation='relu', input_shape=nsamp))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(512, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Flatten())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(num_classes, activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.compile(loss=keras.losses.categorical_crossentropy,
+  prefs: []
+  type: TYPE_NORMAL
+- en: optimizer=keras.optimizers.Adam(),
+  prefs: []
+  type: TYPE_NORMAL
+- en: metrics=['accuracy'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.fit(x_train, y_train,
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size=batch_size,
+  prefs: []
+  type: TYPE_NORMAL
+- en: epochs=epochs,
+  prefs: []
+  type: TYPE_NORMAL
+- en: verbose=0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: validation_data=(x_test, y_test))
+  prefs: []
+  type: TYPE_NORMAL
+- en: (*\pagebreak*)
+  prefs: []
+  type: TYPE_NORMAL
+- en: score = model.evaluate(x_test, y_test, verbose=0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Test accuracy:', score[1])
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-8: A traditional neural network in Keras*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After loading the necessary modules, we load the data itself and scale it as
+    we did for the classical models. Next, we build the model architecture. We need
+    only Dense layers and Dropout layers. We do put in a Flatten layer to eliminate
+    the extra dimension (note the shape of nsamp) before the final softmax output.
+    Unfortunately, this model does not improve things for us: we achieve an accuracy
+    of only 27.6 percent.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using a Convolutional Neural Network
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Classical models and the traditional neural network don’t cut it. We should
+    not be too surprised, but it was easy to give them a try. Let’s move on and apply
+    a one-dimensional convolutional neural network to this dataset to see if it performs
+    any better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We haven’t worked with one-dimensional CNNs yet. Besides the structure of the
+    input data, the only difference is that we replace calls to Conv2D and MaxPooling2D
+    with calls to Conv1D and MaxPooling1D.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code for the first model we’ll try is shown in [Listing 15-9](ch15.xhtml#ch15lis9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import keras
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.models import Sequential
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.layers import Dense, Dropout, Flatten
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.layers import Conv1D, MaxPooling1D
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size = 32
+  prefs: []
+  type: TYPE_NORMAL
+- en: num_classes = 10
+  prefs: []
+  type: TYPE_NORMAL
+- en: epochs = 16
+  prefs: []
+  type: TYPE_NORMAL
+- en: nsamp = (882,1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = np.load("esc10_raw_train_audio.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("esc10_raw_train_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test  = np.load("esc10_raw_test_audio.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test  = np.load("esc10_raw_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = (x_train.astype('float32') + 32768) / 65536
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = (x_test.astype('float32') + 32768) / 65536
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = keras.utils.to_categorical(y_train, num_classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = keras.utils.to_categorical(y_test, num_classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: model = Sequential()
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(32, kernel_size=3, activation='relu',
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape=nsamp))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Flatten())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(512, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(num_classes, activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.compile(loss=keras.losses.categorical_crossentropy,
+  prefs: []
+  type: TYPE_NORMAL
+- en: optimizer=keras.optimizers.Adam(),
+  prefs: []
+  type: TYPE_NORMAL
+- en: metrics=['accuracy'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: history = model.fit(x_train, y_train,
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size=batch_size,
+  prefs: []
+  type: TYPE_NORMAL
+- en: epochs=epochs,
+  prefs: []
+  type: TYPE_NORMAL
+- en: verbose=1,
+  prefs: []
+  type: TYPE_NORMAL
+- en: validation_data=(x_test[:160], y_test[:160]))
+  prefs: []
+  type: TYPE_NORMAL
+- en: score = model.evaluate(x_test[160:], y_test[160:], verbose=0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Test accuracy:', score[1])
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-9: A 1D CNN in Keras*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This model loads and preprocesses the dataset as before. This architecture,
+    which we’ll call the *shallow* architecture, has a single convolutional layer
+    of 32 filters with a kernel size of 3\. We’ll vary this kernel size in the same
+    way we tried different 2D kernel sizes for the MNIST models. Following the Conv1D
+    layer is a single max-pooling layer with a pool kernel size of 3\. Dropout and
+    Flatten layers come next before a single Dense layer of 512 nodes with dropout.
+    A softmax layer completes the architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll train for 16 epochs using a batch size of 32\. We’ll keep the training
+    history so we can examine the losses and validation performance as a function
+    of epoch. There are 1,600 test samples. We’ll use 10 percent for the training
+    validation and the remaining 90 percent for the overall accuracy. Finally, we’ll
+    vary the Conv1D kernel size from 3 to 33 in an attempt to find one that works
+    well with the training data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s define four other architectures. We’ll refer to them as *medium*, *deep0*,
+    *deep1*, and *deep2*. With no prior experience working with this data, it makes
+    sense to try multiple architectures. At present, there’s no way to know ahead
+    of time what the best architecture is for a new dataset. All we have is our previous
+    experience.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 15-10](ch15.xhtml#ch15lis10) lists the specific architectures, separated
+    by comments.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: medium
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: model = Sequential()
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(32, kernel_size=3, activation='relu',
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape=nsamp))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Flatten())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(512, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(num_classes, activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: deep0
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: model = Sequential()
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(32, kernel_size=3, activation='relu',
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape=nsamp))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Flatten())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(512, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(num_classes, activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: deep1
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: model = Sequential()
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(32, kernel_size=3, activation='relu',
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape=nsamp))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Flatten())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(512, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(num_classes, activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: deep2
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: model = Sequential()
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(32, kernel_size=3, activation='relu',
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape=nsamp))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling1D(pool_size=3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Flatten())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(512, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(num_classes, activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-10: Different 1D CNN architect*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we train multiple models, varying the first Conv1D kernel size each time,
+    we get the results in [Table 15-1](ch15.xhtml#ch15tab1). We’ve highlighted the
+    best-performing model for each architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 15-1:** Test Set Accuracies by Convolutional Kernel Size and Model
+    Architecture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Kernel size** | **Shallow** | **Medium** | **Deep0** | **Deep1** | **Deep2**
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | **44.51** | 41.39 | **48.75** | **54.03** | 9.93 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 5 | 43.47 | 41.74 | 44.72 | 53.96 | 48.47 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 7 | 38.47 | 40.97 | 46.18 | 52.64 | 49.31 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 9 | 41.46 | **43.06** | 46.88 | 48.96 | 9.72 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 11 | 39.65 | 40.21 | 45.21 | 52.99 | 10.07 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 13 | 42.71 | 41.67 | 46.53 | 50.56 | **52.57** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 15 | 40.00 | 42.78 | 46.53 | 50.14 | 47.08 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 33 | 27.57 | 42.22 | 41.39 | 48.75 | 9.86 |'
+  prefs: []
+  type: TYPE_TB
+- en: Looking at [Table 15-1](ch15.xhtml#ch15tab1), we see a general trend of accuracy
+    improving as the model depth increases. However, at the deep2 model, things start
+    to fall apart. Some of the models fail to converge, showing an accuracy equivalent
+    to random guessing. The deep1 model is the best performing for all kernel sizes.
+    When looking across by kernel size, the kernel with width 3 is the best performing
+    for three of the five architectures. All of this implies that the best combination
+    for the 1D CNNs is to use an initial kernel of width 3 and the deep1 architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We trained this architecture for only 16 epochs. Will things improve if we train
+    for more? Let’s train the deep1 model for 60 epochs and plot the training and
+    validation loss and error to see how they converge (or don’t). Doing this produces
+    [Figure 15-2](ch15.xhtml#ch15fig2), where we see the training and validation loss
+    (top) and error (bottom) as a function of epoch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/15fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 15-2: Training and validation loss (top) and error (bottom) for the
+    deep1 architecture*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Immediately, we should pick up on the explosion of the loss for the validation
+    set. The training loss is continually decreasing until after about epoch 18 or
+    so; then the validation loss goes up and becomes oscillatory. This is a clear
+    example of overfitting. The likely source of this overfitting is our limited training
+    set size, only 6,400 samples, even after data augmentation. The validation error
+    remains more or less constant after initially decreasing. The conclusion is that
+    we cannot expect to do much better than an overall accuracy of about 54 percent
+    for this dataset using one-dimensional vectors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we want to improve, we need to be more expressive with our dataset. Fortunately
+    for us, we have another preprocessing trick up our sleeves.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Spectrograms
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let’s return to our augmented set of audio files. To build the dataset, we took
+    the sound samples, keeping only two seconds’ worth and only every 100th sample.
+    The best we could do is an accuracy of a little more than 50 percent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, if we work with a small set of sound samples from an input audio file,
+    say 200 milliseconds worth, we can use the vector of samples to calculate the
+    *Fourier transform*. The Fourier transform of a signal measured at regular intervals
+    tells us the frequencies that went into building the signal. Any signal can be
+    thought of as the sum of many different sine and cosine waves. If the signal is
+    composed of only a few waves, like the sound you might get from an instrument
+    like the ocarina, then the Fourier transform will have essentially a few peaks
+    at those frequencies. If the signal is complex, like speech or music, then the
+    Fourier transform will have many different frequencies, leading to many different
+    peaks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Fourier transform itself is complex-valued: each element has both a real
+    and an imaginary component. You can write it as *a* + *bi*, where *a* and *b*
+    are real numbers and ![Image](Images/394equ01.jpg). If we use the absolute value
+    of these quantities, we’ll get a real number representing the energy of a particular
+    frequency. This is called the *power spectrum* of the signal. A simple tone might
+    have energy in only a few frequencies, while something like a cymbal crash or
+    white noise will have energy more or less evenly distributed among all frequencies.
+    [Figure 15-3](ch15.xhtml#ch15fig3) shows two power spectra.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/15fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 15-3: Power spectrum of an ocarina (top) and cymbal (bottom)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the top is the spectrum of an ocarina, and on the bottom is a cymbal crash.
+    As expected, the ocarina has energy in only a few frequencies, while the cymbal
+    uses all the frequencies. The important point for us is that *visually* the spectra
+    are quite different from each other. (The spectra were made with Audacity, an
+    excellent open source audio processing tool.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: We could use these power spectra as feature vectors, but they represent only
+    the spectra of tiny slices of time. The sound samples are five seconds long. Instead
+    of using a spectrum, we will use a *spectrogram*. The spectrogram is an image
+    made up of columns that represent individual spectra. This means that the x-axis
+    represents time and the y-axis represents frequency. The color of a pixel is proportional
+    to the energy in that frequency at that time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In other words, a spectrogram is what we get if we orient the power spectra
+    vertically and use color to represent intensity at a given frequency. With this
+    approach, we can turn an entire sound sample into an image. For example, [Figure
+    15-4](ch15.xhtml#ch15fig4) shows the spectrogram of a crying baby. Compare this
+    to the feature vector of [Figure 15-1](ch15.xhtml#ch15fig1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/15fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 15-4: Spectrogram of a crying baby*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To create spectrograms of the augmented audio files, we need a new tool and
+    a bit of code. The tool we need is called sox. It’s not a Python library, but
+    a command line tool. Odds are that it is already installed if you are using our
+    canonical Ubuntu Linux distribution. If not, you can install it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ sudo apt-get install sox
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll use sox from inside a Python script to produce the spectrogram images
+    we want. Each sound file becomes a new spectrogram image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The source code to process the training images is in [Listing 15-11](ch15.xhtml#ch15lis11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import os
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: from PIL import Image
+  prefs: []
+  type: TYPE_NORMAL
+- en: rows = 100
+  prefs: []
+  type: TYPE_NORMAL
+- en: cols = 160
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ flist = [i[:-1] for i in open("augmented_train_filelist.txt")]
+  prefs: []
+  type: TYPE_NORMAL
+- en: N = len(flist)
+  prefs: []
+  type: TYPE_NORMAL
+- en: img = np.zeros((N,rows,cols,3), dtype="uint8")
+  prefs: []
+  type: TYPE_NORMAL
+- en: lbl = np.zeros(N, dtype="uint8")
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i,f in enumerate(flist):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: src, c = f.split()
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ os.system("sox %s -n spectrogram" % src)
+  prefs: []
+  type: TYPE_NORMAL
+- en: im = np.array(Image.open("spectrogram.png").convert("RGB"))
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ im = im[42:542,58:858,:]
+  prefs: []
+  type: TYPE_NORMAL
+- en: im = Image.fromarray(im).resize((cols,rows))
+  prefs: []
+  type: TYPE_NORMAL
+- en: img[i,:,:,:] = np.array(im)
+  prefs: []
+  type: TYPE_NORMAL
+- en: lbl[i] = int(c)
+  prefs: []
+  type: TYPE_NORMAL
+- en: p.append(os.path.abspath(src))
+  prefs: []
+  type: TYPE_NORMAL
+- en: os.system("rm -rf spectrogram.png")
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = np.array(p)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ idx = np.argsort(np.random.random(N))
+  prefs: []
+  type: TYPE_NORMAL
+- en: img = img[idx]
+  prefs: []
+  type: TYPE_NORMAL
+- en: lbl = lbl[idx]
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = p[idx]
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("esc10_spect_train_images.npy", img)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("esc10_spect_train_labels.npy", lbl)
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save("esc10_spect_train_paths.npy", p)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-11: Building the spectrograms*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start by defining the size of the spectrogram. This is the input to our model,
+    and we don’t want it to be too big because we’re limited in the size of the inputs
+    we can process. We’ll settle for 100×160 pixels. We then load the training file
+    list ❶ and create NumPy arrays to hold the spectrogram images and associated labels.
+    The list p will hold the pathname of the source for each spectrogram in case we
+    want to get back to the original sound file at some point. In general, it’s a
+    good idea to preserve information to get back to the source of derived datasets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then we loop over the file list. We get the filename and class label and then
+    call sox, passing in the source sound filename ❷. The sox application is sophisticated.
+    The syntax here turns the given sound file into a spectrogram image with the name
+    *spectrogram.png*. We immediately load the output spectrogram into im, making
+    sure it’s an RGB file with no transparency layer (hence the call to convert("RGB")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The spectrogram created by sox has a border with frequency and time information.
+    We want only the spectrogram image portion, so we subset the image ❸. We determined
+    the indices we’re using empirically. It’s possible, but somewhat unlikely, that
+    a newer version of sox will require tweaking these to avoid including any border
+    pixels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we resize the spectrogram so that it fits in our 100×160 pixel array.
+    This is downsampling, true, but hopefully enough characteristic information is
+    still present to allow a model to learn the difference between classes. We keep
+    the downsampled spectrogram and the associated class label and sound file path.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When we’ve generated all the spectrograms, the loop ends, and we remove the
+    final extraneous spectrogram PNG file. We convert the list of sound file paths
+    to a NumPy array so we can store it in the same manner as the images and labels.
+    Finally, we randomize the order of the images as a precaution against any implicit
+    sorting that might group classes ❹. This is so that minibatches extracted sequentially
+    are representative of the mix of classes as a whole. To conclude, we write the
+    images, labels, and pathnames to disk. We repeat this entire process for the test
+    set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Are we able to visually tell the difference between the spectrograms of different
+    classes? If we can do that easily, then we have a good shot of getting a model
+    to tell the difference, too. [Figure 15-5](ch15.xhtml#ch15fig5) shows 10 spectrograms
+    of the same class in each row.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/15fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 15-5: Sample spectrograms for each class in ESC-10\. Each row shows
+    10 examples from the same class.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Visually, we can usually tell the spectra apart, which is encouraging. With
+    our spectrograms in hand, we are ready to try some 2D CNNs to see if they do better
+    than the 1D CNNs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Classifying Spectrograms
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To work with the spectrogram dataset, we need 2D CNNs. A possible starting point
+    is to convert the shallow 1D CNN architecture to 2D by changing Conv1D to Conv2D,
+    and MaxPooling1D to MaxPooling2D. However, if we do this, the resulting model
+    has 30.7 million parameters, which is many more than we want to work with. Instead,
+    let’s opt for a deeper architecture that has fewer parameters and then explore
+    the effect of different first convolutional layer kernel sizes. The code is in
+    [Listing 15-12](ch15.xhtml#ch15lis12).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import keras
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.models import Sequential
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.layers import Dense, Dropout, Flatten
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.layers import Conv2D, MaxPooling2D
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size = 16
+  prefs: []
+  type: TYPE_NORMAL
+- en: num_classes = 10
+  prefs: []
+  type: TYPE_NORMAL
+- en: epochs = 16
+  prefs: []
+  type: TYPE_NORMAL
+- en: img_rows, img_cols = 100, 160
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape = (img_rows, img_cols, 3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = np.load("esc10_spect_train_images.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("esc10_spect_train_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("esc10_spect_test_images.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("esc10_spect_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = x_train.astype('float32') / 255
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = x_test.astype('float32') / 255
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = keras.utils.to_categorical(y_train, num_classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = keras.utils.to_categorical(y_test, num_classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: model = Sequential()
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(32, kernel_size=(3,3), activation='relu',
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_shape=input_shape))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(64, (3, 3), activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling2D(pool_size=(2, 2)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(64, (3, 3), activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling2D(pool_size=(2, 2)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.25))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Flatten())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(128, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dropout(0.5))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(num_classes, activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.compile(loss=keras.losses.categorical_crossentropy,
+  prefs: []
+  type: TYPE_NORMAL
+- en: optimizer=keras.optimizers.Adam(),
+  prefs: []
+  type: TYPE_NORMAL
+- en: metrics=['accuracy'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: history = model.fit(x_train, y_train,
+  prefs: []
+  type: TYPE_NORMAL
+- en: batch_size=batch_size, epochs=epochs,
+  prefs: []
+  type: TYPE_NORMAL
+- en: verbose=0, validation_data=(x_test, y_test))
+  prefs: []
+  type: TYPE_NORMAL
+- en: score = model.evaluate(x_test, y_test, verbose=0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Test accuracy:', score[1])
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.save("esc10_cnn_deep_3x3_model.h5")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-12: Classifying spectrograms*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here we are using a minibatch size of 16 for 16 epochs along with the Adam optimizer.
+    The model architecture has two convolutional layers, a max-pooling layer with
+    dropout, another convolutional layer, and a second max-pooling layer with dropout.
+    There is a single dense layer of 128 nodes before the softmax output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ll test two kernel sizes for the first convolutional layer: 3 × 3 and 7
+    × 7\. The 3 × 3 configuration is shown in [Listing 15-12](ch15.xhtml#ch15lis12).
+    Replace (3,3) with (7,7) to alter the size. All the initial 1D convolutional runs
+    used a single training of the model for evaluation. We know that because of random
+    initialization, we’ll get slightly different results from training to training,
+    even if nothing else changes. For the 2D CNNs, let’s train each model six times
+    and present the overall accuracy as a mean ± standard error of the mean. Doing
+    just this gives us the following overall accuracies:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Kernel size** | **Score** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 × 3 | 78.78 ± 0.60% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 7 × 7 | 78.44 ± 0.72% |'
+  prefs: []
+  type: TYPE_TB
+- en: This indicates that there is no meaningful difference between using a 3 × 3
+    initial convolutional layer kernel size or a 7 × 7\. Therefore, we’ll stick with
+    3 × 3 going forward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 15-6](ch15.xhtml#ch15fig6) shows the training and validation loss (top)
+    and error (bottom) for one run of the 2D CNN trained on the spectrograms. As we
+    saw in the 1D CNN case, after only a few epochs, the validation error starts to
+    increase.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The 2D CNN performs significantly better than the 1D CNN did: 79 percent accuracy
+    versus only 54 percent. This level of accuracy is still not particularly useful
+    for many applications, but for others, it might be completely acceptable. Nevertheless,
+    we’d like to do better if we can. It’s worth noting that we have a few limitations
+    in our data and, for that matter, our hardware, since we are restricting ourselves
+    to a CPU-only approach, which limits the amount of time we are willing to wait
+    for models to train. Here is where the some 25-fold increase in performance possible
+    with GPUs would be helpful, assuming our use case allows for using GPUs. If we’re
+    planning to run the model on an embedded system, for example, we might not have
+    a GPU available, so we’d want to stick with a smaller model anyway.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/15fig06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 15-6: Training and validation loss (top) and error (bottom) for the
+    2D CNN architecture*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Initialization, Regularization, and Batch Normalization
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The literature tells us that there are other things we can try. We already augmented
+    the dataset, a powerful technique, and we are using dropout, another powerful
+    technique. We can try using a new initialization strategy, He initialization,
+    which has been shown to often work better than Glorot initialization, the Keras
+    default. We can also try applying L2 regularization, which Keras implements as
+    weight decay per layer. See [Chapter 10](ch10.xhtml#ch10) for a refresher on these
+    techniques.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To set the layer initialization algorithm, we need to add the following keyword
+    to the Conv2D and first Dense layer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: kernel_initializer="he_normal"
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To add L2 regularization, we add the following keyword to the Conv2D and first
+    Dense layer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: kernel_regularizer=keras.regularizers.l2(0.001)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here *λ* = 0.001\. Recall, *λ* is the L2 regularization scale factor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We could test these together, but instead we’ve tested them individually to
+    see what effect, if any, they have for this dataset. Training six models as before
+    gives the following overall accuracies:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Regularizer** | **Score** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| He initialization | 78.5 ± 0.5% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| L2 regularization | 78.3 ± 0.4% |'
+  prefs: []
+  type: TYPE_TB
+- en: This is no different, statistically, from the previous results. In this case,
+    these approaches are neither beneficial nor detrimental.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Batch normalization is another well-tested, go-to technique widely used by
+    the machine learning community. We mentioned batch normalization briefly in [Chapter
+    12](ch12.xhtml#ch12). Batch normalization does just what its name suggests: it
+    normalizes the inputs to a layer of the network, subtracting per feature means
+    and dividing by the per feature standard deviations. The output of the layer multiplies
+    the normalized input by a constant and adds an offset. The net effect is the input
+    values are mapped to new output values by a two-step process: normalize the input
+    and then apply a linear transform to get the output. The parameters of the linear
+    transform are learned during backprop. At inference time, means and standard deviations
+    learned from the dataset are applied to unknown inputs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Batch normalization has shown itself time and again to be effective, especially
+    in speeding up training. Machine learning researchers are still debating the exact
+    reasons *why* it works as it does. To use it in Keras, you simply insert batch
+    normalization after the convolutional and dense layers of the network (and after
+    any activation function like ReLU used by those layers). Batch normalization is
+    known to not work well with dropout, so we’ll also remove the Dropout layers.
+    The relevant architecture portion of the model code is shown in [Listing 15-13](ch15.xhtml#ch15lis13).
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.layers import BatchNormalization
+  prefs: []
+  type: TYPE_NORMAL
+- en: model = Sequential()
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(32, kernel_size=(3, 3),
+  prefs: []
+  type: TYPE_NORMAL
+- en: activation='relu', input_shape=input_shape))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(BatchNormalization())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(64, (3, 3), activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(BatchNormalization())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling2D(pool_size=(2, 2)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Conv2D(64, (3, 3), activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(BatchNormalization())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(MaxPooling2D(pool_size=(2, 2)))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Flatten())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(128, activation='relu'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(BatchNormalization())
+  prefs: []
+  type: TYPE_NORMAL
+- en: model.add(Dense(num_classes, activation='softmax'))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-13: Adding in batch normalization*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we repeat our training process, six models with mean and standard error reporting
+    of the overall accuracy, we get
+  prefs: []
+  type: TYPE_NORMAL
+- en: Batch normalization     75.56 ± 0.59%
+  prefs: []
+  type: TYPE_NORMAL
+- en: which is significantly less than the mean accuracy found without batch normalization
+    but including dropout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examining the Confusion Matrix
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We’ve seen in this section that our dataset is a tough one. Augmentation and
+    dropout have been effective, but other things like ReLU-specific initialization,
+    L2 regularization (weight decay), and even batch normalization have not improved
+    things for us. That doesn’t mean these techniques are ineffective, just that they
+    are not effective for this particular small dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s take a quick look at the confusion matrix generated by one of the models
+    using our chosen architecture. We’ve seen previously how to calculate the matrix;
+    we’ll show it here for discussion and for comparison with the confusion matrices
+    we’ll make in the next section. [Table 15-2](ch15.xhtml#ch15tab2) shows the matrix;
+    as always, rows are the true class label, and columns are the model-assigned label.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 15-2:** Confusion Matrix for the Spectrogram Model'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | **85.6** | 0.0 | 0.0 | 5.6 | 0.0 | 0.0 | 0.0 | 5.0 | 0.6 | 3.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 0.0 | **97.5** | 1.2 | 0.0 | 0.6 | 0.6 | 0.0 | 0.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 0.0 | 13.8 | **72.5** | 0.6 | 0.6 | 3.8 | 6.2 | 0.0 | 0.6 | 1.9 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 25.0 | 0.0 | 0.0 | **68.1** | 0.0 | 2.5 | 0.6 | 0.0 | 2.5 | 1.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 0.6 | 0.0 | 0.0 | 0.0 | **84.4** | 6.2 | 5.0 | 3.8 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | **94.4** | 4.4 | 0.6 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 0.0 | 0.0 | 1.2 | 0.0 | 0.0 | 10.6 | **88.1** | 0.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 9.4 | 0.0 | 0.6 | 0.0 | 15.6 | 1.9 | 0.0 | **63.8** | 7.5 | 1.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 18.1 | 1.9 | 0.0 | 5.6 | 0.0 | 1.2 | 2.5 | 6.9 | **55.6** | 8.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 7.5 | 0.0 | 8.1 | 0.6 | 0.0 | 0.6 | 0.0 | 1.9 | 10.0 | **71.2** |'
+  prefs: []
+  type: TYPE_TB
+- en: The three worst-performing classes are helicopter (8), fire (7), and waves (3).
+    Both waves and helicopter are most often confused with rain (0), while fire is
+    most often confused with clock (4) and rain. The best performing classes are rooster
+    (1) and sneezing (5). These results make sense. A rooster’s crow and a person
+    sneezing are distinct sounds; nothing really sounds like them. However, it is
+    easy to see how waves and a helicopter could be confused with rain, or the crackle
+    of a fire with the tick of a clock.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Does this mean we’re stuck at 78.8 percent accuracy? No, we have one more trick
+    to try. We’ve been training and evaluating the performance of single models. Nothing
+    is stopping us from training multiple models and combining their results. This
+    is *ensembling*. We presented ensembles briefly in [Chapter 6](ch06.xhtml#ch06)
+    and again in [Chapter 9](ch09.xhtml#ch09) when discussing dropout. Now, let’s
+    use the idea directly to see if we can improve our sound sample classifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ensembles
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The core idea of an ensemble is to take the output of multiple models trained
+    on the same, or extremely similar, dataset(s) and combine them. It embodies the
+    “wisdom of the crowds” concept: one model might be better at certain classes or
+    types of inputs for a particular class than another, so it makes sense that if
+    they work together, they might arrive at a final result better than either one
+    could do on its own.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, we’ll use the same machine learning architecture we used in the previous
+    section. Our different models will be separate trainings of this architecture
+    using the spectrograms as input. This is a weaker form of ensembling. Typically,
+    the models in the ensemble are quite different from each other, either different
+    architectures of neural networks, or completely different types of models like
+    Random Forests and *k*-Nearest Neighbors. The variation between models here is
+    due to the random initialization of the networks and the different parts of the
+    loss landscape the network finds itself in when training stops.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Our approach works like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Train multiple models (*n* = 6) using the spectrogram dataset.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Combine the softmax output of these models on the test set in some manner.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Use the resulting output from the combination to predict the assigned class
+    label.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We hope that the set of class labels assigned after combining the individual
+    model outputs is superior to the set assigned by the model architecture used alone.
+    Intuitively, we feel that this approach should buy us something. It makes sense.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, a question immediately arises: how do we best combine the outputs
+    of the individual networks? We have total freedom in the answer to that question.
+    What we are looking for is an *f* () such that'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*y*[predict] = *f*(*y*[0], *y*[1], *y*[2], … , *y[n]*)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: where *y*[*i*], *i* = 0, 1, …, *n* are the outputs of the *n* models in the
+    ensemble and *f* () is some function, operation, or algorithm that best combines
+    them into a single new prediction, *y*[predict].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some combination approaches come readily to mind: we could average the outputs
+    and select the largest, keep maximum per class output across the ensemble and
+    then choose the largest of those, or use voting to decide which class label should
+    be assigned. We’ll try all three of these.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s start with the first three approaches. We already have the six ensemble
+    models: they’re the models we trained in the previous section to give us the mean
+    accuracy on the test set. This model architecture uses dropout, but no alternate
+    initialization, L2 regularization, or batch normalization.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It’s straightforward enough to run the test set through each of the models
+    trained in the previous section ([Listing 15-14](ch15.xhtml#ch15lis14)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import sys
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: from keras.models import load_model
+  prefs: []
+  type: TYPE_NORMAL
+- en: model = load_model(sys.argv[1])
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("esc10_spect_test_images.npy")/255.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("esc10_spect_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ prob = model.predict(x_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ p = np.argmax(prob, axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: cc = np.zeros((10,10))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y_test)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cc[y_test[i],p[i]] += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ print(np.array2string(cc.astype("uint32")))
+  prefs: []
+  type: TYPE_NORMAL
+- en: cp = 100.0 * cc / cc.sum(axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ print(np.array2string(cp, precision=1))
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("Overall accuracy = %0.2f%%" % (100.0*np.diag(cc).sum()/cc.sum(),))
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.save(sys.argv[2], prob)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-14: Applying multiple models to the test set*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code expects the name of the trained model file as the first argument and
+    the name of an output file to store the model predictions as the second argument.
+    Then, it loads the model and spectrogram test data, applies the model to the test
+    data ❶, and predicts class labels by selecting the highest output value ❷.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code also calculates the confusion matrix and displays it twice, first as
+    actual counts ❸ and again as a percentage of the actual class ❹. Finally, it displays
+    the overall accuracy and writes the probabilities to the disk. With this code,
+    we can store the predictions of each of the six models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that we have the predictions, let’s combine them in the first of the three
+    ways mentioned previously. To calculate the average of the model predictions,
+    we first load each model’s predictions, and then average and select the maximum
+    per sample as shown in [Listing 15-15](ch15.xhtml#ch15lis15).
+  prefs: []
+  type: TYPE_NORMAL
+- en: p0 = np.load("prob_run0.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: p1 = np.load("prob_run1.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: p2 = np.load("prob_run2.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: p3 = np.load("prob_run3.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: p4 = np.load("prob_run4.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: p5 = np.load("prob_run5.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("esc10_spect_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: prob = (p0+p1+p2+p3+p4+p5)/6.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = np.argmax(prob, axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-15: Averaging the test set results*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The resulting percentage confusion matrix is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | **83.8** | 0.0 | 0.0 | 7.5 | 0.0 | 0.0 | 0.0 | 4.4 | 0.0 | 4.4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 0.0 | **97.5** | 1.9 | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 0.0 | 10.0 | **78.1** | 0.0 | 0.0 | 3.1 | 6.2 | 0.0 | 0.0 | 2.5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 9.4 | 0.0 | 0.0 | **86.2** | 0.0 | 3.1 | 0.6 | 0.0 | 0.0 | 0.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 0.6 | 0.0 | 0.0 | 0.0 | **83.1** | 5.6 | 5.0 | 5.6 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 0.0 | 0.0 | 0.0 | 0.0 | 0.6 | **93.8** | 5.6 | 0.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | 8.8 | **90.6** | 0.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 8.1 | 0.0 | 0.0 | 0.0 | 17.5 | 1.9 | 0.0 | **64.4** | 7.5 | 0.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 6.2 | 0.0 | 0.0 | 7.5 | 0.0 | 1.9 | 4.4 | 8.8 | **66.2** | 5.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 5.0 | 0.0 | 5.0 | 1.2 | 0.0 | 0.6 | 0.0 | 1.9 | 10.6 | **75.6** |'
+  prefs: []
+  type: TYPE_TB
+- en: with an overall accuracy of 82.0 percent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This approach is helpful: we went from 79 percent to 82 percent in overall
+    accuracy. The most significant improvements were in class 3 (waves) and class
+    8 (helicopter).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our next approach, shown in [Listing 15-16](ch15.xhtml#ch15lis16), keeps the
+    maximum probability across the six models for each class and then selects the
+    largest to assign the class label.
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = np.zeros(len(y_test), dtype="uint8")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y_test)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: t = np.array([p0[i],p1[i],p2[i],p3[i],p4[i],p5[i]])
+  prefs: []
+  type: TYPE_NORMAL
+- en: p[i] = np.argmax(t.reshape(60)) % 10
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-16: Keeping the test set maximum*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This code defines a vector, p, of the same length as the vector of actual labels,
+    y_test. Then, for each test sample, we form t, a concatenation of all six models’
+    predictions for each class. We reshape t so that it is a one-dimensional vector
+    of 60 elements. Why 60? We have 10 class predictions times 6 models. The maximum
+    of this vector is the largest value, the index of which is returned by argmax.
+    We really don’t want this index; instead, we want the class label this index maps
+    to. Therefore, if we take this index modulo 10, we will get the proper class label,
+    which we assign to p. With p and y_test, we can calculate the confusion matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | **82.5** | 0.0 | 0.0 | 9.4 | 0.0 | 0.0 | 0.0 | 4.4 | 0.6 | 3.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 0.0 | **95.0** | 4.4 | 0.0 | 0.0 | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 0.0 | 10.0 | **78.8** | 0.0 | 0.0 | 3.1 | 5.6 | 0.0 | 0.0 | 2.5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 5.0 | 0.0 | 0.0 | **90.6** | 0.0 | 2.5 | 0.6 | 0.0 | 0.6 | 0.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 1.2 | 0.0 | 0.0 | 0.0 | **81.2** | 6.2 | 5.0 | 6.2 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 0.0 | 0.0 | 0.0 | 0.0 | 0.6 | **93.8** | 5.6 | 0.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 0.0 | 0.0 | 0.6 | 0.0 | 0.6 | 8.8 | **90.0** | 0.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 8.8 | 0.0 | 0.0 | 0.0 | 16.2 | 2.5 | 0.0 | **65.0** | 6.9 | 0.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 8.1 | 0.0 | 0.0 | 6.2 | 0.0 | 1.9 | 4.4 | 9.4 | **63.1** | 6.9 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 3.8 | 0.0 | 4.4 | 3.1 | 0.0 | 0.0 | 0.0 | 1.9 | 10.6 | **76.2** |'
+  prefs: []
+  type: TYPE_TB
+- en: This gives us an overall accuracy of 81.6 percent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Voting is the typical approach used to combine outputs from several models.
+    To implement voting in this case, we’ll use [Listing 15-17](ch15.xhtml#ch15lis17).
+  prefs: []
+  type: TYPE_NORMAL
+- en: t = np.zeros((6,len(y_test)), dtype="uint32")
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ t[0,:] = np.argmax(p0, axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[1,:] = np.argmax(p1, axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[2,:] = np.argmax(p2, axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[3,:] = np.argmax(p3, axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[4,:] = np.argmax(p4, axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[5,:] = np.argmax(p5, axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = np.zeros(len(y_test), dtype="uint8")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y_test)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: q = np.bincount(t[:,i])
+  prefs: []
+  type: TYPE_NORMAL
+- en: p[i] = np.argmax(q)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-17: Voting to select the best class label*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first apply argmax across the six model predictions to get the associated
+    labels ❶, storing them in a combined matrix, t. We then define p as before to
+    hold the final assigned class label. We loop over each of the test samples, where
+    we use a new NumPy function, bincount, to give us the number of times each class
+    label occurs for the current test sample. The largest such count is the most often
+    selected label, so we use argmax again to assign the proper output label to p.
+    Note, this code works because our class labels are integers running consecutively
+    from 0 through 9\. This alone is a good enough reason to use such simple and ordered
+    class labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is the confusion matrix produced by this voting procedure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | **86.2** | 0.0 | 0.0 | 8.8 | 0.0 | 0.0 | 0.0 | 3.8 | 0.0 | 1.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 0.0 | **98.1** | 1.2 | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 0.0 | 10.6 | **78.1** | 0.0 | 0.0 | 3.1 | 5.6 | 0.0 | 0.0 | 2.5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 14.4 | 0.0 | 0.0 | **81.2** | 0.0 | 3.1 | 0.6 | 0.0 | 0.0 | 0.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 0.6 | 0.0 | 0.0 | 0.0 | **83.8** | 5.6 | 5.0 | 5.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 0.0 | 0.0 | 0.0 | 0.0 | 0.6 | **94.4** | 5.0 | 0.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 0.0 | 0.0 | 1.2 | 0.0 | 0.6 | 9.4 | **88.8** | 0.0 | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 8.8 | 0.0 | 0.0 | 0.0 | 18.1 | 1.9 | 0.0 | **65.6** | 5.0 | 0.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 7.5 | 0.0 | 0.0 | 6.9 | 0.0 | 3.1 | 3.8 | 8.8 | **67.5** | 2.5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 5.6 | 0.0 | 6.2 | 1.2 | 0.0 | 0.6 | 0.0 | 1.9 | 11.2 | **73.1** |'
+  prefs: []
+  type: TYPE_TB
+- en: This gives us an overall accuracy of 81.7 percent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each of these three ensemble approaches improved our results, almost identically.
+    A simple combination of the model outputs gave us, essentially, an accuracy boost
+    of 3 percent over the base model alone, thereby demonstrating the utility of ensemble
+    techniques.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This chapter presented a case study, a new dataset, and the steps we need to
+    take to work through building a useful model. We started by working with the dataset
+    as given to us, as raw sound samples, which we were able to augment successfully.
+    We noticed that we had a feature vector and attempted to use classical models.
+    From there, we moved on to 1D convolutional neural networks. Neither of these
+    approaches was particularly successful.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fortunately for us, our dataset allowed for a new representation, one that illustrated
+    more effectively what composed the data and, especially important for us, introduced
+    spatial elements so that we could work with 2D convolutional networks. With these
+    networks, we improved quite a bit on the best 1D results, but we were still not
+    at a level that was likely to be useful.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After exhausting our bag of CNN training tricks, we moved to ensembles of classifiers.
+    With these, we discovered a modest improvement by using simple approaches to combining
+    the base model outputs (for example, averaging).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can show the progression of models and their overall accuracies to see how
+    our case study evolved:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Model** | **Data source** | **Accuracy** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Gaussian Naïve Bayes | 1D sound sample | 28.1% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Random Forest (1,000 trees) | 1D sound sample | 34.4% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1D CNN | 1D sound sample | 54.0% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2D CNN | Spectrogram | 78.8% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Ensemble (average) | Spectrogram | 82.0% |'
+  prefs: []
+  type: TYPE_TB
+- en: This table shows the power of modern deep learning and the utility of combining
+    it with well-proven classical approaches like ensembles.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter concludes our exploration of machine learning. We started at the
+    beginning, with data and datasets. We moved on to the classical machine learning
+    models, and then dove into traditional neural networks so that we would have a
+    solid foundation from which to understand modern convolutional neural networks.
+    We explored CNNs in detail and concluded with a case study as an illustration
+    of how you might approach a new dataset to build a successful model. Along the
+    way, we learned about how to evaluate models. We became familiar with the metrics
+    used by the community so that we can understand what people are talking about
+    and presenting in their papers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Of course, this entire book has been an introduction, and we have barely scratched
+    the surface of the ever-expanding world that is machine learning. Our final chapter
+    will serve as a jumping-off point—a guide to where you may want to wander next
+    to expand your machine learning knowledge beyond the tight bounds we’ve been required
+    to set for ourselves here.
+  prefs: []
+  type: TYPE_NORMAL

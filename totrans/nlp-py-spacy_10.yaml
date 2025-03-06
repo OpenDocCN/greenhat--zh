@@ -1,0 +1,973 @@
+- en: '**10'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: TRAINING MODELS**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../Images/comm1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: As you learned in [Chapter 1](../Text/ch01.xhtml#ch01), spaCy contains statistical
+    neural network models trained to perform named entity recognition, part-of-speech
+    tagging, syntactic dependency parsing, and semantic similarity prediction. But
+    you’re not limited to using only pretrained, ready-to-use models. You can also
+    train a model with your own training examples, tuning its pipeline components
+    for your application’s requirements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter covers how to train spaCy’s named entity recognizer and dependency
+    parser, the pipeline components that you most often need to customize to make
+    the model you’re using specific to a particular use case. The reason is that a
+    certain domain usually requires a specific set of entities and, sometimes, a certain
+    way of parsing dependencies. You’ll learn how to train an existing model with
+    new examples and a blank one from scratch. You’ll also save a customized pipeline
+    component to disk so you can load it later in another script or model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Training a Model’s Pipeline Component**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You rarely have to train a model from scratch to satisfy your application’s
+    specific requirements. Instead, you can use an existing model and update only
+    the pipeline component you need to change. This process usually involves two steps:
+    preparing *training examples* (sets of sentences with annotations that the model
+    can learn from), and then exposing the pipeline component to the training examples,
+    as shown in [Figure 10-1](../Text/ch10.xhtml#ch10fig01).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig10-1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-1: The training process for a pipeline component*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To prepare training examples, you convert raw text data into a training example
+    containing a sentence and each token’s annotations. During the training process,
+    spaCy uses the training examples to correct the model’s weights: the goal is to
+    minimize the error (called the *loss*) of the model prediction. Put simply, the
+    algorithm calculates the relationship between the token and its annotation to
+    determine the likelihood that a token should be assigned that annotation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A real-world implementation might require hundreds or even thousands of training
+    examples to efficiently teach a certain component of a model. Before you start
+    training the component, you need to temporarily disable all the model’s other
+    pipeline components to protect them from unnecessary alterations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Training the Entity Recognizer**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Suppose you’re developing a chatbot app for a taxi company. The app must correctly
+    recognize all the names referring to districts within the city and its surroundings.
+    To accomplish this, you might need to update a model’s named entity recognition
+    system with your own examples, making it recognize, for instance, the word “Solnce,”
+    which refers to a neighborhood in a city, as a geopolitical entity. The following
+    sections describe how you could complete this task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Deciding Whether You Need to Train the Entity Recognizer***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Let’s begin by looking at how the existing named entity recognizer in the default
+    English model (generally the en_core_web_sm model) recognizes the named entities
+    of interest. It’s possible that you won’t need to update the named entity recognizer.
+    For this task, you might use sentences common for booking a taxi, like this one:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Could you pick me up at Solnce?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To see how the recognizer will classify “Solnce” in the sentence, print the
+    sentence’s named entities using the following script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(u'Could you pick me up at Solnce?')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for ent in doc.ents:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(ent.text, ent.label_)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this example, “Solnce” is the only named entity, so the script generates
+    the following single-line output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Solnce LOC
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that the output for this entity can vary depending on the model and sentence
+    you’re using. To get the description for the LOC entity label in the output, you
+    can use the spacy.explain() function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> print(spacy.explain(''LOC''))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''Non-GPE locations, mountain ranges, bodies of water'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: The result is that the named entity recognizer classified “Solnce” as a non-GPE
+    location, which doesn’t match what you expect to see. To change this so the recognizer
+    classifies “Solnce” as an entity of type GPE, you need to update the recognizer,
+    as discussed in the following sections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*For simplicity, we’re using a single-named entity in this example. But you
+    can create more names for districts with which to train the recognizer.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rather than updating the existing recognizer, you could replace it with a custom
+    one. However, in that case, you’d need many more training examples to retain the
+    functionality that isn’t related to GPE entities but you might still need.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Creating Training Examples***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Once you know you need to train the entity recognizer to satisfy your app’s
+    needs, the next step is to create a set of appropriate training examples. For
+    that, you need some relevant text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Likely, the best data source for creating such a training set is real customer
+    input that you gathered previously. Choose utterances that include the named entities
+    you need to use for training. Typically, you’d log customer input in a file as
+    plaintext. For example, a customer input log file for the taxi app might contain
+    the following utterances:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Could you send a taxi to Solnce?
+  prefs: []
+  type: TYPE_NORMAL
+- en: Is there a flat rate to the airport from Solnce?
+  prefs: []
+  type: TYPE_NORMAL
+- en: How long is the wait for a taxi right now?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To create training examples from these utterances, you need to convert them
+    into a list of tuples in which each training example represents a separate tuple,
+    as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: train_exams = [
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ ('Could you send a taxi to Solnce?', {
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ ''entities'': [(25, 32, ''GPE'')]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('Is there a flat rate to the airport from Solnce?', {
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''entities'': [(41, 48, ''GPE'')]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('How long is the wait for a taxi right now?', {
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''entities'': []'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '})'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Each tuple consists of two values: the string representing an utterance ➊ and
+    the dictionary for the annotations of the entities found in that utterance. The
+    entity’s annotations include its start and end positions in terms of characters
+    composing the utterance and the label to be assigned to the entity ➋.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Automating the Example Creation Process***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As you’ve no doubt realized, creating a set of training examples manually can
+    be time-consuming and error prone, especially if you have hundreds or thousands
+    of utterances to process. You can automate this tedious task by using the following
+    script, which quickly creates a set of training examples from the submitted text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ doc = nlp(u'Could you send a taxi to Solnce? I need to get to Google. Could
+  prefs: []
+  type: TYPE_NORMAL
+- en: you send a taxi an hour later?')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ #f = open("test.txt","rb")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#contents =f.read()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#doc = nlp(contents.decode(''utf8''))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ train_exams = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ districts = ['Solnce', 'Greenwal', 'Downtown']
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for sent in doc.sents:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: entities = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for token in sent:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.ent_type != 0:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ start = token.idx - sent.start_char
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.text in districts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: entity = (start, start + len(token), 'GPE')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: entity = (start, start + len(token), token.ent_type_)
+  prefs: []
+  type: TYPE_NORMAL
+- en: entities.append(entity)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'tpl = (sent.text, {''entities'': entities})'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➏ train_exams.append(tpl)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For readability, we pick up some utterances for processing in the usual way:
+    by hardcoding them in the script ➊. But the commented lines of code show how we
+    might pick up utterances from a file instead ➋.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once we’ve obtained the utterances—either from a file or passed in to the doc
+    explicitly—we can start generating a list of training examples from them. We begin
+    by creating an empty list ➌. Next, we need to define a list containing the names
+    of entities that we want the model to recognize differently than it currently
+    does ➍. (This is the list of districts in this example.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remember that real customer input might include entities that the recognizer
+    already correctly recognizes (say, Google or London), so we shouldn’t change the
+    recognizer’s behavior when it classifies them. We create training examples for
+    those entities and process all the entities presented in the utterances used for
+    generating training examples, not only the new ones. A training set for a real
+    implementation must include numerous examples for entities of different types.
+    Depending on the application’s needs, the training set might include several hundred
+    examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We iterate over the submitted utterances, creating a new empty entities list
+    on each iteration. Then, to fill in this list, we loop over the tokens in the
+    utterance, finding entities. For each found entity, we determine its start character
+    index in the utterance ➎. We then calculate the end index by adding len(token)
+    to the start index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, we must check whether the entity is in the list of entities to which we
+    want to assign a new label. If so, we assign it the GPE label. Otherwise, the
+    recognizer will use the current label in the entity annotations. After that, we
+    can define a tuple representing the training example, and then append it to the
+    training set ➏.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script sends the training examples being generated to the train_exams list,
+    which should look as follows after the script execution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> train_exams'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '['
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ (''Could you send a taxi to Solnce?'', {''entities'': [(25, 31, ''GPE'')]}),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ (''I need to get to Google.'', {''entities'': [(17, 23, ''ORG'')]}),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➌ (''Could you send a taxi an hour later?'', {''entities'': []})'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For simplicity, the training set we use here consists of just a few training
+    examples. Notice that only the first one contains an entity from the list of entities
+    we need to familiarize the recognizer with (the districts list in this example)
+    ➊. That doesn’t mean that the second and third training examples aren’t useful.
+    The second training example ➋ mixes in another entity type, which prevents the
+    recognizer from “forgetting” what it previously knew.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The third training example doesn’t contain any entity ➌. To improve the learning
+    results, we need to mix in not only examples of other entity types, but also examples
+    that don’t contain any entities. The following section “[The Training Process](../Text/ch10.xhtml#lev136)”
+    discusses the details of the training process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Disabling the Other Pipeline Components***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The spaCy documentation recommends disabling all the other pipeline components
+    before you start training a certain pipeline component, so you modify only the
+    component you want to update. The following code disables all the pipeline components
+    except for the named entity recognizer. You need to either append this code to
+    the script introduced in the preceding section or execute it in the same Python
+    session after that script (we’ll append the final piece of code in the next section,
+    which covers the training process):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: other_pipes = [pipe for pipe in nlp.pipe_names if pipe != 'ner']
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp.disable_pipes(*other_pipes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now you’re ready to start training the named entity recognizer to teach it to
+    find the new entities defined in the training examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Training Process***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the training process, you shuffle and loop over the training examples, adjusting
+    the model with weights that more accurately reflect the relationships between
+    the tokens and the annotations. Refer back to [Chapter 1](../Text/ch01.xhtml#ch01)
+    for a more detailed explanation of neural network models, including what weights
+    are.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To improve accuracy, you can apply several techniques to a training loop. For
+    example, the following code illustrates how to process your training examples
+    in batches. This technique shows the training examples to the model in different
+    representations to avoid generalizations found in the training corpus.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Append the following code to the script that was first introduced in “[Creating
+    Training Examples](../Text/ch10.xhtml#lev141)” on [page 144](../Text/ch10.xhtml#page_144)
+    and that was modified in the preceding section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: from spacy.util import minibatch, compounding
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ optimizer = nlp.entity.create_optimizer()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(25):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ random.shuffle(train_exams)
+  prefs: []
+  type: TYPE_NORMAL
+- en: max_batch_size = 3
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ batch_size = compounding(2.0, max_batch_size, 1.001)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ batches = minibatch(train_exams, size=batch_size)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for batch in batches:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: texts, annotations = zip(*batch)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ nlp.update(texts, annotations, sgd=optimizer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➏ ner = nlp.get_pipe('ner')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➐ ner.to_disk('/usr/to/ner')
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before we can begin training, we need to create an *optimizer* ➊—a function
+    that will be used during the training process to hold intermediate results between
+    updates of the model weights. We could create an optimizer with the nlp.begin_training()
+    method. But this method removes existing entity types. In this example, because
+    we’re updating an existing model and don’t want it to “forget” the existing entity
+    types, we use the nlp.entity.create_optimizer() method. This method creates an
+    optimizer for the named entity recognizer without losing an existing set of entity
+    types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'During the training process, the script shows the examples to the model in
+    a loop, in random order, to avoid any generalizations that might come from the
+    order of the examples ➋. The script also batches the training examples, which
+    the spaCy documentation suggests might improve the effectiveness of the training
+    process when the number of training examples is large enough. To make the batch
+    size vary on each step, we use the compounding() method, which yields a generator
+    of batch sizes. In particular, it generates an infinite series of compounding
+    values: it starts from the value specified as the first parameter and calculates
+    the next value by multiplying the previous value by the compound rate specified
+    as the third parameter, without exceeding the maximum value specified as the second
+    parameter ➌. Then we batch the training examples using the minibatch() method.
+    Doing so sets its size parameter to the iterator generated with the compounding()
+    method invoked in the preceding line of code ➍.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we iterate over the batches, updating the named entity recognizer model
+    on each iteration. Each batch requires us to update the model by calling nlp.update()
+    ➎, which makes a prediction for each entity found in the examples included in
+    the batch and then checks the annotations provided to see whether it was correct.
+    If the prediction is wrong, the training process adjusts the weights in the underlying
+    model so the correct prediction will score higher next time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we need to serialize the updated named entity recognizer component
+    to disk so we can load it in another script (or another Python session) later.
+    For that, we first must obtain the component from the pipeline ➏ and then save
+    it to disk with its to_disk() method ➐. Be sure you’ve created the */usr/to* directory
+    in your system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Evaluating the Updated Recognizer***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now you can test the updated recognizer. If you’re performing the example discussed
+    in this chapter in a Python session, close it, open a new one, and enter the following
+    code to make sure the model has made the correct generalizations. (If you’ve built
+    a separate script from the code discussed in the previous sections and run it,
+    you can run the following code either as a separate script or from within a Python
+    session.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: from spacy.pipeline import EntityRecognizer
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ nlp = spacy.load('en', disable=['ner'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ ner = EntityRecognizer(nlp.vocab)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ ner.from_disk('/usr/to/ner')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ nlp.add_pipe(ner, "custom_ner")
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ print(nlp.meta['pipeline'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➏ doc = nlp(u'Could you pick me up at Solnce?')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for ent in doc.ents:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(ent.text, ent.label_)
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first load the pipeline components without the named entity recognizer component
+    ➊. The reason is that training an existing model’s pipeline component doesn’t
+    permanently override the component’s original behavior. When we load a model,
+    the original versions of the components composing the model’s pipeline load by
+    default; so to use an updated version, we must explicitly load it from disk. This
+    allows us to have several custom versions of the same pipeline component and load
+    an appropriate one when necessary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We create this new component in two steps: constructing a new pipeline instance
+    from the EntityRecognizer class ➋, and then loading the data into it from disk,
+    specifying the directory in which we serialized the recognizer ➌.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we add the loaded named entity recognizer component to the current pipeline,
+    optionally using a custom name ➍. If we print out the names of the currently available
+    pipeline components ➎, we should see that custom name among the 'tagger' and 'parser'
+    names.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The only task left is test the loaded named entity recognizer component. Be
+    sure to use a different sentence than the one used in the training dataset ➏.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As a result, we should see the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Available pipe components: [''tagger'', ''parser'', ''custom_ner'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Solnce GPE
+  prefs: []
+  type: TYPE_NORMAL
+- en: The updated named entity recognizer component can now recognize the custom entity
+    names correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Creating a New Dependency Parser**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the following sections, you’ll learn how to create a custom dependency parser
+    suitable for a specific task. In particular, you’ll train a parser that reveals
+    semantic relations in a sentence rather than syntactic dependencies. *Semantic
+    relations* are between the meanings of words and phrases in a sentence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Custom Syntactic Parsing to Understand User Input***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Why would you need semantic relations? Well, suppose your chatbot app is supposed
+    to understand a user’s request, expressed in plain English, and then transform
+    it into a SQL query to be passed into a database. To achieve this, the app performs
+    syntactic parsing to extract the meaning, shredding the input into pieces to use
+    in building a database query. For example, imagine you have the following sentence
+    to parse:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Find a high paid job with no experience.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A SQL query generated from this sentence might look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SELECT * FROM jobs WHERE salary = 'high' AND experience = 'no'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To begin with, let’s look at how a regular dependency parser would process
+    the sample sentence. For that, you might use the following script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(u'Find a high paid job with no experience.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: print([(t.text, t.dep_, t.head.text) for t in doc])
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script outputs each token’s text, its dependency label, and its syntactic
+    head. If you’re using the en_core_web_sm model, the result should look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '['
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('Find', 'ROOT', 'Find'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('a', 'det', 'job'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('high', 'amod', 'job'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('paid', 'amod', 'job'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('job', 'dobj', 'Find'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('with', 'prep', 'Find'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('no', 'det', 'experience'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('experience', 'pobj', 'with'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('.', 'punct', 'Find')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Diagrammatically, this dependency parsing looks like [Figure 10-2](../Text/ch10.xhtml#ch10fig02).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig10-2.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-2: The dependency parsing of the sample sentence*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This syntactic parsing probably won’t help you generate the desired database
+    query from the sentence. The SQL query shown earlier in this section uses the
+    SELECT statement to select a job that satisfies the requirements “high paid” and
+    “no experience.” In this logic, the word “job” should be connected with not only
+    “high paid” but also “no experience,” but the syntactic parsing doesn’t connect
+    “job” with “no experience.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: To meet your processing needs, you might want to change labeling in a way that
+    will simplify the task of generating database queries. For that, you need to implement
+    a custom parser that shows semantic relations rather than syntactic dependencies.
+    In this case, that means you’d want an arc between the words “job” and “experience.”
+    The following sections describe how to implement this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Deciding on Types of Semantic Relations to Use***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'First, you need to choose a set of relation types to use for labeling. The
+    spaCy documentation contains an example of a custom message parser (*[https://spacy.io/usage/training/#intent-parser](https://spacy.io/usage/training/#intent-parser)*)
+    that uses the following semantic relations: ROOT, PLACE, ATTRIBUTE, QUALITY, TIME,
+    and LOCATION. You might, for example, assign PLACE to a place at which some activity
+    occurs, like “hotel” in the utterance, “I need a hotel in Berlin.” “Berlin” would
+    be a LOCATION in this same utterance, allowing you to distinguish between geographical
+    areas and smaller settings.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To comply with the semantics used in this example, you might add one more type
+    to the list: ACTIVITY, which you could use to label the word “job” in the sample
+    sentence. (Of course, you could just use the original set of relation types. After
+    all, a job is typically associated with a workplace, for which you could use the
+    type PLACE.)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Creating Training Examples***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As usual for the process of training a pipeline component, you start by preparing
+    training examples. When training a parser, you need information about each token’s
+    dependency label and the head of each relation. In this example, you use only
+    a couple of training examples to keep it short and simple. Of course, a real-world
+    implementation would require many more to train a parser component.
+  prefs: []
+  type: TYPE_NORMAL
+- en: TRAINING_DATA = [
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('find a high paying job with no experience', {
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''heads'': [0, 4, 4, 4, 0, 7, 7, 4],'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''deps'': [''ROOT'', ''-'', ''QUALITY'', ''QUALITY'', ''ACTIVITY'', ''-'',
+    ''QUALITY'', ''ATTRIBUTE'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('find good workout classes near home', {
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''heads'': [0, 4, 4, 4, 0, 6, 4],'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''deps'': [''ROOT'', ''-'', ''QUALITY'', ''QUALITY'', ''ACTIVITY'', ''QUALITY'',
+    ''ATTRIBUTE'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '})'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Notice that the syntactically related words might not always be related semantically
+    in the new parser. To see this clearly, you can perform the following test, which
+    generates a list of the heads of the *syntactic* dependencies found in the sample
+    sentence from the first training example in the TRAINING_DATA list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(u'find a high paying job with no experience')
+  prefs: []
+  type: TYPE_NORMAL
+- en: heads = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for token in doc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: heads.append(token.head.i)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(heads)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Assuming you’re using the en_core_web_sm model, this code should output the
+    following token head indexes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[0, 4, 4, 4, 0, 4, 7, 5]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When you compare this list with the heads provided for this same sentence in
+    the TRAINING_DATA list, you should notice discrepancies. For example, in the training
+    example, the word “with” is a child of the word “experience,” whereas, according
+    to standard syntactic rules, “with” is a child of “job” in this sentence. This
+    deviation makes sense if we slightly change the sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: find a high paying job without any experience
+  prefs: []
+  type: TYPE_NORMAL
+- en: In terms of semantics, “without” can be thought of as a modifier for “experience,”
+    because “without” changes the meaning of “experience.” Modifiers, in turn, are
+    always dependent on the word they modify. Therefore, considering “without” as
+    the child in the without/experience pair in this example is quite reasonable when
+    taking semantics into consideration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Training the Parser***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The following script illustrates how to train a parser from scratch using a
+    blank model. In this example, creating a brand-new parser is more reasonable than
+    updating an existing one: the reason is that attempting to train an existing syntactic
+    dependency parser to recognize semantic relations as well would be very difficult,
+    because the two kinds of relations often conflict. But this doesn’t mean that
+    you can’t use your custom parser with existing models. You can load it to any
+    model to replace its original syntactic dependency parser.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To train the parser, the following script uses the training examples from the
+    TRAINING_DATA list defined in the preceding section. Be sure to prepend the TRAINING_DATA
+    list to the code that follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ nlp = spacy.blank('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ parser = nlp.create_pipe('parser')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ nlp.add_pipe(parser, first=True)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➍ for text, annotations in TRAINING_DATA:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➎ for d in annotations.get(''deps'', []):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➏ parser.add_label(d)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➐ optimizer = nlp.begin_training()
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➑ for i in range(25):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➒ random.shuffle(TRAINING_DATA)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for text, annotations in TRAINING_DATA:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp.update([text], [annotations], sgd=optimizer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➓ parser.to_disk('/home/oracle/to/parser')
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start by creating a blank model ➊. Then we create a blank parser component
+    ➋ and add it to the model’s pipeline ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, we derive the set of labels for the parser to use from the
+    TRAINING_DATA list that we had to add to the code. We implement this operation
+    in two loops. In the outer loop, we iterate over the training examples, extracting
+    the tuple with the head and dependency annotations from each example ➍. In the
+    inner loop, we iterate over the tuple of annotations, extracting each label from
+    the deps list ➎ and adding it to the parser ➏.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now we can start the training process. First, we acquire an optimizer ➐ and
+    then implement a simple training loop ➑, shuffling the training examples in a
+    random order ➒. Next, we iterate over the training examples, updating the parser
+    model on each iteration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we serialize the custom parser to disk so we can load and use it later
+    in another script ➓.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Testing Your Custom Parser***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'You can load a custom parser from disk to an existing model’s pipeline using
+    the following script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: from spacy.pipeline import DependencyParser
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊   nlp = spacy.load('en', disable=['parser'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ parser = DependencyParser(nlp.vocab)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➌ parser.from_disk('/home/oracle/to/parser')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➍ nlp.add_pipe(parser, "custom_parser")
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(nlp.meta['pipeline'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(u'find a high paid job with no degree')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➎ print([(w.text, w.dep_, w.head.text) for w in doc if w.dep_ != '-'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice that this script is similar to the script for loading a custom named
+    entity recognizer shown earlier in “[Evaluating the Updated Recognizer](../Text/ch10.xhtml#lev137)”
+    on [page 148](../Text/ch10.xhtml#page_148). We load a regular model, disabling
+    a certain component—the parser, in this example ➊. Next, we create a parser ➋
+    and load it with the data previously serialized to disk ➌. To make the parser
+    available, we need to add it to the model’s pipeline ➍. Then we can test it ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script should produce the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[''tagger'', ''ner'', ''custom_parser'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '['
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('find', 'ROOT', 'find'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('high', 'QUALITY', 'job'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('paid', 'QUALITY', 'job'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('job', 'ACTIVITY', 'find'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('no', 'QUALITY', 'degree'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ('degree', 'ATTRIBUTE', 'job')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The original parser component has been replaced with the custom one in a regular
+    model, whereas the other pipeline components remain the same. Later, we could
+    reload the original component by loading the model using spacy.load('en').
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now that you have a custom parser trained to reveal semantic relations, you can
+    put it to use. Continue with the example from this section by writing a script
+    that generates a SQL statement from a plain English request. In that script, check
+    the ROOT element of each request to determine whether you need to construct a
+    SELECT statement. Then use the ACTIVITY element to refer to the database table
+    against which the statement being generated will be executed. Use the QUALITY
+    and ATTRIBUTE elements in the statement’s WHERE clause.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You can download a set of pretrained statistical models from spaCy to use immediately.
+    But these models might not always suit your purposes. You might want to improve
+    a pipeline component in an existing model or create a new component in a blank
+    model that will better suit your app’s needs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, you learned how to train an existing named entity recognizer
+    component to recognize an additional set of entities that weren’t labeled correctly
+    by default. Then you learned how to train a custom parser component to predict
+    a type of tree structure related to input text that shows semantic relations rather
+    than syntactic dependencies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In both cases, the first (and perhaps the most important and time-consuming)
+    step is to prepare training data. Once you’ve done that, you’ll need only a few
+    more lines of code to implement a training loop for your custom component.
+  prefs: []
+  type: TYPE_NORMAL

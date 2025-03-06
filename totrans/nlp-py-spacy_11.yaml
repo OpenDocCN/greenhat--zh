@@ -1,0 +1,958 @@
+- en: '**11'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: DEPLOYING YOUR OWN CHATBOT**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../Images/comm1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In previous chapters, you hardcoded all the input to your NLP scripts by manually
+    assigning text to a doc object. But when you build chatbots for tasks like taking
+    orders, things get more complicated. You’ll need to deploy your app to a *bot
+    channel*, such as Telegram, which facilitates communication between a bot and
+    a user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter begins with an overview of how to organize a chatbot app. You’ll
+    be guided through the process of preparing a platform for your chatbot with Telegram
+    and then deploying the bot to that platform. You’ll learn how to process multiple
+    kinds of user input with the Telegram API and hold the state of a conversation
+    to keep track of which questions have already been asked.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**How Implementing and Deploying a Chatbot Works**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This section looks closely at how information is transmitted between a typical
+    chatbot and a user, as well as at the structure this transmission needs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A typical chatbot app consists of multiple tiers. After you’ve implemented the
+    logic for processing user input on your machine, you’ll need a messenger app that
+    allows you to create accounts that programs operate. Users won’t interact with
+    the bot implementation on your machine directly; instead, they’ll chat with the
+    bot through the messenger. Apart from a messenger, your chatbot might require
+    some additional services, such as a database or other storage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The diagram in [Figure 11-1](../Text/ch11.xhtml#ch11fig01) represents how a
+    typical chatbot application combines these tiers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig11-1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 11-1: Typical interactions between a user and a bot integrated to a
+    messenger*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The bot application first sends requests to the messenger in an infinite loop,
+    checking whether a user has started a conversation. These requests include an
+    authentication token generated when the developer created the bot in the messenger.
+    An *authentication token* (also called an access token or API key) is unique to
+    the bot that allows the messenger to recognize requests coming from this particular
+    bot.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When a user sends a message to the bot, the messenger processes it and then
+    forwards it to the addressee. The bot chooses an appropriate *handler—*a routine
+    that generates responses to a certain type of user messages—and sends the generated
+    reply to the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The intermediary program that the chatbot uses to interact with users is often
+    a bot platform provided by a messenger app, such as Skype, Facebook Messenger,
+    or Telegram. From the messenger’s standpoint, the bot is a third-party application
+    that runs inside the messenger.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next section guides you through the process of deploying a chatbot implemented
+    in Python to the Telegram’s bot platform. You’ll see some bot implementation details
+    that are specific to the Telegram’s bot platform and will learn to use its features
+    to make bot development easy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I chose the Telegram bot platform for this example because it provides comprehensive
+    resources for Python developers, including the Python Telegram Bot documentation,
+    guides and tutorials, and examples on GitHub. That is, Telegram provides everything
+    you need to build a chatbot in Python. In other messaging apps, like Facebook
+    Messenger for example, you’d need to use third-party tools, such as Flask or Ngrok,
+    complicating a bot’s implementation and not strictly focusing on NLP tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Using Telegram as a Platform for Your Bot**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Telegram is a cloud-based messenger and one of the top messenger apps in the
+    world. Among other features, it provides a platform for creating bots along with
+    a Python library that offers an easy-to-use interface. You can use Telegram on
+    Android, iOS, Windows, Linux, and macOS platforms. But it’s primarily designed
+    for smartphones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Creating a Telegram Account and Authorizing Your Bot***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Before you can create a bot in Telegram, you must sign up for a Telegram account.
+    To do so, you’ll need a smartphone or tablet that runs either iOS or Android.
+    A PC version of Telegram won’t work for this operation. However, once you create
+    a Telegram account, you can use it on a PC.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You’ll find steps that guide you through the process of creating a Telegram
+    account at *[https://telegramguide.com/create-a-telegram-account/](https://telegramguide.com/create-a-telegram-account/)*.
+    Once you have a Telegram account, you can create a bot. You can do this from either
+    a smartphone or a PC, as described in the following steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the Telegram app, perform a search for @BotFather or open the URL *[https://telegram.me/botfather/](https://telegram.me/botfather/)*.
+    BotFather is a Telegram bot that manages all the other bots in your account.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: On the BotFather page, click the **Start** button to see the list of commands
+    that you can use to set up your Telegram bots.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To create a new bot, enter the /newbot command in the **Write a message** box.
+    You’ll be prompted for a name and a username for your bot. Then you’ll be given
+    an authorization token for the new bot. [Figure 11-2](../Text/ch11.xhtml#ch11fig02)
+    shows a screenshot of this process on a smartphone.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig11-2.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 11-2: Creating a new bot in Telegram using a smartphone*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now you can integrate the bot functionality implemented on your machine in a
+    Python file with the bot you just created in Telegram, as discussed in the next
+    section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*It’s important to know that a bot you just created in Telegram doesn’t implement
+    the logic for handling user input. In fact, it’s just a wrapper for the actual
+    bot you need to implement on your own.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Getting Started with the python-telegram-bot Library***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To connect chatbot functionality implemented in Python, you’ll need the python-telegram-bot
+    library, which is built on top of the Telegram Bot API. The library provides an
+    easy-to-use interface for bot programmers developing apps for Telegram. It allows
+    you to focus on coding the bot rather than on the details related to the interactions
+    between the messenger and the bot implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The python-telegram-bot library is free software distributed under an LGPLv3
+    license. You can install or upgrade it via pip using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ pip install python-telegram-bot --upgrade
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*The examples provided throughout the rest of this chapter assume that you’re
+    using python-telegram-bot version 12.0 or later.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once you’ve installed the library, use the following lines of code to perform
+    a quick test to verify that you can access your Telegram bot from Python. You
+    must have an internet connection for this test to work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import telegram
+  prefs: []
+  type: TYPE_NORMAL
+- en: bot = telegram.Bot(token='XXXXXX...')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In place of ''XXXXX'', include the token you were given when creating the bot.
+    Then check your credentials using this line:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(bot.get_me())
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the bot.get_me() function returns your credentials, the bot’s authentication
+    token you specified previously is valid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Using the telegram.ext Objects***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To build a real bot, you’ll need to use the telegram.ext objects, including
+    telegram.ext.Updater and telegram.ext.Dispatcher. These are two of the most important
+    objects in the library, because they’re required in every implementation. In a
+    nutshell, an Updater object receives the messages from Telegram and delivers them
+    to a Dispatcher. In turn, the Dispatcher passes the data to an appropriate handler
+    for processing. The following code illustrates how to use these objects in a simple
+    echo bot that replies to each message with a message that has the same text:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: from telegram.ext import Updater, MessageHandler, Filters
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#function that implements the message handler'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ def echo(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text(update.message.text)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#creating an Updater instance'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➋ updater = Updater('TOKEN', use_context=True)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#registering a handler to handle input text messages'
+  prefs: []
+  type: TYPE_NORMAL
+- en: updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#starting polling updates from the messenger'
+  prefs: []
+  type: TYPE_NORMAL
+- en: updater.start_polling()
+  prefs: []
+  type: TYPE_NORMAL
+- en: updater.idle()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We start by importing the Updater and MessageHandler modules from the telegram.ext
+    package. Then we define the echo() function, which takes two objects as parameters:
+    update and context ➊. The update object represents an incoming message, which
+    can be text, a photo, a sticker, and so on. The context object contains attributes
+    that can hold data from the same chat and user. Both update and context are generated
+    for you behind the scenes and passed to the *callback*—a message processing function
+    assigned to a certain handler. In this example, the text message handler’s callback
+    function is echo(); it contains a single line of code that instructs Telegram
+    to return a user’s text message without any change.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we create an Updater object ➋, which we’ll use to orchestrate the bot
+    execution process throughout the script. When we create an Updater object, a Dispatcher
+    object is created automatically for us, allowing us to register handlers for different
+    types of input data, such as text and photo. In this example, we register a single
+    handler designed to handle only text messages, passing it the callback function
+    implemented earlier in this script. Now the chatbot will call the callback function
+    every time it receives a Telegram message that contains text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then we start the bot by invoking the start_polling() method of the Updater,
+    which launches the process of polling new messages from the messenger. Because
+    start_polling() is a non-blocking method, we also have to call the idle() method
+    of the Updater, which blocks our script until a message is received or a user
+    enters an exit shortcut (CTRL-C). For further details on the classes and methods
+    available in the python-telegram-bot library, read the Python Telegram Bot’s documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To test the script, run it on an internet-connected machine. Once it’s running,
+    any Telegram user can start a conversation with your chatbot. In the Telegram
+    app, search for @*<username>*, entering the username you gave your bot when you
+    created it; then select it. To start a conversation, click the **/start** button
+    or enter the /start command. You can then start sending messages to your bot.
+    Because you’ve implemented an echo bot, any reply message from the bot should
+    contain the same text you sent it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Creating a Telegram Chatbot That Uses spaCy***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the preceding section, we used the python-telegram-bot library and built
+    a simple script integrated into Telegram. Let’s now enhance our implementation
+    and add spaCy to make sure the bot created in Telegram is fully operational.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following code creates a simple bot that processes a user’s utterance and
+    determines whether or not it contains a direct object. Based on that information,
+    it generates a reply message for the user. This code isn’t very useful on its
+    own, but it should show you how to connect text-processing code implemented with
+    spaCy to the code implemented with the python-telegram-bot library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: from telegram.ext import Updater, MessageHandler, Filters
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#the callback function that uses spaCy'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➊ def utterance(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: msg = update.message.text
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(msg)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for token in doc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.dep_ == ''dobj'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('We are processing your request...')
+  prefs: []
+  type: TYPE_NORMAL
+- en: return
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('Please rephrase your request. Be as specific as
+  prefs: []
+  type: TYPE_NORMAL
+- en: possible!')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#the code responsible for interactions with Telegram'
+  prefs: []
+  type: TYPE_NORMAL
+- en: updater = Updater('TOKEN', use_context=True)
+  prefs: []
+  type: TYPE_NORMAL
+- en: updater.dispatcher.add_handler(MessageHandler(Filters.text, utterance))
+  prefs: []
+  type: TYPE_NORMAL
+- en: updater.start_polling()
+  prefs: []
+  type: TYPE_NORMAL
+- en: updater.idle()
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice that the code responsible for interactions with Telegram is the same
+    as in the preceding script. The only difference here is the implementation of
+    the callback function ➊. In this case, the utterance() function uses spaCy to
+    process a user’s input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In that function, we first extract the message text from the update object passed
+    to the function. Next, we convert it into a spaCy Doc object and then check whether
+    the utterance in the doc includes a direct object. If the utterance doesn’t include
+    a direct object, we ask the user to be more specific. For example, a user might
+    say “I am hungry,” which implies they want to order some food. But to place an
+    order, we need them to be more specific; for example, “I want a pizza.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: Perhaps the most interesting aspect of this example is that it illustrates where
+    utterances that spaCy will process can come from in a bot application. In the
+    examples in previous chapters, we used utterances hardcoded in scripts. This is
+    the first time you can see how real chatbots obtain their input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Expanding the Chatbot***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now that you generally know how to integrate a chatbot that uses spaCy into
+    Telegram, let’s create a more interesting bot. For example, you might enhance
+    the bot’s functionality in the previous section so it extracts the intent from
+    a user’s message rather than just printing a message that the request is being
+    processed. To accomplish this, you could recycle a script from one of the previous
+    chapters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Go back to the script in “[Recognizing Synonyms Using Predefined Lists](../Text/ch08.xhtml#lev110)”
+    on [page 117](../Text/ch08.xhtml#page_117) in [Chapter 8](../Text/ch08.xhtml#ch08),
+    which uses lists of synonyms to extract the intent from a submitted utterance.
+    Put the code from this script into a separate function, say, extract_intent(),
+    which should take a single parameter—the text of a user’s message as a Doc object
+    (be sure to exclude the line of code with the hardcoded utterance at the beginning
+    of the script as well as the line that prints the intent at the end). Additionally,
+    the function you’re creating must return a recognized intent as a string. In the
+    script you’re creating, place the new function above the callback function and
+    revise the callback so it looks as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def extract_intent(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#Put the code from [Chapter 8](../Text/ch08.xhtml#ch08) here'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def utterance(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: msg = update.message.text
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(msg)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for token in doc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.dep_ == ''dobj'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ intent = extract_intent(doc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ if intent == ''orderPizza'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('We need some more information to place your
+  prefs: []
+  type: TYPE_NORMAL
+- en: order.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif intent == ''showPizza'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('Would you like to look at our menu?')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('Your intent is not recognized.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: return
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('Please rephrase your request. Be as specific as
+  prefs: []
+  type: TYPE_NORMAL
+- en: possible!')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We call the newly created extract_intent() function from within the utterance
+    callback to obtain the user’s intent ➊. Then we take an appropriate action, depending
+    on the intent obtained. In this example, we simply send the user a relevant message
+    ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although we could put the code from [Chapter 8](../Text/ch08.xhtml#ch08) into
+    the callback function directly, doing so would decrease the overall readability
+    of the code, so it’s considered bad practice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Holding the State of the Current Chat***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The bot you have now does more than simply evaluate a user’s message; it can
+    recognize a user’s intent. Still, this isn’t enough to take orders from users.
+    The primary flaw is that the chatbot will use the same utterance callback function
+    for each user input, even when the intent has been recognized and it’s time to
+    ask the user additional questions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To address this problem, you need to *hold the state* of the current chat so
+    your bot knows what questions have already been answered and what it still has
+    to ask. Then you’ll need to modify the callback so it can process user messages
+    according to the chat’s current state.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This bot could work as follows: if the chatbot hasn’t yet discovered an intent,
+    it should ask the user to express it. After finding the intent, the bot should
+    switch to another question that is relevant to the conversation’s current state.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To help you simplify this kind of implementation, the python-telegram-bot library
+    includes the ConversationHandler object; it allows you to define entry points
+    and states of the conversation by tying them to a handler.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An entry point—for example, a Telegram command like /start—is attached to a
+    handler that can trigger the start of a chat. The handler’s callback must return
+    the initial state of conversation; this action determines what handler to use
+    for the user message that follows. To change the state of conversation, the handler’s
+    callback returns a new state after replying to the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code includes fragments of a script that illustrates how to change
+    the conversation’s state between a chatbot and a user using ConversationHandler:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def start(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ➊ return 'ORDERING'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def intent_ext(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➋ if context.user_data.has_key(''intent''):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 'ADD_INFO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('Please rephrase your request.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 'ORDERING'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def add_info(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return ConversationHandler.END
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def cancel(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return ConversationHandler.END
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def main():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: disp = updater.dispatcher
+  prefs: []
+  type: TYPE_NORMAL
+- en: conv_handler = ConversationHandler(
+  prefs: []
+  type: TYPE_NORMAL
+- en: entry_points=[CommandHandler('start', start)],
+  prefs: []
+  type: TYPE_NORMAL
+- en: states={
+  prefs: []
+  type: TYPE_NORMAL
+- en: '➌ ''ORDERING'': [MessageHandler(Filters.text,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: intent_ext)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '],'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''ADD_INFO'': [MessageHandler(Filters.text,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: add_info)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '],'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '},'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fallbacks=[CommandHandler('cancel', cancel)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: )
+  prefs: []
+  type: TYPE_NORMAL
+- en: disp.add_handler(conv_handler)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using ConversationHandler lets us define several callback functions and the
+    order in which they should be called. A callback processes the user’s message,
+    and depending on the processing results, might change the state of the conversation
+    flow.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, the callback for the /start command switches the conversation
+    to the ORDERING state ➊, which means that the next message coming in from the
+    user will be processed by the intent_ext() function. The reason is that the intent_ext()
+    function is the callback that belongs to the ORDERING state’s handler ➌, as defined
+    in the ConversationHandler object’s states dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that the chatbot can switch between states based on a conditional logic,
+    as illustrated in the intent_ext() function: there, the conversation’s state will
+    change to ADD_INFO (the state in which you collect additional information) only
+    if the intent has been recognized ➋.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Putting All the Pieces Together***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now that you have a cursory understanding of how to structure a Telegram bot
+    that follows a predefined conversation flow, let’s look at what a full implementation
+    of such a script might look like. This bot needs to ask the user a series of questions,
+    one after another, to complete an order form. Because this is a simplified example,
+    the chatbot can process only one intent, orderPizza, and ask a user to specify
+    only the type of pizza when completing the order form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following script is broken into chunks representing each function definition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import logging
+  prefs: []
+  type: TYPE_NORMAL
+- en: import sys
+  prefs: []
+  type: TYPE_NORMAL
+- en: import spacy
+  prefs: []
+  type: TYPE_NORMAL
+- en: from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#allows you to obtain generic debug info'
+  prefs: []
+  type: TYPE_NORMAL
+- en: logger = logging.getLogger(__name__)
+  prefs: []
+  type: TYPE_NORMAL
+- en: logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def extract_intent(doc):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#Here should be the code created as suggested in the Expanding the Chatbot
+    section earlier'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return intent
+  prefs: []
+  type: TYPE_NORMAL
+- en: The extract_intent() function extracts the intent from a submitted utterance.
+    We’ll call this function from within the intent_ext() callback function defined
+    next. The code for extract_intent() isn’t provided here, but you can use the code
+    described earlier in “[Expanding the Chatbot](../Text/ch11.xhtml#lev152)” on [page
+    161](../Text/ch11.xhtml#page_161).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def details_to_str(user_data):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: details = list()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for key, value in user_data.items():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: details.append('{} - {}'.format(key, value))
+  prefs: []
+  type: TYPE_NORMAL
+- en: return "\n".join(details).join(['\n', '\n'])
+  prefs: []
+  type: TYPE_NORMAL
+- en: The details_to_str() function simply converts the content of the user_data dictionary
+    to a string. The user_data dictionary contains information that the chatbot will
+    extract from the conversation, such as the kind of pizza and number of pizzas
+    the user wants. The bot includes this information in the final message sent to
+    the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So far, we have defined the helper functions that will be invoked—either directly
+    or indirectly—from within the bot’s callback functions. Let’s now define the callback
+    functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def start(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('Hi! This is a pizza ordering app. Do you want to
+    order something?')
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 'ORDERING'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The start() function is the callback for the /start Telegram command. In other
+    words, the chatbot calls this function upon starting a chat. The function returns
+    the ORDERING state, which means that the next message received will be processed
+    by the callback attached to the ORDERING state’s handler (the intent_ext() function
+    in this example).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def intent_ext(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: msg = update.message.text
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(msg)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for token in doc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.dep_ == ''dobj'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: intent = extract_intent(doc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if intent == ''orderPizza'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: context.user_data['product'] = 'pizza'
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('We need some more information to place your order.
+    What type
+  prefs: []
+  type: TYPE_NORMAL
+- en: of pizza do you want?')
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 'ADD_INFO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('Your intent is not recognized. Please rephrase your
+    request.')
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 'ORDERING'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text('Please rephrase your request. Be as specific as possible!')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For simplicity, the intent_ext() function used here can recognize only one
+    intent: orderPizza. If it detects this intent, it returns the ADD_INFO state.
+    Otherwise, it returns the ORDERING state, which will cause the intent_ext() function
+    to be invoked again to process the next user message. The ADD_INFO state’s handler
+    can be implemented as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def add_info(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: msg = update.message.text
+  prefs: []
+  type: TYPE_NORMAL
+- en: nlp = spacy.load('en')
+  prefs: []
+  type: TYPE_NORMAL
+- en: doc = nlp(msg)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for token in doc:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if token.dep_ == ''dobj'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: dobj = token
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for child in dobj.lefts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if child.dep_ == ''amod'' or child.dep_ == ''compound'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: context.user_data['type'] = child.text
+  prefs: []
+  type: TYPE_NORMAL
+- en: user_data = context.user_data
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text("Your order has been placed."
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"{}"'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"Have a nice day!".format(details_to_str(user_data)))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return ConversationHandler.END
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text("Cannot extract necessary info. Please try again.")
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 'ADD_INFO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The add_info() function is the callback for the ADD_INFO state handler. In
+    this implementation, it expects that a user ordering pizza will specify the type
+    of pizza they want, then switches the state to ConversationHandler.END, the last
+    state, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def cancel(update, context):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: update.message.reply_text("Have a nice day!")
+  prefs: []
+  type: TYPE_NORMAL
+- en: return ConversationHandler.END
+  prefs: []
+  type: TYPE_NORMAL
+- en: The cancel() function used here simply sends a goodbye message to the user and
+    switches the state to ConversationHandler.END.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, the main() function should look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def main():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#Replace TOKEN with a real token'
+  prefs: []
+  type: TYPE_NORMAL
+- en: updater = Updater("TOKEN", use_context=True)
+  prefs: []
+  type: TYPE_NORMAL
+- en: disp = updater.dispatcher
+  prefs: []
+  type: TYPE_NORMAL
+- en: conv_handler = ConversationHandler(
+  prefs: []
+  type: TYPE_NORMAL
+- en: entry_points=[CommandHandler('start', start)],
+  prefs: []
+  type: TYPE_NORMAL
+- en: states={
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''ORDERING'': [MessageHandler(Filters.text,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: intent_ext)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '],'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''ADD_INFO'': [MessageHandler(Filters.text,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: add_info)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '],'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '},'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fallbacks=[CommandHandler('cancel', cancel)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: )
+  prefs: []
+  type: TYPE_NORMAL
+- en: disp.add_handler(conv_handler)
+  prefs: []
+  type: TYPE_NORMAL
+- en: updater.start_polling()
+  prefs: []
+  type: TYPE_NORMAL
+- en: updater.idle()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if __name__ == ''__main__'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: main()
+  prefs: []
+  type: TYPE_NORMAL
+- en: As usual, a bot script’s main() function orchestrates the bot execution process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can test the script using either the Telegram web app on a computer or the
+    Telegram app on a smartphone. [Figure 11-3](../Text/ch11.xhtml#ch11fig03) shows
+    a screenshot from the Telegram web app when it’s running the script.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig11-3.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 11-3: Testing your bot using the Telegram web app*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Modify the script in the preceding section so it can recognize and process more
+    intents than just orderPizza. Another relevant intent could be showPizza, meaning
+    the user wants to look at the menu. To implement this, you’ll need to modify the
+    intent_ext() function, adding an if intent == 'showPizza' condition in the doc
+    processing loop. Also, you’ll need to add a new state to the states dictionary
+    in the ConversationHandler object—say, SHOW_MENU—and implement the callback for
+    it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, you learned how to implement and deploy a simple chatbot app
+    using the Telegram bot platform, a popular messenger app. You learned how to define
+    and hold states in a conversation. Notably, you also saw an example of where the
+    user messages that you’d process with spaCy might actually come from.
+  prefs: []
+  type: TYPE_NORMAL

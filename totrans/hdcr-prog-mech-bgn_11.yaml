@@ -1,0 +1,1232 @@
+- en: '8'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: DRAWING VECTOR IMAGES
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We’re about to start drawing images described by mathematical equations, a topic
+    as fascinating as it is entertaining. We call images consisting of geometric primitives
+    *vector images*, as opposed to *bitmap images*, which are sometimes also called
+    *raster images*. Vector images are perfect for plotting the results of engineering
+    problems that often come in the form of diagrams and simplified problem geometries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we’ll create our own Python package capable of creating SVG
+    images out of the geometric primitives we created in [Part II](part02.xhtml#part02)
+    of the book: points, segments, circles, polygons, and so on. In later chapters,
+    when we use code to solve actual mechanics problems, this package will help us
+    produce graphical results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are good SVG packages out there (such as *svgwrite*, for instance), and
+    we could just import them, but this book is about learning by doing, so we won’t
+    be using anything besides the Python Standard Library and our own code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the sake of brevity, we won’t be writing unit tests in this chapter, but
+    if you download the code, you’ll see I wrote them to make sure everything works
+    as it should. I encourage you to try to write your own unit tests for functions
+    in this chapter and then compare them to the code I provided.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This chapter will introduce a powerful concept: *templating*. When templating,
+    we have a piece of text, the *template*, that can be customized by filling in
+    different placeholders. This technique is widely used in web development to produce
+    the HTML document that gets rendered in your browser. Here again, there are many
+    good templating libraries (such as *jinja2* or *mako*), but we want to learn how
+    they work behind the scenes, so instead of using any of them, we’ll write our
+    own templating logic.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Bitmaps and Vector Images**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'There are two types of images: *bitmaps* and *vectors*. You’ve likely seen
+    bitmap images before: *.jpeg*, *.gif*, and *.png* are all examples of bitmap image
+    formats. A bitmap is an image defined over a grid of pixels where each individual
+    pixel is assigned a particular color. These images look nice in their original
+    size, but if you zoom in, you may start to distinguish those squares, the pixels.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Vector images, on the other hand, define their content by means of mathematical
+    equations. This has the advantage of scaling smoothly without losing any quality.
+    Let’s explore *.svg*, the most widely used vector image format and the one we’ll
+    be using in this book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**The SVG Format**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: SVG stands for Scalable Vector Graphics. Its specification was developed by
+    the *World Wide Web Consortium (W3C)* and is an open standard. I recommend that
+    you open [*https://developer.mozilla.org/en-US/docs/Web/SVG*](https://developer.mozilla.org/en-US/docs/Web/SVG)
+    and have it with you as a reference to look at; it’ll provide more complete descriptions
+    and examples that can complement the ones in this book. If you ever need to add
+    something new to your SVG package, this page will be your ally.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s look at the following definition from the Mozilla website mentioned above
+    for a quick reference on how these kinds of images are defined, as it beautifully
+    describes the process:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SVG images and their related behaviors are defined in XML text files, which
+    means they can be searched, indexed, scripted, and compressed. Additionally, this
+    means they can be created and edited with any text editor and with drawing software.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that SVG images are defined as plaintext, whereas most other image formats
+    are binary encoded. This means we can readily automate the creation of SVG images
+    and even inspect the contents of an existing image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*This chapter assumes you have a basic understanding of XML format, but if
+    you don’t, don’t worry; it’s quite simple to learn. Check the following resources
+    to get started with it:* [https://www.w3schools.com/xml](https://www.w3schools.com/xml)
+    *and* [https://www.xmlfiles.com/xml](https://www.xmlfiles.com/xml).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s try to create our first SVG image. Open your favorite plaintext editor
+    such as Sublime Text, Visual Studio Code, Atom, or even PyCharm if you want, and
+    write [Listing 8-1](ch08.xhtml#ch8lis1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-1: SVG description of several circles*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that you shouldn’t create SVG files using a rich-text editor such as Word.
+    These rich-text editors add their own markings into the raw file and break the
+    SVG format.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once you’ve copied what’s in [Listing 8-1](ch08.xhtml#ch8lis1), save the file
+    as *circles.svg*, and open it using either Chrome or Firefox. Believe it or not,
+    browsers are some of the best SVG image viewers. Using their *developer tools*,
+    we can inspect the different parts that make up an image, something that will
+    prove useful later when we build more complex images. You should see something
+    like [Figure 8-1](ch08.xhtml#ch8fig1) (there’ll be colors on your screen, but
+    the print version of the book is in grayscale). Zoom in on the image, and you’ll
+    see how it retains its crispness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-1: Examples of SVG circles*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s break down the code in [Listing 8-1](ch08.xhtml#ch8lis1). The first and
+    most cryptic line contains the *XML namespace* (xmln) attribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: We have to include this namespace definition in every svg opening tag. The width
+    and height attributes determine the size of the image in pixels. SVG *attributes*
+    are modifiers that affect how a particular element is rendered. The width and
+    height attributes, for example, determine the size of the drawing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then, between the svg open and close tags is the actual definition of what
+    is drawn, in this case three circles:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As you may have guessed, cx and cy correspond to the coordinates of the center
+    point; r is the radius of the circle. The attribute fill determines the fill color
+    for the circles in hexadecimal format: #rrggbbaa, where rr is the red value, gg
+    is the green value, bb is the blue value, and aa is the alpha or opacity value
+    (see [Figure 8-2](ch08.xhtml#ch8fig2)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-2: Hexadecimal color components*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, the color #ff000077 has the following components:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**red**    ff, the maximum value (255 in base 10)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**green**    00, the minimum value (0 in base 10)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**blue**    00, the minimum value (0 in base 10)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**alpha**    77, a value of 119 out of 255, which equals an alpha percentage
+    of around 47%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This color is a perfect red with some transparency added to it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You may not have realized, but the origin of coordinates for SVG images is
+    located in the upper-left corner, with its y-axis pointing down. You may not be
+    used to this orientation of the vertical axis, but don’t worry: by using one of
+    our affine transformations, we can easily transform space so that the y-axis points
+    upward, as you’ll see later in the chapter. [Figure 8-3](ch08.xhtml#ch8fig3) shows
+    the geometry and arrangement of coordinates for the image we created.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-3: The geometry of our first SVG image*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The viewBox***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A useful attribute that we can define for the svg tag is the viewBox. The viewBox
+    is the rectangular portion of the image the user sees. It’s defined using four
+    numbers,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: where x and y are the coordinates of the rectangle’s origin, and w and h are
+    the width and height of the rectangle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s add a viewBox to our circles image to see its effect (see [Listing 8-2](ch08.xhtml#ch8lis2)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-2: SVG viewBox*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Save the changes we made in [Listing 8-2](ch08.xhtml#ch8lis2) and reload the
+    image in the browser to see the change. To understand what’s happened, take a
+    look at [Figure 8-4](ch08.xhtml#ch8fig4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ve defined a rectangle whose origin is at (100, 100), with a width of 300
+    and a height of 300: a rectangle that contains all three circles without any margin.
+    Notice the image retains its size of 500 by 500 pixels, as defined by the width
+    and height attributes. If the size of the viewBox is not the same as the size
+    of the SVG itself, the content is scaled.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-4: The *viewBox* of an SVG image*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The viewBox is therefore the rectangular portion from the infinite canvas that’s
+    displayed to the user. It’s optional, and it defaults to the rectangle with the
+    size defined by width and height, with its origin at (0, 0).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Space Transformation***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Remember the concept of affine transformations from [Chapter 7](ch07.xhtml#ch07)?
+    SVG images use them to transform their content. The attribute transform can be
+    used to define the affine transformation matrix as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The confusing order of the matrix terms may seem surprising at first, but it
+    actually makes sense, at least for the people behind the SVG standard. The SVG
+    documentation defines the affine transformation matrix as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0208-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'So these are the terms of the transform attribute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Translated to our less cryptic language, the terms are *a* = *s*[*x*], *b*
+    = *sh*[*y*], *c* = *sh*[*x*], *d* = *s*[*y*], *e* = *t*[*x*], and *f* = *t*[*y*]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0208-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Let’s see it in action. We’ll apply a shear in the x direction by setting *sh*[*x*]
+    to be 1\. Remember that both *s*[*x*] and *s*[*y*] have to be 1; otherwise, if
+    set as zero, the image would collapse in a line or point, and we wouldn’t see
+    anything. [Listing 8-3](ch08.xhtml#ch8lis3) has the added transform attribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-3: Shear transformation in circles image*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remember to remove the viewBox attribute so the resulting geometry doesn’t get
+    cropped. You should see something like [Figure 8-5](ch08.xhtml#ch8fig5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-5: Our circles once transformed*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'What about inverting the y-axis so that it points upward, like we’re used to?
+    Easy! Edit the transform matrix to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The resulting geometry you should see is outlined in [Figure 8-6](ch08.xhtml#ch8fig6).
+    Compare it with [Figure 8-1](ch08.xhtml#ch8fig1). See what happened? The picture
+    flipped vertically.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-6: Transformed circles, with the y-axis inverted*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that you have a basic understanding of how to create SVG images, let’s do
+    some Python coding. We’ll create a package in our project to draw SVG images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**The svg Package**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let’s create a new package for graphics in our project, which will contain a
+    subpackage to produce SVG images. Later in the book we’ll add other subpackages
+    for other kinds of graphical operations. Right-click the project name in the **Project
+    Tool** window and choose **New** ▸ **Python Package**. Name it *graphic*. You
+    can also create a new folder yourself, but don’t forget to add the *__init__.py*
+    file to instruct Python this is a package.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You should have the package at the same level as *geom2d*, and it should contain
+    only an *__init__.py* file. Your project’s directory structure should look like
+    this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mechanics
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- geom2d'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- tests'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- graphic'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- utils'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now let’s add the *svg* subpackage: right-click the package you just created
+    and choose **New** ▸ **Python Package** again, but this time name it *svg*. Now
+    we’re ready to start adding our code.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Templates***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A template is a document with some placeholders in it. By assigning values to
+    these placeholders we can produce a complete version of the document. Think, for
+    instance, about those email campaigns that greet you by your name. The company
+    sending them probably has a template like
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hello, {{name}}!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here are some book recommendations we think you may like.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: and an automatic process that substitutes the {{name}} placeholder with each
+    of their clients’ names and then sends the final composed email.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The placeholders in a template may also be called *variables*. Variables are
+    given values in the process of rendering the template, which produces the final
+    document with everything defined in it. [Figure 8-7](ch08.xhtml#ch8fig7) illustrates
+    the process of rendering the same template with two different sets of values.
+    The template has the variables place-from, place-to, distance, and units, which
+    we assign different values to produce different versions of the same template.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-7: Template rendering process*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using templates is a powerful technique that solves a variety of problems where
+    text of any shape and format needs to be generated. Most web frameworks, for instance,
+    use some kind of templating to produce the rendered HTML document. We’ll employ
+    a template to generate our SVG images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**An Example Using Python’s String Replacement**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Let’s work on a template example in code. Open Python’s shell and enter the
+    following template string:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, let’s create a greeting by substituting the {{name}} variable with a real
+    name:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As you can see, we can use Python’s replace string method to create a new string
+    where {{name}} has been replaced by ’Angel’. Since replace returns a new instance,
+    we can chain the calls like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example, we first replaced the {{name}} variable with the string ’Angel’.
+    Then, we called the replace method on the resulting string to substitute the word
+    ’Hello’ with ’Hi there’.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that we can substitute whatever sequence of characters we want using the
+    replace method; there’s no need for our replacement targets to appear between
+    braces, like for instance we did with {{name}}. Using the double braces is a convention
+    for us to quickly identify a variable inside a template. This convention also
+    serves the purpose of preventing unwanted replacements: it’s unlikely that our
+    templates include anything inside two levels of braces, except for our variables.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that we know how to work with template strings in Python, let’s see how
+    we can define templates in separate files and load them into strings in our code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Loading Templates***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To avoid mixing XML and Python code, we want to separate the definitions of
+    SVG tags into their own files. The files containing the XML need to have placeholders
+    where the actual data will be inserted. For example, our circle definition file
+    could look something like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here we’ve put placeholders using double braces. We’ll use code to load this
+    definition into a string and replace the placeholders with the actual coordinates
+    of the center and the radius of the circle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll be creating a few templates, so let’s create a folder named *templates*
+    inside the *svg* package by right-clicking the package name and choosing **New**
+    ▸ **Directory**. We need a function that reads the templates inside this folder
+    by their name and returns their content as a string. In the *svg* package, but
+    not in the *templates* folder, create a new file named *read.py* and add the code
+    in [Listing 8-4](ch08.xhtml#ch8lis4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-4: Reading the content of a template file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s break [Listing 8-4](ch08.xhtml#ch8lis4) down. The first thing we do in
+    the function is obtain the path inside *templates* where the file lives. We do
+    this using the os.path module’s join function. This function computes the path
+    by joining the parts passed as arguments and using the correct separator for your
+    operating system. For instance, Unix-based operating systems use the / character.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, using resource_string from the *pkg_resources* module, we read the file
+    as a *byte string*. A file is stored to disk as a sequence of bytes, so when we
+    read it using the resource_string function, we get this byte string. To convert
+    it to a Unicode character string, we need to *decode* it. For this, byte strings
+    have the method decode, which accepts the encoding as an argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We return the result of decoding the string of bytes using UTF-8 encoding. This
+    will give us a string version of the template we can easily work with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Image Templates***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The most important template we want to define is the template for the SVG image.
+    Create a new text file named *img* (without an extension; we don’t need one) in
+    the *templates* folder and include the definition in [Listing 8-5](ch08.xhtml#ch8lis5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-5: SVG image template*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This template includes five placeholders that need to be replaced with the
+    actual values from the resulting image. We can try to load the template in Python’s
+    shell using the read_template function we defined earlier:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s create a new file *image.py* in the *svg* directory (but outside the *templates*
+    folder!) and define a function that reads in the file and does the replacement.
+    In your *image.py* file, enter the code in [Listing 8-6](ch08.xhtml#ch8lis6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-6: SVG image*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The svg_content function takes four parameters; the last two, viewbox_rect and
+    transform, are given a default value of None. We can use or so that viewbox _rect
+    keeps its value if it’s not None and otherwise gets a default instance created
+    by __default_viewbox_rect ➊ (we’ll write this function next). We do the same with
+    transform ➋, using an affine transformation constructed with the default values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, using the function we prepared in the previous section, we load the template
+    stored in *templates/img* ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last and most important step is to replace all placeholders in the loaded
+    template string with the values we’ve been passed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*One nice property of strings in Python, as in most programming languages,
+    is that they’re immutable; you can’t take a string and change a character in it.
+    What you do instead is create a new string with the desired change. This is how
+    the* replace *string method works: it replaces a given sequence of characters
+    with another and returns a new string with the result. Thanks to this nice property,
+    we can beautifully chain several* replace *calls to the result of the call to*
+    read_template.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The replacements for the {{width}} and {{height}} placeholders are straightforward;
+    just keep in mind that the passed-in size.width and size.height properties are
+    numbers, so we need to convert them to their string representation using str.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The primitives parameter contains a sequence of strings representing the content
+    of the image. We need to collect these strings in a single string. The join string
+    method joins all the elements in a list together into a single string using the
+    string it was called on as a separator. To obtain a string including all the primitives,
+    we’ll use join ➍ on the list, with a new line and a tab character (\n\t) as the
+    separator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For viewBox we need to convert the Rect instance into the four numbers that
+    define it ➎; this is done with __viewbox_from_rect, which we’ll define in a minute.
+    The same goes for transf ➏.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s write the missing helping functions after svg_content. The code is in
+    [Listing 8-7](ch08.xhtml#ch8lis7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-7: SVG image helper functions*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first function (__default_viewbox_rect) creates a rectangle for the viewBox
+    using the point (0, 0) as the origin and the provided size. This function, as
+    its name indicates, is used to provide a default value for the viewbox _rect parameter
+    in case it wasn’t given by the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The __viewbox_from_rect function returns a string formatted to be used as viewBox
+    inside the SVG definition. The last function, __transf_matrix_vals, does something
+    similar: it converts an affine transformation into a string with the format expected
+    by SVG.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Great! We now have a function that renders the SVG template into a string. Let’s
+    take a look at some attributes we’ll add to almost all primitives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Attributes***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The appearance of SVG elements can be modified using *attributes*. SVG attributes
+    are defined following the XML attribute syntax (don’t forget that SVG images are
+    defined following the XML format):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For example, we can use the stroke attribute to set a primitive’s stroke color:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that, in the previous example, the circle’s center coordinates (cx and
+    cy) and radius (r) are also defined as attributes in the circle SVG element.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we’re about to see, many SVG geometry primitives have shared attributes to
+    define things such as the color of their stroke, the stroke’s width, the fill
+    color, etc. To reuse this logic, we’ll place it in a file that all primitive generation
+    functions will use. As these attribute definitions are short, we won’t include
+    them in templates that need to be loaded; instead, we’ll define them inside the
+    function that replaces the placeholders.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Create a new file named *attributes.py* inside the *svg* directory. Your *graphic/svg*
+    folder should look like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: svg
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- templates'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- img'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- attributes.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- image.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- read.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Enter the functions in [Listing 8-8](ch08.xhtml#ch8lis8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-8: SVG attributes*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: All the functions are quite straightforward; they receive a value and return
+    a string with the definition of an SVG attribute. We use single quotes around
+    the returned strings, and this allows us to use double quotes inside without the
+    need of escaping them. The SVG attributes are defined using double quotes, like,
+    for example, stroke="blue".
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The last function takes some attributes and joins them into a string separating
+    them with spaces. We achieve this using a single space (’ ’) as a separator for
+    the join function. To fully understand how this works, give this a try in the
+    shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**The SVG Primitives**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We’ve written the foundations of our *svg* package; we can now produce empty
+    images, a process that involves reading the *img* template and replacing its variables.
+    If we called our svg_content function from Python’s shell,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'we’d get the following SVG content:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: It’s a great beginning, but who wants blank images?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the next sections, we’ll create a couple basic SVG primitives to add between
+    the <svg></svg> tags: lines, rectangles, circles, polygons, and text labels, to
+    name a few. As we’ll see throughout the book, we don’t need a lot of primitives
+    to draw our engineering drawings; we can get pretty far with only straight lines,
+    circles, and rectangles.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The strategy we’ll follow to produce these SVG primitives is the same we used
+    for the SVG content: we’ll use a template to define the SVG code with variables
+    that we’ll replace inside a function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Lines***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The first primitive we’ll implement in our *svg* package is the line segment,
+    or line in SVG parlance. This may be a little unfortunate, as segments and lines
+    are different concepts. (Recall that lines are infinite, but segments are not;
+    they have a finite length.) At any rate, we’ll use the SVG terminology here, so
+    let’s create a new template file named *line* inside the *templates* folder and
+    add the code in [Listing 8-9](ch08.xhtml#ch8lis9):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-9: Line template*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The template for a line is simple. The placeholders define the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: x1 and y1, the coordinates of the start point
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: x2 and y2, the coordinates of the end point
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: attrs, where the attributes will be inserted
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Figure 8-8](ch08.xhtml#ch8fig8) depicts the line with its attributes using
+    the default coordinate system for SVG images.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-8: An example of an SVG line*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s now create a function that reads the template and inserts the values of
+    a segment. We need a new file; let’s create it inside *svg* with the name *primitives.py*.
+    Enter the function in [Listing 8-10](ch08.xhtml#ch8lis10).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-10: SVG line*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One thing to note is that the parameter attributes has a default value of (),
+    that is, an empty tuple. We could have also used an empty list [] as the default
+    for the parameter, but there’s an important difference between those two options:
+    tuples are immutable, and lists are mutable. Function default arguments are evaluated
+    only once when the file is loaded into the interpreter, so if a mutable default
+    parameter is mutated, all subsequent calls to the same function would get the
+    mutated value as the default, and that’s something we want to avoid.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the shell, try the code below to create an SVG line in order to see the result
+    and make sure that all placeholders are properly replaced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: This line inside an SVG file would be drawn as in [Figure 8-9](ch08.xhtml#ch8fig9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-9: SVG line*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bear in mind the arrows and position captions are added in this figure for clarity
+    but won’t appear in the image itself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Rectangles***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Our next primitive is the rectangle, so inside *templates* create a new file
+    named *rect* (remember, we’re not using any extension in our template files) with
+    the definition shown in [Listing 8-11](ch08.xhtml#ch8lis11):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-11: The rectangle template*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can write the template in a single line; here we used several lines because
+    in the print version, the code didn’t fit in just one. The attributes that define
+    a rectangle are, as expected, the coordinates of the origin x and y and its size
+    given by width and height. In *primitives.py*, add the function in [Listing 8-12](ch08.xhtml#ch8lis12).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-12: SVG rectangle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To gain a better understanding of the attributes that define a rectangle in
+    the SVG format, take a look at [Figure 8-10](ch08.xhtml#ch8fig10). The figure
+    uses the default coordinate system from SVG: the y-axis pointing downward. This
+    is why the origin of the rectangle is the upper-left corner. If we were using
+    a coordinate system whose y-axis pointed upward, the origin would be the lower-left
+    corner.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-10: An example of an SVG rectangle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Give it a try in the shell, as we did with the segment, to check that all placeholders
+    are properly replaced:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: It’s a good idea to check that everything works as expected, since later in
+    the book we’ll be creating lots of diagrams using these simple primitives. Unit
+    testing is the best option, much better than testing manually in the shell. If
+    you downloaded the code for the book, you’ll see all these primitive rendering
+    functions are covered by tests. Try to write them yourself so you get used to
+    writing unit tests and then compare them to the ones that I’ve provided you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Circles***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We’ll take a similar approach to rectangles to create circles. Create the template
+    in a file named *circle* (see [Listing 8-13](ch08.xhtml#ch8lis13)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-13: The circle template*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then add the function to render the circle inside *primitives.py* (see [Listing
+    8-14](ch08.xhtml#ch8lis14)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-14: SVG circle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Nothing unexpected here! You can take a look at [Figure 8-11](ch08.xhtml#ch8fig11)
+    to see the attributes we used to define the circle in the SVG format.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-11: An example of an SVG circle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s give it a try in the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '***Polygons***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Polygons are simple to define; we simply need to provide the list of vertex
+    coordinates formatted in a specific way. Create the template file *polygon* in
+    *templates* (see [Listing 8-15](ch08.xhtml#ch8lis15)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-15: The polygon template*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then inside *primitives.py* include the function in [Listing 8-16](ch08.xhtml#ch8lis16).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-16: SVG polygon*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The placeholder {{points}} is replaced with the result of applying __format_points
+    to the list of vertices. Let’s write that function here, inside the *primitives.py*
+    file (see [Listing 8-16](ch08.xhtml#ch8lis16)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-17: Format points*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see, the list of vertices is converted into a string where each vertex
+    is separated by a space,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'and the two coordinates, x and y, are separated with a comma:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For example, a polygon with vertices (1, 2), (5, 6), and (8, 9) would result
+    in the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '***Polylines***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '*Polylines* are defined the same way as polygons—the only difference is that
+    the last vertex isn’t connected with the first one. Create the template in a file
+    named *polyline* in *templates* (see [Listing 8-18](ch08.xhtml#ch8lis18)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-18: The polyline template*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Include the rendering function inside file *primitives.py* (see [Listing 8-19](ch08.xhtml#ch8lis19)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-19: SVG polyline*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Again, no surprises here. [Figure 8-12](ch08.xhtml#ch8fig12) shows the difference
+    between a polygon and a polyline. The definition for both is the same; the only
+    difference is that last segment connecting vertex (*x*[4], *y*[4]) back to (*x*[1],
+    *y*[1]) appears only in the case of a polygon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-12: An SVG polygon and polyline*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s try a polygon and a polyline in the shell to see the results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: Both the polygon and the polyline have the same sequence of points, but in an
+    SVG image, the polygon will have a segment connecting the first and last vertices,
+    whereas the polyline will remain open.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Text***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Our diagrams will contain captions (like the structural analysis result diagrams
+    in [Chapter 18](ch18.xhtml#ch18)), so we need to be able to include text in our
+    images. Create a new template file named *text* in folder *templates* with the
+    code in [Listing 8-20](ch08.xhtml#ch8lis20).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-20: The text template*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The placeholder {{text}} has to be between the open and close tags <text> and
+    </text>; this is where the actual text will be inserted. The attributes x and
+    y define the position where the text will be located; then dx and dy displace
+    that original position. We’ll find this displacement handy when, for instance,
+    we want to add the coordinates of a point next to it. We can choose the position
+    of the point itself as the base, which we then displace a given amount so that
+    the text and the drawing of the point don’t overlap.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In *primitives.py* add the function shown in [Listing 8-21](ch08.xhtml#ch8lis21)
+    to render text:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-21: SVG text*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s give it a try in the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If we format the result string, the result is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: '***Groups***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Oftentimes we want to group a bunch of elements so we can add a common attribute
+    to all of them, such as an affine transformation or fill color. This is what groups
+    are for. They’re nothing to be rendered by themselves, but they group a bunch
+    of primitives in a neat way. Create the file *group* inside the *templates* folder
+    (see [Listing 8-22](ch08.xhtml#ch8lis22)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-22: The group template*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To render the group, we’ll add the function shown in [Listing 8-23](ch08.xhtml#ch8lis23)
+    to file *primitives.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-23: SVG group*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This time, all primitives passed as a sequence are joined into a string separated
+    by line breaks (\n). This is so that each primitive is inserted in a new line,
+    which will make the file easier to read.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Arrows***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In this section, we’re going to add a different primitive, one that’s built
+    not by loading and rendering a template but by using other primitives: an arrow.
+    In [Chapter 18](ch18.xhtml#ch18), when we draw structure diagrams, we’ll use arrows
+    to represent forces, so this is a good moment to implement them.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The arrow consists of a line segment with a small triangle at one of its ends,
+    the arrow’s head (see [Figure 8-13](ch08.xhtml#ch8fig13)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-13: An SVG arrow*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Drawing the arrow’s segment is simple: we just need a line segment. Drawing
+    the head is a bit more involved, because it needs to always be aligned with the
+    segment. Using a bit of elementary geometry we can figure out the points that
+    define the arrow’s head. Take a look at [Figure 8-14](ch08.xhtml#ch8fig14).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/08fig14.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-14: Key points in an arrow*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our arrow’s head is a triangle defined between points *C*[1], *E* (the segment’s
+    end point), and *C*[2]. The size of the arrow is given by a length and a height,
+    sizes that we’ll use to locate the *C*[1] and *C*[2] points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The figure uses three vectors to position these two points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/vlvictorit.jpg)    This is a vector in the direction opposite
+    to the segment’s direction vector and is the same length as the arrow.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/vh1victorit.jpg)    This is a vector perpendicular to the
+    segment, and the length is half the arrow’s head height.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/vh2victorit.jpg)    This is similar to ![Image](../images/vh1victorit.jpg),
+    but in the opposite direction.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using these vectors, we can now compute the points as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00227-p1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00227-p2.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Without further ado, let’s write the code to draw arrows. Inside *primitives.py*,
+    enter the code in [Listing 8-24](ch08.xhtml#ch8lis24).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-24: SVG arrow*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ve defined the arrow function that accepts as parameters a segment, the length
+    and height of the arrow, and the SVG attributes. Note that the _segment parameter
+    starts with an underscore. This is to avoid a clash with the file’s segment function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this function we first store the segment’s director vector in the variable
+    director. We then compute the ![Image](../images/vlvictorit.jpg) vector taking
+    director’s opposite vector scaled to the passed-in length ➊. The ![Image](../images/vh1victorit.jpg)
+    vector is obtained by taking director’s perpendicular vector scaled to the arrow’s
+    half-height ➋. Then, ![Image](../images/vh2victorit.jpg) is simply the opposite
+    of it ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function returns an SVG group including the arrow’s segment ➍ and a polyline
+    ➎. This polyline defines the arrow’s head using the three points we discussed
+    earlier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first point, *C*[1], is computed by displacing the segment’s end point by
+    the result of adding vectors ![Image](../images/vlvictorit.jpg) and ![Image](../images/vh1victorit.jpg).
+    Then comes the segment’s end point. Lastly comes *C*[2], resulting from the displacement
+    of the segment’s end point by a vector that’s the result of adding ![Image](../images/vlvictorit.jpg)
+    and ![Image](../images/vh2victorit.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Primitives Result**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We’ve added a few functions to our *primitives.py* file. If you followed along,
+    your file should look similar to [Listing 8-25](ch08.xhtml#ch8lis25).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 8-25: SVG primitives result*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have everything we need to start drawing images. In the next chapter, we’ll
+    use our *svg* package to plot the result of a geometrical problem. But first,
+    let’s provide a convenient way of importing the contents of this package.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Package Imports**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Similar to what we did with the *geom2d* package, we want to give the option
+    of importing everything from *svg* with a single import line:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The only thing we have to do is import all relevant modules inside the *svg*
+    package’s *__init__.py* file file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Graphics are key to engineering applications. Many involve creating diagrams
+    made of simple geometric primitives such as segments and rectangles. We created
+    a geometry package in [Part II](part02.xhtml#part02) of this book; in this chapter,
+    we learned how to turn those primitives into vector images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We started with a quick introduction to the SVG format and saw how easy it is
+    to create SVG images using just a few lines of XML data. We then learned about
+    templates, extensionless plaintext files that define the SVG structure using placeholders.
+    The placeholders, which have the form of {{name}}, are replaced by concrete data
+    using code. Templates are widely used, and there are some complex packages for
+    rendering templates. Our use case was pretty simple, so we did the replacement
+    using the replace method from Python strings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Lastly, we created functions to obtain the SVG representation for our geometric
+    primitives: line segments, circles, rectangles, and polygons. From now on, creating
+    vector diagrams should be straightforward, something that we’ll prove in the next
+    chapter.'
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,773 @@
+- en: '8'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Language
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](Images/circleart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: In this chapter, we step into the messy world of human language. We’ll start
+    by discussing the differences between language and math that make language algorithms
+    difficult. We’ll continue by building a space insertion algorithm that can take
+    any text in any language and insert spaces wherever they’re missing. After that,
+    we’ll build a phrase completion algorithm that can imitate the style of a writer
+    and find the most fitting next word in a phrase.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The algorithms in this chapter rely heavily on two tools that we haven’t used
+    before: list comprehensions and corpuses. *List comprehensions* enable us to quickly
+    generate lists using the logic of loops and iterations. They’re optimized to run
+    very quickly in Python and they’re easy to write concisely, but they can be hard
+    to read and their syntax takes some getting used to. A *corpus* is a body of text
+    that will “teach” our algorithm the language and style we want it to use.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why Language Algorithms Are Hard
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The application of algorithmic thinking to language goes back at least as far
+    as Descartes, who noticed that although there are infinite numbers, anyone with
+    a rudimentary understanding of arithmetic knows how to create or interpret a number
+    they’ve never encountered before. For example, maybe you’ve never encountered
+    the number 14,326—never counted that high, never read a financial report about
+    that many dollars, never mashed exactly those keys on the keyboard. And yet I’m
+    confident that you can easily grasp exactly how high it is, what numbers are higher
+    or lower than it, and how to manipulate it in equations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm that lets us easily understand hitherto unimagined numbers is
+    simply a combination of the 10 digits (0–9), memorized in order, and the place
+    system. We know that 14,326 is one higher than 14,325 because the digit 6 comes
+    one after the digit 5 in order, they occupy the same place in their respective
+    numbers, and the digits in all the other places are the same. Knowing the digits
+    and the place system enables us to instantly have an idea of how 14,326 is similar
+    to 14,325 and how both are larger than 12 and smaller than 1,000,000\. We can
+    also understand at a glance that 14,326 is similar to 4,326 in some respects but
+    differs greatly in size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Language is not the same. If you are learning English and you see the word *stage*
+    for the first time, you cannot reliably reason about its meaning simply by noting
+    its similarity to *stale* or *stake* or *state* or *stave* or *stade* or *sage*,
+    even though those words differ from *stage* about as much as 14,326 does from
+    14,325\. Nor can you reliably suppose that a bacterium is larger than an elk because
+    of the number of syllables and characters in the words. Even supposedly reliable
+    rules of language, like adding *s* to form plurals in English, can lead us badly
+    astray when we infer that the word “princes” refers to less of something than
+    the word “princess.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: In order to use algorithms with language, we must either make language simpler,
+    so that the short mathematical algorithms we have explored so far can reliably
+    work with it, or make our algorithms smarter, so that they can deal with the messy
+    complexity of human language as it has developed naturally. We’ll do the latter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Space Insertion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Imagine that you are the chief algorithm officer at a large old company that
+    has a warehouse full of handwritten paper records. The chief record digitization
+    officer has been conducting a long-term project of scanning those paper records
+    to image files, and then using text recognition technology to convert the images
+    to text that can be easily stored in the company’s databases. However, some of
+    the handwriting on the records is awful and the text recognition technology is
+    imperfect, so the final digital text that is extracted from a paper record is
+    sometimes incorrect. You’ve been given only the digitized text and you’re asked
+    to find a way to correct the mistakes without referring to the paper originals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Suppose that you read the first digitized sentence into Python and find that
+    it’s a quote from G. K. Chesterton: “The one perfectly divine thing, the one glimpse
+    of God’s paradise given on earth, is to fight a losing battle—and not lose it.”
+    You take this imperfectly digitized text and store it in a variable called `text`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You’ll notice that this text is in English, and while the spelling of each
+    word is correct, there are missing spaces throughout: `oneperfectly` should actually
+    be `one perfectly`, `paradisegiven` should be `paradise given`, and so on. (Missing
+    a space is uncommon for humans, but text recognition technology often makes this
+    kind of mistake.) In order to do your job, you’ll have to insert spaces at the
+    appropriate spots in this text. For a fluent English speaker, this task may not
+    seem difficult to do manually. However, imagine that you need to do it quickly
+    for millions of scanned pages—you will obviously need to write an algorithm that
+    can do it for you.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Defining a Word List and Finding Words
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The first thing we will do is teach our algorithm some English words. This
+    isn’t very hard: we can define a list called `word_list` and populate it with
+    words. Let’s start with just a few words:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this chapter, we’ll create and manipulate lists using list comprehensions,
+    which you’ll probably like after you get used to them. The following is a very
+    simple list comprehension that creates a copy of our `word_list`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can see that the syntax `for word in word_list` is very similar to the
+    syntax for a `for` loop. But we don’t need a colon or extra lines. In this case,
+    the list comprehension is as simple as possible, just specifying that we want
+    each word in `word_list` to be in our new list, `word_list_copy`. This may not
+    be so useful, but we can concisely add logic to make it more useful. For example,
+    if we want to find every word in our word list that contains the letter *n*, all
+    it takes is the simple addition of an `if` statement:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can run `print(has_n)` to see that the result is what we expect:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Later in the chapter, you’ll see more complex list comprehensions, including
+    some that have nested loops. However, all of them follow the same basic pattern:
+    a `for` loop specifying iteration, with optional `if` statements describing the
+    logic of what we want to select for our final list output.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ll use Python’s `re` module to access text manipulation tools. One of `re`’s
+    useful functions is `finditer()`, which can search our text to find the location
+    of any word in our `word_list`. We use `finditer()` in a list comprehension like
+    so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: That line is a little dense, so take a moment to make sure you understand it.
+    We’re defining a variable called `locs`, short for “locations”; this variable
+    will contain the locations in the text of every word in our word list. We’ll use
+    a list comprehension to get this list of locations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The list comprehension takes place inside the square brackets (`[]`). We use
+    `for word in word_list` to iterate over every word in our `word_list`. For each
+    word, we call `re.finditer()`, which finds the selected word in our text and returns
+    a list of every location where that word occurs. We iterate over these locations,
+    and each individual location is stored in `m`. When we access `m.start()` and
+    `m.end()`, we’ll get the location in the text of the beginning and end of the
+    word, respectively. Notice—and get used to—the order of the `for` loops, since
+    some people find it the opposite of the order they expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The whole list comprehension is enveloped by `list(set())`. This is a convenient
+    way to get a list that contains only unique values with no duplicates. Our list
+    comprehension alone might have multiple identical elements, but converting it
+    to a set automatically removes duplicates, and then converting it back to a list
+    puts it in the format we want: a list of unique word locations. You can run `print(locs)`
+    to see the result of the whole operation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: In Python, ordered pairs like these are called *tuples*, and these tuples show
+    the locations of each word from `word_list` in our text. For example, when we
+    run `text[17:23]` (using the numbers from the third tuple in the preceding list),
+    we find that it’s `divine`. Here, `d` is the 17th character of our text, `i` is
+    the 18th character of our text, and so on until `e`, the final letter of `divine`,
+    is the 22nd character of our text, so the tuple is rounded off with 23\. You can
+    check that the other tuples also refer to the locations of words in our `word_list`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Notice that `text[4:7]` is `one`, and `text[7:16]` is `perfectly`. The end
+    of the word `one` runs into the beginning of the word `perfectly` without any
+    intervening space. If we hadn’t noticed that immediately by reading the text,
+    we could have caught it by looking at the tuples (4, 7) and (7, 16) in our `locs`
+    variable: since 7 is the second element of (4, 7) and also the first element of
+    (7, 16), we know that one word ends in the same index where another word begins.
+    In order to find places where we need to insert spaces, we’ll look for cases like
+    this: where the end of one valid word is at the same place as the beginning of
+    another valid word.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dealing with Compound Words
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Unfortunately, two valid words appearing together without a space is not conclusive
+    evidence that a space is missing. Consider the word *butterfly*. We know that
+    *butter* is a valid word and *fly* is a valid word, but we can’t necessarily conclude
+    that *butterfly* was written in error, because *butterfly* is also a valid word.
+    So we need to check not only for valid words that appear together without a space
+    but also for valid words that, when mashed together without a space, do not together
+    form another valid word. This means that in our text, we need to check whether
+    `oneperfectly` is a word, whether `paradisegiven` is a word, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In order to check this, we need to find all the spaces in our text. We can look
+    at all the substrings between two consecutive spaces and call those potential
+    words. If a potential word is not in our word list, then we’ll conclude that it’s
+    invalid. We can check each invalid word to see whether it’s made up of a combination
+    of two smaller words; if it is, we’ll conclude that there’s a missing space and
+    add it back in, right between the two valid words that have combined to form the
+    invalid word.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Checking Between Existing Spaces for Potential Words
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We can use `re.finditer()` again to find all the spaces in our text, which
+    we’ll store in a variable called `spacestarts`. We’ll also add two more elements
+    to our `spacestarts` variable: one to represent the location of the beginning
+    of the text and one to represent the location of the end. This ensures that we
+    find every potential word, since words at the very beginning and end will be the
+    only words that are not between spaces. We also add a line that sorts the `spacestarts`
+    list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The list `spacestarts` records the locations of the spaces in our text. We
+    got these locations by using a list comprehension and the `re.finditer()` tool.
+    In this case, `re.finditer()` finds the location of every space in the text and
+    stores it in a list, which refers to each individual element as `m`. For each
+    of those `m` elements, which are spaces, we get the location where the space begins
+    by using the `start()` function. We are looking for potential words between those
+    spaces. It will be useful to have another list that records the locations of characters
+    that come just after a space; these will be the locations of the first character
+    of each potential word. We’ll call that list `spacestarts_affine`, since in technical
+    terms, this new list is an affine transformation of the `spacestarts` list. *Affine*
+    is often used to refer to linear transformations, such as adding 1 to each location,
+    which we’ll do here. We’ll also sort this list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next, we can get all the substrings that are between two spaces:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The variable we’re creating here is called `between_spaces`, and it’s a list
+    of tuples of the form (*<location of beginning of substring>*, *<location of end
+    of substring>*), like (17, 23). The way we get these tuples is through a list
+    comprehension. This list comprehension iterates over `k`. In this case, `k` takes
+    on the values of integers between 0 and one less than the length of the `spacestarts`
+    list. For each `k`, we will generate one tuple. The first element of the tuple
+    is `spacestarts[k]+1`, which is one position after the location of each space.
+    The second element of the tuple is `spacestarts[k+1]`, which is the location of
+    the next space in the text. This way, our final output contains tuples that indicate
+    the beginning and end of each substring between spaces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now, consider all of the potential words that are between spaces, and find
+    the ones that are not valid (not in our word list):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Looking at `between_spaces_notvalid`, we can see that it’s a list of the locations
+    of all invalid potential words in our text:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Our code thinks that all these locations refer to invalid words. However, if
+    you look at some of the words referred to here, they look pretty valid. For example,
+    `text[103:106]` outputs the valid word `and`. The reason our code thinks that
+    `and` is an invalid word is that it isn’t in our word list. Of course, we could
+    add it to our word list manually and continue using that approach as we need our
+    code to recognize words. But remember that we want this space insertion algorithm
+    to work for millions of pages of scanned text, and they may contain many thousands
+    of unique words. It would be helpful if we could import a word list that already
+    contained a substantial body of valid English words. Such a collection of words
+    is referred to as a *corpus.*
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using an Imported Corpus to Check for Valid Words
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Luckily, there are existing Python modules that allow us to import a full corpus
+    with just a few lines. First, we need to download the corpus:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We’ve downloaded a corpus called `brown` from the module called `nltk`. Next,
+    we’ll import the corpus:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We have imported the corpus and converted its collection of words into a Python
+    list. Before we use this new `word_list`, however, we should do some cleanup to
+    remove what it thinks are words but are actually punctuation marks:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'These lines use the `remove()` and `replace()` functions to replace punctuation
+    with empty strings and then remove the empty strings. Now that we have a suitable
+    word list, we’ll be able to recognize invalid words more accurately. We can rerun
+    our check for invalid words using our new `word_list` and get better results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When we print the list `between_spaces_notvalid`, we get a shorter and more
+    accurate list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now that we have found the invalid potential words in our text, we’ll check
+    in our word list for words that could be combined to form those invalid words.
+    We can begin by looking for words that start just after a space. These words could
+    be the first half of an invalid word:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Our list comprehension iterates over every element of our `locs` variable, which
+    contains the location of every word in the text. It checks whether `locs[0]`,
+    the beginning of the word, is in `spacestarts_affine`, a list containing the characters
+    that come just after a space. Then it checks whether `loc[1]` is not in `spacestarts`,
+    which checks whether the word ends where a space begins. If a word starts after
+    a space and doesn’t end at the same place as a space, we put it in our `partial_words`
+    variable, because this could be a word that needs to have a space inserted after
+    it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, let’s look for words that end with a space. These could be the second
+    half of an invalid word. To find them, we make some small changes to the previous
+    logic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now we can start inserting spaces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finding First and Second Halves of Potential Words
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Let’s start by inserting a space into `oneperfectly`. We’ll define a variable
+    called `loc` that stores the location of `oneperfectly` in our text:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We now need to check whether any of the words in `partial_words` could be the
+    first half of `oneperfectly`. For a valid word to be the first half of `oneperfectly`,
+    it would have to have the same beginning location in the text , but not the same
+    ending location, as `oneperfectly`. We’ll write a list comprehension that finds
+    the ending location of every valid word that begins at the same location as `oneperfectly`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: We’ve specified `loc2[0] == loc[0]`, which says that our valid word must start
+    at the same place as `oneperfectly`. We’ve also specified `(loc2[1]-loc[0])>1`,
+    which ensures that the valid word we find is more than one character long. This
+    is not strictly necessary, but it can help us avoid false positives. Think of
+    words like *avoid*, *aside*, *along*, *irate*, and *iconic*, in which the first
+    letter could be considered a word on its own but probably shouldn’t be.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Our list `endsofbeginnings` should include the ending location of every valid
+    word that begins at the same place as `oneperfectly`. Let’s use a list comprehension
+    to create a similar variable, called `beginningsofends`, that will find the beginning
+    location of every valid word that ends at the same place as `oneperfectly`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: We’ve specified `loc2[1] == loc[1]`, which says that our valid word must end
+    at the same place as `oneperfectly`. We’ve also specified `(loc2[1]-loc[0])>1`,
+    which ensures that the valid word we find is more than one character long, just
+    as we did before.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’re almost home; we just need to find whether any locations are contained
+    in both `endsofbeginnings` and `beginningsofends`. If there are, that means that
+    our invalid word is indeed a combination of two valid words without a space. We
+    can use the `intersection()` function to find all elements that are shared by
+    both lists:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We use the `list(set())` syntax again; just like before, it’s to make sure
+    that our list contains only unique values, with no duplicates. We call the result
+    `pivot`. It’s possible that `pivot` will contain more than one element. This would
+    mean that there are more than two possible combinations of valid words that could
+    compose our invalid word. If this happens, we’ll have to decide which combination
+    is the one the original writer intended. This cannot be done with certainty. For
+    example, consider the invalid word *choosespain*. It’s possible that this invalid
+    word is from a travel brochure for Iberia (“Choose Spain!”), but it’s also possible
+    that it’s from a description of a masochist (“chooses pain”). Because of the huge
+    quantity of words in our language and the numerous ways they can be combined,
+    sometimes we can’t be certain which is right. A more sophisticated approach would
+    take into account context—whether other words around *choosespain* tend to be
+    about olives and bullfighting or about whips and superfluous dentist appointments.
+    Such an approach would be difficult to do well and impossible to do perfectly,
+    illustrating again the difficulty of language algorithms in general. In our case,
+    we’ll take the smallest element of `pivot`, not because this is certainly the
+    correct one, but just because we have to take one:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, we can write one line that replaces our invalid word with the two
+    valid component words plus a space:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: If we print this new text, we can see that it has correctly inserted a space
+    into the misspelling `oneperfectly`, though it hasn’t yet inserted spaces in the
+    rest of the misspellings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can put all this together into one beautiful function, shown in [Listing
+    8-1](#listing8-1). This function will use a `for` loop to insert spaces into every
+    instance of two valid words running together to become an invalid word.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Listing 8-1:](#listinganchor8-1) A function that inserts spaces into texts,
+    combining much of the code in the chapter so far'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then we can define any text and call our function as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We see the output just as we expect, with spaces inserted perfectly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: We’ve created an algorithm that can correctly insert spaces into English text.
+    One thing to consider is whether you can do the same for other languages. You
+    can—as long as you read in a good, appropriate corpus for the language you’re
+    working with to define the `word_list`, the function we defined and called in
+    this example can correctly insert spaces into text in any language. It can even
+    correct a text in a language you’ve never studied or even heard of. Try different
+    corpuses, different languages, and different texts to see what kind of results
+    you can get, and you’ll get a glimpse of the power of language algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Phrase Completion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Imagine that you are doing algorithm consulting work for a startup that is trying
+    to add features to a search engine they are building. They want to add phrase
+    completion so that they can provide search suggestions to users. For example,
+    when a user types in `peanut``butter and`, a search suggestion feature might suggest
+    adding the word `jelly`. When a user types in `squash`, the search engine could
+    suggest both `court` and `soup`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building this feature is simple. We’ll start with a corpus, just like we did
+    with our space checker. In this case, we’re interested not only in the individual
+    words of our corpus but also in how the words fit together, so we’ll compile lists
+    of n-grams from our corpus. An *n-gram* is simply a collection of *n* words that
+    appear together. For example, the phrase “Reality is not always probable, or likely”
+    is made up of seven words once spoken by the great Jorge Luis Borges. A 1-gram
+    is an individual word, so the 1-grams of this phrase are *reality*, *is*, *not*,
+    *always*, *probable*, *or*, and *likely*. The 2-grams are every string of two
+    words that appear together, including *reality**is*, *is not*, *not always*, *always
+    probable*, and so on. The 3-grams are *reality is not*, *is not always*, and so
+    on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tokenizing and Getting N-grams
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We’ll use a Python module called `nltk` to make n-gram collection easy. We’ll
+    first tokenize our text. *Tokenizing* simply means splitting a string into its
+    component words, ignoring punctuation. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result we see is this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can tokenize and get the n-grams from our text as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Alternatively, we can put all the n-grams in a list called `grams`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, we have gotten a tokenization and a list of n-grams for a short
+    one-sentence text. However, in order to have an all-purpose phrase completion
+    tool, we’ll need a considerably larger corpus. The `brown` corpus we used for
+    space insertion won’t work because it consists of single words and so we can’t
+    get its n-grams.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One corpus we could use is a collection of literary texts made available online
+    by Google’s Peter Norvig at [http://norvig.com/big.txt](http://norvig.com/big.txt).
+    For the examples in this chapter, I downloaded a file of Shakespeare’s complete
+    works, available for free online at *[http://www.gutenberg.org/files/100/100-0.txt](http://www.gutenberg.org/files/100/100-0.txt)*,
+    and then removed the Project Gutenberg boilerplate text on the top. You could
+    also use the complete works of Mark Twain, available at *[http://www.gutenberg.org/cache/epub/3200/pg3200.txt](http://www.gutenberg.org/cache/epub/3200/pg3200.txt)*.
+    Read a corpus into Python as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we used the `requests` module to directly read a text file containing
+    the collected works of Shakespeare from a website where it’s being hosted, and
+    then read it into our Python session in a variable called `text`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After reading in your chosen corpus, rerun the code that created the `grams`
+    variable. Here it is with the new definition of the `text` variable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: Our Strategy
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Our strategy for generating search suggestions is simple. When a user types
+    in a search, we check how many words are in their search. In other words, a user
+    enters an n-gram and we determine what *n* is. When a user searches for an n-gram,
+    we are helping them add to their search, so we will want to suggest an *n* + 1-gram.
+    We’ll search our corpus and find all *n* + 1-grams whose first *n* elements match
+    our n-gram. For example, a user might search for `crane`, a 1-gram, and our corpus
+    might contain the 2-grams `crane feather`, `crane operator`, and `crane neck`.
+    Each is a potential search suggestion we could offer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We could stop there, providing every *n* + 1-gram whose first *n* elements matched
+    the *n* + 1-gram the user had entered. However, not all suggestions are equally
+    good. For example, if we are working for a custom engine that searches through
+    manuals for industrial construction equipment, it’s likely that `crane operator`
+    will be a more relevant, useful suggestion than `crane feather`. The simplest
+    way to determine which *n* + 1-gram is the best suggestion is to offer theone
+    that appears most often in our corpus.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Thus, our full algorithm: a user searches for an n-gram, we find all *n* +
+    1-grams whose first *n* elements match the user’s n-gram, and we recommend the
+    matching *n* + 1-gram that appears most frequently in the corpus.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finding Candidate *n* + 1-grams
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In order to find the *n* + 1-grams that will constitute our search suggestions,
+    we need to know how long the user’s search term is. Suppose the search term is
+    `life is a`, meaning that we’re looking for suggestions for how to complete the
+    phrase “life is a . . .”. We can use the following simple lines to get the length
+    of our search term:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now that we know the length of the search term, we know *n*—it’s 3\. Remember
+    that we’ll be returning the most frequent *n* + 1-grams (4-grams) to the user.
+    So we need to take into account the different frequencies of different *n* + 1-grams.
+    We’ll use a function called `Counter()`, which will count the number of occurrences
+    of each *n* + 1-gram in our collection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This line has selected only the *n* + 1-grams from our `grams` variable. Applying
+    the `Counter()` function creates a list of tuples. Each tuple has an *n* + 1-gram
+    as its first element and the frequency of that *n* + 1-gram in our corpus as its
+    second element. For example, we can print the first element of `counted_grams`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output shows us the first *n* + 1-gram in our corpus and tells us that
+    it appears only once in the entire corpus:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This n-gram is the beginning of Shakespeare’s Sonnet 1\. It’s fun to look at
+    some of the interesting 4-grams we can randomly find in Shakespeare’s works. For
+    example, if you run `print(list(counted_grams)[10])`, you can see that the 10th
+    4-gram in Shakespeare’s works is “rose might never die.” If you run `print(list(counted_grams)[240000])`,
+    you can see that the 240,000th n-gram is “I shall command all.” The 323,002nd
+    is “far more glorious star” and the 328,004th is “crack my arms asunder.” But
+    we want to do phrase completion, not just *n* + 1-gram browsing. We need to find
+    the subset of *n* + 1-grams whose first *n* elements match our search term. We
+    can do that as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This list comprehension iterates over every *n* + 1-gram and calls each element
+    as it does so. For each element, it checks whether `element[0][:-1]==tuple(split_term)`.
+    The left side of this equality, `element[0][:-1]`, simply takes the first *n*
+    elements of each *n* + 1-gram: the `[:-1]` is a handy way to disregard the last
+    element of a list. The right side of the equality, `tuple(split_term)`, is the
+    n-gram we’re searching for (“life is a”). So we’re checking for *n* + 1-grams
+    whose first *n* elements are the same as our n-gram of interest. Whichever terms
+    match are stored in our final output, called `matching_terms`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Selecting a Phrase Based on Frequency
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Our `matching_terms` list has everything we need to finish the job; it consists
+    of *n* + 1-grams whose first *n* elements match the search term, and it includes
+    their frequencies in our corpus. As long as there is at least one element in the
+    matching terms list, we can find the element that occurs most frequently in the
+    corpus and suggest it to the user as the completed phrase. The following snippet
+    gets the job done:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this snippet, we started by defining `frequencies`, a list containing the
+    frequency of every *n* + 1-gram in our corpus that matches the search term. Then,
+    we used the `numpy` module’s `max()` function to find the highest of those frequencies.
+    We used another list comprehension to get the first *n* + 1-gram that occurs with
+    the highest frequency in the corpus, and finally we created a `combined_term`,
+    a string that puts together all of the words in that search term, with spaces
+    separating the words.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we can put all of our code together in a function, shown in [Listing
+    8-2](#listing8-2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Listing 8-2:](#listinganchor8-2) A function that provides search suggestions
+    by taking an n-gram and returning the most likely n + 1-gram that starts with
+    the input n-gram'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When we call our function, we pass an n-gram as the argument, and the function
+    returns an *n* + 1-gram. We call it as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: And you can see that the suggestion is `life is a tedious`, which is the most
+    common 4-gram that Shakespeare used that started with the words `life is a` (tied
+    with two other 4-grams). Shakespeare used this 4-gram only once, in *Cymbeline*,
+    when Imogen says, “I see a man’s life is a tedious one.” In *King Lear*, Edgar
+    tells Gloucester “Thy life is a miracle” (or “Thy life’s a miracle,” depending
+    on which text you use), so that 4-gram would also be a valid completion of our
+    phrase.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can have some fun by trying a different corpus and seeing how the results
+    differ. Let’s use the corpus of Mark Twain’s collected works:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With this new corpus, we can check for search suggestions again:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, the completed phrase is `life is a failure`, indicating a difference
+    between the two text corpuses, and maybe also a difference between the style and
+    attitude of Shakespeare and those of Mark Twain. You can also try other search
+    terms. For example, `I love` is completed by `you` if we use Mark Twain’s corpus,
+    and `thee` if we use Shakespeare’s corpus, showing a difference in style across
+    the centuries and ocean, if not a difference in ideas. Try another corpus and
+    some other phrases and see how your phrases get completed. If you use a corpus
+    written in another language, you can do phrase completion for languages you don’t
+    even speak using the exact function we just wrote.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this chapter, we discussed algorithms that can be used to work with human
+    language. We started with a space insertion algorithm that can correct incorrectly
+    scanned texts, and we continued with a phrase completion algorithm that can add
+    words to input phrases to match the content and style of a text corpus. The approaches
+    we took to these algorithms are similar to the approaches that work for other
+    types of language algorithms, including spell checkers and intent parsers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we’ll explore machine learning, a powerful and growing
+    field that every good algorithm-smith should be familiar with. We’ll focus on
+    a machine learning algorithm called *decision trees*, which are simple, flexible,
+    accurate, and interpretable models that can take you far on your journey through
+    algorithms and life.
+  prefs: []
+  type: TYPE_NORMAL

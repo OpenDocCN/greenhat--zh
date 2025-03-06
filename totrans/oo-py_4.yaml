@@ -1,0 +1,5880 @@
+- en: concepts of Python and OOP, such as the
+  prefs: []
+  type: TYPE_NORMAL
+- en: lifetime of an object (including deleting an
+  prefs: []
+  type: TYPE_NORMAL
+- en: object) and class variables, that didn’t fit well
+  prefs: []
+  type: TYPE_NORMAL
+- en: in the earlier chapters in this section. To tie all of this
+  prefs: []
+  type: TYPE_NORMAL
+- en: together, we’ll build a small game. I’ll also introduce
+  prefs: []
+  type: TYPE_NORMAL
+- en: slots, a memory management technique for objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter should give you a better understanding
+  prefs: []
+  type: TYPE_NORMAL
+- en: of how your code can affect the way that memory is
+  prefs: []
+  type: TYPE_NORMAL
+- en: used by objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Object Lifetime**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I[n Chapter 2, I d](index_split_000.html#p50)efined an object as “Data, plus
+    code that acts on that data, over time.” I’ve talked quite a bit about data (instance
+    variables) and the
+  prefs: []
+  type: TYPE_NORMAL
+- en: code that acts on that data (methods), but I haven’t explained much about
+  prefs: []
+  type: TYPE_NORMAL
+- en: the time aspect. That will be my focus here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You already know that a program can create an object at any time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Often, a program will create one or more objects at startup and use those
+  prefs: []
+  type: TYPE_NORMAL
+- en: objects throughout its operation. However, in many cases a program will
+  prefs: []
+  type: TYPE_NORMAL
+- en: want to create an object when it needs it, but release or remove the object
+  prefs: []
+  type: TYPE_NORMAL
+- en: when it’s done using it to free up the resources that the object uses (mem-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'ory, files, network connections, and so on). Here are a few examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • A “transaction” object that’s used while a customer is making an
+  prefs: []
+  type: TYPE_NORMAL
+- en: electronic purchase. When the purchase is completed, the object is
+  prefs: []
+  type: TYPE_NORMAL
+- en: destroyed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: • An object to handle communication over the internet that’s released
+  prefs: []
+  type: TYPE_NORMAL
+- en: when the communication is completed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Transient objects in a game. The program could instantiate many cop-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ies of bad guys, aliens, spaceships, and so on; as the player destroys each
+  prefs: []
+  type: TYPE_NORMAL
+- en: one, the program can eliminate the underlying object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The period of time from the instantiation of an object until it is destroyed
+  prefs: []
+  type: TYPE_NORMAL
+- en: is known as the object’s *lifetime*. To understand the lifetime of an object,
+    you first need to know about a related underlying concept having to do with the
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'implementation of objects in Python (and some other OOP languages): the'
+  prefs: []
+  type: TYPE_NORMAL
+- en: reference count.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Reference Count***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are a number of different implementations of Python. The following
+  prefs: []
+  type: TYPE_NORMAL
+- en: discussion of reference counts applies to the official version released by the
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python Software Foundation—the version downloaded from [*python.org*—](python.org)
+  prefs: []
+  type: TYPE_NORMAL
+- en: that’s commonly known as *CPython*. Other implementations of Python may
+  prefs: []
+  type: TYPE_NORMAL
+- en: use a different approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Part of the philosophy of Python is that programmers should never
+  prefs: []
+  type: TYPE_NORMAL
+- en: have to worry about the details of managing memory. Python takes care of
+  prefs: []
+  type: TYPE_NORMAL
+- en: that for you. However, having a basic idea of how Python manages memory
+  prefs: []
+  type: TYPE_NORMAL
+- en: will be helpful in understanding how and when objects are released back to
+  prefs: []
+  type: TYPE_NORMAL
+- en: the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whenever a program instantiates an object from a class, Python allo-
+  prefs: []
+  type: TYPE_NORMAL
+- en: cates memory for the storage of the instance variables defined in the class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each object also contains an extra internal field called a *reference count*,
+    which keeps track of how many different variables refer to that object. I
+  prefs: []
+  type: TYPE_NORMAL
+- en: show how this works in Listing 11-1\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**242** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image 30](index-272_1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**File: ReferenceCount.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reference count example
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '1 class Square():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, width, color):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width = width
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.color = color
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instantiate an object
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 2 oSquare1 = Square(5, 'red')
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(oSquare1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reference count of the Square object is 1
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Now set another variable to the same object
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 3 oSquare2 = oSquare1
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(oSquare2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reference count of the Square object is 2
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '*Listing 11-1: A simple Square class for demonstrating reference counting*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can use Python Tuto[r ( *http://pythontutor.com/*) t](http://pythontutor.com/)o
+    step through our code. We start with a simple Square class 1 containing a few
+    instance variables. We then instantiate an object and assign it to the variable
+    oSquare1 2\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 11-1 shows what we see after instantiating the first object: as you
+    can'
+  prefs: []
+  type: TYPE_NORMAL
+- en: see, the variable oSquare1 refers to an instance of the Square class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 11-1: A single variable (oSquare1) referring to an object*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we set a second variable to refer to the same Square object 3
+  prefs: []
+  type: TYPE_NORMAL
+- en: and print the value of the new variable. Note that the statement oSquare2 =
+  prefs: []
+  type: TYPE_NORMAL
+- en: oSquare1 does not make a new copy of the Square object! Figure 11-2 shows
+  prefs: []
+  type: TYPE_NORMAL
+- en: what we see after executing these two lines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **243**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image 31](index-273_1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 11-2: Two variables referring to the same object*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The variables oSquare1 and oSquare2 both refer to the same Square object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can also see in the top box that the two calls to print() show the same
+  prefs: []
+  type: TYPE_NORMAL
+- en: memory address. Therefore, the reference count of the object is now 2\. If
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'we were to assign another variable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'oSquare3 = oSquare2 # or oSquare1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the reference count would be incremented to 3 (because all three variables
+  prefs: []
+  type: TYPE_NORMAL
+- en: would refer to the same object), and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The reference count of an object is important because when it reaches
+  prefs: []
+  type: TYPE_NORMAL
+- en: zero, Python marks the relevant memory as no longer in use by the pro-
+  prefs: []
+  type: TYPE_NORMAL
+- en: gram. This is known as being *marked as garbage*. Python has a garbage col-
+  prefs: []
+  type: TYPE_NORMAL
+- en: lector that runs to reclaim any blocks of memory that have been marked as
+  prefs: []
+  type: TYPE_NORMAL
+- en: garbage; I’ll discuss that later in this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Python Standard Library contains the getrefcount() function,
+  prefs: []
+  type: TYPE_NORMAL
+- en: which returns the number of variables that refer to an object. Here, we use
+  prefs: []
+  type: TYPE_NORMAL
+- en: it to see the reference count after the first instantiation of a Square object
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'from the Square class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oSquare1 = Square(5, 'red')
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Reference count is', sys.getrefcount(oSquare1))
+  prefs: []
+  type: TYPE_NORMAL
+- en: This prints a count of 2\. This may be surprising—you likely expected
+  prefs: []
+  type: TYPE_NORMAL
+- en: that the count would be 1\. However, as the documentation of this func-
+  prefs: []
+  type: TYPE_NORMAL
+- en: tion explains, “The count returned is generally one higher than you might
+  prefs: []
+  type: TYPE_NORMAL
+- en: expect, because it includes the (temporary) reference as an argument to
+  prefs: []
+  type: TYPE_NORMAL
+- en: getrefcount().”
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**244** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Incrementing the Reference Count**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are a few ways that an object’s reference count is incremented:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1\. When an additional variable is assigned to refer to the same object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oSquare2 = oSquare1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2\. When an object is passed into a function and therefore a local param-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'eter variable is set to refer to the object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def myFunctionOrMethod(oLocalSquareParam):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oLocalSquareParam now refers to wherever the argument refers to
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '*<body of myFunctionOrMethod>*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'myFunctionOrMethod(oSquare1) # call the function and pass in the object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3\. When an object is put into a container such as a list or a dictionary:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: myList = [oSquare1, someValue, someOtherValue]
+  prefs: []
+  type: TYPE_NORMAL
+- en: If oSquare1 already refers to an object, after executing this line, the list
+  prefs: []
+  type: TYPE_NORMAL
+- en: contains an additional reference to the same Square object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Decrementing the Reference Count**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Decrementing the reference count also happens in a few ways. To demon-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'strate this, let’s create an object and increment its reference count:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oSquare1 = Square(20, BLACK)
+  prefs: []
+  type: TYPE_NORMAL
+- en: oSquare2 = oSquare1
+  prefs: []
+  type: TYPE_NORMAL
+- en: myList = [oSquare1]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'myFunctionOrMethod(oSquare1) # call the function and pass in the object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When myFunctionOrMethod() starts, the reference to the object is copied
+  prefs: []
+  type: TYPE_NORMAL
+- en: into a local parameter variable for use inside the function. The reference
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'count of this Square object is currently 4: two object variables, one copy'
+  prefs: []
+  type: TYPE_NORMAL
+- en: inside a list, plus a local parameter variable inside the function. This refer-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'ence count can be decremented:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1\. When any variable that refers to an object is reassigned. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oSquare2 = 5
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2\. Whenever a local variable that refers to an object goes out of scope.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When a variable is created inside of a function or method, the scope of
+  prefs: []
+  type: TYPE_NORMAL
+- en: that variable is limited to that function or method. When the execution
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **245**
+  prefs: []
+  type: TYPE_NORMAL
+- en: of the current function or method ends, that variable literally goes away. In
+    this example, when myFunctionOrMethod() ends, the local variable
+  prefs: []
+  type: TYPE_NORMAL
+- en: that refers to the object is eliminated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. When an object is removed from a container like a list, tuple, or diction-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'ary, for example with:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: myList.pop()
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calling the remove() method of a list would also decrement the refer-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ence count.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4\. When you use the del statement to explicitly delete a variable that refers
+  prefs: []
+  type: TYPE_NORMAL
+- en: to an object. This eliminates the variable and reduces the reference
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'count of the object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'del oSquare3 # delete the variable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5\. If the reference count of the object’s container (in this case, myList)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'goes to zero:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'del myList # where myList has an element that refers to an object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have a variable that refers to an object, and you want to keep the
+  prefs: []
+  type: TYPE_NORMAL
+- en: variable but lose the reference to the object, you can execute a statement
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oSquare1 = None
+  prefs: []
+  type: TYPE_NORMAL
+- en: That keeps the variable name, but lowers the reference count of the
+  prefs: []
+  type: TYPE_NORMAL
+- en: object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Death Notice**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the reference count of an object goes to zero, Python knows that the
+  prefs: []
+  type: TYPE_NORMAL
+- en: object can be safely deleted. Right before destroying an object, Python calls
+  prefs: []
+  type: TYPE_NORMAL
+- en: a magic method of that object named __del__() to inform the object of its
+  prefs: []
+  type: TYPE_NORMAL
+- en: impending demise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In any class, you can write your own version of the __del__() method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In your version, you can include any code you want your object to execute
+  prefs: []
+  type: TYPE_NORMAL
+- en: (ha! interesting word choice here) before the object disappears forever. For
+  prefs: []
+  type: TYPE_NORMAL
+- en: example, your object may want to close a file, close a network connection,
+  prefs: []
+  type: TYPE_NORMAL
+- en: and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When an object is deleted, Python checks to see if any of its instance
+  prefs: []
+  type: TYPE_NORMAL
+- en: variables refer to other objects. If so, the reference counts of those objects
+  prefs: []
+  type: TYPE_NORMAL
+- en: are also decremented. If this results in another object’s reference count
+  prefs: []
+  type: TYPE_NORMAL
+- en: going to zero, then that object is deleted as well. This type of chained or
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*cascading* deletion can go on as many layers deep as is necessary. Listing
+    11-2'
+  prefs: []
+  type: TYPE_NORMAL
+- en: provides an example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**246** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: DeleteExample_Teacher_Student.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Student class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'class Student():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, name):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.name = name
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Creating Student object', self.name)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 def __del__(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('In the __del__ method for student:', self.name)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Teacher class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'class Teacher():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Creating the Teacher object')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 self.oStudent1 = Student('Joe')
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.oStudent2 = Student('Sue')
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.oStudent3 = Student('Chris')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3 def __del__(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('In the __del__ method for Teacher')
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instantiate the Teacher object (that creates Student objects)
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 4 oTeacher = Teacher()
+  prefs: []
+  type: TYPE_NORMAL
+- en: Delete the Teacher object
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 5 del oTeacher
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-2: Classes demonstrating __del__() methods*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here we have two classes, Student and Teacher. The main code instanti-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ates one Teacher object 4, and its __init__() method creates three instances
+  prefs: []
+  type: TYPE_NORMAL
+- en: of the Student class 2, one each for Joe, Sue, and Chris. Therefore, after
+  prefs: []
+  type: TYPE_NORMAL
+- en: starting up, the Teacher object has three instance variables that are Student
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'objects. The output from the first part is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating the Teacher object
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating Student object Joe
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating Student object Sue
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating Student object Chris
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, the main code uses the del statement to delete the Teacher
+  prefs: []
+  type: TYPE_NORMAL
+- en: object 5\. Since we wrote a __del__() method in the Teacher class 3, that
+  prefs: []
+  type: TYPE_NORMAL
+- en: method of the Teacher *object* is called—which, for demonstration purposes,
+  prefs: []
+  type: TYPE_NORMAL
+- en: only prints a message.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the Teacher object is deleted, Python sees that it contains three
+  prefs: []
+  type: TYPE_NORMAL
+- en: other objects (the three Student objects). So, Python lowers the reference
+  prefs: []
+  type: TYPE_NORMAL
+- en: count of each of those objects from 1 to 0\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once this happens, the __del__() method of the Student objects is
+  prefs: []
+  type: TYPE_NORMAL
+- en: called 1, and each outputs a message. The memory used by all three of
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **247**
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'the Student objects is then marked as garbage. The output from the end of the
+    program is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the __del__ method for Teacher
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the __del__ method for student: Joe'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the __del__ method for student: Sue'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the __del__ method for student: Chris'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because Python keeps track of reference counts for all objects, you
+  prefs: []
+  type: TYPE_NORMAL
+- en: rarely, if ever, have to worry about memory management in Python and
+  prefs: []
+  type: TYPE_NORMAL
+- en: rarely need to include a __del__() method. However, you might consider
+  prefs: []
+  type: TYPE_NORMAL
+- en: using a del statement to explicitly tell Python to delete objects that use
+  prefs: []
+  type: TYPE_NORMAL
+- en: a very large amount of memory when you are no longer using them. For
+  prefs: []
+  type: TYPE_NORMAL
+- en: example, you might want to delete an object that loads a large number of
+  prefs: []
+  type: TYPE_NORMAL
+- en: records from a database, or loads many images, when you are done using it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, it is not guaranteed that Python will call the __del__() method when
+  prefs: []
+  type: TYPE_NORMAL
+- en: a program exits, so you should avoid putting any program-ending critical
+  prefs: []
+  type: TYPE_NORMAL
+- en: code in this method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Garbage Collection***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When an object is deleted, either through the reference count going to zero
+  prefs: []
+  type: TYPE_NORMAL
+- en: or though the explicit use of a del statement, as the programmer you should
+  prefs: []
+  type: TYPE_NORMAL
+- en: consider the object inaccessible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, the specific implementation of the garbage collector is com-
+  prefs: []
+  type: TYPE_NORMAL
+- en: pletely up to Python. The details of the algorithm that decides when the
+  prefs: []
+  type: TYPE_NORMAL
+- en: actual garbage collection code runs are not important to you as the pro-
+  prefs: []
+  type: TYPE_NORMAL
+- en: grammer. It may run when your program instantiates an object and Python
+  prefs: []
+  type: TYPE_NORMAL
+- en: needs to allocate memory, or at random times, or at certain scheduled
+  prefs: []
+  type: TYPE_NORMAL
+- en: times. The algorithm may change from one release of Python to another.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whichever it is, Python will take care of garbage collection, and you needn’t
+  prefs: []
+  type: TYPE_NORMAL
+- en: worry about the specifics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Class Variables**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I have talked extensively about how instance variables are defined in a class
+  prefs: []
+  type: TYPE_NORMAL
+- en: and how each object instantiated from a class gets its own set of all the
+  prefs: []
+  type: TYPE_NORMAL
+- en: instance variables. The prefix self. is used to identify each instance vari-
+  prefs: []
+  type: TYPE_NORMAL
+- en: able. However, you can also create *class variables* at the class level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**class variable**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A variable that is defined in and owned by a class . Only one of each class
+    variable exists, independent of how many instances of that class are created .
+  prefs: []
+  type: TYPE_NORMAL
+- en: You create a class variable with an assignment statement, which by conven-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'tion is placed between the class statement and the first def statement, like
+    so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class MyDemoClass():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'myClassVariable = 0 # create a class variable and assign 0 to it'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**248** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, *<otherParameters>* ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: More code here
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Because this class variable is owned by the class, in methods of the class
+  prefs: []
+  type: TYPE_NORMAL
+- en: you would refer to it as MyDemoClass.myClassVariable. Every object instantiated
+  prefs: []
+  type: TYPE_NORMAL
+- en: from a class has access to all class variables defined in the class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two typical uses for class variables: defining a constant and'
+  prefs: []
+  type: TYPE_NORMAL
+- en: creating a counter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Class Variable Constants***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can create a class variable to be used as a constant, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class MyClass():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'DEGREES_IN_CIRCLE = 360 # creating a class variable constant'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To access this constant in methods of the class, you would write
+  prefs: []
+  type: TYPE_NORMAL
+- en: MyClass.DEGREES_IN_CIRCLE.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a reminder, Python does not actually have constants. Instead, there
+  prefs: []
+  type: TYPE_NORMAL
+- en: is a convention among Python programmers that any variable whose name
+  prefs: []
+  type: TYPE_NORMAL
+- en: consists of all uppercase letters, with words separated by underscores, is
+  prefs: []
+  type: TYPE_NORMAL
+- en: meant to be treated as a constant. That is, this type of variable should
+  prefs: []
+  type: TYPE_NORMAL
+- en: never be reassigned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can also use class variable constants to save on resources (memory
+  prefs: []
+  type: TYPE_NORMAL
+- en: and time). Imagine we’re writing a game where we create many instances
+  prefs: []
+  type: TYPE_NORMAL
+- en: of a SpaceShip class. We create a picture of a spaceship and place the file
+    in
+  prefs: []
+  type: TYPE_NORMAL
+- en: a folder named *images*. Before considering class variables, the __init__()
+  prefs: []
+  type: TYPE_NORMAL
+- en: method of our SpaceShip class would start by instantiating an Image object
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class SpaceShip():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, window, ...):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.image = pygwidgets.Image(window, (0, 0),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''images/ship.png'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This technique works fine. However, coding it this way means that not
+  prefs: []
+  type: TYPE_NORMAL
+- en: only does every object instantiated from the SpaceShip class have to take the
+  prefs: []
+  type: TYPE_NORMAL
+- en: time to load the image, but each object takes up all the memory needed to
+  prefs: []
+  type: TYPE_NORMAL
+- en: represent a copy of the same image. Instead, we can have the class load the
+  prefs: []
+  type: TYPE_NORMAL
+- en: image once, and each SpaceShip object then uses the single image kept in
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'the class, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class SpaceShip():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SPACE_SHIP_IMAGE = pygame.image.load('images/ship.png')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, window, ...):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.image = pygwidgets.Image(window, (0, 0),
+  prefs: []
+  type: TYPE_NORMAL
+- en: SpaceShip.SPACE_SHIP_IMAGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: An Image object (in pygwidgets, as used here) can use either a path
+  prefs: []
+  type: TYPE_NORMAL
+- en: to an image or an already loaded image. Allowing the class to load
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **249**
+  prefs: []
+  type: TYPE_NORMAL
+- en: the image only *once* makes startup faster and results in lower memory usage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Class Variables for Counting***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A second way to use a class variable is to keep track of how many objects
+  prefs: []
+  type: TYPE_NORMAL
+- en: have been instantiated from a class. Listing 11-3 shows an example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: ClassVariable.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sample class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'class Sample():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 nObjects = 0 # this is a class variable of the Sample class'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, name):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.name = name
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Sample.nObjects = Sample.nObjects + 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def howManyObjects(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 print('There are', Sample.nObjects, 'Sample objects')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __del__(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Sample.nObjects = Sample.nObjects - 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instantiate 4 objects
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: oSample1 = Sample('A')
+  prefs: []
+  type: TYPE_NORMAL
+- en: oSample2 = Sample('B')
+  prefs: []
+  type: TYPE_NORMAL
+- en: oSample3 = Sample('C')
+  prefs: []
+  type: TYPE_NORMAL
+- en: oSample4 = Sample('D')
+  prefs: []
+  type: TYPE_NORMAL
+- en: Delete 1 object
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: del oSample3
+  prefs: []
+  type: TYPE_NORMAL
+- en: See how many we have
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: oSample1.howManyObjects()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-3: Using a class variable for counting objects instantiated from
+    a class* In the Sample class, nObjects is a class variable because it is defined'
+  prefs: []
+  type: TYPE_NORMAL
+- en: in the class scope, typically between the class statement and the first def
+  prefs: []
+  type: TYPE_NORMAL
+- en: statement 1\. It is used to count the number of Sample objects that exist
+  prefs: []
+  type: TYPE_NORMAL
+- en: and is initialized to zero. All methods refer to this variable using the
+  prefs: []
+  type: TYPE_NORMAL
+- en: name Sample.nObjects. Whenever a Sample object is instantiated, the count
+  prefs: []
+  type: TYPE_NORMAL
+- en: is incremented 2\. When one is deleted, the count is decremented 4\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The howManyObjects() method reports the current count 3\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main code creates four objects, then deletes one. When run, this
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'program outputs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are 3 Sample objects
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**250** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image 32](index-280_1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Putting It All Together: Balloon Sample Program**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we’ll take a number of different concepts we’ve covered and
+  prefs: []
+  type: TYPE_NORMAL
+- en: put them all together in a relatively simple game—at least, simple from the
+  prefs: []
+  type: TYPE_NORMAL
+- en: user’s point of view. The game will present some number of balloons in
+  prefs: []
+  type: TYPE_NORMAL
+- en: three sizes that move upward in the window. The goal for the user is to pop
+  prefs: []
+  type: TYPE_NORMAL
+- en: as many balloons as possible before they float off the top of the window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Small balloons are worth 30 points, medium balloons are worth 20 points,
+  prefs: []
+  type: TYPE_NORMAL
+- en: and large balloons are worth 10 points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The game could be extended to include many levels with faster-moving
+  prefs: []
+  type: TYPE_NORMAL
+- en: balloons, but for now, there is only a single level. The size and location
+  prefs: []
+  type: TYPE_NORMAL
+- en: of each balloon is chosen at random. Before each round, a Start button
+  prefs: []
+  type: TYPE_NORMAL
+- en: becomes available that allows the user to play again. Figure 11-3 is a screen-
+  prefs: []
+  type: TYPE_NORMAL
+- en: shot of the game in action.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 11-3: A screenshot of the Bal oon game*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **251**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image 33](index-281_1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 11-4 shows the project folder for the game.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 11-4: The Bal oon game project folder*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The game is implemented with four Python source files:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Main_BalloonGame.py***Main code, runs the main loop'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***BalloonMgr.py***Contains the BalloonMgr class that handles all Balloon objects'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Balloon.py***Contains the Balloon class and BalloonSmall, BalloonMedium,
+    and BalloonLarge subclasses'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***BalloonConstants.py***Contains constants used by more than one file Figure
+    11-5 shows an object diagram of the implementation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Main code
+  prefs: []
+  type: TYPE_NORMAL
+- en: BalloonMgr
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon
+  prefs: []
+  type: TYPE_NORMAL
+- en: …
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 11-5: An object diagram of the Bal oon game*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main code (found in *Main_BalloonGame.py*) instantiates a single
+  prefs: []
+  type: TYPE_NORMAL
+- en: balloon manager (oBalloonMgr) object from the BalloonMgr class. The balloon
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**252** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: manager then instantiates a number of balloons, each chosen randomly from the
+    BalloonSmall, BalloonMedium, and BalloonLarge classes, and keeps this
+  prefs: []
+  type: TYPE_NORMAL
+- en: list of objects in an instance variable. Each Balloon object sets its own speed,
+  prefs: []
+  type: TYPE_NORMAL
+- en: point value, and random starting position off the bottom of the window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given this structure, the main code is responsible for presenting the over-
+  prefs: []
+  type: TYPE_NORMAL
+- en: all user interface. It only communicates with the oBalloonMgr. The oBalloonMgr
+  prefs: []
+  type: TYPE_NORMAL
+- en: talks to all the Balloon objects. Therefore, the main code doesn’t even know
+  prefs: []
+  type: TYPE_NORMAL
+- en: that the Balloon objects exist. It relies on the balloon manager to take care
+  prefs: []
+  type: TYPE_NORMAL
+- en: of them. Let’s walk through the different parts of the program and see how
+  prefs: []
+  type: TYPE_NORMAL
+- en: each piece works.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Module of Constants***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This organization introduces a new technique for working with multiple
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python files, each of which is commonly referred to as a *module*. If you find
+    yourself in a situation where multiple Python modules require access to
+  prefs: []
+  type: TYPE_NORMAL
+- en: the same constants, a good solution is to create a module of constants and
+  prefs: []
+  type: TYPE_NORMAL
+- en: import that module into all modules that use the constants. Listing 11-4
+  prefs: []
+  type: TYPE_NORMAL
+- en: shows some constants defined in *BalloonConstants.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: BalloonGame/BalloonConstants.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Constants used by more than one Python module
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'N_BALLOONS = 15 # number of balloons in a round of the game'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'BALLOON_MISSED = ''Missed'' # balloon went off the top'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'BALLOON_MOVING = ''Balloon Moving'' # balloon is moving'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-4: A module of constants that’s imported by other modules*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is just a simple Python file that contains constants shared by more
+  prefs: []
+  type: TYPE_NORMAL
+- en: than one module. The main code needs to know how many balloons there
+  prefs: []
+  type: TYPE_NORMAL
+- en: are in order to display that number. The balloon manager needs to know
+  prefs: []
+  type: TYPE_NORMAL
+- en: the number so it can instantiate the correct number of Balloon objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This approach makes it extremely simple to modify the number of Balloon
+  prefs: []
+  type: TYPE_NORMAL
+- en: objects. If we added levels with different numbers of balloons, we could
+  prefs: []
+  type: TYPE_NORMAL
+- en: build a list or a dictionary in this file alone, and all other files would have
+  prefs: []
+  type: TYPE_NORMAL
+- en: access to that information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The other two constants are used in each Balloon object as status indica-
+  prefs: []
+  type: TYPE_NORMAL
+- en: tors as the balloon moves up the window. When I get to the discussion of
+  prefs: []
+  type: TYPE_NORMAL
+- en: the game play, you’ll see that the balloon manager (oBalloonMgr) asks each
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon object for its status, and each responds with one of these two con-
+  prefs: []
+  type: TYPE_NORMAL
+- en: stants. Placing shared constants in a module and importing that module
+  prefs: []
+  type: TYPE_NORMAL
+- en: in modules that use the constants is a simple and effective technique for
+  prefs: []
+  type: TYPE_NORMAL
+- en: ensuring that different parts of a program use consistent values. This is a
+  prefs: []
+  type: TYPE_NORMAL
+- en: good example of applying the Don’t Repeat Yourself (DRY) principle by
+  prefs: []
+  type: TYPE_NORMAL
+- en: only defining values in a single place.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **253**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Main Program Code***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main code of our sample program, shown in Listing 11-5, follows the
+  prefs: []
+  type: TYPE_NORMAL
+- en: 12-step template I’ve used throughout this book. It shows the user’s score,
+  prefs: []
+  type: TYPE_NORMAL
+- en: the game status, and a Start button at the bottom of the window, and it
+  prefs: []
+  type: TYPE_NORMAL
+- en: reacts to the user clicking the Start button.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: BalloonGame/Main_BalloonGame.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon game main code
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 1 - Import packages
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: from pygame.locals import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: import pygwidgets
+  prefs: []
+  type: TYPE_NORMAL
+- en: import sys
+  prefs: []
+  type: TYPE_NORMAL
+- en: import pygame
+  prefs: []
+  type: TYPE_NORMAL
+- en: from BalloonMgr import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 - Define constants
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: BLACK = (0, 0, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: GRAY = (200, 200, 200)
+  prefs: []
+  type: TYPE_NORMAL
+- en: BACKGROUND_COLOR = (0, 180, 180)
+  prefs: []
+  type: TYPE_NORMAL
+- en: WINDOW_WIDTH = 640
+  prefs: []
+  type: TYPE_NORMAL
+- en: WINDOW_HEIGHT = 640
+  prefs: []
+  type: TYPE_NORMAL
+- en: PANEL_HEIGHT = 60
+  prefs: []
+  type: TYPE_NORMAL
+- en: USABLE_WINDOW_HEIGHT = WINDOW_HEIGHT - PANEL_HEIGHT
+  prefs: []
+  type: TYPE_NORMAL
+- en: FRAMES_PER_SECOND = 30
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 - Initialize the world
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: pygame.init()
+  prefs: []
+  type: TYPE_NORMAL
+- en: window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+  prefs: []
+  type: TYPE_NORMAL
+- en: clock = pygame.time.Clock()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4 - Load assets: image(s), sound(s), etc.'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: oScoreDisplay = pygwidgets.DisplayText(window, (10, USABLE_WINDOW_HEIGHT + 25),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''Score: 0'', textColor=BLACK,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: backgroundColor=None, width=140, fontSize=24)
+  prefs: []
+  type: TYPE_NORMAL
+- en: oStatusDisplay = pygwidgets.DisplayText(window, (180, USABLE_WINDOW_HEIGHT +
+    25),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ''''', textColor=BLACK, backgroundColor=None,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: width=300, fontSize=24)
+  prefs: []
+  type: TYPE_NORMAL
+- en: oStartButton = pygwidgets.TextButton(window,
+  prefs: []
+  type: TYPE_NORMAL
+- en: (WINDOW_WIDTH - 110, USABLE_WINDOW_HEIGHT + 10),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''Start'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 - Initialize variables
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: oBalloonMgr = BalloonMgr(window, WINDOW_WIDTH, USABLE_WINDOW_HEIGHT)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'playing = False 1 # wait until user clicks Start'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 - Loop forever
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 - Check for and handle events
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: nPointsEarned = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for event in pygame.event.get():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**254** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if event.type == pygame.QUIT:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pygame.quit()
+  prefs: []
+  type: TYPE_NORMAL
+- en: sys.exit()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if playing: 2'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oBalloonMgr.handleEvent(event)
+  prefs: []
+  type: TYPE_NORMAL
+- en: theScore = oBalloonMgr.getScore()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'oScoreDisplay.setValue(''Score: '' + str(theScore))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif oStartButton.handleEvent(event): 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oBalloonMgr.start()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'oScoreDisplay.setValue(''Score: 0'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: playing = True
+  prefs: []
+  type: TYPE_NORMAL
+- en: oStartButton.disable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 - Do any "per frame" actions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'if playing: 4'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oBalloonMgr.update()
+  prefs: []
+  type: TYPE_NORMAL
+- en: nPopped = oBalloonMgr.getCountPopped()
+  prefs: []
+  type: TYPE_NORMAL
+- en: nMissed = oBalloonMgr.getCountMissed()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'oStatusDisplay.setValue(''Popped: '' + str(nPopped) +'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ''' Missed: '' + str(nMissed) +'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ''' Out of: '' + str(N_BALLOONS))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (nPopped + nMissed) == N_BALLOONS: 5'
+  prefs: []
+  type: TYPE_NORMAL
+- en: playing = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: oStartButton.enable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9 - Clear the window
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: window.fill(BACKGROUND_COLOR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10 - Draw all window elements
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'if playing: 6'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oBalloonMgr.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: pygame.draw.rect(window, GRAY, pygame.Rect(0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: USABLE_WINDOW_HEIGHT, WINDOW_WIDTH, PANEL_HEIGHT))
+  prefs: []
+  type: TYPE_NORMAL
+- en: oScoreDisplay.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: oStatusDisplay.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: oStartButton.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11 - Update the window
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: pygame.display.update()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 12 - Slow things down a bit
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'clock.tick(FRAMES_PER_SECOND) # make pygame wait'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-5: The Bal oon game’s main code*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code is based on a single Boolean variable, playing, set to False by
+  prefs: []
+  type: TYPE_NORMAL
+- en: default to let the user begin the game by pressing Start 1\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When playing is True, the main code calls the handleEvent() method 2
+  prefs: []
+  type: TYPE_NORMAL
+- en: of the balloon manager, oBalloonMgr, to handle all events. We call the bal-
+  prefs: []
+  type: TYPE_NORMAL
+- en: loon manager’s getScore() method to get the score, and we update the score
+  prefs: []
+  type: TYPE_NORMAL
+- en: field’s text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **255**
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the game is over, the program waits for the user to press the Start button
+    3\. When the button is clicked, the balloon manager is told to start
+  prefs: []
+  type: TYPE_NORMAL
+- en: the game, and the user interface is updated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In every frame, if the game is running, we send the update() message
+  prefs: []
+  type: TYPE_NORMAL
+- en: to the balloon manager 4, triggering it to pass on the update() message to
+  prefs: []
+  type: TYPE_NORMAL
+- en: all balloons. Then we ask the balloon manager for the numbers of balloons
+  prefs: []
+  type: TYPE_NORMAL
+- en: remaining and balloons popped. We use that information to update the
+  prefs: []
+  type: TYPE_NORMAL
+- en: user interface.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the user pops all balloons or the last balloon floats off the top
+  prefs: []
+  type: TYPE_NORMAL
+- en: of the window, we set the playing variable to False and enable the Start
+  prefs: []
+  type: TYPE_NORMAL
+- en: button 5\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The drawing code is very straightforward 6\. We tell the balloon man-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ager to draw, which triggers all the balloons to draw themselves. Then we
+  prefs: []
+  type: TYPE_NORMAL
+- en: draw the bottom bar with its status data and the Start button.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Bal oon Manager***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The balloon manager is responsible for keeping track of all balloons,
+  prefs: []
+  type: TYPE_NORMAL
+- en: including creating the Balloon objects, telling each one to draw itself, tell-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ing each to move, and keeping track of how many were popped and missed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Listing 11-6 contains the code of the BalloonMgr class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: BalloonGame/BalloonMgr.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: BalloonMgr class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: import pygame
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: from pygame.locals import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: import pygwidgets
+  prefs: []
+  type: TYPE_NORMAL
+- en: from BalloonConstants import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: from Balloon import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: BalloonMgr manages a list of Balloon objects
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'class BalloonMgr():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 def __init__(self, window, maxWidth, maxHeight):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.window = window
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.maxWidth = maxWidth
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.maxHeight = maxHeight
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2 def start(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.balloonList = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.nPopped = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.nMissed = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3 for balloonNum in range(0, N_BALLOONS):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: randomBalloonClass = random.choice((BalloonSmall,
+  prefs: []
+  type: TYPE_NORMAL
+- en: BalloonMedium,
+  prefs: []
+  type: TYPE_NORMAL
+- en: BalloonLarge))
+  prefs: []
+  type: TYPE_NORMAL
+- en: oBalloon = randomBalloonClass(self.window, self.maxWidth,
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.maxHeight, balloonNum)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**256** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.balloonList.append(oBalloon)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def handleEvent(self, event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4 if event.type == MOUSEBUTTONDOWN:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Go 'reversed' so topmost balloon gets popped
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'for oBalloon in reversed(self.balloonList):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: wasHit, nPoints = oBalloon.clickedInside(event.pos)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if wasHit:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if nPoints > 0: # remove this balloon'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.balloonList.remove(oBalloon)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.nPopped = self.nPopped + 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.score = self.score + nPoints
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'return # no need to check others'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '5 def update(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for oBalloon in self.balloonList:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: status = oBalloon.update()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if status == BALLOON_MISSED:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon went off the top, remove it
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: self.balloonList.remove(oBalloon)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.nMissed = self.nMissed + 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: '6 def getScore(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.score
+  prefs: []
+  type: TYPE_NORMAL
+- en: '7 def getCountPopped(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.nPopped
+  prefs: []
+  type: TYPE_NORMAL
+- en: '8 def getCountMissed(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.nMissed
+  prefs: []
+  type: TYPE_NORMAL
+- en: '9 def draw(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for oBalloon in self.balloonList:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oBalloon.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-6: The BalloonMgr class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When instantiated, the balloon manager is told the width and height of
+  prefs: []
+  type: TYPE_NORMAL
+- en: the window 1, and it saves this information in instance variables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The concept behind the start() method 2 is important. Its purpose
+  prefs: []
+  type: TYPE_NORMAL
+- en: is to initialize any instance variables needed for one round of the game,
+  prefs: []
+  type: TYPE_NORMAL
+- en: so it’s called whenever the user starts a round of the game. In this game,
+  prefs: []
+  type: TYPE_NORMAL
+- en: start() resets the count of popped balloons and the count of missed bal-
+  prefs: []
+  type: TYPE_NORMAL
+- en: loons. It then goes through a loop that creates all the Balloon objects (ran-
+  prefs: []
+  type: TYPE_NORMAL
+- en: domly chosen among three different sizes using three different classes)
+  prefs: []
+  type: TYPE_NORMAL
+- en: and stores them in a list 3\. Whenever the method creates a Balloon object,
+  prefs: []
+  type: TYPE_NORMAL
+- en: it passes the window and the width and height of the window. (For future
+  prefs: []
+  type: TYPE_NORMAL
+- en: expansion, each Balloon object is given a unique number.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each time through the main loop, the main code calls the handleEvent()
+  prefs: []
+  type: TYPE_NORMAL
+- en: method of the balloon manager 4\. Here, we check if the user has clicked
+  prefs: []
+  type: TYPE_NORMAL
+- en: on any Balloon. If the event detected was a MOUSEDOWNEVENT, the code loops
+  prefs: []
+  type: TYPE_NORMAL
+- en: through all the Balloon objects, asking each one if the click occurred inside
+  prefs: []
+  type: TYPE_NORMAL
+- en: that balloon. Each Balloon returns a Boolean indicating if it was hit and, if
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **257**
+  prefs: []
+  type: TYPE_NORMAL
+- en: so, the number of points the user should get for popping it. (The code is set
+    up this way for future expansion, as discussed in the note at the end of this
+  prefs: []
+  type: TYPE_NORMAL
+- en: section.) The balloon manager then uses the remove() method to eliminate
+  prefs: []
+  type: TYPE_NORMAL
+- en: that Balloon from its list, increments the number of popped balloons, and
+  prefs: []
+  type: TYPE_NORMAL
+- en: updates the score.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In each iteration of the main loop, the main code also calls the update()
+  prefs: []
+  type: TYPE_NORMAL
+- en: method of the balloon manager 5, which passes this call on to all of the
+  prefs: []
+  type: TYPE_NORMAL
+- en: balloons, telling them to update themselves. Each balloon moves up the
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'screen based on its own speed setting and returns its status: either that it
+    is'
+  prefs: []
+  type: TYPE_NORMAL
+- en: still moving (BALLOON_MOVING) or that it has moved beyond the top of the win-
+  prefs: []
+  type: TYPE_NORMAL
+- en: dow (BALLOON_MISSED). If a balloon was missed, the balloon manager removes
+  prefs: []
+  type: TYPE_NORMAL
+- en: that balloon from its list and increments its count of missed balloons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The balloon manager provides three getter methods that allow the
+  prefs: []
+  type: TYPE_NORMAL
+- en: main code to get the score 6, the number of popped balloons 7, and the
+  prefs: []
+  type: TYPE_NORMAL
+- en: number of missed balloons 8\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each time through the main loop, the main code calls the balloon
+  prefs: []
+  type: TYPE_NORMAL
+- en: manager’s draw() method 9\. The balloon manager doesn’t have anything
+  prefs: []
+  type: TYPE_NORMAL
+- en: to draw by itself, but loops though all the Balloon objects and calls the draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: method of each. (Notice the polymorphism here. The balloon manager has
+  prefs: []
+  type: TYPE_NORMAL
+- en: a draw() method, and each Balloon object has a draw() method.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**N O T E**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*As a challenge, try to expand this game to include a new type (subclass) of
+    Balloon, a* *MegaBalloon. The difference is that a MegaBalloon will take three
+    clicks to pop. Artwork* *is included in the download for this game.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Bal oon Class and Objects***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we have the balloon classes. To reinforce the concept of inheri-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'tance fro[m Chapter 10, t](index_split_004.html#p240)he *Balloon.py* module
+    includes an abstract base class named Balloon and three subclasses: BalloonSmall,
+    BalloonMedium, and'
+  prefs: []
+  type: TYPE_NORMAL
+- en: BalloonLarge. The balloon manager instantiates Balloon objects from these
+  prefs: []
+  type: TYPE_NORMAL
+- en: subclasses. The subclasses each only include an __init__() method, which
+  prefs: []
+  type: TYPE_NORMAL
+- en: overrides and then calls the abstract method __init__() in the Balloon
+  prefs: []
+  type: TYPE_NORMAL
+- en: class. Each balloon image will start at some randomized location (below
+  prefs: []
+  type: TYPE_NORMAL
+- en: the bottom of the window) and will move up a few pixels in every frame.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Listing 11-7 shows the code of the Balloon class and its subclasses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: BalloonGame/Balloon.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon base class and 3 subclasses
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: import pygame
+  prefs: []
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: from pygame.locals import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: import pygwidgets
+  prefs: []
+  type: TYPE_NORMAL
+- en: from BalloonConstants import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: from abc import ABC, abstractmethod
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**258** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 class Balloon(ABC):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: popSoundLoaded = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'popSound = None # load when first balloon is created'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '@abstractmethod'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 def __init__(self, window, maxWidth, maxHeight, ID,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'oImage, size, nPoints, speedY):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.window = window
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.ID = ID
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.balloonImage = oImage
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.size = size
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.nPoints = nPoints
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.speedY = speedY
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if not Balloon.popSoundLoaded: # load first time only'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon.popSoundLoaded = True
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon.popSound = pygame.mixer.Sound('sounds/balloonPop.wav')
+  prefs: []
+  type: TYPE_NORMAL
+- en: balloonRect = self.balloonImage.getRect()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width = balloonRect.width
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height = balloonRect.height
+  prefs: []
+  type: TYPE_NORMAL
+- en: Position so balloon is within the width of the window,
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: but below the bottom
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: self.x = random.randrange(maxWidth - self.width)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.y = maxHeight + random.randrange(75)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.balloonImage.setLoc((self.x, self.y))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3 def clickedInside(self, mousePoint):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: myRect = pygame.Rect(self.x, self.y, self.width, self.height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if myRect.collidepoint(mousePoint):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon.popSound.play()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'return True, self.nPoints # True here means it was hit'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'return False, 0 # not hit, no points'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4 def update(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.y = self.y - self.speedY # update y position by speed'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.balloonImage.setLoc((self.x, self.y))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if self.y < -self.height: # off the top of the window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return BALLOON_MISSED
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return BALLOON_MOVING
+  prefs: []
+  type: TYPE_NORMAL
+- en: '5 def draw(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.balloonImage.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '6 def __del__(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(self.size, 'Balloon', self.ID, 'is going away')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '7 class BalloonSmall(Balloon):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: balloonImage = pygame.image.load('images/redBalloonSmall.png')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, window, maxWidth, maxHeight, ID):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oImage = pygwidgets.Image(window, (0, 0),
+  prefs: []
+  type: TYPE_NORMAL
+- en: BalloonSmall.balloonImage)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **259**
+  prefs: []
+  type: TYPE_NORMAL
+- en: super().__init__(window, maxWidth, maxHeight, ID,
+  prefs: []
+  type: TYPE_NORMAL
+- en: oImage, 'Small', 30, 3.1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '8 class BalloonMedium(Balloon):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: balloonImage = pygame.image.load('images/redBalloonMedium.png')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, window, maxWidth, maxHeight, ID):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oImage = pygwidgets.Image(window, (0, 0),
+  prefs: []
+  type: TYPE_NORMAL
+- en: BalloonMedium.balloonImage)
+  prefs: []
+  type: TYPE_NORMAL
+- en: super().__init__(window, maxWidth, maxHeight, ID,
+  prefs: []
+  type: TYPE_NORMAL
+- en: oImage, 'Medium', 20, 2.2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '9 class BalloonLarge(Balloon):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: balloonImage = pygame.image.load('images/redBalloonLarge.png')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, window, maxWidth, maxHeight, ID):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oImage = pygwidgets.Image(window, (0, 0),
+  prefs: []
+  type: TYPE_NORMAL
+- en: BalloonLarge.balloonImage)
+  prefs: []
+  type: TYPE_NORMAL
+- en: super().__init__(window, maxWidth, maxHeight, ID,
+  prefs: []
+  type: TYPE_NORMAL
+- en: oImage, 'Large', 10, 1.5)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-7: The Balloon classes*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Balloon class is an abstract class 1, so the BalloonMgr instanti-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ates objects (randomly) from the BalloonSmall 7, BalloonMedium 8, and
+  prefs: []
+  type: TYPE_NORMAL
+- en: BalloonLarge 9 classes. Each of those classes creates a pygwidgets Image object,
+  prefs: []
+  type: TYPE_NORMAL
+- en: then calls the __init__() method in the Balloon base class. We differentiate
+  prefs: []
+  type: TYPE_NORMAL
+- en: the balloons with the arguments representing the image, size, number of
+  prefs: []
+  type: TYPE_NORMAL
+- en: points, and speed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The __init__() method in the Balloon class 2 stores the information
+  prefs: []
+  type: TYPE_NORMAL
+- en: about each balloon in instance variables. We get the rectangle of the bal-
+  prefs: []
+  type: TYPE_NORMAL
+- en: loon image and remember its width and height. We set a randomized
+  prefs: []
+  type: TYPE_NORMAL
+- en: horizontal position that will ensure that the balloon image will fully show
+  prefs: []
+  type: TYPE_NORMAL
+- en: within the window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Every time a MOUSEDOWNEVENT happens, the balloon manager loops
+  prefs: []
+  type: TYPE_NORMAL
+- en: through the Balloon objects and calls the clickedInside() method of each 3\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code here checks to see if the MOUSEDOWNEVENT that was detected hap-
+  prefs: []
+  type: TYPE_NORMAL
+- en: pened inside the current balloon. If it did, the Balloon plays the pop sound
+  prefs: []
+  type: TYPE_NORMAL
+- en: and returns a Boolean to say that it was clicked on, as well as the number of
+  prefs: []
+  type: TYPE_NORMAL
+- en: points that balloon was worth. If it was not hit, it returns False and zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In each frame, the balloon manager calls the update() method of each
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balloon 4, which updates that Balloon’s y position by subtracting its own
+  prefs: []
+  type: TYPE_NORMAL
+- en: speed in order to move higher in the window. After changing the position,
+  prefs: []
+  type: TYPE_NORMAL
+- en: the update() method returns either BALLOON_MISSED (if it has moved completely
+  prefs: []
+  type: TYPE_NORMAL
+- en: off the top of the window) or BALLOON_MOVING (to indicate that it is still in
+    play).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The draw() method simply draws the image of the balloon at the appro-
+  prefs: []
+  type: TYPE_NORMAL
+- en: priate (x, y) location 5\. Although the y position is kept as a floating-point
+  prefs: []
+  type: TYPE_NORMAL
+- en: value, pygame automatically converts it to an integer for pixel placement in
+  prefs: []
+  type: TYPE_NORMAL
+- en: the window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last method, __del__() 6, has been added for debugging and for
+  prefs: []
+  type: TYPE_NORMAL
+- en: future development. Whenever the balloon manager deletes a balloon,
+  prefs: []
+  type: TYPE_NORMAL
+- en: the __del__() method of that Balloon object is called. For demonstration
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**260** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: purposes, for now it simply prints a message that displays the balloon’s size
+    and ID number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the program is run and the user starts clicking on the balloons,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'we see output like this in the shell or console window:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Small Balloon 2 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Small Balloon 8 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Small Balloon 3 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Small Balloon 7 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Small Balloon 9 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Small Balloon 12 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Small Balloon 11 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Small Balloon 6 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Medium Balloon 14 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Large Balloon 1 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Medium Balloon 10 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Medium Balloon 13 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Medium Balloon 0 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Medium Balloon 4 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: Large Balloon 5 is going away
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the game is over, the program waits for the user to click on the
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start button. When that button is clicked, the balloon manager re-creates
+  prefs: []
+  type: TYPE_NORMAL
+- en: the list of Balloon objects and resets its instance variables, and the game
+  prefs: []
+  type: TYPE_NORMAL
+- en: begins again.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Managing Memory: Slots**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we have discussed, when you instantiate an object, Python must allocate
+  prefs: []
+  type: TYPE_NORMAL
+- en: space for the instance variables defined in the class. By default, Python does
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'this using a dictionary with a special name: __dict__. To see this in action,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'you can add this line to the end of the __init__() method of any class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(self.__dict__)
+  prefs: []
+  type: TYPE_NORMAL
+- en: A dictionary is an excellent way to represent all the instance vari-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ables because it is dynamic—it can grow whenever Python encounters an
+  prefs: []
+  type: TYPE_NORMAL
+- en: instance variable that it has not seen before in a class. While I recommend
+  prefs: []
+  type: TYPE_NORMAL
+- en: that you initialize all your instance variables in your __init__() method, you
+  prefs: []
+  type: TYPE_NORMAL
+- en: can in fact define instance variables in any method, and those instance vari-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ables will be added when the method is executed for the first time. While
+  prefs: []
+  type: TYPE_NORMAL
+- en: I personally think the following is a bad idea, it demonstrates the ability
+    to
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'add an instance variable to an object dynamically:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: myObject = MyClass()
+  prefs: []
+  type: TYPE_NORMAL
+- en: myObject.someInstanceVariable = 5
+  prefs: []
+  type: TYPE_NORMAL
+- en: In order to allow for this dynamic capability, dictionaries are typically
+  prefs: []
+  type: TYPE_NORMAL
+- en: implemented starting with enough empty space to represent some number
+  prefs: []
+  type: TYPE_NORMAL
+- en: of instance variables (the exact number is an internal detail of Python).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **261**
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whenever a new instance variable is encountered, it’s added to the dictionary.
+    If the dictionary runs out of space, Python adds more. This generally
+  prefs: []
+  type: TYPE_NORMAL
+- en: works well, and programmers do not experience any problems with this
+  prefs: []
+  type: TYPE_NORMAL
+- en: implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, imagine you have a class like the following with two instance
+  prefs: []
+  type: TYPE_NORMAL
+- en: variables created in the __init__() method, and you know that you will not
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'need to add any more instance variables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Point():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, x, y):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.x = x
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.y = y
+  prefs: []
+  type: TYPE_NORMAL
+- en: More methods
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Now, let’s assume that you need to instantiate a very large number
+  prefs: []
+  type: TYPE_NORMAL
+- en: (hundreds of thousands, or even millions) of objects from this class. A case
+  prefs: []
+  type: TYPE_NORMAL
+- en: like this could cumulatively account for a large amount of wasted memory
+  prefs: []
+  type: TYPE_NORMAL
+- en: space (RAM).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To combat this potential waste, Python gives us a different approach,
+  prefs: []
+  type: TYPE_NORMAL
+- en: known as *slots*, to represent the instance variables. The idea is that you
+    can tell Python the names of all the instance variables up front, and Python
+  prefs: []
+  type: TYPE_NORMAL
+- en: will use a data structure that allocates exactly enough space for just those
+  prefs: []
+  type: TYPE_NORMAL
+- en: instance variables. To use slots, you need to include the special class vari-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'able __slots__ to define a list of variables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: __slots__ = [ *<instanceVar1>* , *<instanceVar2>* , ... *<instanceVarN>* ]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is what a modified version of our example class would look like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class PointWithSlots():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Define slots for only two instance variables
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: __slots__ = ['x', 'y']
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, x, y):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.x = x
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.y = y
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(x, y)
+  prefs: []
+  type: TYPE_NORMAL
+- en: These two classes will work identically, but objects instantiated from
+  prefs: []
+  type: TYPE_NORMAL
+- en: PointWithSlots will take up considerably less memory. To demonstrate the
+  prefs: []
+  type: TYPE_NORMAL
+- en: difference, we’ll add this line to the end of the __init__() method of both
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'classes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Try to create an additional instance variable
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: self.color = 'black'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now when we try to instantiate an object from both classes, the
+  prefs: []
+  type: TYPE_NORMAL
+- en: Point class has no problem adding another instance variable, but the
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'PointWithSlots class fails with the following error:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'AttributeError: ''PointWithSlots'' object has no attribute ''color'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**262** Chapter 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using slots is highly memory-efficient at the expense of a loss of dynamic instance
+    variables. If you’re dealing with a very large number of
+  prefs: []
+  type: TYPE_NORMAL
+- en: objects from a class, this trade-off may very well be worthwhile.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter focused on a few concepts that didn’t readily fit in the previ-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ous chapters. First, I discussed the circumstances under which you might
+  prefs: []
+  type: TYPE_NORMAL
+- en: want to delete an object. We looked at reference counts and how they track
+  prefs: []
+  type: TYPE_NORMAL
+- en: how many variables refer to the same object, which led to a discussion of
+  prefs: []
+  type: TYPE_NORMAL
+- en: object lifetimes and garbage collection. When the reference count goes to
+  prefs: []
+  type: TYPE_NORMAL
+- en: zero, the object is available for garbage collection. If a class has a __del__()
+  prefs: []
+  type: TYPE_NORMAL
+- en: method, then any objects created from the class can use the __del__()
+  prefs: []
+  type: TYPE_NORMAL
+- en: method for any cleanup that they might want to do.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, I discussed how class variables are different from instance
+  prefs: []
+  type: TYPE_NORMAL
+- en: variables. Every object instantiated from a class gets its own set of all the
+  prefs: []
+  type: TYPE_NORMAL
+- en: instance variables in the class. However, there is only one of each class
+  prefs: []
+  type: TYPE_NORMAL
+- en: variable, and that is accessible by all objects created from the class. Class
+  prefs: []
+  type: TYPE_NORMAL
+- en: variables are often used as constants or counters, or for loading something
+  prefs: []
+  type: TYPE_NORMAL
+- en: large and making it available to all objects instantiated from the class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To put a number of techniques and concepts together, we built a
+  prefs: []
+  type: TYPE_NORMAL
+- en: balloon-popping game and organized it very efficiently. We had one file
+  prefs: []
+  type: TYPE_NORMAL
+- en: that contained only constants used by other files. The main code con-
+  prefs: []
+  type: TYPE_NORMAL
+- en: sisted of the main loop and a status display, and the balloon manager
+  prefs: []
+  type: TYPE_NORMAL
+- en: did the work of managing the objects. Such a division of labor allows for
+  prefs: []
+  type: TYPE_NORMAL
+- en: splitting up the game into smaller, logical pieces. The role of each part is
+  prefs: []
+  type: TYPE_NORMAL
+- en: well defined, making the overall program more manageable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, I explained how a technique called slots allows for a memory-
+  prefs: []
+  type: TYPE_NORMAL
+- en: efficient representation of instance variables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing Memory Used by Objects **263**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**PART IV**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**U S I N G O O P I N G A M E**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**D E V E L O P M E N T**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this part of the book, we’ll build some sample
+  prefs: []
+  type: TYPE_NORMAL
+- en: games using pygwidgets. I’ll also introduce the pyghelpers
+  prefs: []
+  type: TYPE_NORMAL
+- en: module, which includes a number of classes and func-
+  prefs: []
+  type: TYPE_NORMAL
+- en: tions that can be useful in building game programs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Chapter 12 re](#p296)visits the Higher or Lower game fro[m Chapter 1\. W](index_split_000.html#p32)e’ll
+    build a version of the game with a graphical user interface, and I’ll introduce
+    Deck and Card classes that can be reused in any card game program.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Chapter 13 f](#p310)ocuses on timers. We’ll build a number of different timer
+    classes that allow your program to keep running while concurrently checking for
+    a certain time limit.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Chapter 14 d](#p324)iscusses different animation classes you can use to show
+    sequences of images. This will allow you to easily build more artistic games'
+  prefs: []
+  type: TYPE_NORMAL
+- en: and programs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Chapter 15 i](index_split_006.html#p340)ntroduces an approach to building
+    a program that can contain many scenes, like a start scene, a play scene, and
+    a game over scene. I’ll'
+  prefs: []
+  type: TYPE_NORMAL
+- en: show a SceneMgr class that is designed to manage any number of program-
+  prefs: []
+  type: TYPE_NORMAL
+- en: mer-built scenes, and we’ll use it to build a Rock, Paper, Scissors game.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Chapter 16 d](index_split_006.html#p370)emonstrates how to show and react
+    to different types of dialog boxes. You’ll then use everything you’ve learned
+    to build a fully functioning animated game.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Chapter 17 i](index_split_007.html#p396)ntroduces the concept of design patterns,
+    using the model, view, controller pattern as an example. It then provides a short
+    wrap-up for'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**12**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**C A R D G A M E S**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the remaining chapters of this book,
+  prefs: []
+  type: TYPE_NORMAL
+- en: we’ll build a few demo programs using
+  prefs: []
+  type: TYPE_NORMAL
+- en: pygame and pygwidgets. Each program will
+  prefs: []
+  type: TYPE_NORMAL
+- en: present one or more reusable classes and show
+  prefs: []
+  type: TYPE_NORMAL
+- en: how they can be used in a sample project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I[n Chapter 1, I p](index_split_000.html#p32)resented a text-based Higher or
+    Lower card game. In this chapter we’ll create a GUI version of the game, as shown
+    in Figure 12-1\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To quickly recap the game rules: we start with seven cards face down'
+  prefs: []
+  type: TYPE_NORMAL
+- en: and one card face up. The player guesses whether the next card to be
+  prefs: []
+  type: TYPE_NORMAL
+- en: turned over will be higher or lower than the last visible card by pressing
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lower or Higher. When the game is over, the user can click New Game to
+  prefs: []
+  type: TYPE_NORMAL
+- en: start a new round of the game. The player starts with 100 points, gains 15
+  prefs: []
+  type: TYPE_NORMAL
+- en: points for a correct answer, and loses 10 points for an incorrect answer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image 34](index-297_1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-1: The user interface of the Higher or Lower game*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**The Card Class**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the original text-based version of the game, the code dealing with the
+  prefs: []
+  type: TYPE_NORMAL
+- en: deck of cards was not easily reusable in other projects. To solve this prob-
+  prefs: []
+  type: TYPE_NORMAL
+- en: lem, here we’ll create a highly reusable Deck class that manages cards from
+    a
+  prefs: []
+  type: TYPE_NORMAL
+- en: Card class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To represent a card in pygame, we need to store the following data in
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'instance variables for each Card object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Rank (ace, 2, 3, … 10, jack, queen, king)
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Suit (clubs, hearts, diamonds, spades)
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Value (1, 2, 3, … 12, 13)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '• Name (built using the rank and suit: for example, 7 of clubs)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Image of the back of the card (a single image shared by all Card objects)
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Image of the front of the card (a unique image for each Card object)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each card must be able to perform the following behaviors, for which
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'we will create methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Mark itself as concealed (face down)
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Mark itself as revealed (face up)
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Return its name
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Return its value
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Set and get its location in the window
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Draw itself (either the revealed image or the concealed image)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**268** Chapter 12'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While the following card behaviors are not used in the Higher or Lower game,
+    we’ll add these too in case they are needed in some other game:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Return its rank
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Return its suit
+  prefs: []
+  type: TYPE_NORMAL
+- en: Listing 12-1 shows the code of the Card class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: HigherOrLower/Card.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Card class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: import pygame
+  prefs: []
+  type: TYPE_NORMAL
+- en: import pygwidgets
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Card():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 BACK_OF_CARD_IMAGE = pygame.image.load('images/BackOfCard.png')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2 def __init__(self, window, rank, suit, value):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.window = window
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.rank = rank
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.suit = suit
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.cardName = rank + ' of ' + suit
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.value = value
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 fileName = 'images/' + self.cardName + '.png'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Set some starting location; use setLoc below to change
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 4 self.images = pygwidgets.ImageCollection(window, (0, 0),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{''front'': fileName,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''back'': Card.BACK_OF_CARD_IMAGE}, ''back'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '5 def conceal(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.images.replace('back')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '6 def reveal(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.images.replace('front')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '7 def getName(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.cardName
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def getValue(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.value
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def getSuit(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.suit
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def getRank(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.rank
+  prefs: []
+  type: TYPE_NORMAL
+- en: '8 def setLoc(self, loc): # call the setLoc method of the ImageCollection'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.images.setLoc(loc)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Card Games **269**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '9 def getLoc(self): # get the location from the ImageCollection loc = self.images.getLoc()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return loc
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'a def draw(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.images.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-1: The Card class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Card class assumes that image files for all 52 cards, plus an image
+  prefs: []
+  type: TYPE_NORMAL
+- en: for the back of all the cards, are available in a folder named *images* inside
+    the project folder. If you download the files associated with this chapter,
+  prefs: []
+  type: TYPE_NORMAL
+- en: you will see that the *images* folder contains the full set of . *png* files.
+    The files are available via my GitHub repository at [*https://github.com/IrvKalb/*](https://github.com/IrvKalb/Object-Oriented-Python-Code/)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[*Object-Oriented-Python-Code*](https://github.com/IrvKalb/Object-Oriented-Python-Code/)
+    */*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The class loads the image of the back of the cards once and saves it in a
+  prefs: []
+  type: TYPE_NORMAL
+- en: class variable 1\. That image is available to all Card objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When called for each card, the __init__() method 2 starts by storing
+  prefs: []
+  type: TYPE_NORMAL
+- en: the window; building and storing the name of the card; and storing its
+  prefs: []
+  type: TYPE_NORMAL
+- en: rank, value, and suit in instance variables. It then builds the path to the
+    file
+  prefs: []
+  type: TYPE_NORMAL
+- en: in the *images* folder that contains the image for that specific card 3\. For
+  prefs: []
+  type: TYPE_NORMAL
+- en: example, if the rank is ace and the suit is spades, we build a path of *images/*
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Ace of Spades.png*. We use an ImageCollection object to remember the paths'
+  prefs: []
+  type: TYPE_NORMAL
+- en: to both the front and back images 4; we’ll use 'back' to say that we want to
+  prefs: []
+  type: TYPE_NORMAL
+- en: show the back of the card as the starting image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The conceal() method 5 tells ImageCollection to set the back of the card
+  prefs: []
+  type: TYPE_NORMAL
+- en: as the current image. The reveal() method 6 tells ImageCollection to set the
+  prefs: []
+  type: TYPE_NORMAL
+- en: front of the card as the current image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The getName(), getValue(), getSuit(), and getRank() methods 7 are getter
+  prefs: []
+  type: TYPE_NORMAL
+- en: methods that allow the caller to retrieve the name, value, suit, and rank of
+  prefs: []
+  type: TYPE_NORMAL
+- en: the given card.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The setLoc() method sets a new location for the card 8, and getLoc()
+  prefs: []
+  type: TYPE_NORMAL
+- en: retrieves the current location 9\. The location is kept in the ImageCollection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, draw() a draws the image of the card in the window. More spe-
+  prefs: []
+  type: TYPE_NORMAL
+- en: cifically, it tells the ImageCollection to draw the currently indicated image
+    at
+  prefs: []
+  type: TYPE_NORMAL
+- en: the remembered location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**The Deck Class**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A Deck object is a classic example of an object manager object. Its job is to
+  prefs: []
+  type: TYPE_NORMAL
+- en: create and manage 52 Card objects. Listing 12-2 contains the code of our
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deck class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: HigerOrLower/Deck.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deck class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: import random
+  prefs: []
+  type: TYPE_NORMAL
+- en: from Card import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**270** Chapter 12'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Deck():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 SUIT_TUPLE = ('Diamonds', 'Clubs', 'Hearts', 'Spades')
+  prefs: []
+  type: TYPE_NORMAL
+- en: This dict maps each card rank to a value for a standard deck
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: STANDARD_DICT = {'Ace':1, '2':2, '3':3, '4':4, '5':5,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''6'':6, ''7'':7, ''8'': 8, ''9'':9, ''10'':10,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''Jack'':11, ''Queen'':12, ''King'':13}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2 def __init__(self, window, rankValueDict=STANDARD_DICT):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: rankValueDict defaults to STANDARD_DICT, but you can call it
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: with a different dict, e.g., a special dict for Blackjack
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: self.startingDeckList = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.playingDeckList = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for suit in Deck.SUIT_TUPLE:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3 for rank, value in rankValueDict.items():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oCard = Card(window, rank, suit, value)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.startingDeckList.append(oCard)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.shuffle()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4 def shuffle(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Copy the starting deck and save it in the playing deck list
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: self.playingDeckList = self.startingDeckList.copy()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for oCard in self.playingDeckList:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oCard.conceal()
+  prefs: []
+  type: TYPE_NORMAL
+- en: random.shuffle(self.playingDeckList)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '5 def getCard(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if len(self.playingDeckList) == 0:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: raise IndexError('No more cards')
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pop one card off the deck and return it
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: oCard = self.playingDeckList.pop()
+  prefs: []
+  type: TYPE_NORMAL
+- en: return oCard
+  prefs: []
+  type: TYPE_NORMAL
+- en: '6 def returnCardToDeck(self, oCard):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Put a card back into the deck
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: self.deckList.insert(0, oCard)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-2: A Deck class that manages 52 Card objects*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We begin the Deck class by creating a few class variables 1 that we’ll
+  prefs: []
+  type: TYPE_NORMAL
+- en: use to create 52 cards with the proper suits and values. There are only four
+  prefs: []
+  type: TYPE_NORMAL
+- en: methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To the __init__() method 2, we pass a reference to the window and an
+  prefs: []
+  type: TYPE_NORMAL
+- en: optional dictionary that maps card ranks to their values. If none is passed
+  prefs: []
+  type: TYPE_NORMAL
+- en: in, we use the dictionary for a standard deck of values. We build a deck
+  prefs: []
+  type: TYPE_NORMAL
+- en: of 52 cards, saved in self.startingDeckList, by iterating through all suits,
+  prefs: []
+  type: TYPE_NORMAL
+- en: then iterating through all card ranks and values. In the inner for loop 3,
+  prefs: []
+  type: TYPE_NORMAL
+- en: we use a call to the items() method of a dictionary that allows us to eas-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ily get the key and value (here, the rank and value) in a single statement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each time through the inner loop we instantiate a Card object, passing the
+  prefs: []
+  type: TYPE_NORMAL
+- en: rank, suit, and value of the new card. We append each Card object to the
+  prefs: []
+  type: TYPE_NORMAL
+- en: list self.startingDeckList to create a full deck of cards.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Card Games **271**
+  prefs: []
+  type: TYPE_NORMAL
+- en: The final step is to call the shuffle() method 4 to randomize the
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'deck. The purpose of this method may seem obvious: to shuffle the deck.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, it does an extra little trick. The __init__() method built the
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.startingDeckList, and that work should only be done once. So, when-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ever we shuffle the deck, rather than re-creating all the Card objects, we
+  prefs: []
+  type: TYPE_NORMAL
+- en: make a copy of the starting deck list, save it in self.playingDeckList, and
+  prefs: []
+  type: TYPE_NORMAL
+- en: shuffle that. The copy is what will be used and manipulated as the game
+  prefs: []
+  type: TYPE_NORMAL
+- en: runs. With this approach, we can remove cards from self.playingDeckList
+  prefs: []
+  type: TYPE_NORMAL
+- en: and not have to worry about adding them back into the deck later or reload-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ing cards. The two lists, self.startingDeckList and self.playingDeckList, share
+  prefs: []
+  type: TYPE_NORMAL
+- en: references to the same 52 Card objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that when we call shuffle() for subsequent runs of the game, some
+  prefs: []
+  type: TYPE_NORMAL
+- en: of the Card objects may be in the “revealed” state. So, before proceeding, we
+  prefs: []
+  type: TYPE_NORMAL
+- en: iterate through the entire deck and call the conceal() method on each card,
+  prefs: []
+  type: TYPE_NORMAL
+- en: so that all cards will initially appear face down. The shuffle() method fin-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ishes by randomizing the cards in the playing deck using random.shuffle().
+  prefs: []
+  type: TYPE_NORMAL
+- en: The getCard() method 5 retrieves a card from the deck. It first checks
+  prefs: []
+  type: TYPE_NORMAL
+- en: to see if the deck is empty and, if so, raises an exception. Otherwise, since
+  prefs: []
+  type: TYPE_NORMAL
+- en: the deck is already shuffled, it pops a card off the deck and returns that
+  prefs: []
+  type: TYPE_NORMAL
+- en: card to the caller.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Together, Deck and Card provide a highly reusable combination of classes
+  prefs: []
+  type: TYPE_NORMAL
+- en: that can be used in most card games. The Higher or Lower game only uses
+  prefs: []
+  type: TYPE_NORMAL
+- en: eight cards for each round and shuffles the entire deck at the start of each
+  prefs: []
+  type: TYPE_NORMAL
+- en: game. Therefore, in this game it is not possible for the Deck object to run
+    out
+  prefs: []
+  type: TYPE_NORMAL
+- en: of cards. For a card game where you need to know if the deck runs out of
+  prefs: []
+  type: TYPE_NORMAL
+- en: cards, you can build a try block around the call to getCard() and use an except
+  prefs: []
+  type: TYPE_NORMAL
+- en: clause to catch an exception. The choice of what to do there is up to you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While not used in this game, the returnCardToDeck() method 6 allows
+  prefs: []
+  type: TYPE_NORMAL
+- en: you to put a card back into the deck.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**The Higher or Lower Game**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The code of the actual game is fairly simple: the main code implements the'
+  prefs: []
+  type: TYPE_NORMAL
+- en: main loop, and a Game object contains the logic for the game itself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Main Program***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Listing 12-3 is the main program that sets up the world and contains the
+  prefs: []
+  type: TYPE_NORMAL
+- en: main loop. It also creates the Game object that runs the game.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: HigherOrLower/Main_HigherOrLower.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Higher or Lower - pygame version
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Main program
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4 - Load assets: image(s), sound(s), etc.'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 1 background = pygwidgets.Image(window, (0, 0),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**272** Chapter 12'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''images/background.png'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: newGameButton = pygwidgets.TextButton(window, (20, 530),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''New Game'', width=100, height=45)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: higherButton = pygwidgets.TextButton(window, (540, 520),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''Higher'', width=120, height=55)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: lowerButton = pygwidgets.TextButton(window, (340, 520),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''Lower'', width=120, height=55)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: quitButton = pygwidgets.TextButton(window, (880, 530),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''Quit'', width=100, height=45)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 - Initialize variables
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 2 oGame = Game(window)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 - Loop forever
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 - Check for and handle events
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'for event in pygame.event.get():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: if ((event.type == QUIT) or
+  prefs: []
+  type: TYPE_NORMAL
+- en: ((event.type == KEYDOWN) and (event.key == K_ESCAPE)) or
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(quitButton.handleEvent(event))):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pygame.quit()
+  prefs: []
+  type: TYPE_NORMAL
+- en: sys.exit()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3 if newGameButton.handleEvent(event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oGame.reset()
+  prefs: []
+  type: TYPE_NORMAL
+- en: lowerButton.enable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: higherButton.enable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if higherButton.handleEvent(event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: gameOver = oGame.hitHigherOrLower(HIGHER)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if gameOver:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: higherButton.disable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: lowerButton.disable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if lowerButton.handleEvent(event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: gameOver = oGame.hitHigherOrLower(LOWER)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if gameOver:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: higherButton.disable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: lowerButton.disable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 - Do any "per frame" actions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 9 - Clear the window before drawing it again
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 4 background.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10 - Draw the window elements
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Tell the game to draw itself
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 5 oGame.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: Draw remaining user interface components
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: newGameButton.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: higherButton.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: lowerButton.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: quitButton.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: Card Games **273**
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11 - Update the window
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: pygame.display.update()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 12 - Slow things down a bit
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: clock.tick(FRAMES_PER_SECOND)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-3: The main code of the Higher or Lower game*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main program loads the background image and builds four but-
+  prefs: []
+  type: TYPE_NORMAL
+- en: tons 1, then instantiates the Game object 2\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the main loop, we listen for any of the buttons being pressed 3, and
+  prefs: []
+  type: TYPE_NORMAL
+- en: when one is, we call the appropriate method in the Game object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At the bottom of the loop, we draw the window elements 4, starting
+  prefs: []
+  type: TYPE_NORMAL
+- en: with the background. Most significantly, we call the draw() method of the
+  prefs: []
+  type: TYPE_NORMAL
+- en: Game object 5\. As you will see, the Game object passes this message on to each
+  prefs: []
+  type: TYPE_NORMAL
+- en: of the Card objects. Finally, we draw all four buttons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Game Object***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Game object handles the actual game logic. Listing 12-4 contains the
+  prefs: []
+  type: TYPE_NORMAL
+- en: code of the Game class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: HigherOrLower/Game.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Game class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: import pygwidgets
+  prefs: []
+  type: TYPE_NORMAL
+- en: from Constants import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: from Deck import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: from Card import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Game():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: CARD_OFFSET = 110
+  prefs: []
+  type: TYPE_NORMAL
+- en: CARDS_TOP = 300
+  prefs: []
+  type: TYPE_NORMAL
+- en: CARDS_LEFT = 75
+  prefs: []
+  type: TYPE_NORMAL
+- en: NCARDS = 8
+  prefs: []
+  type: TYPE_NORMAL
+- en: POINTS_CORRECT = 15
+  prefs: []
+  type: TYPE_NORMAL
+- en: POINTS_INCORRECT = 10
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, window): 1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.window = window
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.oDeck = Deck(self.window)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.score = 100
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.scoreText = pygwidgets.DisplayText(window, (450, 164),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''Score: '' + str(self.score),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fontSize=36, textColor=WHITE,
+  prefs: []
+  type: TYPE_NORMAL
+- en: justified='right')
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.messageText = pygwidgets.DisplayText(window, (50, 460),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ''''', width=900, justified=''center'','
+  prefs: []
+  type: TYPE_NORMAL
+- en: fontSize=36, textColor=WHITE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.loserSound = pygame.mixer.Sound("sounds/loser.wav")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**274** Chapter 12'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.winnerSound = pygame.mixer.Sound("sounds/ding.wav") self.cardShuffleSound
+    = pygame.mixer.Sound("sounds/cardShuffle.wav")
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.cardXPositionsList = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: thisLeft = Game.CARDS_LEFT
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calculate the x positions of all cards, once
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'for cardNum in range(Game.NCARDS):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.cardXPositionsList.append(thisLeft)
+  prefs: []
+  type: TYPE_NORMAL
+- en: thisLeft = thisLeft + Game.CARD_OFFSET
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.reset() # start a round of the game'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def reset(self): 2 # this method is called when a new round starts'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.cardShuffleSound.play()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.cardList = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.oDeck.shuffle()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for cardIndex in range(0, Game.NCARDS): # deal out cards'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oCard = self.oDeck.getCard()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.cardList.append(oCard)
+  prefs: []
+  type: TYPE_NORMAL
+- en: thisXPosition = self.cardXPositionsList[cardIndex]
+  prefs: []
+  type: TYPE_NORMAL
+- en: oCard.setLoc((thisXPosition, Game.CARDS_TOP))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.showCard(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.cardNumber = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currentCardName, self.currentCardValue = \
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.getCardNameAndValue(self.cardNumber)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.messageText.setValue('Starting card is ' + self.currentCardName +
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''. Will the next card be higher or lower?'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def getCardNameAndValue(self, index):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oCard = self.cardList[index]
+  prefs: []
+  type: TYPE_NORMAL
+- en: theName = oCard.getName()
+  prefs: []
+  type: TYPE_NORMAL
+- en: theValue = oCard.getValue()
+  prefs: []
+  type: TYPE_NORMAL
+- en: return theName, theValue
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def showCard(self, index):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oCard = self.cardList[index]
+  prefs: []
+  type: TYPE_NORMAL
+- en: oCard.reveal()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def hitHigherOrLower(self, higherOrLower): 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.cardNumber = self.cardNumber + 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.showCard(self.cardNumber)
+  prefs: []
+  type: TYPE_NORMAL
+- en: nextCardName, nextCardValue = self.getCardNameAndValue(self.cardNumber)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if higherOrLower == HIGHER:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if nextCardValue > self.currentCardValue:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.score = self.score + Game.POINTS_CORRECT
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.messageText.setValue('Yes, the ' + nextCardName + ' was higher')
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.winnerSound.play()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.score = self.score – Game.POINTS_INCORRECT
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.messageText.setValue('No, the ' + nextCardName + ' was not higher')
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.loserSound.play()
+  prefs: []
+  type: TYPE_NORMAL
+- en: Card Games **275**
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else: # user hit the Lower button'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if nextCardValue < self.currentCardValue:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.score = self.score + Game.POINTS_CORRECT
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.messageText.setValue('Yes, the ' + nextCardName + ' was lower')
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.winnerSound.play()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.score = self.score – Game.POINTS_INCORRECT
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.messageText.setValue('No, the ' + nextCardName + ' was not lower')
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.loserSound.play()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.scoreText.setValue(''Score: '' + str(self.score))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.currentCardValue = nextCardValue # set up for the next card'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'done = (self.cardNumber == (Game.NCARDS - 1)) # did we reach the last card?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return done
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def draw(self): 4'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tell each card to draw itself
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'for oCard in self.cardList:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oCard.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.scoreText.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.messageText.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 12-4: The Game object that runs the game*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the __init__() method 1, we initialize a number of instance variables
+  prefs: []
+  type: TYPE_NORMAL
+- en: that only need to be set up once. We create the Deck object, set the starting
+  prefs: []
+  type: TYPE_NORMAL
+- en: score, and create a DisplayText object for displaying the score and the result
+  prefs: []
+  type: TYPE_NORMAL
+- en: of each move. We also load a number of sound files for use during play.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, we call the reset() method 2, which contains any code needed for
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'one play of the game: that is, to shuffle the deck, play the shuffling sound,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: deal out eight cards, display them in previously computed positions, and
+  prefs: []
+  type: TYPE_NORMAL
+- en: show the face of the first card.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the user presses the Higher or Lower button, the main code calls
+  prefs: []
+  type: TYPE_NORMAL
+- en: hitHigherOrLower() 3, which turns over the next card, compares the value
+  prefs: []
+  type: TYPE_NORMAL
+- en: with the previous face-up card, and awards or subtracts points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The draw() method 4 iterates through all the cards in the current game,
+  prefs: []
+  type: TYPE_NORMAL
+- en: telling each to draw itself (by calling each Card object’s draw() method). It
+  prefs: []
+  type: TYPE_NORMAL
+- en: then draws the text of the score and the feedback for the current move.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Testing with __name__**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you write a class, it’s always a good idea to write some test code
+  prefs: []
+  type: TYPE_NORMAL
+- en: to ensure that an object created from that class will work correctly. As a
+  prefs: []
+  type: TYPE_NORMAL
+- en: reminder, any file containing Python code is called a *module*. A standard
+  prefs: []
+  type: TYPE_NORMAL
+- en: practice is to write one or more classes in a module, then use an import
+  prefs: []
+  type: TYPE_NORMAL
+- en: statement to bring that module into some other module. When you write a
+  prefs: []
+  type: TYPE_NORMAL
+- en: module that contains a class (or classes), you can add some test code that’s
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**276** Chapter 12'
+  prefs: []
+  type: TYPE_NORMAL
+- en: intended to run *only* when the module is run as the main program, and doesn’t
+    run in the typical case when the module is imported by another
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In a project with multiple Python modules, you typically have one main
+  prefs: []
+  type: TYPE_NORMAL
+- en: module and several other modules. When your program runs, Python cre-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ates the special variable __name__ in every module. In whichever module is
+  prefs: []
+  type: TYPE_NORMAL
+- en: given control first, Python sets the value of __name__ to the string '__main__'.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Therefore, you can write code to check the value of __name__ and execute
+  prefs: []
+  type: TYPE_NORMAL
+- en: some test code only if a module is running as the main program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ll use the Deck class as an example. At the end of *Deck.py*, after the
+  prefs: []
+  type: TYPE_NORMAL
+- en: code of the class, I’ve added this code to create an instance of the Deck class
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'and print out the cards that it creates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip code of the Deck class ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if __name__ == ''__main__'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Main code to test the Deck class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: import pygame
+  prefs: []
+  type: TYPE_NORMAL
+- en: Constants
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: WINDOW_WIDTH = 100
+  prefs: []
+  type: TYPE_NORMAL
+- en: WINDOW_HEIGHT = 100
+  prefs: []
+  type: TYPE_NORMAL
+- en: pygame.init()
+  prefs: []
+  type: TYPE_NORMAL
+- en: window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+  prefs: []
+  type: TYPE_NORMAL
+- en: oDeck = Deck(window)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(1, 53):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oCard = oDeck.getCard()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print(''Name: '', oCard.getName(), '' Value:'', oCard.getValue())'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This checks if the *Deck.py* file is running as the main program. In the
+  prefs: []
+  type: TYPE_NORMAL
+- en: typical case where the Deck class is imported by some other module, the
+  prefs: []
+  type: TYPE_NORMAL
+- en: value of __name__ will be 'Deck', so this code does nothing. But if we run
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Deck.py* as the main program, for testing purposes only, Python sets the'
+  prefs: []
+  type: TYPE_NORMAL
+- en: value of __name__ to '__main__' and this test code runs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the test code, we build a minimal pygame program that creates
+  prefs: []
+  type: TYPE_NORMAL
+- en: an instance of the Deck class, then prints out the name and value of all 52
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'cards. The output of running *Deck.py* as the main program looks like this
+    in the shell or console window:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 4 of Spades Value: 4'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 4 of Diamonds Value: 4'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: Jack of Hearts Value: 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 8 of Spades Value: 8'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 10 of Diamonds Value: 10'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 3 of Clubs Value: 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: Jack of Diamonds Value: 11'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 9 of Spades Value: 9'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: Ace of Diamonds Value: 1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 2 of Clubs Value: 2'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 7 of Clubs Value: 7'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Card Games **277**
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 4 of Clubs Value: 4'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 8 of Hearts Value: 8'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 3 of Diamonds Value: 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 7 of Spades Value: 7'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 7 of Diamonds Value: 7'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: King of Diamonds Value: 13'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 10 of Spades Value: 10'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: Ace of Hearts Value: 1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: 8 of Diamonds Value: 8'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Name: Queen of Diamonds Value: 12'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Code like this is useful for testing that the class is generally working as
+  prefs: []
+  type: TYPE_NORMAL
+- en: we expect, without having to deal with a larger main program to instanti-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ate it. It gives us a quick way to make sure the class isn’t broken. Depending
+  prefs: []
+  type: TYPE_NORMAL
+- en: on our needs, we could go further and add some example code to illustrate
+  prefs: []
+  type: TYPE_NORMAL
+- en: typical calls to the methods of the class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Other Card Games**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are many card games that use a standard 52-card deck. We could
+  prefs: []
+  type: TYPE_NORMAL
+- en: use the Deck and Card classes as is to build games like Bridge, Hearts, Gin
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rummy, and most Solitaire games. However, there are some card games
+  prefs: []
+  type: TYPE_NORMAL
+- en: that use different card values or different numbers of cards. Let’s look at
+    a
+  prefs: []
+  type: TYPE_NORMAL
+- en: few examples and see how our classes could be adapted for these cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Blackjack Deck***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: While a deck for Blackjack, also known as 21, uses the same cards as a stan-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'dard deck, the *values* of the cards are different: the card values for 10,
+    jack, queen, and king are all 10\. The __init__() method of the Deck class starts'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, window, rankValueDict=STANDARD_DICT):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To create a Blackjack deck, you would only need to supply a different
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'dictionary for rankValueDict, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: blackJackDict = {'Ace':1, '2':2, '3':3, '4':4, '5':5,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''6'':6, ''7'':7, ''8'': 8, ''9'':9, ''10'':10,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''Jack'':10, ''Queen'':10, ''King'':10}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: oBlackjackDeck = Deck(window, rankValueDict=blackJackDict)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once you create the oBlackjackDeck this way, you can then call the exist-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ing shuffle() and getCard() methods with no change. In the implementation
+  prefs: []
+  type: TYPE_NORMAL
+- en: of Blackjack, you would also have to deal with the fact that an ace can have
+  prefs: []
+  type: TYPE_NORMAL
+- en: a value of 1 or 11\. But that, as we say, is an exercise left to the reader!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**278** Chapter 12'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Games with Unusual Card Decks***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are a number of card games that do not use a standard deck of 52
+  prefs: []
+  type: TYPE_NORMAL
+- en: cards. The game of canasta requires at least two decks with jokers, for a
+  prefs: []
+  type: TYPE_NORMAL
+- en: total of 108 cards. A pinochle deck consists of two copies of 9, 10, jack,
+  prefs: []
+  type: TYPE_NORMAL
+- en: queen, king, and ace for each suit, for a total of 48 cards.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For games like these, you could still use the Deck class, but you would
+  prefs: []
+  type: TYPE_NORMAL
+- en: need to create a subclass with Deck as the base class. The new CanastaDeck
+  prefs: []
+  type: TYPE_NORMAL
+- en: or PinochleDeck class would need to have its own __init__() method that
+  prefs: []
+  type: TYPE_NORMAL
+- en: builds a deck as a list consisting of the appropriate Card objects. However,
+  prefs: []
+  type: TYPE_NORMAL
+- en: the shuffle() and getCard() methods could be inherited from the Deck class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Therefore, a CanastaDeck or PinochleDeck class would subclass the Deck class
+  prefs: []
+  type: TYPE_NORMAL
+- en: and consist of only an __init__() method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, we built a GUI version of the Higher or Lower card game
+  prefs: []
+  type: TYPE_NORMAL
+- en: fro[m Chapter 1 u](index_split_000.html#p32)sing highly reusable Deck and Card
+    classes. The main code instantiates a Game object, which creates a Deck object
+    that instantiates 52 Card
+  prefs: []
+  type: TYPE_NORMAL
+- en: objects, one for each card in the resulting deck. Each Card object is respon-
+  prefs: []
+  type: TYPE_NORMAL
+- en: sible for drawing its appropriate image in the window and can respond to
+  prefs: []
+  type: TYPE_NORMAL
+- en: queries about its name, rank, suit, and value. The Game class, which contains
+  prefs: []
+  type: TYPE_NORMAL
+- en: the logic of the game, is separate from the main code, which runs the
+  prefs: []
+  type: TYPE_NORMAL
+- en: main loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I demonstrated how Python creates a special variable called __name__
+  prefs: []
+  type: TYPE_NORMAL
+- en: and gives it different values depending on whether a file is being run as
+  prefs: []
+  type: TYPE_NORMAL
+- en: the main program or not. You can use this feature to add some test code
+  prefs: []
+  type: TYPE_NORMAL
+- en: that runs when you run the file as a main program (to test the code in the
+  prefs: []
+  type: TYPE_NORMAL
+- en: module), but will not run in the typical case when the file is imported by
+  prefs: []
+  type: TYPE_NORMAL
+- en: another module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, I showed how you can build different types of card decks,
+  prefs: []
+  type: TYPE_NORMAL
+- en: depending on how different they are from the Deck class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Card Games **279**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**13**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**T I M E R S**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter is about timers. A *timer*
+  prefs: []
+  type: TYPE_NORMAL
+- en: allows your program to count or wait for
+  prefs: []
+  type: TYPE_NORMAL
+- en: a given amount of time before moving on
+  prefs: []
+  type: TYPE_NORMAL
+- en: to perform some other action. In the world of
+  prefs: []
+  type: TYPE_NORMAL
+- en: text-based Python programs, this is easily achieved
+  prefs: []
+  type: TYPE_NORMAL
+- en: with time.sleep() by specifying a number of seconds
+  prefs: []
+  type: TYPE_NORMAL
+- en: to sleep. To pause for two and a half seconds, you
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'could write:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import time
+  prefs: []
+  type: TYPE_NORMAL
+- en: time.sleep(2.5)
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, in the world of pygame, and event-driven programming in
+  prefs: []
+  type: TYPE_NORMAL
+- en: general, the user should always be able to interact with the program, so
+  prefs: []
+  type: TYPE_NORMAL
+- en: pausing in this way is inappropriate. A call to time.sleep() would make the
+  prefs: []
+  type: TYPE_NORMAL
+- en: program nonreactive during the sleeping period.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image 35](index-311_1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![Image 36](index-311_2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Instead, the main loop needs to continue to run at whatever frame
+  prefs: []
+  type: TYPE_NORMAL
+- en: rate you have chosen. You need a way for the program to continue to loop,
+  prefs: []
+  type: TYPE_NORMAL
+- en: but also count time from a given starting point to some time in the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are three different ways this can be accomplished:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Measure time by counting frames.
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Use pygame to create an event that is issued in the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Remember a start time and continuously check for the elapsed time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I will quickly discuss the first two, but I’ll focus on the third, as it pro-
+  prefs: []
+  type: TYPE_NORMAL
+- en: vides the cleanest and most accurate approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Timer Demonstration Program**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To illustrate the different approaches, I’ll use different implementations of
+  prefs: []
+  type: TYPE_NORMAL
+- en: the test program shown in Figure 13-1\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 13-1: The timer demonstration program*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the user clicks Start, a 2.5-second timer starts and the window
+  prefs: []
+  type: TYPE_NORMAL
+- en: changes to look like Figure 13-2\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 13-2: The message displayed while the timer is running*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For two and a half seconds, the Start button becomes disabled and a
+  prefs: []
+  type: TYPE_NORMAL
+- en: message is displayed below the buttons. When the time expires, the mes-
+  prefs: []
+  type: TYPE_NORMAL
+- en: sage goes away and the Start button is re-enabled. Independent of the timer
+  prefs: []
+  type: TYPE_NORMAL
+- en: running, anything else that the user wants to do in the program still needs
+  prefs: []
+  type: TYPE_NORMAL
+- en: to be responsive. In this example, clicking Click Me prints a message to the
+  prefs: []
+  type: TYPE_NORMAL
+- en: shell window, whether the timer is running or not.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**282** Chapter 13'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Three Approaches for Implementing Timers**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, I’ll discuss three different approaches to implementing tim-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'ers: counting frames, generating a pygame event, and checking for elapsed'
+  prefs: []
+  type: TYPE_NORMAL
+- en: time. To make these concepts clear, the following code examples are built
+  prefs: []
+  type: TYPE_NORMAL
+- en: directly in the main loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Counting Frames***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A straightforward approach to creating a timer is to count the number of
+  prefs: []
+  type: TYPE_NORMAL
+- en: frames that go by. One frame is the same as one loop iteration. If you know
+  prefs: []
+  type: TYPE_NORMAL
+- en: the frame rate of a program, you can calculate how long to wait by multiply-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ing the time to wait by the frame rate. The following code shows the key
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'parts of the implementation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: InLineTimerExamples/CountingFrames.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'FRAMES_PER_SECOND = 30 # takes 1/30th of a second for each frame'
+  prefs: []
+  type: TYPE_NORMAL
+- en: TIMER_LENGTH = 2.5
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerRunning = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This code shows what happens when the user clicks the Start button:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if startButton.handleEvent(event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerRunning = True
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'nFramesElapsed = 0 # initialize a counter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: nFramesToWait = int(FRAMES_PER_SECOND * TIMER_LENGTH)
+  prefs: []
+  type: TYPE_NORMAL
+- en: startButton.disable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerMessage.show()
+  prefs: []
+  type: TYPE_NORMAL
+- en: The program calculates that it should wait for 75 frames (2.5 seconds
+  prefs: []
+  type: TYPE_NORMAL
+- en: × 30 frames per second), and we set timerRunning to True to indicate that the
+  prefs: []
+  type: TYPE_NORMAL
+- en: timer has started. Inside the main loop, we use this code to check for when
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'the timer ends:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if timerRunning:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'nFramesElapsed = nFramesElapsed + 1 # increment the counter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if nFramesElapsed >= nFramesToWait:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: startButton.enable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerMessage.hide()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Timer ended by counting frames')
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerRunning = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the timer ends, we re-enable the Start button, hide the message,
+  prefs: []
+  type: TYPE_NORMAL
+- en: and reset the timerRunning variable. (If you prefer, you could set the count
+  prefs: []
+  type: TYPE_NORMAL
+- en: to the number of frames to wait and count down to zero instead.) This
+  prefs: []
+  type: TYPE_NORMAL
+- en: approach works fine, but it is tied to the program’s frame rate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timers **283**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Timer Event***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a second approach, we’ll take advantage of pygame’s built-in timer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pygame allows you to add a new event to the event queue—this is known
+  prefs: []
+  type: TYPE_NORMAL
+- en: as *posting* an event. Specifically, we’ll ask pygame to create and post a timer
+    event. We only need to specify how far into the future we want the event to
+  prefs: []
+  type: TYPE_NORMAL
+- en: happen. After the given amount of time, pygame will issue a timer event in
+  prefs: []
+  type: TYPE_NORMAL
+- en: the main loop, in the same way that it issues other standard events such as
+  prefs: []
+  type: TYPE_NORMAL
+- en: KEYUP, KEYDOWN, MOUSEBUTTONUP, MOUSEBUTTONDOWN, and so on. Your code will need
+  prefs: []
+  type: TYPE_NORMAL
+- en: to look for and react to this type of event.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following documentation is fro[m *https://www.pygame.org/docs/ref/*](https://www.pygame.org/docs/ref/time.html)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[*time.html*:](https://www.pygame.org/docs/ref/time.html)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pygame.time.set_timer()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Repeatedly create an event on the event queue*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: set_timer(eventid, milliseconds) -> None
+  prefs: []
+  type: TYPE_NORMAL
+- en: set_timer(eventid, milliseconds, once) -> None
+  prefs: []
+  type: TYPE_NORMAL
+- en: Set an event type to appear on the event queue every given number of
+  prefs: []
+  type: TYPE_NORMAL
+- en: milliseconds. The first event will not appear until the amount of time
+  prefs: []
+  type: TYPE_NORMAL
+- en: has passed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Every event type can have a separate timer attached to it. It is best to
+  prefs: []
+  type: TYPE_NORMAL
+- en: use the value between pygame.USEREVENT and pygame.NUMEVENTS.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To disable the timer for an event, set the milliseconds argument to 0\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the once argument is True, then only send the timer once.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Every event type in pygame is represented by unique identifier. As of
+  prefs: []
+  type: TYPE_NORMAL
+- en: pygame 2.0, you can now make a call to pygame.event.custom_type() to get an
+  prefs: []
+  type: TYPE_NORMAL
+- en: identifier for a custom event.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: InLineTimerExamples /TimerEvent.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TIMER_EVENT_ID = pygame.event.custom_type() # new in pygame 2.0'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TIMER_LENGTH = 2.5 # seconds'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When the user clicks Start, the code creates and posts the timer event:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if startButton.handleEvent(event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pygame.time.set_timer(TIMER_EVENT_ID,
+  prefs: []
+  type: TYPE_NORMAL
+- en: int(TIMER_LENGTH * 1000), True)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip disable button, show message ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The value calculated is 2,500 milliseconds. True means that the timer
+  prefs: []
+  type: TYPE_NORMAL
+- en: should only run once (generate only one event). We now need code in the
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'event loop that checks for the event happening:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if event.type == TIMER_EVENT_ID:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip enable button, hide message ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**284** Chapter 13'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since we specified True in the call to set the timer, this event is issued only
+    once. If we want to repeat events every 2,500 milliseconds, we could set
+  prefs: []
+  type: TYPE_NORMAL
+- en: the last argument in the original call to False (or just let it default to False).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To end repeated timer events, we would make a call to set_timer() and pass
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0 (zero) as the second argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Building a Timer by Calculating Elapsed Time***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The third approach for implementing a timer uses the current time as a
+  prefs: []
+  type: TYPE_NORMAL
+- en: starting point. We can then continuously query the current time and per-
+  prefs: []
+  type: TYPE_NORMAL
+- en: form a simple subtraction to calculate the elapsed time. The code shown
+  prefs: []
+  type: TYPE_NORMAL
+- en: for this example runs in the main loop; later, we’ll extract the timer-related
+  prefs: []
+  type: TYPE_NORMAL
+- en: code and build a reusable Timer class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The time module of the Python Standard Library has this function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: time.time()
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calling this function returns the current time in seconds as a floating-
+  prefs: []
+  type: TYPE_NORMAL
+- en: point number. The value returned is the number of seconds that have passed
+  prefs: []
+  type: TYPE_NORMAL
+- en: since “epoch time,” which is defined as 00:00:00 UTC on January 1, 1970\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code in Listing 13-1 creates a timer by remembering the time when
+  prefs: []
+  type: TYPE_NORMAL
+- en: the user clicks Start. While the timer is running, we check in every frame to
+  prefs: []
+  type: TYPE_NORMAL
+- en: see if the desired amount of time has elapsed. You’ve already seen the user
+  prefs: []
+  type: TYPE_NORMAL
+- en: interface, so I’ll omit those details and some of the setup code for brevity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: InLineTimerExamples/ElapsedTime.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timer in the main loop
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TIMER_LENGTH = 2.5 # seconds'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerRunning = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 - Loop forever
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 - Check for and handle events
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'for event in pygame.event.get():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if event.type == pygame.QUIT:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pygame.quit()
+  prefs: []
+  type: TYPE_NORMAL
+- en: sys.exit()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 if startButton.handleEvent(event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'timeStarted = time.time() # remember the start time'
+  prefs: []
+  type: TYPE_NORMAL
+- en: startButton.disable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerMessage.show()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Starting timer')
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerRunning = True
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timers **285**
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if clickMeButton.handleEvent(event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Other button was clicked')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 - Do any "per frame" actions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '2 if timerRunning: # if the timer is running'
+  prefs: []
+  type: TYPE_NORMAL
+- en: elapsed = time.time() - timeStarted
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3 if elapsed >= TIMER_LENGTH: # True here means timer has ended'
+  prefs: []
+  type: TYPE_NORMAL
+- en: startButton.enable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerMessage.hide()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Timer ended')
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerRunning = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9 - Clear the window
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: window.fill(WHITE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10 - Draw all window elements
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: headerMessage.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: startButton.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: clickMeButton.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerMessage.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11 - Update the window
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: pygame.display.update()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 12 - Slow things down a bit
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'clock.tick(FRAMES_PER_SECOND) # make pygame wait'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 13-1: A timer built into the main loop*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The important variables to notice in this program are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**TIMER_LENGTH** A constant that says how long we want our timer to run'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**timerRunning** A Boolean that tells us whether the timer is running'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**timeStarted** The time at which the user pressed the Start button'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the user clicks Start, timerRunning is set to True 1\. We initialize the
+  prefs: []
+  type: TYPE_NORMAL
+- en: variable startTime to the current time. We then disable the Start button and
+  prefs: []
+  type: TYPE_NORMAL
+- en: show the message below the buttons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each time through the loop, if the timer is running 2, we subtract
+  prefs: []
+  type: TYPE_NORMAL
+- en: the starting time from the current time to see how much time has elapsed
+  prefs: []
+  type: TYPE_NORMAL
+- en: since the timer started. When the amount of time elapsed becomes greater
+  prefs: []
+  type: TYPE_NORMAL
+- en: than or equal to TIMER_LENGTH, whatever action we want to happen when the
+  prefs: []
+  type: TYPE_NORMAL
+- en: time is up can happen. In this sample program, we enable the Start but-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ton, remove the bottom message, print a short text output, and reset the
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerRunning variable to False 3\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code in Listing 13-1 works fine . . . for a single timer. However, this
+  prefs: []
+  type: TYPE_NORMAL
+- en: is a book on object-oriented programming, so we want this to be scalable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To generalize the functionality, we’ll turn the timing code into a class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll take the important variables, turn them into instance variables, and
+  prefs: []
+  type: TYPE_NORMAL
+- en: split the code into methods. That way, we can define and use any number
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**286** Chapter 13'
+  prefs: []
+  type: TYPE_NORMAL
+- en: of timers in a program. The Timer class, along with other classes used to display
+    timing in pygame programs, are available in a module named
+  prefs: []
+  type: TYPE_NORMAL
+- en: pyghelpers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Installing pyghelpers**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To install pyghelpers, open the command line and enter the following two
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**python3 -m pip install -U pip --user**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**python3 -m pip install -U pyghelpers --user**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These commands download and install pyghelpers from PyPI into a
+  prefs: []
+  type: TYPE_NORMAL
+- en: folder that is available to all your Python programs. Once installed, you can
+  prefs: []
+  type: TYPE_NORMAL
+- en: use pyghelpers by including the following statement at the beginning of your
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'programs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import pyghelpers
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can then instantiate objects from the classes in the module and call
+  prefs: []
+  type: TYPE_NORMAL
+- en: the methods of those objects. The most current documentation of pyghelpers
+  prefs: []
+  type: TYPE_NORMAL
+- en: is at [*https://pyghelpers.readthedocs.io/en/latest/*](https://pyghelpers.readthedocs.io/en/latest/),
+    and the source code is available via my GitHub repository at [*https://github.com/IrvKalb/pyghelpers/*](https://github.com/IrvKalb/pyghelpers).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**The Timer Class**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Listing 13-2 contains the code of a very simple timer as a class. This code
+    is
+  prefs: []
+  type: TYPE_NORMAL
+- en: built into the pyghelpers package as the Timer class (I’ve omitted some of the
+  prefs: []
+  type: TYPE_NORMAL
+- en: documentation here for brevity).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: (Available as part of the pyghelpers module)**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timer class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'class Timer():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 def __init__(self, timeInSeconds, nickname=None, callBack=None):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.timeInSeconds = timeInSeconds
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.nickname = nickname
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.callBack = callBack
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.savedSecondsElapsed = 0.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.running = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2 def start(self, newTimeInSeconds=None):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timers **287**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if newTimeInSeconds != None:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.timeInSeconds = newTimeInSeconds
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.running = True
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.startTime = time.time()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3 def update(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if not self.running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return False
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.savedSecondsElapsed = time.time() - self.startTime
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if self.savedSecondsElapsed < self.timeInSeconds:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'return False # running but hasn''t reached limit'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else: # timer has finished'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.running = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if self.callBack is not None:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.callBack(self.nickname)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'return True # True here means that the timer has ended'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4 def getTime(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if self.running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.savedSecondsElapsed = time.time() - self.startTime
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.savedSecondsElapsed
+  prefs: []
+  type: TYPE_NORMAL
+- en: '5 def stop(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""Stops the timer"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.getTime() # remembers final self.savedSecondsElapsed'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.running = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 13-2: A simple Timer class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you create a Timer object, the only required argument is the num-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ber of seconds you want the timer to run 1\. You can optionally supply a
+  prefs: []
+  type: TYPE_NORMAL
+- en: nickname for the timer and a function or method to be called back when
+  prefs: []
+  type: TYPE_NORMAL
+- en: the time has elapsed. If you specify a callback, the nickname will be passed
+  prefs: []
+  type: TYPE_NORMAL
+- en: in when the callback happens.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You call the start() method 2 to start the timer running. The Timer
+  prefs: []
+  type: TYPE_NORMAL
+- en: object remembers the start time in the instance variable self.startTime.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The update() method 3 must be called every time through the main
+  prefs: []
+  type: TYPE_NORMAL
+- en: loop. If the timer is running and the appropriate amount of time has
+  prefs: []
+  type: TYPE_NORMAL
+- en: elapsed, this method returns True. In any other call, this method returns
+  prefs: []
+  type: TYPE_NORMAL
+- en: False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a Timer is running, calling getTime() 4 returns how much time has
+  prefs: []
+  type: TYPE_NORMAL
+- en: elapsed for that Timer. You can call the stop() method 5 to immediately
+  prefs: []
+  type: TYPE_NORMAL
+- en: stop the Timer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can now rewrite the timer demonstration program shown in
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 13-1 to use this Timer class from the pyghelpers package. Listing 13-3
+  prefs: []
+  type: TYPE_NORMAL
+- en: shows how we use a Timer object in the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**288** Chapter 13'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: TimerObjectExamples/SimpleTimerExample.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Simple timer example
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 oTimer = pyghelpers.Timer(TIMER_LENGTH) # create a Timer object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 - Loop forever
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'while True:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 - Check for and handle events
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'for event in pygame.event.get():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if event.type == pygame.QUIT:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pygame.quit()
+  prefs: []
+  type: TYPE_NORMAL
+- en: sys.exit()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if startButton.handleEvent(event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2 oTimer.start() # start the timer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: startButton.disable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerMessage.show()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Starting timer')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if clickMeButton.handleEvent(event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Other button was clicked')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 - Do any "per frame" actions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '3 if oTimer.update(): # True here means timer has ended'
+  prefs: []
+  type: TYPE_NORMAL
+- en: startButton.enable()
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerMessage.hide()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('Timer ended')
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9 - Clear the screen
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: window.fill(WHITE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10 - Draw all screen elements
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: headerMessage.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: startButton.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: clickMeButton.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: timerMessage.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11 - Update the screen
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: pygame.display.update()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 12 - Slow things down a bit
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'clock.tick(FRAMES_PER_SECOND) # make pygame wait'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 13-3: A main program that uses an instance of the Timer class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Again, I’ve cut the setup code. Before the main loop starts, we create a
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timer object 1\. When the user clicks Start, we call oTimer.start() 2 to start
+  prefs: []
+  type: TYPE_NORMAL
+- en: the timer running.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timers **289**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image 37](index-319_1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Each time through the loop, we call the update() method of the Timer
+  prefs: []
+  type: TYPE_NORMAL
+- en: object 3\. There are two ways to know when the timer ends. The simple
+  prefs: []
+  type: TYPE_NORMAL
+- en: way is to check for this call returning True. The sample code in Listing 13-3
+  prefs: []
+  type: TYPE_NORMAL
+- en: uses this approach. Alternatively, if we specified a value for callBack in the
+  prefs: []
+  type: TYPE_NORMAL
+- en: __init__() call, when the timer finished, whatever was specified as the
+  prefs: []
+  type: TYPE_NORMAL
+- en: callBack value would be called back. In most cases, I would suggest using
+  prefs: []
+  type: TYPE_NORMAL
+- en: the first approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are two advantages to using a Timer class. First, it hides the details
+  prefs: []
+  type: TYPE_NORMAL
+- en: of the timing code; you only create a Timer object when you want to, and
+  prefs: []
+  type: TYPE_NORMAL
+- en: you call the methods of that object. Second, you can create as many Timer
+  prefs: []
+  type: TYPE_NORMAL
+- en: objects as you wish, and each will run independently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Displaying Time**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Many programs will need to count and display time to the user. For exam-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ple, in a game, the elapsed time might be constantly displayed and updated,
+  prefs: []
+  type: TYPE_NORMAL
+- en: or the user might have a set amount of time to complete a task, requiring a
+  prefs: []
+  type: TYPE_NORMAL
+- en: countdown timer. I’ll demonstrate how to do both of these using the Slider
+  prefs: []
+  type: TYPE_NORMAL
+- en: Puzzle game pictured in Figure 13-3\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 13-3: The Slider Puzzle user interface*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you start this game, the tiles are randomly rearranged, and there
+  prefs: []
+  type: TYPE_NORMAL
+- en: is one empty black space. The goal of the game is to move tiles one at a time
+  prefs: []
+  type: TYPE_NORMAL
+- en: to put them in order from 1 to 15\. You are only allowed to click a tile that
+    is
+  prefs: []
+  type: TYPE_NORMAL
+- en: horizontally or vertically adjacent to the empty square. Clicking a valid tile
+  prefs: []
+  type: TYPE_NORMAL
+- en: swaps it with the space. I won’t get into the details of the full implementa-
+  prefs: []
+  type: TYPE_NORMAL
+- en: tion of the game (although the source code is available online, with the rest
+  prefs: []
+  type: TYPE_NORMAL
+- en: of the book’s resources). Instead, I will focus on how to integrate a timer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pyghelpers package contains two classes that allow programmers to
+  prefs: []
+  type: TYPE_NORMAL
+- en: track time. The first is CountUpTimer, which starts at zero and counts up indef-
+  prefs: []
+  type: TYPE_NORMAL
+- en: initely, or until you tell it to stop. The second is CountDownTimer, which starts
+  prefs: []
+  type: TYPE_NORMAL
+- en: at a given amount of time and counts down to zero. I’ve built a version of
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**290** Chapter 13'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the game for each. The first version lets the user see how long it takes them
+    to solve the puzzle. In the second one, the user is given a certain amount of
+  prefs: []
+  type: TYPE_NORMAL
+- en: time when they start the game, and if they have not completed it when the
+  prefs: []
+  type: TYPE_NORMAL
+- en: timer reaches zero, they lose the game.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***CountUpTimer***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the CountUpTimer class, you create a timer object and tell it when to
+  prefs: []
+  type: TYPE_NORMAL
+- en: start. Then, in every frame, you can call one of three different methods to
+  prefs: []
+  type: TYPE_NORMAL
+- en: get the time elapsed in different formats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Listing 13-4 contains the implementation of the CountUpTimer class from
+  prefs: []
+  type: TYPE_NORMAL
+- en: pyghelpers. The code is a good example of how the different methods of a
+  prefs: []
+  type: TYPE_NORMAL
+- en: class share instance variables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: (Available as part of the pyghelpers module)**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: CountUpTimer class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'class CountUpTimer():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self): 1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.running = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.savedSecondsElapsed = 0.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.secondsStart = 0 # safeguard'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def start(self): 2'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.secondsStart = time.time() # get the current seconds and save the value'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.running = True
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.savedSecondsElapsed = 0.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def getTime(self): 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""Returns the time elapsed as a float"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if not self.running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'return self.savedSecondsElapsed # do nothing'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.savedSecondsElapsed = time.time() - self.secondsStart
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'return self.savedSecondsElapsed # returns a float'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def getTimeInSeconds(self): 4'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""Returns the time elapsed as an integer number of seconds"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: nSeconds = int(self.getTime())
+  prefs: []
+  type: TYPE_NORMAL
+- en: return nSeconds
+  prefs: []
+  type: TYPE_NORMAL
+- en: Updated version using fStrings
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'def getTimeInHHMMSS(self, nMillisecondsDigits=0): 5'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '--- snip ---'
+  prefs: []
+  type: TYPE_NORMAL
+- en: nSeconds = self.getTime()
+  prefs: []
+  type: TYPE_NORMAL
+- en: mins, secs = divmod(nSeconds, 60)
+  prefs: []
+  type: TYPE_NORMAL
+- en: hours, mins = divmod(int(mins), 60)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if nMillisecondsDigits > 0:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timers **291**
+  prefs: []
+  type: TYPE_NORMAL
+- en: secondsWidth = nMillisecondsDigits + 3
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: secondsWidth = 2
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if hours > 0:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: output =
+  prefs: []
+  type: TYPE_NORMAL
+- en: f'{hours:d}:{mins:02d}:{secs:0{secondsWidth}.{nMillisecondsDigits}f}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif mins > 0:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: output = f'{mins:d}:{secs:0{secondsWidth}.{nMillisecondsDigits}f}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: output = f'{secs:.{nMillisecondsDigits}f}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return output
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def stop(self): 6'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""Stops the timer"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.getTime() # remembers final self.savedSecondsElapsed'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.running = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 13-4: The CountUpTimer class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The implementation depends on three key instance variables 1:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • self.running is a Boolean that indicates whether the timer is running or
+  prefs: []
+  type: TYPE_NORMAL
+- en: not.
+  prefs: []
+  type: TYPE_NORMAL
+- en: • self.savedSecondsElapsed is a float that represents the elapsed time of a
+  prefs: []
+  type: TYPE_NORMAL
+- en: timer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: • self.secondsStart is the time that the timer started running.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The client calls the start() method 2 to start a timer. In response, the
+  prefs: []
+  type: TYPE_NORMAL
+- en: method calls time.time(), stores the start time in self.secondsStart, and sets
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.running to True to indicate that the timer is running.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The client can call any of these three methods to get the elapsed time
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'associated with the timer, in different formats:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • getTime() 3 returns the elapsed time as a floating-point number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: • getTimeInSeconds() 4 returns the elapsed time as an integer number of
+  prefs: []
+  type: TYPE_NORMAL
+- en: seconds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: • getTimeInHHMMSS() 5 returns the elapsed time as a formatted string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The getTime() method calls time.time() to get the current time and
+  prefs: []
+  type: TYPE_NORMAL
+- en: subtracts the starting time to get the elapsed time. The other two meth-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ods each make a call to the getTime() method of this class to calculate the
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elapsed time, then do different processing on the output: getTimeInSeconds()'
+  prefs: []
+  type: TYPE_NORMAL
+- en: converts the time into an integer number of seconds, and getTimeInHHMMSS()
+  prefs: []
+  type: TYPE_NORMAL
+- en: formats the time into a string in *hours:minutes:seconds* format. The output
+    of each of these methods is intended to be sent to a DisplayText object (defined
+  prefs: []
+  type: TYPE_NORMAL
+- en: in the pygwidgets package) to be shown in the window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The stop() method 6 can be called to stop the timer (for example,
+  prefs: []
+  type: TYPE_NORMAL
+- en: when the user completes the puzzle).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**292** Chapter 13'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main file for this version of the Slider Puzzle game is available with the
+    rest of the book’s resources, at *SliderPuzzles/Main_SliderPuzzleCountUp.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It instantiates a CountUpTimer object before the main loop begins and saves
+  prefs: []
+  type: TYPE_NORMAL
+- en: it in the variable oCountUpTimer. It then calls the start() method right away.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It also creates a DisplayText field to display the time. Each time through the
+  prefs: []
+  type: TYPE_NORMAL
+- en: main loop, the main code calls the getTimeInHHMMSS() method and shows the
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'result in the field:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'timeToShow = oCountUpTimer.getTimeInHHMMSS() # ask the Timer object for the
+    elapsed time oTimerDisplay.setValue(''Time: '' + timeToShow) # put that into a
+    text field'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The variable oTimerDisplay is an instance of the pygwidgets.DisplayText
+  prefs: []
+  type: TYPE_NORMAL
+- en: class. The setValue() method of the DisplayText class is optimized to check
+  prefs: []
+  type: TYPE_NORMAL
+- en: whether the new text to be displayed is the same as the previous text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Therefore, even though we are telling the field to display the amount of
+  prefs: []
+  type: TYPE_NORMAL
+- en: time 30 times every second, there is not much work done until the time
+  prefs: []
+  type: TYPE_NORMAL
+- en: changes, once per second.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The game code checks for a solved puzzle and, when the puzzle is
+  prefs: []
+  type: TYPE_NORMAL
+- en: solved, calls the stop() method to freeze the time. If the user clicks the
+  prefs: []
+  type: TYPE_NORMAL
+- en: Restart button to start a new game, the game calls start() to restart the
+  prefs: []
+  type: TYPE_NORMAL
+- en: timer object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***CountDownTimer***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The CountDownTimer class has some subtle differences. Instead of counting up
+  prefs: []
+  type: TYPE_NORMAL
+- en: from zero, you initialize a CountDownTimer by providing a starting number of
+  prefs: []
+  type: TYPE_NORMAL
+- en: seconds, and it counts down from that value. The interface for creating a
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'CountDownTimer looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: CountDownTimer(nStartingSeconds, stopAtZero=True, nickname=None,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'callBack=None):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is a second optional parameter, stopAtZero, that defaults to True—
+  prefs: []
+  type: TYPE_NORMAL
+- en: which assumes that you want the timer to stop when it reaches zero. You can
+  prefs: []
+  type: TYPE_NORMAL
+- en: also optionally specify a function or method as a callback when the timer
+  prefs: []
+  type: TYPE_NORMAL
+- en: reaches zero. Lastly, you can supply a nickname to be used if and when a
+  prefs: []
+  type: TYPE_NORMAL
+- en: callback is made.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The client calls the start() method to begin counting down.
+  prefs: []
+  type: TYPE_NORMAL
+- en: From the client’s point of view, the getTime(), getTimeInSeconds(),
+  prefs: []
+  type: TYPE_NORMAL
+- en: getTimeInHHMMSS(), and stop() methods appear identical to their counter-
+  prefs: []
+  type: TYPE_NORMAL
+- en: parts in the CountUpTimer class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: CountDownTimer has an additional method named ended(). The applica-
+  prefs: []
+  type: TYPE_NORMAL
+- en: tion needs to call the ended() method every time through its main loop. It
+  prefs: []
+  type: TYPE_NORMAL
+- en: returns False while the timer is active, but returns True when the timer ends
+  prefs: []
+  type: TYPE_NORMAL
+- en: (that is, reaches zero).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The countdown version of the Slider Puzzle game’s main file is available
+  prefs: []
+  type: TYPE_NORMAL
+- en: with the book’s resources, at *SliderPuzzles/Main_SliderPuzzleCountDown.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code is very similar to the previous version that counts up, but
+  prefs: []
+  type: TYPE_NORMAL
+- en: this version creates an instance of CountDownTimer instead and supplies a set
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timers **293**
+  prefs: []
+  type: TYPE_NORMAL
+- en: number of seconds it allows to solve the puzzle. It also calls getTimeInHHMMSS(2)
+    every frame and updates the time with two decimal digits. Finally, it includes
+  prefs: []
+  type: TYPE_NORMAL
+- en: a call to the ended() method in every frame to see if the time has run out.
+    If
+  prefs: []
+  type: TYPE_NORMAL
+- en: the timer ends before the user has solved the puzzle, it plays a sound and
+  prefs: []
+  type: TYPE_NORMAL
+- en: displays a message telling the user that they ran out of time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter gave you a number of ways to handle timing in programs. I
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'discussed three different approaches: first by counting frames, second by'
+  prefs: []
+  type: TYPE_NORMAL
+- en: creating a custom event, and finally by remembering a start time and sub-
+  prefs: []
+  type: TYPE_NORMAL
+- en: tracting it from the current time to get the time elapsed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the third approach, we built a generic reusable Timer class (which
+  prefs: []
+  type: TYPE_NORMAL
+- en: you can find in the pyghelpers package). I also showed two additional classes
+  prefs: []
+  type: TYPE_NORMAL
+- en: from this package, CountUpTimer and CountDownTimer, that can be used to han-
+  prefs: []
+  type: TYPE_NORMAL
+- en: dle timing in programs where you want to show a timer to the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**294** Chapter 13'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**14**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**A N I M A T I O N**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter is about animation—
+  prefs: []
+  type: TYPE_NORMAL
+- en: s pecifically, traditional image animation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On a very simple level, you can think of
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'this like a flip-book: a series of images, each'
+  prefs: []
+  type: TYPE_NORMAL
+- en: slightly different from the previous one, that are
+  prefs: []
+  type: TYPE_NORMAL
+- en: shown in succession. The user sees each image for a
+  prefs: []
+  type: TYPE_NORMAL
+- en: short amount of time and experiences the illusion of
+  prefs: []
+  type: TYPE_NORMAL
+- en: movement. Animation provides a good opportunity
+  prefs: []
+  type: TYPE_NORMAL
+- en: for building a class because the mechanics of display-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ing the images over time are well understood and
+  prefs: []
+  type: TYPE_NORMAL
+- en: easily coded.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To show the general principles, we’ll begin by implementing two anima-
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'tion classes: a SimpleAnimation class based on a series of individual image
+    files,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: and a SimpleSpriteSheetAnimation class built using a single file that contains
+  prefs: []
+  type: TYPE_NORMAL
+- en: a sequence of many images. Then I’ll show you two more-robust animation classes
+    from the pygwidgets package, Animation and SpriteSheetAnimation, and
+  prefs: []
+  type: TYPE_NORMAL
+- en: explain how they are built using a common base class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Building Animation Classes**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The basic idea behind an animation class is relatively straightforward. The
+  prefs: []
+  type: TYPE_NORMAL
+- en: client will provide an ordered set of images and an amount of time. The cli-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ent code will tell the animation when to start playing and will periodically
+  prefs: []
+  type: TYPE_NORMAL
+- en: tell the animation to update itself. The images in the animation will be dis-
+  prefs: []
+  type: TYPE_NORMAL
+- en: played in order, each for the given amount of time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***SimpleAnimation Class***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The general technique is to begin by loading the complete set of images,
+  prefs: []
+  type: TYPE_NORMAL
+- en: storing them in a list, and displaying the first image. When the client tells
+  prefs: []
+  type: TYPE_NORMAL
+- en: the animation to start, the animation begins tracking time. Each time the
+  prefs: []
+  type: TYPE_NORMAL
+- en: object is told to update itself, our code checks to see if the specified amount
+  prefs: []
+  type: TYPE_NORMAL
+- en: of time has passed and, if so, displays the next image in the sequence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the animation is finished, we display the first image again.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Creating the Class**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Listing 14-1 contains the code of a SimpleAnimation class, which handles an
+  prefs: []
+  type: TYPE_NORMAL
+- en: animation made up of separate image files. To keep things clearly orga-
+  prefs: []
+  type: TYPE_NORMAL
+- en: nized, I strongly recommend that you place all the image files associated
+  prefs: []
+  type: TYPE_NORMAL
+- en: with an animation in a subfolder inside an *images* folder inside your project
+    folder. The examples given here will use this structure, and the associated
+  prefs: []
+  type: TYPE_NORMAL
+- en: art and main code are available with the rest of the book’s resources.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**File: SimpleAnimation/SimpleAnimation.py**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: SimpleAnimation class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: import pygame
+  prefs: []
+  type: TYPE_NORMAL
+- en: import time
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class SimpleAnimation():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, window, loc, picPaths durationPerImage): 1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.window = window
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.loc = loc
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.imagesList = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for picPath in picPaths:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'image = pygame.image.load(picPath) # load an image'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'image = pygame.Surface.convert_alpha(image) 2 # optimize blitting'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.imagesList.append(image)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.playing = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.durationPerImage = durationPerImage
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.nImages = len(self.imagesList)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**296** Chapter 14'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.index = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def play(self): 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if self.playing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.playing = True
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.imageStartTime = time.time()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.index = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def update(self): 4'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if not self.playing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return
+  prefs: []
+  type: TYPE_NORMAL
+- en: How much time has elapsed since we started showing this image
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: self.elapsed = time.time() - self.imageStartTime
+  prefs: []
+  type: TYPE_NORMAL
+- en: If enough time has elapsed, move on to the next image
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'if self.elapsed > self.durationPerImage:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.index = self.index + 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if self.index < self.nImages: # move on to next image'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.imageStartTime = time.time()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else: # animation is finished'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.playing = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.index = 0 # reset to the beginning'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def draw(self): 5'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Assumes that self.index has been set earlier - in the update() method.
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: It is used as the index into the imagesList to find the current image.
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'theImage = self.imagesList[self.index] # choose the image to show'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'self.window.blit(theImage, self.loc) # show it'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 14-1: The SimpleAnimation class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When a client instantiates a SimpleAnimation object, it must pass in the
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**window** The window to draw into.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**loc** The location in the window to draw the images.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**picPaths** A list or tuple of paths to images. The images will be dis-'
+  prefs: []
+  type: TYPE_NORMAL
+- en: played in the order given here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**durationPerImage** How long (in seconds) to show each image.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the __init__() method 1, we save these parameter variables into sim-
+  prefs: []
+  type: TYPE_NORMAL
+- en: ilarly named instance variables. The method loops through the list of paths,
+  prefs: []
+  type: TYPE_NORMAL
+- en: loads each image, and saves the resulting images into a list. A list is a perfect
+  prefs: []
+  type: TYPE_NORMAL
+- en: way to represent an ordered set of images. The class will use the self.index
+  prefs: []
+  type: TYPE_NORMAL
+- en: variable to keep track of the current image in the list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The format of an image in a file is different from the format of an image
+  prefs: []
+  type: TYPE_NORMAL
+- en: when displayed on the screen. The call to convert_alpha() 2 converts from the
+  prefs: []
+  type: TYPE_NORMAL
+- en: file format to the screen format to optimize performance when showing an
+  prefs: []
+  type: TYPE_NORMAL
+- en: image in the window. The actual drawing is done later, in the draw() method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Animation **297**
+  prefs: []
+  type: TYPE_NORMAL
+- en: The play() method 3 starts an animation running. It first checks to see if the
+    animation is already running, and if it is, the method just returns.
+  prefs: []
+  type: TYPE_NORMAL

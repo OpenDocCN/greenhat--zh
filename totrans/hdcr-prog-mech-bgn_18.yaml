@@ -1,0 +1,1082 @@
+- en: '14'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: LINEAR EQUATIONS
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Many engineering problems require resolving a system of linear equations. These
+    equations arise in structural analysis, electric circuits, statistics, and optimization
+    problems, just to name a few. Implementing algorithms to solve these ubiquitous
+    systems of equations is key for our *Mechanics* project to deal with real-world
+    engineering problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we’ll explore the concept of *numerical methods*: existing
+    algorithms that use computers to solve systems of equations. We’ll implement a
+    powerful method to solve systems of linear equations: the Cholesky decomposition.
+    We’ll use this method when we need to solve the big systems of equations from
+    the structural analysis problems in [Part V](part05.xhtml#part05) of the book.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Systems of Linear Equations**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A linear equation with *n* unknowns *x*[1], *x*[2], …, *x*[*n*] can be expressed
+    as shown in [Equation 14.1](ch14.xhtml#ch14eqa01).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, *m*[1], *m*[2], …, *m*[*n*] are the equation’s coefficients, known numbers
+    that multiply each of the unknowns, and *b* is a known number that doesn’t multiply
+    any unknown. We call this last number *b* the *free term*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the unknowns are only multiplied by a scalar, added, or subtracted, then
+    we say the equation is *linear*. The coefficients are always known quantities.
+    An alternative way of expressing a linear equation is shown here,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0360-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where *m*[*i*] is the coefficients, *x*[*i*] is the unknowns, and *b* is the
+    free term.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By contrast, a nonlinear equation includes things like unknowns with an exponent
+    (*x*³), trigonometric functions (sin(*x*)), or the product of several unknowns
+    (*x*[1] ⋅ *x*[2]). These equations are considerably harder to solve than linear
+    ones, so we’ll stay focused on linear equations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A system of linear equations has the form shown in [Equation 14.2](ch14.xhtml#ch14eqa02).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, a coefficient *m*[*i,j*] is the term that multiplies the *j*^(*th*) unknown
+    in the *i*^(*th*) equation. These systems can be conveniently expressed in their
+    matrix form as shown in [Equation 14.3](ch14.xhtml#ch14eqa03).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, [*M*] is the matrix of coefficients,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0360-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'and [*x*] and [*b*] are the unknown and the free-term column vectors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0360-03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'A solution for [Equation 14.3](ch14.xhtml#ch14eqa03) is a set of numbers *x*[1],
+    *x*[2], …, *x*[*n*] that satisfies all *n* equations. Finding solutions for big
+    systems of equations by hand can take a long time, but don’t worry: there are
+    plenty of algorithms for solving systems like this using a computer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A quick note on nomenclature. We’ll use uppercase letters inside square brackets
+    to denote matrices: [*M*]. The items in a matrix will be named using the same
+    letter used for the matrix but lowercase. Items will include as a subscript two
+    comma-separated numbers, which are the row and column indices of their position
+    inside the matrix. For example, the number in row 3 and column 5 of the matrix
+    [*M*] will be referred to as *m*[3, 5]. Column and row vectors are denoted as
+    lowercase letters inside square brackets: [*x*]. Remember that column and row
+    vectors are also matrices.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Numerical Methods**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*Numerical methods* are algorithms that find an approximate solution for a
+    system of equations using the computational power of a computer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are numerical methods designed to solve systems of linear, nonlinear,
+    and differential systems of equations. Most numerical methods, nevertheless, are
+    limited to solving specific types of systems. For instance, the Cholesky decomposition
+    works only with linear systems whose coefficient matrix is symmetric and positive
+    definite (we’ll see what this means in a bit). If we need to solve a nonlinear
+    system of equations, or even one that is linear but with a nonsymmetric coefficient
+    matrix, Cholesky decomposition simply won’t work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two big families of numerical methods: *direct* and *iterative*.
+    Direct methods use algebraic modifications on the original system to solve it.
+    Iterative methods, on the other hand, start with an approximate solution for the
+    system and improve it step-by-step until the solution has the desired accuracy.
+    The Cholesky decomposition is a direct numerical method.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Numerical methods are a big topic: entire books have been written about it.
+    There are many technical details about numerical methods that we won’t be covering
+    here. But this isn’t a theory book; we’re much more interested in the practice,
+    so we’ll implement an algorithm that solves the kinds of systems of equations
+    that’ll arise in the structural analysis application we’ll create in the next
+    part of the book. In this case, that means we’ll be working with linear systems
+    with symmetric, positive-definite coefficient matrices.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Cholesky Decomposition**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The *Cholesky decomposition* is a direct (noniterative) method that solves linear
+    systems of equations provided their [*M*] (the coefficient matrix) is *symmetric*
+    and *positive definite*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A symmetric matrix [*M*] is one that is equal to its transpose: [*M*] = [*M*]^′.
+    That is the same as saying that the values in the matrix are symmetric with respect
+    to the main diagonal. In a symmetric matrix, every row contains the same values
+    as the column with the same index, and vice versa. Note that to be symmetric,
+    a matrix needs to be square. The following is an example of a symmetric matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0361-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A square matrix [*M*] with *n* rows and columns is *positive definite* if for
+    any column vector [*x*] made of *n* real numbers (with the exception of a vector
+    filled with zeros), the expression in [Equation 14.4](ch14.xhtml#ch14eqa04) is
+    satisfied.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: If you find a nonzero vector [*x*] that doesn’t satisfy the previous equation,
+    then the matrix [*M*] is not positive definite.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can also say that a matrix is positive definite if it’s symmetric and all
+    its eigenvalues are positive. If you remember the process of obtaining the eigenvalues
+    of a matrix, you might agree that it’s painful and a bit boring. In either case,
+    proving that [*x*]^′[*M*][*x*] > 0 for every possible [*x*] or obtaining all eigenvalues
+    of the matrix and making sure all are positive is an involved process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We are going to skip all that technical complexity and won’t be demonstrating
+    that the matrices we’ll work with are positive definite. We’ll apply the Cholesky
+    factorization to a problem that is well-known for yielding systems of equations
+    with a symmetric and positive-definite matrix: truss structure analysis using
+    the direct stiffness method. If you ever need to apply this algorithm to any another
+    problem, you’ll first need to figure out whether the system of equations derived
+    for it has a matrix that Cholesky can work with. If it’s not the case, don’t worry:
+    there are plenty of other numerical methods that you can use.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After we implement Cholesky’s algorithm together, I hope you feel empowered
+    to implement any other numerical method on your own. As you’ll see, the most powerful
+    resource we have at our disposal to make sure we get these tricky algorithms right
+    is unit testing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***LU Factorization Methods***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Cholesky is a computation method from the family of so-called *LU* factorization
+    or decomposition methods. An *LU* factorization of a given square matrix [*M*]
+    has the form shown in [Equation 14.5](ch14.xhtml#ch14eqa05).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, [*L*] is a *lower-triangular matrix*, and [*U*] is an *upper-triangular
+    matrix*. A lower-triangular matrix is one where all nonzero values are on and
+    below the main diagonal. Conversely, an upper-triangular matrix has the nonzero
+    values on and above the main diagonal. Here’s an example of a lower-and an upper-triangular
+    matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0362-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Every *nonsingular matrix* (a matrix that has an inverse) always has an *LU*
+    factorization. For example, the matrices from the previous example are the *LU*
+    factorization for the matrix
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00363-p1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'which you can verify by multiplying the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00363-p2.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The Cholesky algorithm will provide us with a lower-and an upper-triangular
+    matrix. Besides Cholesky, there are two well-known methods for obtaining the factorization
+    of any nonsingular matrix: the Doolittle and Crout algorithms. These algorithms
+    define the formulas necessary to compute the *l*[*i,j*] and *u*[*i,j*] values
+    for the lower- and upper-triangular matrices. The benefit of these methods is
+    that they work for any kind of matrix, not just symmetric, positive-definite matrices.
+    We won’t be covering them here, but I encourage you to take a look and try to
+    implement one of them yourself in our *Mechanics* project. You may want to try
+    that as an exercise after we’ve implemented Cholesky’s algorithm.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s fair to ask, why not use the Doolittle or Crout algorithms that work with
+    every nonsingular matrix instead of the more restrictive Cholesky? For symmetric
+    and positive-definite matrices, Cholesky’s decomposition is about twice as fast
+    as these other algorithms. Since we’ll use the method with the type of matrices
+    required, we’ll want to benefit from the execution speed offered by Cholesky’s
+    method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once we obtain the *LU* factorization for the matrix, we can solve our system
+    of equations in two steps. Suppose our original system was as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[*M*][*x*] = [*b*]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After factorizing [*M*], we have [Equation 14.6](ch14.xhtml#ch14eqa06).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We can extract two systems from [Equation 14.6](ch14.xhtml#ch14eqa06) if we
+    take the product [*U*][*x*] and substitute it with a new unknown vector [*y*]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0363-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We now have a lower-triangular matrix system, as shown in [Equation 14.7](ch14.xhtml#ch14eqa07),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and an upper-triangular matrix system, as shown in [Equation 14.8](ch14.xhtml#ch14eqa08).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'By first solving [Equation 14.7](ch14.xhtml#ch14eqa07), we find [*y*], which
+    plugged into [Equation 14.8](ch14.xhtml#ch14eqa08) allows us to compute the unknown
+    vector [*x*]: the system’s solution. Both [Equation 14.7](ch14.xhtml#ch14eqa07)
+    and [Equation 14.8](ch14.xhtml#ch14eqa08) are systems with a triangular matrix,
+    and they can be easily solved by forward and backward substitution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Take this system of equations whose coefficient matrix is lower triangular:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00364-p1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The first unknown *y*[1] can be computed from the first equation as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0364-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: From the second equation we have the following,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0364-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'which can be solved, as we already computed the value for *y*[1] in the previous
+    step. We do the same for the third equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0364-03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We have the values for *y*[1] and *y*[2], so the value for *y*[3] can be computed.
+    This process is known as *forward substitution*. A formula to obtain the *y*^(*ith*)
+    solution term using forward substitution is shown in [Equation 14.9](ch14.xhtml#ch14eqa09)
+    (using zero-based indices).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In a system whose coefficient matrix is upper triangular, we can use a similar
+    substitution process, but starting from the bottom this time. The process is called
+    *backward substitution*. This time we have the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0364-04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Starting from the last equation, we can compute *x*[3]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0364-05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'With this value we can move to the second equation to obtain *x*[2]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0365-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Lastly, from the first equation in the system, we have this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0365-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: For the backward substitution, the formula to compute the *x*^(*ith*) term is
+    described by [Equation 14.10](ch14.xhtml#ch14eqa10), with *n* being the size of
+    the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We’ll need to implement these formulas in our code soon. You’ll see that it’s
+    actually simpler than it looks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Understanding Cholesky***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'As we discussed, the Cholesky decomposition is an *LU* method that works with
+    symmetric, positive-definite matrices. Thanks to those properties, a matrix [*M*]
+    can be decomposed into an [*L*][*U*] form where the upper-triangular matrix is
+    the transpose of the lower-triangular one: [*U*] = [*L*]^′. This means we only
+    need to compute the lower-triangular matrix [*L*]: [*U*] is just its transpose.
+    Using the Cholesky method, the [*M*] matrix factorization has the form shown in
+    [Equation 14.11](ch14.xhtml#ch14eqa11).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: So, the system of equations now looks like [Equation 14.12](ch14.xhtml#ch14eqa12).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In this case, we obtain the two systems we need to solve by substituting [*L*]^′[*x*]
+    with [*y*]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f00365-p1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: As we already know, this transformation yields a lower system, which we’ll solve
+    first using forward substitution (see [Equation 14.13](ch14.xhtml#ch14eqa13)),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and then using an upper system that we’ll solve by backward substitution to
+    obtain the solution vector [*x*] (see [Equation 14.14](ch14.xhtml#ch14eqa14)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa14.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Given a symmetric, positive-definite matrix [*M*], we can compute the lower-triangular
+    matrix terms of its Cholesky decomposition, the *l*[*i,j*] terms, using the formulas
+    in [Equation 14.15](ch14.xhtml#ch14eqa15).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/14eqa15.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[Equation 14.15](ch14.xhtml#ch14eqa15) may look intimidating, but it’s actually
+    not that complicated. The best way to see this is by doing an exercise by hand.
+    Grab a pen and some paper and let’s factor a matrix together.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***A Factorization by Hand***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Given the symmetric and positive-definite matrix
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0366-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: let’s find its Cholesky factorization, a lower-triangular matrix [*L*],
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0366-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: such that [*M*] = [*L*][*L*]^′. To compute the *l*[*i,j*] terms, we use [Equation
+    14.15](ch14.xhtml#ch14eqa15). Don’t forget that index *i* represents the rows
+    of the matrix, and *j* represents its columns. Let’s do it step-by-step.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Step 1:** *i* = 0,*j* = 0\. Since *i* = *j*, we use the first formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0366-03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Note that the summation is struck through because it doesn’t yield any term.
+    This is because the summation’s end value *k* = –1 is smaller than the start one
+    *k* = 0\. As you probably know, for the summation to yield any term, the end value
+    for *k* (the iterating variable) needs to be equal to or greater than the start
+    value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Step 2:** *i* = 1,*j* = 0\. In this case, *i*≠*j*, so we use the second formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0366-04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Step 3:** *i* = 1,*j* = 1.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0367-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Step 4:** *i* = 2,*j* = 0.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0367-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Step 5:** *i* = 2,*j* = 1.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0367-03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Step 6:** *i* = 2,*j* = 2.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0367-04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'If we combine all the computed *l*[*i,j*] values, the resulting matrix is as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0367-05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'This means that the original system’s matrix [*M*] can be factorized as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0367-06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: You can do the matrix multiplication to verify that the product [*L*][*L*]^′
+    is actually equal to [*M*]. To complete the exercise, let’s suppose this matrix
+    is the coefficient matrix of a system of equations and solve it using the forward
+    and backward substitutions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***A Resolution by Hand***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Let’s suppose the matrix we decomposed earlier into its [*L*][*L*]^′ form is
+    part of the following system of equations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0367-07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We need to find the values of *x*[1], *x*[2], and *x*[3] that satisfy all three
+    equations. Using the Cholesky factorization we just obtained, we can rewrite the
+    system as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0368-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The first of the two subsystems we have to solve, [*L*][*y*] = [*b*], results
+    from substituting [*L*]^′[*x*] with a new unknown vector [*y*]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0368-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'This results in the first system (the lower system):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0368-03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We have to solve this system using the forward-substitution formula from [Equation
+    14.9](ch14.xhtml#ch14eqa09).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Lower System: Forward Substitution**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Let’s apply [Equation 14.9](ch14.xhtml#ch14eqa09) step-by-step:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Step 1:** *i* = 0.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0368-04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Step 2:** *i* = 1.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0368-05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Step 3:** *i* = 2.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0368-06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Thus, the solution for the first system is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0369-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'With this solution, we can use backward substitution to compute [*x*]: the
+    solution to our system of equations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Upper System: Backward Substitution**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Let’s use [Equation 14.10](ch14.xhtml#ch14eqa10) to compute the solution vector
+    step-by-step. This time we have to solve the following system using the backward-substitution
+    process:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0369-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Since the substitution is backward, we have to start from the last row (*i*
+    = 2) and go up to the first one (*i* = 0).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Step 1:** *i* = 2.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0369-03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Step 2:** *i* = 1.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0369-04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Step 3:** *i* = 0.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0369-05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Then, the solution to the initial system is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0369-06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'You can test if the solution is correct by checking if the equality holds:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0369-07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Now that we know how the Cholesky algorithm works and we’ve worked out an example
+    by hand, let’s implement the algorithm in our code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Implementing Cholesky***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Start by creating a new file in the *eqs* package named *cholesky.py*. In it,
+    include the cholesky_solve function in [Listing 14-1](ch14.xhtml#ch14lis1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 14-1: Cholesky decomposition algorithm*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This function takes a Matrix and a Vector as inputs. These are the coefficient
+    matrix and free vector of a system: the [*M*] and the [*b*] from the system of
+    equations [*M*][*x*] = [*b*]. The returned Vector is [*x*], the solution to the
+    system found applying Cholesky’s method.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This cholesky_solve function defines the highest-level algorithm, which has
+    three main steps plus a validation of the input system. We haven’t implemented
+    any of these functions yet; we’ll get to this shortly. The following are the three
+    main steps to the algorithm:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: lower_matrix_decomposition Obtain [*L*], the lower-triangular matrix, by applying
+    [Equation 14.15](ch14.xhtml#ch14eqa15).
+  prefs: []
+  type: TYPE_NORMAL
+- en: solve_lower_sys Solve the first subsystem, the lower-triangular system, by applying
+    the forward-substitution technique (see [Equation 14.9](ch14.xhtml#ch14eqa09)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: solve_upper_sys Solve the second subsystem, the upper-triangular system, by
+    applying the backward-substitution technique (see [Equation 14.10](ch14.xhtml#ch14eqa10)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: From the function names, it’s easy enough to see what the code in cholesky _solve
+    is doing. Note that we broke the function into several smaller functions. If we
+    had thrown all the code for the Cholesky resolution into the cholesky_solve function,
+    the result would be a long pile of source code with no readily identifiable structure.
+    This code would be extremely hard to understand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a general rule, you want to divide your big algorithms into smaller subalgorithms,
+    each contained in a small function with a descriptive name.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice the visibility of the subfunctions used by cholesky_solve. All the subfunctions
+    are public. This is so that they can be unit tested individually. The resolution
+    algorithm is a bit complex; we’re safer if we know that each of its subparts does
+    its job without errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Validating the System**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Let’s implement a function that validates that the system is square and has
+    a number of columns equal to the size of the vector. Enter the code for the validate_system
+    function, found in [Listing 14-2](ch14.xhtml#ch14lis2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 14-2: System validation*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first check that the matrix has the same number columns as the vector’s length.
+    If this condition isn’t satisfied, the system can’t be solved, so we raise an
+    error. The same applies if the system’s matrix is not square.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re not doing any check to ensure the matrix is symmetric or positive definite;
+    if the matrix passed to our function isn’t, the function will simply fail at some
+    point with a by-zero division error or something similar. It’d be a nice idea
+    to add those guards, at least the check for symmetry, but checking that the system’s
+    matrix is positive definite may be more challenging. The symmetry check is easy
+    to implement, but it has the downside of being computationally expensive. I encourage
+    you to think about ways of doing these checks and maybe add them in your code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now we’re going to do something a little backward. We’re going to start with
+    a unit test instead of the code itself. This is so that we know when our code
+    is ready: once the tests pass. We can keep running the test to check whether the
+    logic we’re writing is ready or not; we can refactor it until it looks readable,
+    with the safety net of the test that will warn us if we did something wrong. This
+    technique where the test is written before the code is known as *test-driven development*,
+    or TDD for short.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll start by looking at the system of equations we’ll use in the unit tests.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**System of Equations for Testing**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: To make sure we implement all the logic without bugs, we’re going to use tests
+    for each of the subfunctions in the Cholesky algorithm. We’ll also implement a
+    test to check that all the subfunctions work together to compute the final solution.
+    For these tests we want to use a system of equations whose solution we know in
+    advance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s use the following size 4 system:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0372-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'For this system’s matrix [*M*], the Cholesky [*L*][*L*]^′ factorization is
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0372-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The solution of the lower system,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0372-03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'is the following vector:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0372-04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The final solution, resulting from the resolution of the upper system,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0372-05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'is the following vector:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0372-06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: It’s a good idea to take some time to check all those numbers and make sure
+    you understand the resolution process. Once you’re solid on the fundamentals of
+    the process, let’s code it up, starting with a unit test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Lower Matrix Factorization**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: As we’re about to implement the most complex algorithm in the book so far, let’s
+    first write a unit test. We’ll know our factorization logic is well implemented
+    once the test passes. Chances are we’ll need to debug our code, and having a test
+    will help.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Create a new file for our test, *cholesky_test.py*, and place it inside the
+    *eqs/tests* directory. Then enter the test code in [Listing 14-3](ch14.xhtml#ch14lis3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 14-3: Testing the lower matrix factorization*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This test defines both the original matrix, sys_matrix, and the expected decomposition,
+    low_matrix. Using a function we haven’t defined yet, lower _matrix_decomposition,
+    we compute the decomposition matrix and compare it against the known solution.
+    Your IDE should complain that you’re trying to import a function it can’t find
+    in the *eqs.cholesky* module:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cannot find reference 'lower_matrix_decomposition' in 'cholesky.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s implement the function. Go back to the *cholesky.py* file, and after validate_system,
+    enter the code in [Listing 14-4](ch14.xhtml#ch14lis4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 14-4: Lower matrix decomposition*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start by storing the size of the system in a variable named size. The size
+    is the number of rows or columns—it doesn’t matter which since the matrix is square.
+    Then we create a new square matrix, low_mat, of that same size. Recall that our
+    matrices are filled with zeros when they’re instantiated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm has two main nested loops. These loops iterate through all the
+    positions in the matrix that are in the main diagonal and below it, that is, all
+    *m*[*i,j*] where *i* ≥ *j*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Don’t forget that Python’s* range(n) *function generates a sequence starting
+    from 0 up to* n *– 1, not* n.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Inside the j loop, we store the value of the system’s matrix at position (*i,j*)
+    in m_ij ➊. Then, we distinguish between the case where we’re on the main diagonal
+    (i == j) or below it using an if else statement. Recall that the formula to compute
+    a term in the main diagonal of the decomposition matrix is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0374-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We used that expression to compute the value, which we store in diag _val ➋
+    and set in the matrix ➌. In the calculation we used the m_ij value and sq_sum.
+    The latter is initialized as 0 for every new iteration of *i* (for each row) and
+    updated for every new value below the main diagonal ➏.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the case where we’re under the main diagonal (i > j, the else branch),
+    the formula to compute the *l*[*i,j*] term is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0375-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Note that to compute this *l*[*i,j*] value, we need to have *l*[*j,j*], which
+    is a value from a previous row since *i* > *j*. The first term that we compute
+    is the sum of *l*[*i,k*]*l*[*j,k*] with *k* going from 0 to *j –* 1\. The loop
+    in ➍ does exactly this. Before entering the loop, we initialize a variable non_diag_sum
+    to zero. Inside the loop this variable gets added to the product of l_ik and l_jk
+    for every value of *k*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With non_diag_sum computed, we have everything we need. The value of *l*[*j,j*]
+    is extracted from low_mat and stored in variable l_jj. Then the value for the
+    decomposition is computed and stored in variable non_diag_val ➎. This value is
+    first used to update the sq_sum ➏ and then stored in the decomposition matrix
+    ➐.
+  prefs: []
+  type: TYPE_NORMAL
+- en: That’s it. Run the test we wrote earlier and make sure your code passes it.
+    Don’t worry if it doesn’t; in fact, it’s a bit hard to get this algorithm right
+    the first time you write it, but that’s exactly why we implemented the test first.
+    Use the test to debug the code and carefully compare what you wrote with the printed
+    version of the code in this book. You can also refer to the code distributed with
+    the book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To run the test in the shell, use this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: We’ve obtained the [*L*] decomposition matrix using Cholesky’s algorithm. Let’s
+    now implement the resolution of the lower and upper systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Lower System Resolution**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'To solve the lower-triangular system using forward substitution, we need to
+    implement the algorithm in [Equation 14.9](ch14.xhtml#ch14eqa09). We’ll repeat
+    the formula here for convenience:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0375-02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We’re going to follow the same approach as before and write the test before
+    we write the main code. In the *cholesky_test.py* file, enter the new test in
+    [Listing 14-5](ch14.xhtml#ch14lis5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 14-5: Testing the lower system resolution*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ve first imported the Vector class from eqs.vector. Then we’ve added two
+    new vectors that we need for the new test: sys_vec ➊, which is the free vector
+    of the system of equations, and low_solution ➋, the expected solution for the
+    lower-triangular system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the test in place ➌, let’s now implement the missing solve_lower_sys function.
+    After the factorization function in the *cholesky.py* file, enter the code in
+    [Listing 14-6](ch14.xhtml#ch14lis6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 14-6: Solving the lower system*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first thing we do is save the size of the system in a variable size and
+    create the solution vector of that size. The main loop that iterates through all
+    values in the sys_vector is the i loop ➊. In it, we start by initializing a sum
+    to zero. The j loop ➋ iterates through all values from 0 to *i –* 1, updating
+    the sum for each iteration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Having obtained the sum part of the equation, we can compute the solution value,
+    which is stored in solution_val ➌. Then we set in the solution vector in the next
+    line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Run the two tests in *cholesky_test.py* to make sure both pass. It seems reasonable
+    that the first one will pass: we haven’t modified the factorization function in
+    any way, but it’s good practice to run all tests in the file, just in case we
+    modified something that we shouldn’t have. I hope the second test also passes
+    for you, in which case you got the new function right! You’ll need to debug your
+    code otherwise. Take your time to do so; it’s a great exercise.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To run the tests from the shell, use this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s now work out the upper system resolution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Upper System Resolution**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The resolution of the upper-triangular system using backward substitution can
+    be carried out using [Equation 14.10](ch14.xhtml#ch14eqa10). As a reminder, the
+    formula is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0377-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'One important thing to recall is that the upper-triangular matrix [*U*], with
+    values *u*[*i,j*], is the transpose of Cholesky’s lower-triangular decomposition:
+    [*L*]^′.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once again we’ll start with the test. Open your *cholesky_test.py* file and
+    enter the new test in [Listing 14-7](ch14.xhtml#ch14lis7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 14-7: Testing the upper system resolution*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this new test ➋, we call solve_upper_sys (still to be written), passing it
+    in both the factorized matrix low_matrix and the lower system solution low_solution.
+    Then, we assert that the vector we get returned is the one we expect, which we’ve
+    defined as part of the test’s data in the solution variable ➊.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’re now ready to implement the last part to complete Cholesky’s method: the
+    resolution of the upper system. Open the *cholesky.py* file again and enter the
+    solve_upper_sys function in [Listing 14-8](ch14.xhtml#ch14lis8).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 14-8: Solving the upper system*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function is similar to the previous solve_lower_sys function. We start
+    by initializing the solution vector, solution, with the same size as the passed-in
+    low_vector. This time, as we’ll iterate starting from the last row, we save its
+    index in the last_index variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The loop that iterates through all row indices goes from last_index all the
+    way down to –1 (noninclusive) ➊. The inner loop going from *i* + 1 to size (again,
+    noninclusive) computes the sum of the *u*[*i,j*]*x*[*j*] products ➋. To obtain
+    u_ij, we ask the lower-triangular matrix for the value as if it were transposed
+    ➌. Thanks to this neat trick, we avoid transposing [*L*], a process that is computationally
+    expensive. This is the optimization we talked about in the previous chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To get the divisor in [Equation 14.10](ch14.xhtml#ch14eqa10), we use the value_transposed_at
+    function again ➍. With this value we can already compute the solution at each
+    row ➎ and store it in the result vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Run all the tests in the file to check whether the implementation is bug-free.
+    Just for your reference, [Listing 14-9](ch14.xhtml#ch14lis9) is the complete *cholesky.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 14-9: Cholesky method result*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Each of the three subfunctions that take part in the resolution of a system
+    of equations using Cholesky’s method has been tested separately: we can be sure
+    those work properly. Does this mean that the cholesky_solve function is free of
+    bugs itself? Not necessarily. We may still make mistakes when putting all those
+    well-tested functions together.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Checking that the cholesky_solve function works as a whole requires one more
+    test. This a test that ensures that each of the subfunctions behaves well when
+    combined; it’s called an *integration test*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Testing Cholesky: An Integration Test***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Open your *cholesky_test.py* file one last time. Let’s add a final test (shown
+    in [Listing 14-10](ch14.xhtml#ch14lis10)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 14-10: Testing the Cholesky decomposition method*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 14-10](ch14.xhtml#ch14lis10) is the resulting test file. We included
+    the last test: test_solve _system. This test exercises the Cholesky algorithm
+    as a whole by calling cholesky_solve.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Run all the tests in the file. If all four tests pass, you got all the code
+    right. You should be proud of yourself for following along with the code in this
+    long chapter. Congratulations!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you want to run the tests from the command line, use this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we discussed numerical methods and then centered the discussion
+    around those that solve linear systems of equations. In particular, we analyzed
+    the Cholesky decomposition method. This [*L*][*U*] decomposition algorithm works
+    with symmetric, positive-definite matrices and can be twice as fast as other [*L*][*U*]
+    alternatives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We paid special attention to the code’s readability. To make the algorithm easy
+    to follow, we broke it down into smaller functions, each of which was tested separately.
+    We started writing the test before the main algorithm’s logic, a technique referred
+    to as test-driven development. We included one last test integrating the complete
+    resolution of a system of equations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ve implemented a powerful resolution algorithm, and we’ll put it to work
+    in [Part V](part05.xhtml#part05) of the book.
+  prefs: []
+  type: TYPE_NORMAL

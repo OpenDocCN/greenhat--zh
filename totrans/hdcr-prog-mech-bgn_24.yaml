@@ -1,0 +1,632 @@
+- en: '19'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: ASSEMBLING OUR APPLICATION
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We’ve implemented all the pieces of our truss structure application, so now
+    it’s time to assemble them into something we can run from the command line. The
+    application we’ll write this chapter will parse an input file into the structure
+    model, use the solve_structure method from the Structure class to assemble the
+    solved structure, and then use the functions we implemented in the previous chapter
+    to create an SVG diagram and text file describing the solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**A General Overview**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To get an overview of how we’ll assemble the different modules into a final
+    application, let’s take a look at [Figure 19-1](ch19.xhtml#ch19fig1). This figure
+    illustrates the stages that take place when our application is executed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/19fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 19-1: Structure resolution steps*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, our application is given a text file defining the structure. This file
+    is formatted according to the rules we defined in [Chapter 17](ch17.xhtml#ch17).
+    In the first step, we’ll read the contents of the file into a string that’s then
+    parsed into a model built from our structure classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once the structure model is constructed, the Structure class’s solve _structure
+    method does the analysis and creates a structure solution model. If you recall,
+    the StructureSolution class is the top-level entity representing the solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last step is to save the result in the form of a diagram (into an SVG file)
+    and in the form of a text report (into a plaintext file). Thus, our program’s
+    output will be two files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before we can do anything, though, we first need to set up a new directory for
+    our application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Setup**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'First, let’s create a new package in the *apps* directory. Name it *truss_structures*.
+    Your directory should look like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: apps
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- aff_transf_motion'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|   |- ...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- circle_from_points'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|   |- ...'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- truss_structures'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|    |- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you created the package folder as a regular folder, don’t forget to include
+    an empty *__init__.py* file to make it a Python package. In the package, let’s
+    now add the main file. Create a new Python file named *main.py*, and in it, simply
+    add the following lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Your *truss_structures* package should now contain two files:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: truss_structures
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- main.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, we won’t be using a run configuration inside our IDE; we’ll
+    instead rely on a bash script that wraps the program. Let’s prepare the script
+    now so we can use it throughout the chapter. At the top of the project directory,
+    in the *Mechanics* folder, create a new bash file and name it *truss.sh*. Enter
+    the code in [Listing 19-1](ch19.xhtml#ch19lis1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 19-1: Bash wrapper script*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have to change the permissions on the file to make it executable. From the
+    shell, run the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you run this script from the shell,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: you should see ’Main’ printed out. We’re all set up; let’s start coding!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Input Arguments**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Our command line application is going to accept a few arguments: the overall
+    scale of the drawing, the scale of the node displacements, the scale of the loads,
+    and whether the original geometry should be drawn (see [Table 18-1](ch18.xhtml#ch18tab1)
+    on [page 497](ch18.xhtml#ch18tab1) for a refresher).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We pass these arguments to our program like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We want to read these arguments, parse their values, and use a default value
+    if the user doesn’t provide a value. We can do this using a handy tool from Python’s
+    standard library: *argparse*. Argparse will also generate help messages about
+    the different arguments for the user and validate the passed-in values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Create a new file in the *apps/truss_structures* package named *arguments.py*.
+    Your *truss_structures* package should now look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: truss_structures
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- arguments.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- main.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Enter the code in [Listing 19-2](ch19.xhtml#ch19lis2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 19-2: Parsing the command line arguments*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this file, we define a function named parse_arguments. This function configures
+    an instance of the ArgumentParser ➊ class to identify our arguments and parse
+    them. We pass the constructor a description of what our program does. This will
+    be used as a help message if the user passes in the --help flag, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This provides the user with the following description:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: The first argument we add is --scale ➋; we give it a help message and a default
+    value of 2, and we set its type to be a floating-point number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then comes the --disp-scale argument ➌ with a default value of 500\. Don’t forget
+    that the displacements are usually small compared to the size of the bars, so
+    we’ll need a big scale to appreciate them. Each structure solution has a different
+    order of magnitude for the displacements, so this scale is better adjusted by
+    trial and error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next comes the --load-scale argument ➍ with a default value of 0.02\. This scale
+    will shrink the loads so that they fit inside the drawing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Last comes the --no-draw-original flag ➎, which controls whether we draw the
+    original structure’s geometry. If the flag isn’t present in the arguments, we’ll
+    draw the original geometry but use a lighter color to keep the focus on the solution
+    drawing. This will look something like [Figure 19-2](ch19.xhtml#ch19fig2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/19fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 19-2: Drawing the original geometry (in a lighter color)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The --no-draw-original flag is different than the other parameters: it’s not
+    expecting an associated value; we only care whether the flag appears in the parameters
+    list. We add this flag to the parser using the add_argument method with an action
+    parameter. When this argument is found in the arguments list, an action is executed.
+    In this case, we use the ’store_true’ action, which simply saves a True value
+    in the argument if the flag is present and a False otherwise. There are a few
+    actions defined in the *argsparse* package, which you can browse in the documentation.
+    We’ll need only ’store_true’.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last line returns the result of calling the parse_args method ➏. This method
+    reads the arguments from sys.argv, which is where Python stores the arguments
+    passed to a program, and parses the values following the rules we defined earlier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The result is a dictionary-like structure with the values for the parameters.
+    As we’ll see later, the names for the keys of the dictionary are the same as the
+    arguments, but without the initial dashes (--) and with underscores instead of
+    the middle dashes. For example, --load-scale becomes load_scale, a much more Pythonic
+    name for a variable. In addition, the dash isn’t allowed for variable names in
+    Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s now write the code that generates the application’s output files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Generating the Output**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We prepared two functions in the previous chapter that generate both the SVG
+    and text solution representations. We’ll use these functions in the app and write
+    their results to an external file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, create a new file named *output.py*. Your *truss_structures* package
+    should now look like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: truss_structures
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- arguments.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- main.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- output.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *output.py*, enter the code in [Listing 19-3](ch19.xhtml#ch19lis3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 19-3: Handling the structure output*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We define three functions: one for saving the solution into an SVG image file
+    (save_solution_to_svg), another one that saves the solution in a text file (save_solution_to_text),
+    and a third function that creates a new file and saves it in the current working
+    directory (__write_to_file).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The save_solution_to_svg function calls the structure_solution_to_svg function
+    from the previous chapter ➊ and passes the generated SVG string to the __write_to_file
+    function. Note that we pass the command line argument’s dictionary to this function;
+    these are the settings we use to generate the SVG vector image. For this to work,
+    we have to make sure the command line arguments are parsed using the same name
+    as the settings expected by structure_solution_to_svg. After the SVG diagram is
+    created, we use __write_to_file to create a file named *result.svg* in the program’s
+    working directory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The save_solution_to_text function is similar to save_solution_to_svg: it produces
+    the text result using the structure_solution_to_string function ➋ and then writes
+    the results to a *result.txt* file.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In __write_to_file, the first thing we do is figure out the file path by joining
+    the current working directory with the filename (which should already include
+    the extension). We then store the file path in the file_path variable ➌. Lastly,
+    we use the with block to open the file in write mode (’w’), which creates the
+    file if it doesn’t exist, and then we write the passed-in content string to the
+    file ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re almost done! We just need to stitch the input, resolution, and output
+    together.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**The Main Script**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let’s head back to the *main.py* file. Open it and enter the code in [Listing
+    19-4](ch19.xhtml#ch19lis4) (you can delete the print(’Main’) line we wrote earlier).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 19-4: Main script*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the “if name is main” block, we parse the arguments passed to the script
+    from the command line. To do this, we use our parse_arguments function ➊, which
+    we import from the *arguments.py* module. If this parsing fails, because a required
+    flag was left out or something similar, the execution halts, and a helpful message
+    is sent to the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once the arguments are parsed, we read all of the lines passed to the program
+    via the standard input and save them in the lines variable ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we parse those passed-in lines to create the structure model using the
+    parse_structure_from_lines function ➌ we developed in [Chapter 17](ch17.xhtml#ch17).
+    Once we have the structure model, we call its solve_structure method to compute
+    the solution ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then, we call the two functions we wrote in the previous section to produce
+    the output files: save_solution_to_svg and save_solution_to_text.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, we calculate the time the program took to run to have it as a reference
+    and compare how long it takes to solve structures of different sizes. We stored
+    the time in the start_time variable before we started to parse and compute the
+    structure. We also stored the time in end_time just after generating the output
+    files. Subtracting start_time from end_time yields the elapsed seconds, the amount
+    of time our app took to produce the results. We print this resulting time in seconds
+    before the application execution finishes ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’m sure you’re as excited as I am to try our new app. Let’s write a structure
+    file by hand and solve it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Trying the App**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let’s create a structure file to try the app. [Figure 19-3](ch19.xhtml#ch19fig3)
+    illustrates four common truss configurations found in bridges. From these standard
+    designs, we’ll pick the Warren typology for our first test. We’ll write a file
+    by hand defining a structure following this configuration of the bars in the truss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/19fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 19-3: Truss typologies*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Create a new file named *warren.txt* inside *apps/truss_structures*. Enter
+    the following structure definition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alternatively, to avoid writing all this yourself, you may copy and paste the
+    contents of the file provided in the code that accompanies the book. [Figure 19-4](ch19.xhtml#ch19fig4)
+    might help you visually understand how the nodes and bars are arranged in our
+    Warren structure example file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/19fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 19-4: Warren truss structure to test our app*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now it’s time to solve this structure and see the beautiful results our app
+    produces. From the shell, run the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This should print to the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the previous command, we execute the bash script that wraps our code and
+    passes it two arguments: a global drawing scale of 1.25 and a displacement scale
+    of 250\. The other arguments will use their default values, which if you recall
+    are a load scale of 0.02 and False for the --no-draw-original flag.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Two new files should have appeared in your project, at the same level as the
+    *truss.sh* bash file: *result.svg* and *result.txt*. If you open the second, the
+    textual representation of the solution, you’ll see something like [Listing 19-5](ch19.xhtml#ch19lis5).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 19-5: Warren truss plaintext solution*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The plaintext solution report is useful for checking all the solution values.
+    For instance, you can check the reactions in nodes 1 and 5 (the externally constrained
+    nodes). The node with an ID of 1 (NODE 1), which is externally constrained in
+    both the horizontal and vertical directions, has an approximate reaction force
+    of ![Image](../images/Rvictor_caps.jpg) = ⟨–7513, 6090⟩. The displacement of this
+    node is necessarily zero. The node with an ID of 5 (NODE 5), which is constrained
+    only in the vertical direction, has a displacement vector of ![Image](../images/uvictorit.jpg)
+    = ⟨0.055, 0.0⟩.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Take a look at the section of each bar section now. You can readily identify
+    the compressed and elongated bars and check their elongation, strain, and stress
+    values. This report gives us all the data we need if we want to analyze the structure
+    under the given loads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The best part is inside the *result.svg* file. Open the resulting image in your
+    favorite browser. Your result should look like [Figure 19-5](ch19.xhtml#ch19fig5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/19fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 19-5: Warren solution diagram*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see on your screen, the bars are colored in red if subject to compression
+    and green if subject to tension. The captions aligned to the bars indicate their
+    stress. The original geometry is drawn in the background using a light-blue color,
+    which gives us a better visualization of how the loads deform the structure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*You can view SVG images in PyCharm, but if we try to open and visualize our
+    diagrams inside the IDE, you’ll be surprised to see them upside down. Don’t panic:
+    you haven’t gotten it wrong. It’s just that (as of the 2021.1 version) PyCharm
+    doesn’t support the* transform *attribute we added to the SVG, which, if you recall
+    from earlier, we require to flip the y-axis. I recommend using a browser instead.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Can you see the difference in the bars’ line thickness? Using line thickness
+    to represent the cross section of the bars helps us identify the bars of the structure
+    that can withstand a greater load. The stress labels we added to the bars allow
+    us to readily inspect the stress on each bar, giving us one of the most important
+    pieces of information upfront. We can gather quite a bit of information from just
+    a single glance at our diagram; this is precisely the value of these sorts of
+    graphical representations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To understand what the arguments to our program do, let’s play around with them
+    and see what kind of results we can get.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Playing with the Arguments***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Let’s first check what happens if we pass the --no-draw-original flag:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you open the *result.svg* image in your favorite browser, you should see
+    the image in [Figure 19-6](ch19.xhtml#ch19fig6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/19fig06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 19-6: Warren solution diagram without original geometry*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Without the original geometry we can see the deformed structure with less clutter;
+    at the same time, we cannot see how the nodes and bars are moving relative to
+    their original position.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'What about using a larger displacement scale? Let’s try the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using a displacement scale of 500 exaggerates the deformations so we can see
+    them clearly. The diagram should now look like [Figure 19-7](ch19.xhtml#ch19fig7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/19fig07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 19-7: Warren solution diagram with a larger displacement scale*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We haven’t used the loads diagram yet; we’ve been using the default value of
+    0.02\. Let’s try to edit this value to see its effect:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: If we use a load scale of 0.01, half of what we’ve used so far, you can see
+    that the load vectors’ lengths have shrunk, as in [Figure 19-8](ch19.xhtml#ch19fig8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/19fig08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 19-8: Warren solution diagram with a smaller load scale*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see, the load scale is important for the correct visualization of
+    the load vectors. A small value shrinks the vectors so much that there’s no space
+    for their labels to be nicely placed. You can try a larger load scale, say 0.5\.
+    The labels should disappear from the diagram. In this case, the vectors we draw
+    are so long that their centers lie outside the drawing bounds, and therefore,
+    the load caption that we place toward the start point is simply not visible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Solving a Large Structure***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In the *apps/truss_structures* directory of the code distributed with the book
+    is a file, *baltimore.txt*, that defines a Baltimore truss structure with 10 spans.
+    Copy this file into your project, in the same folder. Alternatively, you can create
+    and write the file by hand ([Listing 19-6](ch19.xhtml#ch19lis6)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 19-6: Baltimore truss structure definition*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that, in this code, we apply the same load to every node, but we’ve left
+    out some of the load lines. If you write this by hand, you should include those
+    load definition lines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s pass the file defining this large structure to our program:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output produced by the program should look something like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Even for the Baltimore typology with 40 nodes and 77 bars, the computation time
+    is a fraction of a second. If you open the *solution.svg* file, you’ll see something
+    like [Figure 19-9](ch19.xhtml#ch19fig9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/19fig09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 19-9: Baltimore solution diagram*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that you’ve gotten this far, spend some time playing with your application.
+    Try with different structures and parameters to check the results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In this chapter, we took all of the structural analysis modules we’ve been
+    building in the previous chapters and assembled them into a command line application
+    that solves truss structures. Our app reads structure files from the standard
+    input and produces two result files: one is a vector diagram representing the
+    solution, and the other is a plaintext report including all the relevant values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is the last chapter in [Part V](part05.xhtml#part05) of the book. It’s
+    been an intense couple of chapters, but I hope the result has paid off. We’ve
+    made up a format for files that defines a structure, written a function to parse
+    it into our model, implemented the resolution algorithm that generates the solution
+    model, coded a way to export this solution into a diagram and text report, and,
+    finally, assembled all of it into a final application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We chose an application that solves truss structures to exemplify the process
+    of writing engineering applications, but we could have chosen any other topic—heat
+    transfer, fluid dynamics, beam analysis, and so on. The process and techniques
+    are the same. The knowledge you’ve acquired should empower you to write code that
+    works with any engineering domain you might encounter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is also the last chapter in the book. I hope you’ve enjoyed learning about
+    how to build engineering applications, split them into modules, and, of course,
+    test them. All that’s left is for you to start creating your own apps. As mentioned
+    in the introduction of the book, the only way to become an expert is by doing:
+    build many apps, learn from your mistakes, and then build some more. Good luck!'
+  prefs: []
+  type: TYPE_NORMAL

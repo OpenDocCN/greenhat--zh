@@ -1,0 +1,952 @@
+- en: '5'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Binary Classification
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Many difficult questions can be phrased simply as yes/no questions: To buy
+    the stock or not? To take the job or not? To hire the applicant or not? This chapter
+    is about *binary classification*, the technical term for answering yes/no questions,
+    or deciding between true and false, 1 and 0.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll start by introducing a common business scenario that depends on binary
+    classification. We’ll continue by discussing linear probability models, a simple
+    but powerful binary classification approach based on linear regression. We’ll
+    also cover logistic regression, a more advanced classification method that improves
+    on some of the shortcomings of linear probability models. We’ll conclude by going
+    over some of the many applications of binary classification methods, including
+    risk analysis and forecasting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Minimizing Customer Attrition
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Imagine you’re running a big tech company with about 10,000 large clients.
+    Each client has a long-term contract with you, promising that they’ll pay you
+    regularly to use your company’s software. However, all your clients are free to
+    exit their contracts at any time and stop paying you if they decide they don’t
+    want to use your software anymore. You want to have as many clients as you can,
+    so you do your best to do two things: one, grow the company by signing new contracts
+    with new clients and, two, prevent attrition by ensuring that your existing clients
+    don’t exit their contracts.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we’ll focus on your second goal: preventing client attrition.
+    This is an extremely common concern for businesses in every industry, and one
+    that every company struggles with. It’s especially important since acquiring new
+    customers is well known to be much more costly than retaining existing ones.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To prevent attrition, you have a team of client managers who stay in touch with
+    clients, make sure they’re happy, resolve any problems that come up, and in general
+    ensure that they’re satisfied enough to continue renewing their contracts indefinitely.
+    Your client management team is small, however—only a few people who together have
+    to try to keep 10,000 clients happy. It’s impossible for them to be in constant
+    contact with all 10,000 clients, and inevitably some clients will have concerns
+    and problems that your client management team isn’t able to find out about or
+    resolve.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As the leader of your company, you have to decide how to direct the efforts
+    of the client managers to minimize attrition. Every hour they spend working with
+    a client who’s at high risk of attrition is probably worthwhile, but their time
+    is wasted when they spend too much time on a client who is not at risk of attrition.
+    The best use of the client managers’ time will be to focus on the clients who
+    have the highest likelihood of canceling their contracts. All the managers need
+    is a list of all the high-risk clients to contact, and then they can use their
+    time with maximum efficiency to minimize attrition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting an accurate list of high-attrition-risk clients is not an easy task,
+    since you can’t read the minds of all your clients and immediately know which
+    ones are in danger of canceling their contracts and which ones are happy as clams.
+    Many companies rely on intuition or guessing to decide which clients have the
+    highest attrition risk. But intuition and guessing rarely lead to the most accurate
+    possible results. We’ll get better accuracy, and therefore better cost savings,
+    by using data science tools to decide whether each client is high risk or low
+    risk.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Deciding whether a client is high risk or low risk for attrition is a binary
+    classification problem; it consists of answering a yes-or-no question: Is this
+    client at high risk for attrition? What started as a daunting business problem
+    (how to increase revenue growth with limited resources) has been reduced to a
+    much simpler data analysis problem (how to perform a binary classification of
+    attrition risk). We’ll approach this problem by reading in historical data related
+    to past attrition, analyzing that data to find useful patterns in it, and applying
+    our knowledge of those patterns to more recent data to perform our binary classification
+    and make useful business recommendations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using Linear Probability Models to Find High-Risk Customers
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We can choose from several data analysis methods to do binary classification.
+    But before we explore these methods, we should read some data into Python. We’ll
+    use fabricated data about hypothetical clients of our imaginary firm. You can
+    load it into your Python session directly from its online home by using the following
+    snippet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this snippet, we import pandas and read the file for our data. This time,
+    we read the file directly from a website where it’s being stored. The file is
+    in *.csv* format, which you’ve already encountered in previous chapters. You can
+    print the top five rows of our data as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You should see the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The last line of the output tells us that the dataset has five columns. Suppose
+    that the first four columns of the data were generated about six months ago. The
+    first column is a four-character code for every client. The second column is `lastmonth_activity`,
+    a measurement of the number of times someone at that client company accessed our
+    software in the last month before this data was generated (between 6 and 7 months
+    ago). The third column is `lastyear_activity`, the same measurement for the entire
+    year before the data was generated (between 6 and 18 months ago). The `lastyear_activity`
+    column is not visible in the preceding snippet, where we can see only ellipses
+    between the second and fourth columns. The reason for this is that the pandas
+    package has default display settings that ensure its output will be small enough
+    to fit easily onscreen. If you’d like to change the maximum number of columns
+    that pandas prints out, you can run the following line in Python:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we use the pandas option `display.max_columns` to change the maximum number
+    of columns pandas will display to `6`. This change ensures that if we ever print
+    the `attrition_past` dataset again, we’ll see all five of its columns, and when
+    we add one more column to the dataset, we’ll then be able to see all six of its
+    columns. If you want to display all columns of every dataset, no matter how many,
+    you can change the `6` to `None`, which will mean that there’s no maximum limit
+    on the number of columns for pandas to display.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Besides columns recording activity levels, we also have a record of the number
+    of employees each company had six months ago in the `number_of_employees` column.
+    Finally, suppose that the final column, `exited`, was generated today. This column
+    records whether a given corporation exited its contract at any time in the six-month
+    period between when the first four columns were generated and today. This column
+    is recorded in a binary format: 1 for a client that exited in the last six months
+    and 0 for a client that didn’t exit. The `exited` column is our binary measurement
+    of attrition, and it’s the column that interests us most because it’s what we’re
+    going to learn to predict.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Having four columns that are six months old and one column that’s new may seem
+    like a bug or an unnecessary complication. However, this temporal difference between
+    our columns enables us to find patterns relating the past and the future. We’ll
+    find patterns in the data that show how activity levels and employee numbers at
+    one particular time can be used to predict attrition levels later. Eventually,
+    the patterns we’ll find in this data will enable us to use a client’s activity
+    as measured today to predict their attrition likelihood during the next six months.
+    If we can predict a client’s attrition risk in the next six months, we can take
+    action during those six months to change their minds and keep them around. Convincing
+    clients to stay will be the client manager’s role—the contribution of data science
+    will be to make the attrition prediction itself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Plotting Attrition Risk
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Before we jump into finding all these patterns, let’s check how often attrition
+    occurs in our data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: The result we get is about 0.58, meaning that about 58 percent of the clients
+    in the data exited their contracts in the last six months. This shows us that
+    attrition is a big problem for the business.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we should make plots of our data. Doing this early and often is a good
+    idea in any data analysis scenario. We’re interested in how each of our variables
+    will relate to the binary `exited` variable, so we can start with a plot of the
+    relationship of `lastmonth_activity` and `exited`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can see the result in [Figure 5-1](#figure5-1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c05/f05001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5-1: Historical attrition of clients of a hypothetical company'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the x-axis, we see last month’s activity, although since the data was recorded
+    six months ago, it’s really activity from six to seven months ago. The y-axis
+    shows attrition from our `exited` variable, and that’s why all values are 0 (did
+    not exit) or 1 (exited) in the most recent six months. Eyeballing this figure
+    can give us a basic idea of the relationship between past activity and future
+    attrition. In particular, the clients with the most activity (> 600) did not exit
+    their contracts in the six months after their high activity was recorded. High
+    activity seems to be a predictor of client loyalty, and if it is, low activity
+    will be a predictor of client attrition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Confirming Relationships with Linear Regression
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We’ll want to confirm our initial visual impression by performing a more rigorous
+    quantitative test. In particular, we can use linear regression. Remember that
+    in Chapter 2, we had a cloud of points and used linear regression to find a line
+    that was the best fit to the cloud. Here, our points don’t look very cloud-like
+    because of the limited range of the *y* variable: our “cloud” is two scattered
+    lines at *y* = 0 and *y* = 1\. However, linear regression is a mathematical method
+    from linear algebra, and it doesn’t care how cloud-like our plot looks. We can
+    perform linear regression on our attrition data with code that’s almost identical
+    to the code we used before:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this snippet, we create a variable called `regressor`, which we then fit
+    to our data. After fitting our regressor, we can plot our regression line going
+    through our “cloud” of data, just as we did in Chapter 2:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Figure 5-2](#figure5-2) shows the result of this code.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c05/f05002.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5-2: A linear regression predicting a 0–1 attrition outcome'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can compare this plot with Figure 2-2 in Chapter 2. Just as we did in Figure
+    2-2, we have a collection of points, and we’ve added a regression line that we
+    know is the line of best fit to those points. Remember that we interpret the value
+    of a regression line as an expected value. In Figure 2-2, we saw that our regression
+    line went approximately through the point *x* = 109, *y* = 17,000, and we interpreted
+    that to mean that in month 109, we expect about 17,000 car sales.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Figure 5-2](#figure5-2), the way to interpret our expected values may not
+    seem immediately obvious. For example, at *x* = 400, the *y* value of the regression
+    line is about 0.4\. This means that our expected value of `exited` is 0.4, but
+    that’s not a cogent statement because `exited` can be only 0 or 1 (either you
+    exit or you don’t, with no middle ground). So, what could it mean to expect 0.4
+    “exiteds,” or 0.4 units of exiting at that activity level?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The way we interpret an expected value of *0.4 units of exiting* is as a probability:
+    we conclude that clients with an activity level of about 400 in the most recent
+    month have about a 40 percent probability of exiting their contracts. Since our
+    exited data consists of six months of exits after the activity levels were recorded,
+    we interpret the value of the regression line as a 40 percent probability of attrition
+    over the next six months after the activity level was recorded. Another way we
+    can phrase our estimated 40 percent attrition probability is to say that we estimate
+    a 40 percent attrition risk for clients with an activity level of 400.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The regression in [Figure 5-2](#figure5-2) is a standard linear regression,
+    exactly like the linear regression model we created in Chapter 2 and plotted in
+    Figure 2-2\. However, when we perform a standard linear regression on binary data
+    (data consisting of only two values like 0 and 1), we have a special name for
+    it: we call it a *linear probability model (LPM)*. These models are simple and
+    easy to implement, but they can be useful whenever we want to know a predicted
+    probability of something that’s hard to predict.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After performing our regression and interpreting its values, the last important
+    step is to make a business decision based on everything we’ve learned. [Figure
+    5-2](#figure5-2) shows a simple relationship between activity and exit probability:
+    lower activity is associated with higher exit probability, and higher activity
+    is associated with lower exit probability. What we call *exit probability*, we
+    can also call *attrition risk*, so we can also say that last month’s activity
+    is negatively correlated with the next six months’ attrition risk. This negative
+    correlation makes sense from a business point of view: if a client uses your product
+    very actively, we expect them to be unlikely to exit their contract, and if a
+    client is very inactive, we expect them to be more likely to exit.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Knowing that a general negative correlation exists between activity and attrition
+    risk is helpful. But we can be even more specific in our reasoning and decision-making
+    if we calculate the exact predicted attrition risk for each client. This will
+    enable us to make individualized decisions for each client based on their predicted
+    risk. The following code calculates the attrition risk for each client (the predicted
+    value from our regression) and stores its value in a new column called `predicted`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: If you run `print(attrition_past.head())`, you can see that our attrition dataset
+    now has six columns. Its new sixth column is the predicted attrition probability
+    for each client based on our regression. Of course, this is not very useful to
+    us; we don’t need predicted attrition probabilities, since this is a record of
+    past attrition and we already know with certainty whether each of these clients
+    exited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Altogether, attrition prediction has two steps. First, we learn the relationships
+    between features and target variables by using data from the past. Second, we
+    use the relationships we learned from past data to make predictions for the future.
+    So far, we’ve done only the first step: we’ve fit a regression that captures the
+    relationship between customer attributes and attrition risk. Next, we need to
+    make predictions for the future.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Predicting the Future
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Let’s download and open more fabricated data. This time, suppose that all the
+    data was generated today, so its `lastmonthactivity` column refers to the previous
+    month, and its `lastyearactivity` column refers to the 12-month period ending
+    today. We can read in our data as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `attrition_past` dataset that we worked with before used old data (more
+    than six months old) to predict attrition that happened in the recent past (any
+    time in the last six months). By contrast, with this dataset, we’ll use new data
+    (generated today) to predict attrition that we expect to happen in the near future
+    (in the next six months). That’s why we’re calling it `attrition_future`. If you
+    run `print(attrition_future.head())`, you can see the first five rows of this
+    data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can see that this dataset’s first four columns have the same names and interpretations
+    as the first four columns of `attrition_past`. However, this dataset doesn’t have
+    a fifth, `exited` column. The dataset lacks this column because the `exited` column
+    is supposed to record whether a client exited their contract in the six-month
+    period after the other columns were generated. But that six-month period hasn’t
+    happened yet; it’s the six months that start today. We need to use what we’ve
+    learned from the attrition dataset to predict the probabilities of attrition for
+    this new set of clients. When we do, we’ll be making a prediction about the future
+    rather than the past.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All of the four-character corporation codes in the first column of `attrition_future`
+    are new—they didn’t appear in the original attrition dataset. We can’t use anything
+    from the original attrition dataset to learn directly about this new dataset.
+    However, we can use the regressor we fit to make attrition probability predictions
+    for this new dataset. In other words, we don’t use the actual data from `attrition_past`
+    to learn about `attrition_future`, but we do use the patterns we found in `attrition_past`,
+    which we encoded in a linear regression, to make predictions about `attrition_future`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can predict attrition probabilities for the `attrition_future` dataset in
+    exactly the same way we predicted attrition probabilities for the `attrition_past`
+    dataset, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This snippet adds a new column called `predicted` to the `attrition_future`
+    dataset. We can run `print(attrition_future.head())` to see the top five rows
+    after the change:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can see that the pattern of low predicted exit probability for high-activity
+    clients matches the pattern we observed for the `attrition_past` dataset. This
+    is because our predicted probabilities were generated using the same regressor
+    that was trained on the `attrition_past` dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Making Business Recommendations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'After calculating these predicted probabilities, we want to translate them
+    to business recommendations for our client management team. The simplest way to
+    direct the team members’ efforts would be to provide them with a list of high-risk
+    clients to focus their efforts on. We can specify a number of clients *n* that
+    we think they have the time and bandwidth to focus on, and create a list of the
+    top *n* highest-risk clients. We can do this for *n* = 5 as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When we run this line, we get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can see that our top five highest-risk clients have predicted probabilities
+    over 0.7 (70 percent), quite a high attrition probability.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now, suppose your client managers are unsure of the number of clients they
+    can focus on. Instead of asking for the top *n* clients for some *n*, they may
+    simply want a ranked list of every client from highest to lowest attrition probability.
+    The client managers can start at the beginning of the list and work their way
+    through it as far as they can get. You can print this list easily as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output is a list of all corporations in the `attrition_future` dataset,
+    ranked from highest to lowest attrition probability:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: The first three corporations in this list—`whsh`, `pian`, and `mike`—are estimated
+    to have the highest attrition risk (highest probability of exiting their contracts).
+    In this case, the data shows a three-way tie for highest risk, since all three
+    of these corporations have the same predicted high risk, and all the other corporations
+    have lower predicted attrition risk.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, you may decide that you’re interested in any clients whose predicted
+    probabilities are higher than a certain threshold *x*. We can do this as follows
+    for *x* = 0.7:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: You’ll see a full list of all corporations that are predicted to have a greater
+    than 70 percent attrition risk over the next six months. This could be a useful
+    priority list for your client managers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Measuring Prediction Accuracy
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the previous section, we went through all the steps necessary to send a list
+    of at-risk corporations to our client managers. Having reported our attrition
+    risk predictions, we may feel that our task is complete and we can move on to
+    the next one. But we’re not finished yet. As soon as we deliver our predictions
+    to client managers, they’ll likely immediately ask us how accurate we expect our
+    predictions to be. They’ll want to know how much they can trust our predictions
+    before they put in great effort acting on them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In Chapter 2, we went over two common ways to measure the accuracy of linear
+    regressions: root mean squared error (RMSE) and mean absolute error (MAE). Our
+    LPM is technically a linear regression, so it’s possible to use these metrics
+    again. However, for classification problems, the common convention is to use a
+    different set of metrics that express classification accuracy in a more easily
+    interpretable way. The first thing we’ll need to do is create lists of our predictions
+    and actual values, respectively:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this snippet, we calculate the median value of our `predicted` column. Then
+    we create `prediction`, which will be 0 when our LPM predicts below-median probability,
+    and 1 when our LPM predicts above-median probability. We’re doing this because
+    when we measure accuracy for classification tasks, we’ll use metrics that count
+    exact matches like `predicted` = 1, `actual` = 1 and `predicted` = 0, `actual`
+    = 0\. Typical classification accuracy metrics don’t give “partial credit” for
+    predicting 0.99 probability when the actual value is 1, so we convert our probabilities
+    to 1s and 0s so we can get “full credit” where possible. We also convert our list
+    of actual values (from the `exited` column) to a Python list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now that our data is in the right format, we can create a *confusion matrix*,
+    a standard way to measure accuracy in classification models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The confusion matrix that is output shows the number of true positives, true
+    negatives, false positives, and false negatives we get when making predictions
+    on our dataset. Our confusion matrix looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Every confusion matrix has the following structure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So, when we look at our confusion matrix, we find that our model made seven
+    true-positive classifications: for seven corporations, our model predicted above-median
+    exit probability (high attrition risk), and those seven corporations did exit.
+    Our false positives are six cases in which we predicted above-median exit probability
+    but the corporation didn’t exit. Our false negatives are four cases in which we
+    predicted below-median exit probability but the corporation did exit. Finally,
+    our true negatives are nine cases in which we predicted below-median exit probability
+    for clients that didn’t exit.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re always happy about true positives and true negatives, and we always want
+    both (the values on the main diagonal of the confusion matrix) to be high. We’re
+    never happy about false positives or false negatives, and we always want both
+    (the values off the main diagonal) to be as low as possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The confusion matrix contains all possible information about the classifications
+    we’ve made and their correctness. However, data scientists can never get enough
+    new ways to slice and dice and re-represent data. We can calculate a huge number
+    of derived metrics from our little confusion matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Two of the most popular metrics we can derive are precision and recall. *Precision*
+    is defined as *true positives* / (*true positives* + *false positives*). *Recall*
+    is also called *sensitivity* and is defined as *true positives* / (*true positives*
+    + *false negatives*). Precision is answering the question, Out of everything we
+    thought was positive, how many times was it actually positive? (In our case, *positive*
+    refers to attrition—out of all the times we thought a client was at high risk
+    of leaving, how many times did they actually leave?) Recall is answering the slightly
+    different question, Out of all the actually positive cases, how many did we think
+    were positive? (In other words, out of all the clients who actually exited their
+    contracts, how many did we predict were at high attrition risk?) If false positives
+    are high, precision will be low. If false negatives are high, recall will be low.
+    Ideally, both will be as high as possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can calculate both precision and recall as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: You’ll see that our precision is about 0.54, and our recall is about 0.64\.
+    These are not extremely encouraging values. Precision and recall are always between
+    0 and 1, and they’re supposed to be as close to 1 as possible. Our results are
+    higher than 0, which is good news, but we have plenty of room for improvement.
+    Let’s do our best to get better precision and recall by making some improvements
+    in the next sections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using Multivariate LPMs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'So far, all of our results have been simple: the clients with the lowest activity
+    levels are also the clients with the highest predicted attrition probabilities.
+    These models are so simple that they may hardly seem worthwhile. You may think
+    that the relationship between low activity and attrition risk is both intuitive
+    and visually evident in [Figure 5-2](#figure5-2), so fitting a regression to confirm
+    it is superfluous. This is reasonable, although it’s wise to seek rigorous confirmation
+    from a regression even in cases that seem intuitively obvious.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Regressions begin to become more useful when we have no clear intuitive relationship
+    and no simple plots that can show them instantly. For example, we can use three
+    predictors to predict attrition risk: last month’s activity, last year’s activity,
+    and a client’s number of employees. If we wanted to plot the relationship of all
+    three variables with attrition simultaneously, we would need to create a four-dimensional
+    plot, which would be hard to read and think about. If we didn’t want to create
+    a four-dimensional plot, we could create separate plots for the relationship between
+    each individual variable and attrition. But each of these plots would show only
+    one variable’s relationship with attrition, thus failing to capture the whole
+    story told by the whole dataset together.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead of trying to discover attrition risk through plotting and intuition,
+    we can run a multivariate regression with the predictors we’re interested in:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is a multivariate linear regression, just like the multivariate linear
+    regressions we introduced in Chapter 2. Since we’re running it to predict 0–1
+    data, it’s a *multivariate linear probability model*. Just as we’ve done for previous
+    regressions we’ve created, we can use this new multivariate regressor to predict
+    probabilities for the `attrition_future` dataset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When we run `print(attrition_future.nlargest(5,''predicted_multi''))`, we can
+    see the five corporations with the highest predicted attrition risk, based on
+    this new multivariate regressor. The output looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Since we’re using three variables to predict attrition probability instead of
+    one, it’s not as obvious which corporations will have the highest and lowest estimated
+    attrition risk. The regression’s ability to predict for us will be helpful in
+    this more complex scenario.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s look at a list of all corporations, sorted by highest attrition risk
+    to lowest risk based on this most recent regression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You’ll see the following list of corporations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: These are the same corporations we saw before, but they’re in a different order,
+    since their attrition risk was predicted using `regressor_multi` instead of `regressor`.
+    You can see that in some cases, the order is similar. For example, the `dmai`
+    corporation was ranked sixth by `regressor` and ranked fourth by `regressor_multi`.
+    In other cases, the order is quite different. For example, the `whsh` corporation
+    was ranked first (tied with two other corporations) by `regressor`, but it’s seventeenth
+    in the prediction by `regressor_multi`. The order changes because the distinct
+    regressors take into account different information and find different patterns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating New Metrics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'After running a regression that uses all the numeric predictors in the dataset,
+    you may think that we’ve done all the regression that’s possible. But we can do
+    more, because we’re not strictly limited to creating LPMs based on the columns
+    of our attrition dataset in their raw form. We can also create a *derived feature*,
+    or engineered feature—a feature or metric created by transforming and combining
+    existing variables. The following is an example of a derived feature:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we create a new metric called `activity_per_employee`. This is simply
+    the last month’s activity for the whole corporation divided by the number of employees
+    at the corporation. This new derived metric could be a better predictor of attrition
+    risk than the raw activity level or the raw number of employees alone.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, two companies may both have high activity levels at exactly 10,000
+    each. However, if one of those companies has 10,000 employees, and the other has
+    10 employees, we might have very different expectations about their attrition
+    risk. The average employee at the smaller company is accessing our tool 1,000
+    times per month, while the average employee at the larger company is accessing
+    it only 1 time per month. Even though both companies have the same level of activity
+    according to our raw measurement, the smaller company seems to have a lower likelihood
+    of attrition because our tool appears to be much more important to the work of
+    each of its employees, on average. We can use this new `activity_per_employee`
+    metric in a regression that’s just like all the regressions we’ve done before:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This snippet contains a lot of code, but everything it does is something you’ve
+    done before. First, we define the `activity_per_employee` metric, our new derived
+    feature. Then, we define our `x` and `y` variables. The `x` variable will be our
+    features: the four variables we’ll use to predict attrition. The `y` variable
+    will be our target: the one variable we’re trying to predict. We create and fit
+    a linear regression that uses `x` to predict `y`, and then we create `predicted3`,
+    a new column that contains predictions of attrition risk made by this new regression.
+    We create a `predicted3` column both for our past data and our present data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As we did before, we can look at the predictions made by this model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Again, you’ll see that the order is different from the order given by the previous
+    regressors we tried:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Just as we did before, we can check the confusion matrix for our latest model.
+    First, we’ll put our predictions and actual values in the correct 0–1 format:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we can calculate our latest confusion matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This confusion matrix should immediately look better to you than our previous
+    confusion matrix. If you need more evidence that our latest model is better, look
+    at the precision and recall values for this model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: You’ll see that our precision is about 0.69, and our recall is about 0.82—still
+    not perfect, but big improvements on our previous, lower values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Considering the Weaknesses of LPMs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'LPMs have good points: it’s easy to interpret their values, it’s easy to estimate
+    them with centuries-old methods and many useful Python modules, and they’re simple
+    in a way only a straight line can be. However, LPMs also have weaknesses. One
+    is that they don’t fit the points of a dataset well: they pass through the middle
+    of the points and get close to only a few points.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The biggest weakness of LPMs is apparent if you look at the right side of [Figure
+    5-2](#figure5-2). There, you can see that the regression line dips below *y* =
+    0\. If we try to interpret the value of the regression line at that part of the
+    plot, we reach an absurd conclusion: we predict approximately a –20 percent probability
+    of attrition for corporations with about 1,200 logins. There’s no reasonable way
+    to interpret a negative probability; it’s just nonsense that our model has output.
+    Unfortunately, this kind of nonsense is inevitable with every LPM that isn’t a
+    horizontal line. Any non-horizontal regression line will make predictions that
+    are below 0 percent or above 100 percent for certain values. The inevitability
+    of these nonsensical predictions is the major weakness of LPMs and the reason
+    you should learn alternative binary classification methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Predicting Binary Outcomes with Logistic Regression
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We need a method for binary classification that is not subject to the weaknesses
+    of LPMs. If you think about [Figure 5-2](#figure5-2), you’ll realize that whatever
+    method we use can’t rely on fitting straight lines to points, since any straight
+    line besides a perfectly flat horizontal line will inevitably make predictions
+    that are higher than 100 percent or lower than 0 percent. Any straight line will
+    also be far from many of the points it’s trying to fit. If we’re going to fit
+    a line to points to do binary classification, it will have to be a curve that
+    doesn’t go below 0 or above 1, and that also gets close to many of the points
+    (which are all at *y* = 0 or *y* = 1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One important curve that fits these criteria is called the *logistic curve*.
+    Mathematically, the logistic curve can be described by the following function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c05/g05001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The logistic function is used to model populations, epidemics, chemical reactions,
+    and linguistic shifts, among other things. If you look closely at the denominator
+    of this function, you’ll see β[0] + β[1]· *x*. If that reminds you of the type
+    of expression that we used when we were doing linear regression in Chapter 2,
+    it should—it’s exactly the same expression as we find in a standard regression
+    formula (one with an intercept, a slope, and an *x* variable).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Soon, we’ll go over a new type of regression using this logistic function. We’ll
+    be working with many of the same elements that we’ve used before, so much of what
+    we’ll do should feel familiar. We’ll use the logistic function to model attrition
+    risk, and the way we’ll use it can be applied to any situation where you need
+    a model of the probability of a yes/no or 0/1 answer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Drawing Logistic Curves
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We can draw a simple logistic curve in Python as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can see the output of this code in [Figure 5-3](#figure5-3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c05/f05003.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5-3: An example of a logistic curve'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The logistic curve has an S-like shape, so it stays close to *y* = 0 and *y*
+    = 1 over most of its domain. Also, it never goes above 1 and never goes below
+    0, so it resolves the weaknesses of LPMs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If we change the coefficients in our logistic equation to be positive instead
+    of negative, we reverse the direction of the logistic curve, so it’s a backward
+    S instead of a standard S:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: This code snippet is the same as the previous code snippet, except for the change
+    of two numbers from negative to positive (shown in bold). We can see the final
+    plot in [Figure 5-4](#figure5-4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c05/f05004.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5-4: Another example of a logistic curve, showing a backward S shape'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now let’s use logistic curves with our data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fitting the Logistic Function to Our Data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We can fit a logistic curve to binary data in much the same way that we fit
+    a straight line to binary data when we created our LPM. Fitting a logistic curve
+    to binary data is also called performing *logistic regression*, and it’s a common,
+    standard alternative to linear regression for binary classification. We can choose
+    from several useful Python modules to perform logistic regression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'After we fit the model, we can access predicted probabilities for each element
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can then plot the results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can see in the output plot in [Figure 5-5](#figure5-5) that we have exactly
+    what we wanted: a regression that never predicts above 100 percent or below 0
+    percent probability and gets very close to some of the points in our strange “cloud.”
+    We’ve resolved the weaknesses of LPMs with this new method.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c05/f05005.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5-5: A logistic regression predicting attrition risk'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may object that we introduced logistic regression as something that produces
+    an S-shaped curve like the curves in Figures 5-3 and 5-4, and there’s no S-shaped
+    curve in [Figure 5-5](#figure5-5). But [Figure 5-5](#figure5-5) shows only a portion
+    of the full S; it’s like [Figure 5-5](#figure5-5) is zoomed in on the lower-right
+    side of [Figure 5-4](#figure5-4), so we see only the right side of the backward
+    S. If we zoomed out the plot and considered hypothetical activity levels that
+    were negative, we would see a fuller backward S, including predicted attrition
+    probabilities close to 1\. Since negative activity levels are impossible, we see
+    only a portion of the full S that the logistic equation specifies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Just as we did with other regressions, we can look at the predictions our logistic
+    regression makes. In particular, we can predict the probabilities of attrition
+    for every company in our `attrition2` dataset and print them out in order from
+    highest to lowest attrition risk:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can see that the output consists of every corporation in `attrition2`, sorted
+    in order of highest to lowest predicted attrition probability based on the results
+    of our logistic regression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can look at these results and compare them to the predictions from our other
+    regressions. Taking into account different information and using different functions
+    to model the data can lead to different results each time we perform regression.
+    In this case, since our logistic regression used the same predictor (last month’s
+    activity) as our first LPM, it ranks corporations from highest to lowest risk
+    in the same order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Applications of Binary Classification
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Logistic regressions and LPMs are commonly used to predict binary outcomes.
+    We can use them not only for attrition prediction but also for predicting whether
+    a stock will go up, whether an applicant will be successful in a job, whether
+    a project will be profitable, whether a team will win a game, or any other binary
+    classification that can be expressed in a true/false, 0/1 framework.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The LPMs and logistic regressions you learned about in this chapter are statistical
+    tools that can tell us the probability of attrition. But knowing the probability
+    of attrition does not fully solve the business problem that attrition represents.
+    A business leader needs to communicate these attrition predictions and make sure
+    that client managers act on them effectively. A host of business considerations
+    could alter the strategy a leader implements to manage an attrition problem. For
+    example, attrition probability is not the only thing that could determine the
+    priority assigned to a client. That priority will also depend on the relative
+    importance of the client, probably including the revenue the company expects to
+    gain from the client, the size of the client, and other strategic considerations.
+    Data science is always part of a larger business process, every step of which
+    is difficult and important.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'LPMs and logistic regressions have one important thing in common: they’re *monotonic*:
+    they express a trend that moves in only one direction. In Figures 5-1, 5-2 and
+    5-5, less activity is always associated with higher attrition risk, and vice versa.
+    However, imagine a more complex situation, in which low activity is especially
+    associated with high attrition risk, medium activity is associated with low attrition
+    risk, and high activity again is associated with high attrition risk. A monotonic
+    function like the ones examined in this chapter wouldn’t be able to capture this
+    pattern, and we would have to turn to more complex models. The next chapter describes
+    methods for machine learning—including methods to capture non-monotonic trends
+    in complex, multivariate data—to make predictions and perform classifications
+    even more accurately.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this chapter, we discussed binary classification. We started with a simple
+    business scenario and showed how linear regression can enable us to predict probabilities
+    that help solve a business problem. We considered the weaknesses of those linear
+    probability models and introduced logistic regression as a more complex model
+    that overcomes those weaknesses. Binary classification may seem like an unimportant
+    topic, but we can use it for analyzing risk, predicting the future, and making
+    difficult yes/no decisions. In our discussion of machine learning in the next
+    chapter, we’ll discuss prediction and classification methods that go beyond regressions.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,1766 @@
+- en: '**10'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: BACKPROPAGATION**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/common.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Backpropagation is currently *the* core algorithm behind deep learning. Without
+    it, we cannot train deep neural networks in a reasonable amount of time, if at
+    all. Therefore, practitioners of deep learning need to understand what backpropagation
+    is, what it brings to the training process, and how to implement it, at least
+    for simple networks. For the purposes of this chapter, I’ll assume you have no
+    knowledge of backpropagation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll begin the chapter by discussing what backpropagation is and what it isn’t.
+    We’ll then work through the math for a trivial network. After that, we’ll introduce
+    a matrix description of backpropagation suitable for building fully connected
+    feedforward neural networks. We’ll explore the math and experiment with a NumPy-based
+    implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep learning toolkits like TensorFlow don’t implement backpropagation the way
+    we will in the first two sections of this chapter. Instead, they use computational
+    graphs, which we’ll discuss at a high level to conclude the chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What Is Backpropagation?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In [Chapter 7](ch07.xhtml#ch07), we introduced the idea of the gradient of a
+    scalar function of a vector. We worked with gradients again in [Chapter 8](ch08.xhtml#ch08)
+    and saw their connection to the Jacobian matrix. Recall in that chapter, we discussed
+    how training a neural network is essentially an optimization problem. We know
+    training a neural network involves a loss function, a function of the network’s
+    weights and biases that tells us how well the network performs on the training
+    set. When we do gradient descent, we’ll use the gradient to decide how to move
+    from one part of the loss landscape to another to find where the network performs
+    best. The goal of training is to minimize the loss function over the training
+    set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: That’s the high-level picture. Now let’s make it a little more concrete. Gradients
+    apply to functions that accept vector inputs and return a scalar value. For a
+    neural network, the vector input is the weights and biases, the parameters that
+    define how the network performs once the architecture is fixed. Symbolically,
+    we can write the loss function as *L*(**θ**), where **θ** (theta) is a vector
+    of all the weights and biases in the network. Our goal is to move through the
+    space that the loss function defines to find the minimum, the specific **θ** leading
+    to the smallest loss, *L*. We do this by using the gradient of *L*(**θ**). Therefore,
+    to train a neural network via gradient descent, we need to know how each weight
+    and bias value contributes to the loss function; that is, we need to know ∂*L*/∂*w*,
+    for some weight (or bias) *w*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backpropagation is the algorithm that tells us what ∂*L*/∂*w* is for each weight
+    and bias of the network. With the partial derivatives, we can apply gradient descent
+    to improve the network’s performance on the next pass of the training data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before we go any further, a word on terminology. You’ll often hear machine learning
+    folks use *backpropagation* as a proxy for the entire process of training a neural
+    network. Experienced practitioners understand what they mean, but people new to
+    machine learning are sometimes a bit confused. To be explicit, *backpropagation*
+    is the algorithm that finds the contribution of each weight and bias value to
+    the network’s error, the ∂*L*/∂*w*’s. *Gradient descent* is the algorithm that
+    uses the ∂*L*/∂*w*’s to modify the weights and biases to improve the network’s
+    performance on the training set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rumelhart, Hinton, and Williams introduced backpropagation in their 1986 paper
+    “Learning Representations by Back-propagating Errors.” Ultimately, backpropagation
+    is an application of the chain rule we discussed in [Chapters 7](ch07.xhtml#ch07)
+    and [8](ch08.xhtml#ch08). Backpropagation begins at the network’s output with
+    the loss function. It moves *backward*, hence the name “backpropagation,” to ever-lower
+    layers of the network, propagating the error signal to find ∂*L*/∂*w* for each
+    weight and bias. Note, practitioners frequently shorten the name to “backprop.”
+    You’ll encounter that term often.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll work through backpropagation by example in the following two sections.
+    For now, the primary thing to understand is that it is the first of two pieces
+    we need to train neural networks. It provides the information required by the
+    second piece, gradient descent, the subject of [Chapter 11](ch11.xhtml#ch11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backpropagation by Hand
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let’s define a simple neural network, one that accepts two input values, has
+    two nodes in its hidden layer, and has a single output node, as shown in [Figure
+    10-1](ch10.xhtml#ch10fig01).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-1: A simple neural network*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 10-1](ch10.xhtml#ch10fig01) shows the network with its six weights,
+    *w*[0] through *w*[5], and three bias values, *b*[0], *b*[1], and *b*[2]. Each
+    value is a scalar.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll use sigmoid activation functions in the hidden layer,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/245equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and no activation function for the output node. To train the network, we’ll
+    use a squared-error loss function,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/245equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where *y* is the label, zero or one, for a training example and *a*[2] is the
+    output of the network for the input associated with *y*, namely *x*[0] and *x*[1].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s write the equations for a forward pass with this network, a pass that
+    moves left to right from the input, *x*[0] and *x*[1], to the output, *a*[2].
+    The equations are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, we’ve introduced intermediate values *z*[0] and *z*[1] to be the arguments
+    to the activation functions. Notice that *a*[2] has no activation function. We
+    could have used a sigmoid here as well, but as our labels are either 0 or 1, we’ll
+    learn a good output value regardless.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we pass a single training example through the network, the output is *a*[2].
+    If the label associated with the training example, ***x*** = (*x*[0], *x*[1]),
+    is *y*, the squared-error loss is as indicated in [Figure 10-1](ch10.xhtml#ch10fig01).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The argument to the loss function is *a*[2]; *y* is a fixed constant. However,
+    *a*[2] depends directly on *w*[4], *w*[5], *b*[2], and the values of *a*[1] and
+    *a*[0], which themselves depend on *w*[0], *w*[1], *w*[2], *w*[3], *b*[0], *b*[1],
+    *x*[0], and *x*[1]. Therefore, thinking in terms of the weights and biases, we
+    could write the loss function as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*L* = *L*(*w*[0], *w*[1], *w*[2], *w*[3], *w*[4], *w*[5], *b*[0], *b*[1], *b*[2];*x*[0],
+    *x*[1], *y*) = *L*(**θ**; ***x***, *y*)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here, **θ** represents the weights and biases; it’s considered the variable.
+    The parts after the semicolon are constants in this case: the input vector ***x***
+    = (*x*[0], *x*[1]) and the associated label, *y*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We need the gradient of the loss function, ▽*L*(**θ**; ***x***, *y*). To be
+    explicit, we need all the partial derivatives, ∂*L*/∂*w*[5], ∂*L*/∂*b*[0], and
+    so on, for all weights and biases: nine partial derivatives in total.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here’s our plan of attack. First, we’ll work through the math to calculate expressions
+    for the partial derivatives of all nine values. Second, we’ll write some Python
+    code to implement the expressions so we can train the network of [Figure 10-1](ch10.xhtml#ch10fig01)
+    to classify iris flowers. We’ll learn a few things during this process. Perhaps
+    the most important is that calculating the partial derivatives by hand is, to
+    be understated, tedious. We’ll succeed, but we’ll see in the following section
+    that, thankfully, we have a far more compact way we can represent backpropagation,
+    especially for fully connected feedforward networks. Let’s get started.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calculating the Partial Derivatives
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We need expressions for all the partial derivatives of the loss function for
+    the network in [Figure 10-1](ch10.xhtml#ch10fig01). We also need an expression
+    for the derivative of our activation function, the sigmoid. Let’s begin with the
+    sigmoid, as a clever trick writes the derivative in terms of the sigmoid itself,
+    a value calculated during the forward pass.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The derivative of the sigmoid is shown next.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ02.jpg)![Image](Images/10equ03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The trick of [Equation 10.2](ch10.xhtml#ch10equ02) is to add and subtract one
+    in the numerator to change the form of the factor to be another copy of the sigmoid
+    itself. So, the derivative of the sigmoid is the product of the sigmoid and one
+    minus the sigmoid. Looking back at [Equation 10.1](ch10.xhtml#ch10equ01), we see
+    that the forward pass computes the sigmoids, the activation functions, as *a*[0]
+    and *a*[1]. Therefore, during the derivation of the backpropagation partial derivatives,
+    we’ll be able to substitute *a*[0] and *a*[1] via [Equation 10.3](ch10.xhtml#ch10equ03)
+    for the derivative of the sigmoid to avoid calculating it a second time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s start with the derivatives. True to backpropagation’s name, we’ll work
+    backward from the loss function and apply the chain rule to arrive at the expressions
+    we need. The derivative of the loss function,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/247equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This means that everywhere in the expressions that follow, we can replace ∂*L*/∂*a*[2]
+    with *a*[2] − *y*. Recall *y* is the label for the current training example, and
+    we compute *a*[2] during the forward pass as the output of the network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s now find expressions for *w*[5], *w*[4], and *b*[2], the parameters used
+    to calculate *a*[2]. The chain rule tells us
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: since
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/248equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We’ve substituted in the expression for *a*[2] from [Equation 10.1](ch10.xhtml#ch10equ01).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Similar logic leads to expressions for *w*[4] and *b*[2]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Fantastic! We have three of the partial derivatives we need—only six more to
+    go. Let’s write the expressions for *b*[1], *w*[1], and *w*[3],
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where we use
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/248equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: substituting *a*[1] for σ(*z*[1]) as we calculate *a*[1] during the forward
+    pass.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A similar calculation gives us expressions for the final three partial derivatives:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Whew! That was tedious, but now we have what we need. Notice, however, that
+    this is a very rigid process—if we change the network architecture, activation
+    function, or loss function, we need to derive these expressions again. Let’s use
+    the expressions to classify iris flowers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Translating into Python
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The code I’ve presented here is in the file *nn_by_hand.py*. Take a look at
+    it in an editor to see the overall structure. We’ll start with the main function
+    ([Listing 10-1](ch10.xhtml#ch10ex01)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ epochs = 1000
+  prefs: []
+  type: TYPE_NORMAL
+- en: eta = 0.1
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ xtrn, ytrn, xtst, ytst = BuildDataset()
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ net = {}
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["b2"] = 0.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["b1"] = 0.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["b0"] = 0.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w5"] = 0.0001*(np.random.random() - 0.5)
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w4"] = 0.0001*(np.random.random() - 0.5)
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w3"] = 0.0001*(np.random.random() - 0.5)
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w2"] = 0.0001*(np.random.random() - 0.5)
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w1"] = 0.0001*(np.random.random() - 0.5)
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w0"] = 0.0001*(np.random.random() - 0.5)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ tn0,fp0,fn0,tp0,pred0 = Evaluate(net, xtst, ytst)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❺ net = GradientDescent(net, xtrn, ytrn, epochs, eta)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❻ tn,fp,fn,tp,pred = Evaluate(net, xtst, ytst)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("Training for %d epochs, learning rate %0.5f" % (epochs, eta))
+  prefs: []
+  type: TYPE_NORMAL
+- en: print()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("Before training:")
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("   TN:%3d FP:%3d" % (tn0, fp0))
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("   FN:%3d TP:%3d" % (fn0, tp0))
+  prefs: []
+  type: TYPE_NORMAL
+- en: print()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("After training:")
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("   TN:%3d FP:%3d" % (tn, fp))
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("   FN:%3d TP:%3d" % (fn, tp))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-1: The* *main* *function*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we set the number of epochs and the learning rate, η (eta) ❶. The number
+    of epochs is the number of passes through the training set to update the network
+    weights and biases. The network is straightforward, and our dataset tiny, with
+    only 70 samples, so we need many epochs for training. Gradient descent uses the
+    learning rate to decide how to move based on the gradient values. We’ll explore
+    the learning rate more thoroughly in [Chapter 11](ch11.xhtml#ch11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we load the dataset ❷. We’re using the same iris dataset we used in [Chapter
+    6](ch06.xhtml#ch06) and again in [Chapter 9](ch09.xhtml#ch09), keeping only the
+    first two features and classes 0 and 1\. See the BuildDataset function in *nn_by_hand.py*.
+    The return values are NumPy arrays: xtrn (70 × 2) and xtst (30 × 2) for training
+    and test data, and the associated labels in ytrn and ytst.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We need someplace to store the network weights and biases. A Python dictionary
+    will do, so we set it up next with default values ❸. Notice that we set the bias
+    values to zero and the weights to small random values in [−0.00005, +0.00005].
+    These seem to work well enough in this case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The remainder of main evaluates the randomly initialized network (Evaluate ❹)
+    on the test data, performs gradient descent to train the model (GradientDescent
+    ❺), and evaluates the test data again to demonstrate that training worked ❻.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-2](ch10.xhtml#ch10ex02) shows Evaluate as well as Forward, which
+    Evaluate calls.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def Evaluate(net, x, y):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: out = Forward(net, x)
+  prefs: []
+  type: TYPE_NORMAL
+- en: tn = fp = fn = tp = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: pred = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ c = 0 if (out[i] < 0.5) else 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: pred.append(c)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (c == 0) and (y[i] == 0):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: tn += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif (c == 0) and (y[i] == 1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fn += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif (c == 1) and (y[i] == 0):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fp += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: tp += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: return tn,fp,fn,tp,pred
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def Forward(net, x):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: out = np.zeros(x.shape[0])
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for k in range(x.shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ z0 = net["w0"]*x[k,0] + net["w2"]*x[k,1] + net["b0"]
+  prefs: []
+  type: TYPE_NORMAL
+- en: a0 = sigmoid(z0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: z1 = net["w1"]*x[k,0] + net["w3"]*x[k,1] + net["b1"]
+  prefs: []
+  type: TYPE_NORMAL
+- en: a1 = sigmoid(z1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: out[k] = net["w4"]*a0 + net["w5"]*a1 + net["b2"]
+  prefs: []
+  type: TYPE_NORMAL
+- en: return out
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-2: The* *Evaluate* *function*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s begin with Forward, which performs a forward pass over the data in x.
+    After creating a place to hold the output of the network (out), each input is
+    run through the network using the current value of the parameters ❷. Notice that
+    the code is a direct implementation of [Equation 10.1](ch10.xhtml#ch10equ01),
+    with out[k] in place of *a*[2]. When all inputs have been processed, we return
+    the collected outputs to the caller.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now let’s look at Evaluate. Its arguments are a set of input features, x, associated
+    labels, y, and the network parameters, net. Evaluate first runs the data through
+    the network by calling Forward to populate out. These are the raw, floating-point
+    outputs from the network. To compare them with the actual labels, we apply a threshold
+    ❶ to call outputs < 0.5 class 0 and outputs ≥ 0.5 class 1\. The predicted label
+    is appended to pred and tallied by comparing it to the actual label in y.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the actual and predicted labels are both zero, the model has correctly identified
+    a *true negative* (TN), a true instance of class 0\. If the network predicts class
+    0, but the actual label is class 1, we have a *false negative* (FN), a class 1
+    instance labeled class 0\. Conversely, labeling a class 0 instance class 1 is
+    a *false positive* (FP). The only remaining option is an actual class 1 instance
+    labeled as class 1, a *true positive* (TP). Finally, we return the tallies and
+    predictions to the caller.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-3](ch10.xhtml#ch10ex03) presents GradientDescent, which [Listing
+    10-1](ch10.xhtml#ch10ex01) calls ❺. This is where we implement the partial derivatives
+    calculated above.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def GradientDescent(net, x, y, epochs, eta):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❶ for e in range(epochs):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: dw0 = dw1 = dw2 = dw3 = dw4 = dw5 = db0 = db1 = db2 = 0.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❷ for k in range(len(y)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ z0 = net["w0"]*x[k,0] + net["w2"]*x[k,1] + net["b0"]
+  prefs: []
+  type: TYPE_NORMAL
+- en: a0 = sigmoid(z0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: z1 = net["w1"]*x[k,0] + net["w3"]*x[k,1] + net["b1"]
+  prefs: []
+  type: TYPE_NORMAL
+- en: a1 = sigmoid(z1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: a2 = net["w4"]*a0 + net["w5"]*a1 + net["b2"]
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ db2 += a2 - y[k]
+  prefs: []
+  type: TYPE_NORMAL
+- en: dw4 += (a2 - y[k]) * a0
+  prefs: []
+  type: TYPE_NORMAL
+- en: dw5 += (a2 - y[k]) * a1
+  prefs: []
+  type: TYPE_NORMAL
+- en: db1 += (a2 - y[k]) * net["w5"] * a1 * (1 - a1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: dw1 += (a2 - y[k]) * net["w5"] * a1 * (1 - a1) * x[k,0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: dw3 += (a2 - y[k]) * net["w5"] * a1 * (1 - a1) * x[k,1]
+  prefs: []
+  type: TYPE_NORMAL
+- en: db0 += (a2 - y[k]) * net["w4"] * a0 * (1 - a0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: dw0 += (a2 - y[k]) * net["w4"] * a0 * (1 - a0) * x[k,0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: dw2 += (a2 - y[k]) * net["w4"] * a0 * (1 - a0) * x[k,1]
+  prefs: []
+  type: TYPE_NORMAL
+- en: m = len(y)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❺ net["b2"] = net["b2"] - eta * db2 / m
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w4"] = net["w4"] - eta * dw4 / m
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w5"] = net["w5"] - eta * dw5 / m
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["b1"] = net["b1"] - eta * db1 / m
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w1"] = net["w1"] - eta * dw1 / m
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w3"] = net["w3"] - eta * dw3 / m
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["b0"] = net["b0"] - eta * db0 / m
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w0"] = net["w0"] - eta * dw0 / m
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["w2"] = net["w2"] - eta * dw2 / m
+  prefs: []
+  type: TYPE_NORMAL
+- en: return net
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-3: Using* *GradientDescent* *to train the network*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The GradientDescent function contains a double loop. The outer loop ❶ is over
+    epochs, the number of full passes through the training set. The inner loop ❷ is
+    over the training examples, one at a time. The forward pass comes first ❸ to calculate
+    the output, a2, and intermediate values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next block of code implements the backward pass using the partial derivatives,
+    [Equations 10.4](ch10.xhtml#ch10equ04) through [10.8](ch10.xhtml#ch10equ08), to
+    move the error (loss) backward through the network ❹. We use the average loss
+    over the training set to update the weights and biases. Therefore, we accumulate
+    the contribution to the loss for each weight and bias value for each training
+    example. This explains adding each new contribution to the total over the training
+    set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After passing each training example through the net and accumulating its contribution
+    to the loss, we update the weights and biases ❺. The partial derivatives give
+    us the gradient, the direction of maximal change; however, we want to minimize,
+    so we move in the direction *opposite* to the gradient, subtracting the average
+    of the loss due to each weight and bias from its current value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example,
+  prefs: []
+  type: TYPE_NORMAL
+- en: net["b2"] = net["b2"] - eta * db2 / m
+  prefs: []
+  type: TYPE_NORMAL
+- en: is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/252equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where η = 0.1 is the learning rate and *m* is the number of samples in the training
+    set. The summation is over the partial for *b*[2] evaluated for each input sample,
+    ***x**[i]*, the average value of which, multiplied by the learning rate, is used
+    to adjust *b*[2] for the next epoch. Another name we frequently use for the learning
+    rate is *step size*. This parameter controls how quickly the weights and biases
+    of the network step through the loss landscape toward a minimum value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our implementation is complete. Let’s run it to see how well it does.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training and Testing the Model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s take a look at the training data. We can plot the features, one on each
+    axis, to see how easy it might be to separate the two classes. The result is [Figure
+    10-2](ch10.xhtml#ch10fig02), with class 0 as circles and class 1 as squares.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-2: The iris training data showing class 0 (circles) and class 1
+    (squares)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s straightforward to see that the two classes are quite separate from each
+    other so that even our elementary network with two hidden neurons should be able
+    to learn the difference between them. Compare this plot with the left side of
+    [Figure 6-2](ch06.xhtml#ch06fig02), which shows the first two features for all
+    three iris classes. If we had included class 2 in our dataset, two features would
+    not be enough to separate all three classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Run the code with
+  prefs: []
+  type: TYPE_NORMAL
+- en: python3 nn_by_hand.py
+  prefs: []
+  type: TYPE_NORMAL
+- en: For me, this produces
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training for 1000 epochs, learning rate 0.10000
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Before training:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TN: 15 FP: 0'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'FN: 15 TP: 0'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After training:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TN: 14 FP: 1'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'FN: 1 TP: 14'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re told training used 1,000 passes through the training set of 70 examples.
+    This is the outer loop of [Listing 10-3](ch10.xhtml#ch10ex03). We’re then presented
+    with two tables of numbers, characterizing the network before training and after.
+    Let’s walk through these tables to understand the story they tell.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The tables are known by several names: *contingency tables*, *2* × *2 tables*,
+    or *confusion matrices*. The term *confusion matrix* is the most general, though
+    it’s usually reserved for multiclass classifiers. The labels count the number
+    of true positives, true negatives, false positives, and false negatives in the
+    test set. The test set includes 30 samples, 15 from each class. If the network
+    is perfect, all class 0 samples will be in the TN count, and all class 1 in the
+    TP count. Errors are FP or FN counts.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The randomly initialized network labels everything as class 0\. We know this
+    because there are 15 TN samples (those that are truly class 0) and 15 FN samples
+    (15 class 1 samples that are labeled class 0). The overall accuracy before training
+    is then 15/(15 + 15) = 0.5 = 50 percent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After training, the 1,000 passes through the outer loop of the code in [Listing
+    10-3](ch10.xhtml#ch10ex03), the test data is almost perfectly classified, with
+    14 of the 15 class 0 and 14 of the 15 class 1 labels correctly assigned. The overall
+    accuracy is now (14 + 14)/(15 + 15) = 28/30 = 93.3 percent—not too shabby considering
+    our model has a single hidden layer of two nodes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Again, this exercise’s main point is to see how tedious and potentially error-prone
+    it is to calculate derivatives by hand. The code above works with scalars; it
+    doesn’t process vectors or matrices to take advantage of any symmetry possible
+    by using a better representation of the backpropagation algorithm. Thankfully,
+    we can do better. Let’s look again at the backpropagation algorithm for fully
+    connected networks and see if we can use vectors and matrices to arrive at a more
+    elegant approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backpropagation for Fully Connected Networks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this section, we’ll explore the equations that allow us to pass an error
+    term backward from the output of the network to the input. Additionally, we’ll
+    see how to use this error term to calculate the necessary partial derivatives
+    of the weights and biases for a layer so we can implement gradient descent. With
+    all the essential expressions on hand, we’ll implement Python classes that will
+    allow us to build and train fully connected feedforward neural networks of arbitrary
+    depth and shape. We’ll conclude by testing the classes against the MNIST dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backpropagating the Error
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Let’s begin with a useful observation: the layers of a fully connected neural
+    network can be thought of as vector functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***y*** = ***f***(***x***)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: where the input to the layer is ***x*** and the output is ***y***. The input,
+    ***x***, is either the actual input to the network for a training sample or, if
+    working with one of the hidden layers of the model, the previous layer’s output.
+    These are both vectors; each node in a layer produces a single scalar output,
+    which, when grouped, becomes ***y***, a vector representing the output of the
+    layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The forward pass runs through the layers of the network in order, mapping ***x**[i]*
+    to ***y**[i]* so that ***y**[i]* becomes ***x**[i]*+1, the input to layer *i*
+    + 1\. After all layers are processed, we use the final layer output, call it ***h***,
+    to calculate the loss, *L*(***h***, ***y***[true]). The loss is a measure of how
+    wrong the network is for the input, ***x***, that we determine by comparing it
+    to the true label ***y***[true]. Note that if the model is multiclass, the output
+    ***h*** is a vector, with one element for each possible class, and the true label
+    is a vector of zeros, except for the index of the actual class label, which is
+    one. This is why many toolkits, like Keras, map integer class labels to one-hot
+    vectors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We need to move the loss value, or the *error*, back through the network; this
+    is the backpropagation step. To do this for a fully connected network using per-layer
+    vectors and weight matrices, we need to first see how to run the forward pass.
+    As we did for the network we built above, we’ll separate applying the activation
+    function from the action of a fully connected layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, for any layer with the input vector ***x*** coming from the layer
+    below, we need to calculate an output vector, ***y***. For a fully connected layer,
+    the forward pass is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***y*** = ***Wx*** + ***b***'
+  prefs: []
+  type: TYPE_NORMAL
+- en: where ***W*** is a weight matrix, ***x*** is the input vector, and ***b*** is
+    the bias vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For an activation layer, we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***y*** = **σ**(***x***)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for whatever activation function, **σ**, we choose. We’ll stick with the sigmoid
+    for the remainder of this chapter. Note we made the function a vector-valued function.
+    To do this, we apply the scalar sigmoid function to each element of the input
+    vector to produce the output vector:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**σ**(***x***) = [*σ*(*x*[0]) *σ*(*x*[1]) ... *σ*(*x[n]*[−1])]^⊤'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A fully connected network consists of a series of fully connected layers followed
+    by activation layers. Therefore, the forward pass is a chain of operations that
+    begins with the input to the model being given to the first layer to produce an
+    output, which is then passed to the next layer’s input, and so on until all layers
+    have been processed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The forward pass leads to the final output and the loss. The derivative of the
+    loss function with respect to the network output is the first error term. To pass
+    the error term back down the model, we need to calculate how the error term changes
+    with a change to the input of a layer using how the error changes with a change
+    to the layer’s output. Specifically, for each layer, we need to know how to calculate
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/256equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: That is, we need to know how the error term changes with a change in the input
+    to the layer given
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/256equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'which is how the error term changes with a change in the output of the layer.
+    The chain rule tells us how to do it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where ∂*E*/∂***x*** for layer *i* becomes ∂*E*/∂***y*** for layer *i* − 1 as
+    we move backward through the network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Operationally, the backpropagation algorithm becomes
+  prefs: []
+  type: TYPE_NORMAL
+- en: Run a forward pass to map ***x*** → ***y***, layer by layer, to get the final
+    output, ***h***.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Calculate the value of the derivative of the loss function using ***h*** and
+    ***y***[true]; this becomes ∂*E*/∂***y*** for the output layer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Repeat for all earlier layers to calculate ∂*E*/∂***x*** from ∂*E*/∂***y***,
+    causing ∂*E*/∂***x*** for layer *i* to become ∂*E*/∂***y*** for layer *i* − 1.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: This algorithm passes the error term backward through the network. Let’s work
+    out how to get the necessary partial derivatives by layer type, beginning with
+    the activation layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will assume we know ∂*E*/∂***y*** and are looking for ∂*E*/∂***x***. The
+    chain rule says
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, we’re introducing ⊙ to represent the Hadamard product. Recall that the
+    Hadamard product is the element-wise multiplication of two vectors or matrices.
+    (See [Chapter 5](ch05.xhtml#ch05) for a refresher.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: We now know how to pass the error term through an activation layer. The only
+    other layer we’re considering is a fully connected layer. If we expand [Equation
+    10.9](ch10.xhtml#ch10equ09), we get
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: since
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/257equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The result is ***W***^⊤, not ***W***, because the derivative of a matrix times
+    a vector in denominator notation is the transpose of the matrix rather than the
+    matrix itself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let us pause for a bit to recap and think about the form of [Equations 10.10](ch10.xhtml#ch10equ10)
+    and [10.11](ch10.xhtml#ch10equ11). These equations tell us how to pass the error
+    term backward from layer to layer. What are the shapes of these values? For the
+    activation layer, if the input has *k*-elements, then the output also has *k-*elements.
+    Therefore, the relationship in [Equation 10.10](ch10.xhtml#ch10equ10) should map
+    a *k-*element vector to another *k*-element vector. The error term, ∂*E*/∂***y***,
+    is a *k*-element vector, as is the derivative of the activation function, σ′(***x***).
+    Finally, the Hadamard product between the two also outputs a *k*-element vector,
+    as needed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the fully connected layer, we have an *m*-element input, ***x***; an *n*
+    × *m*-element weight matrix, ***W***; and an output vector, ***y***, of *n*-elements.
+    So we need to generate an *m*-element vector, ∂*E*/∂***x***, from the *n*-element
+    error term, ∂*E*/∂***y***. Multiplying the transpose of the weight matrix, an
+    *m* × *n-*element matrix, by the error term does result in an *m*-element vector,
+    since *m* × *n* by *n* × 1 is *m* × 1, an *m*-element column vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calculating Partial Derivatives of the Weights and Biases
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[Equations 10.10](ch10.xhtml#ch10equ10) and [10.11](ch10.xhtml#ch10equ11) tell
+    us how to pass the error term backward through the network. However, the point
+    of backpropagation is to calculate how changes in the weights and biases affect
+    the error so we can use gradient descent. Specifically, for every fully connected
+    layer, we need expressions for'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/258equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: given
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/258equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Let’s start with ∂*E*/∂***b***. Applying the chain rule yet again gives
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: meaning the error due to the bias term for a fully connected layer is the same
+    as the error due to the output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The calculation for the weight matrix is similar:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The equation above tells us the error due to the weight matrix is a product
+    of the output error and the input, ***x***. The weight matrix is an *n* × *m-*element
+    matrix, as the forward pass multiplies by the *m*-element input vector. Therefore,
+    the error contribution from the weights, ∂*E*/∂***W***, also must be an *n* ×
+    *m* matrix. We know ∂*E*/∂***y*** is an *n*-element column vector, and the transpose
+    of ***x*** is an *m*-element row vector. The outer product of the two is an *n*
+    × *m* matrix, as required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Equations 10.10](ch10.xhtml#ch10equ10), [10.11](ch10.xhtml#ch10equ11), [10.12](ch10.xhtml#ch10equ12),
+    and [10.13](ch10.xhtml#ch10equ13) apply for a single training example. This means
+    for a specific input to the network, these equations, especially 10.12 and 10.13,
+    tell us the contribution to the loss by the biases and weights of any layer *for
+    that input sample*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To implement gradient descent, we need to accumulate these errors, the ∂*E*/∂***W***
+    and ∂*E*/∂***b*** terms, over the training samples. We then use the average value
+    of these errors to update the weights and biases at the end of every epoch or,
+    as we’ll implement it, minibatch. As gradient descent is the subject of [Chapter
+    11](ch11.xhtml#ch11), all we’ll do here is outline how we use backpropagation
+    to implement gradient descent and leave the details to that chapter and the code
+    we’ll implement next.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In general, however, to train the network, we need to do the following for
+    each sample in the minibatch:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Forward pass the sample through the network to create the output. Along the
+    way, we need to store the input to each layer, as we need it to implement backpropagation
+    (that is, we need ***x***^⊤ from [Equation 10.13](ch10.xhtml#ch10equ13)).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Calculate the value of the derivative of the loss function, which for us is
+    the mean squared error, to use as the first error term in back-propagation.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Run through the layers of the network in reverse order, calculating ∂*E*/∂***W***
+    and ∂*E*/∂***b*** for each fully connected layer. These values are accumulated
+    for each sample in the minibatch (**Δ*W***, **Δ*b***).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When the minibatch samples have been processed and the errors accumulated, it’s
+    time to take a gradient descent step. This is where the weights and biases of
+    each layer are updated via
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/10equ14.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: with **Δ*W*** and **Δ*b*** being the accumulated errors over the minibatch and
+    *m* being the size of the minibatch. Repeated gradient descent steps lead to a
+    final set of weights and biases—a trained network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This section is quite math-heavy. The following section translates the math
+    into code, where we’ll see that for all the math, the code, because of NumPy and
+    object-oriented design, is quite compact and elegant. If you’re fuzzy on the math,
+    I suspect the code will go a long way toward clarifying things for you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A Python Implementation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Our implementation is in the style of toolkits like Keras. We want the ability
+    to create arbitrary, fully connected networks, so we’ll use Python classes for
+    each layer and store the architecture as a list of layers. Each layer maintains
+    its weights and biases, along with the ability to do a forward pass, a backward
+    pass, and a gradient descent step. For simplicity, we’ll use sigmoid activations
+    and the squared error loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We need two classes: ActivationLayer and FullyConnectedLayer. An additional
+    Network class holds the pieces together and handles training. The classes are
+    in the file *NN.py*. (The code here is modified from the original code by Omar
+    Aflak and is used with his permission. See the GitHub link in *NN.py*. I modified
+    the code to use minibatches and support gradient descent steps other than for
+    every sample.)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s walk through each of the three classes, starting with ActivationLayer
+    (see [Listing 10-4](ch10.xhtml#ch10ex04)). The translation of the math we’ve done
+    to code form is quite elegant, in most cases a single line of NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class ActivationLayer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def forward(self, input_data):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.input = input_data
+  prefs: []
+  type: TYPE_NORMAL
+- en: return sigmoid(input_data)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def backward(self, output_error):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return sigmoid_prime(self.input) * output_error
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def step(self, eta):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-4: The* *ActivationLayer* *class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-4](ch10.xhtml#ch10ex04) shows ActivationLayer and includes only
+    three methods: forward, backward, and step. The simplest is step. It does nothing,
+    as there’s nothing for an activation layer to do during gradient descent because
+    there are no weights or bias values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The forward method accepts the input vector, ***x***, stores it for later use,
+    and then calculates the output vector, ***y***, by applying the sigmoid activation
+    function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The backward method accepts ∂*E*/∂***y***, the output_error from the layer above.
+    It then returns [Equation 10.10](ch10.xhtml#ch10equ10) by applying the derivative
+    of the sigmoid (sigmoid_prime) to the input set during the forward pass, multiplied
+    element-wise by the error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sigmoid and sigmoid_prime helper functions are
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def sigmoid(x):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return 1.0 / (1.0 + np.exp(-x))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def sigmoid_prime(x):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return sigmoid(x)*(1.0 - sigmoid(x))
+  prefs: []
+  type: TYPE_NORMAL
+- en: The FullyConnectedLayer class is next. It’s more complex than the ActivationLayer
+    class, but not significantly so. See [Listing 10-5](ch10.xhtml#ch10ex05).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class FullyConnectedLayer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, input_size, output_size):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ self.delta_w = np.zeros((input_size, output_size))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.delta_b = np.zeros((1,output_size))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.passes = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ self.weights = np.random.rand(input_size, output_size) - 0.5
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.bias = np.random.rand(1, output_size) - 0.5
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def forward(self, input_data):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.input = input_data
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ return np.dot(self.input, self.weights) + self.bias
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def backward(self, output_error):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: input_error = np.dot(output_error, self.weights.T)
+  prefs: []
+  type: TYPE_NORMAL
+- en: weights_error = np.dot(self.input.T, output_error)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.delta_w += np.dot(self.input.T, output_error)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.delta_b += output_error
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.passes += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: return input_error
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def step(self, eta):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ self.weights -= eta * self.delta_w / self.passes
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.bias -= eta * self.delta_b / self.passes
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❺ self.delta_w = np.zeros(self.weights.shape)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.delta_b = np.zeros(self.bias.shape)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.passes = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-5: The* *FullyConnectedLayer* *class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We tell the constructor the number of input and output nodes. The number of
+    input nodes (input_size) specifies the number of elements in the vector coming
+    into the layer. Likewise, output_size specifies the number of elements in the
+    output vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fully connected layers accumulate weight and bias errors over the minibatch,
+    the ∂*E*/∂***W*** terms in delta_w and the ∂*E*/∂***b*** terms in delta_b ❶. Each
+    sample processed is counted in passes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We must initialize neural networks with random weight and bias values; therefore,
+    the constructor sets up an initial weight matrix and bias vector using uniform
+    random values in the range [−0.5, 0.5] ❷. Notice, the bias vector is 1 × *n*,
+    a row vector. The code flips the ordering from the equations above to match the
+    way training samples are usually stored: a matrix in which each row is a sample
+    and each column a feature. The computation produces the same results because scalar
+    multiplication is commutative: *ab* = *ba*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The forward method stashes the input vector for later use by backward and then
+    calculates the output of the layer, multiplying the input by the weight matrix
+    and adding the bias term ❸.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Only two methods remain. The backward method receives ∂*E*/∂***y*** (output_error)
+    and calculates ∂*E*/∂***x*** (input_error), ∂*E*/∂***W*** (weights_error), and
+    ∂*E*/∂***b*** (output_error). We add the errors to the running error total for
+    the layer, delta_w and delta_b, for step to use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The step method includes a gradient descent step for a fully connected layer.
+    Unlike the empty method of ActivationLayer, the FullyConnectedLayer has plenty
+    to do. We update the weight matrix and bias vector using the average error, as
+    in [Equation 10.14](ch10.xhtml#ch10equ14) ❹. This implements the gradient descent
+    step over the minibatch. Finally, we reset the accumulators and counter for the
+    next minibatch ❺.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Network class brings everything together, as shown in [Listing 10-6](ch10.xhtml#ch10ex06).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Network:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, verbose=True):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.verbose = verbose
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ self.layers = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def add(self, layer):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ self.layers.append(layer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def predict(self, input_data):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: result = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(input_data.shape[0]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: output = input_data[i]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for layer in self.layers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: output = layer.forward(output)
+  prefs: []
+  type: TYPE_NORMAL
+- en: result.append(output)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ return result
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def fit(self, x_train, y_train, minibatches, learning_rate, batch_size=64):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❹ for i in range(minibatches):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: err = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: idx = np.argsort(np.random.random(x_train.shape[0]))[:batch_size]
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_batch = x_train[idx]
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_batch = y_train[idx]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❺ for j in range(batch_size):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: output = x_batch[j]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for layer in self.layers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: output = layer.forward(output)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❻ err += mse(y_batch[j], output)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❼ error = mse_prime(y_batch[j], output)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for layer in reversed(self.layers):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: error = layer.backward(error)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❽ for layer in self.layers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: layer.step(learning_rate)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (self.verbose) and ((i%10) == 0):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: err /= batch_size
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('minibatch %5d/%d error=%0.9f' % (i, minibatches, err))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-6: The* *Network* *class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The constructor for the Network class is straightforward. We set a verbose flag
+    to toggle displaying the mean error over the minibatch during training. Successful
+    training should show this error decreasing over time. As layers are added to the
+    network, they are stored in layers, which the constructor initializes ❶. The add
+    method adds layer objects to the network by appending them to layers ❷.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After the network is trained, the predict method generates output for each
+    input sample in input_data with a forward pass through the layers of the network.
+    Notice the pattern: the input sample is assigned to output; then the loop over
+    layers calls the forward method of each layer, in turn passing the output of the
+    previous layer as input to the next; and so on through the entire network. When
+    the loop ends, output contains the output of the final layer, so it’s appended
+    to result, which is returned to the caller ❸.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training the network is fit’s job. The name matches the standard training method
+    for sklearn. The arguments are the NumPy array of sample vectors, one per row
+    (x_train), and their labels as one-hot vectors (y_train). The number of minibatches
+    to train comes next. We’ll discuss minibatches in a bit. We also provide the learning
+    rate, η (eta), and an optional minibatch size, batch_size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The fit method uses a double loop. The first is over the desired number of minibatches
+    ❹. As we learned earlier, a minibatch is a subset of the full training set, and
+    an epoch is one full pass through the training set. Using the entire training
+    set is known as *batch training*, and batch training uses epochs. However, there
+    is good reason not to do batch training, as you’ll see in [Chapter 11](ch11.xhtml#ch11),
+    so the concept of a *minibatch* was introduced. The typical minibatch sizes are
+    anywhere from 16 to 128 samples at a time. Powers of two are often used to make
+    things nice for GPU-based deep learning toolkits. For us, there’s no difference
+    between a minibatch of 64 or 63 samples in terms of performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We select most minibatches as sequential sets of the training data to ensure
+    all the data is used. Here, we’re being a bit lazy and instead select random subsets
+    each time we need a minibatch. This simplifies the code and adds one more place
+    where randomness can show its utility. That’s what idx gives us, a random ordering
+    of indices into the training set, keeping only the first batch_size worth. We
+    then use x_batch and y_batch for the actual forward and backward passes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second loop is over the samples in the minibatch ❺. Samples are passed individually
+    through the layers of the network, calling forward just as predict does. For display
+    purposes, the actual mean squared error between the forward pass output and the
+    sample label is accumulated for the minibatch ❻.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The backward pass begins with the output error term, the derivative of the loss
+    function, mse_prime ❼. The pass then continues *backward* through the layers of
+    the network, passing the previous layer’s output error as input to the layer below,
+    directly mirroring the forward pass process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once the loop processes all the minibatch samples ❺, it’s time to take a gradient
+    descent step based on the mean error each layer in the network accumulated over
+    the samples ❽. The argument to step needs only the learning rate. The minibatch
+    concludes by reporting the average error if verbose is set for every 10th minibatch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll experiment with this code again in [Chapter 11](ch11.xhtml#ch11) as we
+    explore gradient descent. For now, let’s test it with the MNIST dataset to see
+    how well it works.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the Implementation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s take *NN.py* for a spin. We’ll use it to build a classifier for the MNIST
+    dataset, which we first encountered in [Chapter 9](ch09.xhtml#ch09). The original
+    MNIST dataset consists of 28×28-pixel grayscale images of handwritten digits with
+    black backgrounds. It’s a workhorse of the machine learning community. We’ll resize
+    the images to 14×14 pixels before turning them into vectors of 196 elements (=
+    14 × 14).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The dataset includes 60,000 training images and 10,000 test images. The vectors
+    are stored in NumPy arrays; see the files in the *dataset* directory. The code
+    to generate the dataset is in *build_dataset.py*. If you want to run the code
+    yourself, you’ll need to install Keras and OpenCV for Python first. Keras supplies
+    the original set of images and maps the training set labels to one-hot vectors.
+    OpenCV rescales the images from 28×28 to 14×14 pixels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code we need is in *mnist.py* and is shown in [Listing 10-7](ch10.xhtml#ch10ex07).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: from NN import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ x_train = np.load("dataset/train_images_small.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("dataset/test_images_small.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("dataset/train_labels_vector.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("dataset/test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ x_train = x_train.reshape(x_train.shape[0], 1, 14*14)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train /= 255
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = x_test.reshape(x_test.shape[0], 1, 14*14)
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test /= 255
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ net = Network()
+  prefs: []
+  type: TYPE_NORMAL
+- en: net.add(FullyConnectedLayer(14*14, 100))
+  prefs: []
+  type: TYPE_NORMAL
+- en: net.add(ActivationLayer())
+  prefs: []
+  type: TYPE_NORMAL
+- en: net.add(FullyConnectedLayer(100, 50))
+  prefs: []
+  type: TYPE_NORMAL
+- en: net.add(ActivationLayer())
+  prefs: []
+  type: TYPE_NORMAL
+- en: net.add(FullyConnectedLayer(50, 10))
+  prefs: []
+  type: TYPE_NORMAL
+- en: net.add(ActivationLayer())
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ net.fit(x_train, y_train, minibatches=40000, learning_rate=1.0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❺ out = net.predict(x_test)
+  prefs: []
+  type: TYPE_NORMAL
+- en: cm = np.zeros((10,10), dtype="uint32")
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y_test)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cm[y_test[i],np.argmax(out[i])] += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: print()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(np.array2string(cm))
+  prefs: []
+  type: TYPE_NORMAL
+- en: print()
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("accuracy = %0.7f" % (np.diag(cm).sum() / cm.sum(),))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-7: Classifying MNIST digits*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice that we import *NN.py* right after NumPy. We load the training images,
+    test images, and labels next ❶. The Network class expects each sample vector to
+    be a 1 × *n* row vector, so we reshape the training data from (60000,196) to (60000,1,196)—the
+    same as the test data ❷. At the same time, we scale the 8-bit data from [0, 255]
+    to [0, 1]. This is a standard preprocessing step for image data, as doing so makes
+    it easier for the network to learn.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building the model comes next ❸. First, we create an instance of the Network
+    class. Then, we add the input layer by defining a FullyConnectedLayer with 196
+    inputs and 100 outputs. A sigmoid activation layer follows this. We then add a
+    second fully connected layer mapping the 100 outputs of the first layer to 50
+    outputs, along with an activation layer. Finally, we add a last fully connected
+    layer mapping the 50 outputs of the previous layer to 10, the number of classes,
+    along with adding its activation layer. This approach mimics common toolkits like
+    Keras.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training happens by calling fit ❹. We specify 40,000 minibatches using the default
+    minibatch size of 64 samples. We set the learning rate to 1.0, which works well
+    in this instance. Training takes some 17 minutes on my old Intel i5 Ubuntu system.
+    As the model trains, the mean error over the minibatch is reported. When training
+    is complete, we pass the 10,000 test samples through the network and calculate
+    a 10 × 10 confusion matrix ❺. Recall that the rows of the confusion matrix are
+    the true class labels, here the actual digits 0 through 9\. The columns correspond
+    to the predicted labels, the largest value of the 10 outputs for each input sample.
+    The matrix elements are the counts of how often the true label was *i*, and the
+    assigned label was *j*. If the model is perfect, the matrix is purely diagonal;
+    there are no cases where the true label and model label disagree. The overall
+    accuracy is printed last as the diagonal sum divided by the sum of the matrix,
+    the total number of test samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: My run of *mnist.py* produced
+  prefs: []
+  type: TYPE_NORMAL
+- en: minibatch 39940/40000  error=0.003941790
+  prefs: []
+  type: TYPE_NORMAL
+- en: minibatch 39950/40000  error=0.001214253
+  prefs: []
+  type: TYPE_NORMAL
+- en: minibatch 39960/40000  error=0.000832551
+  prefs: []
+  type: TYPE_NORMAL
+- en: minibatch 39970/40000  error=0.000998448
+  prefs: []
+  type: TYPE_NORMAL
+- en: minibatch 39980/40000  error=0.002377286
+  prefs: []
+  type: TYPE_NORMAL
+- en: minibatch 39990/40000  error=0.000850956
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[ 965    0    1   1   1   5   2   3   2    0]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[   0 1121    3   2   0   1   3   0   5    0]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[   6    0 1005   4   2   0   3   7   5    0]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[   0    1    6 981   0   4   0   9   4    5]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[   2    0    3   0 953   0   5   3   1   15]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[   4    0    0  10   0 864   5   1   4    4]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[   8    2    1   1   3   4 936   0   3    0]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[   2    7   19   2   1   0   0 989   1    7]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[   5    0    4   5   3   5   7   3 939    3]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[   5    5    2  10   8   2   1   3   6 967]]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: accuracy = 0.9720000
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The confusion matrix is strongly diagonal, and the overall accuracy is 97.2
+    percent. This isn’t too bad of a result for a simple toolkit like *NN.py* and
+    a fully connected feedforward network. The largest error that the network made
+    was confusing sevens for twos 19 times (element [7,2] of the confusion matrix).
+    The next closest error was confusing fours for nines 15 times (element [4,9]).
+    Both of these errors make sense: sevens and twos often look similar, as do fours
+    and nines.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We started this chapter with a network we created that included two inputs,
+    two nodes in the hidden layer, and an output. The file *iris.py* implements the
+    same model by adapting the dataset to what Network expects. We won’t walk through
+    the code, but do run it. When I do, I get slightly better performance on the test
+    set: 14 out of 15 correct for class 0 and 15 out of 15 for class 1.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sadly, the backpropagation methods detailed here and in the previous section
+    are not ultimately flexible enough for deep learning. Modern toolkits don’t use
+    these approaches. Let’s explore what deep learning toolkits do when it comes to
+    backpropagation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Computational Graphs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In computer science, a *graph* is a collection of nodes (vertices) and edges
+    connecting them. We’ve been using graphs all along to represent neural networks.
+    In this section, we’ll use graphs to represent expressions instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider this simple expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*y* = *mx* + *b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To evaluate this expression, we follow agreed-upon rules regarding operator
+    precedence. Following the rules implies a sequence of primitive operations that
+    we can represent as a graph, as shown in [Figure 10-3](ch10.xhtml#ch10fig03).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-3: A computational graph implementing* y = mx + b'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data flows through the graph of [Figure 10-3](ch10.xhtml#ch10fig03) along the
+    arrows, from left to right. Data originates in *sources*, here *x*, *m*, and *b*,
+    and flows through *operators*, * and +, to the output, *y*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 10-3](ch10.xhtml#ch10fig03) is a *computational graph*—a graph specifying
+    how to evaluate an expression. Compilers for languages like C generate computational
+    graphs in some form to translate high-level expressions into sequences of machine
+    language instructions. For the expression above, first the *x* and *m* values
+    are multiplied, and the resulting output of the multiplication operation is passed
+    to an addition operation, along with *b*, to produce the final output, *y*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can represent expressions, including those representing complex deep neural
+    networks, as computational graphs. We represented fully connected feedforward
+    models this way, as data flowing from the input, ***x***, through the hidden layers
+    to the output, the loss function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Computational graphs are how deep learning toolkits like TensorFlow and PyTorch
+    manage the structure of a model and implement backpropagation. Unlike the rigid
+    calculations earlier in the chapter, a computational graph is generic and capable
+    of representing all the architectures used in deep learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you peruse the deep learning literature and begin to work with specific toolkits,
+    you will run across two different approaches to using computational graphs. The
+    first generates the graph dynamically when data is available. PyTorch uses this
+    method, called *symbol-to-number*. TensorFlow uses the second method, *symbol-to-symbol*,
+    to build a static computational graph ahead of time. Both approaches implement
+    graphs, and both can automatically calculate the derivatives needed for backpropagation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: TensorFlow generates the derivatives it needs for backpropagation in much the
+    same way we did in the previous section. Like addition, each operation knows how
+    to create the derivative of its outputs with respect to its inputs. That, along
+    with the chain rule, is all that’s needed to implement backpropagation. Exactly
+    how the graph is traversed depends on the *graph evaluation engine* and the specific
+    model architecture, but the graph is traversed as needed for both the forward
+    and backward passes. Note that because the computational graph breaks expressions
+    into smaller operations, each of which knows how to process gradients during the
+    backward step (as we did above for ActivationLayer and FullyConnectedLayer), it’s
+    possible to use custom functions in layers without working through the derivatives.
+    The graph engine does it for you, as long as you use primitive operations the
+    engine already supports.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s walk through the forward and backward passes of a computational graph.
+    This example comes from the 2015 paper “TensorFlow: Large-Scale Machine Learning
+    on Heterogeneous Distributed Systems” (*[https://arxiv.org/pdf/1603.04467.pdf](https://arxiv.org/pdf/1603.04467.pdf)*).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A hidden layer in a fully connected model is expressed as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***y*** = **σ**(***Wx*** + ***b***)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: for weight matrix ***W***, bias vector ***b***, input ***x***, and output ***y***.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 10-4](ch10.xhtml#ch10fig04) shows the same equation as a computational
+    graph.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-4: The computational graphs representing the forward and backward
+    passes through one layer of a feedforward neural network*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 10-4](ch10.xhtml#ch10fig04) presents two versions. The top of the figure
+    shows the forward pass, where data flows from ***x***, ***W***, and ***b*** to
+    produce the output. Notice how the arrows lead left to right.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note the sources are tensors, here either vectors or matrices. The outputs of
+    operations are also tensors. The tensors flow through the graph, hence the name
+    *TensorFlow*. [Figure 10-4](ch10.xhtml#ch10fig04) represents matrix multiplication
+    as @, the NumPy matrix multiplication operator. The activation function is **σ**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the backward pass, the sequence of derivatives begins with ∂***y***/∂***y***
+    = 1 and flows back through the graph from operator output to inputs. If there
+    is more than one input, there is more than one output derivative. In practice,
+    the graph evaluation engine processes the proper set of operators in the proper
+    order. Each operator has its needed input derivatives available when it’s that
+    operator’s turn to be processed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 10-4](ch10.xhtml#ch10fig04) uses ∂ before an operator to indicate the
+    derivatives the operator generates. For example, the addition operator (∂+) produces
+    two outputs because there are two inputs, ***Wx*** and ***b***. The same is true
+    for matrix multiplication (∂@). The derivative of the activation function is shown
+    as **σ**′.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice that arrows run from ***W*** and ***x*** in the forward pass to the derivative
+    of the matrix multiplication operator in the backward pass. Both ***W*** and ***x***
+    are necessary to calculate ∂***y***/∂***W*** and ∂***y***/∂***x***—see [Equation
+    10.13](ch10.xhtml#ch10equ13) and [Equation 10.11](ch10.xhtml#ch10equ11), respectively.
+    There is no arrow from ***b*** to the matrix multiplication operator because ∂***y***/∂***b***
+    does not depend on ***b***—see [Equation 10.12](ch10.xhtml#ch10equ12). If a layer
+    were below what is shown in [Figure 10-4](ch10.xhtml#ch10fig04), the ∂***y***/∂***x***
+    output from the matrix multiplication operator would become the input for the
+    backward pass through that layer, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The power of computational graphs makes modern deep learning toolkits highly
+    general and supports almost any network type and architecture, without burdening
+    the user with detailed and highly tedious gradient calculations. As you continue
+    to explore deep learning, do appreciate what the toolkits make possible with only
+    a few lines of code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This chapter introduced backpropagation, one of the two pieces needed to make
+    deep learning practical. First, we worked through calculating the necessary derivatives
+    by hand for a tiny network and saw how laborious a process it was. However, we
+    were able to train the tiny network successfully.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we used our matrix calculus knowledge from [Chapter 8](ch08.xhtml#ch08)
+    to find the equations for multilayer fully connected networks and created a simple
+    toolkit in the same vein as toolkits like Keras. With the toolkit, we successfully
+    trained a model to high accuracy using the MNIST dataset. While effective and
+    general in terms of the number of hidden layers and their sizes, the toolkit was
+    restricted to fully connected models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We ended the chapter with a cursory look at how modern deep learning toolkits
+    like TensorFlow implement models and automate backpropagation. The computational
+    graph enables arbitrary combinations of primitive operations, each of which can
+    pass gradients backward as necessary, thereby allowing the complex model architectures
+    we find in deep learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second half of training a deep model is gradient descent, which puts the
+    gradients calculated by backpropagation to work. Let’s now turn our attention
+    that way.
+  prefs: []
+  type: TYPE_NORMAL

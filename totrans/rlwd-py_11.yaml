@@ -1,0 +1,997 @@
+- en: '11'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: CREATING AN INTERACTIVE ZOMBIE ESCAPE MAP
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/common.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In 2010, *The Walking Dead* premiered on the AMC television channel. Set at
+    the beginning of a zombie apocalypse, it told the story of a small group of survivors
+    in the area of Atlanta, Georgia. The critically acclaimed show soon became a phenomenon,
+    turning into the most watched series in cable television history, spawning a spin-off
+    called *Fear the Walking Dead*, and starting an entirely new genre of television,
+    the post-episode discussion show, with *Talking Dead*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, you’ll play a quick-thinking data scientist who foresees the
+    coming collapse of civilization. You’ll prepare a map to help the *Walking Dead*
+    survivors escape the crowded Atlanta metropolitan area for the more sparsely populated
+    lands west of the Mississippi. In the process, you’ll use the pandas library to
+    load, analyze, and clean the data, and you’ll use the bokeh and holoviews modules
+    to plot the map.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Project #15: Visualizing Population Density with a Choropleth Map**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: According to scientists (yes, they’ve studied this), the key to surviving a
+    zombie apocalypse is to live as far from a city as possible. In the United States,
+    that means living in one of the large black areas shown in [Figure 11-1](ch11.xhtml#ch011fig1).
+    The brighter the lights, the greater the population, so if you want to avoid people,
+    don’t “go into the light.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-1: Nighttime image of US city lights in 2012'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unfortunately for our *Walking Dead* survivors in Atlanta, they’re a long way
+    from the relative safety of the American West. They’ll need to weave their way
+    through a gauntlet of cities and towns, ideally passing through the least populated
+    areas. Service station maps don’t provide that population information, but the
+    US census does. Before civilization collapses and the internet fails, you can
+    download population density data onto your laptop and sort it out later using
+    Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The best way to present this type of data is with a *choropleth map*, a visualization
+    tool that uses colors or patterns to represent statistics about predefined geographical
+    regions. You may be familiar with choropleth maps of US presidential election
+    results, which color counties red for a Republican victory and blue for a Democratic
+    one ([Figure 11-2](ch11.xhtml#ch011fig2)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the survivors had a choropleth map of population density that showed the
+    number of people per square mile in each county, they could find the shortest,
+    and theoretically safest, routes out of Atlanta and across the American South.
+    Although you could get even higher-resolution data from the census, using its
+    county-level data should be enough. *Walking Dead* zombie herds migrate as they
+    get hungry, quickly rendering detailed statistics obsolete.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-2: Choropleth map of the 2016 US presidential election results (light
+    gray = Democrat, dark gray = Republican)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To determine the best routes through the counties, the survivors can use state
+    highway maps like the ones found in service stations and welcome centers. These
+    paper maps include county and parish outlines, making it easy to relate their
+    network of cities and roads to a page-sized printout of the choropleth map.
+  prefs: []
+  type: TYPE_NORMAL
+- en: THE OBJECTIVE
+  prefs: []
+  type: TYPE_NORMAL
+- en: Create an interactive map of the conterminous United States (the 48 adjoining
+    states) that displays population density by county.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Strategy***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Like all data visualization exercises, this task consists of the following
+    basic steps: finding and cleaning the data, choosing the type of plot and the
+    tool with which to show the data, preparing the data for plotting, and drawing
+    the data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finding the data is easy in this case, as the US census population data is made
+    readily available to the public. You still need to *clean* it, however, by finding
+    and handling bogus data points, null values, and formatting issues. Ideally you
+    would also verify the accuracy of the data, a difficult job that data scientists
+    probably skip far too often. The data should at least pass a sanity check, something
+    that may have to wait until the data is drawn. New York City should have a greater
+    population density than Billings, Montana, for example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, you must decide how you’ll present the data. You’ll use a map, but other
+    options might include a bar chart or a table. Even more important is choosing
+    the tool—in this case, the Python library—that you’ll use to make the plot. The
+    choice of tool can have a big impact on how you prepare the data and exactly what
+    you end up showing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Years ago, a fast-food company ran a commercial in which a customer claimed
+    to like “a variety, but not too much of a variety.” When it comes to visualization
+    tools in Python, you can argue that there are too many choices, with too little
+    to distinguish them: matplotlib, seaborn, plotly, bokeh, folium, altair, pygal,
+    ggplot, holoviews, cartopy, geoplotlib, and built-in functions in pandas.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These various visualization libraries have their strengths and weaknesses, but
+    since this project requires speed, you’ll focus on the easy-to-use holoviews module,
+    with a bokeh backend for plotting. This combination will allow you to produce
+    an interactive choropleth map with only a few lines of code, and bokeh conveniently
+    includes US state and county polygons in its sample data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once you’ve chosen your visualization tool, you must put the data in the format
+    that the tool expects. You’ll need to figure out how to fill in the county shapes,
+    which you get from one file, with the population data from another file. This
+    will involve a little reverse engineering using example code from the holoviews
+    gallery. After that, you’ll plot the map with bokeh.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fortunately, data analysis with Python almost always relies on the Python Data
+    Analysis Library (pandas). This module will let you load the census data, analyze
+    it, and reformat it for use with holoviews and bokeh.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Python Data Analysis Library***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The open source pandas library is the most popular library available for performing
+    data extraction, processing, and manipulation in Python. It contains data structures
+    designed for working with common data sources, such as SQL relational databases
+    and Excel spreadsheets. If you plan on being a data scientist in any form, you’ll
+    surely encounter pandas at some point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The pandas library contains two primary data structures: series and dataframes.
+    A *series* is a one-dimensional labeled array that can hold any type of data,
+    such as integers, floats, strings, and so on. Because pandas is based on NumPy,
+    a series object is basically two associated arrays (see the introduction to arrays
+    on [page 12](ch01.xhtml#page_12) in [Chapter 1](ch01.xhtml) if you’re new to arrays).
+    One array contains the data point values, which can have any NumPy data type.
+    The other array contains labels for each data point, called *indexes* ([Table
+    11-1](ch11.xhtml#ch011table1)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-1:** A Series Object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Index | Value |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0 | 25 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 432 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | –112 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | 99 |'
+  prefs: []
+  type: TYPE_TB
+- en: Unlike the indexes of Python list items, the indexes in a series don’t have
+    to be integers. In [Table 11-2](ch11.xhtml#ch011table2), the indexes are the names
+    of people, and the values are their ages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-2:** A Series Object with Meaningful Labels'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Index | Value |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Javier | 25 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Carol | 32 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lora | 19 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sarah | 29 |'
+  prefs: []
+  type: TYPE_TB
+- en: As with a list or NumPy array, you can slice a series or select individual elements
+    by specifying an index. You can manipulate the series many ways, such as filtering
+    it, performing mathematical operations on it, and merging it with other series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A *dataframe* is a more complex structure comprising two dimensions. It has
+    a tabular structure similar to a spreadsheet, with columns, rows, and data ([Table
+    11-3](ch11.xhtml#ch011table3)). You can think of it as an ordered collection of
+    columns with two indexing arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-3:** A Dataframe Object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | Columns |  |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Index | Country | State | County | Population |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0 | USA | Alabama | Autauga | 54,571 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | USA | Alabama | Baldwin | 182,265 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | USA | Alabama | Barbour | 27,457 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | USA | Alabama | Bibb | 22,915 |'
+  prefs: []
+  type: TYPE_TB
+- en: The first index, for the rows, works much like the index array in a series.
+    The second keeps track of the series of labels, with each label representing a
+    column header. Dataframes also resemble dictionaries; the column names form the
+    keys, and the series of data in each column forms the values. This structure lets
+    you easily manipulate dataframes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Covering all the functionality in pandas would require a whole book, and you
+    can find plenty online! We’ll defer additional discussion until the code section,
+    where we’ll look at specific examples as we apply them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The bokeh and holoviews Libraries***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The bokeh module (*[https://bokeh.org/](https://bokeh.org/)*) is an open source
+    interactive visualization library for modern web browsers. You can use it to construct
+    elegant interactive graphics over large or streaming datasets. It renders its
+    graphics using HTML and JavaScript, the predominant programming languages for
+    creating interactive web pages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The open source holoviews library (*[http://holoviews.org/](http://holoviews.org/)*)
+    aims to make data analysis and visualization simple. With holoviews, instead of
+    building a plot by making a direct call to a plotting library, such as bokeh or
+    matplotlib, you first create an object describing your data, and the plots become
+    automatic visual representations of this object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The holoviews example gallery includes several choropleth maps visualized using
+    bokeh (such as *[http://holoviews.org/gallery/demos/bokeh/texas_choropleth_example.html](http://holoviews.org/gallery/demos/bokeh/texas_choropleth_example.html)*).
+    Later, we’ll use the unemployment rate example from this gallery to figure out
+    how to present our population density data in a similar manner.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Installing pandas, bokeh, and holoviews***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: If you worked through the project in [Chapter 1](ch01.xhtml), you already have
+    pandas and NumPy installed. If not, see the instructions in “Installing the Python
+    Libraries” on [page 6](ch01.xhtml#page_6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: One option for installing holoviews, along with latest version of all the recommended
+    packages for working with the module on Linux, Windows, or macOS, is to use Anaconda.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: This installation method includes the default matplotlib plotting library backend,
+    the more interactive bokeh plotting library backend, and the Jupyter/IPython Notebook.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can install a similar set of packages using pip.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additional minimal installation options are available through pip, assuming
+    you already have bokeh installed. You can find these and other installation instructions
+    at *[http://holoviews.org/install.html](http://holoviews.org/install.html)* and
+    *[http://holoviews.org/user_guide/Installing_and_Configuring.html](http://holoviews.org/user_guide/Installing_and_Configuring.html)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Accessing the County, State, Unemployment, and Population Data***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The bokeh library comes with data files for the state and county outlines and
+    the 2009 US unemployment data per county. As mentioned, you’ll use the unemployment
+    data to determine how to format the population data, which comes from the 2010
+    census.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To download the bokeh sample data, connect to the internet, open a Python shell,
+    and enter the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, the program will tell you where on your machine it’s putting
+    the data so that bokeh can automatically find it. Your path will differ from mine.
+    For more on downloading the sample data, see *[https://docs.bokeh.org/en/latest/docs/reference/sampledata.html](https://docs.bokeh.org/en/latest/docs/reference/sampledata.html)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Look for *US_Counties.csv* and *unemployment09.csv* in the folder of downloaded
+    files. These plaintext files use the popular *comma-separated values* (CSV) format,
+    in which each line represents a data record with multiple fields separated by
+    commas. (Good luck saying “CSV” right if you regularly shop at a CVS pharmacy!)
+  prefs: []
+  type: TYPE_NORMAL
+- en: The unemployment file is instructive of the plight of the data scientist. If
+    you open it, you’ll see that there are no column names describing the data ([Figure
+    11-3](ch11.xhtml#ch011fig3)), though it’s possible to guess what most of the fields
+    represent. We’ll deal with this later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-3: The first few rows of unemployment09.csv'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you open the US counties file, you’ll see lots of columns, but at least they
+    have headers ([Figure 11-4](ch11.xhtml#ch011fig4)). Your challenge will be to
+    relate the un-employment data in [Figure 11-3](ch11.xhtml#ch011fig3) to the geographical
+    data in [Figure 11-4](ch11.xhtml#ch011fig4) so that you can do the same later
+    with the census data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-4: The first few rows of US_Counties.csv'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can find the population data, *census_data_popl_2010.csv*, in the *Chapter_11*
+    folder, downloadable from the book’s website. This file, originally named *DEC_10_SF1_GCTPH1.US05PR_with_ann.csv*,
+    came from the American FactFinder website. By the time this book is published,
+    the US government will have migrated the census data to a new site called *[https://data.census.gov](https://data.census.gov)*
+    (see *[https://www.census.gov/data/what-is-data-census-gov.html](https://www.census.gov/data/what-is-data-census-gov.html)*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you look at the top of the census file, you’ll see lots of columns with two
+    header rows ([Figure 11-5](ch11.xhtml#ch011fig5)). You’re interested in column
+    M, titled *Density per square mile of land area – Population*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-5: The first few rows of census_data_popl_2010.csv'
+  prefs: []
+  type: TYPE_NORMAL
+- en: At this point, you have all the Python libraries and data files you need to
+    generate a population density choropleth map *in theory*. Before you can write
+    the code, however, you need to know how you’re going to link the population data
+    to the geographical data so that you can place the correct county data in the
+    correct county shape.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Hacking holoviews***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Learning to adapt existing code for your own use is a valuable skill for a data
+    scientist. This may require a bit of reverse engineering. Because open source
+    software is free, it’s sometimes poorly documented, so you have to figure out
+    how it works on your own. Let’s take a moment and apply this skill to our current
+    problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In previous chapters, we took advantage of the gallery examples provided by
+    open source modules such as turtle and matplotlib. The holoviews library also
+    has a gallery (*[http://holoviews.org/gallery/index.html](http://holoviews.org/gallery/index.html)*),
+    and it includes Texas Choropleth Example, a choropleth map of the Texas unemployment
+    rate in 2009 ([Figure 11-6](ch11.xhtml#ch011fig6)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-6: Choropleth map of the 2009 Texas unemployment rate from the holoviews
+    gallery'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 11-1](ch11.xhtml#ch011list1) contains the code provided by holoviews
+    for this map. You’ll build your project based on this example, but to do so, you’ll
+    have to address two main differences. First, you plan to plot population density
+    rather than unemployment rate. Second, you want a map of the conterminous United
+    States, not just Texas.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-1: holoviews gallery code for generating the Texas choropleth'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code imports the data from the bokeh sample data ➊. You’ll need to know
+    the format and content of both the unemployment and counties variables. The unemployment
+    rate is accessed later using the unemployment variable and an index or key of
+    cid, which may stand for “county ID” ➋. The program selects Texas, rather than
+    the whole United States, based on a conditional using a state code ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s investigate this in the Python shell.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Start by importing the bokeh sample data using the syntax from the gallery example.
+    Next, use the type() built-in function to check the data type of the unemployment
+    variable ➊. You’ll see that it’s a dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, use dictionary comprehension to make a new dictionary comprising the first
+    two lines in unemployment ➋. Print the results, and you’ll see that the keys are
+    tuples and the values are numbers, presumably the unemployment rate in percent
+    ➌. Check the data type for the numbers in the key. They’re integers rather than
+    strings ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compare the output at ➌ to the first two rows in the CSV file in [Figure 11-3](ch11.xhtml#ch011fig3).
+    The first number in the key tuple, presumably a state code, comes from column
+    B. The second number in the tuple, presumably a county code, comes from column
+    C. The unemployment rate is obviously stored in column I.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now compare the contents of unemployment to [Figure 11-4](ch11.xhtml#ch011fig4),
+    representing the county data. The *STATE num* (column J) and *COUNTY num* (column
+    K) obviously hold the components of the key tuple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So far so good, but if you look at the population data file in [Figure 11-5](ch11.xhtml#ch011fig5),
+    you won’t find a state or county code to direct into a tuple. There are numbers
+    in column E, however, that match those in the last column of the county data,
+    labeled *FIPS formula* in [Figure 11-4](ch11.xhtml#ch011fig4). These FIPS numbers
+    seem to relate to the state and county codes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As it turns out, a *Federal Information Processing Series (FIPS)* code is basically
+    a ZIP code for a county. The FIPS code is a five-digit numeric code assigned to
+    each county by the National Institute of Standards and Technology. The first two
+    digits represent the county’s state, and the final three digits represent the
+    county ([Table 11-4](ch11.xhtml#ch011table4)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-4:** Identifying US Counties Using a FIPS Code'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| US County | State Code | County Code | FIPS |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Baldwin County, AL | 01 | 003 | 1003 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Johnson County, IA | 19 | 103 | 19103 |'
+  prefs: []
+  type: TYPE_TB
+- en: Congratulations, you now know how to link the US census data to the county shapes
+    in the bokeh sample data. It’s time to write the final code!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Choropleth Code***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The *choropleth.py* program includes code for both cleaning the data and plotting
+    the choropleth map. You can find a copy of the code, along with the population
+    data, in the *Chapter_11* folder downloadable from the book’s website at *[https://nostarch.com/real-world-python/](https://nostarch.com/real-world-python/)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Importing Modules and Data and Constructing a Dataframe**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Listing 11-2](ch11.xhtml#ch011list2) imports modules and the bokeh county
+    sample data that includes coordinates for all the US county polygons. It also
+    loads and creates a dataframe object to represent the population data. Then it
+    begins the process of cleaning and preparing the data for use with the county
+    data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-2: Importing modules and data, creating a dataframe, and renaming
+    columns'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start by importing abspath from the operating system library. You’ll use this
+    to find the absolute path to the choropleth map HTML file after it’s created.
+    Then import the webbrowser module so you can launch the HTML file. You need this
+    because the holoviews library is designed to work with a Jupyter Notebook and
+    won’t automatically display the map without some help.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, import pandas and repeat the holoviews imports from the gallery example
+    in [Listing 11-1](ch11.xhtml#ch011list1). Note that you must specify bokeh as
+    the holoviews extension, or *backend* ➊. This is because holoviews can work with
+    other plotting libraries, such as matplotlib, and needs to know which one to use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You brought in the geographical data with the imports. Now load the population
+    data using pandas. This module includes a set of input/output API functions to
+    facilitate reading and writing data. These *readers* and *writers* address major
+    formats such as comma-separated values (read_csv, to_csv), Excel (read_excel,
+    to_excel), Structured Query Language (read_sql, to_sql), HyperText Markup Language
+    (read_html, to_html), and more. In this project, you’ll work with the CSV format.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In most cases, you can read CSV files without specifying the character encoding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this case, however, you’ll get the following error:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: That’s because the file contains characters encoded with Latin-1, also known
+    as ISO-8859-1, rather than the default UTF-8 encoding. Adding the encoding argument
+    will fix the problem ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, turn the population data file into a tabular dataframe by calling the DataFrame()
+    constructor. You don’t need all the columns in the original file, so pass the
+    names of the column you want to keep to the constructor. These represent columns
+    E, G, and M in [Figure 11-5](ch11.xhtml#ch011fig5), or the FIPS code, county name
+    (without the state name), and population density, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, use the rename() dataframe method to make the column labels shorter and
+    more meaningful. Call them *fips*, *County*, and *Density*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finish the listing by printing the first few rows of the dataframe using the
+    head() method and by printing the shape of the dataframe using its shape attribute.
+    By default, the head() method prints the first five rows. If you want to see more
+    rows, you can pass it the number as an argument, such as head(20). You should
+    see the following output in the shell:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice that the first two rows (rows 0 and 1) are not useful. In fact, you can
+    glean from this output that each state will have a row for its name, which you’ll
+    want to delete. You can also see from the shape attribute that there are 3,274
+    rows in the dataframe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Removing Extraneous State Name Rows and Preparing the State and County Codes**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Listing 11-3](ch11.xhtml#ch011list3) removes all rows whose FIPS code is less
+    than or equal to 100\. These are header rows that indicate where a new state begins.
+    It then creates new columns for the state and county codes, which it derives from
+    the existing column of FIPS codes. You’ll use these later to select the proper
+    county outline from the bokeh sample data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-3: Removing extraneous rows and preparing the state and county codes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To display the population density data in the county polygons, you need to turn
+    it into a dictionary where the keys are a tuple of the state code and county code
+    and the values are the density data. But as you saw previously, the population
+    data does not include separate columns for the state and county codes; it has
+    only the FIPS codes. So, you’ll need to split out the state and county components.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, get rid of all the noncounty rows. If you look at the previous shell
+    output (or rows 3 and 4 in [Figure 11-5](ch11.xhtml#ch011fig5)), you’ll see that
+    these rows do not include a four- or five-digit FIPS code. You can thus use the
+    fips column to make a new dataframe, still named df, that preserves only rows
+    with a fips value greater than 100\. To check that this worked, repeat the printout
+    from the previous listing, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: The two “bad” rows at the top of the dataframe are now gone, and based on the
+    shape attribute, you’ve lost a total of 53 rows. These represent the header rows
+    for the 50 states, United States, District of Columbia (DC), and Puerto Rico.
+    Note that DC has a FIPS code of 11001 and Puerto Rico uses a state code of 72
+    to go with the three-digit county code for its 78 municipalities. You’ll keep
+    DC but remove Puerto Rico later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, create columns for state and county code numbers. Name the first new column
+    state_id ➊. Dividing by 1,000 using floor division (//) returns the quotient with
+    the digits after the decimal point removed. Since the last three numbers of the
+    FIPS code are reserved for county codes, this leaves you with the state code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although // returns an integer, the new dataframe column uses the float datatype
+    by default. But our analysis of the bokeh sample data indicated that it used integers
+    for these codes in the key tuples. Convert the column to the integer datatype
+    using the pandas astype() method and pass it 'int64'.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, make a new column for the county code. Name it cid so it will match the
+    terminology used in the holoviews choropleth example. Since you’re after the last
+    three digits in the FIPS code, use the modulo operator (%). This returns the remainder
+    from the division of the first argument to the second. Convert this column to
+    the integer datatype as in the previous line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Print the output again, only this time call the info() method on the dataframe
+    ➋. This method returns a concise summary of the dataframe, including datatypes
+    and memory usage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see from the columns and information summary, the state_id and cid
+    numbers are integer values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The state codes in the first five rows are all single-digit numbers, but it’s
+    possible for state codes to have double digits, as well. Take the time to check
+    the state codes of later rows. You can do this by calling the loc() method on
+    the dataframe and passing it a high row number ➌. This will let you check double-digit
+    state codes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: The fips, state_id, and cid all look reasonable. This completes the data preparation.
+    The next step is to turn this data into a dictionary that holoviews can use to
+    make the choropleth map.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Preparing the Data for Display**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Listing 11-4](ch11.xhtml#ch011list4) converts the state and county IDs and
+    the density data into separate lists. It then recombines them into a dictionary
+    with the same format as the unemployment dictionary used in the holoviews gallery
+    example. It also lists the states and territories to exclude from the map and
+    makes a list of the data needed to plot the choropleth map.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-4: Preparing the population data for plotting'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Earlier, we looked at the unemployment variable in the holoviews gallery example
+    and found that it was a dictionary. Tuples of the state and county codes served
+    as the keys, and the unemployment rates served as the values, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: To create a similar dictionary for the population data, first use the pandas
+    tolist() method to create separate lists of the dataframe’s state_id, cid, and
+    Density columns. Then, use the built-in zip() function to merge the state and
+    county code lists as tuple pairs. Create the final dictionary, popl_dens_dict,
+    by zipping this new tuple_list with the density list. (The name tuple_list is
+    misleading; technically, it’s a tuple_tuple.) That’s it for the data preparation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The *Walking Dead* survivors will be lucky to get out of Atlanta. Let’s forget
+    about them reaching Alaska. Make a tuple, named EXCLUDED, of states and territories
+    that are in the bokeh county data but aren’t part of the conterminous United States.
+    These include Alaska, Hawaii, Puerto Rico, Guam, Virgin Islands, Northern Mariana
+    Islands, and American Samoa. To reduce typing, you can use the abbreviations provided
+    as a column in the county dataset (see [Figure 11-4](ch11.xhtml#ch011fig4)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, as in the holoviews example, make a dictionary and put it in a list named
+    counties. Here’s where you add the population density data. Link it to the proper
+    county using the cid county identifier number. Use a conditional to apply the
+    EXCLUDED tuple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you print the first index in this list, you’ll get the (truncated) output
+    that follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Density key-value pair now replaces the unemployment rate pair used in the
+    holoviews gallery example. Next up, plotting the map!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Plotting the Choropleth Map**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Listing 11-5](ch11.xhtml#ch011list5) creates the choropleth map, saves it
+    as an *.html* file, and opens it with the webbrowser.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-5: Creating and plotting the choropleth map'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'According to the holoviews documentation, the Polygons() class creates a contiguous
+    filled area in a 2D space as a list of polygon geometries. Name a variable choropleth
+    and pass Polygons() the counties variable and the dictionary keys, including the
+    lons and lats used to draw the county polygons. Also pass it the county names
+    and population density keys. The holoviews hover tool will use this tuple, (''detailed
+    name'', ''County''), to show you the full county name, such as County: Claiborne
+    County, Mississippi, when you move the cursor around the map ([Figure 11-7](ch11.xhtml#ch011fig7)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-7: Choropleth map with the hover feature active'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, set the options for the map ➊. First, permit use of a logarithmic color
+    bar by setting the logz argument to True.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The holoviews window will come with a set of default tools such as pan, zoom,
+    save, refresh, and so on (see the upper-right corner of [Figure 11-7](ch11.xhtml#ch011fig7)).
+    Use the tools argument to add the hover feature to this list. This allows you
+    query the map and get both the county name and detailed information on the population
+    density.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’re not making a standard plot with an annotated *x*-axis and *y*-axis, so
+    set these to None. Likewise, don’t show a grid or frame around the map.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Set the width and height of the map in pixels. You may want to adjust this for
+    your monitor. Next set colorbar to True and place the toolbar at the top of the
+    display.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since you want to color the counties based on population density, set the color_index
+    argument to Density, which represents the values in popl_dens_dict. For the fill
+    colors, use the Greys cmap. If you want to use brighter colors, you can find a
+    list of available colormaps at *[http://build.holoviews.org/user_guide/Colormaps.html](http://build.holoviews.org/user_guide/Colormaps.html)*.
+    Be sure to choose one with “bokeh” in the name. Finish the color scheme by selecting
+    a line color for the county outlines. Good choices for a gray colormap are None,
+    'white', or 'black'.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Complete the options by adding a title. The choropleth map is now ready for
+    plotting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To save your map in the current directory, use the holoviews save() method and
+    pass it the choropleth variable, a file name with the *.html* extension, and the
+    name of the plotting backend being used ➋. As mentioned previously, holoviews
+    is designed for use with a Jupyter Notebook. If you want the map to automatically
+    pop up on your browser, first assign the full path to the saved map to a url variable.
+    Then use the webbrowser module to open url and display the map ([Figure 11-8](ch11.xhtml#ch011fig8)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-8: The 2010 population density choropleth map. Lighter colors represent
+    lower population density'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can use the toolbar at the top of the map to pan, zoom (using a box or lasso),
+    save, refresh, or hover. The hover tool, shown in [Figure 11-7](ch11.xhtml#ch011fig7),
+    will help you find the least populated counties in places where the map shading
+    makes the difference hard to distinguish visually.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*The Box Zoom tool permits a quick view of a rectangular area but may stretch
+    or squeeze the map axes. To preserve the map’s aspect ratio when zooming, use
+    a combination of the Wheel Zoom and Pan tools.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Planning the Escape***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The Chisos Mountains, an extinct supervolcano in Big Bend National Park, might
+    be one of the best places on Earth to ride out a zombie apocalypse. Remote and
+    fortress-like in appearance ([Figure 11-9](ch11.xhtml#ch011fig9)), the mountains
+    tower 4,000 feet above the surrounding desert plain, reaching a maximum elevation
+    of almost 8,000 feet. At their heart lies a natural basin with park facilities,
+    including a lodge, cabins, store, and restaurant. Fish and game are abundant in
+    the area, desert springs provide fresh water, and the banks of the Rio Grande
+    are suitable for farming.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-9: The Chisos Mountains of west Texas (left) with 3D relief map representation
+    (right)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With your choropleth map, you can quickly plan a route to this natural fortress
+    far, far away. But first, you need to escape Atlanta. The shortest route out of
+    the metropolitan area is a narrow passage squeezed between the cities of Birmingham
+    and Montgomery in Alabama ([Figure 11-10](ch11.xhtml#ch011fig10)). You can skirt
+    the next big city, Jackson, Mississippi, by going either north or south. To choose
+    the best route, however, you need to look farther ahead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-10: Escape from Atlanta'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The southerly route around Jackson is shorter but forces the survivors to pass
+    over the highly developed I-35 corridor, anchored by San Antonio in the south
+    and Dallas–Fort Worth (DFW) in the north ([Figure 11-11](ch11.xhtml#ch011fig11)).
+    This creates a potentially dangerous choke point at Hill County, Texas (circled
+    in [Figure 11-11](ch11.xhtml#ch011fig11)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-11: The way west'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternatively, the northerly route through the Red River Valley, between Oklahoma
+    and Texas, would be longer but safer, especially if you took advantage of the
+    navigable river. Once west of Fort Worth, the survivors could cross the river
+    and turn south to salvation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This type of planning would be even simpler if holoviews provided a slider tool
+    that allowed you to interactively alter the color bar. For example, you could
+    filter out or change the shading of counties by simply dragging your cursor up
+    and down the legend. This would make it easier to find connected routes through
+    the lowest population counties.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Unfortunately, a slider tool isn’t one of the holowviews window options. Since
+    you know pandas, though, that won’t stop you. Simply add the following snippet
+    of code after the line that prints the information at location 500:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will change the population density values in the dataframe, setting those
+    greater than or equal to 65 to a constant value of 1000. Run the program again,
+    and you’ll get the plot in [Figure 11-12](ch11.xhtml#ch011fig12). With the new
+    values, the San Antonio–Austin–Dallas barrier becomes more apparent, as does the
+    relative safety of the Red River Valley that forms the northern border of east
+    Texas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may be wondering, where did the survivors go in the TV show? They went nowhere!
+    They spent the first four seasons in the vicinity of Atlanta, first camping at
+    Stone Mountain and then holed up in a prison near the fictional town of Woodbury
+    ([Figure 11-13](ch11.xhtml#ch011fig13)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-12: Counties with more than 65 people per square mile shaded black'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/fig11_13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-13: Location of Stone Mountain and the fictional town of Woodbury'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stone Mountain is less than 20 miles from downtown Atlanta and in DeKalb County,
+    with 2,586 people per square mile. Woodbury (the real town of Senoia) is only
+    35 miles from downtown Atlanta and on the border of Coweta County, with 289 people
+    per square mile, and Fayette County, with 549 people per square mile. No wonder
+    these guys had so much trouble. If only there had been a data scientist in the
+    group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, you got to work with the Python Data Analysis Library (pandas)
+    and the bokeh and holoviews visualization modules. In the process, you did some
+    real-world data wrangling to clean and link data from different sources.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Further Reading**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: “If the Zombie Apocalypse Happens, Scientists Say You Should Run for the Hills”
+    (Business Insider, 2017), by Kevin Loria, describes the application of standard
+    disease models to infection rates in a theoretical zombie outbreak.
+  prefs: []
+  type: TYPE_NORMAL
+- en: “What to Consider When Creating Choropleth Maps” (*Chartable*, 2018), by Lisa
+    Charlotte Rost, provides useful guidelines for making choropleth maps. You can
+    find it at *[https://blog.datawrapper.de/choroplethmaps/](https://blog.datawrapper.de/choroplethmaps/)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '“Muddy America: Color Balancing the Election Map—Infographic” (STEM Lounge,
+    2019) by Larry Weru, demonstrates ways to increase the useful detail in choropleth
+    maps, using the iconic red-blue United States election map as an example.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Python Data Science Handbook: Essential Tools for Working with Data* (O’Reilly
+    Media, 2016), by Jake VanderPlas, is a thorough reference for important Python
+    data science tools, including pandas.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Beneath the Window: Early Ranch Life in the Big Bend Country* (Iron Mountain
+    Press, 2003), by Patricia Wilson Clothier, is an engaging recollection of growing
+    up in the early 20th century on a vast ranch in the Big Bend country of Texas,
+    before it became a national park. It provides insight into how apocalypse survivors
+    might deal with life in the harsh country.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Game Theory: Real Tips for SURVIVING a Zombie Apocalypse (7 Days to Die)*
+    (The Game Theorists, 2016) is a video on the best place *in the world* to escape
+    a zombie apocalypse. Unlike *The Walking Dead*, the video assumes that the zombie
+    virus can be transmitted by mosquitoes and ticks, and it selects the location
+    with this in mind. It’s available online.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Challenge Project: Mapping US Population Change**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The US government will release population data from the 2020 census in 2021\.
+    However, less accurate, intercensal population estimates for 2019 are currently
+    available. Use one of these, along with the 2010 data from Project 15, to generate
+    a new choropleth map that captures population change, by county, over that time
+    period.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Hint: you can subtract columns in pandas dataframes to generate the difference
+    data, as demonstrated in the toy example that follows. The 2020 population values
+    represent dummy data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE

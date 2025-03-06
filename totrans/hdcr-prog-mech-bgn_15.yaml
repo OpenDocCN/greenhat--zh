@@ -1,0 +1,1055 @@
+- en: '12'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: ANIMATING AFFINE TRANSFORMATIONS
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: You just learned the basics of animation and GUI design. In this chapter, we’ll
+    combine the two and build an application that animates affine transformations.
+    This will help build your visual intuition for this potentially confusing topic
+    and strengthen your programming skills.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The application will first read a text file defining the affine transformation
+    and the geometries to transform. Then, it’ll compute a sequence of affine transformations,
+    interpolating from the identity to the given transformation. Each of the transformations
+    in this sequence will be used to draw a frame of the animation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As with the circle building application we built in [Chapter 9](ch09.xhtml#ch09),
+    we’ll use regular expressions to read the primitives from the text file. We’ll
+    be using some more advanced ones here, which we’ll analyze in detail. There will
+    be a lot of code in this chapter. We’re building a larger application, and it’s
+    a great opportunity to learn about how to distribute responsibilities in your
+    code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As always, we’ll try to keep the architecture and design as clean as possible,
+    explaining the reasoning behind each decision we encounter. Let’s get started!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Application Architecture and Visibility Diagrams**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To discuss this application’s architecture, we’ll introduce a new kind of diagram:
+    a *visibility diagram*. Visibility diagrams display the components of an application
+    using arrows to indicate what each part of the program knows—in other words, who
+    can see whom. Take a look at the diagram from [Figure 12-1](ch12.xhtml#ch12fig1).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/12fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-1: Our application architecture*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'At the top of the diagram is *Main*, the executing script. The circle around
+    it signifies that it’s the entry point to the application. There are three arrows
+    starting from *Main*, which means *Main* knows about three other modules: *Config*,
+    *Input*, and *Simulation*. Modules are represented with rectangles.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note the arrows go one way. *Main* knows these modules exist, and depends on
+    them, but these modules know nothing about the existence of *Main*. This is critical:
+    we want to minimize what the components of our application know about each other.
+    This ensures the modules are as *decoupled* as possible, meaning that they can
+    live on their own.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The benefits of a decoupled design are mainly simplicity, which allows us to
+    easily grow and maintain our software, and reusability. The fewer dependencies
+    a module has, the easier it is to use it somewhere else.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Going back to the diagram in [Figure 12-1](ch12.xhtml#ch12fig1), we said that
+    *Main* uses three modules: *Config*, *Input*, and *Simulation*. The *Config* module
+    will be in charge of loading the configuration for the application stored in *config.json*—indicated
+    by the arrow.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The *Input* module will read the input file given by the user and define both
+    an affine transformation and geometric primitives. Thus, this module will use
+    two more modules: *Geometry*, to parse the primitives, and *Transformation*, to
+    parse the affine transformation. Again, the fact that the arrows go from *Input*
+    toward the other two modules means these other two modules have no clue about
+    *Input*: they could be used perfectly by another module.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, we have the *Simulation* module, which will be in charge of performing
+    the actual simulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*I can’t stress the importance of decoupled architectures enough. Applications
+    should be made of small submodules that expose a straightforward, concise interface
+    and hide their inner working from the rest of the world. These modules are simpler
+    to maintain when they have as few dependencies of their own as possible. Applications
+    that don’t respect this simple principle end up doomed more often than not, and
+    trust me when I say that you’ll feel hopeless when you fix a small bug in a module
+    and it breaks some apparently unrelated piece of another module.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s move on and set up the project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Setting Up**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the *apps* folder, create a new Python package named *aff_transf_motion*.
+    In it, add all the files shown in the following tree. If you created the new package
+    by right-clicking *apps* and choosing **New** ▸ **Python Package**, *__init__.py*
+    will already be in the directory; the IDE created it for us. If you created the
+    package in another way, don’t forget to add this file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: apps
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- aff_transf_motion'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- __init__.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- config.json'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- config.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- input.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- main.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- parse_geom.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- parse_transform.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- simulation.py'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|- test.txt'
+  prefs: []
+  type: TYPE_NORMAL
+- en: All your files are empty for now, but we’ll be filling them with code soon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before we do that, though, we want to have a run configuration or bash script
+    to run the project as we develop, just like we did in [Chapter 9](ch09.xhtml#ch09).
+    We first need to define the script it will execute in *main.py*. For now, we’ll
+    simply print a message to the shell to make sure things are working properly.
+    Open the file and enter the code in [Listing 12-1](ch12.xhtml#ch12lis1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-1: Main file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s now explore our two options for executing the project: a run configuration
+    and a bash script. You don’t need to set up both; you can choose the one that
+    works best for you and skip the other.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Creating a Run Configuration***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the menu choose **Run** ▸ **Edit Configurations**. Click the **+** icon at
+    the top left and choose **Python** to create the run configuration. Name it *aff-transf-motion*.
+    Similar to what we did in [Chapter 9](ch09.xhtml#ch09), choose *main.py* as the
+    script path and *aff_transform_motion* as the working directory. Lastly, check
+    the **Redirect input from** option, and choose *test.txt*. Your configuration
+    should look similar to [Figure 12-2](ch12.xhtml#ch12fig2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/12fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-2: The run configuration*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To make sure the run configuration is properly set up, choose it from the run
+    configuration navigation bar and click the green play button. The shell should
+    display the message Ready!. If you had any trouble setting this up, refer to [Chapter
+    9](ch09.xhtml#ch09) where we covered this process in detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Creating a Bash Script***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To run the app from the command line, we’ll use the technique we explored in
+    [Chapter 9](ch09.xhtml#ch09): creating a bash script wrapper that uses our project
+    root as the workspace for Python to resolve our dependencies. Create a new file
+    in the root of the project (under *Mechanics*): *aff_motion.sh*. In the file,
+    enter the code in [Listing 12-2](ch12.xhtml#ch12lis2).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-2: Bash script to execute the project*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using this bash script, we can now execute the application from the command
+    line like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can make this bash script executable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'then run it like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Reading the Configuration File**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Because we want to separate configuration values from the code, we’ll keep them
+    in a JSON file. This allows us to change the behavior of our application without
+    needing to touch the code. Open *config.json* and enter the content in [Listing
+    12-3](ch12.xhtml#ch12lis3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-3: Configuration JSON file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This configuration first defines the number of frames to use for the simulation.
+    Then comes the dimensions and the color of the coordinate axes, which we’ll draw
+    to help us visualize how the space is transformed. Lastly, we have configuration
+    values for the geometry that will be transformed. Here we’re defining stroke color
+    and width.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We now need a way to read this configuration JSON file and transform its contents
+    into a Python dictionary. Let’s use the same approach we used in [Chapter 9](ch09.xhtml#ch09).
+    In *config.py*, enter the code in [Listing 12-4](ch12.xhtml#ch12lis4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-4: Reading the configuration file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: That’s it for the configuration; let’s turn our attention to reading and parsing
+    input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Reading Input**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We’re expecting the user to pass our program a file containing the definition
+    of an affine transformation and a list of the geometric primitives to transform.
+    Let’s define how these files should be formatted. We can start by reading the
+    affine transformation values since we know beforehand how many values we’re expecting.
+    Because there can be any number of geometric primitives, we’ll put those at the
+    end.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Formatting the Input***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Here’s a nice way of formatting the affine transformation values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here each value is defined in its own line and has a tag indicating which term
+    it is. We could use a more condensed format and simply have all those values in
+    a single line, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: But this has the downside of being less clear for the user. What’s the order
+    of the values? Was the third number the shear in the x direction or the translation
+    in the y direction? To answer this question, you’d need to open the source code
+    and find out how those values are parsed. I tend to favor clarity over compactness
+    in cases where the size of the input isn’t too big, so we’ll stick to the first
+    approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So what about the geometric primitives? For each kind of geometric primitive,
+    we’ll use a different four-letter code: circ for circle, for example. This code
+    will be followed by a bunch of numbers that define the primitive’s properties.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a circle, the definition will look like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: where <*cx*> and <*cy*> are the coordinates of the center point and <*r*> is
+    the value for the radius.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A rectangle will look like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: with <*ox*> and <*oy*> defining the coordinates of its origin, <*w*> its width,
+    and <*h*> its height.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A polygon will look like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: where [<*x*> <*y*>] means a sequence of x and y values representing the coordinates
+    of a vertex. Bear in mind that the minimum number of vertices to build a polygon
+    is three; therefore, we need at least six values here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, a segment is defined like
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: where <*sx*> and <*sy*> are the coordinates of the start point, and <*ex*> and
+    <*ey*> are the coordinates of the end point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Adding Example Input***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s fill our *test.txt* file with an example input. Remember that we redirected
+    the standard input in our program to read from *test.txt*, so we’ll be using it
+    to test our code. Open the file and enter the definition in [Listing 12-5](ch12.xhtml#ch12lis5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-5: Input test file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This file first defines an affine transformation as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0314-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: It also defines a circle, two rectangles, a polygon, and a segment. [Figure
+    12-3](ch12.xhtml#ch12fig3) depicts the approximate layout of these geometric primitives
+    before we apply the affine transformation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/12fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-3: The geometric primitives in our test file*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that *test.txt* has these definitions, let’s write the outline of the code
+    we need to read and parse the input. Open *input.py* and enter the code in [Listing
+    12-6](ch12.xhtml#ch12lis6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-6: Parsing the input file starting point*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We first define a function, read_input, which will read both the affine transformation
+    and the geometric primitives and return a tuple containing both. To do its work,
+    it delegates each of the two tasks to private functions: __read_transform and
+    __read_primitives. These functions return None for now. We’ll implement them in
+    the next two sections.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Parsing the Affine Transformation***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The affine transformation in the input file will always span six lines, one
+    line per term. We can simplify the parsing by requiring that the terms always
+    appear in the same, predefined order. We’ll double-check that each of the terms
+    has the appropriate name tag, just to make sure the user wrote the terms in the
+    right order, but we won’t include that bit in our regular expression, which should
+    make things a bit simpler.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first thing we need is a regular expression that can match the floating-point
+    numbers in the components of the transformation. It’s important to design this
+    regular expression so that it also matches integer numbers; the decimal part should
+    be optional. We also want to accept negative numbers. A regular expression combining
+    all these characteristics could look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /-?\d+(\.\d+)?/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The regular expression has three parts. The first, -?, matches zero or one
+    instances of the minus symbol. The second, \d+, matches one or more digits before
+    the decimal separator: the integer part. Lastly comes (\.\d+)?, which matches
+    zero or one sequence made of a dot and one or more digits. Note that we’ve used
+    ? to handle our optional components.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using the regular expression shown earlier, we can prepare another regular
+    expression that matches all of the term values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /(?P<val>-?\d+(\.\d+)?)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: This defines a group named val that will capture the term’s value using the
+    previous expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s open *parse_transform.py* (empty at the moment) and implement the logic
+    for reading and parsing the affine transformation terms. Enter the code in [Listing
+    12-7](ch12.xhtml#ch12lis7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-7: Parsing the affine transformation terms*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We first define the regular expression to parse the affine transformation term
+    values: __TRANSF_VAL_RE. Then comes the main function: parse_transform _term,
+    which takes two parameters: the name of the term to validate and the line to parse.
+    Each of these operations is handled by two private functions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function __ensure_term_name checks whether the given name is present in
+    line. If it’s not, the function raises a ValueError with a helpful message to
+    let the user know which term couldn’t be properly interpreted. Then, __parse_transform_term
+    applies the regular expression __TRANSF_VAL_RE to match the term’s value. If it
+    succeeds, the matched group val is converted to a float value and returned. An
+    error is raised in the case that the string doesn’t match the regular expression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s now use this parse function in the *Input* module (as depicted by [Figure
+    12-1](ch12.xhtml#ch12fig1)). Open your *input.py* file and add the following imports
+    at the top:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Then, refactor the __read_transform function as in [Listing 12-8](ch12.xhtml#ch12lis8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-8: Parsing the affine transformation*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can easily test that our code works by editing the contents of our *main.py*
+    file to match [Listing 12-9](ch12.xhtml#ch12lis9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-9: Main file: reading transformation test*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you run the application using the run configuration or the bash script we
+    created before, the output in your shell should be the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You want to make sure all of the values in the affine transformation we defined
+    in *test.txt* are properly parsed. If you recall, those were as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: sx 1.2
+  prefs: []
+  type: TYPE_NORMAL
+- en: sy 1.4
+  prefs: []
+  type: TYPE_NORMAL
+- en: shx 2.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: shy 3.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: tx 50.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: ty 25.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: Double-check that the output you got from the program matches these values.
+    If you got it all right, congratulations! If you got any unexpected value, debug
+    your program until you find the culprit and fix the bug.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Parsing the Geometric Primitives***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The geometric primitives can come in any order, and there can be any number
+    of them, so we’ll need a different parsing strategy. We need to tackle two separate
+    problems: we need to read an unknown number of lines from the input and then figure
+    out the the type of geometric primitive for each line. Let’s solve these problems
+    separately, starting with the first one.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Reading an Unknown Number of Lines**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: To read an unknown number of lines, we can keep reading from the standard input
+    until an EOFError (end of file error) is raised, signaling that we’ve exhausted
+    all the available lines. Open *input.py* and refactor __read_primitives by entering
+    the code in [Listing 12-10](ch12.xhtml#ch12lis10).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-10: Reading lines from standard input*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We declare a variable has_more_lines and assign it a value of True. Then, in
+    a while loop that keeps looping provided the variable remains True, we try to
+    read another line from the standard input. If the operation succeeds, we print
+    the line to the output; otherwise, we catch the EOFError and set has_more _lines
+    to False.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Run the program again to make sure all the lines from the input file are processed
+    by __read_primitives and appear in the shell output. The output of your program
+    should include the following lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first problem is solved: our *input.py* module knows how to read all the
+    lines from the input file. Notice that empty lines are also processed by the __read_primitives
+    function; we’ll handle that in the next section. Now that we know how to read
+    in the lines, let’s turn our focus to our second problem: identifying the primitive
+    type for each of the read-in lines.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Parsing the Right Primitive**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Let’s start with one thing we know for sure: we need to have regular expressions
+    for each of the geometric primitives our program understands. Earlier in the chapter,
+    we defined the input format we expect for each of the primitives. We just need
+    to turn that into a regular expression. We’ll accept either an integer or floating-point
+    number for the properties of each of the primitives. We saw how to do this before.
+    Let’s call the regex that captures a property value NUM_RE and use the following
+    definition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /\d+(\.\d+)?/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using this regex, we could have the regular expression for a circle as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /circ (?P<cx>NUM_RE) (?P<cy>NUM_RE) (?P<r>NUM_RE)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here we’ve included three capture groups: cx, cy, and r. These groups coincide
+    with the properties we defined for the input representation of the previous circle.
+    In a similar fashion, a rectangle can be matched by the regular expression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /rect (?P<ox>NUM_RE) (?P<oy>NUM_RE) (?P<w>NUM_RE) (?P<h>NUM_RE)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A regular expression to match segments can be as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /segm (?P<sx>NUM_RE) (?P<sy>NUM_RE) (?P<ex>NUM_RE) (?P<ey>NUM_RE)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Lastly, for the polygon, we use a slightly different approach that simplifies
+    its parsing process a bit, as we’ll see now. The following is the regular expression
+    we’ll use:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: /poly (?P<coords>[\d\s\.]+)/
+  prefs: []
+  type: TYPE_NORMAL
+- en: This regex matches strings starting with the word *poly* followed by a space
+    and a sequence of digits, spaces, or dots (used as decimal separator). With it,
+    we’ll match polygon definitions, as follows,
+  prefs: []
+  type: TYPE_NORMAL
+- en: poly 30 10 80.5 10 30 90.5
+  prefs: []
+  type: TYPE_NORMAL
+- en: which we’ll parse as a polygon defined by the vertices (30, 10), (80.5, 10),
+    and (30, 90.5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s include these definitions in our *parse_geom.py* file, along with some
+    imports that we’ll need to create the geometric primitives. Enter the code in
+    [Listing 12-11](ch12.xhtml#ch12lis11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-11: Geometric primitives, regex definitions*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have all the regular expressions we need, so our next goal is for the appropriate
+    primitive for each line we read. To solve this problem, we’ll follow the “if can
+    <verb> then <verb>” pattern, in our case “if can parse then parse.” Let’s see
+    how this works. We have a sequence of parser functions, each of which expects
+    a string formatted in a specific way. These functions would fail if they tried
+    to parse a geometric primitive out of a string with a wrong format. So before
+    putting them to work, we want to make sure they’ll understand the string we pass
+    them in. We’ll accompany each of the parse functions with a can_parse function.
+    This second function should determine whether all of the parts the parse function
+    expects are in the string: the pattern’s “can parse” part.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For each of our geometric primitives we need a pair of functions: one to determine
+    whether the given line of text can be parsed to this primitive (the “can parse”
+    part) and another to actually parse it (the “then parse” part). The code for this
+    algorithm is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: We first check whether the given line can be parsed to a circle. If the test
+    passes, we proceed to parse the circle; otherwise, we continue with the next comparison,
+    repeating this pattern. It may happen that none of these comparisons passes, and
+    we reach the last else statement; we handle this situation in the handle_unknown_line
+    function. Think, for example, about those empty lines we read from the input file;
+    those won’t match against any known primitive. There are a couple of ways we could
+    handle these problem lines. We could, for example, print them to the shell with
+    a warning message, thus letting the user know there were lines the program didn’t
+    understand. To keep things simple, we’ll just ignore unknown lines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s now implement the “can parse” and “parse” functions for each of our primitives.
+    In *parse_geom.py*, after the regular expressions we just defined, enter the code
+    in [Listing 12-12](ch12.xhtml#ch12lis12). This code handles the circle case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-12: Parsing a circle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As you can see, the can_parse_circle function simply checks for a match between
+    the passed-in line and the regular expression for a circle: __CIRC_RE. The parse_circle
+    function goes one step further and, assuming the line matches the regular expression,
+    extracts the cx and cy group values, the center of the circle. It does the same
+    with the r group, the radius.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Don’t forget that the values we extract from the regular expression capture
+    groups are always strings. Since we’re expecting floating-point numbers, we need
+    to do the conversion using the float function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s now implement the same functions for the case of a rectangle. After the
+    code you just wrote, enter the code in [Listing 12-13](ch12.xhtml#ch12lis13).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-13: Parsing a rectangle*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: No surprises here. We applied the same procedure, this time extracting groups
+    named ox, oy, w, and h, which define the origin point and the size of the rectangle.
+    Let’s do the same for the case of a polygon. Enter the code in [Listing 12-14](ch12.xhtml#ch12lis14).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-14: Parsing a polygon*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this case, the mechanics are a bit different. Remember we had a slightly
+    different regular expression for the case of a polygon. Since polygons are defined
+    by an unknown number of vertices, the regex to match these numbers by pairs had
+    to be more complicated. We also had to use a list comprehension to properly parse
+    the coordinates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, the string captured by the group named coords is split using a space
+    as the separator. Thus, the string of numbers
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''10 20 30 40 50 60'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'would be converted to an array of strings like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[''10'', ''20'', ''30'', ''40'', ''50'', ''60'']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then each of the strings is converted into a floating-point number:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[10.0, 20.0, 30.0, 40.0, 50.0, 60.0]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With this array of numbers we can easily create an instance of our Polygon
+    class using the factory function make_polygon_from_coords. Don’t forget to add
+    the import at the top of the file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: The last pair of “can parse” and “parse” functions we need are for segments.
+    Enter the code in [Listing 12-15](ch12.xhtml#ch12lis15).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-15: Parsing a segment*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Great! We now have the functions we need to apply our “if can parse then parse”
+    strategy. Open *input.py* and import these functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: We use the asterisk import to bring all the defined functions in the *parse
+    _geom* module without writing all of their names. Now let’s refactor the __read
+    _primitives function ([Listing 12-16](ch12.xhtml#ch12lis16)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-16: Reading the primitives from the input*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We start defining a dictionary named prims with an array for each type of geometric
+    primitive. Each of the arrays in the dictionary is identified by a name: circs,
+    rects, polys, and segs. Then comes the while loop, which iterates through all
+    the read-in lines. Instead of printing them to the shell, we added our parsing
+    functions, similar to what we did in pseudocode before. This time, whenever a
+    primitive is parsed, the result is appended to the corresponding array of the
+    prims dictionary. The function ends by returning prims.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 12-17](ch12.xhtml#ch12lis17) contains the final result for *input.py*.
+    Make sure yours looks similar.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-17: Complete input-reading code*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that we can fully parse the input, let’s move on and implement the simulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Running the Simulation**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Once the configuration and input are completely read and parsed, they’re both
+    passed to a simulation function that we’ll write shortly. This function will also
+    define the user interface: a canvas to draw the shapes and a button to start the
+    animation. [Figure 12-4](ch12.xhtml#ch12fig4) shows how these components will
+    be laid out.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The simulation won’t start until the user clicks the play button. This way we
+    prevent the simulation from starting too soon; otherwise, the user may miss the
+    first part of it. Furthermore, thanks to the button, we’ll be able to rerun the
+    simulation without needing to relaunch the application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/12fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-4: The simulation’s user interface*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Building the User Interface***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Open the empty *simulation.py* and enter the code in [Listing 12-18](ch12.xhtml#ch12lis18).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-18: Simulation function*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ve defined a function simulate, which takes in the target transform, the
+    geometric primitives, and the configuration for the application. Recall that the
+    configuration JSON file contains the number of frames to use for the simulation
+    and the sizes and colors of everything we’ll draw to the screen. Since the function
+    will get a bit long, we’ve added three header comments to easily locate each of
+    the sections: the user interface definition; the update, draw, and should_continue
+    functions; and the main loop.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first section of the function builds the user interface. We instantiate
+    the Tk class and add a Canvas and a Button to it. Using the grid system, we place
+    the canvas in the first row (row=0) and the button in the second one (row=1).
+    We’ve also created a function, start_simulation, which is executed when the button
+    is pressed. This function doesn’t do much for now; all it does is tell Tkinter
+    to process all pending events (tk.update()) and print a message to the shell.
+    We’ll add the simulation’s updating logic here shortly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then we define the templates for the key simulation functions: update _system,
+    redraw, and should_continue. Don’t forget to declare the appropriate input parameters
+    for each of them; otherwise, Python will complain once we hand them to our main_loop
+    function. We’ll fill in these functions shortly.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, we call redraw to render the initial state of the geometric primitives
+    to the screen and start Tkinter’s main loop. To test our progress, let’s edit
+    *main.py* so that it shows the user interface. Open that file and modify it so
+    that it looks like [Listing 12-19](ch12.xhtml#ch12lis19).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-19: Execution entry point*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our *main.py* file is now ready. Let’s work on the simulation code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Implementing the Simulation Logic***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s move on to the simulation logic. If you recall from [Chapter 7](ch07.xhtml#ch07),
+    to draw the different frames of the animation, we need to generate a sequence
+    of interpolated affine transformations going from the identity transformation
+    to the target transformation that we parsed from the input. If you need a refresher
+    on the topic, refer to “Interpolating Transformations” on [page 192](ch07.xhtml#ch00lev1sec45).
+    Thanks to the affine-transformation interpolation function we implemented in [Chapter
+    7](ch07.xhtml#ch07), ease_in_out_interpolation, this piece of logic is a breeze.
+    In *simulation.py* make the changes shown in [Listing 12-20](ch12.xhtml#ch12lis20).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-20: Computing the transformation sequence*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first thing that we need is the number of steps for the interpolation.
+    This is just the number of frames, a value that we read from the configuration
+    and stored in variable frames. To compute the interpolated sequence, we’ve defined
+    a private function in the file: __make_transform_sequence. This function takes
+    the target affine transformation and the number of frames and computes the sequence
+    using the following transformation as the starting point:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/f0328-01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Notice the translation of 20 pixels in both the horizontal and vertical axes.
+    This small offset separates the axes from the canvas’s upper and left sides. The
+    resulting sequence of transformations is stored in transform_seq.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s now dive into the key functions for the simulation: update_system, redraw,
+    and should_continue. Edit *simulation.py* to look like the code in [Listing 12-21](ch12.xhtml#ch12lis21).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-21: Implementing drawing and updating*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After the sequence of transformations we recently computed, we instantiate our
+    CanvasDrawing class, passing in the Tkinter canvas and the first affine transformations
+    ➊. Note that we imported the class at the top of the file and that the first transformation
+    on the sequence is the initial transformation for the geometric primitives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, we implement the update_system function. This function updates the drawing’s
+    transformation according to the current frame number ➋ and invokes tk’s update
+    method. To compute the index used to obtain the corresponding transformation,
+    we subtract 1 from the frame number. Recall that the frames are counted from 1,
+    while a Python list’s first index is 0\. It’s important to realize that, in this
+    particular simulation, it’s not the system (made up of the geometric primitives)
+    that gets updated every frame but rather the affine transformation, a property
+    of the CanvasDrawing class, that gets a new value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next is the redraw function ➌. It first clears the canvas and sets the size
+    and color for the outlines of the shapes we’re drawing. These two values come
+    from the configuration file. Then, it iterates through all the primitives in the
+    dictionary, calling the corresponding draw command from the CanvasDrawing class.
+    Thanks to our previous work on that class, drawing to the canvas is that simple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Last is the implementation of should_continue that simply compares the current
+    frame number to the total number of frames for the animation ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Drawing the Axes***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We’re almost there! Let’s add some code to draw the x- and y-axes as well as
+    a call to the simulation’s main loop (not to be confused with Tkinter’s mainloop
+    function). The axes will provide a good visual reference for how the space is
+    transformed. Include the changes in [Listing 12-22](ch12.xhtml#ch12lis22).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-22: Drawing the axes and main loop*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First comes the most important addition: the inclusion of a call to the main_loop
+    function ➊. We pass in the functions defined next to take care of the updating,
+    redrawing, and continuation of the simulation. Make sure you import the main_loop
+    function at the top of the file.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next come the definitions of x_axis ➋ and y_axis ➌, both defined as segments.
+    Each length is a parameter we read from the configuration file and store in axis_length.
+    To draw the axes, we need to take into account that they have a different stroke
+    width and color than the other geometry. We’ve added the code for these properties
+    in the redraw function, just below the call to clear_drawing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After setting the corresponding outline width and color, we use our CanvasDrawing
+    class’s draw_arrow method, passing it the segment that defines the x_axis geometry
+    and the size of the arrow ➍. The size of the arrow, once again, comes from the
+    configuration. We have to add the same code to draw y_axis ➎, but this time only
+    the stroke color needs to be updated: the axes are drawn using the same stroke
+    width.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Well, we’ve been incrementally writing a lot of code. Just for reference, [Listing
+    12-23](ch12.xhtml#ch12lis23) shows the final *simulation.py* file. Take a look
+    and make sure you got it all.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-23: Complete simulation code*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: At last! We’re now ready to see the result, so execute the application using
+    the run configuration or the bash script. A window with the geometric primitives
+    as they were defined in the input file should appear (see the left image in [Figure
+    12-5](ch12.xhtml#ch12fig5)). Notice also the x- and y-axes, which we drew as arrows;
+    can you spot the 20 pixels of separation we gave the origin?
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now click **Play** and watch the result. The simulation should start slow, then
+    build some speed, and finally decelerate toward its end. We achieved this effect
+    using ease-in-out interpolation, which makes the animation look smooth and realistic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../images/12fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 12-5: Simulating an affine transformation*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now is a good time to go back to “Interpolating Transformations” on [page 192](ch07.xhtml#ch00lev1sec45)
+    and give it a second read. After seeing the ease-in-out effect in action, you
+    can build a solid visual intuition for [Equation 7.11](ch07.xhtml#ch07eqa11) ([page
+    194](ch07.xhtml#ch07eqa11)), which defines the pace for the animation you just
+    witnessed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Take some time to play with your application. Change some parameters to see
+    the effect on the resulting simulation. For example, try to change the offset
+    of the initial affine transformation (the translation components tx and ty). Play
+    with the stroke widths and colors in the configuration file, and edit the number
+    of frames. Another interesting exercise is editing the affine transformation and
+    the geometric primitives defined in the input file *test.txt*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we developed our second application, one that animates the
+    effect of affine transformations. Like before, we used regular expressions to
+    parse the input and used our geometry library for the heavy lifting. This time
+    the output was an animation, which, thanks to the work we did in the previous
+    chapters, was straightforward to implement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This chapter concludes [Part III](part03.xhtml#part03) of the book. In this
+    part, we learned to create SVG vector graphics and animated simulations from our
+    geometric primitives, key skills for building good engineering software. We used
+    that knowledge to build two simple applications: one that determines a circle
+    passing through three given points and one that animates geometric primitives
+    under an affine transformation. Those were simple applications, but they illustrate
+    how powerful geometric and visual primitives really are.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next part of the book, we’ll look at how to solve systems of equations,
+    another key piece for any engineering application. That is the last tool our *Mechanics*
+    package needs. After exploring that topic, the rest of the book will be focused
+    on solving mechanics problems using only the powerful primitives we coded ourselves.
+  prefs: []
+  type: TYPE_NORMAL

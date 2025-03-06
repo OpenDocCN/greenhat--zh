@@ -1,0 +1,1278 @@
+- en: '7'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Unsupervised Learning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: We’ll start this chapter with an introduction to the concept of unsupervised
+    learning, comparing it to supervised learning. Then we’ll generate data for clustering,
+    the most common task associated with unsupervised learning. We’ll first focus
+    on a sophisticated method called E-M clustering. Finally, we’ll round out the
+    chapter by looking at how other clustering methods relate to the rest of unsupervised
+    learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unsupervised Learning vs. Supervised Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The easiest way to understand unsupervised learning is by comparing it to supervised
+    learning. Remember from Chapter 6 that the supervised learning process is captured
+    by [Figure 7-1](#figure7-1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-1: The conceptual map of all supervised learning methods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The *target* that [Figure 7-1](#figure7-1) refers to is the special variable
+    in our dataset that we want to predict. The *features* are the variables in our
+    dataset that we’ll use to predict the target. The *learned function* is a function
+    that maps the features to the target. We can check the accuracy of the learned
+    function by comparing our predictions to actual target values. If the predictions
+    are very far from the target values, we know that we should try to find a better
+    learned function. It’s like the target values are supervising our process by telling
+    us how accurate our function is and enabling us to push toward the highest possible
+    accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unsupervised learning doesn’t have this supervision because it doesn’t have
+    a target variable. [Figure 7-2](#figure7-2) depicts the process of unsupervised
+    learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07002.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-2: The conceptual map of the unsupervised learning process'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instead of trying to map features to a target variable, unsupervised learning
+    is concerned with creating a model of the features themselves; it does this by
+    finding relationships between observations and natural groups in the features.
+    In general, it’s a way of exploring the features. Finding relationships among
+    observations in our data can help us understand them better; it will also help
+    us find anomalies and make the dataset a little less unwieldy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The arrow in [Figure 7-2](#figure7-2) connects the features to themselves. This
+    arrow indicates that we are finding ways that features relate to one another,
+    such as the natural groups they form; it does not indicate a cycle or repeating
+    process. This probably sounds rather abstract, so let’s make it clearer by looking
+    at a concrete example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating and Exploring Data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let’s start by looking at some data. Instead of reading in existing data as
+    we’ve done in previous chapters, we’ll generate new data by using Python’s random
+    number generation capabilities. Randomly generated data tends to be simpler and
+    easier to work with than data from real life; this will help us as we’re trying
+    to discuss the complexities of unsupervised learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More importantly, one of the main goals of unsupervised learning is to understand
+    how subsets of data relate to one another. Generating data ourselves will mean
+    that we can judge whether our unsupervised learning methods have found the right
+    relationships among subsets of our data, since we’ll know exactly where those
+    subsets came from and how they relate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rolling the Dice
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We’ll start by generating simple example data with some dice rolls:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this snippet, we import the `choices()` and `seed()` functions from the `random`
+    module. These are the functions we’ll use to do random number generation. We define
+    a variable called `numberofrolls`, which is storing the value `1800`, the number
+    of simulated dice rolls we want Python to generate for us. We call the `seed()`
+    function, which isn’t necessary but will ensure you get the same results as the
+    ones presented here in the book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we create two lists, `dice1` and `dice2`, using the `choices()` function.
+    We pass two arguments to this function: the list `[1,2,3,4,5,6]`, which tells
+    the `choices()` function that we want it to make random selections from the integers
+    between 1 and 6, and `k=numberofrolls`, which tells the `choices()` function that
+    we want it to make 1,800 such selections. The `dice1` list represents 1,800 rolls
+    of one die, and the `dice2` variable likewise represents 1,800 rolls of a second,
+    separate die.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can look at the first 10 elements of `dice1` as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You should see the following output (if you ran `seed(9)` in the preceding
+    snippet):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This list looks plausible as a record of 10 rolls of a fair die. After generating
+    lists of 1,800 random rolls from two dice, we can find the sums of each of the
+    1,800 rolls:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here we create the `dicesum` variable by using a list comprehension. The first
+    element of `dicesum` is the sum of the first element of `dice1` and the first
+    element of `dice2`, the second element of `dicesum` is the sum of the second element
+    of `dice1` and the second element of `dice2`, and so on. All of this code simulates
+    a common scenario: rolling two dice together and looking at the sum of the numbers
+    that are face up after rolling. But instead of rolling the dice ourselves, we
+    have Python simulate all 1,800 rolls for us.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once we have the summed dice rolls, we can draw a histogram of all of them:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Figure 7-3](#figure7-3) shows the result.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07003.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-3: The outcomes of 1,800 simulated dice rolls'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is a histogram just like the ones we’ve seen in Chapters 1 and 3. Each
+    vertical bar represents a frequency of a particular dice outcome. For example,
+    the leftmost bar indicates that of our 1,800 rolls, about 50 summed to 2\. The
+    tallest bar in the middle indicates that around 300 of our dice rolls summed to
+    7.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Histograms like this one show us the *distribution* of our data—the relative
+    frequency of different observations occurring. Our distribution shows that the
+    highest and lowest values, like 2 and 12, are relatively uncommon, while the middle
+    values, like 7, are much more common. We can also interpret a distribution in
+    terms of probabilities: if we roll two fair dice, 7 is a highly likely outcome,
+    and 2 and 12 are not likely outcomes. We can know the approximate likelihood of
+    each outcome by looking at the height of each bar of our histogram.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can see that this histogram takes a shape that resembles a bell. The more
+    times we roll our dice, the more bell-like our histogram will become. For large
+    numbers of dice rolls, the histogram of outcomes is closely approximated by a
+    special distribution called the *normal distribution*, or *Gaussian distribution*.
+    You also met this distribution in Chapter 3, although in that chapter we called
+    it by one of its other names: the bell curve. The normal distribution is a common
+    pattern we observe when we measure the relative frequencies of certain things,
+    like differences between means in Chapter 3, or sums of dice rolls here.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Every bell curve is fully described by just two numbers: a *mean*, describing
+    the center and highest point of the bell curve, and a *variance*, describing how
+    widely spread out the bell curve is. The square root of the variance is the *standard
+    deviation*, another measure of how widely spread out a bell curve is. We can calculate
+    the mean and standard deviation of our dice roll data with the following simple
+    function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: This function takes a list of observations as its input. It uses the `np.mean()`
+    function to get the mean of the list and store it in the variable called `center`.
+    Then, it uses the `np.cov()` method. This method’s name, `cov`, is short for *covariance*,
+    another measurement of the way data varies. When we calculate a covariance of
+    two separate lists of observations, it tells us how much those datasets vary together.
+    When we calculate a covariance of one list of observations alone, it’s simply
+    called the variance, and the square root of the variance is the standard deviation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If we run the preceding snippet, we should get the mean and standard deviation
+    of our dice rolls:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This output tells us that the mean of our observed dice rolls is about 7 and
+    the standard deviation is about 2.5\. Now that we know these numbers, we can plot
+    a bell curve as an overlay on our histogram as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Figure 7-4](#figure7-4) shows our output.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07004.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-4: A bell curve overlaid on a histogram of dice rolls'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can see that the bell curve is a continuous curve that we’ve plotted over
+    our histogram. Its value represents relative probability: since it has a relatively
+    high value at 7, and a relatively low value at 2 and 12, we interpret that to
+    mean that we are more likely to roll a 7 than to roll a 2 or 12\. We can see that
+    these theoretical probabilities match our observed dice rolls pretty closely,
+    since the height of the bell curve is close to the height of each histogram bar.
+    We can easily check the number of rolls predicted by the bell curve as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we use the `stats.norm.pdf()` function to calculate the expected number
+    of dice rolls for 2, 7, and 12\. This function is from the `stats` module, and
+    its name, `norm.pdf`, is short for *normal probability density function*, which
+    is yet another name for our familiar bell curve. The snippet uses `stats.norm.pdf()`
+    to calculate how high the bell curve is at *x* = 2, *x* = 7, and *x* = 12 (in
+    other words, how likely rolling a 2, rolling a 7, and rolling a 12 are based on
+    the mean and standard deviation we calculated before). Then, it multiplies these
+    likelihoods by the number of times we want to roll the dice (1,800 in this case)
+    to get the total number of expected rolls of 2, 7, and 12, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using Another Kind of Die
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We’ve calculated probabilities for the hypothetical scenario of rolling two
+    6-sided dice together because dice rolls give us an easy, familiar way to think
+    about important data science ideas like probabilities and distributions. But of
+    course this is not the only possible type of data we could analyze, or even the
+    only type of dice roll we could analyze.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Imagine rolling a pair of nonstandard 12-sided dice, whose sides are marked
+    with the numbers 4, 5, 6, . . . , 14, 15\. When these dice are rolled together,
+    their sum could be any integer between 8 and 30\. We can randomly generate 1,800
+    hypothetical rolls again and draw a histogram of those rolls by using the same
+    type of code we used before, with a few small changes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Figure 7-5](#figure7-5) shows the resulting histogram.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07005.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-5: A bell curve and histogram for dice rolls using a pair of custom
+    12-sided dice'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The bell shape is roughly the same as in [Figure 7-4](#figure7-4), but in this
+    case, 19 is the most likely outcome, not 7, and the range goes from 8 to 30 instead
+    of from 2 to 12\. So we have a normal distribution or bell curve again, but with
+    a different mean and standard deviation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can plot both of our histograms (Figures 7-4 and 7-5) together as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Figure 7-6](#figure7-6) shows the result.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07006.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-6: A combined histogram showing outcomes from 6-sided and 12-sided
+    dice pairs'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is technically one histogram, though we know that it was generated by combining
+    the data from two separate histograms. Remember that for the pair of 6-sided dice,
+    7 is the most common outcome, and for the pair of 12-sided dice, 19 is the most
+    common outcome. We see this reflected in a local peak at 7 and another local peak
+    at 19 in our histogram. These two local peaks are called *modes*. Since we have
+    two modes, this is what we call a *bimodal* histogram.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you look at [Figure 7-6](#figure7-6), it should help you start to understand
+    what the conceptual diagram in [Figure 7-2](#figure7-2) is trying to illustrate.
+    We’re not predicting or classifying dice rolls as we’ve done in previous chapters
+    on supervised learning. Instead, we’re making simple theoretical models—in this
+    case, our bell curves—that express our understanding of the data and the way observations
+    relate to one another. In the next section, we’ll use these bell curve models
+    to reason about the data and understand it better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Origin of Observations with Clustering
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Imagine that we randomly select one dice roll out of all the rolls that we
+    plotted in [Figure 7-6](#figure7-6):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You should see the output `[12]`, indicating that we randomly selected one
+    instance in our data in which we rolled a sum of 12\. Without giving you any other
+    information, imagine that I ask you to make an educated guess about which pair
+    of dice was responsible for rolling this particular 12\. It could have been either
+    pair: the 6-sided die could have come up as a pair of 6s, or the 12-sided die
+    could have come up in various combinations, like 8 and 4\. How can you make an
+    educated guess about which pair of dice is most likely to be the origin of this
+    observation?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may have strong intuition already that the 12 was not likely to have been
+    rolled by the 6-sided dice. After all, 12 is the least likely roll for 6-sided
+    dice (tied with 2), but 12 is closer to the middle of [Figure 7-5](#figure7-5),
+    indicating that it’s a more common roll for the 12-sided dice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Your educated guess need not be based merely on intuition. We can look at the
+    heights of the histogram bars in Figures 7-4 and 7-5 to see that when we rolled
+    both pairs of dice 1,800 times, we got about 50 instances of 12s from the 6-sided
+    dice and more than 60 instances of 12s from the 12-sided dice. And from a theoretical
+    perspective, the heights of the bell curves in [Figure 7-6](#figure7-6) enable
+    us to directly compare the relative probabilities of each outcome for each pair
+    of dice, since we roll both pairs equally often.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can do this same type of reasoning to think about dice rolls other than
+    12\. For example, we know that 8 is more likely for the 6-sided dice, not only
+    because of our intuition but also because the left bell curve in [Figure 7-6](#figure7-6)
+    is higher than the right bell curve when the *x* value is 8\. In case we don’t
+    have [Figure 7-6](#figure7-6) in front of us, we can calculate the heights of
+    each bell curve as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here we see that the 6-sided dice are more likely to be the origin of the observed
+    8 roll: it’s expected about 266 times out of 1,800 rolls of the 6-sided dice,
+    while we expect to roll 8 only about 11 or 12 times out of 1,800 rolls of the
+    12-sided dice. We can follow exactly the same process to determine that the 12-sided
+    pair is more likely to be the origin of the observed 12 roll:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: If we use this method of comparing the heights of bell curves, then for any
+    observed dice roll, we can say which dice pair is most likely to be its origin.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now that we can make educated guesses about the origin of any dice rolls, we’re
+    ready to tackle *clustering*, one of the most important, most common tasks in
+    unsupervised learning. The goal of clustering is to answer a global version of
+    the question we considered previously: Which pair of dice is the origin of every
+    observation in our data?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Clustering begins with a reasoning process that’s similar to the reasoning
+    in our previous section. But instead of reasoning about a single dice roll, we
+    try to determine which dice pair is the origin of every observation in our data.
+    This is a simple process that we can go through as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For all rolls of 2, dice pair 1’s bell curve is higher than dice pair 2’s, so,
+    without knowing anything else, we suppose that all rolls of 2 came from dice pair
+    1.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For all rolls of 3, dice pair 1’s bell curve is higher than dice pair 2’s, so,
+    without knowing anything else, we suppose that all rolls of 3 came from dice pair
+    1.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: . . .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For all rolls of 12, dice pair 2’s bell curve is higher than dice pair 1’s,
+    so, without knowing anything else, we suppose that all rolls of 12 came from dice
+    pair 2.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: . . .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For all rolls of 30, dice pair 2’s bell curve is higher than dice pair 1’s,
+    so, without knowing anything else, we suppose that all rolls of 30 came from dice
+    pair 2.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'By considering each of the 29 possible dice roll outcomes individually, we
+    can make good guesses about the respective origins of every observation in our
+    data. We can also write code to accomplish this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s look at the `classify()` function. It takes three arguments. The first
+    argument it requires is `allpts`, which represents a list of every observation
+    in our data. The other two arguments the function requires are `allmns` and `allvar`.
+    These two arguments represent the means and variances, respectively, of every
+    group (that is, every dice pair) in our data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function needs to accomplish what we did visually when we looked at [Figure
+    7-6](#figure7-6) to find which dice pairs were the origin of each roll. We consider
+    the bell curves for each dice pair, and whichever bell curve has a higher value
+    for a particular dice roll is assumed to be the dice pair it came from. In our
+    function, instead of looking visually at bell curves, we need to calculate the
+    values of bell curves and see which one is higher. This is why we create a list
+    called `vars`. This list starts out empty, but then we append our bell curves
+    to it with the `multivariate_normal()` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After we have our collection of bell curves, we consider every point in our
+    data. If the first bell curve is higher than the other bell curves at that point,
+    we say that the point is associated with the first dice pair. If the second bell
+    curve is the highest at that point, we say the point belongs to the second dice
+    pair. If we have more than two bell curves, we can compare all of them, classifying
+    every point according to which bell curve is highest. We find the highest bell
+    curve the same way we did when we were looking at [Figure 7-6](#figure7-6) previously,
+    but now we’re doing it with code instead of with our eyes. Every time we classify
+    a point, we append its dice pair number to a list called `classification`. When
+    the function finishes running, it has filled up the list with a dice pair classification
+    for every point in our data, and it returns this as its final value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s try out our new `classify()` function. First, let’s define some points,
+    means, and variances:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Our `allpoints` list is a collection of hypothetical dice rolls that we want
+    to classify. Our `allmeans` list consists of two numbers: 7, the mean dice roll
+    expected from our 6-sided dice pair, and 19, the mean dice roll expected from
+    our 12-sided dice pair. Our `allvar` list consists of the respective variances
+    of the two dice pairs. Now that we have the three required arguments, we can call
+    our `classify()` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We see the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: This list is telling us that the first two dice rolls in our `allpoints` list,
+    2 and 8, are more likely to be associated with the 6-sided dice pair. The other
+    dice rolls in our `allpoints` list—12, 15, and 25—are more likely to be associated
+    with the 12-sided dice pair.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What we’ve just done is take a list of very different dice rolls and classify
+    them into two distinct groups. You might want to call this classification or grouping,
+    but in the world of machine learning, it’s called *clustering*. If you look at
+    [Figure 7-6](#figure7-6), you can begin to see why. Dice rolls from the 6-sided
+    dice appear to cluster around their most common value, 7, while dice rolls from
+    the 12-sided dice appear to cluster around their most common value, 19\. They
+    form little mountains of observations, or groups, that we’re going to call clusters
+    regardless of their shape or size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s common in practice for data to have this type of clustered structure, in
+    which a small number of subsets (clusters) are apparent, with most observations
+    in each subset appearing close to the subset’s mean, and only a small minority
+    of observations between subsets or far away from the mean. By forming a conclusion
+    about the clusters that exist in our data, and assigning each observation to one
+    of our clusters, we’ve accomplished a simple version of clustering, the main task
+    of this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Clustering in Business Applications
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Dice rolls have probabilities that are easy to understand and reason about.
+    But not many situations in business require being directly interested in dice
+    rolls. Nevertheless, clustering is commonly used in business, especially by marketers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Imagine that [Figure 7-6](#figure7-6) is not a record of dice rolls but rather
+    a record of transaction sizes at a retail store you’re running. The lower cluster
+    around 7 indicates that people in one group are spending about $7 at your store,
+    and the higher cluster around 19 indicates that people in another group are spending
+    around $19 at your store. You can say that you have a cluster of low-spending
+    customers and a cluster of high-spending customers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that you know that you have two distinct groups of customers and you know
+    who they are, you can act on this information. For example, instead of using the
+    same advertising strategy for all your customers, you may want to advertise or
+    market differently to each group. Maybe advertisements emphasizing bargains and
+    utility are persuasive to low spenders, while advertisements emphasizing premium
+    quality and social prestige are more appealing to high spenders. Once you have
+    a firm grasp of the boundary between your two groups of customers, the size of
+    each group, and their most common spending habits, you have most of what you need
+    to enact a sophisticated two-pronged advertisement strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the other hand, after discovering the clusters in your data, you might want
+    to eliminate them rather than cater to them. For example, you may believe that
+    your low-spending customers are not budget conscious but rather simply unaware
+    of some of your more expensive, useful products. You may focus on more aggressive
+    and informative advertising strictly for them, to encourage all of your customers
+    to be in the high-spending group. Your exact approach will depend on many other
+    details of your business, your products, and your strategy. A cluster analysis
+    can give you important input to your strategic decisions by showing you the salient
+    groups of customers and their characteristics, but it won’t go all the way to
+    providing a clear business strategy from scratch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead of transaction size, we could imagine that the x-axis of the histogram
+    in [Figure 7-6](#figure7-6) refers to another variable, like customer age. Then,
+    our clustering analysis would be telling us that two distinct groups patronize
+    our business: a younger group and an older group. You could do clustering on any
+    numeric variable that you measure related to your customers and potentially find
+    interesting customer groups.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Corporate marketers had been splitting customers into groups for many years
+    before the term *data science* was common or even before most of today’s clustering
+    methods were invented. Before the age of data science and clustering, marketers
+    called the practice of splitting customers into groups *customer segmentation*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, marketers often perform segmentation in a nonscientific way, not
+    by finding clusters and boundaries from data but by picking round numbers from
+    guesses or intuition. For example, a television producer might commission surveys
+    of viewers and analyze the data in a way that seems natural, by looking at results
+    from all viewers younger than age 30, then looking at viewers age 30 and up separately.
+    Using the nice, round number 30 provides a potentially natural-seeming boundary
+    between younger and older viewers. However, maybe the producer’s show has scarcely
+    any viewers above age 30, so analyzing responses from this group separately would
+    be a distraction from the much larger group of viewers under 30\. A simple cluster
+    analysis might instead reveal a large cluster of viewers around age 18 and a large
+    cluster around age 28, with a boundary between these groups at age 23\. Analyzing
+    segments based on this clustering analysis, rather than the round-sounding but
+    ultimately misguided under-30 and over-30 segments, would be more useful to understand
+    the show’s viewers and their opinions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Segmentation predates clustering, but clustering is a great way to do segmentation
+    because it enables us to find more accurate and useful segments, and precise boundaries
+    between them. In this case, you could say that the clustering approach is giving
+    us objective, data-driven insights, as compared to the intuition-based or experience-based
+    approach associated with round-number segmentation. Improving from intuition to
+    objective, data-driven insights is one of the main contributions of data science
+    to business.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So far, we’ve discussed segmentation on only one variable at a time: dice rolls,
+    spending, or age analyzed individually. Instead of clustering and segmenting on
+    only one variable at a time, we can start thinking in multiple dimensions. For
+    example, if we’re running a retail company in the United States, we might find
+    a cluster of young, high spenders in the west; a group of older, low spenders
+    in the southeast; and a cluster of middle-aged, moderately high spenders in the
+    north. To discover this, we would have to perform clustering in multiple dimensions
+    at once. Data science clustering methods have this capability, giving them another
+    advantage over traditional segmentation methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analyzing Multiple Dimensions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In our dice roll data, each observation consists of just one number: the sum
+    of the face-up numbers on the dice we rolled. We don’t record the temperature
+    or color of the dice, the length or width of their edges, or anything else except
+    for exactly one raw number per roll. Our dice roll dataset is *one-dimensional*.
+    Here a *dimension* doesn’t necessarily refer to a dimension in space but rather
+    to any measurement that can vary between low and high. Dice rolls can vary a great
+    deal between a low roll like 2 and a high roll like 12 (or more, depending on
+    the dice we’re using), but we measure only their highs and lows on one metric:
+    the sum of the numbers that are face up after we roll them.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In business scenarios, we’re almost always interested in more than one dimension.
+    When we’re analyzing customer clusters, for example, we want to know customers’
+    ages, locations, incomes, genders, years of education, and as much more as we
+    can so we can successfully market to them. When we’re working with many dimensions,
+    some things will look different. For example, the bell curves we’ve seen in Figures
+    7-3 through 7-6 will gain an extra dimension, as in the right side of [Figure
+    7-7](#figure7-7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07007.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-7: A univariate bell curve (left) and a bivariate bell curve (right)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The left side of this diagram shows a *univariate bell curve*, called *univariate*
+    because it shows relative probabilities for only one variable (the x-axis). The
+    right side shows a *bivariate bell curve*, one that shows relative probabilities
+    varying along two dimensions: the x- and y-axes. We can imagine that the x- and
+    y-axes in the plot on the right side of [Figure 7-7](#figure7-7) could be age
+    and average transaction size, for example.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A univariate Gaussian curve has a mean that’s represented by just one number,
+    like *x* = 0 in the left side of [Figure 7-7](#figure7-7). A bivariate Gaussian
+    curve has a mean that’s represented by two numbers: an ordered pair consisting
+    of an x-coordinate and a y-coordinate, like (0, 0). The number of dimensions increases,
+    but the idea of using the mean of each dimension to find the highest point of
+    the bell is the same. Finding the means of each dimension will tell us where to
+    find the center and highest point of the bell, around which the other observations
+    tend to cluster. In both the univariate and bivariate cases, we can interpret
+    the height of the bell curve as a probability: points where the bell curve is
+    higher correspond to observations that are more likely.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Going from one to two dimensions also affects the way we express how spread
+    out our bell curve is. In one dimension, we use the variance (or standard deviation)
+    as a single number that expresses the degree of spread of our curve. In two or
+    more dimensions, we use a matrix, or a rectangular array of numbers, to express
+    the degree of the bell curve’s spread. The matrix we use, called a *covariance
+    matrix*, records not only how spread out each dimension is on its own but also
+    the extent to which different dimensions vary together. We don’t need to worry
+    about the details of the covariance matrix; we mostly just need to calculate it
+    with the `np.cov()` function and use it as an input in our clustering methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When you increase the number of dimensions in your clustering analysis from
+    two to three or more, the adjustment is straightforward. Instead of a univariate
+    or bivariate bell curve, we’ll have a *multivariate bell curve*. In three dimensions,
+    a mean will have three coordinates; in *n* dimensions, it will have *n* coordinates.
+    The covariance matrix will also get bigger every time you increase the dimension
+    of your problem. But no matter how many dimensions you have, the features of the
+    bell curve are always the same: it has a mean, which most observations are near,
+    and it has a measure of covariance, which shows how spread out the bell curve
+    is.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the rest of the chapter, we’ll look at a two-dimensional example, which will
+    show the idea and process of clustering while still enabling us to draw simple,
+    interpretable plots. This example will show all the essential features of clustering
+    and unsupervised learning that you can apply in any number of dimensions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: E-M Clustering
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We now have all the ingredients required to perform *E-M clustering*, a powerful
+    unsupervised learning approach that enables us to intelligently find natural groups
+    in multidimensional data. This technique is also called *Gaussian mixture modeling*,
+    because it uses bell curves (Gaussian distributions) to model how groups mix together.
+    Whatever you call it, it’s useful and relatively straightforward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ll start by looking at new two-dimensional data that we want to perform
+    clustering on. We can read the data from its online home as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This snippet uses two modules: `ast` and `requests`. The `requests` package
+    allows Python to request a file or dataset from a website—in this case, the website
+    where the clustering data lives. The data is stored in a file as a Python list.
+    Python reads *.txt* files as strings by default, but we want to read the data
+    into a Python list instead of a string. The `ast` module contains a `literal_eval()`
+    method that enables us to read list data from files that would otherwise be treated
+    as strings. We read our list into a variable called `allpoints`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now that we’ve read the data into Python, we can plot it to see what it looks
+    like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Figure 7-8](#figure7-8) shows the results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07008.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-8: A plot of our new two-dimensional data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One thing you might notice is that these axes have no labels. This is not an
+    accident: we’re going to work with this data as an unlabeled example and then
+    talk about how it can be applied to many scenarios. You could imagine many possible
+    labels for the axes in this example: maybe the points represent cities, the x-axis
+    is percent population growth, and the y-axis is percent economic growth. If so,
+    performing clustering will identify clusters of cities whose growth has been comparable
+    recently. Maybe this could be useful if you’re a CEO and you’re trying to decide
+    where to open a new franchise of your business. But the axes don’t have to represent
+    the cities’ growth: they could represent anything at all, and our clustering algorithms
+    will work in the same way regardless.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A few other things are immediately apparent in [Figure 7-8](#figure7-8). Two
+    particularly dense clusters of observations appear at the top and right of the
+    plot, respectively. In the center of the plot, another cluster appears to be much
+    less dense than the other two. We seem to have three clusters in different locations,
+    with different sizes and densities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead of relying only on our eyes for this clustering exercise, let’s use
+    a powerful clustering algorithm: the E-M algorithm. *E-M* is short for *expectation-maximization*.
+    We can describe this algorithm in four steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Guessing: Make guesses for the means and covariances of every cluster.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Expectation: Classify every observation in our data according to which cluster
+    it’s most likely to be a member of, according to the most recent estimates of
+    means and covariances. (This is called the *E*, or *Expectation*, step because
+    we’re classifying based on our expectation of how likely each point is to be in
+    each cluster.)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Maximization: Use the classifications obtained in the Expectation step to calculate
+    new estimates for the means and covariances of each cluster. (This is called the
+    *M*, or *Maximization*, step because we find the means and variances that maximize
+    the probability of matching our data.)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Convergence: Repeat the Expectation and Maximization steps until reaching a
+    stopping condition.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If this algorithm seems intimidating, don’t worry; you’ve already done all the
+    hard parts earlier in the chapter. Let’s proceed through each step in turn to
+    understand them better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Guessing Step
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The first step is the easiest, since we can make any guess whatsoever for the
+    means and covariances of our clusters. Let’s make some initial guesses:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this snippet, we first make guesses for `mean1`, `mean2`, and `mean3`. These
+    guesses are two-dimensional points that are supposed to be the respective centers
+    of our three clusters. We then make guesses for the covariance of each cluster.
+    We make the easiest-possible guess for covariance: we guess a special, simple
+    matrix called the *identity matrix* as the covariance matrix for each cluster.
+    (The details of the identity matrix aren’t important right now; we use it because
+    it’s simple and tends to work well enough as an initial guess.) We can draw a
+    plot to see what these guesses look like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: The plot looks like [Figure 7-9](#figure7-9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07009.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-9: Our data with some guesses at cluster centers shown as stars'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can see the points plotted again, with stars representing the guesses we
+    made for cluster centers. (The stars will be red if you’re plotting at home.)
+    Our guesses clearly were not very good. In particular, none of our guesses are
+    in the center of the two dense clusters we see at the top and right of the plot,
+    and none are close to the center of the main cloud of points. In this case, starting
+    with inaccurate guesses is good, because it will enable us to see how powerful
+    the E-M clustering algorithm is: it can find the right cluster centers even if
+    our initial guesses in the Guessing step are quite poor.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Expectation Step
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We’ve completed the Guessing step of the algorithm. For the next step, we need
+    to classify all of our points according to which cluster we believe they’re in.
+    Luckily, we already have our `classify()` function for this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Remember what this function does. Earlier in the chapter, we used it to classify
+    dice rolls. We took a set of dice roll observations and found which dice pair
+    each dice roll was likely to come from by comparing the heights of two bell curves.
+    Here, we will use the function for a similar task, but we’ll use our new unlabeled
+    data instead of dice roll data. For each observation in our new data, this function
+    finds which group it’s likely to belong to by comparing the heights of the bell
+    curve associated with each group. Let’s call this function on our points, means,
+    and variances:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we have a list called `theclass`, which contains a classification of every
+    point in our data. We can look at the first 10 elements of `theclass` by running
+    `print(theclass[:10])`. We see the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This output is telling us that the first point in our data seems to be in cluster
+    1, the fifth point is in cluster 3, and so on. We’ve accomplished the Guessing
+    step and the Expectation step: we have some values for means and variances of
+    our clusters, and we’ve classified every data point into one of our clusters.
+    Before we move on, let’s create a function that will plot our data and clusters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This function takes our data (`allpoints`), our cluster classifications (`theclass`),
+    and our cluster means (`allmeans`) as inputs. Then it assigns colors to each cluster:
+    points in the first cluster are black, points in the second cluster are green,
+    and points in the third cluster are yellow. The `plt.scatter()` function draws
+    all our points in their colors. Finally, it draws red stars for each of our cluster
+    centers. Note this book is printed in black-and-white, so you will see these colors
+    only if you try this code on your own computer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can call this function by running `makeplot(allpoints,theclass,allmeans)`,
+    and we should see [Figure 7-10](#figure7-10).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07010.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-10: Initial cluster classifications'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is a two-dimensional plot. But to understand how it performed classification
+    into clusters, you should imagine three bivariate bell curves (like the one on
+    the right side of [Figure 7-7](#figure7-7)) jutting out of the page, each one
+    centered on one of the star-shaped cluster centers. The covariance we’ve estimated
+    will determine how widely spread out each bell curve is. The cluster classifications
+    are determined by which of these three bell curves is highest for each point in
+    our data. You can imagine that if we moved the centers or changed the covariance
+    estimates, our bivariate bell curves would look different, and we could get different
+    classifications. (This will happen very soon.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s clear from [Figure 7-10](#figure7-10) that we haven’t finished our clustering
+    task. For one thing, the cluster shapes don’t match the shapes we think we see
+    in [Figure 7-8](#figure7-8). But even more obviously, the points that we’ve called
+    *cluster centers*, shown as stars on this plot, are clearly not in the center
+    of their respective clusters; they’re more or less on the edge of their data.
+    This is why we need to do the Maximization step of the E-M clustering algorithm,
+    in which we’ll recalculate the means and variances of each cluster (and thereby
+    move cluster centers to more appropriate locations).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Maximization Step
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'This step is pretty simple: we just need to take the points in each of our
+    clusters and calculate their means and variances. We can update the `getcenters()`
+    function we used previously to accomplish this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Our updated `getcenters()` function is simple. We pass a number `k` to the function
+    as an argument; this number indicates the number of clusters in our data. We also
+    pass the data and the cluster classifications to the function. The function calculates
+    the mean and variance of every cluster and then returns a list of means (which
+    we call `centers`) and a list of variances (which we call `thevars`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s call our updated `getcenters()` function to find the actual means and
+    variances of our three clusters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now that we have newly calculated means and variances, let’s plot our clusters
+    again by running `makeplot(allpoints,theclass,allmeans)`. The result should look
+    like [Figure 7-11](#figure7-11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07011.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-11: Recalculated cluster centers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can see that our cluster centers, the star shapes, have moved since we
+    recalculated them in the Expectation step. But now that the cluster centers have
+    moved, some of our previous cluster classifications are probably incorrect. If
+    you run this on your computer, you’ll see some yellow points that are quite far
+    from the center of the yellow cluster (the cluster at the top right of the plot),
+    and quite close to the centers of the other clusters. Since the centers have moved
+    and we’ve recalculated covariances, we need to rerun our classification function
+    to reclassify all the points into their correct clusters (meaning, we need to
+    run our Expectation step again):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Again, to think about how this classification is accomplished, you can imagine
+    three bivariate bell curves jutting out of the page, with bell curve centers determined
+    by the positions of the stars, and widths determined by the bell curve covariances
+    we’ve calculated. Whichever bell curve is highest at each point will determine
+    that point’s cluster classification.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s make another plot that will reflect these newly recalculated cluster classifications
+    by running `makeplot(allpoints,theclass,allmeans)` yet again. The result is [Figure
+    7-12](#figure7-12).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07012.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-12: Reclassified cluster classifications'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here, you can see that the stars (cluster centers) are in the same locations
+    as in [Figure 7-11](#figure7-11). But we’ve accomplished reclassification of the
+    points: based on comparing the bell curves for each cluster, we’ve found the cluster
+    that’s most likely to contain every point, and we’ve changed the coloring accordingly.
+    You can compare this to [Figure 7-10](#figure7-10) to see the progress we’ve made
+    since we started: we’ve changed our estimates of where the cluster centers are
+    as well as our estimates of which points belong in which clusters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Convergence Step
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can see that two clusters have grown (the lower cluster and the cluster
+    on the left), while one cluster has shrunk (the cluster at the top right). But
+    now we’re in the same situation we were in before: after reclassifying the clusters,
+    the centers are not correct, so we need to recalculate them too.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Hopefully, you can see the pattern in this process by now: every time we reclassify
+    our clusters, we have to recalculate the clusters’ centers, but every time we
+    recalculate the centers, we have to reclassify the clusters. Stated another way,
+    every time we perform the Expectation step, we have to perform the Maximization
+    step, but every time we perform the Maximization step, we have to perform the
+    Expectation step again.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'That’s why the next, final step of E-M clustering is to repeat the Expectation
+    and Maximization steps: both steps create a need for the other one. We can write
+    a short loop that will accomplish this for us:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: The first line of the loop’s body (starting with `theclass=`) accomplishes the
+    Expectation step, and the next line accomplishes the Maximization step. You may
+    wonder whether we’ll get caught in an infinite loop, in which we have to constantly
+    recalculate centers and reclassify clusters again and again forever, never reaching
+    a final answer. We’re lucky because E-M clustering is mathematically guaranteed
+    to *converge*, meaning that eventually we’ll reach a step where we recalculate
+    the centers and find the same centers we calculated in the previous step, and
+    we reclassify the clusters and find the same clusters we classified in the previous
+    step. At that point, we can stop running our clustering because continuing will
+    just give us a repetition of the same answers over and over.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the previous snippet, instead of checking for convergence, we set a limit
+    at 100 iterations. For a dataset as small and simple as ours, this will certainly
+    be more than enough iterations. If you have a complex dataset that doesn’t seem
+    to converge after 100 iterations, you can increase to 1,000 or more until your
+    E-M clustering reaches convergence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s think about what we’ve done. We did the Guessing step, guessing means
+    and variances of our clusters. We did the Expectation step, classifying clusters
+    based on means and variances. We did the Maximization step, calculating means
+    and variances based on clusters. And we did the Convergence step, repeating the
+    Expectation and Maximization steps until reaching a stopping condition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ve completed E-M clustering! Now that we’ve finished, let’s look at a plot
+    of the final estimated clusters and centers by running `makeplot(allpoints,theclass,allmeans)`
+    one final time; see [Figure 7-13](#figure7-13).
+  prefs: []
+  type: TYPE_NORMAL
+- en: When we look at this plot, we can see that our clustering succeeded. One of
+    our cluster centers (stars) appears close to the center of the large, spread-out
+    cluster. The other two cluster centers appear near the center of the smaller,
+    more compact clusters. Importantly, we can see observations that are closer (in
+    absolute distance) to the small clusters but are classified as being part of the
+    large cluster. This is because E-M clustering takes variance into account; since
+    it sees that the center cluster is more spread out, it assigns a higher variance
+    to it, and therefore it’s able to include more points. Remember that we started
+    with some atrocious guesses for cluster centers, but we got a result that exactly
+    matches what looks perfect to us. Starting from our bad guesses in [Figure 7-10](#figure7-10),
+    we’ve arrived at reasonable-looking results in [Figure 7-13](#figure7-13). This
+    shows the strength of E-M clustering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07013.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-13: Final E-M clustering results'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our E-M clustering process has identified clusters in our data. We’ve completed
+    the clustering algorithm, but we haven’t applied it to any business scenario yet.
+    The way we apply it to business will depend on what the data represents. This
+    was just example data generated for the book, but we could perform exactly the
+    same E-M clustering process on any other data from any field. For example, we
+    might imagine, as we described before, that the points of [Figure 7-13](#figure7-13)
+    represent cities, and the x- and y-axes represent types of urban growth. Or, the
+    points of [Figure 7-13](#figure7-13) could represent customers, and the x- and
+    y-axes represent customer attributes like total spending, age, location, or anything
+    else.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What you do with your clusters will depend on the data you’re working with and
+    your goals. But in every situation, knowing the clusters that exist in your data
+    can help you craft different marketing approaches or different products for different
+    clusters, or different strategies for interacting with each of them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other Clustering Methods
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'E-M clustering is a powerful clustering method, but it’s not the only one.
+    Another method, *k-means clustering*, is more popular because it’s easier. If
+    you can do E-M clustering, k-means clustering is easy after some straightforward
+    changes to our code. The following are the steps of k-means clustering:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Guessing: Make guesses for the means of every cluster.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Classification: Classify every observation in our data according to which cluster
+    it’s most likely to be a member of, according to which mean it’s closest to.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Adjustment: Use the classifications obtained in the Classification step to
+    calculate new estimates for the means of each cluster.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Convergence: Repeat the Classification and Adjustment steps until reaching
+    a stopping condition.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'You can see that k-means clustering consists of four steps, just like E-M clustering.
+    The first and last steps (Guessing and Convergence) are identical: we make guesses
+    at the beginning of both processes, and we repeat steps until convergence in both
+    processes. The only differences are in the second and third steps.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In both algorithms, the second step (Expectation for E-M clustering, Classification
+    for k-means clustering) determines which observations belong to which clusters.
+    The difference is in the way we determine which observations belong to which cluster.
+    For E-M clustering, we determine an observation’s cluster based on comparing the
+    heights of bell curves, as illustrated in [Figure 7-6](#figure7-6). With k-means
+    clustering, we determine an observation’s cluster more simply: by measuring the
+    distance between the observation and each cluster center, and finding which cluster
+    center it’s closest to. So, when we see a dice roll equal to 12, E-M clustering
+    will tell us that it was rolled by the 12-sided dice, because of the heights of
+    bell curves in [Figure 7-6](#figure7-6). However, k-means clustering will tell
+    us that it was rolled by the 6-sided dice, because 12 is closer to 7 (the mean
+    roll of 6-sided dice) than it is to 19 (the mean roll of our 12-sided dice).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The other difference between E-M clustering and k-means clustering is in the
+    third step (Maximization for E-M clustering and Adjustment for k-means clustering).
+    In E-M clustering, we need to calculate the means and covariance matrices for
+    every cluster. But in k-means clustering, we need to calculate only the means
+    of each cluster—we don’t use covariance estimates at all in k-means clustering.
+    You can see that E-M clustering and k-means clustering both have the same general
+    outline, and differ in only a few particulars of the way classification and adjustment
+    are performed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Actually, we can easily implement k-means clustering in Python if we import
+    the right modules:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we import `KMeans()` from the same sklearn module we’ve used before. Then,
+    we create an object called `kmeans`; this is the object we can use to do k-means
+    clustering on our data. You can see that when we call the `KMeans()` function,
+    we need to specify a few important parameters, including the number of clusters
+    we’re looking for (`n_clusters`). After we’ve created our `kmeans` object, we
+    can call its `fit()` method to find the clusters in our `allpoints` data (the
+    same data we used before). When we call the `fit()` method, this determines what
+    cluster every point is in, and we can access the classification of each cluster
+    in the `kmeans.labels_` object. We can also access the cluster centers in the
+    `kmeans.cluster_centers_` object. Finally, we can call our `makeplot()` function,
+    to plot our data and the clusters we found using k-means. [Figure 7-14](#figure7-14)
+    has the result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07014.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-14: The result of k-means clustering'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can see in this plot that the results of k-means clustering are not very
+    different from the results of E-M clustering: we’ve identified the two dense clusters
+    at the top and right of the plot, and we’ve identified the looser cluster in the
+    rest of the plot. One difference is that the cluster boundaries are not the same:
+    in k-means clustering, the top and right clusters include some observations that
+    look more like members of the less dense cluster. This is not a coincidence; k-means
+    clustering is designed to find clusters that are approximately the same sizes,
+    and it doesn’t have the flexibility that E-M clustering has to find different
+    cluster sizes with different densities.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Many other clustering methods exist besides E-M and k-means, so many that they
+    are too numerous to write about in detail here. Every clustering method is suited
+    to a particular type of data and a particular application. For example, one powerful
+    yet underappreciated clustering method is called *density-based spatial clustering
+    of applications with noise* *(DBSCAN)*. Unlike E-M and k-means clustering, DBSCAN
+    can detect clusters that have unique, nonspherical, non-bell-like shapes, like
+    the shapes shown in [Figure 7-15](#figure7-15).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/502888c07/f07015.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7-15: The result of DBSCAN clustering, with nonspherical clusters'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can see two distinct groups, or clusters, of data. But since they swirl
+    around each other, using bell curves to classify them wouldn’t work well. Bell
+    curves can’t easily find the complex boundaries that these clusters have. DBSCAN
+    doesn’t rely on bell curves, but rather relies on careful considerations of the
+    distances between each of the points within and between clusters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another important kind of clustering is called *hierarchical clustering*. Instead
+    of simply classifying observations into groups, hierarchical clustering yields
+    a nested hierarchy that shows groups of observations in closely related, then
+    successively more distant groups. Every type of clustering has different assumptions
+    and methods associated with it. But all of them are accomplishing the same goal:
+    classifying points into groups without any labels or supervision.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other Unsupervised Learning Methods
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Clustering is the most popular application of unsupervised learning, but a
+    variety of algorithms besides clustering fall under the broad umbrella of unsupervised
+    learning. Several unsupervised learning methods accomplish *anomaly detection*:
+    finding observations that don’t fit with the general pattern of a dataset. Some
+    anomaly detection methods are broadly similar to clustering methods, because they
+    sometimes include identifying dense groups of near neighbors (like clusters) and
+    measuring distances between observations and their closest clusters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another group of unsupervised learning methods are called *latent variable
+    models*. These models try to express the observations in a dataset as a function
+    of hypothetical hidden, or *latent*, variables. For example, a dataset may consist
+    of student scores in eight classes. We might have a hypothesis that two main types
+    of intelligence exist: analytic and creative. We can check whether students’ scores
+    in quantitative, analytic classes like math and science tend to correlate, and
+    whether students’ scores in more creative classes like language and music tend
+    to correlate. In other words, we hypothesize that there are two hidden, or latent,
+    variables that we haven’t directly measured, analytic intelligence and creative
+    intelligence, and these two latent variables determine the values of all the variables
+    we do observe, all the students’ grades, to a large extent.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This isn’t the only possible hypothesis. We could also hypothesize that student
+    grades are determined by only one latent variable, general intelligence, or we
+    could hypothesize that student grades are determined by three or any other number
+    of latent variables that we could then try to measure and analyze.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The E-M clustering we accomplished in this chapter can also be thought of as
+    a type of latent variable model. In the case of clustering dice rolls, the latent
+    variables we’re interested in finding are the mean and standard deviations of
+    the bell curves that indicate cluster locations and sizes. Many of these latent
+    variable models rely on linear algebra and matrix algebra, so if you’re interested
+    in unsupervised learning, you should study those topics diligently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remember that all of these methods are unsupervised, meaning we have no labels
+    that we can rigorously test our hypotheses against. In the case of [Figure 7-13](#figure7-13)
+    and [Figure 7-14](#figure7-14), we can see that the cluster classifications we’ve
+    found look right and make sense in certain ways, but we can’t say with certainty
+    whether they’re correct. Nor can we say whether E-M clustering (whose results
+    are shown in [Figure 7-13](#figure7-13)) or k-means clustering (whose results
+    are shown in [Figure 7-14](#figure7-14)) is more correct than the other—because
+    there are no “ground truth” group labels that we can use to judge correctness.
+    This is why unsupervised learning methods are often used for data exploration
+    but aren’t often used to get final answers about predictions or classifications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since it’s not possible to definitively say whether any unsupervised learning
+    method has delivered correct results, unsupervised learning requires good judgment
+    to do well. Instead of giving us final answers, it tends to give us insight into
+    data that in turn helps us get ideas for other analyses, including supervised
+    learning. But that doesn’t mean it’s not worthwhile; unsupervised learning can
+    provide invaluable insights and ideas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this chapter, we covered unsupervised learning, with a focus on E-M clustering.
+    We discussed the concept of unsupervised learning, the details of E-M clustering,
+    and the differences between E-M clustering and other clustering methods like k-means
+    clustering. We finished with a discussion of other unsupervised learning methods.
+    In the next chapter, we’ll discuss web scraping and how to get data quickly and
+    easily from websites for analysis and business applications.
+  prefs: []
+  type: TYPE_NORMAL
