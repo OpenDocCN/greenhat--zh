@@ -1,0 +1,140 @@
+<html><head></head><body><div id="sbo-rt-content"><section><header>
+<h1 class="Appendix"><span class="AppendixNumber"><span epub:type="pagebreak" title="493" id="Page_493"/>E</span><br/>
+<span class="AppendixTitle">Troubleshooting Deployments</span></h1>
+</header>
+<figure class="opener">
+<img src="Images/chapterart.png" alt="" width="406" height="406"/>
+</figure>
+<p class="ChapterIntro">Deploying an app is tremendously satisfying when it works, especially if you’ve never done it before. However, there are many obstacles that can arise in the deployment process, and unfortunately, some of these issues can be difficult to identify and address. This appendix will help you understand modern approaches to deployment and give you specific ways to troubleshoot the deployment process when things aren’t working.</p>
+<p>If the additional information in this appendix isn’t enough to help you get through the deployment process successfully, see the online resources at <a href="https://ehmatthes.github.io/pcc_3e" class="LinkURL">https://ehmatthes.github.io/pcc_3e</a>; the updates there will almost certainly help you carry out a successful deployment.</p>
+<h2 id="h1-502703b05-0001"><span epub:type="pagebreak" title="494" id="Page_494"/>Understanding Deployments</h2>
+<p class="BodyFirst">When you’re trying to troubleshoot a particular deployment attempt, it’s helpful to have a clear understanding of how a typical deployment works. <em>Deployment</em> refers to the process of taking a project that works on your local system, and copying that project to a remote server in a way that allows it to respond to requests from any user on the internet. The remote environment differs from a typical local system in a number of important ways: it’s probably not the same operating system (OS) as the one you’re using, and it’s most likely one of many virtual servers on a single physical server.</p>
+<p>When you deploy a project, or <em>push</em> it to the remote server, the following steps need to be taken:</p>
+<ul>
+<li>Create a virtual server on a physical machine at a datacenter.</li>
+<li>Establish a connection between the local system and the remote server.</li>
+<li>Copy the project’s code to the remote server.</li>
+<li>Identify all of the project’s dependencies and install them on the remote server.</li>
+<li>Set up a database and run any existing migrations.</li>
+<li>Copy static files (CSS, JavaScript files, and media files) to a place where they can be served efficiently.</li>
+<li>Start a server to handle incoming requests.</li>
+<li>Start routing incoming requests to the project, once it’s ready to handle requests.</li>
+</ul>
+<p>When you consider all that goes into a deployment, it’s no wonder deployments often fail. Fortunately, once you gain an understanding of what should be happening, you’ll stand a better chance of identifying what went wrong. If you can identify what went wrong, you might be able to identify a fix that will make the next deployment attempt successful.</p>
+<p>You can develop locally on one kind of OS and push to a server running a different OS. It’s important to know what kind of system you’re pushing to, because that can inform some of your troubleshooting work. At the time of this writing, a basic remote server on Platform.sh runs Debian Linux; most remote servers are Linux-based systems.</p>
+<h2 id="h1-502703b05-0002">Basic Troubleshooting</h2>
+<p class="BodyFirst">Some troubleshooting steps are specific to each OS, but we’ll get to that in a moment. First, let’s consider the steps everyone should try when troubleshooting a deployment.</p>
+<p>Your best resource is the output generated during the attempted push. This output can look intimidating; if you’re new to deploying apps, it can look highly technical, and there’s usually a lot of it. The good news is you don’t need to understand everything in the output. You should have two goals when skimming log output: identify any deployment steps that worked, and identify any steps that didn’t. If you can do this, you might be <span epub:type="pagebreak" title="495" id="Page_495"/>able to figure out what to change in your project, or in your deployment process, to make your next push successful.</p>
+<h3 id="h2-502703b05-0001">Follow Onscreen Suggestions</h3>
+<p class="BodyFirst">Sometimes, the platform you’re pushing to will generate a message that has a clear suggestion for how to address the issue. For example, here’s the message you’ll see if you create a Platform.sh project before initializing a Git repository, and then try to push the project:</p>
+<pre><code>$ <b>platform push</b>
+<span class="CodeAnnotationHang" aria-label="annotation1">❶</span> Enter a number to choose a project:
+  [0] ll_project (votohz445ljyg)
+ &gt; <b>0</b>
+
+<span class="CodeAnnotationHang" aria-label="annotation2">❷</span>   [RootNotFoundException]
+  Project root not found. This can only be run from inside a project directory.
+
+<span class="CodeAnnotationHang" aria-label="annotation3">❸</span>  To set the project for this Git repository, run:
+    platform project:set-remote [id]</code></pre>
+<p>We’re trying to push a project, but the local project hasn’t been associated with a remote project yet. So, the Platform.sh CLI asks which remote project we want to push to <span class="CodeAnnotation" aria-label="annotation1">❶</span>. We enter <code class="bold">0</code>, to select the only project listed. But next, we see a <code>RootNotFoundException</code> <span class="CodeAnnotation" aria-label="annotation2">❷</span>. This happens because Platform.sh looks for a <em>.git</em> directory when it inspects the local project, to figure out how to connect the local project with the remote project. In this case, since there was no <em>.git</em> directory when the remote project was created, that connection was never established. The CLI suggests a fix <span class="CodeAnnotation" aria-label="annotation3">❸</span>; it’s telling us that we can specify the remote project that should be associated with this local project, using the <code>project:set-remote</code> command.</p>
+<p>Let’s try this suggestion:</p>
+<pre><code>$ <b>platform project:set-remote votohz445ljyg</b>
+Setting the remote project for this repository to: ll_project (votohz445ljyg)
+
+The remote project for this repository is
+    now set to: ll_project (votohz445ljyg)</code></pre>
+<p>In the previous output, the CLI showed the ID of this remote project, <code>votohz4451jyg</code>. So we run the command that’s suggested, using this ID, and the CLI is able to make the connection between the local project and the remote project.</p>
+<p>Now let’s try to push the project again:</p>
+<pre><code>$ <b>platform push</b>
+Are you sure you want to push to the main (production) branch? [Y/n] <b>y</b>
+Pushing HEAD to the existing environment main
+<var>--snip--</var></code></pre>
+<p>This was a successful push; following the onscreen suggestion worked.</p>
+<p><span epub:type="pagebreak" title="496" id="Page_496"/>You should be careful about running commands that you don’t fully understand. However, if you have good reason to believe that a command can do little harm, and if you trust the source of the recommendation, it might be reasonable to try the suggestions offered by the tools you’re using.</p>
+<aside epub:type="sidebar">
+<div class="top hr"><hr/></div>
+<section class="note">
+<h2><span class="NoteHead">Note</span></h2>
+<p>	Keep in mind there are individuals who will tell you to run commands that will wipe your system or expose your system to remote exploitation. Following the suggestions of a tool provided by a company or organization you trust is different from following the suggestions of random people online. Anytime you’re dealing with remote connections, proceed with an abundance of caution.</p>
+<div class="bottom hr"><hr/></div>
+</section>
+</aside>
+<h3 id="h2-502703b05-0002">Read the Log Output</h3>
+<p class="BodyFirst">As mentioned earlier, the log output that you see when you run a command like <code>platform push </code>can be both informative and intimidating. Read through the following snippet of log output, taken from a different attempt at using <code>platform push</code>, and see if you can spot the issue:</p>
+<pre><code><var>--snip--</var>
+Collecting soupsieve==2.3.2.post1
+  Using cached soupsieve-2.3.2.post1-py3-none-any.whl (37 kB)
+Collecting sqlparse==0.4.2
+  Using cached sqlparse-0.4.2-py3-none-any.whl (42 kB)
+Installing collected packages: platformshconfig, sqlparse,...
+Successfully installed Django-4.1 asgiref-3.5.2 beautifulsoup4-4.11.1...
+W: ERROR: Could not find a version that satisfies the requirement gunicorrn
+W: ERROR: No matching distribution found for gunicorrn
+
+130 static files copied to '/app/static'.
+
+Executing pre-flight checks...
+<var>--snip--</var></code></pre>
+<p>When a deployment attempt fails, a good strategy is to look through the log output and see if you can spot anything that looks like warnings or errors. Warnings are fairly common; they’re often messages about upcoming changes in a project’s dependencies, to help developers address issues before they cause actual failures.</p>
+<p>A successful push may have warnings, but it shouldn’t have any errors. In this case, Platform.sh couldn’t find a way to install the requirement <code>gunicorrn</code>. This is a typo in the <em>requirements_remote.txt</em> file, which was supposed to include <code>gunicorn</code> (with one <em>r</em>). It’s not always easy to spot the root issue in log output, especially when the problem causes a bunch of cascading errors and warnings. Just like when reading a traceback on your local system, it’s a good idea to look closely at the first few errors that are listed, and also the last few errors. Most of the errors in between tend to be internal packages complaining that something went wrong, and passing messages about the error to other internal packages. The actual error we can fix is usually one of the first or last errors listed.</p>
+<p><span epub:type="pagebreak" title="497" id="Page_497"/>Sometimes, you’ll be able to spot the error, and other times, you’ll have no idea what the output means. It’s certainly worth a try, and using log output to successfully diagnose an error is a tremendously satisfying feeling. As you spend more time looking through log output, you’ll get better at identifying the information that’s most meaningful to you.</p>
+<h2 id="h1-502703b05-0003">OS-Specific Troubleshooting</h2>
+<p class="BodyFirst">You can develop on any operating system you like and push to any host you like. The tools for pushing projects have developed enough that they’ll modify your project as needed to run correctly on the remote system. However, there are some OS-specific issues that can arise.</p>
+<p>In the Platform.sh deployment process, one of the most likely sources of difficulties is installing the CLI. Here’s the command to do so:</p>
+<pre><code>$ <b>curl -fsS https://platform.sh/cli/installer | php</b></code></pre>
+<p>The command starts with <code>curl</code>, a tool that lets you request remote resources, accessed through a URL, within a terminal. Here, it’s being used to download the CLI installer from a Platform.sh server. The <code>-fsS</code> section of the command is a set of flags that modify how curl runs. The <code>f</code> flag tells curl to suppress most error messages, so the CLI installer can handle them instead of reporting them all to you. The <code>s</code> flag tells curl to run silently; it lets the CLI installer decide what information to show in the terminal. The <code>S</code> flag tells curl to show an error message if the overall command fails. The <code>| php</code> at the end of the command tells your system to run the downloaded installer file using a PHP interpreter, because the Platform.sh CLI is written in PHP.</p>
+<p>This means your system needs curl and PHP in order to install the Platform.sh CLI. To use the CLI, you’ll also need Git, and a terminal that can run Bash commands. <em>Bash</em> is a language that’s available in most server environments. Most modern systems have plenty of room for multiple tools like this to be installed.</p>
+<p>The following sections will help you address these requirements for your OS. If you don’t already have Git installed, see the instructions for installing Git on <span class="xref" itemid="xref_target_page 484">page 484</span> in<span class="xref" itemid="xref_target_ Appendix D"> Appendix D</span> and then go to the section here that’s applicable to your OS.</p>
+<aside epub:type="sidebar">
+<div class="top hr"><hr/></div>
+<section class="note">
+<h2><span class="NoteHead">Note</span></h2>
+<p>	An excellent tool for understanding terminal commands like the one shown here is <a href="https://explainshell.com" class="LinkURL">https://explainshell.com</a>. Enter the command you’re trying to understand, and the site will show you the documentation for all the parts of your command. Try it out with the command used to install the Platform.sh CLI.</p>
+<div class="bottom hr"><hr/></div>
+</section>
+</aside>
+<h3 id="h2-502703b05-0003">Deploying from Windows</h3>
+<p class="BodyFirst">Windows has seen a resurgence in popularity with programmers in recent years. Windows has integrated many different elements of other operating systems, providing users with a number of options for how to do local development work and interact with remote systems.</p>
+<p><span epub:type="pagebreak" title="498" id="Page_498"/>One of the most significant difficulties in deploying from Windows is that the core Windows operating system is not the same as what a Linux-based remote server uses. A base Windows system has a different set of tools and languages than a base Linux system, so to carry out deployment work from Windows, you’ll need to choose how to integrate Linux-based tool sets into your local environment.</p>
+<h4 id="h3-502703b05-0001">Windows Subsystem for Linux</h4>
+<p class="BodyFirst">One popular approach is to use <em>Windows Subsystem for Linux</em> (<em>WSL</em>), an environment that allows Linux to run directly on Windows. If you have WSL set up, using the Platform.sh CLI on Windows becomes as easy as using it on Linux. The CLI won’t know it’s running on Windows; it will just see the Linux environment you’re using it in.</p>
+<p>Setting up WSL is a two-step process: you first install WSL, and then choose a Linux distribution to install into the WSL environment. Setting up a WSL environment is more than can be described here; if you’re interested in this approach and don’t already have it set up, see the documentation at <a href="https://docs.microsoft.com/en-us/windows/wsl/about" class="LinkURL">https://docs.microsoft.com/en-us/windows/wsl/about</a>. Once you have WSL set up, you can follow the instructions in the Linux section of this appendix to continue your deployment work.</p>
+<h4 id="h3-502703b05-0002">Git Bash</h4>
+<p class="BodyFirst">Another approach to building a local environment that you can deploy from uses <em>Git Bash</em>, a terminal environment that’s compatible with Bash but runs on Windows. Git Bash is installed along with Git when you use the installer from <a href="https://git-scm.com" class="LinkURL">https://git-scm.com</a>. This approach can work, but it isn’t as streamlined as WSL. In this approach, you’ll have to use a Windows terminal for some steps and a Git Bash terminal for others.</p>
+<p>First you’ll need to install PHP. You can do this with <em>XAMPP</em>, a package that bundles PHP with a few other developer-focused tools. Go to <a href="https://apachefriends.org" class="LinkURL">https://apachefriends.org</a> and click the button to download XAMPP for Windows. Open the installer and run it; if you see a warning about User Account Control (UAC) restrictions, click <b>OK</b>. Accept all of the installer’s defaults.</p>
+<p>When the installer finishes running, you’ll need to add PHP to your system’s path; this will tell Windows where to look when you want to run PHP. In the Start menu, enter <code class="bold">path</code> and click <b>Edit the System Environment Variables</b>; click the button labeled <b>Environment Variables</b>. You should see the variable <code>Path</code> highlighted; click <b>Edit</b> under this pane. Click <b>New</b> to add a new path to the current list of paths. Assuming you kept the default settings when running the XAMPP installer, add <code class="bold">C:\xampp\php</code> in the box that appears, then click <b>OK</b>. When you’re finished, close all of the system dialogs that are still open.</p>
+<p>With these requirements taken care of, you can install the Platform.sh CLI. You’ll need to use a Windows terminal with administrator privileges; enter <code class="bold">command</code> into the Start menu, and under the Command Prompt app, <span epub:type="pagebreak" title="499" id="Page_499"/>click <b>Run as administrator</b>. In the terminal that appears, enter the following command:</p>
+<pre><code>&gt; <b>curl -fsS https://platform.sh/cli/installer | php</b></code></pre>
+<p>This will install the Platform.sh CLI, as described earlier.</p>
+<p>Finally, you’ll work in Git Bash. To open a Git Bash terminal, go to the Start menu and search for <code class="bold">git bash</code>. Click the <b>Git Bash app</b> that appears; you should see a terminal window open. You can use traditional Linux-based commands like <code>ls</code> in this terminal, as well as Windows-based commands like <code>dir</code>. To make sure the installation was successful, issue the <code class="bold">platform list</code> command. You should see a list of all the commands in the Platform.sh CLI. From this point forward, carry out all of your deployment work using the Platform.sh CLI inside a Git Bash terminal window.</p>
+<h3 id="h2-502703b05-0004">Deploying from macOS</h3>
+<p class="BodyFirst">The macOS operating system is not based on Linux, but they were both developed on similar principles. What this means, practically, is that a lot of the commands and workflows that you use on macOS will work in a remote server environment as well. You might need to install some developer-focused resources in order to have all of these tools available in your local macOS environment. If you get a prompt to install the <em>command line developer tools</em> at any point in your work, click <b>Install</b> to approve the installation.</p>
+<p>The most likely difficulty when installing the Platform.sh CLI is making sure PHP is installed. If you see a message that the <code>php</code> command is not found, you’ll need to install PHP. One of the easiest ways to install PHP is by using the <em>Homebrew</em> package manager, which facilitates the installation of a wide variety of packages that programmers depend on. If you don’t already have Homebrew installed, visit <a href="https://brew.sh" class="LinkURL">https://brew.sh</a> and follow the instructions to install it.</p>
+<p>Once Homebrew is installed, use the following command to install PHP:</p>
+<pre><code>$ <b>brew install php</b></code></pre>
+<p>This will take a while to run, but once it has completed, you should be able to successfully install the Platform.sh CLI.</p>
+<h3 id="h2-502703b05-0005">Deploying from Linux</h3>
+<p class="BodyFirst">Because most server environments are Linux-based, you should have very little difficulty installing and using the Platform.sh CLI. If you try to install the CLI on a system with a fresh installation of Ubuntu, it will tell you exactly which packages you need:</p>
+<pre><code>$ <b>curl -fsS https://platform.sh/cli/installer | php</b>
+Command 'curl' not found, but can be installed with:
+sudo apt  install curl
+Command 'php' not found, but can be installed with:
+sudo apt install php-cli</code></pre>
+<p><span epub:type="pagebreak" title="500" id="Page_500"/>The actual output will have more information about a few other packages that would work, plus some version information. The following command will install curl and PHP:</p>
+<pre><code>$ <b>sudo apt install curl php-cli</b></code></pre>
+<p>After running this command, the Platform.sh CLI installation command should run successfully. Since your local environment is quite similar to most Linux-based hosting environments, much of what you learn about working in your terminal will carry over to working in a remote environment as well.</p>
+<h2 id="h1-502703b05-0004">Other Deployment Approaches</h2>
+<p class="BodyFirst">If Platform.sh doesn’t work for you, or if you want to try a different approach, there are many hosting platforms to choose from. Some work similarly to the process described in <span class="xref" itemid="xref_target_Chapter 20">Chapter 20</span>, and some have a much different approach to carrying out the steps described at the beginning of this appendix:</p>
+<ul>
+<li>Platform.sh allows you to use a browser to carry out the steps we used the CLI for. If you like browser-based interfaces better than terminal-based workflows, you may prefer this approach.</li>
+<li>There are a number of other hosting providers that offer both CLI- and browser-based approaches. Some of these providers offer terminals within their browser, so you don’t have to install anything on your system.</li>
+<li>Some providers allow you to push your project to a remote code hosting site like GitHub, and then connect your GitHub repository to the hosting site. The host then pulls your code from GitHub, instead of requiring you to push your code from your local system directly to the host. Platform.sh supports this kind of workflow as well.</li>
+<li>Some providers offer an array of services that you select from, in order to put together an infrastructure that works for your project. This typically requires you to have a deeper understanding of the deployment process, and what a remote server needs in order to serve a project. These hosts include Amazon Web Services (AWS) and Microsoft’s Azure platform. It can be much harder to track your costs in these kinds of platforms, because each service can accrue charges independently.</li>
+<li>Many people host their projects on a virtual private server (VPS). In this approach, you rent a virtual server that acts just like a remote computer, log in to the server, install the software needed to run your project, copy your code over, set the right connections, and allow your server to start accepting requests.</li>
+</ul>
+<p>New hosting platforms and approaches appear on a regular basis; find one that looks appealing to you, and invest the time to learn that provider’s deployment process. Maintain your project long enough so that you get to <span epub:type="pagebreak" title="501" id="Page_501"/>know what works well with your provider’s approach and what doesn’t. No hosting platform is going to be perfect; you’ll need to make an ongoing judgement call about whether the provider you’re currently using is good enough for your use case.</p>
+<p>I’ll offer one last word of caution about choosing a deployment platform and an overall approach to deployment. Some people will enthusiastically steer you toward overly complex deployment approaches and services that are meant to make your project highly reliable and capable of serving millions of users simultaneously. Many programmers spend lots of time, money, and energy building out a complex deployment strategy, only to find that hardly anyone is using their project. Most Django projects can be set up on a small hosting plan and tuned to serve thousands of requests per minute. If your project is getting anything less than this level of traffic, take the time to configure your deployment to work well on a minimal platform before investing in infrastructure that’s meant for some of the largest sites in the world.</p>
+<p>Deployment is incredibly challenging at times, but just as satisfying when your live project works well. Enjoy the challenge, and ask for help when you need it.</p>
+</section>
+</div></body></html>
