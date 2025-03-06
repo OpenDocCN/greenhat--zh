@@ -1,0 +1,4017 @@
+- en: '**15'
+  id: totrans-0
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: '**15'
+- en: 'A CASE STUDY: CLASSIFYING AUDIO SAMPLES**'
+  id: totrans-1
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 一个案例研究：**音频样本分类**
+- en: '![image](Images/common.jpg)'
+  id: totrans-2
+  prefs: []
+  type: TYPE_IMG
+  zh: '![image](Images/common.jpg)'
+- en: 'Let’s bring together everything that we’ve learned throughout the book. We’ll
+    be looking at a single case study. The scenario is this: we are data scientists,
+    and our boss has tasked us with building a classifier for audio samples stored
+    as *.wav* files. We’ll begin with the data itself. We first want to build some
+    basic intuition for how it’s structured. From there, we’ll build augmented datasets
+    we can use for training models. The first dataset uses the sound samples themselves,
+    a one-dimensional dataset. We’ll see that this approach isn’t as successful as
+    we would like it to be.'
+  id: totrans-3
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 让我们将书中所学的内容整合在一起。我们将通过一个案例研究来展示。场景是这样的：我们是数据科学家，我们的老板委派我们为存储为*.wav*文件的音频样本构建一个分类器。我们从数据本身开始。首先，我们想要建立一些基本的直觉来理解数据的结构。然后，我们将构建可以用于训练模型的增强数据集。第一个数据集使用的是声音样本本身，这是一个一维数据集。我们将看到这种方法并不像我们希望的那样成功。
+- en: We’ll then turn the audio data into images to allow us to explore two-dimensional
+    CNNs. This change of representation will lead to a big improvement in model performance.
+    Finally, we’ll combine multiple models in ensembles to see how to leverage the
+    relative strengths and weaknesses of the individual models to boost overall performance
+    still more.
+  id: totrans-4
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 然后，我们将音频数据转换为图像，以便探索二维CNN。这个表示方式的变化将显著改善模型的性能。最后，我们将多个模型结合在一起，形成集成模型，以观察如何利用个体模型的相对优缺点，进一步提高整体性能。
+- en: Building the Dataset
+  id: totrans-5
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: 构建数据集
+- en: There are 10 classes in our dataset, which consists of 400 samples total, 40
+    samples per class, each 5 seconds long. We’ll assume we cannot get any more data
+    because it’s time-consuming and expensive to record the samples and label them.
+    We must work with the data we are given and no more.
+  id: totrans-6
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们的数据集中有10个类别，共有400个样本，每个类别40个样本，每个样本长度为5秒。我们假设无法获得更多的数据，因为录制样本和标注它们既费时又昂贵。我们必须利用现有的数据，不能再增加。
+- en: Throughout this book, we have consistently preached about the necessity of having
+    a good dataset. We’ll assume that the dataset we have been handed is complete
+    in the sense that our system will encounter only types of sound samples in the
+    dataset; there will be no unknown class or classes. Additionally, we’ll also assume
+    that the balanced nature of the dataset is real, and all classes are indeed equally
+    likely.
+  id: totrans-7
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在本书中，我们始终强调拥有一个良好的数据集是多么重要。我们假设我们收到的数据集是完整的，意味着我们的系统将只遇到数据集中的声音样本类型；不会有未知的类别。此外，我们还假设数据集的平衡性是正确的，所有类别的样本发生的概率相等。
+- en: 'The audio dataset we’ll use is called ESC-10\. For a complete description,
+    see “ESC: Dataset for Environmental Sound Classification” by Karol J. Piczal (2015).
+    The dataset is available at [https://github.com/karoldvl/ESC-50/](https://github.com/karoldvl/ESC-50/).
+    But it needs to be extracted from the larger ESC-50 dataset, which doesn’t have
+    a license we can use. The ESC-10 subset does.'
+  id: totrans-8
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将使用的音频数据集叫做ESC-10。有关详细描述，请参见Karol J. Piczal（2015）的《ESC：环境声音分类数据集》。该数据集可通过[https://github.com/karoldvl/ESC-50/](https://github.com/karoldvl/ESC-50/)获取。但它需要从更大的ESC-50数据集中提取，因为ESC-50没有我们可以使用的许可，而ESC-10子集有。
+- en: Let’s do some preprocessing to extract the ESC-10 *.wav* files from the larger
+    ESC-50 dataset. Download the single ZIP-file version of the dataset from the preceding
+    URL and expand it. This will create a directory called *ESC-50-master*. Then,
+    use the code in [Listing 15-1](ch15.xhtml#ch15lis1) to build the ESC-10 dataset
+    from it.
+  id: totrans-9
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 让我们做一些预处理，将ESC-10 *.wav* 文件从更大的ESC-50数据集中提取出来。从前面的URL下载数据集的单个ZIP文件并解压缩。这将创建一个名为*ESC-50-master*的目录。然后，使用[Listing
+    15-1](ch15.xhtml#ch15lis1)中的代码从中构建ESC-10数据集。
+- en: import sys
+  id: totrans-10
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import sys
+- en: import os
+  id: totrans-11
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import os
+- en: import shutil
+  id: totrans-12
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import shutil
+- en: classes = {
+  id: totrans-13
+  prefs: []
+  type: TYPE_NORMAL
+  zh: classes = {
+- en: '"rain":0,'
+  id: totrans-14
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"rain":0,'
+- en: '"rooster":1,'
+  id: totrans-15
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"rooster":1,'
+- en: '"crying_baby":2,'
+  id: totrans-16
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"crying_baby":2,'
+- en: '"sea_waves":3,'
+  id: totrans-17
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"sea_waves":3,'
+- en: '"clock_tick":4,'
+  id: totrans-18
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"clock_tick":4,'
+- en: '"sneezing":5,'
+  id: totrans-19
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"sneezing":5,'
+- en: '"dog":6,'
+  id: totrans-20
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"dog":6,'
+- en: '"crackling_fire":7,'
+  id: totrans-21
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"crackling_fire":7,'
+- en: '"helicopter":8,'
+  id: totrans-22
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"helicopter":8,'
+- en: '"chainsaw":9,'
+  id: totrans-23
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '"chainsaw":9,'
+- en: '}'
+  id: totrans-24
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '}'
+- en: 'with open("ESC-50-master/meta/esc50.csv") as f:'
+  id: totrans-25
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'with open("ESC-50-master/meta/esc50.csv") as f:'
+- en: lines = [i[:-1] for i in f.readlines()]
+  id: totrans-26
+  prefs: []
+  type: TYPE_NORMAL
+  zh: lines = [i[:-1] for i in f.readlines()]
+- en: lines = lines[1:]
+  id: totrans-27
+  prefs: []
+  type: TYPE_NORMAL
+  zh: lines = lines[1:]
+- en: os.system("rm -rf ESC-10")
+  id: totrans-28
+  prefs: []
+  type: TYPE_NORMAL
+  zh: os.system("rm -rf ESC-10")
+- en: os.system("mkdir ESC-10")
+  id: totrans-29
+  prefs: []
+  type: TYPE_NORMAL
+  zh: os.system("mkdir ESC-10")
+- en: os.system("mkdir ESC-10/audio")
+  id: totrans-30
+  prefs: []
+  type: TYPE_NORMAL
+  zh: os.system("mkdir ESC-10/audio")
+- en: meta = []
+  id: totrans-31
+  prefs: []
+  type: TYPE_NORMAL
+  zh: meta = []
+- en: 'for line in lines:'
+  id: totrans-32
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for line in lines:'
+- en: t = line.split(",")
+  id: totrans-33
+  prefs: []
+  type: TYPE_NORMAL
+  zh: t = line.split(",")
+- en: 'if (t[-3] == ''True''):'
+  id: totrans-34
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if (t[-3] == ''True''):'
+- en: meta.append("ESC-10/audio/%s %d" % (t[0],classes[t[3]]))
+  id: totrans-35
+  prefs: []
+  type: TYPE_NORMAL
+  zh: meta.append("ESC-10/audio/%s %d" % (t[0],classes[t[3]]))
+- en: src = "ESC-50-master/audio/"+t[0]
+  id: totrans-36
+  prefs: []
+  type: TYPE_NORMAL
+  zh: src = "ESC-50-master/audio/"+t[0]
+- en: dst = "ESC-10/audio/"+t[0]
+  id: totrans-37
+  prefs: []
+  type: TYPE_NORMAL
+  zh: dst = "ESC-10/audio/"+t[0]
+- en: shutil.copy(src,dst)
+  id: totrans-38
+  prefs: []
+  type: TYPE_NORMAL
+  zh: shutil.copy(src,dst)
+- en: 'with open("ESC-10/filelist.txt","w") as f:'
+  id: totrans-39
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'with open("ESC-10/filelist.txt","w") as f:'
+- en: 'for m in meta:'
+  id: totrans-40
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for m in meta:'
+- en: f.write(m+"\n")
+  id: totrans-41
+  prefs: []
+  type: TYPE_NORMAL
+  zh: f.write(m+"\n")
+- en: '*Listing 15-1: Building the ESC-10 dataset*'
+  id: totrans-42
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*清单15-1：构建ESC-10数据集*'
+- en: The code uses the ESC-50 metadata to identify the sound samples that belong
+    to the 10 classes of the ESC-10 dataset and then copies them to the *ESC-10/audio*
+    directory. It also writes a list of the audio files to *filelist.txt*. After running
+    this code, we’ll use only the ESC-10 files.
+  id: totrans-43
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 代码使用ESC-50的元数据来识别属于ESC-10数据集的10个类别的声音样本，然后将它们复制到*ESC-10/audio*目录中。它还会将音频文件的列表写入*filelist.txt*。运行这段代码后，我们将只使用ESC-10文件。
+- en: 'If all is well, we should now have 400 five-second *.wav* files, 40 from each
+    of the 10 classes: rain, rooster, crying baby, sea waves, clock tick, sneezing,
+    dog, crackling fire, helicopter, and chainsaw. We’ll politely refrain from asking
+    our boss exactly why she wants to discriminate between these particular classes
+    of sound.'
+  id: totrans-44
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 如果一切顺利，我们现在应该拥有400个五秒钟的*.wav*文件，每个类别有40个，共来自10个类别：雨声、公鸡叫声、婴儿哭声、海浪声、时钟滴答声、打喷嚏声、狗叫声、噼啪的火声、直升机声和链锯声。我们会礼貌地避免询问老板，究竟她为什么要区分这些特定的声音类别。
+- en: Augmenting the Dataset
+  id: totrans-45
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 数据集增强
+- en: Our first instinct should be that our dataset is too small. After all, we have
+    only 40 examples of each sound, and we know that some of those will need to be
+    held back for testing, leaving even fewer per class for training.
+  id: totrans-46
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们的第一反应应该是，数据集太小了。毕竟，我们每种声音只有40个样本，而且我们知道其中一些将需要留作测试集，这样每个类别的训练样本就更少了。
+- en: We could resort to *k*-fold validation, but in this case, we’ll instead opt
+    for data augmentation. So, how do we augment audio data?
+  id: totrans-47
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以 resort to *k*-fold 验证，但在这种情况下，我们将选择数据增强。那么，如何增强音频数据呢？
+- en: Recall, the goal of data augmentation is to create new data samples that could
+    plausibly come from the classes in the dataset. With images, we can make obvious
+    changes like shifting, flipping left and right, and so on. With continuous vectors,
+    we’ve seen how to use PCA to augment the data (see [Chapter 5](ch05.xhtml#ch05)).
+    To augment the audio files, we need to think of things we can do that will produce
+    new files that still sound like the original class. Four thoughts come to mind.
+  id: totrans-48
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 回想一下，数据增强的目标是创建新的数据样本，这些样本应该是来自数据集中的各个类别的。对于图像，我们可以进行显而易见的变换，比如平移、左右翻转等等。对于连续向量，我们已经看到如何使用PCA来增强数据（参见[第5章](ch05.xhtml#ch05)）。对于音频文件，我们需要思考可以做哪些处理来生成新的文件，同时又能保持其原始类别的特点。以下是四个思路。
+- en: First, we can shift the sample in time, much as we can shift an image to the
+    left or right a few pixels. Second, we can simulate a noisy environment by adding
+    a small amount of random noise to the sound itself. Third, we can shift the pitch
+    of the sound, and make it higher or lower by some small amount. Not surprisingly,
+    this is known as *pitch shifting*. Finally, we can lengthen or compress the sound
+    in time. This is known as *time shifting*.
+  id: totrans-49
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 首先，我们可以在时间上平移样本，就像我们可以将图像向左或向右平移几个像素一样。其次，我们可以通过为声音添加少量的随机噪声来模拟一个嘈杂的环境。第三，我们可以改变声音的音高，稍微提高或降低音高。这就是所谓的*音高移位*。最后，我们可以在时间上延长或压缩声音，这就是*时间移位*。
+- en: Doing all of this sounds complicated, especially if we haven’t worked with audio
+    data before. I should point out that in practice, being presented with unfamiliar
+    data is a very real possibility; we don’t all get to choose what we need to work
+    with.
+  id: totrans-50
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 做这些事情听起来很复杂，特别是如果我们之前没有处理过音频数据的话。我应该指出，在实践中，面对不熟悉的数据是非常常见的情况；我们并不总是能够选择自己要处理的数据。
+- en: 'Fortunately for us, we’re working in Python, and the Python community is vast
+    and talented. It turns out that adding one library to our system will allow us
+    to easily do time stretching and pitch shifting. Let’s install the librosa library.
+    This should do the trick for us:'
+  id: totrans-51
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 幸运的是，我们使用的是Python，Python社区非常庞大且充满才华。事实证明，只需要安装一个库，我们就能轻松地进行时间伸缩和音高移位。让我们来安装librosa库。这应该能帮我们解决问题：
+- en: $ sudo pip3 install librosa
+  id: totrans-52
+  prefs: []
+  type: TYPE_NORMAL
+  zh: $ sudo pip3 install librosa
+- en: With the necessary library installed, we can augment the ESC-10 dataset with
+    the code in [Listing 15-2](ch15.xhtml#ch15lis2).
+  id: totrans-53
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 安装好所需的库后，我们可以使用[清单15-2](ch15.xhtml#ch15lis2)中的代码来增强ESC-10数据集。
+- en: import os
+  id: totrans-54
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import os
+- en: import random
+  id: totrans-55
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import random
+- en: import numpy as np
+  id: totrans-56
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import numpy as np
+- en: from scipy.io.wavfile import read, write
+  id: totrans-57
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from scipy.io.wavfile import read, write
+- en: import librosa as rosa
+  id: totrans-58
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import librosa as rosa
+- en: N = 8
+  id: totrans-59
+  prefs: []
+  type: TYPE_NORMAL
+  zh: N = 8
+- en: os.system("rm -rf augmented; mkdir augmented")
+  id: totrans-60
+  prefs: []
+  type: TYPE_NORMAL
+  zh: os.system("rm -rf augmented; mkdir augmented")
+- en: os.system("mkdir augmented/train augmented/test")
+  id: totrans-61
+  prefs: []
+  type: TYPE_NORMAL
+  zh: os.system("mkdir augmented/train augmented/test")
+- en: ❶ src_list = [i[:-1] for i in open("ESC-10/filelist.txt")]
+  id: totrans-62
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ src_list = [i[:-1] for i in open("ESC-10/filelist.txt")]
+- en: z = [[] for i in range(10)]
+  id: totrans-63
+  prefs: []
+  type: TYPE_NORMAL
+  zh: z = [[] for i in range(10)]
+- en: 'for s in src_list:'
+  id: totrans-64
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for s in src_list:'
+- en: _,c = s.split()
+  id: totrans-65
+  prefs: []
+  type: TYPE_NORMAL
+  zh: _,c = s.split()
+- en: z[int(c)].append(s)
+  id: totrans-66
+  prefs: []
+  type: TYPE_NORMAL
+  zh: z[int(c)].append(s)
+- en: ❷ train = []
+  id: totrans-67
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ train = []
+- en: test = []
+  id: totrans-68
+  prefs: []
+  type: TYPE_NORMAL
+  zh: test = []
+- en: 'for i in range(10):'
+  id: totrans-69
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i in range(10):'
+- en: p = z[i]
+  id: totrans-70
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p = z[i]
+- en: random.shuffle(p)
+  id: totrans-71
+  prefs: []
+  type: TYPE_NORMAL
+  zh: random.shuffle(p)
+- en: test += p[:8]
+  id: totrans-72
+  prefs: []
+  type: TYPE_NORMAL
+  zh: test += p[:8]
+- en: train += p[8:]
+  id: totrans-73
+  prefs: []
+  type: TYPE_NORMAL
+  zh: train += p[8:]
+- en: random.shuffle(train)
+  id: totrans-74
+  prefs: []
+  type: TYPE_NORMAL
+  zh: random.shuffle(train)
+- en: random.shuffle(test)
+  id: totrans-75
+  prefs: []
+  type: TYPE_NORMAL
+  zh: random.shuffle(test)
+- en: augment_audio(train, "train")
+  id: totrans-76
+  prefs: []
+  type: TYPE_NORMAL
+  zh: augment_audio(train, "train")
+- en: augment_audio(test, "test")
+  id: totrans-77
+  prefs: []
+  type: TYPE_NORMAL
+  zh: augment_audio(test, "test")
+- en: '*Listing 15-2: Augmenting the ESC-10 dataset, part 1*'
+  id: totrans-78
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*清单15-2：增强ESC-10数据集，第1部分*'
+- en: This code loads the necessary modules, including the librosa module, which we’ll
+    just call rosa, and two functions from the SciPy wavfile module that let us read
+    and write NumPy arrays as *.wav* files.
+  id: totrans-79
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这段代码加载了必要的模块，包括librosa模块（我们简称为rosa），以及SciPy wavfile模块中的两个函数，用于读取和写入NumPy数组作为*.wav*文件。
+- en: We set the number of samples per class that we’ll hold back for testing (N=8)
+    and create the output directory where the augmented sound files will reside (augmented).
+    Then we read the file list we created with [Listing 15-1](ch15.xhtml#ch15lis1)
+    ❶. Next, we create a nested list (z) to hold the names of the audio files associated
+    with each of the 10 classes.
+  id: totrans-80
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们设置每个类别用于测试的样本数量（N=8），并创建输出目录，保存增强后的声音文件（augmented）。然后，我们读取之前创建的文件列表，参考[清单15-1](ch15.xhtml#ch15lis1)
+    ❶。接下来，我们创建一个嵌套列表（z），用于保存与10个类别每个类别相关联的音频文件名称。
+- en: Using the list of files per class, we pull it apart and create train and test
+    file lists ❷. Notice that we randomly shuffle the list of files per class and
+    the final train and test lists. This code follows the convention we discussed
+    in [Chapter 4](ch04.xhtml#ch04) of separating train and test first, then augmenting.
+  id: totrans-81
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 使用每个类别的文件列表，我们将其拆分并创建训练和测试文件列表 ❷。注意，我们随机打乱每个类别的文件列表以及最终的训练和测试列表。该代码遵循我们在[第4章](ch04.xhtml#ch04)中讨论的先分离训练集和测试集，再进行数据增强的惯例。
+- en: We can augment the train and test files by calling augment_audio. This function
+    is in [Listing 15-3](ch15.xhtml#ch15lis3).
+  id: totrans-82
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以通过调用augment_audio来增强训练和测试文件。该函数位于[清单15-3](ch15.xhtml#ch15lis3)中。
+- en: 'def augment_audio(src_list, typ):'
+  id: totrans-83
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def augment_audio(src_list, typ):'
+- en: flist = []
+  id: totrans-84
+  prefs: []
+  type: TYPE_NORMAL
+  zh: flist = []
+- en: 'for i,s in enumerate(src_list):'
+  id: totrans-85
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i,s in enumerate(src_list):'
+- en: f,c = s.split()
+  id: totrans-86
+  prefs: []
+  type: TYPE_NORMAL
+  zh: f,c = s.split()
+- en: '❶ wav = read(f) # (sample rate, data)'
+  id: totrans-87
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❶ wav = read(f) #（采样率，数据）'
+- en: base = os.path.abspath("augmented/%s/%s" %
+  id: totrans-88
+  prefs: []
+  type: TYPE_NORMAL
+  zh: base = os.path.abspath("augmented/%s/%s" %
+- en: (typ, os.path.basename(f)[:-4]))
+  id: totrans-89
+  prefs: []
+  type: TYPE_NORMAL
+  zh: (typ, os.path.basename(f)[:-4]))
+- en: fname = base+".wav"
+  id: totrans-90
+  prefs: []
+  type: TYPE_NORMAL
+  zh: fname = base+".wav"
+- en: ❷ write(fname, wav[0], wav[1])
+  id: totrans-91
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ write(fname, wav[0], wav[1])
+- en: flist.append("%s %s" % (fname,c))
+  id: totrans-92
+  prefs: []
+  type: TYPE_NORMAL
+  zh: flist.append("%s %s" % (fname,c))
+- en: 'for j in range(19):'
+  id: totrans-93
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for j in range(19):'
+- en: d = augment(wav)
+  id: totrans-94
+  prefs: []
+  type: TYPE_NORMAL
+  zh: d = augment(wav)
+- en: fname = base+("_%04d.wav" % j)
+  id: totrans-95
+  prefs: []
+  type: TYPE_NORMAL
+  zh: fname = base+("_%04d.wav" % j)
+- en: ❸ write(fname, wav[0], d.astype(wav[1].dtype))
+  id: totrans-96
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ write(fname, wav[0], d.astype(wav[1].dtype))
+- en: flist.append("%s %s" % (fname,c))
+  id: totrans-97
+  prefs: []
+  type: TYPE_NORMAL
+  zh: flist.append("%s %s" % (fname,c))
+- en: random.shuffle(flist)
+  id: totrans-98
+  prefs: []
+  type: TYPE_NORMAL
+  zh: random.shuffle(flist)
+- en: 'with open("augmented_%s_filelist.txt" % typ,"w") as f:'
+  id: totrans-99
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'with open("augmented_%s_filelist.txt" % typ,"w") as f:'
+- en: 'for z in flist:'
+  id: totrans-100
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for z in flist:'
+- en: f.write("%s\n" % z)
+  id: totrans-101
+  prefs: []
+  type: TYPE_NORMAL
+  zh: f.write("%s\n" % z)
+- en: '*Listing 15-3: Augmenting the ESC-10 dataset, part 2*'
+  id: totrans-102
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*清单15-3：增强ESC-10数据集，第2部分*'
+- en: The function loops over all the filenames in the given list (src_list), which
+    will be either train or test. The filename is separated from the class label,
+    and then the file is read from disk ❶. As indicated in the comment, wav is a list
+    of two elements. The first is the sampling rate in Hz (cycles per second). This
+    is how often the analog waveform was digitized to produce the *.wav* file. For
+    ESC-10, the sampling rate is always 44,100 Hz, which is the standard rate for
+    a compact disc. The second element is a NumPy array containing the actual digitized
+    sound samples. These are the values we’ll augment to produce new data files.
+  id: totrans-103
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 该函数循环遍历给定列表中的所有文件名（src_list），该列表可以是训练集或测试集。文件名与类别标签分开，然后从磁盘读取文件 ❶。如注释所示，wav是一个包含两个元素的列表。第一个元素是采样率，以Hz为单位（每秒的周期数）。这表示模拟波形被数字化以生成*.wav*文件的频率。对于ESC-10，采样率始终为44,100
+    Hz，这是标准的CD采样率。第二个元素是一个NumPy数组，包含实际的数字化声音样本。这些值将用于增强数据，生成新的数据文件。
+- en: After setting up some output pathnames, we write the original sound sample to
+    the augmented directory ❷. Then, we start a loop to generate 19 more augmented
+    versions of the current sound sample. The augmented dataset, as a whole, will
+    be 20 times larger, for a total of 8,000 sound files, 6,400 for training and 1,600
+    for testing. Note, the sound samples for an augmented source file are assigned
+    to d. The new sound file is written to disk using the sample rate of 44,100 Hz
+    and the augmented data matching the datatype of the source ❸.
+  id: totrans-104
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在设置了一些输出路径名之后，我们将原始声音样本写入增强目录❷。然后，我们开始一个循环，生成当前声音样本的19个增强版本。整个增强数据集的大小将是原始数据集的20倍，总共有8,000个声音文件，其中6,400个用于训练，1,600个用于测试。请注意，增强源文件的声音样本分配给d。新的声音文件使用44,100
+    Hz的采样率和与源数据相匹配的数据类型写入磁盘❸。
+- en: As we create the augmented sound files, we also keep track of the filename and
+    class and write them to a new file list. Here typ is a string indicating train
+    or test.
+  id: totrans-105
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在创建增强的声音文件时，我们还会追踪文件名和类别，并将它们写入一个新的文件列表中。这里typ是一个字符串，表示训练集或测试集。
+- en: 'This function calls yet another function, augment. This is the function that
+    generates an augmented version of a single sound file by randomly applying some
+    subset of the four augmentation strategies mentioned previously: shifting, noise,
+    pitch shifting, or time-shifting. Some or all of these might be used for any call
+    to augment. The augment function itself is shown in [Listing 15-4](ch15.xhtml#ch15lis4).'
+  id: totrans-106
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这个函数调用了另一个函数augment。这个函数通过随机应用之前提到的四种增强策略的某些子集，来生成单个声音文件的增强版本：平移、噪声、音高平移或时间平移。对于每次调用augment，这些方法中的一些或全部可能会被使用。augment函数本身在[Listing
+    15-4](ch15.xhtml#ch15lis4)中展示。
+- en: 'def augment(wav):'
+  id: totrans-107
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def augment(wav):'
+- en: sr = wav[0]
+  id: totrans-108
+  prefs: []
+  type: TYPE_NORMAL
+  zh: sr = wav[0]
+- en: d = wav[1].astype("float32")
+  id: totrans-109
+  prefs: []
+  type: TYPE_NORMAL
+  zh: d = wav[1].astype("float32")
+- en: '❶ if (random.random() < 0.5):'
+  id: totrans-110
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❶ if (random.random() < 0.5):'
+- en: s = int(sr/4.0*(np.random.random()-0.5))
+  id: totrans-111
+  prefs: []
+  type: TYPE_NORMAL
+  zh: s = int(sr/4.0*(np.random.random()-0.5))
+- en: d = np.roll(d,s)
+  id: totrans-112
+  prefs: []
+  type: TYPE_NORMAL
+  zh: d = np.roll(d,s)
+- en: 'if (s < 0):'
+  id: totrans-113
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if (s < 0):'
+- en: d[s:] = 0
+  id: totrans-114
+  prefs: []
+  type: TYPE_NORMAL
+  zh: d[s:] = 0
+- en: 'else:'
+  id: totrans-115
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'else:'
+- en: d[:s] = 0
+  id: totrans-116
+  prefs: []
+  type: TYPE_NORMAL
+  zh: d[:s] = 0
+- en: '❷ if (random.random() < 0.5):'
+  id: totrans-117
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❷ if (random.random() < 0.5):'
+- en: d += 0.1*(d.max()-d.min())*np.random.random(d.shape[0])
+  id: totrans-118
+  prefs: []
+  type: TYPE_NORMAL
+  zh: d += 0.1*(d.max()-d.min())*np.random.random(d.shape[0])
+- en: '❸ if (random.random() < 0.5):'
+  id: totrans-119
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❸ if (random.random() < 0.5):'
+- en: pf = 20.0*(np.random.random()-0.5)
+  id: totrans-120
+  prefs: []
+  type: TYPE_NORMAL
+  zh: pf = 20.0*(np.random.random()-0.5)
+- en: d = rosa.effects.pitch_shift(d, sr, pf)
+  id: totrans-121
+  prefs: []
+  type: TYPE_NORMAL
+  zh: d = rosa.effects.pitch_shift(d, sr, pf)
+- en: '❹ if (random.random() < 0.5):'
+  id: totrans-122
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '❹ if (random.random() < 0.5):'
+- en: rate = 1.0 + (np.random.random()-0.5)
+  id: totrans-123
+  prefs: []
+  type: TYPE_NORMAL
+  zh: rate = 1.0 + (np.random.random()-0.5)
+- en: d = rosa.effects.time_stretch(d,rate)
+  id: totrans-124
+  prefs: []
+  type: TYPE_NORMAL
+  zh: d = rosa.effects.time_stretch(d,rate)
+- en: 'if (d.shape[0] > wav[1].shape[0]):'
+  id: totrans-125
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'if (d.shape[0] > wav[1].shape[0]):'
+- en: d = d[:wav[1].shape[0]]
+  id: totrans-126
+  prefs: []
+  type: TYPE_NORMAL
+  zh: d = d[:wav[1].shape[0]]
+- en: 'else:'
+  id: totrans-127
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'else:'
+- en: w = np.zeros(wav[1].shape[0], dtype="float32")
+  id: totrans-128
+  prefs: []
+  type: TYPE_NORMAL
+  zh: w = np.zeros(wav[1].shape[0], dtype="float32")
+- en: w[:d.shape[0]] = d
+  id: totrans-129
+  prefs: []
+  type: TYPE_NORMAL
+  zh: w[:d.shape[0]] = d
+- en: d = w.copy()
+  id: totrans-130
+  prefs: []
+  type: TYPE_NORMAL
+  zh: d = w.copy()
+- en: return d
+  id: totrans-131
+  prefs: []
+  type: TYPE_NORMAL
+  zh: return d
+- en: '*Listing 15-4: Augmenting the ESC-10 dataset, part 3*'
+  id: totrans-132
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*Listing 15-4: 增强ESC-10数据集，部分3*'
+- en: This function separates the samples (d) from the sample rate (sr) and makes
+    sure the samples are floating-point numbers. For ESC-10, the source samples are
+    all of type int16 (signed 16-bit integers). Next come four if statements. Each
+    one asks for a single random float, and if that float is less than 0.5, we execute
+    the body of the if. This means that we apply each possible augmentation with a
+    probability of 50 percent.
+  id: totrans-133
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这个函数将样本（d）与采样率（sr）分开，并确保样本是浮动点数。对于ESC-10，源样本全为int16类型（有符号16位整数）。接下来是四个if语句。每个if语句都会生成一个随机浮动数，如果该浮动数小于0.5，则执行if语句的内容。这意味着我们以50%的概率应用每一种可能的增强方式。
+- en: The first if shifts the sound samples in time ❶ by rolling the NumPy array,
+    a vector, by some number of samples, s. This value amounts to at most an eighth
+    of a second, sr/4.0. Note that the shift can be positive or negative. The quantity
+    sr/4.0 is the number of samples in a quarter of a second. However, the random
+    float is in the range [*–*0.5,+0.5], so the ultimate shift is at most an eighth
+    of a second. If the shift is negative, we need to zero samples at the end of the
+    data; otherwise, we zero samples at the start.
+  id: totrans-134
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 第一个if语句通过将NumPy数组（向量）按某个样本数s滚动，来在时间上平移声音样本❶。这个值最多为四分之一秒的时间，即sr/4.0。请注意，平移可以是正向的或负向的。sr/4.0是四分之一秒内的样本数量。然而，随机浮动数在[*–*0.5,
+    +0.5]的范围内，因此最终的平移量最多为四分之一秒。如果平移是负向的，我们需要在数据末尾置零样本；否则，我们在开始位置置零样本。
+- en: Random noise is added by literally adding a random value of up to one-tenth
+    of the range of the audio signal back in ❷. When played, this adds hiss, as you
+    might hear on an old cassette tape.
+  id: totrans-135
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 随机噪声通过字面地将音频信号范围的十分之一以内的随机值加回去❷。这会导致播放时产生类似旧磁带中听到的嘶嘶声。
+- en: Next comes shifting the pitch of the sample by using librosa. The pitch shift
+    is expressed in musical steps, or fractions thereof. We randomly pick a float
+    in the range [*–*10,+10] (pf) and pass it along with the data (d) and sampling
+    rate (sr) to the librosa pitch_shift effect function ❸.
+  id: totrans-136
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 接下来是使用librosa调整样本的音高。音高变化以音乐的半音阶或其分数表示。我们随机选择一个在[*–*10,+10]范围内的浮动值（pf），并将其与数据（d）和采样率（sr）一起传递给librosa的pitch_shift效果函数❸。
+- en: The last augmentation uses the librosa function to stretch or compress time
+    (time_stretch) ❹. We adjust using an amount of time (rate) that is in the range
+    [*–*0.5,+0.5]. If time was stretched, we need to chop off the extra samples to
+    ensure that the sample length remains constant. If time was compressed, we need
+    to add zero samples at the end.
+  id: totrans-137
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最后的扩充使用了librosa函数来拉伸或压缩时间（time_stretch）❹。我们使用在范围[*–*0.5,+0.5]内的时间（rate）进行调整。如果时间被拉伸，我们需要去除额外的样本，以确保样本长度保持不变。如果时间被压缩，我们需要在结尾添加零样本。
+- en: Lastly, we return the new, augmented samples.
+  id: totrans-138
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最后，我们返回新的、扩充过的样本。
+- en: Running the code in [Listing 15-2](ch15.xhtml#ch15lis2) creates a new *augmented*
+    data directory with subdirectories *train* and *test*. These are the raw sound
+    files that we’ll work with going forward. I encourage you to listen to some of
+    them to understand what the augmentations have done. The filenames should help
+    you quickly tell the originals from the augmentations.
+  id: totrans-139
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 运行[列表15-2](ch15.xhtml#ch15lis2)中的代码会创建一个新的*扩充*数据目录，并包含子目录*train*和*test*。这些是我们接下来要处理的原始声音文件。我鼓励你去听一听它们，以理解扩充操作的效果。文件名应该能帮助你快速区分原始文件和扩充后的文件。
+- en: Preprocessing Our Data
+  id: totrans-140
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 数据预处理
+- en: Are we ready to start building models? Not yet. Our experience told us that
+    the dataset was too small, and we augmented accordingly. However, we haven’t yet
+    turned the raw data into something we can pass to a model.
+  id: totrans-141
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们准备好开始构建模型了吗？还没有。我们的经验告诉我们，数据集太小，因此我们做了相应的扩充。然而，我们还没有将原始数据转换成可以传递给模型的格式。
+- en: A first thought is to use the raw sound samples. These are already vectors representing
+    the audio signal, with the time between the samples set by the sampling rate of
+    44,100 Hz. But we don’t want to use them as they are. The samples are all exactly
+    five seconds long. At 44,100 samples per second, that means each sample is a vector
+    of 44,100 × 5 = 220,500 samples. That’s too long for us to work with effectively.
+  id: totrans-142
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 第一个想法是使用原始的声音样本。这些样本已经是表示音频信号的向量，样本之间的时间由采样率44,100 Hz决定。但我们不想直接使用它们。样本的时长都是精确的五秒钟。以44,100样本每秒的速度，意味着每个样本是一个44,100
+    × 5 = 220,500个样本的向量。这对我们来说太长，无法有效处理。
+- en: With a bit more thought, we might be able to convince ourselves that distinguishing
+    between a crying baby and a barking dog might not need such a high sampling rate.
+    What if instead of keeping all the samples, we kept only every 100th sample? Moreover,
+    do we really need five seconds’ worth of data to identify the sounds? What if
+    we kept only the first two seconds worth?
+  id: totrans-143
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 再想一想，我们可能会说，区分哭泣的婴儿和叫的狗可能不需要那么高的采样率。如果我们不保留所有样本，而只保留每第100个样本会怎样？此外，我们真的需要五秒钟的数据来识别声音吗？如果我们只保留前两秒的数据呢？
+- en: Let’s keep only the first two seconds of each sound file; that’s 88,200 samples.
+    And let’s keep only every 100th sample, so each sound file now becomes a vector
+    of 882 elements. That’s hardly more than an unraveled MNIST digit image, and we
+    know we can work with those.
+  id: totrans-144
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们只保留每个声音文件的前两秒；即88,200个样本。并且我们只保留每第100个样本，因此每个声音文件现在变成了一个包含882个元素的向量。这几乎与一个展开的MNIST数字图像差不多，我们知道我们可以处理这些。
+- en: '[Listing 15-5](ch15.xhtml#ch15lis5) has the code to build the actual initial
+    version of the dataset we’ll use to build the models.'
+  id: totrans-145
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[列表15-5](ch15.xhtml#ch15lis5)包含了用于构建我们将用于构建模型的初始版本数据集的代码。'
+- en: import os
+  id: totrans-146
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import os
+- en: import random
+  id: totrans-147
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import random
+- en: import numpy as np
+  id: totrans-148
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import numpy as np
+- en: from scipy.io.wavfile import read
+  id: totrans-149
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from scipy.io.wavfile import read
+- en: 'sr = 44100 # Hz'
+  id: totrans-150
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'sr = 44100 # Hz'
+- en: N = 2*sr   # number of samples to keep
+  id: totrans-151
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'N = 2*sr   # 要保留的样本数量'
+- en: w = 100    # every 100
+  id: totrans-152
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'w = 100    # 每100个'
+- en: afiles = [i[:-1] for i in open("augmented_train_filelist.txt")]
+  id: totrans-153
+  prefs: []
+  type: TYPE_NORMAL
+  zh: afiles = [i[:-1] for i in open("augmented_train_filelist.txt")]
+- en: trn = np.zeros((len(afiles),N//w,1), dtype="int16")
+  id: totrans-154
+  prefs: []
+  type: TYPE_NORMAL
+  zh: trn = np.zeros((len(afiles),N//w,1), dtype="int16")
+- en: lbl = np.zeros(len(afiles), dtype="uint8")
+  id: totrans-155
+  prefs: []
+  type: TYPE_NORMAL
+  zh: lbl = np.zeros(len(afiles), dtype="uint8")
+- en: 'for i,t in enumerate(afiles):'
+  id: totrans-156
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i,t in enumerate(afiles):'
+- en: ❶ f,c = t.split()
+  id: totrans-157
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ f,c = t.split()
+- en: trn[i,:,0] = read(f)[1][:N:w]
+  id: totrans-158
+  prefs: []
+  type: TYPE_NORMAL
+  zh: trn[i,:,0] = read(f)[1][:N:w]
+- en: lbl[i] = int(c)
+  id: totrans-159
+  prefs: []
+  type: TYPE_NORMAL
+  zh: lbl[i] = int(c)
+- en: np.save("esc10_raw_train_audio.npy", trn)
+  id: totrans-160
+  prefs: []
+  type: TYPE_NORMAL
+  zh: np.save("esc10_raw_train_audio.npy", trn)
+- en: np.save("esc10_raw_train_labels.npy", lbl)
+  id: totrans-161
+  prefs: []
+  type: TYPE_NORMAL
+  zh: np.save("esc10_raw_train_labels.npy", lbl)
+- en: afiles = [i[:-1] for i in open("augmented_test_filelist.txt")]
+  id: totrans-162
+  prefs: []
+  type: TYPE_NORMAL
+  zh: afiles = [i[:-1] for i in open("augmented_test_filelist.txt")]
+- en: tst = np.zeros((len(afiles),N//w,1), dtype="int16")
+  id: totrans-163
+  prefs: []
+  type: TYPE_NORMAL
+  zh: tst = np.zeros((len(afiles), N//w, 1), dtype="int16")
+- en: lbl = np.zeros(len(afiles), dtype="uint8")
+  id: totrans-164
+  prefs: []
+  type: TYPE_NORMAL
+  zh: lbl = np.zeros(len(afiles), dtype="uint8")
+- en: 'for i,t in enumerate(afiles):'
+  id: totrans-165
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 对于 i, t 在 afiles 中的每一项：
+- en: f,c = t.split()
+  id: totrans-166
+  prefs: []
+  type: TYPE_NORMAL
+  zh: f, c = t.split()
+- en: tst[i,:,0] = read(f)[1][:N:w]
+  id: totrans-167
+  prefs: []
+  type: TYPE_NORMAL
+  zh: tst[i,:,0] = read(f)[1][:N:w]
+- en: lbl[i] = int(c)
+  id: totrans-168
+  prefs: []
+  type: TYPE_NORMAL
+  zh: lbl[i] = int(c)
+- en: np.save("esc10_raw_test_audio.npy", tst)
+  id: totrans-169
+  prefs: []
+  type: TYPE_NORMAL
+  zh: np.save("esc10_raw_test_audio.npy", tst)
+- en: np.save("esc10_raw_test_labels.npy", lbl)
+  id: totrans-170
+  prefs: []
+  type: TYPE_NORMAL
+  zh: np.save("esc10_raw_test_labels.npy", lbl)
+- en: '*Listing 15-5: Building reduced samples dataset*'
+  id: totrans-171
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*代码清单 15-5: 构建减少样本数据集*'
+- en: This code builds train and test NumPy files containing the raw data. The data
+    is from the augmented sound files we built in [Listing 15-2](ch15.xhtml#ch15lis2).
+    The file list contains the file location and class label ❶. We load each file
+    in the list and put it into an array, either the train or test array.
+  id: totrans-172
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这段代码构建了包含原始数据的训练和测试 NumPy 文件。这些数据来自我们在 [代码清单 15-2](ch15.xhtml#ch15lis2) 中构建的增强音频文件。文件列表包含文件位置和类标签
+    ❶。我们加载列表中的每个文件并将其放入数组中，可能是训练数组或测试数组。
+- en: 'We have a one-dimensional feature vector and a number of train or test files,
+    so we might expect we need a two-dimensional array to store our data, either 6400
+    × 882 for the training set or 1600 × 882 for the test set. However, we know we’ll
+    ultimately be working with Keras, and we know that Keras wants a dimension for
+    the number of channels, so we define the arrays to be 6400 × 882 × 1 and 1600
+    × 882 × 1 instead. The most substantial line in this code is the following:'
+  id: totrans-173
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们有一个一维特征向量和一些训练或测试文件，因此我们可能需要一个二维数组来存储数据，可以是训练集的 6400 × 882 或测试集的 1600 × 882。然而，我们知道最终将使用
+    Keras，而且 Keras 需要一个通道数维度，因此我们将数组定义为 6400 × 882 × 1 和 1600 × 882 × 1。该代码中最关键的行是：
+- en: trn[i,:,0] = read(f)[1][:N:w]
+  id: totrans-174
+  prefs: []
+  type: TYPE_NORMAL
+  zh: trn[i,:,0] = read(f)[1][:N:w]
+- en: It reads the current sound file, keeps only the sound samples ([1]), and from
+    the sound samples keeps only the first two seconds, worth at every 100th sample,
+    [:N:w]. Spend a little time with this code. If you’re confused, I’d suggest experimenting
+    with NumPy at the interactive Python prompt to understand what it’s doing.
+  id: totrans-175
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 它读取当前音频文件，只保留音频样本 ([1])，并从音频样本中保留前两秒，每隔 100 个样本取一个，[:N:w]。花点时间理解这段代码。如果你感到困惑，建议在
+    Python 交互式提示符下尝试使用 NumPy 来理解它在做什么。
+- en: In the end, we have train and test files for the 882 element vectors and associated
+    labels. We’ll build our first models with these. [Figure 15-1](ch15.xhtml#ch15fig1)
+    shows the resulting vector for a crying baby.
+  id: totrans-176
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最终，我们得到了用于 882 元素向量及其相关标签的训练文件和测试文件。我们将用这些来构建第一个模型。[图 15-1](ch15.xhtml#ch15fig1)
+    显示了哭泣婴儿的特征向量。
+- en: '![image](Images/15fig01.jpg)'
+  id: totrans-177
+  prefs: []
+  type: TYPE_IMG
+  zh: '![image](Images/15fig01.jpg)'
+- en: '*Figure 15-1: Feature vector for a crying baby*'
+  id: totrans-178
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*图 15-1: 哭泣婴儿的特征向量*'
+- en: The x-axis is sample number (think “time”), and the y-axis is the sample value.
+  id: totrans-179
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x 轴是样本编号（可以理解为“时间”），y 轴是样本值。
+- en: Classifying the Audio Features
+  id: totrans-180
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: 分类音频特征
+- en: We have our training and test sets. Let’s build some models and see how they
+    do. Since we have feature vectors, we can start quickly with classical models.
+    After those, we can build some one-dimensional convolutional networks and see
+    if they perform any better.
+  id: totrans-181
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们已经有了训练集和测试集。接下来让我们构建一些模型，看看它们的表现如何。由于我们有特征向量，可以快速开始使用经典模型。之后，我们可以构建一些一维卷积网络，看看它们的表现是否更好。
+- en: Using Classical Models
+  id: totrans-182
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 使用经典模型
+- en: We can test the same suite of classical models we used in [Chapter 7](ch07.xhtml#ch07)
+    with the breast cancer dataset. [Listing 15-6](ch15.xhtml#ch15lis6) has the setup
+    code.
+  id: totrans-183
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以使用与 [第 7 章](ch07.xhtml#ch07) 中乳腺癌数据集相同的经典模型进行测试。[代码清单 15-6](ch15.xhtml#ch15lis6)
+    提供了设置代码。
+- en: import numpy as np
+  id: totrans-184
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import numpy as np
+- en: from sklearn.neighbors import NearestCentroid
+  id: totrans-185
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from sklearn.neighbors import NearestCentroid
+- en: from sklearn.neighbors import KNeighborsClassifier
+  id: totrans-186
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from sklearn.neighbors import KNeighborsClassifier
+- en: from sklearn.naive_bayes import GaussianNB
+  id: totrans-187
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from sklearn.naive_bayes import GaussianNB
+- en: from sklearn.ensemble import RandomForestClassifier
+  id: totrans-188
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from sklearn.ensemble import RandomForestClassifier
+- en: from sklearn.svm import LinearSVC
+  id: totrans-189
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from sklearn.svm import LinearSVC
+- en: x_train = np.load("esc10_raw_train_audio.npy")[:,:,0]
+  id: totrans-190
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_train = np.load("esc10_raw_train_audio.npy")[:,:,0]
+- en: y_train = np.load("esc10_raw_train_labels.npy")
+  id: totrans-191
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_train = np.load("esc10_raw_train_labels.npy")
+- en: (*\pagebreak*)
+  id: totrans-192
+  prefs: []
+  type: TYPE_NORMAL
+  zh: (*\pagebreak*)
+- en: x_test  = np.load("esc10_raw_test_audio.npy")[:,:,0]
+  id: totrans-193
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_test = np.load("esc10_raw_test_audio.npy")[:,:,0]
+- en: y_test  = np.load("esc10_raw_test_labels.npy")
+  id: totrans-194
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_test = np.load("esc10_raw_test_labels.npy")
+- en: ❶ x_train = (x_train.astype('float32') + 32768) / 65536
+  id: totrans-195
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ x_train = (x_train.astype('float32') + 32768) / 65536
+- en: x_test = (x_test.astype('float32') + 32768) / 65536
+  id: totrans-196
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_test = (x_test.astype('float32') + 32768) / 65536
+- en: train(x_train, y_train, x_test, y_test)
+  id: totrans-197
+  prefs: []
+  type: TYPE_NORMAL
+  zh: train(x_train, y_train, x_test, y_test)
+- en: '*Listing 15-6: Classifying the audio features with classical models, part 1*'
+  id: totrans-198
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*列表 15-6：使用经典模型对音频特征进行分类，第一部分*'
+- en: Here we import the necessary model types, load the dataset, scale it, and then
+    call a train function that we’ll introduce shortly.
+  id: totrans-199
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在这里，我们导入必要的模型类型，加载数据集，对其进行缩放，然后调用一个我们稍后会介绍的train函数。
+- en: Scaling is crucial here. Consider the y-axis range for [Figure 15-1](ch15.xhtml#ch15fig1).
+    It goes from about –4000 to 4000\. We need to scale the data so that the range
+    is smaller and the values are closer to being centered around 0\. Recall, for
+    the MNIST and CIFAR-10 datasets, we divided by the maximum value to scale to [0,1].
+  id: totrans-200
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 缩放在这里至关重要。考虑[图 15-1](ch15.xhtml#ch15fig1)中的y轴范围。它大约从-4000到4000。我们需要对数据进行缩放，使其范围更小，值更接近0。回想一下，对于MNIST和CIFAR-10数据集，我们通过最大值来缩放到[0,1]。
+- en: The sound samples are 16-bit signed integers. This means the full range of values
+    they can take on covers [*–*32,768,+32,767]. If we make the samples floats, add
+    32,768, and then divide by 65,536 (twice the lower value) ❶, we’ll get samples
+    in the range [0,1), which is what we want.
+  id: totrans-201
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 音频样本是16位有符号整数。这意味着它们可以取的值的完整范围覆盖[*–*32,768,+32,767]。如果我们将样本转换为浮动数，添加32,768，然后除以65,536（即2倍的最小值）❶，我们将得到范围在[0,1)内的样本，这就是我们想要的。
+- en: Training and evaluating the classical models is straightforward, as shown in
+    [Listing 15-7](ch15.xhtml#ch15lis7).
+  id: totrans-202
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 训练和评估经典模型非常直接，如[列表 15-7](ch15.xhtml#ch15lis7)所示。
+- en: 'def run(x_train, y_train, x_test, y_test, clf):'
+  id: totrans-203
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def run(x_train, y_train, x_test, y_test, clf):'
+- en: clf.fit(x_train, y_train)
+  id: totrans-204
+  prefs: []
+  type: TYPE_NORMAL
+  zh: clf.fit(x_train, y_train)
+- en: score = 100.0*clf.score(x_test, y_test)
+  id: totrans-205
+  prefs: []
+  type: TYPE_NORMAL
+  zh: score = 100.0*clf.score(x_test, y_test)
+- en: print("score = %0.2f%%" % score)
+  id: totrans-206
+  prefs: []
+  type: TYPE_NORMAL
+  zh: print("score = %0.2f%%" % score)
+- en: 'def train(x_train, y_train, x_test, y_test):'
+  id: totrans-207
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'def train(x_train, y_train, x_test, y_test):'
+- en: 'print("Nearest Centroid          : ", end='''')'
+  id: totrans-208
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("Nearest Centroid          : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test, NearestCentroid())
+  id: totrans-209
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test, NearestCentroid())
+- en: 'print("k-NN classifier (k=3)     : ", end='''')'
+  id: totrans-210
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("k-NN 分类器 (k=3)     : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test, KNeighborsClassifier(n_neighbors=3))
+  id: totrans-211
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test, KNeighborsClassifier(n_neighbors=3))
+- en: 'print("k-NN classifier (k=7)     : ", end='''')'
+  id: totrans-212
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("k-NN 分类器 (k=7)     : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test, KNeighborsClassifier(n_neighbors=7))
+  id: totrans-213
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test, KNeighborsClassifier(n_neighbors=7))
+- en: 'print("Naive Bayes (Gaussian)    : ", end='''')'
+  id: totrans-214
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("朴素贝叶斯（高斯）        : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test, GaussianNB())
+  id: totrans-215
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test, GaussianNB())
+- en: 'print("Random Forest (trees=  5) : ", end='''')'
+  id: totrans-216
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("Random Forest (trees=  5) : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test,
+  id: totrans-217
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test,
+- en: RandomForestClassifier(n_estimators=5))
+  id: totrans-218
+  prefs: []
+  type: TYPE_NORMAL
+  zh: RandomForestClassifier(n_estimators=5))
+- en: 'print("Random Forest (trees= 50) : ", end='''')'
+  id: totrans-219
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("Random Forest (trees= 50) : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test,
+  id: totrans-220
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test,
+- en: RandomForestClassifier(n_estimators=50))
+  id: totrans-221
+  prefs: []
+  type: TYPE_NORMAL
+  zh: RandomForestClassifier(n_estimators=50))
+- en: 'print("Random Forest (trees=500) : ", end='''')'
+  id: totrans-222
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("Random Forest (trees=500) : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test,
+  id: totrans-223
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test,
+- en: RandomForestClassifier(n_estimators=500))
+  id: totrans-224
+  prefs: []
+  type: TYPE_NORMAL
+  zh: RandomForestClassifier(n_estimators=500))
+- en: 'print("Random Forest (trees=1000): ", end='''')'
+  id: totrans-225
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("Random Forest (trees=1000): ", end='''')'
+- en: run(x_train, y_train, x_test, y_test,
+  id: totrans-226
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test,
+- en: RandomForestClassifier(n_estimators=1000))
+  id: totrans-227
+  prefs: []
+  type: TYPE_NORMAL
+  zh: RandomForestClassifier(n_estimators=1000))
+- en: 'print("LinearSVM (C=0.01)        : ", end='''')'
+  id: totrans-228
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("LinearSVM (C=0.01)        : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test, LinearSVC(C=0.01))
+  id: totrans-229
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test, LinearSVC(C=0.01))
+- en: 'print("LinearSVM (C=0.1)         : ", end='''')'
+  id: totrans-230
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("LinearSVM (C=0.1)         : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test, LinearSVC(C=0.1))
+  id: totrans-231
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test, LinearSVC(C=0.1))
+- en: 'print("LinearSVM (C=1.0)         : ", end='''')'
+  id: totrans-232
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("LinearSVM (C=1.0)         : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test, LinearSVC(C=1.0))
+  id: totrans-233
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test, LinearSVC(C=1.0))
+- en: 'print("LinearSVM (C=10.0)        : ", end='''')'
+  id: totrans-234
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'print("LinearSVM (C=10.0)        : ", end='''')'
+- en: run(x_train, y_train, x_test, y_test, LinearSVC(C=10.0))
+  id: totrans-235
+  prefs: []
+  type: TYPE_NORMAL
+  zh: run(x_train, y_train, x_test, y_test, LinearSVC(C=10.0))
+- en: '*Listing 15-7: Classifying the audio features with classical models, part 2*'
+  id: totrans-236
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*列表 15-7：使用经典模型对音频特征进行分类，第二部分*'
+- en: 'The train function creates the particular model instances and then calls run.
+    We saw this same code structure in [Chapter 7](ch07.xhtml#ch07). The run function
+    uses fit to train the model and score to score the model on the test set. For
+    the time being, we’ll evaluate the models based solely on their overall accuracy
+    (the score). Running this code produces output like this:'
+  id: totrans-237
+  prefs: []
+  type: TYPE_NORMAL
+  zh: train函数创建特定的模型实例，然后调用run函数。我们在[第7章](ch07.xhtml#ch07)中看到了这个相同的代码结构。run函数使用fit来训练模型，使用score来评估模型在测试集上的表现。目前，我们将仅根据模型的整体准确度（分数）来评估模型。运行这段代码会产生如下输出：
+- en: 'Nearest Centroid          : score = 11.9%'
+  id: totrans-238
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'Nearest Centroid          : score = 11.9%'
+- en: 'k-NN classifier (k=3)     : score = 12.1%'
+  id: totrans-239
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'k-NN 分类器 (k=3)        : score = 12.1%'
+- en: 'k-NN classifier (k=7)     : score = 10.5%'
+  id: totrans-240
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'k-NN 分类器 (k=7)        : score = 10.5%'
+- en: 'Naive Bayes (Gaussian)    : score = 28.1%'
+  id: totrans-241
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '朴素贝叶斯（高斯）      : score = 28.1%'
+- en: 'Random Forest (trees=  5) : score = 22.6%'
+  id: totrans-242
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '随机森林 (树木= 5)       : score = 22.6%'
+- en: 'Random Forest (trees= 50) : score = 30.8%'
+  id: totrans-243
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '随机森林 (树木= 50)      : score = 30.8%'
+- en: 'Random Forest (trees=500) : score = 32.8%'
+  id: totrans-244
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '随机森林 (树木=500)      : score = 32.8%'
+- en: 'Random Forest (trees=1000): score = 34.4%'
+  id: totrans-245
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '随机森林 (树木=1000)      : score = 34.4%'
+- en: 'LinearSVM (C=0.01)        : score = 16.5%'
+  id: totrans-246
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'LinearSVM (C=0.01)        : score = 16.5%'
+- en: 'LinearSVM (C=0.1)         : score = 17.5%'
+  id: totrans-247
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'LinearSVM (C=0.1)         : score = 17.5%'
+- en: 'LinearSVM (C=1.0)         : score = 13.4%'
+  id: totrans-248
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'LinearSVM (C=1.0)         : score = 13.4%'
+- en: 'LinearSVM (C=10.0)        : score = 10.2%'
+  id: totrans-249
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'LinearSVM (C=10.0)        : score = 10.2%'
+- en: We can see very quickly that the classical models have performed terribly. Many
+    of them are essentially guessing the class label. There are 10 classes, so random
+    chance guessing should have an accuracy around 10 percent. The best-performing
+    classical model is a Random Forest with 1,000 trees, but even that is performing
+    at only 34.44 percent—far too low an overall accuracy to make the model one we’d
+    care to use in most cases. The dataset is not a simple one, at least not for old-school
+    approaches. Somewhat surprisingly, the Gaussian Naïve Bayes model is right 28
+    percent of the time. Recall that the Gaussian Naïve Bayes expects the samples
+    to be independent from one another. Here the independence assumption between the
+    sound samples for a particular test input is not valid. The feature vector, in
+    this case, represents a signal evolving in time, not a collection of features
+    that are independent of each other.
+  id: totrans-250
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们很快就可以看到经典模型的表现非常糟糕。许多模型实际上几乎是在随机猜测类别标签。由于有10个类别，所以随机猜测的准确率应该大约是10%。表现最好的经典模型是一个拥有1000棵树的随机森林，但即便如此，它的表现也仅为34.44%——准确率仍然太低，无法成为大多数情况下我们愿意使用的模型。这个数据集并不简单，至少对传统方法来说是这样。令人有些意外的是，高斯朴素贝叶斯模型有28%的准确率。请记住，高斯朴素贝叶斯假设样本之间是独立的。而在这里，特定测试输入下的声音样本之间并不独立。特征向量在这种情况下表示的是时间上不断变化的信号，而不是互相独立的特征集合。
+- en: 'The models that failed the most are Nearest Centroid, *k*-NN, and the linear
+    SVMs. We have a reasonably high-dimensional input, 882 elements, but only 6,400
+    of them in the training set. That is likely too few samples for the nearest neighbor
+    classifiers to make use of—the feature space is too sparsely populated. Once again,
+    the curse of dimensionality is rearing its ugly head. The linear SVM fails because
+    the features seem not to be linearly separable. We did not try an RBF (Gaussian
+    kernel) SVM, but we’ll leave that as an exercise for the reader. If you do try
+    it, remember that there are now two hyperparameters to tune: *C* and *γ*.'
+  id: totrans-251
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最常失败的模型是最近质心、*k*-NN 和线性 SVM。我们有一个合理高维的输入，882个元素，但训练集仅有6400个样本。这对最近邻分类器来说样本可能太少——特征空间太过稀疏。再次出现了维度灾难的问题。线性
+    SVM 失败是因为这些特征似乎不是线性可分的。我们没有尝试 RBF（高斯核）SVM，但我们将留给读者作为练习。如果你尝试了，记得现在有两个超参数需要调整：*C*
+    和 *γ*。
+- en: Using a Traditional Neural Network
+  id: totrans-252
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 使用传统神经网络
+- en: We haven’t yet tried a traditional neural network. We could use the sklearn
+    MLPClassifier class as we did before, but this is a good time to show how to implement
+    a traditional network in Keras. [Listing 15-8](ch15.xhtml#ch15lis8) has the code.
+  id: totrans-253
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们还没有尝试传统神经网络。我们可以像之前一样使用 sklearn 的 MLPClassifier 类，但现在是展示如何在 Keras 中实现传统神经网络的好时机。[Listing
+    15-8](ch15.xhtml#ch15lis8) 包含代码。
+- en: import keras
+  id: totrans-254
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import keras
+- en: from keras.models import Sequential
+  id: totrans-255
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from keras.models import Sequential
+- en: from keras.layers import Dense, Dropout, Flatten
+  id: totrans-256
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from keras.layers import Dense, Dropout, Flatten
+- en: from keras import backend as K
+  id: totrans-257
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from keras import backend as K
+- en: import numpy as np
+  id: totrans-258
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import numpy as np
+- en: batch_size = 32
+  id: totrans-259
+  prefs: []
+  type: TYPE_NORMAL
+  zh: batch_size = 32
+- en: num_classes = 10
+  id: totrans-260
+  prefs: []
+  type: TYPE_NORMAL
+  zh: num_classes = 10
+- en: epochs = 16
+  id: totrans-261
+  prefs: []
+  type: TYPE_NORMAL
+  zh: epochs = 16
+- en: nsamp = (882,1)
+  id: totrans-262
+  prefs: []
+  type: TYPE_NORMAL
+  zh: nsamp = (882,1)
+- en: x_train = np.load("esc10_raw_train_audio.npy")
+  id: totrans-263
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_train = np.load("esc10_raw_train_audio.npy")
+- en: y_train = np.load("esc10_raw_train_labels.npy")
+  id: totrans-264
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_train = np.load("esc10_raw_train_labels.npy")
+- en: x_test  = np.load("esc10_raw_test_audio.npy")
+  id: totrans-265
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_test = np.load("esc10_raw_test_audio.npy")
+- en: y_test  = np.load("esc10_raw_test_labels.npy")
+  id: totrans-266
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_test  = np.load("esc10_raw_test_labels.npy")
+- en: x_train = (x_train.astype('float32') + 32768) / 65536
+  id: totrans-267
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_train = (x_train.astype('float32') + 32768) / 65536
+- en: x_test = (x_test.astype('float32') + 32768) / 65536
+  id: totrans-268
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_test = (x_test.astype('float32') + 32768) / 65536
+- en: y_train = keras.utils.to_categorical(y_train, num_classes)
+  id: totrans-269
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_train = keras.utils.to_categorical(y_train, num_classes)
+- en: y_test = keras.utils.to_categorical(y_test, num_classes)
+  id: totrans-270
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_test = keras.utils.to_categorical(y_test, num_classes)
+- en: model = Sequential()
+  id: totrans-271
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model = Sequential()
+- en: model.add(Dense(1024, activation='relu', input_shape=nsamp))
+  id: totrans-272
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(1024, activation='relu', input_shape=nsamp))
+- en: model.add(Dropout(0.5))
+  id: totrans-273
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
+- en: model.add(Dense(512, activation='relu'))
+  id: totrans-274
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(512, activation='relu'))
+- en: model.add(Dropout(0.5))
+  id: totrans-275
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
+- en: model.add(Flatten())
+  id: totrans-276
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Flatten())
+- en: model.add(Dense(num_classes, activation='softmax'))
+  id: totrans-277
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(num_classes, activation='softmax'))
+- en: model.compile(loss=keras.losses.categorical_crossentropy,
+  id: totrans-278
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.compile(loss=keras.losses.categorical_crossentropy,
+- en: optimizer=keras.optimizers.Adam(),
+  id: totrans-279
+  prefs: []
+  type: TYPE_NORMAL
+  zh: optimizer=keras.optimizers.Adam(),
+- en: metrics=['accuracy'])
+  id: totrans-280
+  prefs: []
+  type: TYPE_NORMAL
+  zh: metrics=['accuracy'])
+- en: model.fit(x_train, y_train,
+  id: totrans-281
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.fit(x_train, y_train,
+- en: batch_size=batch_size,
+  id: totrans-282
+  prefs: []
+  type: TYPE_NORMAL
+  zh: batch_size=batch_size,
+- en: epochs=epochs,
+  id: totrans-283
+  prefs: []
+  type: TYPE_NORMAL
+  zh: epochs=epochs,
+- en: verbose=0,
+  id: totrans-284
+  prefs: []
+  type: TYPE_NORMAL
+  zh: verbose=0,
+- en: validation_data=(x_test, y_test))
+  id: totrans-285
+  prefs: []
+  type: TYPE_NORMAL
+  zh: validation_data=(x_test, y_test))
+- en: (*\pagebreak*)
+  id: totrans-286
+  prefs: []
+  type: TYPE_NORMAL
+  zh: (*\pagebreak*)
+- en: score = model.evaluate(x_test, y_test, verbose=0)
+  id: totrans-287
+  prefs: []
+  type: TYPE_NORMAL
+  zh: score = model.evaluate(x_test, y_test, verbose=0)
+- en: print('Test accuracy:', score[1])
+  id: totrans-288
+  prefs: []
+  type: TYPE_NORMAL
+  zh: print('测试准确率:', score[1])
+- en: '*Listing 15-8: A traditional neural network in Keras*'
+  id: totrans-289
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*清单 15-8: Keras中的传统神经网络*'
+- en: 'After loading the necessary modules, we load the data itself and scale it as
+    we did for the classical models. Next, we build the model architecture. We need
+    only Dense layers and Dropout layers. We do put in a Flatten layer to eliminate
+    the extra dimension (note the shape of nsamp) before the final softmax output.
+    Unfortunately, this model does not improve things for us: we achieve an accuracy
+    of only 27.6 percent.'
+  id: totrans-290
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 加载必要的模块后，我们加载数据并像经典模型一样对其进行缩放。接下来，我们构建模型架构。我们只需要 Dense 层和 Dropout 层。我们确实添加了一个
+    Flatten 层，以在最终的 softmax 输出之前消除额外的维度（注意 nsamp 的形状）。不幸的是，这个模型并没有为我们带来改进：我们的准确率仅为
+    27.6%。
+- en: Using a Convolutional Neural Network
+  id: totrans-291
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 使用卷积神经网络
+- en: Classical models and the traditional neural network don’t cut it. We should
+    not be too surprised, but it was easy to give them a try. Let’s move on and apply
+    a one-dimensional convolutional neural network to this dataset to see if it performs
+    any better.
+  id: totrans-292
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 经典模型和传统神经网络并不够好。我们不应该感到太惊讶，但尝试它们也很容易。接下来，我们将应用一维卷积神经网络（CNN）到这个数据集，看看它能否表现得更好。
+- en: We haven’t worked with one-dimensional CNNs yet. Besides the structure of the
+    input data, the only difference is that we replace calls to Conv2D and MaxPooling2D
+    with calls to Conv1D and MaxPooling1D.
+  id: totrans-293
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们还没有使用过一维CNN。除了输入数据的结构外，唯一的区别是我们将 Conv2D 和 MaxPooling2D 替换为 Conv1D 和 MaxPooling1D。
+- en: The code for the first model we’ll try is shown in [Listing 15-9](ch15.xhtml#ch15lis9).
+  id: totrans-294
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将尝试的第一个模型的代码如[清单 15-9](ch15.xhtml#ch15lis9)所示。
+- en: import keras
+  id: totrans-295
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 导入 keras
+- en: from keras.models import Sequential
+  id: totrans-296
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 从 keras.models 导入 Sequential
+- en: from keras.layers import Dense, Dropout, Flatten
+  id: totrans-297
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 从 keras.layers 导入 Dense, Dropout, Flatten
+- en: from keras.layers import Conv1D, MaxPooling1D
+  id: totrans-298
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 从 keras.layers 导入 Conv1D, MaxPooling1D
+- en: import numpy as np
+  id: totrans-299
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 导入 numpy as np
+- en: batch_size = 32
+  id: totrans-300
+  prefs: []
+  type: TYPE_NORMAL
+  zh: batch_size = 32
+- en: num_classes = 10
+  id: totrans-301
+  prefs: []
+  type: TYPE_NORMAL
+  zh: num_classes = 10
+- en: epochs = 16
+  id: totrans-302
+  prefs: []
+  type: TYPE_NORMAL
+  zh: epochs = 16
+- en: nsamp = (882,1)
+  id: totrans-303
+  prefs: []
+  type: TYPE_NORMAL
+  zh: nsamp = (882,1)
+- en: x_train = np.load("esc10_raw_train_audio.npy")
+  id: totrans-304
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_train = np.load("esc10_raw_train_audio.npy")
+- en: y_train = np.load("esc10_raw_train_labels.npy")
+  id: totrans-305
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_train = np.load("esc10_raw_train_labels.npy")
+- en: x_test  = np.load("esc10_raw_test_audio.npy")
+  id: totrans-306
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_test = np.load("esc10_raw_test_audio.npy")
+- en: y_test  = np.load("esc10_raw_test_labels.npy")
+  id: totrans-307
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_test = np.load("esc10_raw_test_labels.npy")
+- en: x_train = (x_train.astype('float32') + 32768) / 65536
+  id: totrans-308
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_train = (x_train.astype('float32') + 32768) / 65536
+- en: x_test = (x_test.astype('float32') + 32768) / 65536
+  id: totrans-309
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_test = (x_test.astype('float32') + 32768) / 65536
+- en: y_train = keras.utils.to_categorical(y_train, num_classes)
+  id: totrans-310
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_train = keras.utils.to_categorical(y_train, num_classes)
+- en: y_test = keras.utils.to_categorical(y_test, num_classes)
+  id: totrans-311
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_test = keras.utils.to_categorical(y_test, num_classes)
+- en: model = Sequential()
+  id: totrans-312
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model = Sequential()
+- en: model.add(Conv1D(32, kernel_size=3, activation='relu',
+  id: totrans-313
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(32, kernel_size=3, activation='relu',
+- en: input_shape=nsamp))
+  id: totrans-314
+  prefs: []
+  type: TYPE_NORMAL
+  zh: input_shape=nsamp))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-315
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-316
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Flatten())
+  id: totrans-317
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Flatten())
+- en: model.add(Dense(512, activation='relu'))
+  id: totrans-318
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(512, activation='relu'))
+- en: model.add(Dropout(0.5))
+  id: totrans-319
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
+- en: model.add(Dense(num_classes, activation='softmax'))
+  id: totrans-320
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(num_classes, activation='softmax'))
+- en: model.compile(loss=keras.losses.categorical_crossentropy,
+  id: totrans-321
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.compile(loss=keras.losses.categorical_crossentropy,
+- en: optimizer=keras.optimizers.Adam(),
+  id: totrans-322
+  prefs: []
+  type: TYPE_NORMAL
+  zh: optimizer=keras.optimizers.Adam(),
+- en: metrics=['accuracy'])
+  id: totrans-323
+  prefs: []
+  type: TYPE_NORMAL
+  zh: metrics=['accuracy'])
+- en: history = model.fit(x_train, y_train,
+  id: totrans-324
+  prefs: []
+  type: TYPE_NORMAL
+  zh: history = model.fit(x_train, y_train,
+- en: batch_size=batch_size,
+  id: totrans-325
+  prefs: []
+  type: TYPE_NORMAL
+  zh: batch_size=batch_size,
+- en: epochs=epochs,
+  id: totrans-326
+  prefs: []
+  type: TYPE_NORMAL
+  zh: epochs=epochs,
+- en: verbose=1,
+  id: totrans-327
+  prefs: []
+  type: TYPE_NORMAL
+  zh: verbose=1,
+- en: validation_data=(x_test[:160], y_test[:160]))
+  id: totrans-328
+  prefs: []
+  type: TYPE_NORMAL
+  zh: validation_data=(x_test[:160], y_test[:160]))
+- en: score = model.evaluate(x_test[160:], y_test[160:], verbose=0)
+  id: totrans-329
+  prefs: []
+  type: TYPE_NORMAL
+  zh: score = model.evaluate(x_test[160:], y_test[160:], verbose=0)
+- en: print('Test accuracy:', score[1])
+  id: totrans-330
+  prefs: []
+  type: TYPE_NORMAL
+  zh: print('测试准确率:', score[1])
+- en: '*Listing 15-9: A 1D CNN in Keras*'
+  id: totrans-331
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*清单 15-9: Keras中的一维卷积神经网络*'
+- en: This model loads and preprocesses the dataset as before. This architecture,
+    which we’ll call the *shallow* architecture, has a single convolutional layer
+    of 32 filters with a kernel size of 3\. We’ll vary this kernel size in the same
+    way we tried different 2D kernel sizes for the MNIST models. Following the Conv1D
+    layer is a single max-pooling layer with a pool kernel size of 3\. Dropout and
+    Flatten layers come next before a single Dense layer of 512 nodes with dropout.
+    A softmax layer completes the architecture.
+  id: totrans-332
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这个模型加载并预处理数据集，与之前相同。我们将这种架构称为*浅层*架构，它只有一个卷积层，包含32个滤波器，卷积核大小为3。我们将像在MNIST模型中尝试不同的2D卷积核大小那样，改变这个卷积核的大小。紧随Conv1D层之后的是一个最大池化层，池化核大小为3。接下来是Dropout层和Flatten层，最后是一个带有dropout的512节点的全连接Dense层。Softmax层完成了这个架构。
+- en: We’ll train for 16 epochs using a batch size of 32\. We’ll keep the training
+    history so we can examine the losses and validation performance as a function
+    of epoch. There are 1,600 test samples. We’ll use 10 percent for the training
+    validation and the remaining 90 percent for the overall accuracy. Finally, we’ll
+    vary the Conv1D kernel size from 3 to 33 in an attempt to find one that works
+    well with the training data.
+  id: totrans-333
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将训练16个epoch，使用批量大小为32。我们会保留训练历史，以便检查损失和验证性能与epoch的关系。测试样本有1,600个。我们将使用10%的数据进行训练验证，其余90%用于整体准确度的计算。最后，我们会将Conv1D的卷积核大小从3调整到33，试图找到一个适合训练数据的卷积核大小。
+- en: Let’s define four other architectures. We’ll refer to them as *medium*, *deep0*,
+    *deep1*, and *deep2*. With no prior experience working with this data, it makes
+    sense to try multiple architectures. At present, there’s no way to know ahead
+    of time what the best architecture is for a new dataset. All we have is our previous
+    experience.
+  id: totrans-334
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将定义另外四种架构。我们将它们分别称为*中等*、*深层0*、*深层1*和*深层2*。由于没有与这些数据打交道的经验，尝试多种架构是有意义的。目前，没有办法预先知道哪种架构最适合新的数据集。我们能做的只是依赖之前的经验。
+- en: '[Listing 15-10](ch15.xhtml#ch15lis10) lists the specific architectures, separated
+    by comments.'
+  id: totrans-335
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[Listing 15-10](ch15.xhtml#ch15lis10)列出了具体的架构，并用注释分隔。'
+- en: medium
+  id: totrans-336
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: medium
+- en: model = Sequential()
+  id: totrans-337
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model = Sequential()
+- en: model.add(Conv1D(32, kernel_size=3, activation='relu',
+  id: totrans-338
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(32, kernel_size=3, activation='relu',
+- en: input_shape=nsamp))
+  id: totrans-339
+  prefs: []
+  type: TYPE_NORMAL
+  zh: input_shape=nsamp))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-340
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-341
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-342
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-343
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Flatten())
+  id: totrans-344
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Flatten())
+- en: model.add(Dense(512, activation='relu'))
+  id: totrans-345
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(512, activation='relu'))
+- en: model.add(Dropout(0.5))
+  id: totrans-346
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
+- en: model.add(Dense(num_classes, activation='softmax'))
+  id: totrans-347
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(num_classes, activation='softmax'))
+- en: deep0
+  id: totrans-348
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: deep0
+- en: model = Sequential()
+  id: totrans-349
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model = Sequential()
+- en: model.add(Conv1D(32, kernel_size=3, activation='relu',
+  id: totrans-350
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(32, kernel_size=3, activation='relu',
+- en: input_shape=nsamp))
+  id: totrans-351
+  prefs: []
+  type: TYPE_NORMAL
+  zh: input_shape=nsamp))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-352
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-353
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-354
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-355
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-356
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-357
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-358
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-359
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Flatten())
+  id: totrans-360
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Flatten())
+- en: model.add(Dense(512, activation='relu'))
+  id: totrans-361
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(512, activation='relu'))
+- en: model.add(Dropout(0.5))
+  id: totrans-362
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
+- en: model.add(Dense(num_classes, activation='softmax'))
+  id: totrans-363
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(num_classes, activation='softmax'))
+- en: deep1
+  id: totrans-364
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: deep1
+- en: model = Sequential()
+  id: totrans-365
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model = Sequential()
+- en: model.add(Conv1D(32, kernel_size=3, activation='relu',
+  id: totrans-366
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(32, kernel_size=3, activation='relu',
+- en: input_shape=nsamp))
+  id: totrans-367
+  prefs: []
+  type: TYPE_NORMAL
+  zh: input_shape=nsamp))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-368
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-369
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-370
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-371
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-372
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-373
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-374
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-375
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-376
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-377
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-378
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-379
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Flatten())
+  id: totrans-380
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Flatten())
+- en: model.add(Dense(512, activation='relu'))
+  id: totrans-381
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(512, activation='relu'))
+- en: model.add(Dropout(0.5))
+  id: totrans-382
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
+- en: model.add(Dense(num_classes, activation='softmax'))
+  id: totrans-383
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(num_classes, activation='softmax'))
+- en: deep2
+  id: totrans-384
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: deep2
+- en: model = Sequential()
+  id: totrans-385
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model = Sequential()
+- en: model.add(Conv1D(32, kernel_size=3, activation='relu',
+  id: totrans-386
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(32, kernel_size=3, activation='relu',
+- en: input_shape=nsamp))
+  id: totrans-387
+  prefs: []
+  type: TYPE_NORMAL
+  zh: input_shape=nsamp))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-388
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-389
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-390
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-391
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-392
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-393
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-394
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-395
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-396
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-397
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-398
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-399
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-400
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+  id: totrans-401
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv1D(64, kernel_size=3, activation='relu'))
+- en: model.add(MaxPooling1D(pool_size=3))
+  id: totrans-402
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling1D(pool_size=3))
+- en: model.add(Dropout(0.25))
+  id: totrans-403
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Flatten())
+  id: totrans-404
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Flatten())
+- en: model.add(Dense(512, activation='relu'))
+  id: totrans-405
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(512, activation='relu'))
+- en: model.add(Dropout(0.5))
+  id: totrans-406
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
+- en: model.add(Dense(num_classes, activation='softmax'))
+  id: totrans-407
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(num_classes, activation='softmax'))
+- en: '*Listing 15-10: Different 1D CNN architect*'
+  id: totrans-408
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*列表15-10：不同的1D CNN架构*'
+- en: If we train multiple models, varying the first Conv1D kernel size each time,
+    we get the results in [Table 15-1](ch15.xhtml#ch15tab1). We’ve highlighted the
+    best-performing model for each architecture.
+  id: totrans-409
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 如果我们训练多个模型，每次改变第一个Conv1D卷积核的大小，我们可以得到[表15-1](ch15.xhtml#ch15tab1)中的结果。我们已将每种架构中表现最好的模型标出。
+- en: '**Table 15-1:** Test Set Accuracies by Convolutional Kernel Size and Model
+    Architecture'
+  id: totrans-410
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '**表15-1：不同卷积核大小和模型架构的测试集准确率**'
+- en: '| **Kernel size** | **Shallow** | **Medium** | **Deep0** | **Deep1** | **Deep2**
+    |'
+  id: totrans-411
+  prefs: []
+  type: TYPE_TB
+  zh: '| **卷积核大小** | **浅层** | **中层** | **深层0** | **深层1** | **深层2** |'
+- en: '| --- | --- | --- | --- | --- | --- |'
+  id: totrans-412
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- | --- |'
+- en: '| 3 | **44.51** | 41.39 | **48.75** | **54.03** | 9.93 |'
+  id: totrans-413
+  prefs: []
+  type: TYPE_TB
+  zh: '| 3 | **44.51** | 41.39 | **48.75** | **54.03** | 9.93 |'
+- en: '| 5 | 43.47 | 41.74 | 44.72 | 53.96 | 48.47 |'
+  id: totrans-414
+  prefs: []
+  type: TYPE_TB
+  zh: '| 5 | 43.47 | 41.74 | 44.72 | 53.96 | 48.47 |'
+- en: '| 7 | 38.47 | 40.97 | 46.18 | 52.64 | 49.31 |'
+  id: totrans-415
+  prefs: []
+  type: TYPE_TB
+  zh: '| 7 | 38.47 | 40.97 | 46.18 | 52.64 | 49.31 |'
+- en: '| 9 | 41.46 | **43.06** | 46.88 | 48.96 | 9.72 |'
+  id: totrans-416
+  prefs: []
+  type: TYPE_TB
+  zh: '| 9 | 41.46 | **43.06** | 46.88 | 48.96 | 9.72 |'
+- en: '| 11 | 39.65 | 40.21 | 45.21 | 52.99 | 10.07 |'
+  id: totrans-417
+  prefs: []
+  type: TYPE_TB
+  zh: '| 11 | 39.65 | 40.21 | 45.21 | 52.99 | 10.07 |'
+- en: '| 13 | 42.71 | 41.67 | 46.53 | 50.56 | **52.57** |'
+  id: totrans-418
+  prefs: []
+  type: TYPE_TB
+  zh: '| 13 | 42.71 | 41.67 | 46.53 | 50.56 | **52.57** |'
+- en: '| 15 | 40.00 | 42.78 | 46.53 | 50.14 | 47.08 |'
+  id: totrans-419
+  prefs: []
+  type: TYPE_TB
+  zh: '| 15 | 40.00 | 42.78 | 46.53 | 50.14 | 47.08 |'
+- en: '| 33 | 27.57 | 42.22 | 41.39 | 48.75 | 9.86 |'
+  id: totrans-420
+  prefs: []
+  type: TYPE_TB
+  zh: '| 33 | 27.57 | 42.22 | 41.39 | 48.75 | 9.86 |'
+- en: Looking at [Table 15-1](ch15.xhtml#ch15tab1), we see a general trend of accuracy
+    improving as the model depth increases. However, at the deep2 model, things start
+    to fall apart. Some of the models fail to converge, showing an accuracy equivalent
+    to random guessing. The deep1 model is the best performing for all kernel sizes.
+    When looking across by kernel size, the kernel with width 3 is the best performing
+    for three of the five architectures. All of this implies that the best combination
+    for the 1D CNNs is to use an initial kernel of width 3 and the deep1 architecture.
+  id: totrans-421
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 看[表15-1](ch15.xhtml#ch15tab1)，我们可以看到一个普遍趋势，即随着模型深度的增加，准确度逐步提升。然而，在深层2模型中，情况开始变得糟糕。部分模型未能收敛，表现出类似随机猜测的准确率。深层1模型在所有卷积核大小中表现最好。从卷积核大小来看，宽度为3的卷积核在五种架构中有三种表现最佳。所有这些表明，对于1D
+    CNN来说，最佳组合是使用初始宽度为3的卷积核以及深层1架构。
+- en: We trained this architecture for only 16 epochs. Will things improve if we train
+    for more? Let’s train the deep1 model for 60 epochs and plot the training and
+    validation loss and error to see how they converge (or don’t). Doing this produces
+    [Figure 15-2](ch15.xhtml#ch15fig2), where we see the training and validation loss
+    (top) and error (bottom) as a function of epoch.
+  id: totrans-422
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们仅训练了这种架构16个周期。如果我们训练更多的周期，结果会有改善吗？让我们训练深层1模型60个周期，并绘制训练和验证损失及误差图，看看它们是否收敛（或者没有）。执行此操作后，得到[图15-2](ch15.xhtml#ch15fig2)，我们可以看到训练和验证损失（顶部）以及误差（底部）随着周期的变化。
+- en: '![image](Images/15fig02.jpg)'
+  id: totrans-423
+  prefs: []
+  type: TYPE_IMG
+  zh: '![image](Images/15fig02.jpg)'
+- en: '*Figure 15-2: Training and validation loss (top) and error (bottom) for the
+    deep1 architecture*'
+  id: totrans-424
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*图15-2：深层1架构的训练和验证损失（顶部）与误差（底部）*'
+- en: Immediately, we should pick up on the explosion of the loss for the validation
+    set. The training loss is continually decreasing until after about epoch 18 or
+    so; then the validation loss goes up and becomes oscillatory. This is a clear
+    example of overfitting. The likely source of this overfitting is our limited training
+    set size, only 6,400 samples, even after data augmentation. The validation error
+    remains more or less constant after initially decreasing. The conclusion is that
+    we cannot expect to do much better than an overall accuracy of about 54 percent
+    for this dataset using one-dimensional vectors.
+  id: totrans-425
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 立刻，我们应该注意到验证集损失的激增。训练损失在持续下降，直到大约第18个epoch左右；然后验证损失上升并变得震荡。这是一个典型的过拟合例子。过拟合的可能原因是我们有限的训练集规模，只有6400个样本，即使在数据增强之后也是如此。验证误差在初始下降后基本保持恒定。结论是，使用一维向量，我们不能期望在这个数据集上得到比约54%的总体准确率更好的结果。
+- en: If we want to improve, we need to be more expressive with our dataset. Fortunately
+    for us, we have another preprocessing trick up our sleeves.
+  id: totrans-426
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 如果我们想要提高性能，就需要更好地表达我们的数据集。幸运的是，我们还有一个额外的预处理技巧可以使用。
+- en: Spectrograms
+  id: totrans-427
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: 声谱图
+- en: Let’s return to our augmented set of audio files. To build the dataset, we took
+    the sound samples, keeping only two seconds’ worth and only every 100th sample.
+    The best we could do is an accuracy of a little more than 50 percent.
+  id: totrans-428
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 让我们回到我们增强后的音频文件集。为了构建数据集，我们从声音样本中只保留两秒钟的音频，并且仅选择每100个样本中的一个。我们能做到的最好的准确率大约是50%以上。
+- en: However, if we work with a small set of sound samples from an input audio file,
+    say 200 milliseconds worth, we can use the vector of samples to calculate the
+    *Fourier transform*. The Fourier transform of a signal measured at regular intervals
+    tells us the frequencies that went into building the signal. Any signal can be
+    thought of as the sum of many different sine and cosine waves. If the signal is
+    composed of only a few waves, like the sound you might get from an instrument
+    like the ocarina, then the Fourier transform will have essentially a few peaks
+    at those frequencies. If the signal is complex, like speech or music, then the
+    Fourier transform will have many different frequencies, leading to many different
+    peaks.
+  id: totrans-429
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 然而，如果我们使用一个小的输入音频文件样本集，比如200毫秒，我们可以利用这些样本的向量来计算*傅里叶变换*。傅里叶变换是通过定期采样信号得到的，它告诉我们构成信号的频率。任何信号都可以被看作是许多不同正弦波和余弦波的总和。如果信号仅由少数几个波组成，比如来自欧卡里纳这样的乐器的声音，那么傅里叶变换将仅在这些频率上有几个峰值。如果信号很复杂，如语音或音乐，则傅里叶变换将有许多不同的频率，导致许多不同的峰值。
+- en: 'The Fourier transform itself is complex-valued: each element has both a real
+    and an imaginary component. You can write it as *a* + *bi*, where *a* and *b*
+    are real numbers and ![Image](Images/394equ01.jpg). If we use the absolute value
+    of these quantities, we’ll get a real number representing the energy of a particular
+    frequency. This is called the *power spectrum* of the signal. A simple tone might
+    have energy in only a few frequencies, while something like a cymbal crash or
+    white noise will have energy more or less evenly distributed among all frequencies.
+    [Figure 15-3](ch15.xhtml#ch15fig3) shows two power spectra.'
+  id: totrans-430
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 傅里叶变换本身是复值的：每个元素都有一个实部和一个虚部。你可以将其写为 *a* + *bi*，其中 *a* 和 *b* 是实数，且 ![Image](Images/394equ01.jpg)。如果我们使用这些量的绝对值，我们将得到一个实数，表示某个特定频率的能量。这被称为信号的*功率谱*。一个简单的音调可能只在少数几个频率上有能量，而像镲片撞击声或白噪声这样的信号将使能量在所有频率上更加均匀地分布。[图15-3](ch15.xhtml#ch15fig3)展示了两个功率谱。
+- en: '![image](Images/15fig03.jpg)'
+  id: totrans-431
+  prefs: []
+  type: TYPE_IMG
+  zh: '![image](Images/15fig03.jpg)'
+- en: '*Figure 15-3: Power spectrum of an ocarina (top) and cymbal (bottom)*'
+  id: totrans-432
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*图15-3：欧卡里纳（上）和镲片（下）的功率谱*'
+- en: On the top is the spectrum of an ocarina, and on the bottom is a cymbal crash.
+    As expected, the ocarina has energy in only a few frequencies, while the cymbal
+    uses all the frequencies. The important point for us is that *visually* the spectra
+    are quite different from each other. (The spectra were made with Audacity, an
+    excellent open source audio processing tool.)
+  id: totrans-433
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 上面是欧卡里纳的频谱，下面是镲片撞击的频谱。正如预期的那样，欧卡里纳的频谱只有少数几个频率，而镲片的频谱覆盖了所有频率。对我们来说，重要的一点是，*从视觉上*看，这两个频谱是完全不同的。（这些频谱是使用Audacity制作的，它是一款非常优秀的开源音频处理工具。）
+- en: We could use these power spectra as feature vectors, but they represent only
+    the spectra of tiny slices of time. The sound samples are five seconds long. Instead
+    of using a spectrum, we will use a *spectrogram*. The spectrogram is an image
+    made up of columns that represent individual spectra. This means that the x-axis
+    represents time and the y-axis represents frequency. The color of a pixel is proportional
+    to the energy in that frequency at that time.
+  id: totrans-434
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以将这些功率谱作为特征向量使用，但它们仅表示了时间切片的频谱。音频样本时长为五秒。我们将不使用频谱，而是使用*声谱图*。声谱图是由代表各个频谱的列组成的图像。这意味着x轴表示时间，y轴表示频率。像素的颜色与该时间点在该频率上的能量成正比。
+- en: In other words, a spectrogram is what we get if we orient the power spectra
+    vertically and use color to represent intensity at a given frequency. With this
+    approach, we can turn an entire sound sample into an image. For example, [Figure
+    15-4](ch15.xhtml#ch15fig4) shows the spectrogram of a crying baby. Compare this
+    to the feature vector of [Figure 15-1](ch15.xhtml#ch15fig1).
+  id: totrans-435
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 换句话说，声谱图就是我们将功率谱竖直排列，并使用颜色来表示给定频率下的强度时得到的图像。通过这种方法，我们可以将整个音频样本转化为图像。例如，[Figure
+    15-4](ch15.xhtml#ch15fig4)展示了一个哭泣婴儿的声谱图。对比[Figure 15-1](ch15.xhtml#ch15fig1)的特征向量。
+- en: '![image](Images/15fig04.jpg)'
+  id: totrans-436
+  prefs: []
+  type: TYPE_IMG
+  zh: '![image](Images/15fig04.jpg)'
+- en: '*Figure 15-4: Spectrogram of a crying baby*'
+  id: totrans-437
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*Figure 15-4：哭泣婴儿的声谱图*'
+- en: 'To create spectrograms of the augmented audio files, we need a new tool and
+    a bit of code. The tool we need is called sox. It’s not a Python library, but
+    a command line tool. Odds are that it is already installed if you are using our
+    canonical Ubuntu Linux distribution. If not, you can install it:'
+  id: totrans-438
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 要创建增强的音频文件的声谱图，我们需要一个新的工具和一些代码。我们需要的工具叫做sox。它不是一个Python库，而是一个命令行工具。如果你使用的是我们标准的Ubuntu
+    Linux发行版，它很可能已经安装了。如果没有，你可以安装它：
+- en: $ sudo apt-get install sox
+  id: totrans-439
+  prefs: []
+  type: TYPE_NORMAL
+  zh: $ sudo apt-get install sox
+- en: We’ll use sox from inside a Python script to produce the spectrogram images
+    we want. Each sound file becomes a new spectrogram image.
+  id: totrans-440
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将从Python脚本内部使用sox来生成我们想要的声谱图图像。每个音频文件都会生成一张新的声谱图图像。
+- en: The source code to process the training images is in [Listing 15-11](ch15.xhtml#ch15lis11).
+  id: totrans-441
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 处理训练图像的源代码见[Listing 15-11](ch15.xhtml#ch15lis11)。
+- en: import os
+  id: totrans-442
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import os
+- en: import numpy as np
+  id: totrans-443
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import numpy as np
+- en: from PIL import Image
+  id: totrans-444
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 来自PIL的Image
+- en: rows = 100
+  id: totrans-445
+  prefs: []
+  type: TYPE_NORMAL
+  zh: rows = 100
+- en: cols = 160
+  id: totrans-446
+  prefs: []
+  type: TYPE_NORMAL
+  zh: cols = 160
+- en: ❶ flist = [i[:-1] for i in open("augmented_train_filelist.txt")]
+  id: totrans-447
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ flist = [i[:-1] for i in open("augmented_train_filelist.txt")]
+- en: N = len(flist)
+  id: totrans-448
+  prefs: []
+  type: TYPE_NORMAL
+  zh: N = len(flist)
+- en: img = np.zeros((N,rows,cols,3), dtype="uint8")
+  id: totrans-449
+  prefs: []
+  type: TYPE_NORMAL
+  zh: img = np.zeros((N,rows,cols,3), dtype="uint8")
+- en: lbl = np.zeros(N, dtype="uint8")
+  id: totrans-450
+  prefs: []
+  type: TYPE_NORMAL
+  zh: lbl = np.zeros(N, dtype="uint8")
+- en: p = []
+  id: totrans-451
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p = []
+- en: 'for i,f in enumerate(flist):'
+  id: totrans-452
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i,f in enumerate(flist):'
+- en: src, c = f.split()
+  id: totrans-453
+  prefs: []
+  type: TYPE_NORMAL
+  zh: src, c = f.split()
+- en: ❷ os.system("sox %s -n spectrogram" % src)
+  id: totrans-454
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ os.system("sox %s -n spectrogram" % src)
+- en: im = np.array(Image.open("spectrogram.png").convert("RGB"))
+  id: totrans-455
+  prefs: []
+  type: TYPE_NORMAL
+  zh: im = np.array(Image.open("spectrogram.png").convert("RGB"))
+- en: ❸ im = im[42:542,58:858,:]
+  id: totrans-456
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ im = im[42:542,58:858,:]
+- en: im = Image.fromarray(im).resize((cols,rows))
+  id: totrans-457
+  prefs: []
+  type: TYPE_NORMAL
+  zh: im = Image.fromarray(im).resize((cols,rows))
+- en: img[i,:,:,:] = np.array(im)
+  id: totrans-458
+  prefs: []
+  type: TYPE_NORMAL
+  zh: img[i,:,:,:] = np.array(im)
+- en: lbl[i] = int(c)
+  id: totrans-459
+  prefs: []
+  type: TYPE_NORMAL
+  zh: lbl[i] = int(c)
+- en: p.append(os.path.abspath(src))
+  id: totrans-460
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p.append(os.path.abspath(src))
+- en: os.system("rm -rf spectrogram.png")
+  id: totrans-461
+  prefs: []
+  type: TYPE_NORMAL
+  zh: os.system("rm -rf spectrogram.png")
+- en: p = np.array(p)
+  id: totrans-462
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p = np.array(p)
+- en: ❹ idx = np.argsort(np.random.random(N))
+  id: totrans-463
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ idx = np.argsort(np.random.random(N))
+- en: img = img[idx]
+  id: totrans-464
+  prefs: []
+  type: TYPE_NORMAL
+  zh: img = img[idx]
+- en: lbl = lbl[idx]
+  id: totrans-465
+  prefs: []
+  type: TYPE_NORMAL
+  zh: lbl = lbl[idx]
+- en: p = p[idx]
+  id: totrans-466
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p = p[idx]
+- en: np.save("esc10_spect_train_images.npy", img)
+  id: totrans-467
+  prefs: []
+  type: TYPE_NORMAL
+  zh: np.save("esc10_spect_train_images.npy", img)
+- en: np.save("esc10_spect_train_labels.npy", lbl)
+  id: totrans-468
+  prefs: []
+  type: TYPE_NORMAL
+  zh: np.save("esc10_spect_train_labels.npy", lbl)
+- en: np.save("esc10_spect_train_paths.npy", p)
+  id: totrans-469
+  prefs: []
+  type: TYPE_NORMAL
+  zh: np.save("esc10_spect_train_paths.npy", p)
+- en: '*Listing 15-11: Building the spectrograms*'
+  id: totrans-470
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*Listing 15-11：构建声谱图*'
+- en: We start by defining the size of the spectrogram. This is the input to our model,
+    and we don’t want it to be too big because we’re limited in the size of the inputs
+    we can process. We’ll settle for 100×160 pixels. We then load the training file
+    list ❶ and create NumPy arrays to hold the spectrogram images and associated labels.
+    The list p will hold the pathname of the source for each spectrogram in case we
+    want to get back to the original sound file at some point. In general, it’s a
+    good idea to preserve information to get back to the source of derived datasets.
+  id: totrans-471
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们首先定义声谱图的大小。这是我们模型的输入，我们不希望它太大，因为我们在处理输入时有大小限制。我们选择100×160像素。然后，我们加载训练文件列表❶并创建NumPy数组来保存声谱图图像和相应的标签。列表p将保存每个声谱图的源文件路径，以便在某些时候如果需要，我们可以回到原始音频文件。通常，保存源数据的信息是一个好习惯，方便我们追溯衍生数据集的来源。
+- en: Then we loop over the file list. We get the filename and class label and then
+    call sox, passing in the source sound filename ❷. The sox application is sophisticated.
+    The syntax here turns the given sound file into a spectrogram image with the name
+    *spectrogram.png*. We immediately load the output spectrogram into im, making
+    sure it’s an RGB file with no transparency layer (hence the call to convert("RGB")).
+  id: totrans-472
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 然后，我们遍历文件列表，获取文件名和类别标签，接着调用 sox，传入源音频文件名❷。sox 应用程序功能强大。这里的语法将给定的音频文件转换为名为 *spectrogram.png*
+    的频谱图图像。我们立即将输出的频谱图加载到 im 中，并确保它是一个没有透明层的 RGB 文件（因此调用了 convert("RGB")）。
+- en: The spectrogram created by sox has a border with frequency and time information.
+    We want only the spectrogram image portion, so we subset the image ❸. We determined
+    the indices we’re using empirically. It’s possible, but somewhat unlikely, that
+    a newer version of sox will require tweaking these to avoid including any border
+    pixels.
+  id: totrans-473
+  prefs: []
+  type: TYPE_NORMAL
+  zh: sox 创建的频谱图有一个包含频率和时间信息的边框。我们只需要频谱图图像部分，因此我们对图像进行子集处理❸。我们是通过经验确定了所使用的索引。虽然有可能，但不太可能，新版本的
+    sox 需要调整这些索引，以避免包含任何边框像素。
+- en: Next, we resize the spectrogram so that it fits in our 100×160 pixel array.
+    This is downsampling, true, but hopefully enough characteristic information is
+    still present to allow a model to learn the difference between classes. We keep
+    the downsampled spectrogram and the associated class label and sound file path.
+  id: totrans-474
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 接下来，我们将频谱图调整大小，使其适合我们的 100×160 像素数组。这是下采样，没错，但希望仍然保留足够的特征信息，以便模型能够区分不同的类别。我们保留下采样后的频谱图、相应的类别标签和音频文件路径。
+- en: When we’ve generated all the spectrograms, the loop ends, and we remove the
+    final extraneous spectrogram PNG file. We convert the list of sound file paths
+    to a NumPy array so we can store it in the same manner as the images and labels.
+    Finally, we randomize the order of the images as a precaution against any implicit
+    sorting that might group classes ❹. This is so that minibatches extracted sequentially
+    are representative of the mix of classes as a whole. To conclude, we write the
+    images, labels, and pathnames to disk. We repeat this entire process for the test
+    set.
+  id: totrans-475
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 当我们生成完所有的频谱图后，循环结束，我们会删除最后一个多余的频谱图 PNG 文件。然后我们将音频文件路径列表转换为 NumPy 数组，这样就可以像存储图像和标签一样存储它。最后，我们随机打乱图像的顺序，以防止任何可能的隐式排序将同一类别的图像聚集在一起❹。这样做是为了确保按顺序提取的小批量能够代表所有类别的混合。最后，我们将图像、标签和路径名写入磁盘。我们为测试集重复整个过程。
+- en: Are we able to visually tell the difference between the spectrograms of different
+    classes? If we can do that easily, then we have a good shot of getting a model
+    to tell the difference, too. [Figure 15-5](ch15.xhtml#ch15fig5) shows 10 spectrograms
+    of the same class in each row.
+  id: totrans-476
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们能否通过肉眼区分不同类别的频谱图？如果我们能够轻松做到这一点，那么模型也有很好的机会能够区分这些类别。[Figure 15-5](ch15.xhtml#ch15fig5)
+    展示了同一类别的 10 张频谱图，每行展示一个类别。
+- en: '![image](Images/15fig05.jpg)'
+  id: totrans-477
+  prefs: []
+  type: TYPE_IMG
+  zh: '![image](Images/15fig05.jpg)'
+- en: '*Figure 15-5: Sample spectrograms for each class in ESC-10\. Each row shows
+    10 examples from the same class.*'
+  id: totrans-478
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*图 15-5：ESC-10 中每个类别的示例频谱图。每一行显示同一类别的 10 个示例。*'
+- en: Visually, we can usually tell the spectra apart, which is encouraging. With
+    our spectrograms in hand, we are ready to try some 2D CNNs to see if they do better
+    than the 1D CNNs.
+  id: totrans-479
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 从视觉上看，我们通常能够区分不同的频谱，这让人很有信心。手头有了频谱图后，我们准备尝试一些 2D CNN，看看它们是否比 1D CNN 更有效。
+- en: Classifying Spectrograms
+  id: totrans-480
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: 频谱图分类
+- en: To work with the spectrogram dataset, we need 2D CNNs. A possible starting point
+    is to convert the shallow 1D CNN architecture to 2D by changing Conv1D to Conv2D,
+    and MaxPooling1D to MaxPooling2D. However, if we do this, the resulting model
+    has 30.7 million parameters, which is many more than we want to work with. Instead,
+    let’s opt for a deeper architecture that has fewer parameters and then explore
+    the effect of different first convolutional layer kernel sizes. The code is in
+    [Listing 15-12](ch15.xhtml#ch15lis12).
+  id: totrans-481
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 要处理频谱图数据集，我们需要使用二维卷积神经网络（2D CNN）。一个可能的起点是通过将 Conv1D 改为 Conv2D，并将 MaxPooling1D
+    改为 MaxPooling2D，将浅层的 1D CNN 架构转换为 2D CNN。然而，如果我们这么做，得到的模型将有 3070 万个参数，这比我们希望处理的参数要多得多。因此，我们选择一个更深的架构，参数更少，然后探索不同的第一个卷积层核大小的影响。代码见[Listing
+    15-12](ch15.xhtml#ch15lis12)。
+- en: import keras
+  id: totrans-482
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import keras
+- en: from keras.models import Sequential
+  id: totrans-483
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from keras.models import Sequential
+- en: from keras.layers import Dense, Dropout, Flatten
+  id: totrans-484
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from keras.layers import Dense, Dropout, Flatten
+- en: from keras.layers import Conv2D, MaxPooling2D
+  id: totrans-485
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from keras.layers import Conv2D, MaxPooling2D
+- en: import numpy as np
+  id: totrans-486
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import numpy as np
+- en: batch_size = 16
+  id: totrans-487
+  prefs: []
+  type: TYPE_NORMAL
+  zh: batch_size = 16
+- en: num_classes = 10
+  id: totrans-488
+  prefs: []
+  type: TYPE_NORMAL
+  zh: num_classes = 10
+- en: epochs = 16
+  id: totrans-489
+  prefs: []
+  type: TYPE_NORMAL
+  zh: epochs = 16
+- en: img_rows, img_cols = 100, 160
+  id: totrans-490
+  prefs: []
+  type: TYPE_NORMAL
+  zh: img_rows, img_cols = 100, 160
+- en: input_shape = (img_rows, img_cols, 3)
+  id: totrans-491
+  prefs: []
+  type: TYPE_NORMAL
+  zh: input_shape = (img_rows, img_cols, 3)
+- en: x_train = np.load("esc10_spect_train_images.npy")
+  id: totrans-492
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_train = np.load("esc10_spect_train_images.npy")
+- en: y_train = np.load("esc10_spect_train_labels.npy")
+  id: totrans-493
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_train = np.load("esc10_spect_train_labels.npy")
+- en: x_test = np.load("esc10_spect_test_images.npy")
+  id: totrans-494
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_test = np.load("esc10_spect_test_images.npy")
+- en: y_test = np.load("esc10_spect_test_labels.npy")
+  id: totrans-495
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_test = np.load("esc10_spect_test_labels.npy")
+- en: x_train = x_train.astype('float32') / 255
+  id: totrans-496
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_train = x_train.astype('float32') / 255
+- en: x_test = x_test.astype('float32') / 255
+  id: totrans-497
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_test = x_test.astype('float32') / 255
+- en: y_train = keras.utils.to_categorical(y_train, num_classes)
+  id: totrans-498
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_train = keras.utils.to_categorical(y_train, num_classes)
+- en: y_test = keras.utils.to_categorical(y_test, num_classes)
+  id: totrans-499
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_test = keras.utils.to_categorical(y_test, num_classes)
+- en: model = Sequential()
+  id: totrans-500
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model = Sequential()
+- en: model.add(Conv2D(32, kernel_size=(3,3), activation='relu',
+  id: totrans-501
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv2D(32, kernel_size=(3,3), activation='relu',
+- en: input_shape=input_shape))
+  id: totrans-502
+  prefs: []
+  type: TYPE_NORMAL
+  zh: input_shape=input_shape))
+- en: model.add(Conv2D(64, (3, 3), activation='relu'))
+  id: totrans-503
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv2D(64, (3, 3), activation='relu'))
+- en: model.add(MaxPooling2D(pool_size=(2, 2)))
+  id: totrans-504
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling2D(pool_size=(2, 2)))
+- en: model.add(Dropout(0.25))
+  id: totrans-505
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Conv2D(64, (3, 3), activation='relu'))
+  id: totrans-506
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv2D(64, (3, 3), activation='relu'))
+- en: model.add(MaxPooling2D(pool_size=(2, 2)))
+  id: totrans-507
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling2D(pool_size=(2, 2)))
+- en: model.add(Dropout(0.25))
+  id: totrans-508
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
+- en: model.add(Flatten())
+  id: totrans-509
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Flatten())
+- en: model.add(Dense(128, activation='relu'))
+  id: totrans-510
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(128, activation='relu'))
+- en: model.add(Dropout(0.5))
+  id: totrans-511
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
+- en: model.add(Dense(num_classes, activation='softmax'))
+  id: totrans-512
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(num_classes, activation='softmax'))
+- en: model.compile(loss=keras.losses.categorical_crossentropy,
+  id: totrans-513
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.compile(loss=keras.losses.categorical_crossentropy,
+- en: optimizer=keras.optimizers.Adam(),
+  id: totrans-514
+  prefs: []
+  type: TYPE_NORMAL
+  zh: optimizer=keras.optimizers.Adam(),
+- en: metrics=['accuracy'])
+  id: totrans-515
+  prefs: []
+  type: TYPE_NORMAL
+  zh: metrics=['accuracy'])
+- en: history = model.fit(x_train, y_train,
+  id: totrans-516
+  prefs: []
+  type: TYPE_NORMAL
+  zh: history = model.fit(x_train, y_train,
+- en: batch_size=batch_size, epochs=epochs,
+  id: totrans-517
+  prefs: []
+  type: TYPE_NORMAL
+  zh: batch_size=batch_size, epochs=epochs,
+- en: verbose=0, validation_data=(x_test, y_test))
+  id: totrans-518
+  prefs: []
+  type: TYPE_NORMAL
+  zh: verbose=0, validation_data=(x_test, y_test))
+- en: score = model.evaluate(x_test, y_test, verbose=0)
+  id: totrans-519
+  prefs: []
+  type: TYPE_NORMAL
+  zh: score = model.evaluate(x_test, y_test, verbose=0)
+- en: print('Test accuracy:', score[1])
+  id: totrans-520
+  prefs: []
+  type: TYPE_NORMAL
+  zh: print('测试准确率:', score[1])
+- en: model.save("esc10_cnn_deep_3x3_model.h5")
+  id: totrans-521
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.save("esc10_cnn_deep_3x3_model.h5")
+- en: '*Listing 15-12: Classifying spectrograms*'
+  id: totrans-522
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*列表 15-12: 分类频谱图*'
+- en: Here we are using a minibatch size of 16 for 16 epochs along with the Adam optimizer.
+    The model architecture has two convolutional layers, a max-pooling layer with
+    dropout, another convolutional layer, and a second max-pooling layer with dropout.
+    There is a single dense layer of 128 nodes before the softmax output.
+  id: totrans-523
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在这里，我们使用的迷你批次大小为16，训练16个周期，优化器使用Adam。模型架构包括两个卷积层，一个带dropout的最大池化层，另一个卷积层，以及第二个带dropout的最大池化层。在softmax输出之前有一个128节点的全连接层。
+- en: 'We’ll test two kernel sizes for the first convolutional layer: 3 × 3 and 7
+    × 7\. The 3 × 3 configuration is shown in [Listing 15-12](ch15.xhtml#ch15lis12).
+    Replace (3,3) with (7,7) to alter the size. All the initial 1D convolutional runs
+    used a single training of the model for evaluation. We know that because of random
+    initialization, we’ll get slightly different results from training to training,
+    even if nothing else changes. For the 2D CNNs, let’s train each model six times
+    and present the overall accuracy as a mean ± standard error of the mean. Doing
+    just this gives us the following overall accuracies:'
+  id: totrans-524
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将测试两种卷积核大小：3 × 3 和 7 × 7。3 × 3的配置如[列表 15-12](ch15.xhtml#ch15lis12)所示。将(3,3)替换为(7,7)来改变大小。所有初始的1D卷积运行都使用模型的单次训练进行评估。我们知道，由于随机初始化，每次训练的结果会有所不同，即使其他条件不变。对于2D卷积神经网络，我们将每个模型训练六次，并以均值±标准误差的形式呈现总体准确率。仅此一项，我们得到以下总体准确率：
+- en: '| **Kernel size** | **Score** |'
+  id: totrans-525
+  prefs: []
+  type: TYPE_TB
+  zh: '| **卷积核大小** | **得分** |'
+- en: '| --- | --- |'
+  id: totrans-526
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- |'
+- en: '| 3 × 3 | 78.78 ± 0.60% |'
+  id: totrans-527
+  prefs: []
+  type: TYPE_TB
+  zh: '| 3 × 3 | 78.78 ± 0.60% |'
+- en: '| 7 × 7 | 78.44 ± 0.72% |'
+  id: totrans-528
+  prefs: []
+  type: TYPE_TB
+  zh: '| 7 × 7 | 78.44 ± 0.72% |'
+- en: This indicates that there is no meaningful difference between using a 3 × 3
+    initial convolutional layer kernel size or a 7 × 7\. Therefore, we’ll stick with
+    3 × 3 going forward.
+  id: totrans-529
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这表明使用3 × 3或7 × 7初始卷积层核大小之间没有实质性的差异。因此，我们将在接下来的操作中继续使用3 × 3。
+- en: '[Figure 15-6](ch15.xhtml#ch15fig6) shows the training and validation loss (top)
+    and error (bottom) for one run of the 2D CNN trained on the spectrograms. As we
+    saw in the 1D CNN case, after only a few epochs, the validation error starts to
+    increase.'
+  id: totrans-530
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '[图 15-6](ch15.xhtml#ch15fig6)展示了一个2D卷积神经网络在训练频谱图时的训练和验证损失（上图）及误差（下图）。正如我们在1D卷积神经网络的情况中看到的，经过几个周期后，验证误差开始增加。'
+- en: 'The 2D CNN performs significantly better than the 1D CNN did: 79 percent accuracy
+    versus only 54 percent. This level of accuracy is still not particularly useful
+    for many applications, but for others, it might be completely acceptable. Nevertheless,
+    we’d like to do better if we can. It’s worth noting that we have a few limitations
+    in our data and, for that matter, our hardware, since we are restricting ourselves
+    to a CPU-only approach, which limits the amount of time we are willing to wait
+    for models to train. Here is where the some 25-fold increase in performance possible
+    with GPUs would be helpful, assuming our use case allows for using GPUs. If we’re
+    planning to run the model on an embedded system, for example, we might not have
+    a GPU available, so we’d want to stick with a smaller model anyway.'
+  id: totrans-531
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 2D CNN的表现明显优于1D CNN：准确率为79%，而1D CNN仅为54%。这个准确率对于许多应用来说仍然不是特别有用，但对于其他一些应用来说，可能完全可以接受。尽管如此，如果我们能做到更好，还是很值得尝试的。值得注意的是，我们的数据和硬件存在一些限制，因为我们限制自己使用仅CPU的方法，这限制了我们愿意等待模型训练的时间。在这种情况下，如果能使用GPU，性能可能会提高大约25倍，这将非常有帮助，前提是我们的使用案例允许使用GPU。如果我们计划在嵌入式系统上运行模型，例如，我们可能没有GPU可用，因此我们仍然需要坚持使用更小的模型。
+- en: '![image](Images/15fig06.jpg)'
+  id: totrans-532
+  prefs: []
+  type: TYPE_IMG
+  zh: '![image](Images/15fig06.jpg)'
+- en: '*Figure 15-6: Training and validation loss (top) and error (bottom) for the
+    2D CNN architecture*'
+  id: totrans-533
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*图15-6：2D CNN架构的训练和验证损失（上）及误差（下）*'
+- en: Initialization, Regularization, and Batch Normalization
+  id: totrans-534
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 初始化、正则化与批归一化
+- en: The literature tells us that there are other things we can try. We already augmented
+    the dataset, a powerful technique, and we are using dropout, another powerful
+    technique. We can try using a new initialization strategy, He initialization,
+    which has been shown to often work better than Glorot initialization, the Keras
+    default. We can also try applying L2 regularization, which Keras implements as
+    weight decay per layer. See [Chapter 10](ch10.xhtml#ch10) for a refresher on these
+    techniques.
+  id: totrans-535
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 文献告诉我们，还有其他方法可以尝试。我们已经增强了数据集，这是一个强大的技术，并且我们正在使用dropout，另一种强大的技术。我们可以尝试使用新的初始化策略——He初始化，研究表明它通常比Keras默认的Glorot初始化效果更好。我们还可以尝试应用L2正则化，Keras将其实现为每层的权重衰减。有关这些技术的复习，请参见[第10章](ch10.xhtml#ch10)。
+- en: 'To set the layer initialization algorithm, we need to add the following keyword
+    to the Conv2D and first Dense layer:'
+  id: totrans-536
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 要设置层初始化算法，我们需要向Conv2D和第一个Dense层添加以下关键字：
+- en: kernel_initializer="he_normal"
+  id: totrans-537
+  prefs: []
+  type: TYPE_NORMAL
+  zh: kernel_initializer="he_normal"
+- en: 'To add L2 regularization, we add the following keyword to the Conv2D and first
+    Dense layer:'
+  id: totrans-538
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 要添加L2正则化，我们向Conv2D和第一个Dense层添加以下关键字：
+- en: kernel_regularizer=keras.regularizers.l2(0.001)
+  id: totrans-539
+  prefs: []
+  type: TYPE_NORMAL
+  zh: kernel_regularizer=keras.regularizers.l2(0.001)
+- en: Here *λ* = 0.001\. Recall, *λ* is the L2 regularization scale factor.
+  id: totrans-540
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这里*λ* = 0.001。回想一下，*λ*是L2正则化的缩放因子。
+- en: 'We could test these together, but instead we’ve tested them individually to
+    see what effect, if any, they have for this dataset. Training six models as before
+    gives the following overall accuracies:'
+  id: totrans-541
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以将这些一起测试，但我们选择分别测试它们，以查看它们对该数据集的影响（如果有的话）。像之前一样训练六个模型，得到以下总体准确率：
+- en: '| **Regularizer** | **Score** |'
+  id: totrans-542
+  prefs: []
+  type: TYPE_TB
+  zh: '| **正则化器** | **得分** |'
+- en: '| --- | --- |'
+  id: totrans-543
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- |'
+- en: '| He initialization | 78.5 ± 0.5% |'
+  id: totrans-544
+  prefs: []
+  type: TYPE_TB
+  zh: '| He初始化 | 78.5 ± 0.5% |'
+- en: '| L2 regularization | 78.3 ± 0.4% |'
+  id: totrans-545
+  prefs: []
+  type: TYPE_TB
+  zh: '| L2正则化 | 78.3 ± 0.4% |'
+- en: This is no different, statistically, from the previous results. In this case,
+    these approaches are neither beneficial nor detrimental.
+  id: totrans-546
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 从统计学上讲，这与之前的结果没有区别。在这种情况下，这些方法既没有带来好处，也没有造成伤害。
+- en: 'Batch normalization is another well-tested, go-to technique widely used by
+    the machine learning community. We mentioned batch normalization briefly in [Chapter
+    12](ch12.xhtml#ch12). Batch normalization does just what its name suggests: it
+    normalizes the inputs to a layer of the network, subtracting per feature means
+    and dividing by the per feature standard deviations. The output of the layer multiplies
+    the normalized input by a constant and adds an offset. The net effect is the input
+    values are mapped to new output values by a two-step process: normalize the input
+    and then apply a linear transform to get the output. The parameters of the linear
+    transform are learned during backprop. At inference time, means and standard deviations
+    learned from the dataset are applied to unknown inputs.'
+  id: totrans-547
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 批归一化是另一种经过充分验证的、广泛使用的技术，深受机器学习社区青睐。我们在[第12章](ch12.xhtml#ch12)中简要提到了批归一化。批归一化正如其名字所示：它对网络层的输入进行归一化，减去每个特征的均值并除以每个特征的标准差。该层的输出将归一化后的输入乘以一个常数并加上一个偏移量。其净效应是，输入值通过一个两步过程映射到新的输出值：先归一化输入，然后应用线性变换得到输出。线性变换的参数是在反向传播过程中学习的。在推理时，从数据集中学习到的均值和标准差将应用于未知输入。
+- en: Batch normalization has shown itself time and again to be effective, especially
+    in speeding up training. Machine learning researchers are still debating the exact
+    reasons *why* it works as it does. To use it in Keras, you simply insert batch
+    normalization after the convolutional and dense layers of the network (and after
+    any activation function like ReLU used by those layers). Batch normalization is
+    known to not work well with dropout, so we’ll also remove the Dropout layers.
+    The relevant architecture portion of the model code is shown in [Listing 15-13](ch15.xhtml#ch15lis13).
+  id: totrans-548
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 批归一化已经一次又一次地证明其有效性，尤其是在加速训练方面。机器学习研究人员仍在讨论其为何如此有效的确切原因。要在Keras中使用它，你只需在网络的卷积层和全连接层之后（以及这些层使用的任何激活函数，如ReLU之后）插入批归一化。批归一化已知与丢弃层（dropout）配合不好，因此我们还将移除丢弃层。该模型代码的相关架构部分在[列表15-13](ch15.xhtml#ch15lis13)中展示。
+- en: from keras.layers import BatchNormalization
+  id: totrans-549
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from keras.layers import BatchNormalization
+- en: model = Sequential()
+  id: totrans-550
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model = Sequential()
+- en: model.add(Conv2D(32, kernel_size=(3, 3),
+  id: totrans-551
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv2D(32, kernel_size=(3, 3),
+- en: activation='relu', input_shape=input_shape))
+  id: totrans-552
+  prefs: []
+  type: TYPE_NORMAL
+  zh: activation='relu', input_shape=input_shape))
+- en: model.add(BatchNormalization())
+  id: totrans-553
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(BatchNormalization())
+- en: model.add(Conv2D(64, (3, 3), activation='relu'))
+  id: totrans-554
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv2D(64, (3, 3), activation='relu'))
+- en: model.add(BatchNormalization())
+  id: totrans-555
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(BatchNormalization())
+- en: model.add(MaxPooling2D(pool_size=(2, 2)))
+  id: totrans-556
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling2D(pool_size=(2, 2)))
+- en: model.add(Conv2D(64, (3, 3), activation='relu'))
+  id: totrans-557
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Conv2D(64, (3, 3), activation='relu'))
+- en: model.add(BatchNormalization())
+  id: totrans-558
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(BatchNormalization())
+- en: model.add(MaxPooling2D(pool_size=(2, 2)))
+  id: totrans-559
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(MaxPooling2D(pool_size=(2, 2)))
+- en: model.add(Flatten())
+  id: totrans-560
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Flatten())
+- en: model.add(Dense(128, activation='relu'))
+  id: totrans-561
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(128, activation='relu'))
+- en: model.add(BatchNormalization())
+  id: totrans-562
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(BatchNormalization())
+- en: model.add(Dense(num_classes, activation='softmax'))
+  id: totrans-563
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model.add(Dense(num_classes, activation='softmax'))
+- en: '*Listing 15-13: Adding in batch normalization*'
+  id: totrans-564
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*列表15-13：添加批归一化*'
+- en: If we repeat our training process, six models with mean and standard error reporting
+    of the overall accuracy, we get
+  id: totrans-565
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 如果我们重复我们的训练过程，六个模型的平均值和标准误差报告了整体准确度，我们得到
+- en: Batch normalization     75.56 ± 0.59%
+  id: totrans-566
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 批归一化     75.56 ± 0.59%
+- en: which is significantly less than the mean accuracy found without batch normalization
+    but including dropout.
+  id: totrans-567
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这明显低于没有批归一化但包含丢弃层时的平均准确度。
+- en: Examining the Confusion Matrix
+  id: totrans-568
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: 检查混淆矩阵
+- en: We’ve seen in this section that our dataset is a tough one. Augmentation and
+    dropout have been effective, but other things like ReLU-specific initialization,
+    L2 regularization (weight decay), and even batch normalization have not improved
+    things for us. That doesn’t mean these techniques are ineffective, just that they
+    are not effective for this particular small dataset.
+  id: totrans-569
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们在这一节中已经看到，我们的数据集是一个很有挑战性的。数据增强和丢弃层已经很有效，但像ReLU特定初始化、L2正则化（权重衰减）甚至批归一化等其他技术对我们并没有改善。这并不意味着这些技术无效，只是它们对这个特定的小数据集没有效果。
+- en: Let’s take a quick look at the confusion matrix generated by one of the models
+    using our chosen architecture. We’ve seen previously how to calculate the matrix;
+    we’ll show it here for discussion and for comparison with the confusion matrices
+    we’ll make in the next section. [Table 15-2](ch15.xhtml#ch15tab2) shows the matrix;
+    as always, rows are the true class label, and columns are the model-assigned label.
+  id: totrans-570
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 让我们快速查看由其中一个模型生成的混淆矩阵，该模型使用了我们选择的架构。我们之前已经看过如何计算该矩阵；这里展示它是为了讨论和与接下来我们将在下一节中生成的混淆矩阵进行比较。[表15-2](ch15.xhtml#ch15tab2)展示了该矩阵；一如既往，行代表真实类别标签，列代表模型分配的标签。
+- en: '**Table 15-2:** Confusion Matrix for the Spectrogram Model'
+  id: totrans-571
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '**表15-2：** 光谱图模型的混淆矩阵'
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  id: totrans-572
+  prefs: []
+  type: TYPE_TB
+  zh: '| **类别** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** |
+    **8** | **9** |'
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-573
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+- en: '| **0** | **85.6** | 0.0 | 0.0 | 5.6 | 0.0 | 0.0 | 0.0 | 5.0 | 0.6 | 3.1 |'
+  id: totrans-574
+  prefs: []
+  type: TYPE_TB
+  zh: '| **0** | **85.6** | 0.0 | 0.0 | 5.6 | 0.0 | 0.0 | 0.0 | 5.0 | 0.6 | 3.1 |'
+- en: '| **1** | 0.0 | **97.5** | 1.2 | 0.0 | 0.6 | 0.6 | 0.0 | 0.0 | 0.0 | 0.0 |'
+  id: totrans-575
+  prefs: []
+  type: TYPE_TB
+  zh: '| **1** | 0.0 | **97.5** | 1.2 | 0.0 | 0.6 | 0.6 | 0.0 | 0.0 | 0.0 | 0.0 |'
+- en: '| **2** | 0.0 | 13.8 | **72.5** | 0.6 | 0.6 | 3.8 | 6.2 | 0.0 | 0.6 | 1.9 |'
+  id: totrans-576
+  prefs: []
+  type: TYPE_TB
+  zh: '| **2** | 0.0 | 13.8 | **72.5** | 0.6 | 0.6 | 3.8 | 6.2 | 0.0 | 0.6 | 1.9 |'
+- en: '| **3** | 25.0 | 0.0 | 0.0 | **68.1** | 0.0 | 2.5 | 0.6 | 0.0 | 2.5 | 1.2 |'
+  id: totrans-577
+  prefs: []
+  type: TYPE_TB
+  zh: '| **3** | 25.0 | 0.0 | 0.0 | **68.1** | 0.0 | 2.5 | 0.6 | 0.0 | 2.5 | 1.2 |'
+- en: '| **4** | 0.6 | 0.0 | 0.0 | 0.0 | **84.4** | 6.2 | 5.0 | 3.8 | 0.0 | 0.0 |'
+  id: totrans-578
+  prefs: []
+  type: TYPE_TB
+  zh: '| **4** | 0.6 | 0.0 | 0.0 | 0.0 | **84.4** | 6.2 | 5.0 | 3.8 | 0.0 | 0.0 |'
+- en: '| **5** | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | **94.4** | 4.4 | 0.6 | 0.0 | 0.0 |'
+  id: totrans-579
+  prefs: []
+  type: TYPE_TB
+  zh: '| **5** | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | **94.4** | 4.4 | 0.6 | 0.0 | 0.0 |'
+- en: '| **6** | 0.0 | 0.0 | 1.2 | 0.0 | 0.0 | 10.6 | **88.1** | 0.0 | 0.0 | 0.0 |'
+  id: totrans-580
+  prefs: []
+  type: TYPE_TB
+  zh: '| **6** | 0.0 | 0.0 | 1.2 | 0.0 | 0.0 | 10.6 | **88.1** | 0.0 | 0.0 | 0.0 |'
+- en: '| **7** | 9.4 | 0.0 | 0.6 | 0.0 | 15.6 | 1.9 | 0.0 | **63.8** | 7.5 | 1.2 |'
+  id: totrans-581
+  prefs: []
+  type: TYPE_TB
+  zh: '| **7** | 9.4 | 0.0 | 0.6 | 0.0 | 15.6 | 1.9 | 0.0 | **63.8** | 7.5 | 1.2 |'
+- en: '| **8** | 18.1 | 1.9 | 0.0 | 5.6 | 0.0 | 1.2 | 2.5 | 6.9 | **55.6** | 8.1 |'
+  id: totrans-582
+  prefs: []
+  type: TYPE_TB
+  zh: '| **8** | 18.1 | 1.9 | 0.0 | 5.6 | 0.0 | 1.2 | 2.5 | 6.9 | **55.6** | 8.1 |'
+- en: '| **9** | 7.5 | 0.0 | 8.1 | 0.6 | 0.0 | 0.6 | 0.0 | 1.9 | 10.0 | **71.2** |'
+  id: totrans-583
+  prefs: []
+  type: TYPE_TB
+  zh: '| **9** | 7.5 | 0.0 | 8.1 | 0.6 | 0.0 | 0.6 | 0.0 | 1.9 | 10.0 | **71.2** |'
+- en: The three worst-performing classes are helicopter (8), fire (7), and waves (3).
+    Both waves and helicopter are most often confused with rain (0), while fire is
+    most often confused with clock (4) and rain. The best performing classes are rooster
+    (1) and sneezing (5). These results make sense. A rooster’s crow and a person
+    sneezing are distinct sounds; nothing really sounds like them. However, it is
+    easy to see how waves and a helicopter could be confused with rain, or the crackle
+    of a fire with the tick of a clock.
+  id: totrans-584
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 三个表现最差的类别是直升机（8）、火灾（7）和波浪（3）。波浪和直升机最常被误判为雨声（0），而火灾最常被误判为时钟（4）和雨声。表现最好的类别是公鸡（1）和打喷嚏（5）。这些结果是有道理的。公鸡的啼叫和人类的喷嚏是非常独特的声音，没有什么能与之混淆。然而，很容易理解波浪和直升机如何被误判为雨声，或火灾的噼啪声与时钟的滴答声混淆。
+- en: Does this mean we’re stuck at 78.8 percent accuracy? No, we have one more trick
+    to try. We’ve been training and evaluating the performance of single models. Nothing
+    is stopping us from training multiple models and combining their results. This
+    is *ensembling*. We presented ensembles briefly in [Chapter 6](ch06.xhtml#ch06)
+    and again in [Chapter 9](ch09.xhtml#ch09) when discussing dropout. Now, let’s
+    use the idea directly to see if we can improve our sound sample classifier.
+  id: totrans-585
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这是否意味着我们卡在了78.8%的准确率上？不，我们还有一个方法可以尝试。我们一直在训练和评估单个模型的表现。没有什么能阻止我们训练多个模型并将它们的结果结合起来。这就是*集成学习*。我们在[第6章](ch06.xhtml#ch06)和[第9章](ch09.xhtml#ch09)讨论dropout时简要介绍了集成学习的概念。现在，让我们直接应用这个思想，看看能否提升我们声音样本分类器的表现。
+- en: Ensembles
+  id: totrans-586
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: 集成学习
+- en: 'The core idea of an ensemble is to take the output of multiple models trained
+    on the same, or extremely similar, dataset(s) and combine them. It embodies the
+    “wisdom of the crowds” concept: one model might be better at certain classes or
+    types of inputs for a particular class than another, so it makes sense that if
+    they work together, they might arrive at a final result better than either one
+    could do on its own.'
+  id: totrans-587
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 集成学习的核心思想是将多个在相同或极为相似数据集上训练的模型的输出结合起来。它体现了“群体智慧”的概念：一个模型在某些类别或输入类型上可能比另一个更好，因此，如果它们协同工作，可能会得出比任何一个模型独立工作时更好的结果。
+- en: Here, we’ll use the same machine learning architecture we used in the previous
+    section. Our different models will be separate trainings of this architecture
+    using the spectrograms as input. This is a weaker form of ensembling. Typically,
+    the models in the ensemble are quite different from each other, either different
+    architectures of neural networks, or completely different types of models like
+    Random Forests and *k*-Nearest Neighbors. The variation between models here is
+    due to the random initialization of the networks and the different parts of the
+    loss landscape the network finds itself in when training stops.
+  id: totrans-588
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在这里，我们将使用与上一节相同的机器学习架构。我们的不同模型将是使用谱图作为输入的该架构的独立训练。这是一种较弱的集成方法。通常，集成中的模型彼此之间差异较大，要么是不同架构的神经网络，要么是完全不同类型的模型，如随机森林和
+    *k*-最近邻。这里模型之间的差异来源于网络的随机初始化，以及训练停止时网络所处的不同损失景观。
+- en: 'Our approach works like this:'
+  id: totrans-589
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们的方法是这样的：
+- en: Train multiple models (*n* = 6) using the spectrogram dataset.
+  id: totrans-590
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 使用谱图数据集训练多个模型（*n* = 6）。
+- en: Combine the softmax output of these models on the test set in some manner.
+  id: totrans-591
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 以某种方式将这些模型在测试集上的softmax输出结合起来。
+- en: Use the resulting output from the combination to predict the assigned class
+    label.
+  id: totrans-592
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 使用组合后的输出预测分配的类别标签。
+- en: We hope that the set of class labels assigned after combining the individual
+    model outputs is superior to the set assigned by the model architecture used alone.
+    Intuitively, we feel that this approach should buy us something. It makes sense.
+  id: totrans-593
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们希望，在结合单个模型输出后分配的类别标签集，能够优于单独使用该模型架构时分配的标签集。直观地，我们觉得这种方法应该会有所帮助，这也是有道理的。
+- en: 'However, a question immediately arises: how do we best combine the outputs
+    of the individual networks? We have total freedom in the answer to that question.
+    What we are looking for is an *f* () such that'
+  id: totrans-594
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 然而，问题立刻出现了：我们如何最好地结合各个网络的输出？对此问题我们有完全的自由度。我们所寻找的是一个 *f* ()，使得
+- en: '*y*[predict] = *f*(*y*[0], *y*[1], *y*[2], … , *y[n]*)'
+  id: totrans-595
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*y*[predict] = *f*(*y*[0], *y*[1], *y*[2], … , *y[n]*)'
+- en: where *y*[*i*], *i* = 0, 1, …, *n* are the outputs of the *n* models in the
+    ensemble and *f* () is some function, operation, or algorithm that best combines
+    them into a single new prediction, *y*[predict].
+  id: totrans-596
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 其中，*y*[*i*]，*i* = 0, 1, …, *n* 是集成中 *n* 个模型的输出，*f*() 是某个函数、操作或算法，它最好地将它们结合成一个新的预测结果
+    *y*[predict]。
+- en: 'Some combination approaches come readily to mind: we could average the outputs
+    and select the largest, keep maximum per class output across the ensemble and
+    then choose the largest of those, or use voting to decide which class label should
+    be assigned. We’ll try all three of these.'
+  id: totrans-597
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 一些组合方法立刻浮现在脑海中：我们可以对输出取平均并选择最大的值，保留每个类别中最大输出值，再从中选择最大的，或者使用投票来决定分配哪个类别标签。我们会尝试这三种方法。
+- en: 'Let’s start with the first three approaches. We already have the six ensemble
+    models: they’re the models we trained in the previous section to give us the mean
+    accuracy on the test set. This model architecture uses dropout, but no alternate
+    initialization, L2 regularization, or batch normalization.'
+  id: totrans-598
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 让我们从前三种方法开始。我们已经有了六个集成模型：它们是我们在上一节中训练的模型，用于给出测试集上的平均准确度。该模型架构使用了dropout，但没有使用替代初始化、L2正则化或批量归一化。
+- en: 'It’s straightforward enough to run the test set through each of the models
+    trained in the previous section ([Listing 15-14](ch15.xhtml#ch15lis14)):'
+  id: totrans-599
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 运行测试集通过上一节中训练的每个模型是相当直接的（[列表 15-14](ch15.xhtml#ch15lis14)）：
+- en: import sys
+  id: totrans-600
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import sys
+- en: import numpy as np
+  id: totrans-601
+  prefs: []
+  type: TYPE_NORMAL
+  zh: import numpy as np
+- en: from keras.models import load_model
+  id: totrans-602
+  prefs: []
+  type: TYPE_NORMAL
+  zh: from keras.models import load_model
+- en: model = load_model(sys.argv[1])
+  id: totrans-603
+  prefs: []
+  type: TYPE_NORMAL
+  zh: model = load_model(sys.argv[1])
+- en: x_test = np.load("esc10_spect_test_images.npy")/255.0
+  id: totrans-604
+  prefs: []
+  type: TYPE_NORMAL
+  zh: x_test = np.load("esc10_spect_test_images.npy")/255.0
+- en: y_test = np.load("esc10_spect_test_labels.npy")
+  id: totrans-605
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_test = np.load("esc10_spect_test_labels.npy")
+- en: ❶ prob = model.predict(x_test)
+  id: totrans-606
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❶ prob = model.predict(x_test)
+- en: ❷ p = np.argmax(prob, axis=1)
+  id: totrans-607
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❷ p = np.argmax(prob, axis=1)
+- en: cc = np.zeros((10,10))
+  id: totrans-608
+  prefs: []
+  type: TYPE_NORMAL
+  zh: cc = np.zeros((10,10))
+- en: 'for i in range(len(y_test)):'
+  id: totrans-609
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i in range(len(y_test)):'
+- en: cc[y_test[i],p[i]] += 1
+  id: totrans-610
+  prefs: []
+  type: TYPE_NORMAL
+  zh: cc[y_test[i],p[i]] += 1
+- en: ❸ print(np.array2string(cc.astype("uint32")))
+  id: totrans-611
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❸ print(np.array2string(cc.astype("uint32")))
+- en: cp = 100.0 * cc / cc.sum(axis=1)
+  id: totrans-612
+  prefs: []
+  type: TYPE_NORMAL
+  zh: cp = 100.0 * cc / cc.sum(axis=1)
+- en: ❹ print(np.array2string(cp, precision=1))
+  id: totrans-613
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ❹ print(np.array2string(cp, precision=1))
+- en: print("Overall accuracy = %0.2f%%" % (100.0*np.diag(cc).sum()/cc.sum(),))
+  id: totrans-614
+  prefs: []
+  type: TYPE_NORMAL
+  zh: print("总体准确率 = %0.2f%%" % (100.0*np.diag(cc).sum()/cc.sum(),))
+- en: np.save(sys.argv[2], prob)
+  id: totrans-615
+  prefs: []
+  type: TYPE_NORMAL
+  zh: np.save(sys.argv[2], prob)
+- en: '*Listing 15-14: Applying multiple models to the test set*'
+  id: totrans-616
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*列表 15-14：应用多个模型到测试集*'
+- en: This code expects the name of the trained model file as the first argument and
+    the name of an output file to store the model predictions as the second argument.
+    Then, it loads the model and spectrogram test data, applies the model to the test
+    data ❶, and predicts class labels by selecting the highest output value ❷.
+  id: totrans-617
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这段代码期望第一个参数是训练模型文件的名称，第二个参数是用于存储模型预测结果的输出文件名称。然后，它加载模型和频谱测试数据，应用模型到测试数据 ❶，并通过选择最高的输出值
+    ❷ 来预测类别标签。
+- en: The code also calculates the confusion matrix and displays it twice, first as
+    actual counts ❸ and again as a percentage of the actual class ❹. Finally, it displays
+    the overall accuracy and writes the probabilities to the disk. With this code,
+    we can store the predictions of each of the six models.
+  id: totrans-618
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 代码还会计算混淆矩阵并显示两次，第一次显示实际计数 ❸，第二次显示每个类别的百分比 ❹。最后，它会显示总体准确率并将概率写入磁盘。通过这段代码，我们可以存储六个模型的预测结果。
+- en: Now that we have the predictions, let’s combine them in the first of the three
+    ways mentioned previously. To calculate the average of the model predictions,
+    we first load each model’s predictions, and then average and select the maximum
+    per sample as shown in [Listing 15-15](ch15.xhtml#ch15lis15).
+  id: totrans-619
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 现在我们已经得到了预测结果，接下来让我们按照前面提到的三种方法中的第一种将它们结合起来。为了计算模型预测的平均值，我们首先加载每个模型的预测结果，然后对每个样本进行平均，并选择最大值，如[清单
+    15-15](ch15.xhtml#ch15lis15)所示。
+- en: p0 = np.load("prob_run0.npy")
+  id: totrans-620
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p0 = np.load("prob_run0.npy")
+- en: p1 = np.load("prob_run1.npy")
+  id: totrans-621
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p1 = np.load("prob_run1.npy")
+- en: p2 = np.load("prob_run2.npy")
+  id: totrans-622
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p2 = np.load("prob_run2.npy")
+- en: p3 = np.load("prob_run3.npy")
+  id: totrans-623
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p3 = np.load("prob_run3.npy")
+- en: p4 = np.load("prob_run4.npy")
+  id: totrans-624
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p4 = np.load("prob_run4.npy")
+- en: p5 = np.load("prob_run5.npy")
+  id: totrans-625
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p5 = np.load("prob_run5.npy")
+- en: y_test = np.load("esc10_spect_test_labels.npy")
+  id: totrans-626
+  prefs: []
+  type: TYPE_NORMAL
+  zh: y_test = np.load("esc10_spect_test_labels.npy")
+- en: prob = (p0+p1+p2+p3+p4+p5)/6.0
+  id: totrans-627
+  prefs: []
+  type: TYPE_NORMAL
+  zh: prob = (p0+p1+p2+p3+p4+p5)/6.0
+- en: p = np.argmax(prob, axis=1)
+  id: totrans-628
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p = np.argmax(prob, axis=1)
+- en: '*Listing 15-15: Averaging the test set results*'
+  id: totrans-629
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*清单 15-15：对测试集结果进行平均*'
+- en: The resulting percentage confusion matrix is
+  id: totrans-630
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 结果的百分比混淆矩阵为
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  id: totrans-631
+  prefs: []
+  type: TYPE_TB
+  zh: '| **类别** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** |
+    **8** | **9** |'
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-632
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+- en: '| **0** | **83.8** | 0.0 | 0.0 | 7.5 | 0.0 | 0.0 | 0.0 | 4.4 | 0.0 | 4.4 |'
+  id: totrans-633
+  prefs: []
+  type: TYPE_TB
+  zh: '| **0** | **83.8** | 0.0 | 0.0 | 7.5 | 0.0 | 0.0 | 0.0 | 4.4 | 0.0 | 4.4 |'
+- en: '| **1** | 0.0 | **97.5** | 1.9 | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | 0.0 | 0.0 |'
+  id: totrans-634
+  prefs: []
+  type: TYPE_TB
+  zh: '| **1** | 0.0 | **97.5** | 1.9 | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | 0.0 | 0.0 |'
+- en: '| **2** | 0.0 | 10.0 | **78.1** | 0.0 | 0.0 | 3.1 | 6.2 | 0.0 | 0.0 | 2.5 |'
+  id: totrans-635
+  prefs: []
+  type: TYPE_TB
+  zh: '| **2** | 0.0 | 10.0 | **78.1** | 0.0 | 0.0 | 3.1 | 6.2 | 0.0 | 0.0 | 2.5 |'
+- en: '| **3** | 9.4 | 0.0 | 0.0 | **86.2** | 0.0 | 3.1 | 0.6 | 0.0 | 0.0 | 0.6 |'
+  id: totrans-636
+  prefs: []
+  type: TYPE_TB
+  zh: '| **3** | 9.4 | 0.0 | 0.0 | **86.2** | 0.0 | 3.1 | 0.6 | 0.0 | 0.0 | 0.6 |'
+- en: '| **4** | 0.6 | 0.0 | 0.0 | 0.0 | **83.1** | 5.6 | 5.0 | 5.6 | 0.0 | 0.0 |'
+  id: totrans-637
+  prefs: []
+  type: TYPE_TB
+  zh: '| **4** | 0.6 | 0.0 | 0.0 | 0.0 | **83.1** | 5.6 | 5.0 | 5.6 | 0.0 | 0.0 |'
+- en: '| **5** | 0.0 | 0.0 | 0.0 | 0.0 | 0.6 | **93.8** | 5.6 | 0.0 | 0.0 | 0.0 |'
+  id: totrans-638
+  prefs: []
+  type: TYPE_TB
+  zh: '| **5** | 0.0 | 0.0 | 0.0 | 0.0 | 0.6 | **93.8** | 5.6 | 0.0 | 0.0 | 0.0 |'
+- en: '| **6** | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | 8.8 | **90.6** | 0.0 | 0.0 | 0.0 |'
+  id: totrans-639
+  prefs: []
+  type: TYPE_TB
+  zh: '| **6** | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | 8.8 | **90.6** | 0.0 | 0.0 | 0.0 |'
+- en: '| **7** | 8.1 | 0.0 | 0.0 | 0.0 | 17.5 | 1.9 | 0.0 | **64.4** | 7.5 | 0.6 |'
+  id: totrans-640
+  prefs: []
+  type: TYPE_TB
+  zh: '| **7** | 8.1 | 0.0 | 0.0 | 0.0 | 17.5 | 1.9 | 0.0 | **64.4** | 7.5 | 0.6 |'
+- en: '| **8** | 6.2 | 0.0 | 0.0 | 7.5 | 0.0 | 1.9 | 4.4 | 8.8 | **66.2** | 5.0 |'
+  id: totrans-641
+  prefs: []
+  type: TYPE_TB
+  zh: '| **8** | 6.2 | 0.0 | 0.0 | 7.5 | 0.0 | 1.9 | 4.4 | 8.8 | **66.2** | 5.0 |'
+- en: '| **9** | 5.0 | 0.0 | 5.0 | 1.2 | 0.0 | 0.6 | 0.0 | 1.9 | 10.6 | **75.6** |'
+  id: totrans-642
+  prefs: []
+  type: TYPE_TB
+  zh: '| **9** | 5.0 | 0.0 | 5.0 | 1.2 | 0.0 | 0.6 | 0.0 | 1.9 | 10.6 | **75.6** |'
+- en: with an overall accuracy of 82.0 percent.
+  id: totrans-643
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 总体准确率为 82.0%。
+- en: 'This approach is helpful: we went from 79 percent to 82 percent in overall
+    accuracy. The most significant improvements were in class 3 (waves) and class
+    8 (helicopter).'
+  id: totrans-644
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这种方法是有效的：我们从总体准确率79%提升到了82%。最显著的改进发生在类别3（波形）和类别8（直升机）上。
+- en: Our next approach, shown in [Listing 15-16](ch15.xhtml#ch15lis16), keeps the
+    maximum probability across the six models for each class and then selects the
+    largest to assign the class label.
+  id: totrans-645
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们的下一种方法，在[清单 15-16](ch15.xhtml#ch15lis16)中展示，会保持六个模型中每个类别的最大概率，然后选择最大的值来分配类别标签。
+- en: p = np.zeros(len(y_test), dtype="uint8")
+  id: totrans-646
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p = np.zeros(len(y_test), dtype="uint8")
+- en: 'for i in range(len(y_test)):'
+  id: totrans-647
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'for i in range(len(y_test)):'
+- en: t = np.array([p0[i],p1[i],p2[i],p3[i],p4[i],p5[i]])
+  id: totrans-648
+  prefs: []
+  type: TYPE_NORMAL
+  zh: t = np.array([p0[i],p1[i],p2[i],p3[i],p4[i],p5[i]])
+- en: p[i] = np.argmax(t.reshape(60)) % 10
+  id: totrans-649
+  prefs: []
+  type: TYPE_NORMAL
+  zh: p[i] = np.argmax(t.reshape(60)) % 10
+- en: '*Listing 15-16: Keeping the test set maximum*'
+  id: totrans-650
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '*清单 15-16：保持测试集最大值*'
+- en: 'This code defines a vector, p, of the same length as the vector of actual labels,
+    y_test. Then, for each test sample, we form t, a concatenation of all six models’
+    predictions for each class. We reshape t so that it is a one-dimensional vector
+    of 60 elements. Why 60? We have 10 class predictions times 6 models. The maximum
+    of this vector is the largest value, the index of which is returned by argmax.
+    We really don’t want this index; instead, we want the class label this index maps
+    to. Therefore, if we take this index modulo 10, we will get the proper class label,
+    which we assign to p. With p and y_test, we can calculate the confusion matrix:'
+  id: totrans-651
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  id: totrans-652
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-653
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | **82.5** | 0.0 | 0.0 | 9.4 | 0.0 | 0.0 | 0.0 | 4.4 | 0.6 | 3.1 |'
+  id: totrans-654
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 0.0 | **95.0** | 4.4 | 0.0 | 0.0 | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 |'
+  id: totrans-655
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 0.0 | 10.0 | **78.8** | 0.0 | 0.0 | 3.1 | 5.6 | 0.0 | 0.0 | 2.5 |'
+  id: totrans-656
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 5.0 | 0.0 | 0.0 | **90.6** | 0.0 | 2.5 | 0.6 | 0.0 | 0.6 | 0.6 |'
+  id: totrans-657
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 1.2 | 0.0 | 0.0 | 0.0 | **81.2** | 6.2 | 5.0 | 6.2 | 0.0 | 0.0 |'
+  id: totrans-658
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 0.0 | 0.0 | 0.0 | 0.0 | 0.6 | **93.8** | 5.6 | 0.0 | 0.0 | 0.0 |'
+  id: totrans-659
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 0.0 | 0.0 | 0.6 | 0.0 | 0.6 | 8.8 | **90.0** | 0.0 | 0.0 | 0.0 |'
+  id: totrans-660
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 8.8 | 0.0 | 0.0 | 0.0 | 16.2 | 2.5 | 0.0 | **65.0** | 6.9 | 0.6 |'
+  id: totrans-661
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 8.1 | 0.0 | 0.0 | 6.2 | 0.0 | 1.9 | 4.4 | 9.4 | **63.1** | 6.9 |'
+  id: totrans-662
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 3.8 | 0.0 | 4.4 | 3.1 | 0.0 | 0.0 | 0.0 | 1.9 | 10.6 | **76.2** |'
+  id: totrans-663
+  prefs: []
+  type: TYPE_TB
+- en: This gives us an overall accuracy of 81.6 percent.
+  id: totrans-664
+  prefs: []
+  type: TYPE_NORMAL
+- en: Voting is the typical approach used to combine outputs from several models.
+    To implement voting in this case, we’ll use [Listing 15-17](ch15.xhtml#ch15lis17).
+  id: totrans-665
+  prefs: []
+  type: TYPE_NORMAL
+- en: t = np.zeros((6,len(y_test)), dtype="uint32")
+  id: totrans-666
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ t[0,:] = np.argmax(p0, axis=1)
+  id: totrans-667
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[1,:] = np.argmax(p1, axis=1)
+  id: totrans-668
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[2,:] = np.argmax(p2, axis=1)
+  id: totrans-669
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[3,:] = np.argmax(p3, axis=1)
+  id: totrans-670
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[4,:] = np.argmax(p4, axis=1)
+  id: totrans-671
+  prefs: []
+  type: TYPE_NORMAL
+- en: t[5,:] = np.argmax(p5, axis=1)
+  id: totrans-672
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = np.zeros(len(y_test), dtype="uint8")
+  id: totrans-673
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y_test)):'
+  id: totrans-674
+  prefs: []
+  type: TYPE_NORMAL
+- en: q = np.bincount(t[:,i])
+  id: totrans-675
+  prefs: []
+  type: TYPE_NORMAL
+- en: p[i] = np.argmax(q)
+  id: totrans-676
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 15-17: Voting to select the best class label*'
+  id: totrans-677
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first apply argmax across the six model predictions to get the associated
+    labels ❶, storing them in a combined matrix, t. We then define p as before to
+    hold the final assigned class label. We loop over each of the test samples, where
+    we use a new NumPy function, bincount, to give us the number of times each class
+    label occurs for the current test sample. The largest such count is the most often
+    selected label, so we use argmax again to assign the proper output label to p.
+    Note, this code works because our class labels are integers running consecutively
+    from 0 through 9\. This alone is a good enough reason to use such simple and ordered
+    class labels.
+  id: totrans-678
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is the confusion matrix produced by this voting procedure:'
+  id: totrans-679
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
+    | **8** | **9** |'
+  id: totrans-680
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-681
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+- en: '| **0** | **86.2** | 0.0 | 0.0 | 8.8 | 0.0 | 0.0 | 0.0 | 3.8 | 0.0 | 1.2 |'
+  id: totrans-682
+  prefs: []
+  type: TYPE_TB
+  zh: '| **0** | **86.2** | 0.0 | 0.0 | 8.8 | 0.0 | 0.0 | 0.0 | 3.8 | 0.0 | 1.2 |'
+- en: '| **1** | 0.0 | **98.1** | 1.2 | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | 0.0 | 0.0 |'
+  id: totrans-683
+  prefs: []
+  type: TYPE_TB
+  zh: '| **1** | 0.0 | **98.1** | 1.2 | 0.0 | 0.0 | 0.6 | 0.0 | 0.0 | 0.0 | 0.0 |'
+- en: '| **2** | 0.0 | 10.6 | **78.1** | 0.0 | 0.0 | 3.1 | 5.6 | 0.0 | 0.0 | 2.5 |'
+  id: totrans-684
+  prefs: []
+  type: TYPE_TB
+  zh: '| **2** | 0.0 | 10.6 | **78.1** | 0.0 | 0.0 | 3.1 | 5.6 | 0.0 | 0.0 | 2.5 |'
+- en: '| **3** | 14.4 | 0.0 | 0.0 | **81.2** | 0.0 | 3.1 | 0.6 | 0.0 | 0.0 | 0.6 |'
+  id: totrans-685
+  prefs: []
+  type: TYPE_TB
+  zh: '| **3** | 14.4 | 0.0 | 0.0 | **81.2** | 0.0 | 3.1 | 0.6 | 0.0 | 0.0 | 0.6 |'
+- en: '| **4** | 0.6 | 0.0 | 0.0 | 0.0 | **83.8** | 5.6 | 5.0 | 5.0 | 0.0 | 0.0 |'
+  id: totrans-686
+  prefs: []
+  type: TYPE_TB
+  zh: '| **4** | 0.6 | 0.0 | 0.0 | 0.0 | **83.8** | 5.6 | 5.0 | 5.0 | 0.0 | 0.0 |'
+- en: '| **5** | 0.0 | 0.0 | 0.0 | 0.0 | 0.6 | **94.4** | 5.0 | 0.0 | 0.0 | 0.0 |'
+  id: totrans-687
+  prefs: []
+  type: TYPE_TB
+  zh: '| **5** | 0.0 | 0.0 | 0.0 | 0.0 | 0.6 | **94.4** | 5.0 | 0.0 | 0.0 | 0.0 |'
+- en: '| **6** | 0.0 | 0.0 | 1.2 | 0.0 | 0.6 | 9.4 | **88.8** | 0.0 | 0.0 | 0.0 |'
+  id: totrans-688
+  prefs: []
+  type: TYPE_TB
+  zh: '| **6** | 0.0 | 0.0 | 1.2 | 0.0 | 0.6 | 9.4 | **88.8** | 0.0 | 0.0 | 0.0 |'
+- en: '| **7** | 8.8 | 0.0 | 0.0 | 0.0 | 18.1 | 1.9 | 0.0 | **65.6** | 5.0 | 0.6 |'
+  id: totrans-689
+  prefs: []
+  type: TYPE_TB
+  zh: '| **7** | 8.8 | 0.0 | 0.0 | 0.0 | 18.1 | 1.9 | 0.0 | **65.6** | 5.0 | 0.6 |'
+- en: '| **8** | 7.5 | 0.0 | 0.0 | 6.9 | 0.0 | 3.1 | 3.8 | 8.8 | **67.5** | 2.5 |'
+  id: totrans-690
+  prefs: []
+  type: TYPE_TB
+  zh: '| **8** | 7.5 | 0.0 | 0.0 | 6.9 | 0.0 | 3.1 | 3.8 | 8.8 | **67.5** | 2.5 |'
+- en: '| **9** | 5.6 | 0.0 | 6.2 | 1.2 | 0.0 | 0.6 | 0.0 | 1.9 | 11.2 | **73.1** |'
+  id: totrans-691
+  prefs: []
+  type: TYPE_TB
+  zh: '| **9** | 5.6 | 0.0 | 6.2 | 1.2 | 0.0 | 0.6 | 0.0 | 1.9 | 11.2 | **73.1** |'
+- en: This gives us an overall accuracy of 81.7 percent.
+  id: totrans-692
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这给我们带来了81.7%的整体准确率。
+- en: Each of these three ensemble approaches improved our results, almost identically.
+    A simple combination of the model outputs gave us, essentially, an accuracy boost
+    of 3 percent over the base model alone, thereby demonstrating the utility of ensemble
+    techniques.
+  id: totrans-693
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这三种集成方法每种都提高了我们的结果，几乎是完全相同的。通过简单地组合模型输出，我们基本上获得了比仅使用基础模型高出3%的准确度，从而证明了集成技术的实用性。
+- en: Summary
+  id: totrans-694
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: 总结
+- en: This chapter presented a case study, a new dataset, and the steps we need to
+    take to work through building a useful model. We started by working with the dataset
+    as given to us, as raw sound samples, which we were able to augment successfully.
+    We noticed that we had a feature vector and attempted to use classical models.
+    From there, we moved on to 1D convolutional neural networks. Neither of these
+    approaches was particularly successful.
+  id: totrans-695
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 本章展示了一个案例研究，一个新的数据集，以及我们在构建有用模型时需要采取的步骤。我们首先处理了给定的数据集，作为原始声音样本，并成功进行了数据增强。我们注意到自己有一个特征向量，并尝试使用经典模型。从那里，我们转向了1D卷积神经网络。这些方法都没有特别成功。
+- en: Fortunately for us, our dataset allowed for a new representation, one that illustrated
+    more effectively what composed the data and, especially important for us, introduced
+    spatial elements so that we could work with 2D convolutional networks. With these
+    networks, we improved quite a bit on the best 1D results, but we were still not
+    at a level that was likely to be useful.
+  id: totrans-696
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 幸运的是，我们的数据集支持一种新的表示方法，它更有效地展示了数据的组成，尤其对我们来说，引入了空间元素，使我们能够使用二维卷积网络。通过这些网络，我们在最好的1D结果上取得了相当大的提升，但仍然没有达到一个可能有用的水平。
+- en: After exhausting our bag of CNN training tricks, we moved to ensembles of classifiers.
+    With these, we discovered a modest improvement by using simple approaches to combining
+    the base model outputs (for example, averaging).
+  id: totrans-697
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在用尽了我们所有的CNN训练技巧后，我们转向了分类器的集成方法。在这些方法中，我们通过简单的组合基础模型输出（例如，取平均值）发现了适度的提升。
+- en: 'We can show the progression of models and their overall accuracies to see how
+    our case study evolved:'
+  id: totrans-698
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以展示模型的演变及其整体准确率，看看我们的案例研究是如何发展的：
+- en: '| **Model** | **Data source** | **Accuracy** |'
+  id: totrans-699
+  prefs: []
+  type: TYPE_TB
+  zh: '| **模型** | **数据来源** | **准确率** |'
+- en: '| --- | --- | --- |'
+  id: totrans-700
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- | --- |'
+- en: '| Gaussian Naïve Bayes | 1D sound sample | 28.1% |'
+  id: totrans-701
+  prefs: []
+  type: TYPE_TB
+  zh: '| 高斯朴素贝叶斯 | 1D 声音样本 | 28.1% |'
+- en: '| Random Forest (1,000 trees) | 1D sound sample | 34.4% |'
+  id: totrans-702
+  prefs: []
+  type: TYPE_TB
+  zh: '| 随机森林（1,000棵树） | 1D 声音样本 | 34.4% |'
+- en: '| 1D CNN | 1D sound sample | 54.0% |'
+  id: totrans-703
+  prefs: []
+  type: TYPE_TB
+  zh: '| 1D CNN | 1D 声音样本 | 54.0% |'
+- en: '| 2D CNN | Spectrogram | 78.8% |'
+  id: totrans-704
+  prefs: []
+  type: TYPE_TB
+  zh: '| 2D CNN | 频谱图 | 78.8% |'
+- en: '| Ensemble (average) | Spectrogram | 82.0% |'
+  id: totrans-705
+  prefs: []
+  type: TYPE_TB
+  zh: '| 集成（平均） | 频谱图 | 82.0% |'
+- en: This table shows the power of modern deep learning and the utility of combining
+    it with well-proven classical approaches like ensembles.
+  id: totrans-706
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这张表展示了现代深度学习的强大能力，以及将其与已验证的经典方法如集成方法相结合的实用性。
+- en: This chapter concludes our exploration of machine learning. We started at the
+    beginning, with data and datasets. We moved on to the classical machine learning
+    models, and then dove into traditional neural networks so that we would have a
+    solid foundation from which to understand modern convolutional neural networks.
+    We explored CNNs in detail and concluded with a case study as an illustration
+    of how you might approach a new dataset to build a successful model. Along the
+    way, we learned about how to evaluate models. We became familiar with the metrics
+    used by the community so that we can understand what people are talking about
+    and presenting in their papers.
+  id: totrans-707
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 本章结束了我们对机器学习的探索。我们从头开始，了解数据和数据集。接着我们介绍了经典的机器学习模型，然后深入探讨了传统的神经网络，以便为理解现代卷积神经网络奠定坚实的基础。我们详细探讨了卷积神经网络，并通过一个案例研究作为例子，说明你如何处理一个新的数据集来构建一个成功的模型。在此过程中，我们学习了如何评估模型。我们熟悉了社区使用的评估指标，以便理解人们在论文中讨论和呈现的内容。
+- en: Of course, this entire book has been an introduction, and we have barely scratched
+    the surface of the ever-expanding world that is machine learning. Our final chapter
+    will serve as a jumping-off point—a guide to where you may want to wander next
+    to expand your machine learning knowledge beyond the tight bounds we’ve been required
+    to set for ourselves here.
+  id: totrans-708
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 当然，这整本书一直是一个引导，我们只是稍微触及了机器学习这个不断扩展的世界的表面。我们的最后一章将作为一个起点——一个指南，告诉你接下来可能想要探索的方向，帮助你在我们在这里所设定的有限框架之外，拓展你的机器学习知识。
