@@ -1,31 +1,44 @@
 - en: '10'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '10'
 - en: RESTRICTING ACCESS WITH FACE RECOGNITION
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用人脸识别限制访问权限
 - en: '![Image](../images/common.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/common.jpg)'
 - en: In the previous chapter, you were a technician in the Coalition Marines, a branch
     of the Space Force. In this chapter, you’re that same technician, only your job
     just got harder. Your role is now to *recognize* faces, rather than just detect
     them. Your commander, Captain Demming, has discovered the lab containing the mutant-producing
     interdimensional portal, and he wants access to it restricted to just himself.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前一章中，你是太空军的一名联军海军技术员。在这一章中，你依然是那个技术员，只是你的工作变得更加复杂。你现在的角色是*识别人脸*，而不仅仅是检测人脸。你的指挥官，德明上尉，发现了一个包含突变体生产的跨维度传送门的实验室，他希望仅限自己访问该实验室。
 - en: As in the previous chapter, you’ll need to act quickly, so you’ll rely on Python
     and OpenCV for speed and efficiency. Specifically, you’ll use OpenCV’s local binary
     pattern histogram (LBPH) algorithm, one of the oldest and easiest to use face
     recognition algorithms, to help lock down the lab. If you haven’t installed and
     used OpenCV before, check out “Installing the Python Libraries” on [page 6](ch01.xhtml#page_6).
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 如同前一章所述，你需要快速行动，因此你将依赖 Python 和 OpenCV 来提高速度和效率。具体来说，你将使用 OpenCV 的局部二值模式直方图（LBPH）算法，这是一种最古老且最易使用的人脸识别算法，来帮助锁定实验室。如果你之前没有安装和使用过
+    OpenCV，可以查看 [第6页](ch01.xhtml#page_6)中的“安装 Python 库”。
 - en: '**Recognizing Faces with Local Binary Pattern Histograms**'
+  id: totrans-5
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**使用局部二值模式直方图识别人脸**'
 - en: 'The LBPH algorithm relies on feature vectors to recognize faces. Remember from
     [Chapter 5](ch05.xhtml) that a feature vector is basically a list of numbers in
     a specific order. In the case of LBPH, the numbers represent some qualities of
@@ -36,78 +49,109 @@
     vector: (5.1, 7.4, 5.3, 11.8). Reducing faces in a database to these vectors enables
     rapid searches, and it allows us to express the difference between them as the
     numerical difference, or *distance*, between two vectors.'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: LBPH 算法依赖特征向量来识别人脸。回想一下 [第5章](ch05.xhtml)中提到的，特征向量基本上是按特定顺序排列的一组数字。在 LBPH 中，这些数字代表了面部的一些特性。例如，假设你可以通过一些简单的测量来区分不同的面部，比如眼睛之间的距离、嘴巴的宽度、鼻子的长度和脸部的宽度。按照这个顺序，且以厘米为单位，这四个测量值可能组成如下的特征向量：（5.1，7.4，5.3，11.8）。将数据库中的人脸简化为这些向量，可以实现快速搜索，并且我们可以通过两个向量之间的数值差异，或者说*距离*，来表达它们之间的差异。
 - en: Recognizing faces computationally requires more than four features, of course,
     and the many available algorithms work on different features. Among these algorithms
     are Eigenfaces, LBPH, Fisherfaces, scale-invariant feature transform (SIFT), speeded-up
     robust features (SURF), and various neural network approaches. When the face images
     are acquired under controlled conditions, these algorithms can have a high accuracy
     rate, about as high as that of humans.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 识别人脸在计算上需要多个特征，当然，许多可用的算法依赖于不同的特征。在这些算法中有特征脸（Eigenfaces）、LBPH、Fisherfaces、尺度不变特征变换（SIFT）、加速稳健特征（SURF）以及各种神经网络方法。当面部图像在受控条件下采集时，这些算法可以达到与人类相似的高准确率。
 - en: Controlled conditions for images of faces might involve a frontal view of each
     face with a normal, relaxed expression and, to be usable by all algorithms, consistent
     lighting conditions and resolutions. The face should be unobscured by facial hair
     and glasses, assuming the algorithm was taught to recognize the face under those
     conditions.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于面部图像的受控条件，可能涉及每个面部的正面视图，表情自然、放松，并且为了让所有算法都能使用，还需要保持一致的光照条件和分辨率。面部应避免被胡须和眼镜遮挡，前提是算法已经学习了如何在这些条件下识别面部。
 - en: '***The Face Recognition Flowchart***'
+  id: totrans-9
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***人脸识别流程图***'
 - en: 'Before getting into the details of the LBPH algorithm, let’s look at how face
     recognition works in general. The process consists of three main steps: capturing,
     training, and predicting.'
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 在深入了解 LBPH 算法的细节之前，让我们先来看看人脸识别的一般工作原理。这个过程包括三个主要步骤：捕获、训练和预测。
 - en: In the capture phase, you gather the images that you’ll use to train the face
     recognizer ([Figure 10-1](ch10.xhtml#ch010fig1)). For each face you want to recognize,
     you should take a dozen or more images with multiple expressions.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 在捕获阶段，你需要收集将用于训练人脸识别器的图像（见 [图10-1](ch10.xhtml#ch010fig1)）。对于每个你想要识别的面孔，你应拍摄十张或更多张不同表情的图像。
 - en: '![Image](../images/fig10_01.jpg)'
+  id: totrans-12
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/fig10_01.jpg)'
 - en: 'Figure 10-1: Capturing facial images to train the face recognizer'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-1：捕捉人脸图像以训练人脸识别器
 - en: The next step in the capture process is to detect the face in the image, draw
     a rectangle around it, crop the image to the rectangle, resize the cropped images
     to the same dimensions (depending on the algorithm), and convert them to grayscale.
     The algorithms typically keep track of faces using integers, so each subject will
     need a unique ID number. Once processed, the faces are stored in a single folder,
     which we’ll call the database.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 捕捉过程的下一步是检测图像中的人脸，在人脸周围绘制一个矩形，裁剪图像到矩形区域，调整裁剪后的图像大小以匹配相同的尺寸（取决于算法），并将其转换为灰度图像。算法通常使用整数来跟踪人脸，因此每个对象需要一个唯一的ID号。处理后，所有人脸将存储在一个文件夹中，我们称之为数据库。
 - en: The next step is to train the face recognizer ([Figure 10-2](ch10.xhtml#ch010fig2)).
     The algorithm —in our case, LBPH—analyzes each of the training images and then
     writes the results to a YAML (*.yml*) file, a human-readable data-serialization
     language used for data storage. YAML originally meant “Yet Another Markup Language”
     but now stands for “YAML Ain’t Markup Language” to stress that it’s more than
     just a document markup tool.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一步是训练人脸识别器（见[图10-2](ch10.xhtml#ch010fig2)）。该算法——在我们的案例中是LBPH——分析每个训练图像，然后将结果写入YAML（*.yml*）文件，YAML是一种可读性强的数据序列化语言，用于数据存储。YAML最初代表“Yet
+    Another Markup Language”，但现在表示“YAML Ain’t Markup Language”，以强调它不仅仅是一个文档标记工具。
 - en: '![Image](../images/fig10_02.jpg)'
+  id: totrans-16
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/fig10_02.jpg)'
 - en: 'Figure 10-2: Training the face recognizer and writing the results to a file'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-2：训练人脸识别器并将结果写入文件
 - en: With the face recognizer trained, the final step is to load a new, untrained
     face and predict its identity ([Figure 10-3](ch10.xhtml#ch010fig3)). These unknown
     faces are prepped in the same manner as the training images—that is, cropped,
     resized, and converted to grayscale. The recognizer then analyzes them, compares
     the results to the faces in the YAML file, and predicts which face matches best.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练好人脸识别器后，最后一步是加载一个新的、未经训练的人脸并预测其身份（见[图10-3](ch10.xhtml#ch010fig3)）。这些未知的人脸与训练图像的处理方式相同——即，裁剪、调整大小并转换为灰度图像。然后，识别器会对其进行分析，将结果与YAML文件中的人脸进行比对，并预测最匹配的人脸。
 - en: '![Image](../images/fig10_03.jpg)'
+  id: totrans-19
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/fig10_03.jpg)'
 - en: 'Figure 10-3: Predicting unknown faces using the trained recognizer'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-3：使用训练过的识别器预测未知的人脸
 - en: Note that the recognizer will make a prediction about the identity of every
     face. If there’s only one trained face in the YAML file, the recognizer will assign
     every face the trained face’s ID number. It will also output a *confidence* factor,
@@ -117,32 +161,44 @@
     the predicted face is correct. If the confidence exceeds the accepted threshold
     value, the program will discard the match and classify the face as “unknown” (see
     [Figure 10-3](ch10.xhtml#ch010fig3)).
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，识别器将对每个面孔的身份进行预测。如果YAML文件中只有一个已训练的人脸，识别器将为每个人脸分配该训练人脸的ID号。它还会输出一个*置信度*因素，实际上是新的人脸与训练人脸之间的距离度量。数字越大，匹配越差。我们稍后会更详细地讨论这个问题，但现在要知道，你将使用一个阈值来决定预测的人脸是否正确。如果置信度超过接受的阈值，程序将丢弃该匹配，并将人脸分类为“未知”（见[图10-3](ch10.xhtml#ch010fig3)）。
 - en: '***Extracting Local Binary Pattern Histograms***'
+  id: totrans-22
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***提取局部二值模式直方图***'
 - en: The OpenCV face recognizer you’ll use is based on local binary patterns. These
     texture descriptors were first used around 1994 to describe and classify surface
     textures, differentiating concrete from carpeting, for example. Faces are also
     composed of textures, so the technique works for face recognition.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将使用的OpenCV人脸识别器是基于局部二值模式（LBP）的。这些纹理描述符最早于1994年左右被用来描述和分类表面纹理，例如区分混凝土和地毯。人脸也是由纹理组成的，因此该技术也适用于人脸识别。
 - en: Before you can extract histograms, you first need to generate the binary patterns.
     An LBP algorithm computes a local representation of texture by comparing each
     pixel with its surrounding neighbors. The first computational step is to slide
     a small window across the face image and capture the pixel information. [Figure
     10-4](ch10.xhtml#ch010fig4) shows an example window.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 在提取直方图之前，你需要先生成二值模式。LBP算法通过将每个像素与其周围的邻居进行比较，计算出纹理的局部表示。第一个计算步骤是将一个小窗口滑动到人脸图像上并捕捉像素信息。[图10-4](ch10.xhtml#ch010fig4)显示了一个示例窗口。
 - en: '![Image](../images/fig10_04.jpg)'
+  id: totrans-25
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/fig10_04.jpg)'
 - en: 'Figure 10-4: Example 3×3 pixel sliding window used to capture local binary
     patterns'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 10-4：示例 3×3 像素滑动窗口，用于捕获局部二值模式
 - en: The next step is to convert the pixels into a binary number, using the central
     value (in this case 90) as a threshold. You do this by comparing the eight neighboring
     values to the threshold. If a neighboring value is equal to or higher than the
@@ -151,25 +207,37 @@
     use a clockwise rotation) to form a new binary value (11010111). Finish by converting
     this binary number into a decimal number (215) and storing it at the central pixel
     location.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一步是将像素转换为二进制数，使用中心值（在此情况下为 90）作为阈值。你通过将八个相邻值与阈值进行比较来实现这一点。如果某个相邻值等于或高于阈值，则赋值为
+    1；如果低于阈值，则赋值为 0。接下来，忽略中心值，将二进制值逐行连接（某些方法使用顺时针旋转）以形成新的二进制值（11010111）。最后，将该二进制数转换为十进制数（215），并将其存储在中心像素位置。
 - en: Continue sliding the window until all the pixels have been converted to LBP
     values. In addition to using a square window to capture neighboring pixels, the
     algorithm can use a radius, a process called *circular LBP*.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 继续滑动窗口，直到所有像素都转换为 LBP 值。除了使用方形窗口捕获相邻像素外，该算法还可以使用半径，这一过程称为*圆形 LBP*。
 - en: Now it’s time to extract histograms from the LBP image produced in the previous
     step. To do this, you use a grid to divide the LBP image into rectangular regions
     ([Figure 10-5](ch10.xhtml#ch010fig5)). Within each region, you construct a histogram
     of the LBP values (labeled “Local Region Histogram” in [Figure 10-5](ch10.xhtml#ch010fig5)).
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在是时候从上一步产生的 LBP 图像中提取直方图了。为此，你使用一个网格将 LBP 图像划分为矩形区域（见[图 10-5](ch10.xhtml#ch010fig5)）。在每个区域内，构建
+    LBP 值的直方图（在[图 10-5](ch10.xhtml#ch010fig5)中标记为“局部区域直方图”）。
 - en: '![Image](../images/fig10_05.jpg)'
+  id: totrans-30
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/fig10_05.jpg)'
 - en: 'Figure 10-5: Extracting the LBP histograms'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 10-5：提取 LBP 直方图
 - en: After constructing the local region histograms, you follow a predetermined order
     to normalize and concatenate them into one long histogram (shown truncated in
     [Figure 10-5](ch10.xhtml#ch010fig5)). Because you’re using a grayscale image with
@@ -179,8 +247,12 @@
     is that this composite histogram includes diagnostic features needed to recognize
     a face. They are thus *representations* of a face image, and face recognition
     consists of comparing these representations, rather than the images themselves.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 构建局部区域直方图后，按照预定顺序对它们进行归一化并将它们连接成一个长直方图（在[图 10-5](ch10.xhtml#ch010fig5)中显示为截断形式）。由于你使用的是灰度图像，其强度值在
+    0 和 255 之间，因此每个直方图中有 256 个位置。如果你使用的是 10×10 网格，如在[图 10-5](ch10.xhtml#ch010fig5)中所示，那么最终直方图中将有
+    10×10×256 = 25,600 个位置。假设这个复合直方图包含了识别面部所需的诊断特征。因此，它们是面部图像的*表示*，而面部识别是通过比较这些表示，而不是图像本身来实现的。
 - en: To predict the identity of a new, unknown face, you extract its concatenated
     histogram and compare it to the existing histograms in the trained database. The
     comparison is a measure of the distance between histograms. This calculation may
@@ -189,157 +261,225 @@
     histogram match, along with the confidence measurement. You can then apply a threshold
     to the confidence value, as in [Figure 10-3](ch10.xhtml#ch010fig3). If the confidence
     for the new image is below the threshold value, assume you have a positive match.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 要预测一个新的未知面孔的身份，你需要提取其连接直方图，并将其与训练数据库中的现有直方图进行比较。比较的方式是衡量直方图之间的距离。这个计算可以使用各种方法，包括欧几里得距离、绝对距离、卡方距离等。该算法返回与最接近的直方图匹配的训练图像的
+    ID 号码，并附带置信度测量。然后，你可以对置信度值应用阈值，如在[图 10-3](ch10.xhtml#ch010fig3)中所示。如果新图像的置信度低于阈值，则认为匹配为正。
 - en: Because OpenCV encapsulates all these steps, the LBPH algorithm is easy to implement.
     It also produces great results in a controlled environment and is unaffected by
     changes in lighting conditions ([Figure 10-6](ch10.xhtml#ch010fig6)).
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于 OpenCV 封装了所有这些步骤，LBPH 算法易于实现。它还在受控环境中产生了出色的结果，并且不受光照条件变化的影响（见[图 10-6](ch10.xhtml#ch010fig6)）。
 - en: '![Image](../images/fig10_06.jpg)'
+  id: totrans-35
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/fig10_06.jpg)'
 - en: 'Figure 10-6: LBPs are robust against changes in illumination'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-6：LBP对光照变化具有鲁棒性
 - en: The LBPH algorithm handles changes to lighting conditions well because it relies
     on comparisons among pixel intensities. Even if illumination is much brighter
     in one image than another, the relative reflectivity of the face remains the same,
     and LBPH can capture it.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: LBPH算法能够很好地应对光照条件变化，因为它依赖于像素强度之间的比较。即使一张图像的照明比另一张图像要亮得多，面部的相对反射率依然保持不变，LBPH能够捕捉到这一点。
 - en: '**Project #14: Restricting Access to the Alien Artifact**'
+  id: totrans-38
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**项目 #14：限制外星文物的访问**'
 - en: 'Your squad has fought its way to the lab containing the portal-producing alien
     artifact. Captain Demming orders it locked down immediately, with access restricted
     to just him. Another technician will override the current system with a military
     laptop. Captain Demming will gain access through this laptop using two levels
     of security: a typed password and face verification. Aware of your skills with
     OpenCV, he’s ordered *you* to handle the facial verification part.'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 你的队伍已经打进了包含产生传送门的外星文物的实验室。德明上校命令立即锁定该实验室，仅他自己可以访问。另一个技术员将用军用笔记本电脑覆盖当前系统。德明上校将通过这台笔记本电脑使用两级安全验证：一个是输入密码，另一个是面部识别。考虑到你在OpenCV方面的技能，他命令*你*负责面部验证部分。
 - en: THE OBJECTIVE
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 目标
 - en: Write a Python program that recognizes Captain Demming’s face.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 编写一个Python程序，能够识别德明上校的面孔。
 - en: '***The Strategy***'
+  id: totrans-42
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***策略***'
 - en: You’re pressed for time and working under adverse conditions, so you want to
     use a fast and easy tool with a good performance record, like OpenCV’s LBPH face
     recognizer. You’re aware that LBPH works best under controlled conditions, so
     you’ll use the same laptop webcam to capture both the training images and the
     face of anyone trying to access the lab.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于时间紧迫并且工作环境不佳，你希望使用一个快速且易用的工具，且具有良好的性能记录，比如OpenCV的LBPH人脸识别器。你知道LBPH在受控环境下表现最佳，因此你将使用相同的笔记本电脑摄像头来捕捉训练图像和任何试图访问实验室的人的面孔。
 - en: In addition to pictures of Demming’s face, you’ll want to capture some faces
     that don’t belong to Captain Demming. You’ll use these faces to ensure that all
     the positive matches really belong to the captain. Don’t worry about setting up
     the password, isolating the program from the user, or hacking into the current
     system; the other technician will handle these tasks while you go out and blast
     some mutants.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了德明上校的面部照片外，你还需要捕捉一些不属于德明上校的面孔。你将使用这些面孔来确保所有的正面匹配确实属于上校。无需担心设置密码、隔离程序与用户的操作，或者破解现有系统；另一个技术员会处理这些任务，而你则负责外出打击一些变异体。
 - en: '***Supporting Modules and Files***'
+  id: totrans-45
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***支持模块和文件***'
 - en: You’ll use both OpenCV and NumPy to do most of the work in this project. If
     you don’t already have them installed, see “Installing the Python Libraries” on
     [page 6](ch01.xhtml#page_6). You’ll also need playsound, for playing sounds, and
     pyttsx3, for text-to-speech functionality. You can find out more about these modules,
     including installation instructions, in “The Code” on [page 207](ch09.xhtml#page_207).
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个项目中，你将主要使用OpenCV和NumPy。如果你还没有安装它们，请参考[第6页](ch01.xhtml#page_6)的“安装Python库”部分。你还需要playsound模块来播放声音，以及pyttsx3模块来实现文本转语音功能。你可以在[第207页](ch09.xhtml#page_207)的“代码”部分找到这些模块的更多信息，包括安装说明。
 - en: The code and supporting files are in the *Chapter_10* folder from the book’s
     website, *[https://nostarch.com/real-world-python/](https://nostarch.com/real-world-python/)*.
     Keep the folder structure and filenames the same after downloading them ([Figure
     10-7](ch10.xhtml#ch010fig7)). Note that the *tester* and *trainer* folders are
     created later and will not be included in the download.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码和支持文件位于书籍网站上的*Chapter_10*文件夹，[https://nostarch.com/real-world-python/](https://nostarch.com/real-world-python/)。下载后请保持文件夹结构和文件名不变（见[图10-7](ch10.xhtml#ch010fig7)）。注意，*tester*和*trainer*文件夹稍后会创建，并不会包含在下载内容中。
 - en: '![Image](../images/fig10_07.jpg)'
+  id: totrans-48
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/fig10_07.jpg)'
 - en: 'Figure 10-7: File structure for Project 14'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-7：项目14的文件结构
 - en: The *demming_trainer* and *demming_tester* folders contain images of Captain
     Demming and others that you can use for this project. The code currently references
     these folders.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: '*demming_trainer*和*demming_tester*文件夹包含德明上校及其他人的图片，你可以用来完成这个项目。当前代码已引用这些文件夹。'
 - en: If you want to supply your own images—for example, to use your own face to represent
     Captain Demming’s—then you’ll use the folders named *trainer* and *tester*. The
     code that follows will create the *trainer* folder for you. You’ll need to manually
     create the *tester* folder and add some images of yourself, as described later.
     Of course, you’ll need to edit the code so that it points to these new folders.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你想提供自己的图像——例如，使用你自己的面部来代表 Captain Demming——那么你将使用名为 *trainer* 和 *tester* 的文件夹。接下来的代码将为你创建
+    *trainer* 文件夹。你需要手动创建 *tester* 文件夹并添加一些你的照片，稍后会有详细说明。当然，你需要编辑代码，使其指向这些新的文件夹。
 - en: '***The Video Capture Code***'
+  id: totrans-52
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***视频捕获代码***'
 - en: The first step (performed by the *1_capture.py* code) is to capture the facial
     images that you’ll need for training the recognizer. You can skip this step if
     you plan to use the images provided in the *demming_trainer* folder.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一步（由 *1_capture.py* 代码执行）是捕捉你将用于训练识别器的面部图像。如果你打算使用 *demming_trainer* 文件夹中提供的图像，可以跳过此步骤。
 - en: To use your own face for Captain Demming, use your computer’s camera to record
     about a dozen face shots with various expressions and no glasses. If you don’t
     have a webcam, you can skip this step, take selfies with your phone, and save
     them to a folder named *trainer*, as shown in [Figure 10-7](ch10.xhtml#ch010fig7).
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 要使用你自己的面部来表示 Captain Demming，使用计算机的摄像头录制大约十几张不同表情的面部照片，且不戴眼镜。如果你没有摄像头，可以跳过此步骤，使用手机自拍，并将其保存到名为
+    *trainer* 的文件夹中，如 [图10-7](ch10.xhtml#ch010fig7) 所示。
 - en: '**Importing Modules, and Setting Up Audio, a Webcam, Instructions, and File
     Paths**'
+  id: totrans-55
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**导入模块，设置音频、摄像头、说明和文件路径**'
 - en: '[Listing 10-1](ch10.xhtml#ch010list1) imports modules, initializes and sets
     up the audio engine and the Haar cascade classifier, initializes the camera, and
     provides user instructions. You need the Haar cascades because you must detect
     a face before you can recognize it. For a refresher on Haar cascades and face
     detection, see “Detecting Faces in Photographs” on [page 204](ch09.xhtml#page_204).'
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单 10-1](ch10.xhtml#ch010list1) 导入模块，初始化并设置音频引擎和 Haar 级联分类器，初始化摄像头，并提供用户说明。你需要
+    Haar 级联分类器，因为在识别面部之前，必须先检测到它。关于 Haar 级联和面部检测的复习内容，请参阅 [第204页](ch09.xhtml#page_204)
+    中的“照片中的面部检测”。'
 - en: '[PRE0]'
+  id: totrans-57
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Listing 10-1: Importing modules and setting up audio and detector files, a
     webcam, and instructions'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 清单 10-1：导入模块并设置音频和检测器文件、摄像头以及说明
 - en: The imports are the same as those used to detect faces in the previous chapter.
     You’ll use the operating system (via the os module) to manipulate file paths,
     pyttsx3 to play text-to-speech audio instructions, cv to work with images and
     run the face detector and recognizer, and playsound to play a tone that lets users
     know when the program has finished capturing their image.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入的模块与上一章中用于检测面部的模块相同。你将使用操作系统（通过 os 模块）来操作文件路径，使用 pyttsx3 播放文本转语音音频说明，使用 cv
+    处理图像并运行面部检测器和识别器，使用 playsound 播放音效，提示用户程序何时完成捕获其图像。
 - en: Next, set up the text-to-speech engine. You’ll use this to tell the user how
     to run the program. The default voice is dependent on your particular operating
     system. The engine’s rate parameter is currently optimized for the American “David”
     voice on Windows ➊. You may want to edit the argument if you find the speech to
     be too fast or too slow. If you want to change the voice, see the instructions
     accompanying [Listing 9-1](ch09.xhtml#ch09list1) on [page 209](ch09.xhtml#page_209).
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，设置文本转语音引擎。你将使用它告诉用户如何运行程序。默认的语音取决于你所使用的操作系统。该引擎的速率参数目前已针对 Windows 系统上的美国“David”语音进行了优化➊。如果你发现语速太快或太慢，可以编辑该参数。如果你想更改语音，请参阅
+    [清单 9-1](ch09.xhtml#ch09list1) 及 [第209页](ch09.xhtml#page_209) 上的说明。
 - en: You’ll use a tone to alert the user that the video capture process has ended.
     Set up the path to the *tone.wav* audio file as you did in [Chapter 9](ch09.xhtml).
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将使用音效提醒用户视频捕获过程已结束。设置 *tone.wav* 音频文件的路径，方法与 [第9章](ch09.xhtml) 中一样。
 - en: Now, provide the path to the Haar cascade file ➋ and assign the classifier to
     a variable named face_detector. The path shown here is for my Windows machine;
     your path may be different. On macOS, for example, you can find the files under
     *opencv/data/haarcascades*. You can also find them online at *[https://github.com/opencv/opencv/tree/master/data/haarcascades/](https://github.com/opencv/opencv/tree/master/data/haarcascades/)*.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，提供 Haar 级联文件的路径 ➋，并将分类器分配给名为 face_detector 的变量。这里显示的路径是我的 Windows 计算机的路径；你的路径可能会有所不同。例如，在
+    macOS 上，你可以在 *opencv/data/haarcascades* 文件夹下找到这些文件。你也可以在网上找到它们，网址为 *[https://github.com/opencv/opencv/tree/master/data/haarcascades/](https://github.com/opencv/opencv/tree/master/data/haarcascades/)*。
 - en: In [Chapter 9](ch09.xhtml), you learned how to capture your face using your
     computer’s webcam. You’ll use similar code in this program, starting with a call
     to cv.VideoCapture(0). The 0 argument refers to the active camera. If you have
@@ -348,16 +488,22 @@
     opened, and if it did, set the frame width and height, respectively ➌. The first
     argument in both methods refers to the position of the width or height parameter
     in the list of arguments.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 [第 9 章](ch09.xhtml) 中，你学习了如何使用计算机的网络摄像头捕获你的面部图像。你将在本程序中使用类似的代码，从调用 cv.VideoCapture(0)
+    开始。0 参数指的是活动摄像头。如果你有多个摄像头，可能需要使用其他数字，例如 1，这可以通过尝试不同的数字来确定。使用条件语句检查摄像头是否成功打开，如果成功，则分别设置帧的宽度和高度
+    ➌。这两个方法中的第一个参数指的是宽度或高度参数在参数列表中的位置。
 - en: For security reasons, you’ll be present to supervise the video capture phase
     of the process. Nevertheless, use the pyttsx3 engine to explain the procedure
     to the user (this way you don’t have to remember it). To control the acquisition
     conditions to ensure accurate recognition later, the user will need to remove
     any glasses or face coverings and adopt multiple expressions. Among these should
     be the expression they plan to use each time they access the lab.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 出于安全考虑，你将在视频捕获过程中进行监督。然而，你可以使用 pyttsx3 引擎来向用户解释该过程（这样你就不需要记住这些步骤了）。为了控制获取条件并确保后续的识别准确，用户需要摘掉眼镜或面部遮挡物，并展示多种表情。其中应包括他们每次进入实验室时计划使用的表情。
 - en: Finally, they’ll need to follow some printed instructions on the screen. First,
     they’ll enter their last name ➍. You don’t need to worry about duplicates right
     now, as Captain Demming will be the only user. Plus, you’ll assign the user a
@@ -365,48 +511,69 @@
     the faces during training and prediction. Later, you’ll create a dictionary so
     you can keep track of which user ID belongs to which person, assuming more people
     are granted access in the future.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，他们需要按照屏幕上打印的指示操作。首先，他们将输入自己的姓氏 ➍。目前不需要担心重复问题，因为 Demming 阁下将是唯一的用户。此外，你将为用户分配一个唯一的
+    ID 号。OpenCV 将使用这个变量 user_id 来跟踪训练和预测过程中的所有面部图像。以后，你将创建一个字典，以便能够跟踪每个用户 ID 对应的是哪个人，假设未来会有更多人获得访问权限。
 - en: As soon as the user enters their ID number and presses ENTER, the camera will
     turn on and begin capturing images, so let them know this with another call to
     print(). Remember from the previous chapter that the Haar cascade face detector
     is sensitive to head orientation. For it to function properly, the user must look
     right at the webcam and keep their head as straight as possible.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦用户输入他们的 ID 号并按下回车键，摄像头将开启并开始捕获图像，因此通过另一个调用 print() 来通知用户。记住在前一章中提到的 Haar 级联人脸检测器对头部姿态非常敏感。为了让它正常工作，用户必须直接面对网络摄像头并尽量保持头部直立。
 - en: '**Capturing the Training Images**'
+  id: totrans-67
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**捕获训练图像**'
 - en: '[Listing 10-2](ch10.xhtml#ch010list2) uses the webcam and a while loop to capture
     a specified number of face images. The code saves the images to a folder and sounds
     a tone when the operation is complete.'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: '[列表 10-2](ch10.xhtml#ch010list2) 使用网络摄像头和一个 while 循环来捕获指定数量的面部图像。代码将图像保存到一个文件夹中，并在操作完成时发出音调。'
 - en: '[PRE1]'
+  id: totrans-69
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'Listing 10-2: Capturing video images using a loop'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 列表 10-2：使用循环捕获视频图像
 - en: Start by checking for a directory named *trainer*. If it doesn’t exist, use
     the operating system module’s mkdir() method to make the directory. Then change
     the current working directory to this *trainer* folder.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先检查是否有名为 *trainer* 的目录。如果没有，使用操作系统模块的 mkdir() 方法创建该目录。然后，将当前工作目录更改为 *trainer*
+    文件夹。
 - en: Now, initialize a frame_count variable to 0\. The code will capture and save
     a video frame only if it detects a face. To know when to end the program, you’ll
     need to keep count of the number of captured frames.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，初始化 frame_count 变量为 0。只有当检测到人脸时，代码才会捕捉并保存视频帧。为了知道何时结束程序，你需要跟踪已捕捉帧的数量。
 - en: Next, start a while loop set to True. Then call the cap object’s read() method.
     As noted in the previous chapter, this method returns a tuple consisting of a
     Boolean return code and a numpy ndarray object representing the current frame.
     The return code is typically used to check whether you’ve run out of frames when
     reading from a file. Since we’re not reading from a file here, assign it to an
     underscore to indicate an unused variable.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，启动一个设置为 True 的 while 循环。然后调用 cap 对象的 read() 方法。如前一章所述，该方法返回一个元组，包含一个布尔值返回码和一个
+    numpy ndarray 对象，表示当前帧。返回码通常用于检查在从文件读取时是否已读完所有帧。由于我们这里不是从文件读取，所以将其赋值给一个下划线，以表示这是一个未使用的变量。
 - en: Both face detection and face recognition work on grayscale images, so convert
     the frame to grayscale and name the resulting array gray. Then, call the detectMultiscale()
     method to detect faces in the image ➊. You can find details of how this method
@@ -414,60 +581,85 @@
     Because you’re controlling conditions by having the user look into a laptop’s
     webcam, you can rest assured that the algorithm will work well, though you should
     certainly check the results.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 人脸检测和人脸识别都在灰度图像上工作，因此将帧转换为灰度图像，并将结果数组命名为 gray。接着，调用 detectMultiscale() 方法检测图像中的人脸
+    ➊。有关该方法如何工作的详细信息，请参考 [Listing 9-2](ch09.xhtml#ch09list2) 中的讨论，见 [第 212 页](ch09.xhtml#page_212)。由于你通过让用户注视笔记本的摄像头来控制条件，你可以放心地认为算法会表现良好，尽管你当然需要检查结果。
 - en: The previous method should output the coordinates for a rectangle around the
     face. Start a for loop through each set of coordinates and immediately advance
     the frame_count variable by 1.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 前面的方法应该输出围绕人脸的矩形框坐标。接着，开始一个 for 循环，遍历每一组坐标，并立即将 frame_count 变量加 1。
 - en: 'Use OpenCV’s imwrite() method to save the image to the *trainer* folder. The
     folders use the following naming logic: *name.user_id.frame_count.jpg* (such as
     *demming.1.9.jpg*). Save only the portion of the image within the face rectangle.
     This will help ensure you aren’t training the algorithm to recognize background
     features.'
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 OpenCV 的 imwrite() 方法将图像保存到 *trainer* 文件夹中。文件夹采用以下命名规则：*name.user_id.frame_count.jpg*（例如
+    *demming.1.9.jpg*）。只保存人脸矩形区域内的图像部分，这将有助于确保你不会训练算法识别背景特征。
 - en: The next two lines draw a face rectangle on the original frame and show it.
     This is so the user—Captain Demming—can check that his head is upright and his
     expressions are suitable. The waitKey() method delays the capture process enough
     for the user to cycle through multiple expressions.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来的两行代码会在原始帧上绘制一个人脸矩形，并显示它。这是为了让用户——Demming 阁下——能够检查自己的头部是否直立，表情是否适当。waitKey()
+    方法延迟了捕捉过程，给用户足够时间切换不同的表情。
 - en: Even if Captain Demming will always adopt a relaxed, neutral expression when
     having his identity verified, training the software on a range of expressions
     will lead to more robust results. Along these lines, it’s also helpful if the
     user tilts their head *slightly* from side to side during the capture phase.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 即使 Demming 阁下在验证身份时总是采用放松的中性表情，对软件进行一系列表情的训练将导致更为健壮的结果。从这个角度来看，如果用户在捕捉阶段稍微*左右*摇动头部，也会有帮助。
 - en: Next, check whether the target frame count has been reached, and if it has,
     break out of the loop ➋. Note that, if no one is looking at the camera, the loop
     will run forever. It counts frames only if the cascade classifier detects a face
     and returns a face rectangle.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，检查目标帧数是否已达到，如果已经达到，则跳出循环 ➋。请注意，如果没有人对着摄像头，循环将永远运行下去。只有当级联分类器检测到人脸并返回人脸矩形时，才会计数帧数。
 - en: Let the user know that the camera has turned off by printing a message and sounding
     the tone. Then end the program by releasing the camera and destroying all the
     image windows.
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过打印消息并发出提示音，让用户知道相机已经关闭。然后，释放相机并销毁所有图像窗口，从而结束程序。
 - en: At this point, the *trainer* folder should contain 30 images of the user’s closely
     cropped face. In the next section, you’ll use these images—or the set provided
     in the *demming_trainer* folder—to train OpenCV’s face recognizer.
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 此时，*trainer* 文件夹中应该包含 30 张用户的紧密裁剪人脸图像。在接下来的部分中，你将使用这些图像——或 *demming_trainer*
+    文件夹中提供的图像集——来训练 OpenCV 的人脸识别器。
 - en: '***The Face Trainer Code***'
+  id: totrans-82
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***面部训练器代码***'
 - en: The next step is to use OpenCV to create an LBPH-based face recognizer, train
     it with the training images, and save the results as a reusable file. If you’re
     using your own face to represent Captain Demming’s, you’ll point the program to
     the *trainer* folder. Otherwise, you’ll need to use the *demming _trainer* folder,
     which, along with the *2_train.py* file containing the code, is in the downloadable
     *Chapter_10* folder.
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一步是使用OpenCV创建一个基于LBPH的面部识别器，使用训练图像对其进行训练，并将结果保存为可重复使用的文件。如果你使用自己的面部图像来代表Captain
+    Demming的面部，你需要将程序指向*trainer*文件夹。否则，你将需要使用*demming_trainer*文件夹，和包含代码的*2_train.py*文件，这些都位于可下载的*Chapter_10*文件夹中。
 - en: '[Listing 10-3](ch10.xhtml#ch010list3) sets up paths to the Haar cascades used
     for face detection and the training images captured by the previous program. OpenCV
     keeps track of faces using label integers, rather than name strings, and the listing
@@ -475,107 +667,149 @@
     through the training images, loads them, extracts a user ID number from the filename,
     and detects the faces. Finally, it trains the recognizer and saves the results
     to a file.'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: '[列表 10-3](ch10.xhtml#ch010list3)设置了用于面部检测的Haar级联路径和前一个程序捕捉的训练图像。OpenCV通过标签整数跟踪面部，而不是使用名称字符串，列表还初始化了用于存储标签及其相关图像的列表。接着，它遍历训练图像，加载它们，从文件名中提取用户ID号，并进行面部检测。最后，它训练识别器并将结果保存到文件中。'
 - en: '[PRE2]'
+  id: totrans-85
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'Listing 10-3: Training and saving the LBPH face recognizer'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 列表 10-3：训练并保存LBPH面部识别器
 - en: You’ve seen the imports and the face detector code before. Although you’ve already
     cropped the training images to face rectangles in *1_capture.py*, it doesn’t hurt
     to repeat this procedure. Since *2_train.py* is a stand-alone program, it’s best
     not to take anything for granted.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 你之前已经看到过导入和面部检测器的代码。虽然你已经在*1_capture.py*中将训练图像裁剪成面部矩形，但重复这个过程并不会有坏处。由于*2_train.py*是一个独立程序，最好不要对任何事情掉以轻心。
 - en: 'Next, you must choose which set of training images to use: the ones you captured
     yourself in the *trainer* folder or the set provided in the *demming_trainer*
     folder ➊. Comment out or delete the line for the one you don’t use. Remember,
     because you’re not providing a full path to the folder, you’ll need to launch
     your program from the folder containing it, which should be one level above the
     *trainer* and *demming_trainer* folders.'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，你必须选择使用哪一组训练图像：你自己在*trainer*文件夹中捕捉的图像，还是*demming_trainer*文件夹中提供的图像集 ➊。注释掉或删除不使用的那一行。记住，由于你没有提供文件夹的完整路径，你需要从包含该文件夹的上一级文件夹启动程序，即*trainer*和*demming_trainer*文件夹的父文件夹。
 - en: Create a list named image_paths using list comprehension. This will hold the
     directory path and filename for each image in the training folder. Then create
     empty lists for the images and their labels.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用列表推导创建一个名为image_paths的列表。它将保存训练文件夹中每个图像的目录路径和文件名。然后创建空列表来存储图像及其标签。
 - en: Start a for loop through the image paths. Read the image in grayscale; then
     extract its numeric label from the filename and convert it to an integer ➋. Remember
     that the label corresponds to the user ID input through *1_capture.py* right before
     it captured the video frames.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 开始一个for循环，遍历图像路径。以灰度模式读取图像；然后从文件名中提取其数字标签，并将其转换为整数➋。记住，标签对应的是通过*1_capture.py*输入的用户ID，恰好是在它捕捉视频帧之前。
 - en: 'Let’s take a moment to unpack what’s happening in this extraction and conversion
     process. The os.path.split() method takes a directory path and returns a tuple
     of the directory path and the filename, as shown in the following snippet:'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们花一点时间来解析一下这个提取和转换过程发生了什么。os.path.split()方法接受一个目录路径并返回一个包含目录路径和文件名的元组，如下所示：
 - en: '[PRE3]'
+  id: totrans-92
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: You can then select the last item in the tuple, using an index of -1, and split
     it on the dot. This yields a list with four items (the user’s name, user ID, frame
     number, and file extension).
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，你可以使用索引-1选择元组中的最后一个项目，并根据点分割它。这将产生一个包含四个项目的列表（用户的姓名、用户ID、帧编号和文件扩展名）。
 - en: '[PRE4]'
+  id: totrans-94
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: To extract the label value, you choose the second item in the list using index
     1.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了提取标签值，你可以通过索引1选择列表中的第二个项目。
 - en: '[PRE5]'
+  id: totrans-96
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Repeat this process to extract the name and frame_num for each image. These
     are all strings at this point, which is why you need to turn the user ID into
     an integer for use as a label.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 重复此过程以提取每个图像的名称和frame_num。这些目前都是字符串，因此你需要将用户ID转换为整数，以便作为标签使用。
 - en: Now, call the face detector on each training image ➌. This will return a numpy.ndarray,
     which you’ll call faces. Start looping through the array, which contains the coordinates
     of the detected face rectangles. Append the part of the image in the rectangle
     to the images list you made earlier. Also append the image’s user ID to the labels
     list.
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，调用人脸检测器处理每一张训练图像 ➌。这将返回一个`numpy.ndarray`，我们称之为`faces`。开始循环遍历数组，它包含了检测到的人脸矩形的坐标。将矩形区域内的图像部分添加到之前创建的图像列表中。同时，将图像的用户ID添加到标签列表中。
 - en: Let the user know what’s going on by printing a message in the shell. Then,
     as a check, show each training image for 50 milliseconds. If you’ve ever seen
     Peter Gabriel’s popular 1986 music video for “Sledgehammer,” you’ll appreciate
     this display.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过在终端打印信息来让用户了解当前的进展。然后，作为检查，显示每张训练图像50毫秒。如果你曾看过彼得·加布里尔1986年流行的音乐视频《Sledgehammer》，你会喜欢这种展示方式。
 - en: It’s time to train the face recognizer. Just as you do when using OpenCV’s face
     detector, you start by instantiating a recognizer object ➍. Next, you call the
     train() method and pass it the images list and the labels list, which you turn
     into a NumPy array on the fly.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在是训练人脸识别器的时候了。就像使用OpenCV的人脸检测器一样，你首先要实例化一个识别器对象 ➍。接着，调用`train()`方法，将图像列表和标签列表传递给它，并实时将其转换为NumPy数组。
 - en: You don’t want to train the recognizer every time someone verifies their face,
     so write the results of the training process to a file called *lbph_trainer.yml*.
     Then let the user know the program has ended.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 你不希望每次有人验证他们的面孔时都重新训练识别器，所以将训练过程的结果写入名为*lbph_trainer.yml*的文件中。然后让用户知道程序已结束。
 - en: '***The Face Predictor Code***'
+  id: totrans-102
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***人脸预测代码***'
 - en: It’s time to start recognizing faces, a process we’ll call *predicting*, because
     it all comes down to probability. The program in *3_predict.py* will first calculate
     the concatenated LBP histogram for each face. It will then find the distance between
     this histogram and all the histograms in the training set. Next, it will assign
     the new face the label and name of the trained face that’s closest to it, but
     only if the distance falls below a threshold value that you specify.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在是时候开始识别人脸了，这个过程我们称之为*预测*，因为它归结为概率问题。*3_predict.py*中的程序首先会计算每张人脸的连接LBP直方图。然后，它会计算该直方图与训练集中所有直方图之间的距离。接着，如果该距离低于你指定的阈值，它将为新的面孔分配与训练面孔最接近的标签和名称。
 - en: '**Importing Modules and Preparing the Face Recognizer**'
+  id: totrans-104
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**导入模块并准备人脸识别器**'
 - en: '[Listing 10-4](ch10.xhtml#ch010list4) imports modules, prepares a dictionary
     to hold user ID numbers and names, sets up the face detector and recognizer, and
     establishes the path to the test data. The test data includes images of Captain
@@ -583,29 +817,41 @@
     training folder is included to test the results. If everything is working as it
     should, the algorithm should positively identify this image with a low distance
     measurement.'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单 10-4](ch10.xhtml#ch010list4)导入了模块，准备了一个字典来保存用户ID号和姓名，设置了人脸检测器和识别器，并建立了测试数据的路径。测试数据包括德明队长的图像，以及其他几张人脸图像。为了测试结果，还包含了训练文件夹中的一张德明队长的图像。如果一切正常，算法应该能准确识别这张图像，并给出较低的距离度量。'
 - en: '[PRE6]'
+  id: totrans-106
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'Listing 10-4: Importing modules and preparing for face detection and recognition'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 清单 10-4：导入模块并为人脸检测与识别做准备
 - en: After some familiar imports, create a dictionary to link user ID numbers to
     usernames. Although there’s only one entry currently, this name dictionary makes
     it easy to add more entries in the future. If you’re using your own face, feel
     free to change the last name, but leave the ID number set to 1.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 在导入一些常见的模块后，创建一个字典，将用户ID号与用户名关联起来。尽管目前只有一个条目，但这个名称字典使得将来可以方便地添加更多条目。如果你使用的是自己的照片，可以随意更改最后一个名字，但ID号要保持为1。
 - en: Next, repeat the code that sets up the face_detector object. You’ll need to
     input your own cascade_path (see [Listing 10-1](ch10.xhtml#ch010list1) on [page
     233](ch10.xhtml#page_233)).
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，重复设置`face_detector`对象的代码。你需要输入自己的`cascade_path`（参见[清单 10-1](ch10.xhtml#ch010list1)在[第233页](ch10.xhtml#page_233)）。
 - en: Create a recognizer object as you did in the *2_train.py* code ➊. Then use the
     read() method to load the *.yml* file that contains the training information.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 如同在*2_train.py*代码中一样创建一个识别器对象 ➊。然后使用`read()`方法加载包含训练信息的*.yml*文件。
 - en: You’ll want to test the recognizer using face images in a folder. If you’re
     using the Demming images provided, set up a path to the *demming_tester* folder
     ➋. Otherwise, use the *tester* folder you created earlier. You can add your own
@@ -614,32 +860,44 @@
     one as a control. Instead, use the *1_capture.py* program to produce some new
     images. If you wear glasses, include some images of you with and without them.
     You’ll want to include some strangers from the *demming_tester* folder, as well.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 你需要使用文件夹中的人脸图像来测试识别器。如果你使用的是提供的Demming图像，请设置指向*demming_tester*文件夹的路径 ➋。否则，使用你之前创建的*tester*文件夹。你可以将自己的图像添加到这个空白文件夹中。如果你用自己的脸来代表Demming队长的脸，你不应该在这里重复使用训练图像，尽管你可以考虑使用其中一张作为对照。相反，使用*1_capture.py*程序生成一些新的图像。如果你戴眼镜，可以包括一些戴眼镜和不戴眼镜的照片。你还需要包括一些来自*demming_tester*文件夹中的陌生人的图像。
 - en: '**Recognizing Faces and Updating an Access Log**'
+  id: totrans-112
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: '**人脸识别与访问日志更新**'
 - en: '[Listing 10-5](ch10.xhtml#ch010list5) loops through the images in the test
     folder, detects any faces present, compares the face histogram to those in the
     training file, names the face, assigns a confidence value, and then logs the name
     and access time in a persistent text file. As part of this process, the program
     would theoretically unlock the lab if the ID is positive, but since we don’t have
     a lab, we’ll skip that part.'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单10-5](ch10.xhtml#ch010list5)循环遍历测试文件夹中的图像，检测任何存在的人脸，将人脸的直方图与训练文件中的进行比较，命名人脸，分配置信度值，然后将姓名和访问时间记录到一个持久化的文本文件中。在此过程中，程序理论上会在ID为正时解锁实验室，但由于我们没有实验室，所以我们会跳过这部分。'
 - en: '[PRE7]'
+  id: totrans-114
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'Listing 10-5: Running face recognition and updating the access log file'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 清单10-5：运行人脸识别并更新访问日志文件
 - en: Start by looping through the images in the test folder. This will be either
     the *demming_tester* folder or the *tester* folder. Read each image in as grayscale
     and assign the resulting array to a variable named predict_image. Then run the
     face detector on it.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 从测试文件夹中的图像开始循环。这将是*demming_tester*文件夹或*tester*文件夹。将每张图像读取为灰度图像，并将结果数组赋给名为predict_image的变量。然后对其运行人脸检测器。
 - en: Now loop through the face rectangles, as you’ve done before. Print a message
     about access being requested; then use OpenCV to resize the face subarray to 100×100
     pixels ➊. This is close to the dimensions of the training images in the *demming_trainer*
@@ -647,19 +905,25 @@
     to improve results in my experience. If you’re using your own images to represent
     Captain Demming, you should check that the training image and test image dimensions
     are similar.
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在像之前一样循环遍历人脸矩形。打印出一个关于访问请求的消息；然后使用OpenCV将人脸子数组调整为100×100像素 ➊。这接近*demming_trainer*文件夹中训练图像的尺寸。同步图像的大小严格来说不是必需的，但根据我的经验，有助于提高结果。如果你使用自己的图像代表Demming队长的脸，你应该检查训练图像和测试图像的尺寸是否相似。
 - en: Now it’s time to predict the identity of the face. Doing so takes only one line.
     Just call the predict() method on the recognizer object and pass it the face subarray.
     This method will return an ID number and a distance value.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在是时候预测人脸的身份了。这样做只需要一行代码。只需在识别器对象上调用predict()方法，并传入人脸子数组。该方法将返回一个ID号和一个距离值。
 - en: 'The lower the distance value, the more likely the predicted face has been correctly
     identified. You can use the distance value as a threshold: all images that are
     predicted to be Captain Demming and score *at or below* the threshold will be
     positively identified as Captain Demming. All the others will be assigned to ''unknown''.'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 距离值越低，预测的人脸被正确识别的可能性就越大。你可以使用距离值作为阈值：所有被预测为Demming队长并且得分*等于或低于*阈值的图像将被确定为Demming队长。其他所有图像将被分配为“未知”。
 - en: To apply the threshold, use an if statement ➋. If you’re using your own training
     and test images, set the distance value to 1,000 the first time you run the program.
     Review the distance values for all the images in the test folder, both known and
@@ -667,96 +931,139 @@
     as Captain Demming. This will be your discriminator going forward. For the images
     in the *demming_trainer* and *demming_tester* folders, the threshold distance
     should be 95.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 要应用阈值，使用if语句➋。如果你使用的是自己的训练和测试图像，第一次运行程序时，将距离值设置为1000。查看测试文件夹中所有图像的距离值，包括已知和未知图像。找到一个阈值，在该阈值以下，所有面孔都能正确识别为Demming队长。这将成为你接下来使用的区分值。对于*demming_trainer*和*demming_tester*文件夹中的图像，阈值距离应该是95。
 - en: Next, get the name for the image by using the predicted_id value as a key in
     the names dictionary. Print a message in the shell stating that the image has
     been identified and include the image filename, the name from the dictionary,
     and the distance value.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，使用预测的_id值作为名称字典的键来获取图像的名称。 在命令行中打印一条消息，表明图像已被识别，并包括图像文件名、字典中的名称和距离值。
 - en: For the log, print a message indicating that name (in this case, Captain Demming)
     has been granted access to the lab and include the time using the datetime module
     ➌.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于日志，打印一条消息，表明某个名字（在本例中是Demming队长）已获得实验室访问权限，并包括使用datetime模块的时间➌。
 - en: 'You’ll want to keep a persistent file of people’s comings and goings. Here’s
     a neat trick for doing so: just write to a file using the print() function. Open
     the *lab_access_log.txt* file and include the a parameter for “append.” This way,
     instead of overwriting the file for each new image, you’ll add a new line at the
     bottom. Here’s an example of the file contents:'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 你会想保留一份人员进出记录的持久文件。这里有一个很巧妙的技巧：只需使用print()函数写入文件。打开*lab_access_log.txt*文件，并包含一个“附加”参数。这样，程序每次处理新图像时，不会覆盖文件，而是在文件底部添加一行。以下是文件内容的示例：
 - en: '[PRE8]'
+  id: totrans-124
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: If the conditional is not met, set name to 'unknown' and print a message to
     that effect. Then draw a rectangle around the face and post the user’s name using
     OpenCV’s putText() method. Show the image for two seconds before destroying it.
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果条件不满足，将name设置为'unknown'并打印相应的消息。然后在面部周围绘制矩形，并使用OpenCV的putText()方法显示用户的名字。显示图像两秒钟后销毁它。
 - en: '***Results***'
+  id: totrans-126
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***结果***'
 - en: You can see some example results, from the 20 images in the *demming_tester*
     folder, in [Figure 10-8](ch10.xhtml#ch010fig8). The predictor code correctly identified
     the eight images of Captain Demming with no false positives.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以在[图 10-8](ch10.xhtml#ch010fig8)中查看一些来自*demming_tester*文件夹的20张图片的示例结果。预测器代码正确识别了8张Demming队长的照片，没有出现误识别。
 - en: '![Image](../images/fig10_08.jpg)'
+  id: totrans-128
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../images/fig10_08.jpg)'
 - en: 'Figure 10-8: Demmings and non-Demmings'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 10-8：Demming队长和非Demming队长
 - en: For the LBPH algorithm to be highly accurate, you need to use it under controlled
     conditions. Remember that by forcing the user to gain access through the laptop,
     you controlled their pose, the size of their face, the image resolution, and the
     lighting.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了使LBPH算法具有高准确性，你需要在受控条件下使用它。记住，通过强制用户通过笔记本电脑获取访问权限，你控制了他们的姿势、面部大小、图像分辨率和光照条件。
 - en: '**Summary**'
+  id: totrans-131
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**总结**'
 - en: In this chapter, you got to work with OpenCV’s local binary pattern histogram
     algorithm for recognizing human faces. With only a few lines of code, you produced
     a robust face recognizer that can easily handle variable lighting conditions.
     You also used the Standard Library’s os.path.split() method to break apart directory
     paths and filenames to produce customized variable names.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，你将使用OpenCV的局部二值模式直方图算法来识别人脸。通过仅几行代码，你就创建了一个强大的面部识别器，能够轻松应对不同的光照条件。你还使用了标准库的os.path.split()方法来分割目录路径和文件名，从而生成自定义的变量名。
 - en: '**Further Reading**'
+  id: totrans-133
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**进一步阅读**'
 - en: “Local Binary Patterns Applied to Face Detection and Recognition” (Polytechnic
     University of Catalonia, 2010), by Laura María Sánchez López, is a thorough review
     of the LBPH approach. The PDF can be found online at sites such as *[https://www.semanticscholar.org/](https://www.semanticscholar.org/)*.
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: “应用局部二值模式于人脸检测与识别”（加泰罗尼亚理工大学，2010年），由Laura María Sánchez López编写，是对LBPH方法的全面回顾。PDF可以在像*
+    [https://www.semanticscholar.org/](https://www.semanticscholar.org/)*这样的网站上找到。
 - en: “Look at the LBP Histogram,” on the AURlabCVsimulator site (*[https://aurlabcvsimulator.readthedocs.io/en/latest/](https://aurlabcvsimulator.readthedocs.io/en/latest/)*),
     includes Python code that lets you visualize an LBPH image.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: “查看 LBP 直方图”，在 AURlabCVsimulator 网站上 (*[https://aurlabcvsimulator.readthedocs.io/en/latest/](https://aurlabcvsimulator.readthedocs.io/en/latest/)*)，包含了可以让你可视化
+    LBPH 图像的 Python 代码。
 - en: 'If you’re a macOS or Linux user, be sure to check out Adam Geitgey’s face_recognition
     library, a simple-to-use and highly accurate face recognition system that utilizes
     deep learning. You can find installation instructions and an overview at the Python
     Software Foundation site: *[https://pypi.org/project/face_recognition/](https://pypi.org/project/face_recognition/)*.'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你是 macOS 或 Linux 用户，一定要查看 Adam Geitgey 的 face_recognition 库，这是一个简单易用且高精度的人脸识别系统，利用深度学习技术。你可以在
+    Python 软件基金会网站上找到安装说明和概述：*[https://pypi.org/project/face_recognition/](https://pypi.org/project/face_recognition/)*
 - en: '“Machine Learning Is Fun! Part 4: Modern Face Recognition with Deep Learning”
     (Medium, 2016), by Adam Geitgey, is a short and enjoyable overview of modern face
     recognition using Python, OpenFace, and dlib.'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: “机器学习很有趣！第四部分：使用深度学习进行现代人脸识别”（Medium，2016），作者 Adam Geitgey，是一篇简短且有趣的概述，介绍了如何使用
+    Python、OpenFace 和 dlib 进行现代人脸识别。
 - en: “Liveness Detection with OpenCV” (PyImageSearch, 2019), by Adrian Rosebrock,
     is an online tutorial that teaches you how to protect your face recognition system
     against spoofing by fake faces, such as a photograph of Captain Demming held up
     to the webcam.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: “使用 OpenCV 进行活体检测”（PyImageSearch，2019），作者 Adrian Rosebrock，是一篇在线教程，教你如何保护人脸识别系统免受伪造面孔的欺骗，例如将
+    Captain Demming 的照片举到网络摄像头前。
 - en: Cities and colleges around the world have begun banning facial recognition systems.
     Inventors have also gotten into the act, designing clothing that can confound
     the systems and protect your identity. “These Clothes Use Outlandish Designs to
@@ -764,71 +1071,99 @@
     2020), by Aaron Holmes, and “How to Hack Your Face to Dodge the Rise of Facial
     Recognition Tech” (Wired, 2019), by Elise Thomas, review some recent practical—and
     impractical— solutions to the problem.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 世界各地的城市和大学已开始禁止使用人脸识别系统。发明家们也纷纷行动起来，设计出能够迷惑系统、保护身份的衣物。“这些衣服使用离奇的设计来欺骗面部识别软件，让它认为你不是人类”（《商业内幕》，2020），作者
+    Aaron Holmes，以及“如何黑掉你的面孔，躲避人脸识别技术的崛起”（《连线》，2019），作者 Elise Thomas，回顾了这一问题的一些近期实用——也有不太实用的——解决方案。
 - en: “OpenCV Age Detection with Deep Learning” (PyImageSearch, 2020) by Adrian Rosebrock,
     is an online tutorial for using OpenCV to predict a person’s age from their photograph.
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: “使用 OpenCV 进行深度学习年龄检测”（PyImageSearch，2020），作者 Adrian Rosebrock，是一篇在线教程，介绍如何使用
+    OpenCV 从照片中预测一个人的年龄。
 - en: '**Challenge Project: Adding a Password and Video Capture**'
+  id: totrans-141
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**挑战项目：添加密码和视频捕捉**'
 - en: The *3_predict.py* program you wrote in Project 14 loops through a folder of
     photographs to perform face recognition. Rewrite the program so that it dynamically
     recognizes faces in the webcam’s video stream. The face rectangle and name should
     appear in the video frame as they do on the folder images.
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 你在项目 14 中编写的 *3_predict.py* 程序，循环处理一个文件夹中的照片进行人脸识别。现在，重写该程序，使其能够动态识别网络摄像头视频流中的人脸。人脸矩形框和名称应该与文件夹中的图像一样出现在视频帧中。
 - en: To start the program, have the user enter a password that you verify. If it’s
     correct, add audio instructions telling the user to look at the camera. If the
     program positively identifies Captain Demming, use audio to announce that access
     is granted. Otherwise, play an audio message stating that access is denied.
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 要启动程序，让用户输入一个密码并进行验证。如果密码正确，则添加音频指示，告诉用户看向摄像头。如果程序成功识别出 Captain Demming，则用音频宣布授权访问。否则，播放一条音频消息，表示访问被拒绝。
 - en: If you need help with identifying the face from the video stream, see the *challenge_video_recognize.py*
     program in the appendix. Note that you may need to use a higher confidence value
     for the video frame than the value you used for the still photographs.
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你需要帮助识别视频流中的人脸，请参见附录中的 *challenge_video_recognize.py* 程序。注意，你可能需要为视频帧使用比静态照片更高的置信度值。
 - en: So that you can keep track of who has tried to enter the lab, save a single
     frame to the same folder as the *lab_access_log.txt* file. Use the logged results
     from datetime.now() as the filename so you can match the face to the access attempt.
     Note that you’ll need to reformat the string returned from datetime.now() so that
     it only contains characters acceptable for filenames, as defined by your operating
     system.
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了方便你跟踪谁尝试进入实验室，将一帧图像保存到与*lab_access_log.txt*文件相同的文件夹中。使用从datetime.now()获取的日志结果作为文件名，这样你就可以将面部与访问尝试进行匹配。注意，你需要重新格式化datetime.now()返回的字符串，以使其仅包含操作系统允许用作文件名的字符。
 - en: '**Challenge Project: Look-Alikes and Twins**'
+  id: totrans-146
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**挑战项目：相似面孔和双胞胎**'
 - en: Use the code from Project 14 to compare celebrity look-alikes and twins. Train
     it with images from the internet and see whether you can fool the LBPH algorithm.
     Some pairings to consider are Scarlett Johansson and Amber Heard, Emma Watson
     and Kiernan Shipka, Liam Hemsworth and Karen Khachanov, Rob Lowe and Ian Somerhalder,
     Hilary Duff and Victoria Pedretti, Bryce Dallas Howard and Jessica Chastain, and
     Will Ferrell and Chad Smith.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用第14项目中的代码比较名人相似面孔和双胞胎。用互联网上的图像进行训练，看看你能否欺骗LBPH算法。可以考虑的一些搭配包括：斯嘉丽·约翰逊与安柏·赫德、艾玛·沃森与基尔南·希普卡、利亚姆·海姆斯沃斯与卡伦·哈恰诺夫、罗布·洛与伊恩·萨默霍尔德、希拉里·达夫与维多利亚·佩德雷蒂、布莱斯·达拉斯·霍华德与杰西卡·查斯坦、威尔·法瑞尔与查德·史密斯。
 - en: For famous twins, look at astronaut twins Mark and Scott Kelly and celebrity
     twins Mary-Kate and Ashley Olsen.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于著名的双胞胎，可以看看宇航员双胞胎马克·凯利和斯科特·凯利，或者名人双胞胎玛丽-凯特·奥尔森和艾希丽·奥尔森。
 - en: '**Challenge Project: Time Machine**'
+  id: totrans-149
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**挑战项目：时光机**'
 - en: If you ever watch reruns of old shows, you’ll encounter famous actors in their
     younger—sometimes *much* younger—days. Even though humans excel at face recognition,
     we may still struggle to identify a young Ian McKellen or Patrick Stewart. That’s
     why sometimes it takes a certain inflection of voice or curious mannerism to send
     us scurrying to Google to check the cast members.
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你曾经观看过老节目重播，你会看到一些著名演员年轻时——有时是*非常*年轻时的模样。尽管人类在面部识别方面表现出色，我们仍然可能很难认出年轻时的伊恩·麦凯伦或帕特里克·斯图尔特。这就是为什么有时需要某种语调的变化或奇特的举止，才能促使我们赶紧去Google查找演员表。
 - en: Face recognition algorithms are also prone to fail when identifying faces across
     time. To see how the LBPH algorithm performs under these conditions, use the code
     from Project 14 and train it on faces of yourself (or your relatives) at a certain
     age. Then test it with images over a range of ages.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 面部识别算法在跨时间识别面孔时也容易出错。为了查看LBPH算法在这些条件下的表现，可以使用第14项目中的代码，并用你自己（或你亲戚）某个年龄阶段的面部图像进行训练。然后，使用不同年龄段的图像进行测试。
