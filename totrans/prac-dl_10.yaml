@@ -1,21 +1,30 @@
 - en: '**10'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '**10'
 - en: EXPERIMENTS WITH NEURAL NETWORKS**
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 神经网络实验**
 - en: '![image](Images/common.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/common.jpg)'
 - en: 'In [Chapter 9](ch09.xhtml#ch09), we discussed the theory behind neural networks.
     In this chapter, we’ll trade equations for code and run a number of experiments
     designed to increase our intuition regarding the essential parameters of neural
     networks: architecture and activation functions, batch size, base learning rate,
     training set size, L2 regularization, momentum, weight initialization, feature
     ordering, and the precision of the weights and biases.'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[第9章](ch09.xhtml#ch09)中，我们讨论了神经网络背后的理论。在本章中，我们将用代码代替方程，运行一系列实验，旨在增加我们对神经网络基本参数的直觉：架构和激活函数、批量大小、基础学习率、训练集大小、L2
+    正则化、动量、权重初始化、特征排序以及权重和偏差的精度。
 - en: To save space and eliminate tedious repetition, we won’t show the specific code
     for each experiment. In most cases, the code is only trivially different from
     the previous example; we’re usually changing only the particular argument to the
@@ -23,12 +32,17 @@
     included in the set of files associated with this book, and we’ll list the network
     parameters and the name of the file. When necessary, we’ll provide code to clarify
     a particular approach. We’ll show the code for the first experiment in its entirety.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了节省空间并消除繁琐的重复，我们不会展示每个实验的具体代码。在大多数情况下，代码与前一个示例仅有微小的不同；我们通常只会改变 MLPClassifier
+    构造函数中的特定参数。每个实验的代码包含在本书相关的文件集中，我们会列出网络参数和文件名。必要时，我们会提供代码来阐明特定的方法。我们将展示第一个实验的完整代码。
 - en: Our Dataset
+  id: totrans-5
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 我们的数据集
 - en: We’ll be working with the MNIST dataset’s vector form, which we assembled in
     [Chapter 5](ch05.xhtml#ch05). Recall that this dataset consists of 28×28 pixel
     8-bit grayscale images of handwritten digits, [0,9]. In vector form, each 28 ×
@@ -39,109 +53,155 @@
     set. This is to help illustrate the effect of network parameters and to keep our
     training times reasonable. Refer back to [Figure 5-3](ch05.xhtml#ch5fig3) for
     representative MNIST digits.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用 MNIST 数据集的向量形式，该数据集在[第5章](ch05.xhtml#ch05)中已构建。回想一下，该数据集包含 28×28 像素的 8
+    位灰度手写数字图像，[0,9]。在向量形式中，每个 28 × 28 的图像被展开成一个 28 × 28 = 784 个元素的向量，所有元素都是字节（[0,255]）。展开过程将每一行连接在一起。因此，每个样本有
+    784 个元素，并且有一个关联标签。训练集包含 60,000 个样本，而测试集有 10,000 个样本。在我们的实验中，我们不会使用训练集中的所有数据。这样做是为了帮助说明网络参数的影响，并保持合理的训练时间。请参考[图5-3](ch05.xhtml#ch5fig3)了解代表性的
+    MNIST 手写数字。
 - en: The MLPClassifier Class
+  id: totrans-7
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: MLPClassifier 类
 - en: 'The MLPClassifier class follows the same format as the other sklearn classifiers.
     There is a constructor and the expected methods: fit for training, score for applying
     the classifier to test data, and predict to make a prediction on unknown inputs.
     We’ll also use predict_proba to return the actual predicted per class probabilities.
     The constructor has many options:'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: MLPClassifier 类遵循与其他 sklearn 分类器相同的格式。它有一个构造函数和预期的方法：fit 用于训练，score 用于将分类器应用于测试数据，predict
+    用于对未知输入进行预测。我们还将使用 predict_proba 来返回每个类别的实际预测概率。构造函数有许多选项：
 - en: MLPClassifier(hidden_layer_sizes=(100, ), activation='relu',
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: MLPClassifier(hidden_layer_sizes=(100, ), activation='relu',
 - en: solver='adam', alpha=0.0001, batch_size='auto',
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: solver='adam', alpha=0.0001, batch_size='auto',
 - en: learning_rate='constant', learning_rate_init=0.001,
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: learning_rate='constant', learning_rate_init=0.001,
 - en: power_t=0.5, max_iter=200, shuffle=True,
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: power_t=0.5, max_iter=200, shuffle=True,
 - en: random_state=None, tol=0.0001, verbose=False,
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: random_state=None, tol=0.0001, verbose=False,
 - en: warm_start=False, momentum=0.9, nesterovs_momentum=True,
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: warm_start=False, momentum=0.9, nesterovs_momentum=True,
 - en: early_stopping=False, validation_fraction=0.1, beta_1=0.9,
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: early_stopping=False, validation_fraction=0.1, beta_1=0.9,
 - en: beta_2=0.999, epsilon=1e-08)
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: beta_2=0.999, epsilon=1e-08)
 - en: Here we’ve provided the default values for each parameter. See the sklearn documentation
     page at [http://scikit-learn.org/](http://scikit-learn.org/) for a complete description
     of each parameter. We’ll set some of these to specific values, and others will
     be changed for the experiments while still others are relevant in only specific
     situations. The key parameters we’ll work with are in [Table 10-1](ch10.xhtml#ch10tab1).
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
 - en: The following set of experiments explores the effect of various MLPClassifier
     parameters. As mentioned, we’ll show all the code used for the first experiment,
     understanding that only small changes are needed to perform the other experiments.
     At times, we’ll show little code snippets to make the change concrete.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 10-1:** Important MLPClassifier Constructor Keywords and Our Default
     Values for Them'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Keyword** | **Description** |'
+  id: totrans-20
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- |'
+  id: totrans-21
   prefs: []
   type: TYPE_TB
 - en: '| hidden_layer_sizes | Tuple giving the hidden layer sizes |'
+  id: totrans-22
   prefs: []
   type: TYPE_TB
 - en: '| activation | Activation function type; for example, ReLU |'
+  id: totrans-23
   prefs: []
   type: TYPE_TB
 - en: '| alpha | L2 parameter—we called it *λ* (lambda) |'
+  id: totrans-24
   prefs: []
   type: TYPE_TB
 - en: '| batch_size | Minibatch size |'
+  id: totrans-25
   prefs: []
   type: TYPE_TB
 - en: '| learning_rate_init | The learning rate, *η* (eta) |'
+  id: totrans-26
   prefs: []
   type: TYPE_TB
 - en: '| max_iter | Number of training epochs |'
+  id: totrans-27
   prefs: []
   type: TYPE_TB
 - en: '| warm_start | Continue training or start again |'
+  id: totrans-28
   prefs: []
   type: TYPE_TB
 - en: '| momentum | Momentum |'
+  id: totrans-29
   prefs: []
   type: TYPE_TB
 - en: '| solver | Solver algorithm ("sgd") |'
+  id: totrans-30
   prefs: []
   type: TYPE_TB
 - en: '| nesterovs_momentum | Use Nesterov momentum (False) |'
+  id: totrans-31
   prefs: []
   type: TYPE_TB
 - en: '| early_stopping | Use early stopping (False) |'
+  id: totrans-32
   prefs: []
   type: TYPE_TB
 - en: '| learning_rate | Learning rate schedule ("constant") |'
+  id: totrans-33
   prefs: []
   type: TYPE_TB
 - en: '| tol | Stop early if loss change < tol (1e-8) |'
+  id: totrans-34
   prefs: []
   type: TYPE_TB
 - en: '| verbose | Output to console while training (False) |'
+  id: totrans-35
   prefs: []
   type: TYPE_TB
 - en: Architecture and Activation Functions
+  id: totrans-36
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -150,100 +210,131 @@
     deciding factors for a model’s success. Let’s explore what happens when we train
     a model using different architectures and activation functions while holding the
     training dataset fixed.'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
 - en: The Code
+  id: totrans-38
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: As promised, for this first experiment we’ll show the code in its entirety,
     starting with the helper functions in [Listing 10-1](ch10.xhtml#ch10lis1).
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
 - en: import numpy as np
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
 - en: import time
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
 - en: from sklearn.neural_network import MLPClassifier
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
 - en: 'def run(x_train, y_train, x_test, y_test, clf):'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
 - en: s = time.time()
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
 - en: (*\pagebreak*)
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
 - en: clf.fit(x_train, y_train)
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
 - en: e = time.time()-s
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
 - en: loss = clf.loss_
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
 - en: weights = clf.coefs_
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
 - en: biases = clf.intercepts_
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
 - en: params = 0
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
 - en: 'for w in weights:'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
 - en: params += w.shape[0]*w.shape[1]
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
 - en: 'for b in biases:'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
 - en: params += b.shape[0]
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
 - en: return [clf.score(x_test, y_test), loss, params, e]
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
 - en: 'def nn(layers, act):'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
 - en: return MLPClassifier(solver="sgd", verbose=False, tol=1e-8,
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
 - en: nesterovs_momentum=False, early_stopping=False,
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
 - en: learning_rate_init=0.001, momentum=0.9, max_iter=200,
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
 - en: hidden_layer_sizes=layers, activation=act)
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-1: Helper functions for experimenting with the architecture and
     activation function. See* mnist_nn_experiments.py.'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
 - en: '[Listing 10-1](ch10.xhtml#ch10lis1) imports the usual modules and then defines
     two helper functions, run and nn. Starting with nn, we see that all it does is
     return an instance of MLPClassifier using the hidden layer sizes and the given
     activation function type.'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单 10-1](ch10.xhtml#ch10lis1)导入了常用的模块，然后定义了两个辅助函数，run和nn。从nn开始，我们看到它所做的只是返回一个使用隐藏层大小和给定激活函数类型的MLPClassifier实例。'
 - en: The hidden layer sizes are given as a tuple, where each element is the number
     of nodes in the corresponding layer. Recall that sklearn works with only fully
     connected layers, so a single number is all we need to specify the size. The input
     samples given for training determine the size of the input layer. Here the input
     samples are vectors representing the digit images, so there are 28 × 28 = 784
     nodes in the input layer.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 隐藏层的大小是以元组的形式给出的，每个元素是相应层中节点的数量。请记住，sklearn只支持全连接层，因此一个数字就足够指定层的大小。用于训练的输入样本决定了输入层的大小。这里，输入样本是表示数字图像的向量，因此输入层有28
+    × 28 = 784个节点。
 - en: What about the output layer? It’s not specified explicitly because it depends
     on the number of classes in the training labels. The MNIST dataset has 10 classes,
     so there will be 10 nodes in the output layer. When the predict_proba method is
@@ -251,34 +342,44 @@
     If the model is binary, meaning the only class labels are 0 and 1, then there
     is only one output node, a logistic (sigmoid), representing the probability of
     belonging to class 1.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 那么输出层呢？它没有明确指定，因为它依赖于训练标签中的类别数量。MNIST数据集有10个类别，因此输出层将有10个节点。当调用predict_proba方法获取输出概率时，sklearn会对这10个输出应用softmax。如果模型是二分类的，即只有0和1这两个类别标签，那么只有一个输出节点，一个逻辑（sigmoid）节点，表示属于类别1的概率。
 - en: Now let’s look at the parameters we passed in to MLPClassifier. First, we explicitly
     state that we want to use the SGD solver. The solver is the approach used to modify
     the weights and biases during training. All the solvers use backprop to calculate
     the gradients; how we use those gradients varies. Plain vanilla SGD is good enough
     for us right now.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们看看我们传递给MLPClassifier的参数。首先，我们明确表示希望使用SGD求解器。求解器是用于在训练过程中修改权重和偏差的方法。所有的求解器都使用反向传播来计算梯度；我们如何使用这些梯度是不同的。普通的SGD目前对我们来说已经足够了。
 - en: Next, we set a low tolerance so that we’ll train the requested number of epochs
     (max_iter). We also turn off Nesterov momentum (a variant of standard momentum)
     and early stopping (generally useful but not desired here).
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们设置了较低的容忍度，以便训练所请求的纪元数（max_iter）。我们还关闭了Nesterov动量（标准动量的变种）和提前停止（通常有用，但在这里不需要）。
 - en: The initial learning rate is set to the default value of 0.001, as is the value
     of standard momentum, 0.9\. The number of epochs is arbitrarily set to 200 (the
     default), but we’ll explore this more in the experiments that follow. Please indulge
     your curiosity at all times and see what changing these values does to things.
     For consistency’s sake, we’ll use these values as defaults throughout unless they
     are the parameters we want to experiment with.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 初始学习率设置为默认值0.001，标准动量值为0.9。纪元数（epochs）被任意设置为200（默认值），但我们将在随后的实验中进一步探索这一点。请随时保持好奇心，看看更改这些值会对结果产生什么影响。为了保持一致性，除非我们要实验的参数，否则我们将在整个过程中使用这些默认值。
 - en: The other helper function in [Listing 10-1](ch10.xhtml#ch10lis1) is run. This
     function will train and test the classifier object it’s passed using the standard
     sklearn fit and score methods. It also does some other things that we have not
     seen before.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单 10-1](ch10.xhtml#ch10lis1)中的另一个辅助函数是run。这个函数将使用标准的sklearn fit和score方法来训练和测试传入的分类器对象。它还做了一些我们之前没有见过的事情。'
 - en: In particular, after timing how long training takes, we extract the final training
     loss value, the network weights, and the network biases from the MLPClassifier
     object so that we can return them. The MLPClassifier class minimizes the log-loss,
@@ -289,6 +390,7 @@
     more and more, you’ll begin to develop intuition for what a good loss value is
     and whether the training process is learning quickly or not by how rapidly the
     loss changes.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
 - en: The weights and biases are stored in the coefs_ and intercepts_ member variables.
@@ -298,121 +400,159 @@
     in the run function do. Finally, we return all this information, including the
     score against the test set, to the main function. The main function is shown in
     [Listing 10-2](ch10.xhtml#ch10lis2).
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
 - en: 'def main():'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
 - en: x_train = np.load("mnist_train_vectors.npy").astype("float64")/256.0
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
 - en: y_train = np.load("mnist_train_labels.npy")
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
 - en: x_test = np.load("mnist_test_vectors.npy").astype("float64")/256.0
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
 - en: y_test = np.load("mnist_test_labels.npy")
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
 - en: N = 1000
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
 - en: x_train = x_train[:N]
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
 - en: y_train = y_train[:N]
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
 - en: x_test  = x_test[:N]
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
 - en: y_test  = y_test[:N]
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
 - en: layers = [
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
 - en: (1,), (500,), (800,), (1000,), (2000,), (3000,),
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
 - en: (1000,500), (3000,1500),
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
 - en: (2,2,2), (1000,500,250), (2000,1000,500),
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
 - en: ']'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
 - en: 'for act in ["relu", "logistic", "tanh"]:'
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
 - en: print("%s:" % act)
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
 - en: 'for layer in layers:'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
 - en: scores = []
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
 - en: loss = []
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
 - en: tm = []
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(10):'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
 - en: s,l,params,e = run(x_train, y_train, x_test, y_test,
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
 - en: nn(layer,act))
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
 - en: scores.append(s)
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
 - en: loss.append(l)
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
 - en: tm.append(e)
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
 - en: s = np.array(scores)
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
 - en: l = np.array(loss)
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
 - en: t = np.array(tm)
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
 - en: n = np.sqrt(s.shape[0])
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("    layers: %14s, score= %0.4f +/- %0.4f,'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
 - en: loss = %0.4f +/- %0.4f (params = %6d, time = %0.2f s)" % \
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
 - en: (str(layer), s.mean(), s.std()/n, l.mean(),
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
 - en: l.std()/n, params, t.mean()))
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 10-2: The main function for experimenting with the architecture and
     activation function. See* mnist_nn_experiments.py.'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
 - en: We first load the MNIST train and test data stored in x_train (samples) and
     y_train (labels), and x_test and y_test. Notice that we divide the samples by
     256.0 to make them floats in the range [0,1). This normalization is the only preprocessing
     we’ll do in this chapter.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
 - en: As the full training set has 60,000 samples and we want to run many training
@@ -422,109 +562,156 @@
     we’ll sacrifice the quality of the model to get results in a reasonable timeframe.
     With 1,000 training samples, we’ll have only 100 instances of each digit type,
     on average. We’ll vary the number of training samples for specific experiments.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于完整的训练集有60,000个样本，而我们希望运行多个训练会话，因此我们只使用前1,000个样本进行训练。我们也会保留前1,000个测试样本。本章的目标是观察在改变参数时的相对差异，而不是构建最优模型，因此我们会牺牲模型质量，以便在合理的时间框架内获得结果。使用1,000个训练样本时，平均每种数字类型只有100个实例。我们将在特定实验中调整训练样本数量。
 - en: The layers list holds the different architectures we’ll explore. Ultimately,
     we’ll pass these values to the hidden_layer_sizes argument of the MLPClassifier
     constructor. Notice that we’ll examine architectures ranging from a single hidden
     layer with a single node to three hidden layers with up to 2,000 nodes per layer.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: layers列表包含了我们将要探索的不同架构。最终，我们将这些值传递给MLPClassifier构造函数的hidden_layer_sizes参数。请注意，我们将检查从单一隐藏层和单个节点到三个隐藏层，每层最多2,000个节点的架构。
 - en: 'The main loop runs over three activation function types: rectified linear unit,
     logistic (sigmoid) unit, and the hyperbolic tangent. We’ll train a model for each
     combination of activation function type and architecture (layers). Moreover, since
     we know neural network training is stochastic, we’ll train 10 models for each
     combination and report the mean and standard error of the mean, so we’re not thrown
     off by a particularly bad model that isn’t representative.'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 主循环遍历了三种激活函数类型：整流线性单元、逻辑（sigmoid）单元和双曲正切函数。我们将为每种激活函数类型和架构（层数）的组合训练一个模型。此外，由于我们知道神经网络训练是随机的，我们将为每种组合训练10个模型，并报告平均值和标准误差，以避免因为某个不具代表性的糟糕模型而影响结果。
 - en: '**Note** *When you run the code in the experiments that follow, you’ll likely
     generate warning messages from sklearn like this one:*'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意** *当你运行以下实验中的代码时，可能会生成类似以下的sklearn警告信息：*'
 - en: 'ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 'ConvergenceWarning: 随机优化器：已达到最大迭代次数（200）'
 - en: and the optimization hasn't converged yet.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 并且优化尚未收敛。
 - en: '*The messages are sklearn’s way of telling you that the number of training
     iterations completed before sklearn felt that the network had converged to a good
     set of weights.The warnings are safe to ignore and can be disabled completely
     by adding -W ignore to the command line when you run the code; for example:*'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: '*这些信息是sklearn告诉你，在sklearn认为网络已经收敛到一组良好的权重之前，训练迭代次数已经完成。这些警告是可以安全忽略的，且可以通过在命令行中添加-W
+    ignore来完全禁用，示例命令为：*'
 - en: $ python3 -W ignore mnist_nn_experiments.py
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: $ python3 -W ignore mnist_nn_experiments.py
 - en: The Results
+  id: totrans-117
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 结果
 - en: 'Running this code takes several hours to complete, and produces output with
     lines that look something like this:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行此代码需要几个小时才能完成，并且输出的内容中有类似如下的行：
 - en: layers:(3000,1500), score=0.8822+/-0.0007, loss=0.2107+/-0.0006
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: layers:(3000,1500), score=0.8822+/-0.0007, loss=0.2107+/-0.0006
 - en: (params=6871510, time=253.42s)
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: (params=6871510, time=253.42s)
 - en: This tells us that using a ReLU activation function, and an architecture with
     two hidden layers of 3,000 and 1,500 nodes each, the models had an average score
     of 88.2 percent and an average final training loss of 0.21 (remember that lower
     is better). It also tells us that the neural network had a total of nearly 6.9
     million parameters and took, on average, a little more than four minutes to train.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 这告诉我们，使用ReLU激活函数和一个包含两个隐藏层（分别有3,000个和1,500个节点）的架构时，模型的平均得分为88.2%，平均最终训练损失为0.21（记住，越低越好）。它还告诉我们，神经网络总共有近690万个参数，平均训练时间稍超过四分钟。
 - en: '[Table 10-2](ch10.xhtml#ch10tab2) summarizes the scores for the various network
     architectures and activation function types.'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: '[表 10-2](ch10.xhtml#ch10tab2)总结了不同网络架构和激活函数类型的得分。'
 - en: '**Table 10-2:** Mean Score (mean ± SE) on the MNIST Test Set as a Function
     of the Architecture and Activation Function Type'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表 10-2：** 基于架构和激活函数类型的MNIST测试集平均得分（均值 ± 标准误差）'
 - en: '| Architecture | ReLU | Tanh | Logistic (sigmoid) |'
+  id: totrans-124
   prefs: []
   type: TYPE_TB
+  zh: '| 架构 | ReLU | Tanh | 逻辑（sigmoid） |'
 - en: '| --- | --- | --- | --- |'
+  id: totrans-125
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
 - en: '| 1 | 0.2066 ± 0.0046 | 0.2192 ± 0.0047 | 0.1718 ± 0.0118 |'
+  id: totrans-126
   prefs: []
   type: TYPE_TB
+  zh: '| 1 | 0.2066 ± 0.0046 | 0.2192 ± 0.0047 | 0.1718 ± 0.0118 |'
 - en: '| 500 | 0.8616 ± 0.0014 | 0.8576 ± 0.0011 | 0.6645 ± 0.0029 |'
+  id: totrans-127
   prefs: []
   type: TYPE_TB
 - en: '| 800 | 0.8669 ± 0.0014 | 0.8612 ± 0.0011 | 0.6841 ± 0.0030 |'
+  id: totrans-128
   prefs: []
   type: TYPE_TB
 - en: '| 1000 | 0.8670 ± 0.001 | 0.8592 ± 0.0014 | 0.6874 ± 0.0028 |'
+  id: totrans-129
   prefs: []
   type: TYPE_TB
 - en: '| 2000 | 0.8682 ± 0.0008 | 0.8630 ± 0.0012 | 0.7092 ± 0.0029 |'
+  id: totrans-130
   prefs: []
   type: TYPE_TB
 - en: '| 3000 | 0.8691 ± 0.0005 | 0.8652 ± 0.0011 | 0.7088 ± 0.0024 |'
+  id: totrans-131
   prefs: []
   type: TYPE_TB
 - en: '| 1000; 500 | 0.8779 ± 0.0011 | 0.8720 ± 0.0011 | 0.1184 ± 0.0033 |'
+  id: totrans-132
   prefs: []
   type: TYPE_TB
 - en: '| 3000; 1500 | 0.8822 ± 0.0007 | 0.8758 ± 0.0009 | 0.1221 ± 0.0001 |'
+  id: totrans-133
   prefs: []
   type: TYPE_TB
 - en: '| 1000; 500; 250 | 0.8829 ± 0.0011 | 0.8746 ± 0.0012 | 0.1220 ± 0.0000 |'
+  id: totrans-134
   prefs: []
   type: TYPE_TB
 - en: '| 2000; 1000; 500 | 0.8850 ± 0.0007 | 0.8771 ± 0.0010 | 0.1220 ± 0.0000 |'
+  id: totrans-135
   prefs: []
   type: TYPE_TB
 - en: In each case, we show the mean score on the reduced test set averaged over the
     10 models trained (plus or minus the standard error of the mean). There is quite
     a bit of information in this table, so let’s look at it carefully.
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
 - en: If we look at the activation type, we immediately see something is off. The
@@ -534,6 +721,7 @@
     to train because the scores on the test set are abysmal. If you check the output,
     you’ll see that the loss values do not go down. If the loss value does not decrease
     while training proceeds, something is wrong.
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
 - en: It’s not immediately evident why training failed for the logistic activation
@@ -543,6 +731,7 @@
     schemes we discussed in [Chapter 8](ch08.xhtml#ch08). But these are tailored for
     ReLU and tanh activation functions and may not be performing well for the logistic
     case.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
 - en: For our purposes, we can view this failure as a glaring sign that the logistic
@@ -552,6 +741,7 @@
     the beginning. No wonder it took so long for neural networks to finally find their
     proper place! From here on out, we’ll ignore the logistic activation function
     results.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
 - en: 'Consider again the scores for the single hidden layer networks (see [Table
@@ -561,6 +751,7 @@
     number of nodes in the hidden layer, though these differences are likely not statistically
     significant with only 10 models per architecture. Still, it follows a general
     observation prevalent in the community: ReLU is preferred to tanh.'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
 - en: If we look at the remaining rows of [Table 10-2](ch10.xhtml#ch10tab2), we see
@@ -573,57 +764,74 @@
     of the models. Any differences in performance we see can be plausibly attributed
     to the number of layers used since the overall number of parameters will be virtually
     the same.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
 - en: By modifying the layers array in [Listing 10-2](ch10.xhtml#ch10lis2), we can
     train multiple versions of the architectures shown in [Table 10-3](ch10.xhtml#ch10tab3).
     The number of nodes per layer was selected to parallel the overall number of parameters
     in the models.
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 10-3:** Model Architectures Tested to Produce [Figure 10-1](ch10.xhtml#ch10fig1)'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
 - en: '| Architecture | Number of parameters |'
+  id: totrans-144
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- |'
+  id: totrans-145
   prefs: []
   type: TYPE_TB
 - en: '| 1000 | 795,010 |'
+  id: totrans-146
   prefs: []
   type: TYPE_TB
 - en: '| 2000 | 1,590,010 |'
+  id: totrans-147
   prefs: []
   type: TYPE_TB
 - en: '| 4000 | 3,180,010 |'
+  id: totrans-148
   prefs: []
   type: TYPE_TB
 - en: '| 8000 | 6,360,010 |'
+  id: totrans-149
   prefs: []
   type: TYPE_TB
 - en: '| 700; 350 | 798,360 |'
+  id: totrans-150
   prefs: []
   type: TYPE_TB
 - en: '| 1150; 575 | 1,570,335 |'
+  id: totrans-151
   prefs: []
   type: TYPE_TB
 - en: '| 1850; 925 | 3,173,685 |'
+  id: totrans-152
   prefs: []
   type: TYPE_TB
 - en: '| 2850; 1425 | 6,314,185 |'
+  id: totrans-153
   prefs: []
   type: TYPE_TB
 - en: '| 660; 330; 165 | 792,505 |'
+  id: totrans-154
   prefs: []
   type: TYPE_TB
 - en: '| 1080; 540; 270 | 1,580,320 |'
+  id: totrans-155
   prefs: []
   type: TYPE_TB
 - en: '| 1714; 857; 429 | 3,187,627 |'
+  id: totrans-156
   prefs: []
   type: TYPE_TB
 - en: '| 2620; 1310; 655 | 6,355,475 |'
+  id: totrans-157
   prefs: []
   type: TYPE_TB
 - en: Where did the magic numbers in [Table 10-3](ch10.xhtml#ch10tab3) come from?
@@ -635,18 +843,22 @@
     three-layer models. Doing things this way lets us compare the performance of the
     models for very similar numbers of parameters. In essence, we’re fixing the number
     of parameters in the model and altering only the way they interact with each other.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
 - en: Training models as we did in [Listing 10-2](ch10.xhtml#ch10lis2), but this time
     averaging 25 models instead of just 10, gives us [Figure 10-1](ch10.xhtml#ch10fig1).
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/10fig01.jpg)'
+  id: totrans-160
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-1: Scores (mean ± E) on the MNIST test set for the architectures
     of [Table 10-3](ch10.xhtml#ch10tab3) as a function of the number of parameters
     in the network*'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s parse [Figure 10-1](ch10.xhtml#ch10fig1). First, note that the x-axis,
@@ -654,6 +866,7 @@
     the three lines going vertically as those models all have similar numbers of parameters.
     The legend tells us which plot represents models with one, two, or three hidden
     layers.
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
 - en: 'Looking at the leftmost points, representing the smallest models in each case,
@@ -666,8 +879,10 @@
     here to say, “Go deep, not wide,” but there will be cases where this doesn’t work.
     Still, it’s worth remembering: more layers can help, not just a wider layer with
     more nodes.'
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 看左侧的点，代表每种情况下最小的模型，我们看到从单层到双层的转换会带来模型性能的跃升。而从双层到三层则带来了另一个较小的提升。对于从左到右的所有层数变化，这种趋势一直在重复。稍后我们会讨论单层和双层架构中最大模型之间性能下降的原因。保持参数数量不变，但增加网络的深度（层数），会带来更好的性能。我们可能会在这里忍不住说，“深度更重要，宽度不重要”，但在某些情况下，这样的做法可能并不奏效。不过，值得记住的是：更多的层可以带来帮助，而不仅仅是更宽的层和更多的节点。
 - en: What about the dip for the largest models in the one- and two-layer cases? These
     are the rightmost points of [Figure 10-1](ch10.xhtml#ch10fig1). Recall, the models
     used to make the plot were trained with only 1,000 samples each. For the largest
@@ -675,77 +890,118 @@
     If we were to increase the number of training samples, which we can do because
     we have 60,000 to choose from for MNIST, we might see the dip go away. I’ll leave
     this as an exercise for the reader.
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 那么，单层和双层情况下，最大模型的性能下降又是怎么回事呢？这些点是 [图 10-1](ch10.xhtml#ch10fig1) 的最右侧点。回想一下，绘制这个图的模型仅使用了
+    1000 个样本进行训练。对于最大的模型，可能没有足够的数据来充分训练这样一个宽大的模型。如果我们增加训练样本的数量（因为我们有 60,000 个 MNIST
+    样本可以选择），也许会看到性能下降消失。这个问题留给读者自己去探讨。
 - en: Batch Size
+  id: totrans-165
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 批量大小
 - en: Let’s now turn our attention to how batch size affects training. Recall that
     here *batch size* means minibatch size, a subset of the full training set used
     in the forward pass to calculate the average loss over the minibatch. From this
     loss, we use backprop to update the weights and biases. Processing a single minibatch,
     then, results in a single gradient-descent step—a single update to the parameters
     of the network.
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们关注一下批量大小对训练的影响。记住，这里的 *batch size* 是指小批量的大小，它是从完整训练集中选出的一个子集，用于前向传播中计算该小批量的平均损失。基于这个损失，我们通过反向传播来更新权重和偏差。因此，处理单个小批量将导致一个梯度下降步骤——即网络参数的单次更新。
 - en: We’ll train a fixed-size subset of MNIST for a set number of epochs with different
     minibatch sizes to see how that affects the final test scores. Before we do that,
     however, we need to understand, for epochs and minibatches, the process sklearn
     uses to train a neural network.
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用 MNIST 的一个固定大小子集进行训练，训练一定数量的轮次，并使用不同的小批量大小，以查看这对最终测试得分的影响。在此之前，我们需要了解 sklearn
+    如何使用小批量和轮次来训练神经网络。
 - en: 'Let’s look briefly at the actual sklearn source code for the MLPClassifier
     class, in the _fit_stochastic method, found at [https://github.com/scikit-learn/scikit-learn/blob/7389dba/sklearn/neural_network/multilayer_perceptron.py](https://github.com/scikit-learn/scikit-learn/blob/7389dba/sklearn/neural_network/multilayer_perceptron.py).
     Understanding that this method is an internal one and might change from version
     to version, we see code that looks like this:'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们简要看一下实际的 sklearn 源代码，MLPClassifier 类中的 _fit_stochastic 方法，代码可以在 [https://github.com/scikit-learn/scikit-learn/blob/7389dba/sklearn/neural_network/multilayer_perceptron.py](https://github.com/scikit-learn/scikit-learn/blob/7389dba/sklearn/neural_network/multilayer_perceptron.py)
+    找到。了解这个方法是内部方法，并且可能会随版本更新而变化，我们看到的代码如下所示：
 - en: 'for it in range(self.max_iter):'
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for it in range(self.max_iter):'
 - en: X, y = shuffle(X, y, random_state=self._random_state)
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: X, y = shuffle(X, y, random_state=self._random_state)
 - en: accumulated_loss = 0.0
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: accumulated_loss = 0.0
 - en: 'for batch_slice in gen_batches(n_samples, batch_size):'
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for batch_slice in gen_batches(n_samples, batch_size):'
 - en: activations[0] = X[batch_slice]
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: activations[0] = X[batch_slice]
 - en: batch_loss, coef_grads, intercept_grads = self._backprop(
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: batch_loss, coef_grads, intercept_grads = self._backprop(
 - en: X[batch_slice], y[batch_slice], activations, deltas,
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: X[batch_slice], y[batch_slice], activations, deltas,
 - en: coef_grads, intercept_grads)
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: coef_grads, intercept_grads)
 - en: accumulated_loss += batch_loss * (batch_slice.stop -
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: accumulated_loss += batch_loss * (batch_slice.stop -
 - en: batch_slice.start)
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: batch_slice.start)
 - en: grads = coef_grads + intercept_grads
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: grads = coef_grads + intercept_grads
 - en: self._optimizer.update_params(grads)
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: self._optimizer.update_params(grads)
 - en: self.n_iter_ += 1
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: self.n_iter_ += 1
 - en: There are two for loops, the first over the number of epochs (max_iter), and
     the second over the number of minibatches present in the training data. The gen_batches
     function returns minibatches from the training set. In reality, it returns slice
     indices with X[batch_slice] returning the actual training samples, but the effect
     is the same. The calls to _backprop and update_params complete the gradient descent
     step for the current minibatch.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
 - en: An *epoch* is a full pass through the minibatches present in the training set.
@@ -754,6 +1010,7 @@
     of training samples is not an integer multiple of the minibatch size, the final
     minibatch will be smaller than expected, but that will not affect training in
     the long run.
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
 - en: We can view this graphically as in [Figure 10-2](ch10.xhtml#ch10fig2), where
@@ -761,13 +1018,16 @@
     10-2](ch10.xhtml#ch10fig2), the entire training set is represented as the epoch
     with *n* samples. A minibatch has *m* samples, as indicated. The last minibatch
     is smaller than the rest to indicate that the *n*/*m* might not be an integer.
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/10fig02.jpg)'
+  id: totrans-185
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-2: The relationship between epochs (*n*), minibatches (*m*), and
     samples* {x[*0*],x[*1*], …,x[*n-1*]}'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
 - en: '[Figure 10-2](ch10.xhtml#ch10fig2) also implies that the order of the samples
@@ -776,6 +1036,7 @@
     during training if desired. As long as a minibatch is, statistically, a random
     sample from the training set as a whole, things should be okay. If the minibatch
     is not, then it might give a biased view of the gradient direction during backprop.'
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
 - en: Our minibatch experiment will fix the number of MNIST training samples at 16,384
@@ -783,21 +1044,27 @@
     The scores we report are the mean and standard error for five different runs of
     the same model, each with a different random initialization. The MLPClassifier
     object is therefore instantiated via
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
 - en: MLPClassifier(solver="sgd", verbose=False, tol=1e-8,
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
 - en: nesterovs_momentum=False, early_stopping=False,
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
 - en: learning_rate_init=0.001, momentum=0.9, max_iter=100,
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
 - en: hidden_layer_sizes=(1000,500), activation="relu",
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
 - en: batch_size=bz)
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
 - en: This code indicates that all of the models have two hidden layers of 1,000 and
@@ -806,58 +1073,76 @@
     varies when defining a network is the batch_size. We’ll use the batch sizes in
     [Table 10-4](ch10.xhtml#ch10tab4) along with the number of gradient descent steps
     taken for each epoch (see [Figure 10-2](ch10.xhtml#ch10fig2)).
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 10-4:** Minibatch Sizes and the Corresponding Number of Gradient Descent
     Steps per Epoch'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
 - en: '| Minibatch size | SGD steps per epoch |'
+  id: totrans-196
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- |'
+  id: totrans-197
   prefs: []
   type: TYPE_TB
 - en: '| 2 | 8,192 |'
+  id: totrans-198
   prefs: []
   type: TYPE_TB
 - en: '| 4 | 4,096 |'
+  id: totrans-199
   prefs: []
   type: TYPE_TB
 - en: '| 8 | 2,048 |'
+  id: totrans-200
   prefs: []
   type: TYPE_TB
 - en: '| 16 | 1,024 |'
+  id: totrans-201
   prefs: []
   type: TYPE_TB
 - en: '| 32 | 512 |'
+  id: totrans-202
   prefs: []
   type: TYPE_TB
 - en: '| 64 | 256 |'
+  id: totrans-203
   prefs: []
   type: TYPE_TB
 - en: '| 128 | 128 |'
+  id: totrans-204
   prefs: []
   type: TYPE_TB
 - en: '| 256 | 64 |'
+  id: totrans-205
   prefs: []
   type: TYPE_TB
 - en: '| 512 | 32 |'
+  id: totrans-206
   prefs: []
   type: TYPE_TB
 - en: '| 1,024 | 16 |'
+  id: totrans-207
   prefs: []
   type: TYPE_TB
 - en: '| 2,048 | 8 |'
+  id: totrans-208
   prefs: []
   type: TYPE_TB
 - en: '| 4,096 | 4 |'
+  id: totrans-209
   prefs: []
   type: TYPE_TB
 - en: '| 8,192 | 2 |'
+  id: totrans-210
   prefs: []
   type: TYPE_TB
 - en: '| 16,384 | 1 |'
+  id: totrans-211
   prefs: []
   type: TYPE_TB
 - en: When the minibatch size is 2, over 8,000 gradient descent steps will be taken
@@ -865,6 +1150,7 @@
     are taken. Fixing the number of epochs should favor a smaller minibatch size since
     there will be correspondingly more gradient descent steps, implying more opportunity
     to move toward the optimal set of network parameters.
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
 - en: '[Figure 10-3](ch10.xhtml#ch10fig3) plots the mean score as a function of the
@@ -872,14 +1158,17 @@
     _batch_size.py* file. The plotting code itself is in *mnist_nn_experiments_batch
     _size_plot.py*. The curve that concerns us for the moment is the one using circles.
     We’ll explain the square symbol curve shortly.'
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/10fig03.jpg)'
+  id: totrans-214
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-3: Average score on the MNIST test set as a function of minibatch
     size (mean* ± *SE) for a fixed number of epochs (100) regardless of the minibatch
     size (circles) or a fixed number of minibatches (squares)*'
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
 - en: 'Here we’ve fixed the number of epochs at 100, so by varying the minibatch size,
@@ -888,6 +1177,7 @@
     on a more faithful representation of the actual gradient direction; however, the
     number of steps is reduced because there are fewer minibatches per epoch, leading
     to poorer convergence: we are not reaching a good minimum of the loss function.'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
 - en: A more “fair” test might be to see what happens when we adjust the number of
@@ -896,13 +1186,16 @@
     per epoch is *n*/*m*, where *n* is the number of training samples, and *m* is
     the number of minibatches. If we call the overall number of minibatches we want
     to run *M*, then, to hold it fixed, we need to set the number of *epochs* to
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/235equ01.jpg)'
+  id: totrans-218
   prefs: []
   type: TYPE_IMG
 - en: so that regardless of *m*, we perform a total of *M* gradient descent steps
     during training.
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s keep the same set of minibatches but alter the number of epochs according
@@ -919,23 +1212,28 @@
     performance levels off, reflecting the constant number of gradient descent updates
     combined with a reasonable estimate of the true gradient from using a large enough
     minibatch.
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
 - en: For the set of base neural network parameters, specifically for a fixed learning
     rate, fixing the number of epochs results in reduced performance because of the
     design of sklearn. Fixing the number of minibatches examined results in mainly
     constant performance.
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
 - en: Base Learning Rate
+  id: totrans-222
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'In [Chapter 9](ch09.xhtml#ch09), we introduced the basic equation for updating
     the weights of a neural network during training:'
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
 - en: '*w* ← *w* – *η*Δ*w*'
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
 - en: Here *η* (eta) is the learning rate, the parameter that controls the step size
@@ -945,6 +1243,7 @@
     For our experiments here, however, we’re using a constant learning rate, so whatever
     value we set learning_rate_init to persists throughout the entire training session.
     Let’s see how this value affects learning.
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
 - en: For this experiment, we fix the minibatch size at 64 samples and the architecture
@@ -956,41 +1255,50 @@
     interesting because it looks at the effect on the test score of fewer large steps
     versus many small steps. The code for these experiments is in *mnist_experiments_base_lr.py*.
     The training set is the first 20,000 MNIST samples.
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
 - en: 'The first experiment fixes the epochs at 50 and loops over different base learning
     rates:'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
 - en: '[0.2, 0.1, 0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001]'
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
 - en: 'The second uses the same base learning rates but varies the number of epochs
     so that in each case the product of the base learning rate and epochs is 1.5\.
     This leads to the following number of epochs matched to the preceding base learning
     rates:'
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
 - en: '[8, 15, 30, 150, 300, 1500, 3000, 15000]'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
 - en: Running the two experiments takes some time. When they’re complete, we can plot
     the test score as a function of the base learning rate size. Doing this gives
     us [Figure 10-4](ch10.xhtml#ch10fig4).
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/10fig04.jpg)'
+  id: totrans-232
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-4: MNIST test scores as a function of the base learning rate. The
     circles represent the fixed epochs case. The squares are the fixed product of
     the base learning rate and the epochs case.*'
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
 - en: '[Figure 10-4](ch10.xhtml#ch10fig4) shows two plots. In the first plot, using
     circles, the number of epochs was fixed at 50\. Fixing the number of epochs fixes
     the number of gradient descent steps taken during training. We then vary the learning
     rate. The larger the learning rate, the bigger the steps we’ll take.'
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
 - en: Imagine walking over a football field, attempting to get to the very center
@@ -1002,6 +1310,7 @@
     Intuitively, we can perhaps convince ourselves that there is a sweet spot where
     the step size and the number of steps we get to take combine to get us to the
     center.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
 - en: We see this effect in the circle plot of [Figure 10-4](ch10.xhtml#ch10fig4).
@@ -1011,6 +1320,7 @@
     keep stepping past the minimum. The best score happens when the number of steps
     we get to make and the size of those steps work together to move us to the minimum.
     In the figure, this happens when the base learning rate is 0.1.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
 - en: Now let’s look at the square symbol plot in [Figure 10-4](ch10.xhtml#ch10fig4).
@@ -1022,6 +1332,7 @@
     steps or very many small steps. We can imagine both approaches getting us close
     to the center of the field, at least until our step size is too large to let us
     land at the center.
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
 - en: Some readers might be objecting at this point. If we compare the first three
@@ -1038,6 +1349,7 @@
     taken) to match the learning rate so that we get near to the minimum of the loss
     function quickly, without a lot of stomping around, but not so quickly that we
     are taking large steps that won’t let us converge on the minimum.
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
 - en: Thus far we’ve been holding the learning rate constant throughout training.
@@ -1055,9 +1367,11 @@
     are now closer to our goal of reaching the center. The more we walk, the smaller
     our steps so we can get as close to the center as possible. This is why the learning
     rate is typically reduced during training.
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
 - en: Training Set Size
+  id: totrans-240
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1069,12 +1383,15 @@
     In all cases, the minibatch size is 100, and the architecture of the network has
     two hidden layers of 1,000 and 500 nodes, respectively. [Figure 10-5](ch10.xhtml#ch10fig5)
     shows the results of this experiment.
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/10fig05.jpg)'
+  id: totrans-242
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-5: MNIST test scores as a function of the number of training samples*'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
 - en: '[Figure 10-5](ch10.xhtml#ch10fig5) is particularly satisfying because it shows
@@ -1084,6 +1401,7 @@
     a potentially rapid rise in the performance of the network since the training
     set is a better and better sample of the parent distribution we’re asking the
     model to learn.'
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
 - en: '[Figure 10-5](ch10.xhtml#ch10fig5) shows that increasing the training set size
@@ -1095,9 +1413,11 @@
     learned all it will learn from the dataset. At this point, we might think of enlarging
     the network architecture to see if we get a jump in test set scores provided we
     have enough training samples available.'
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
 - en: L2 Regularization
+  id: totrans-246
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1105,18 +1425,21 @@
     improve network generalization, including L2 regularization. We saw that L2 regularization,
     which adds a new term to the loss function during training, is functionally equivalent
     to weight decay and penalizes the network during training if the weights get large.
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
 - en: In sklearn, the parameter controlling the strength of L2 regularization is alpha.
     If this parameter is 0, there is no L2 regularization, while the regularization
     increases in intensity as alpha increases. Let’s explore the effect of L2 regularization
     on our MNIST networks.
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
 - en: For this experiment, we’ll fix the minibatch size at 64\. We’ll also set the
     momentum to 0 so that the effect we see is due to L2 regularization alone. Finally,
     we’ll use a smaller network with two hidden layers of 100 and 50 nodes each and
     a small training set of the first 3,000 MNIST samples. The code is in *mnist_nn_experiments_L2.py*.
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
 - en: Unlike the previous experiments, in this case, we’d like to evaluate the test
@@ -1128,6 +1451,7 @@
     next time we call fit, we’ll start over with a newly initialized network. This
     won’t help us at all; we need to preserve the weights and biases between calls
     to fit.
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
 - en: Fortunately for us, the creators of sklearn thought ahead and added the warm_start
@@ -1137,30 +1461,39 @@
     score after each epoch of training. Calling score gives us the accuracy on the
     test data. If we want the error, the value we need to track is 1 – score. This
     is the value we plot as a function of epoch. The alpha values we’ll plot are
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
 - en: '[0.0, 0.1, 0.2, 0.3, 0.4]'
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
 - en: We’ve made these rather large compared to the default so we can see the effect.
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
 - en: 'Focusing on the test error only, the code for evaluating a single epoch is:'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
 - en: 'def epoch(x_train, y_train, x_test, y_test, clf):'
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
 - en: clf.fit(x_train, y_train)
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
 - en: val_err = 1.0 - clf.score(x_test, y_test)
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
 - en: clf.warm_start = True
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
 - en: return val_err
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
 - en: Here, fit is called to perform one epoch of training. Then we calculate the
@@ -1168,45 +1501,58 @@
     calling fit ensures that the first call to epoch will properly initialize the
     network, but subsequent calls will keep the weights and biases from the previous
     call.
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
 - en: 'Training then happens in a simple loop:'
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
 - en: 'def run(x_train, y_train, x_test, y_test, clf, epochs):'
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
 - en: val_err = []
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
 - en: clf.max_iter = 1
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(epochs):'
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
 - en: verr = epoch(x_train, y_train, x_test, y_test, clf)
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
 - en: val_err.append(verr)
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
 - en: return val_err
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
 - en: This loop collects the per epoch results and returns them to the main function,
     which itself loops over the *α* values we’re interested in.
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s run this code and plot val_err, the test error, as a function of the number
     of epochs for each alpha. [Figure 10-6](ch10.xhtml#ch10fig6) is the result.
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/10fig06.jpg)'
+  id: totrans-271
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-6: MNIST test error as a function of training epoch for different
     values of α*'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
 - en: The first thing we notice in [Figure 10-6](ch10.xhtml#ch10fig6) is that any
@@ -1215,6 +1561,7 @@
     all result in approximately the same test error, but larger values are slightly
     more effective and reach a lower test error sooner. Compare *α* = 0.1 to *α* =
     0.4, for example.
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
 - en: 'Notice that larger *α* values seem noisier: the plot is thicker as the error
@@ -1226,9 +1573,11 @@
     the network than the training data itself. Because the network is focusing less
     on reducing the loss due to the training data, we might expect the per epoch test
     error to vary more.'
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
 - en: Momentum
+  id: totrans-275
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1236,6 +1585,7 @@
     the gradient value used to update the weight in the previous minibatch. The fraction
     is specified as a multiplier on the previous gradient value, [0,1]. We covered
     momentum in [Chapter 9](ch09.xhtml#ch09).
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
 - en: 'Let’s see how changing this parameter affects training. In this case, the setup
@@ -1244,16 +1594,20 @@
     the L2 weight (*α*), we’ll fix *α* = 0.0001 and vary *μ*. All the other parts
     remain the same: training by single epochs, the network configuration, and so
     forth. See the file *mnist_nn_experiments_momentum.py*.'
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
 - en: 'We’ll explore these momentum values:'
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
 - en: '[0.0, 0.3, 0.5, 0.7, 0.9, 0.99]'
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
 - en: They range from no momentum term (*μ* = 0) to a large momentum term (*μ* = 0.99).
     Running the experiment produces [Figure 10-7](ch10.xhtml#ch10fig7).
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
 - en: In [Figure 10-7](ch10.xhtml#ch10fig7), we see three distinct regions. The first,
@@ -1265,13 +1619,16 @@
     be used, especially with values near the standard of 0.9\. In practice, people
     seldom seem to alter the momentum much, but as this example shows, sometimes it
     makes a big difference to the results.
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/10fig07.jpg)'
+  id: totrans-282
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-7: MNIST test error as a function of training epoch for different
     values of μ*'
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
 - en: Note that we severely limited the training set to a mere 3,000 samples, about
@@ -1279,15 +1636,18 @@
     was a small and less complete of a sample of the parent distribution we want the
     model to learn. Increasing the training set size to 30,000 results in a different,
     and more typical, ordering of the plot, where a momentum of 0.9 is the best option.
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
 - en: Weight Initialization
+  id: totrans-285
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: Once treated rather cavalierly, the initial set of values used for the weights
     and biases of a network is now known to be extremely important. The simple experiment
     of this section shows this plainly.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
 - en: The sklearn toolkit initializes the weights and biases of a neural network by
@@ -1295,14 +1655,17 @@
     weights and biases randomly according to the Glorot algorithm we discussed in
     [Chapter 9](ch09.xhtml#ch09). This algorithm sets the weights and biases to values
     sampled uniformly from the range
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/243equ01.jpg)'
+  id: totrans-288
   prefs: []
   type: TYPE_IMG
 - en: where *f*[*in*] is the number of inputs and *f*[*out*] is the number of outputs
     for the current layer being initialized. If the activation function is a sigmoid,
     *A* = 2; otherwise, *A* = 6.
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
 - en: If we play a little trick, we can change the way that sklearn initializes the
@@ -1311,6 +1674,7 @@
     MLPClassifier, let’s call it simply Classifier, we can override the _init_coef
     method with our own. Python also allows us to add new member variables to a class
     instance arbitrarily, which gives us all we need.
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
 - en: The remainder of the experiment follows the format of the previous sections.
@@ -1320,34 +1684,44 @@
     learning rate of 0.01, a momentum of 0.9, an L2 regularization parameter of 0.2,
     and an architecture with two hidden layers of 100 and 50 nodes each. See *mnist_nn_experiments_init.py*
     for this experiment’s code.
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
 - en: We’ll test four new weight initialization schemes along with the standard Glorot
     approach of sklearn. The schemes are shown in [Table 10-5](ch10.xhtml#ch10tab5).
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 10-5:** Weight Initialization Schemes'
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
 - en: '| Name | Equation | Description |'
+  id: totrans-294
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- |'
+  id: totrans-295
   prefs: []
   type: TYPE_TB
 - en: '| Glorot | ![Image](Images/244equ01.jpg) | sklearn default |'
+  id: totrans-296
   prefs: []
   type: TYPE_TB
 - en: '| He | ![Image](Images/244equ02.jpg) | He initialization for ReLU |'
+  id: totrans-297
   prefs: []
   type: TYPE_TB
 - en: '| Xavier | ![Image](Images/244equ03.jpg) | Alternate Xavier |'
+  id: totrans-298
   prefs: []
   type: TYPE_TB
 - en: '| Uniform | 0.01(*U*(0,1)-0.5) | Classic small uniform |'
+  id: totrans-299
   prefs: []
   type: TYPE_TB
 - en: '| Gaussian | 0.005*N*(0,1) | Classic small Gaussian |'
+  id: totrans-300
   prefs: []
   type: TYPE_TB
 - en: Recall that *N*(0,1) refers to a sample from a bell curve with a mean of 0 and
@@ -1355,6 +1729,7 @@
     [0,1), meaning all values in that range are equally likely except 1.0\. Each of
     the new initialization methods sets the bias values to 0, always. However, sklearn’s
     Glorot implementation sets the bias values in the same way it sets the weights.
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
 - en: '**Note** *As mentioned in [Chapter 9](ch09.xhtml#ch09) , both* Xavier *and*
@@ -1362,6 +1737,7 @@
     the form we’re calling* Xavier *is referred to as such in other machine learning
     toolkits like Caffe, and the equation used is different from the equation used
     in the original paper.*'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
 - en: 'This all sounds nice and neat, but how to implement it in code? First, we define
@@ -1370,92 +1746,121 @@
     while allowing us the freedom to override any of the superclass methods with our
     own implementation. We simply need to define our own version of _init_coef with
     the same arguments and return values. In code, it looks like this:'
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
 - en: 'class Classifier(MLPClassifier):'
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
 - en: 'def _init_coef(self, fan_in, fan_out):'
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (self.init_scheme == 0):'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
 - en: return super(Classifier, self)._init_coef(fan_in, fan_out)
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
 - en: 'elif (self.init_scheme == 1):'
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
 - en: weights = 0.01*(np.random.random((fan_in, fan_out))-0.5)
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
 - en: biases = np.zeros(fan_out)
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
 - en: 'elif (self.init_scheme == 2):'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
 - en: weights = 0.005*(np.random.normal(size=(fan_in, fan_out)))
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
 - en: biases = np.zeros(fan_out)
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
 - en: 'elif (self.init_scheme == 3):'
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: weights = np.random.normal(size=(fan_in, fan_out))*  \
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
 - en: np.sqrt(2.0/fan_in)
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
 - en: biases = np.zeros(fan_out)
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
 - en: 'elif (self.init_scheme == 4):'
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
 - en: weights = np.random.normal(size=(fan_in, fan_out))*  \
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
 - en: np.sqrt(1.0/fan_in)
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
 - en: biases = np.zeros(fan_out)
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: The initialization we perform depends on the value of init_scheme. This is a
     new member variable that we use to select the initialization method (see [Table
     10-6](ch10.xhtml#ch10tab6)).
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 10-6:** Initialization Scheme and init_scheme Value'
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
 - en: '| Value | Initialization method |'
+  id: totrans-324
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- |'
+  id: totrans-325
   prefs: []
   type: TYPE_TB
 - en: '| 0 | sklearn default |'
+  id: totrans-326
   prefs: []
   type: TYPE_TB
 - en: '| 1 | Classic small uniform |'
+  id: totrans-327
   prefs: []
   type: TYPE_TB
 - en: '| 2 | Classic small Gaussian |'
+  id: totrans-328
   prefs: []
   type: TYPE_TB
 - en: '| 3 | He initialization |'
+  id: totrans-329
   prefs: []
   type: TYPE_TB
 - en: '| 4 | Alternate Xavier |'
+  id: totrans-330
   prefs: []
   type: TYPE_TB
 - en: We set the variable immediately after creating the Classifier object.
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
 - en: 'We know that training a network more than once results in slightly different
@@ -1467,64 +1872,82 @@
     as a function of the training epoch, we need to track the test error at each epoch
     for each training of each initialization scheme. This suggests a three-dimensional
     array:'
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
 - en: test_err = np.zeros((trainings, init_types, epochs))
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
 - en: We have trainings trainings of each initialization type (init_types) for a maximum
     of epochs epochs.
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
 - en: 'With all of this in place, the generation and storage of the actual experiment
     output is straightforward, if rather slow, taking the better part of a day to
     run:'
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(trainings):'
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
 - en: 'for k in range(init_types):'
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
 - en: nn = Classifier(solver="sgd", verbose=False, tol=0,
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
 - en: nesterovs_momentum=False, early_stopping=False,
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
 - en: learning_rate_init=0.01, momentum=0.9,
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
 - en: hidden_layer_sizes=(100,50), activation="relu", alpha=0.2,
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
 - en: learning_rate="constant", batch_size=64, max_iter=1)
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
 - en: nn.init_scheme = k
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
 - en: test_err[i,k,:] = run(x_train, y_train, x_test, y_test, nn, epochs)
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("mnist_nn_experiments_init_results.npy", test_err)
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
 - en: Here nn is the classifier instance to train, init_scheme sets the initialization
     scheme to use, and run is the function we defined earlier to train and test the
     network incrementally.
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
 - en: If we set the number of training sessions to 10, the number of epochs to 4,000,
     and plot the mean test error per epoch, we get [Figure 10-8](ch10.xhtml#ch10fig8).
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/10fig08.jpg)'
+  id: totrans-348
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-8: MNIST test error as a function of training epoch for different
     weight initialization methods (mean over 10 training runs)*'
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s understand what the figure is showing us. The five initialization approaches
@@ -1533,6 +1956,7 @@
     of the training epoch. In this case, the value plotted for each curve is the average
     over 10 training runs of the same network architecture initialized with the same
     approach but different random values.
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
 - en: We immediately see two distinct groups of results. On the top, we have the test
@@ -1543,6 +1967,7 @@
     approaches were part of the reason neural networks had a bad name a few decades
     ago. Networks were finicky and difficult to train in large part because of improper
     initialization.
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
 - en: Looking at the bottom set of results, we see that for this experiment, there
@@ -1551,6 +1976,7 @@
     identical. The plot labeled *Xavier* is slightly worse at first , but toward the
     end of our training runs matches the other two. Sklearn is using a good initialization
     strategy.
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
 - en: 'The plot also shows us something else. For the classic initialization approaches,
@@ -1565,19 +1991,23 @@
     training because we have the most reliable evidence that the model is in a good
     place to correctly predict new, unseen inputs. Further training tends to degrade
     model generalization.'
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
 - en: Why did the increase in the test error happen? The likely cause of this effect
     is too small of a training set, only 6,000 samples. Also, the model architecture
     is not very large, with only 100 and 50 nodes in the hidden layers.
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
 - en: This section dramatically demonstrates the benefit of using current, state-of-the-art
     network initialization. When we explore convolutional neural networks in [Chapter
     12](ch12.xhtml#ch12), we’ll use these approaches exclusively.
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
 - en: Feature Ordering
+  id: totrans-356
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1589,6 +2019,7 @@
     and reshape it into a 28 × 28 element array. This means, except for the end of
     one row and the beginning of the next, that the pixels in the row are still part
     of the digit—the spatial relationship of the components of the image is preserved.
+  id: totrans-357
   prefs: []
   type: TYPE_NORMAL
 - en: However, if we scramble the pixels of the image, but always scramble the pixels
@@ -1596,6 +2027,7 @@
     This local relationship is what we use when we look at the image to decide what
     digit it represents. We look for the top part of a 5 to be a straight line segment
     and the bottom portion to curve on the right side, and so forth.
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
 - en: Look at [Figure 7-3](ch07.xhtml#ch7fig3). The figure shows MNIST digit images
@@ -1605,38 +2037,48 @@
     holistically, not by local spatial relationships as we do. Is this true for neural
     networks as well? Also, if true, will the network learn as quickly with the scrambled
     inputs as it does with the original images? Let’s find out.
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
 - en: The code for this experiment is found in *mnist_nn_experiments_scrambled .py*,
     where we simply define our now expected neural network model
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
 - en: MLPClassifier(solver="sgd", verbose=False, tol=0,
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
 - en: nesterovs_momentum=False, early_stopping=False,
+  id: totrans-362
   prefs: []
   type: TYPE_NORMAL
 - en: learning_rate_init=0.01, momentum=0.9,
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
 - en: hidden_layer_sizes=(100,50), activation="relu",
+  id: totrans-364
   prefs: []
   type: TYPE_NORMAL
 - en: alpha=0.2, learning_rate="constant", batch_size=64, max_iter=1)
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
 - en: and train it on the first 6,000 MNIST digit samples—first as usual, and then
     using the scrambled versions. We compute the test set error as a function of the
     epoch and average the results over 10 runs before plotting. The result is [Figure
     10-9](ch10.xhtml#ch10fig9).
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/10fig09.jpg)'
+  id: totrans-367
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-9: MNIST test error as a function of training epoch for scrambled
     and unscrambled digits*'
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
 - en: In the figure, we see the answer to our earlier questions. First, yes, traditional
@@ -1645,6 +2087,7 @@
     as it does with the unscrambled ones. The difference between the scrambled and
     unscrambled curves in [Figure 10-9](ch10.xhtml#ch10fig9) is not statistically
     significant.
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
 - en: These results indicate that (traditional) neural networks “understand” their
@@ -1654,9 +2097,11 @@
     awareness (assuming images as inputs) that limited neural networks for so long
     and led to the development of convolutional neural networks, which are spatially
     aware.
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
 - en: Summary
+  id: totrans-371
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1669,11 +2114,13 @@
     on your own. In particular, experiment with using the different solvers, Nesterov
     momentum, early stopping, and, particularly crucial for training convolutional
     neural networks, nonconstant learning rates.
+  id: totrans-372
   prefs: []
   type: TYPE_NORMAL
 - en: The next chapter explores techniques and metrics for evaluating the performance
     of machine learning models. This interlude before we jump to convolutional neural
     networks will supply us with tools we can use to help understand the performance
     of more advanced model types.
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
