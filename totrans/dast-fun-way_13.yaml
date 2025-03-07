@@ -1,21 +1,29 @@
 - en: '13'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '13'
 - en: Bloom Filters
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 布隆过滤器
 - en: '![](image_fi/book_art/chapterart.png)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![](image_fi/book_art/chapterart.png)'
 - en: As we saw in the previous chapter, we often need to be cognizant of how our
     data structures fit into local memory and how to limit retrievals from slower
     memory. As a data structure grows, it can store more data but might not be able
     to fit into the fastest memory. This chapter introduces the *Bloom filter*, a
     data structure that extends the core concepts behind a hash table to limit the
     amount of memory needed to filter over a large key space.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们在上一章中所看到的，我们通常需要关注我们的数据结构如何适应本地内存，以及如何限制从较慢内存中获取数据的操作。随着数据结构的增长，它能够存储更多的数据，但可能无法适应最快的内存。本章介绍了*布隆过滤器*，一种将哈希表背后的核心概念扩展到限制需要过滤大量键空间的内存量的数据结构。
 - en: 'Bloom filters were invented in 1970 by computer scientist Burton Bloom. A Bloom
     filter tracks which keys have been inserted while ruthlessly optimizing for both
     memory usage and execution time. It tries to answer one very simple yes/no question:
@@ -23,15 +31,19 @@
     check if a password is on a list of known weak passwords. Alternatively, we can
     use Bloom filters as prefiltering step before accessing a larger and more comprehensive,
     but slower, data structure.'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 布隆过滤器是由计算机科学家伯顿·布隆（Burton Bloom）于1970年发明的。布隆过滤器跟踪哪些键已经被插入，同时对内存使用和执行时间进行了严格的优化。它试图回答一个非常简单的“是/否”问题：我们是否曾经见过这个键？例如，我们可以使用布隆过滤器来检查一个密码是否在已知弱密码的列表中。或者，我们也可以在访问更大且更全面但较慢的数据结构之前，先使用布隆过滤器作为预筛选步骤。
 - en: In its quest for ultimate efficiency, the Bloom filter uses an approach that
     can result in false positives. This means that with some non-zero probability,
     the Bloom filter will indicate that a key has been inserted when it, in fact,
     has not. In other words, a Bloom filter of bad passwords might occasionally reject
     a good one.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了追求极致的效率，布隆过滤器采用了一种可能导致假阳性的策略。这意味着布隆过滤器会有一定概率错误地显示某个键已经插入，而实际上它并没有插入。换句话说，布隆过滤器用于检测弱密码时，可能偶尔会拒绝一个有效的密码。
 - en: As we will see, the combination of low memory overhead, fast execution time,
     and a guaranteed lack of false negatives—cases that indicate a key has not occurred
     when it actually has—make Bloom filters useful for prefiltering tasks and early
@@ -44,8 +56,10 @@
     data structure. If the Bloom filter returns true, then either we have received
     a false positive or the record is in our larger data structure, and we perform
     the full search.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们将看到的，低内存开销、快速执行时间和保证不会出现假阴性——即当某个键实际上已经存在时，系统却错误地认为它没有出现——的结合，使得布隆过滤器在进行预筛选任务和访问更昂贵的数据结构之前的早期检查中非常有用。这就导致了一种类似于第11章缓存方法的两阶段查找。为了检查某条记录是否在我们的数据集中，我们首先检查它是否已经被插入到布隆过滤器中。由于布隆过滤器是一个紧凑的高速内存数据结构，我们可以快速地进行检查。如果布隆过滤器返回假，说明该记录不在我们的数据集中，我们可以跳过在更全面数据结构中的昂贵查找。如果布隆过滤器返回真，那么可能是出现了假阳性，或者该记录确实存在于我们更大的数据结构中，我们会进行完整的搜索。
 - en: Imagine we’d like to determine whether a given record exists in a large database
     of medical records before we do a more computationally expensive search. The medical
     database is huge, includes images and videos, and must be stored across a multitude
@@ -54,18 +68,24 @@
     positive and send us searching for a record that does not exist, the Bloom filter
     will also help us avoid many pointless searches. Whenever the Bloom filter indicates
     that a record is not in the data set, we can stop the search immediately!
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 想象一下，我们想在执行更为计算密集的搜索之前，确定某个给定记录是否存在于一个庞大的医疗记录数据库中。这个医疗数据库非常巨大，包含图片和视频，并且必须存储在多个大硬盘中。此外，鉴于有数百万条记录，甚至索引都太大，无法完全放入本地内存中。虽然布隆过滤器偶尔会返回假阳性，导致我们搜索一个不存在的记录，但它也能帮助我们避免许多无意义的搜索。每当布隆过滤器表示某个记录不在数据集中时，我们可以立即停止搜索！
 - en: Introducing Bloom Filters
+  id: totrans-8
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 介绍布隆过滤器
 - en: At its heart, a Bloom filter is an array of binary values. Each bin tracks whether
     or not we have ever seen anything mapping to that hash value before. A value of
     1 indicates that a given bin has been seen before. A value of 0 indicates that
     it has not.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 本质上，布隆过滤器是一个二进制值数组。每个桶跟踪我们是否曾经见过任何映射到该哈希值的内容。值为1表示该桶之前已被见过。值为0表示没有。
 - en: Bloom filters can be incredibly useful when we want to easily search for a single
     value within a large number of values. Imagine this filtering in the context of
     searching a large, crowded ballroom for a friend. We could spend hours wandering
@@ -75,8 +95,10 @@
     matching the description is there. Our description, and the organizer’s mental
     map, consists of a series of basic attributes. Our friend is tall, wears sneakers,
     and has glasses.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 布隆过滤器在我们想在大量值中轻松搜索单一值时非常有用。想象一下，在寻找一个朋友的过程中，使用这种过滤方法来搜索一个庞大、拥挤的舞厅。我们可能会花几个小时在舞池里徘徊，注视着每个面孔，最后得出结论，朋友没有到场。首先向一个知识丰富的活动组织者询问会更简单。我们向组织者描述我们的朋友，他记忆力极好，可以确认是否有人符合这个描述。我们的描述和组织者的心理地图由一系列基本属性组成：我们的朋友很高，穿着运动鞋，戴着眼镜。
 - en: The event organizer’s answer may still not be 100 percent accurate—we are using
     general attributes, and multiple people will share those individual descriptors.
     Sometimes the organizer will give us a false positive, saying, “I saw someone
@@ -86,65 +108,90 @@
     then we can guarantee our friend is not at the event. The response doesn’t need
     to have zero false positives to help us on average. If the organizer can save
     us 9 out of every 10 searches, it would be a tremendous win.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 活动组织者的回答可能仍然不是百分之百准确——我们使用的是一般属性，并且多个不同的人会共享这些个人描述符。有时，组织者会给出假阳性，说：“我见过一个有这些特征的人”，而实际上我们的朋友并不在那里。但他们永远不会做出假阴性陈述，也不会告诉我们我们的朋友不在那儿，当他们实际上就在那儿。如果组织者没有见过我们列出的三个特征的人，那么我们可以保证我们的朋友不在活动中。回答不需要完全没有假阳性就能在平均上帮助我们。如果组织者能节省我们每10次搜索中9次的时间，那将是一个巨大的胜利。
 - en: Let’s examine how we can extend the hashing techniques we learned Chapter 10
     to this prefiltering question. We start with a simple indicator array and examine
     where it falls short. Then we show how the use of multiple hash functions can
     provide a more robust filtering scheme.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们来探讨如何将第10章学到的哈希技术扩展到这个预筛选问题中。我们从一个简单的指示器数组开始，并检查它的不足之处。然后我们展示如何通过使用多个哈希函数来提供更强健的过滤方案。
 - en: Hash Tables of Indicators
+  id: totrans-13
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 指示器哈希表
 - en: Consider the simplest filter, a binary indicator array mapped to by a single
     hash function. When we insert a key, we compute the hash value and mark the appropriate
     bin with a 1\. When we look up a key, we compute the hash value and check the
     corresponding bin. It’s simple. It’s elegant. And, unfortunately, it breaks at
     the slightest hash collision.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑最简单的过滤器，一个由单个哈希函数映射的二进制指示器数组。当我们插入一个键时，我们计算哈希值并将相应的桶标记为1。当我们查找一个键时，我们计算哈希值并检查对应的桶。这很简单，很优雅。可是，不幸的是，它会在最轻微的哈希冲突下失效。
 - en: Imagine we implement this simple single-hash-function filter for our thousand-page
     coffee log. Whenever we want to look up a type of coffee in our log, we first
     ask the filter the simple question, “Have I tried this type of coffee before?”
     This filter often allows us to avoid binary searching through a thousand pages
     if we know that we have never tried the coffee before.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 想象一下，我们为我们那千页的咖啡日志实现了这个简单的单哈希函数过滤器。每当我们想在日志中查找某种咖啡时，我们首先问过滤器一个简单的问题：“我之前试过这种咖啡吗？”如果我们知道自己从未尝试过这款咖啡，这个过滤器常常能让我们避免在千页日志中进行二分查找。
 - en: For the first month it works perfectly. Every time we sample a new coffee, we
     add it to the log and flip the appropriate bit in our filter from 0 to 1, as shown
     in [Figure 13-1](#figure13-1). We use the coffee name as the input to our hash
     function, allowing us to check future coffees by name.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个月它运行得非常完美。每次我们尝试新的咖啡时，我们都会将它添加到日志中，并将过滤器中相应的位从0翻转到1，如[图13-1](#figure13-1)所示。我们使用咖啡名称作为输入来计算哈希函数，使我们可以通过名称检查未来的咖啡。
 - en: '![The string “House Blend” is mapped to bin 6, which has the value 1\. The
     other 11 bins have value 0.](image_fi/502604c13/f13001.png)'
+  id: totrans-17
   prefs: []
   type: TYPE_IMG
+  zh: '![字符串“House Blend”被映射到第6个桶，该桶的值为1。其他11个桶的值为0。](image_fi/502604c13/f13001.png)'
 - en: 'Figure 13-1: A single hash function can map a string to the index of an array.'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-1：单一哈希函数可以将一个字符串映射到数组的索引。
 - en: For the first few entries, the single-hash-function Bloom filter acts similarly
     to a regular hash table (without collision resolution) that stores binary values
     for each entry. We insert a 1 into the appropriate bin for each key seen, and
     a value of 0 indicates we have not seen any entry hashing to that value. When
     we ask whether we’ve tried the House Blend variety, we receive a simple “yes”
     when our lookup returns a 1\.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于前几个条目，单一哈希函数的布隆过滤器表现得类似于常规哈希表（没有冲突解决），它为每个条目存储二进制值。我们为每个遇到的键将1插入到相应的桶中，而0表示我们没有遇到任何映射到该值的条目。当我们询问是否尝试过House
+    Blend品种时，当我们的查找返回1时，我们会得到一个简单的“是”。
 - en: However, problems emerge as we add more and more values to our filter. After
     a day of coffee drinking, our binary array begins to fill up. As shown in [Figure
     13-2](#figure13-2), even if we’re only consuming a few varieties of coffee a day,
     we start to fill the array with 1s.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，当我们向过滤器中添加越来越多的值时，问题就出现了。在一天的咖啡饮用后，我们的二进制数组开始填满。如[图13-2](#figure13-2)所示，即使我们每天只消费几种咖啡，我们也开始将1填充到数组中。
 - en: '![Four of the 12 bins in the binary array have the value 1; the rest are zero.](image_fi/502604c13/f13002.png)'
+  id: totrans-21
   prefs: []
   type: TYPE_IMG
+  zh: '![二进制数组中有四个桶的值为1，其余的为0。](image_fi/502604c13/f13002.png)'
 - en: 'Figure 13-2: A binary array that is starting to fill up'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-2：开始填满的二进制数组
 - en: Since Bloom filters, unlike hash tables, don’t use chaining or any other mechanism
     to resolve collisions, two different coffees will occasionally map to the same
     entry. Soon we don’t know whether we really sampled the Burnt-Bean Dark Roast
@@ -153,8 +200,10 @@
     that whenever we are mapping from a large key space (the set of coffee names)
     to a smaller key space (the entries in an array), we will see collisions. This
     problem grows worse and worse as we add more entries to our log.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于布隆过滤器与哈希表不同，不使用链式处理或任何其他机制来解决冲突，所以两个不同的咖啡偶尔会映射到同一个条目。很快我们就无法确定是否真的尝试了烧焦豆深烘焙，还是对应的1是由于我们之前尝试过的生豆未煮苦辣爆豆，它恰好映射到了同一个条目。请记住，在第10章中提到，当我们从一个大的键空间（咖啡名称集合）映射到一个较小的键空间（数组中的条目）时，我们会遇到冲突。随着我们在日志中添加更多条目，这个问题变得越来越严重。
 - en: Within a year, our initial filter is effectively useless. Our varied coffee
     experiences, while enjoyable, have packed the array with 1s. We now have something
     like the array shown in [Figure 13-3](#figure13-3). Well over half of our queries
@@ -163,14 +212,20 @@
     before the real search. In our party example, this correlates to using a single
     attribute to describe our friend. If we provide only our friend’s hair color,
     the event organizer will almost always have seen someone matching that description.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 在一年之内，我们最初的过滤器实际上变得毫无用处。我们丰富的咖啡体验，虽然愉快，却把数组填满了1。现在我们有了类似[图13-3](#figure13-3)所示的数组。超过一半的查询结果都会发生哈希冲突，从而产生假阳性。过滤器不再是一个高效的预过滤器。相反，它几乎总是会在真正的搜索之前增加一次无用的检查。在我们的派对示例中，这相当于只用一个属性来描述我们的朋友。如果我们只提供朋友的发色，活动组织者几乎总是会遇到符合该描述的人。
 - en: '![Eight of the 12 bins in the binary array have the value 1; only 4 are zero.](image_fi/502604c13/f13003.png)'
+  id: totrans-25
   prefs: []
   type: TYPE_IMG
+  zh: '![二进制数组中有8个桶的值为1；只有4个为0。](image_fi/502604c13/f13003.png)'
 - en: 'Figure 13-3: A binary array that is too full to be a useful coffee tracker'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-3：已满的二进制数组，无法再作为有用的咖啡追踪器
 - en: The simplest fix to our mounting collisions would be to increase the space of
     hash values. We could make our binary array larger. Instead of using 100 indicator
     values, we could try 1,000\. This reduces the likelihood of collisions, but does
@@ -178,12 +233,17 @@
     and, as we saw in Chapter 10, some collisions are unavoidable. Our hashing approach
     isn’t doomed yet, though. We can do even better by adopting a strategy that also
     reduces the *impact* of each collision.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 解决我们不断增加的碰撞的最简单方法是增加哈希值的空间。我们可以将二进制数组变大。不再使用 100 个指示值，而是尝试 1,000。这样可以减少碰撞的可能性，但并不能完全消除它。一次碰撞仍然会导致误报，并且正如我们在第
+    10 章中所看到的那样，一些碰撞是无法避免的。不过，我们的哈希方法并不注定失败。通过采用一种策略，我们还可以进一步减少每次碰撞的*影响*。
 - en: The Bloom Filter
+  id: totrans-28
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 布隆过滤器
 - en: A Bloom filter solves the problem of collisions by taking the idea of hash functions
     to the extreme. Instead of using a single hash function for each key, it employs
     *k* independent hash functions, all mapping the key onto the same range of hash
@@ -191,81 +251,119 @@
     hash functions for our coffee list. The hash function *f1* maps this key to index
     2; the second function, *f2*, maps it to index 6; and the third, *f3*, maps it
     to index 9\.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 布隆过滤器通过将哈希函数的思想推向极限，解决了碰撞问题。它不再为每个键使用单个哈希函数，而是采用* k *个独立的哈希函数，这些函数都将键映射到相同范围的哈希值。例如，如[图
+    13-4](#figure13-4)所示，我们可能为咖啡列表使用三个哈希函数。哈希函数*f1*将此键映射到索引 2；第二个函数*f2*将其映射到索引 6；第三个函数*f3*将其映射到索引
+    9。
 - en: '![The string “House Blend” is mapped to bin 2 by the first hash function, bin
     6 by the second hash function, and bin 9 by the third hash function.](image_fi/502604c13/f13004.png)'
+  id: totrans-30
   prefs: []
   type: TYPE_IMG
+  zh: '![字符串“House Blend”通过第一个哈希函数映射到桶 2，通过第二个哈希函数映射到桶 6，通过第三个哈希函数映射到桶 9。](image_fi/502604c13/f13004.png)'
 - en: 'Figure 13-4: Inserting the string HOUSE BLEND into a Bloom filter using three
     hash functions'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 13-4：使用三种哈希函数将字符串 HOUSE BLEND 插入布隆过滤器
 - en: 'Formally, we define the Bloom filter’s operations as follows:'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 从形式上讲，我们将布隆过滤器的操作定义如下：
 - en: Insert key For each of our *k* hash functions, map the key to an index and set
     the value at that index to 1.
+  id: totrans-33
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 插入键 对于每个* k *哈希函数，将键映射到一个索引，并将该索引处的值设置为 1。
 - en: Lookup key For each of our *k* hash functions, map the key to an index and check
     whether the value at that index is 1\. Return true if and only if all *k* array
     values are 1.
+  id: totrans-34
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 查找键 对于每个* k *哈希函数，将键映射到一个索引并检查该索引处的值是否为 1。仅当所有* k *数组值为 1 时，才返回 true。
 - en: At first glance, all we have done is make matters worse. Instead of filling
     up one bin per sample, we’re filling three. Our array is practically guaranteed
     to fill up faster and see collisions earlier. If we add a second entry, as shown
     in [Figure 13-5](#figure13-5), we add more 1s to our array.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 乍一看，我们所做的似乎只是让问题变得更糟。我们不再每个样本填充一个桶，而是填充三个桶。我们的数组几乎可以保证更快填满，并且更早看到碰撞。如果我们添加第二个条目，如[图
+    13-5](#figure13-5)所示，我们会向数组中添加更多的 1。
 - en: '![The string “Morning shock” is mapped to bin 5 by the first hash function,
     bin 2 by the second hash function, and bin 8 by the third hash function.](image_fi/502604c13/f13005.png)'
+  id: totrans-36
   prefs: []
   type: TYPE_IMG
+  zh: '![字符串“Morning shock”通过第一个哈希函数映射到桶 5，通过第二个哈希函数映射到桶 2，通过第三个哈希函数映射到桶 8。](image_fi/502604c13/f13005.png)'
 - en: 'Figure 13-5: Inserting the string MORNING SHOCK into a Bloom filter using three
     hash functions'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 13-5：使用三种哈希函数将字符串 MORNING SHOCK 插入布隆过滤器
 - en: On the contrary, we’ve actually improved things. The power of the Bloom filter
     enables us to look up entries efficiently. Instead of succumbing to a single collision,
     producing a false positive if we see a see a single 1, we require *all* the bins
     for our target string to contain a 1, as shown in [Figure 13-6](#figure13-6).
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 相反，我们实际上是改进了系统。布隆过滤器的强大功能使我们能够高效地查找条目。我们要求*所有*目标字符串对应的桶中都包含 1，如[图 13-6](#figure13-6)所示，而不是屈服于单次碰撞，在看到单个
+    1 时就产生误报。
 - en: '![The string “Pure Caffeine” is mapped to bin 9 by the first hash function,
     bin 8 by the second hash function, and bin 5 by the third hash function.](image_fi/502604c13/f13006.png)'
+  id: totrans-39
   prefs: []
   type: TYPE_IMG
+  zh: '![字符串“Pure Caffeine”通过第一个哈希函数映射到桶 9，通过第二个哈希函数映射到桶 8，通过第三个哈希函数映射到桶 5。](image_fi/502604c13/f13006.png)'
 - en: 'Figure 13-6: Looking up the string PURE CAFFEINE in a Bloom filter with three
     hash functions'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 13-6：在具有三种哈希函数的布隆过滤器中查找字符串 PURE CAFFEINE
 - en: If we see a single 0, we know that this entry has not been inserted into the
     array. In [Figure 13-7](#figure13-7), we can see we’ve never sampled the Caffeine
     +10 roast. In the ballroom, the event organizer only needs to know that our friend
     is wearing a bowler hat to categorically answer that they’ve seen no one of that
     description. They’ve seen someone of the correct height and someone with the correct
     hair color, but no one wearing that hat. We can safely avoid a full search.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们看到一个单独的 0，我们就知道这个条目没有被插入到数组中。在[图 13-7](#figure13-7)中，我们可以看到我们从未尝试过 Caffeine
+    +10 烘焙咖啡。在舞厅中，活动组织者只需要知道我们的朋友戴着一顶圆顶礼帽，就可以明确回答他们没见过符合这种描述的人。他们见过身高合适和发色正确的人，但没有见过戴那顶帽子的人。我们可以安全地避免做全面搜索。
 - en: '![The string “Caffeine +10” is mapped to bin 9 by the first hash function,
     bin 8 by the second hash function, and bin 4 by the third hash function. The first
     two functions map to bins containing 1, but the final hash function maps to a
     bin containing 0.](image_fi/502604c13/f13007.png)'
+  id: totrans-42
   prefs: []
   type: TYPE_IMG
+  zh: '![字符串“Caffeine +10”通过第一个哈希函数映射到 9 号桶，第二个哈希函数映射到 8 号桶，第三个哈希函数映射到 4 号桶。前两个哈希函数映射到包含
+    1 的桶，但最后一个哈希函数映射到包含 0 的桶。](image_fi/502604c13/f13007.png)'
 - en: 'Figure 13-7: Looking up the string CAFFEINE +10 in a Bloom filter with three
     hash functions'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 13-7：在一个包含三个哈希函数的 Bloom filter 中查找字符串 CAFFEINE +10
 - en: To register a false positive, *each* of our hash values must collide with a
     previous entry. If we balance the size of our array with the number of hash functions,
     we can reduce the probability for a false positive.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了注册一个假阳性，*每个*哈希值都必须与之前的条目发生碰撞。如果我们平衡数组的大小和哈希函数的数量，就可以降低假阳性的概率。
 - en: We can visualize a Bloom filter’s treatment of collisions via a conversation
     with a knowledgeable barista. Imagine that, on a recent trip, a friend hands us
     an incredible cup of coffee. After basking in the joy of the rich flavors and
@@ -276,8 +374,10 @@
     to find the shop and interrogate the owner ourselves. We need to get on our flight
     home. Holding back tears at the lost knowledge, we jot a few attributes on a piece
     of paper and resolve to track down the mystery coffee.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过与一位知识渊博的咖啡师的对话来形象化 Bloom filter 处理碰撞的过程。假设在一次旅行中，朋友递给我们一杯令人惊叹的咖啡。品尝完浓郁的口感和强效的咖啡因后，我们询问朋友有关这次新发现的咖啡。令我们失望的是，朋友即将成为前朋友，他们耸耸肩，指向一个大致的方向，并声称是在“那边”的一家店里购买的。他们记不住咖啡师的名字、店铺名称，甚至连咖啡品牌都忘了。遗憾的是，我们没有时间去找到这家店并亲自询问店主。我们得赶上回家的航班。忍住失去这段知识的泪水，我们在纸上记下了几个特征，决定追踪这杯神秘的咖啡。
 - en: Upon returning home, we visit the most knowledgeable barista we know and show
     them our notes. We have managed to capture five key traits about our coffee, such
     as “primary smell is chocolate.” This clearly isn’t enough information to identify
@@ -287,8 +387,11 @@
     and rules out a match. Despite our arguments that the flavors worked surprisingly
     well, our expert has never heard of any coffee that includes an “extra-sweet bubblegum
     flavor.” They give us a funny look and mumble something about having standards.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 回到家后，我们去拜访了最有经验的咖啡师，并向他们展示我们的笔记。我们已经捕捉到了有关这杯咖啡的五个关键特征，比如“主要气味是巧克力”。显然，这些信息不足以唯一地识别这杯咖啡，但我们可以询问咖啡师是否知道有符合这些描述的咖啡。在翻阅自己
+    10,000 页的咖啡日志之前，咖啡师先独立地考虑这些特征，并排除了匹配的可能性。尽管我们强调这种味道的搭配出奇的好，但这位专家从未听说过有咖啡包含“额外甜美的泡泡糖味”。他们用一种奇怪的表情看着我们，并嘟囔着什么关于保持标准的事情。
 - en: In this case, our five attributes are effectively hash functions, projecting
     the complex coffee experience into a lower-dimensional space—an array of descriptor
     words. The barista uses each of these attributes individually to check whether
@@ -300,8 +403,10 @@
     characteristics is unique, the barista can confidently say no, and we can leave
     confident in the knowledge that no coffee in our barista’s extensive catalog could
     be our mystery blend.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，我们的五个属性实际上是哈希函数，将复杂的咖啡体验投影到一个较低维度的空间——一个描述词数组。咖啡师使用这些属性中的每一个单独地检查他们是否知道有任何咖啡可能匹配，使用他们自己咖啡日志的索引。索引中的条目意味着至少有一个匹配。每个属性的测试可能会出现假阳性，但这没关系。在最坏的情况下，我们浪费一些时间浏览旧的咖啡日志条目，最后确定没有完全匹配的咖啡。至少我们知道永远不会看到假阴性。如果至少有一个特征是独特的，咖啡师可以自信地说“不”，我们也可以自信地离开，知道我们咖啡师广泛的咖啡目录中没有我们想要的神秘咖啡。
 - en: We can use just the Bloom filter step to make fast, in-the-moment decisions
     without subsequently searching a larger data structure. Imagine that our trusted
     barista maintains a secret list of coffees to avoid, 500 coffees around the world
@@ -310,8 +415,10 @@
     if we ask our barista friend about a specific coffee on the list, they will give
     a polite warning that maybe we’d prefer decaf instead. Before sampling any new
     coffee, we’d do well to check it isn’t on their list.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以仅使用布隆过滤器步骤来快速做出当下的决策，而不需要之后搜索更大的数据结构。想象一下，我们信任的咖啡师维护着一份秘密的咖啡避免列表，里面列出了全球500种恶心到让我们一个月都不想喝咖啡的咖啡。由于各种责任原因，他们没有公开这个列表。但如果我们问咖啡师关于列表中特定咖啡的情况，他们会礼貌地提醒我们，或许我们更适合选择无咖啡因咖啡。在品尝任何新咖啡之前，我们最好先检查它是否在他们的列表中。
 - en: Of course, we won’t be able to call the barista each time we get the opportunity
     to try a new coffee, so we need a quick way of making the decision. Using five
     informative attributes, including primary smell and viscosity, the barista constructs
@@ -321,140 +428,200 @@
     drink the new coffee. It is guaranteed to not be on the barista’s list. However,
     if all the attributes are 1, maybe we should order something else. As a bonus,
     the barista never has to distribute their secret list.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 当然，我们不会在每次有机会尝试新咖啡时都去找咖啡师，因此我们需要一个快速做出决定的方法。使用包括主要气味和粘度在内的五个信息属性，咖啡师为这些咖啡构建了一个布隆过滤器，列出列表中每种咖啡的五个属性，每个属性标记为1。当我们有机会品尝新咖啡时，我们将这五个属性与列表进行对比。如果其中任何一个映射为0，我们可以安全地喝这款新咖啡，保证它不在咖啡师的列表中。然而，如果所有属性都是1，或许我们应该点别的。作为额外奖励，咖啡师永远不需要分发他们的秘密列表。
 - en: We can apply Bloom filters to computer science applications in a similar fashion.
     Consider the problem of checking a password against a list of known weak passwords.
     We could systematically search the full list every time someone proposes a new
     password. Alternatively, we could create a Bloom filter to quickly check if we
     should reject the password. Occasionally we might reject a reasonable password,
     but we can guarantee we’ll never let a bad one through.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以类似地将布隆过滤器应用于计算机科学中的应用。例如，考虑检查密码是否在已知弱密码列表中的问题。我们可以在每次有人提出新密码时，系统性地搜索整个列表。另一种选择是，我们可以创建一个布隆过滤器来快速检查是否应该拒绝该密码。偶尔我们可能会拒绝一个合理的密码，但可以保证我们永远不会让一个不好的密码通过。
 - en: Bloom Filter Code
+  id: totrans-51
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 布隆过滤器代码
 - en: 'In its simplest form, a Bloom filter can be stored as just an array of binary
     values. To make the code clearer, we wrap the Bloom filter in a simple composite
     data structure containing the parameters, such as the size and the number of hash
     functions:'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 在最简单的形式中，布隆过滤器可以仅作为一个二进制值数组来存储。为了让代码更清晰，我们将布隆过滤器封装在一个简单的复合数据结构中，包含一些参数，如大小和哈希函数的数量：
 - en: '[PRE0]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Given this wrapper, the code for both the insertion and lookup functions can
     be implemented with a single `WHILE` loop:'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 有了这个封装器，插入和查找功能的代码可以通过一个单独的`WHILE`循环来实现：
 - en: '[PRE1]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: In this code, `filter.h[i](key)` denotes the Bloom filter’s `i`th hash function
     applied to `key`. Both functions use a loop to iterate over the *k* hash functions,
     computing `key`’s hash value and accessing the corresponding bin in the Bloom
     filter’s array. In the case of insertion, the code sets the value of the bin to
     `1`. In the case of lookup, the code checks whether the bin contains a `0` and
     returns `False` if so.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这段代码中，`filter.h[i](key)` 表示应用于 `key` 的布隆过滤器的第 `i` 个哈希函数。两个函数都使用循环来迭代 *k* 个哈希函数，计算
+    `key` 的哈希值，并访问布隆过滤器数组中的相应桶。在插入时，代码将桶的值设置为 `1`；在查找时，代码检查桶是否包含 `0`，如果是，则返回 `False`。
 - en: In the worst case, the functions cost scales linearly with *k* as we need to
     iterate over each hash function for each operation. The structure of lookup provides
     an additional potential advantage. The lookup can terminate immediately after
     finding the first 0, skipping any further hash functions. Importantly, the runtime
     of both insertion and lookup is independent of both the size of the Bloom filter
     (number of bins) and the number of items inserted.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 在最坏的情况下，函数的成本随 *k* 线性增长，因为我们需要对每个操作迭代每个哈希函数。查找的结构提供了一个额外的潜在优势：一旦找到第一个 0，查找就可以立即终止，跳过后续的哈希函数。值得注意的是，插入和查找的运行时间与布隆过滤器的大小（桶的数量）和插入的项数无关。
 - en: Tuning Bloom Filter Parameters
+  id: totrans-58
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 调整布隆过滤器参数
 - en: There are multiple parameters that impact the Bloom filter’s false positive
     rate, including the size of the array and the number of hash functions used. By
     tuning these parameters to the problem at hand, we can often keep the false positive
     rate very low while minimizing the amount of memory used. We can do this empirically
     with real data, through simulation, or with a variety of mathematical approximations
     of the false positive rate.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 影响布隆过滤器假阳性率的因素有多个，包括数组的大小和使用的哈希函数数量。通过根据实际问题调整这些参数，我们通常可以在最小化内存使用的同时，保持假阳性率非常低。我们可以通过真实数据的经验测试、模拟，或者通过一系列数学近似来评估假阳性率。
 - en: 'One common and simple approximation is:'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 一种常见且简单的近似方法是：
 - en: '*FalsePositiveRate* = (1 – (1 – 1/*m*)^(*nk*))^(*k*)'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: '*假阳性率* = (1 – (1 – 1/*m*)^(*nk*))^(*k*)'
 - en: 'where *n* is the number of items inserted into the Bloom filter, *m* is the
     size of the array, and *k* is the number of hash functions used. This approximation
     uses simplified assumptions, but it gives a good view into how the various parameters
     interact:'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中，*n* 是插入到布隆过滤器中的项数，*m* 是数组的大小，*k* 是使用的哈希函数数量。这个近似公式使用了简化的假设，但它很好地展示了各种参数是如何相互作用的：
 - en: Increasing the size of the array (*m*) always decreases the false positive rate,
     because there are more bins to store information.
+  id: totrans-63
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 增加数组的大小（*m*）总是会减少假阳性率，因为有更多的桶可以存储信息。
 - en: Increasing the number of items inserted (*n*) always increases the false positive
     rate, because we set more of those bins to 1\.
+  id: totrans-64
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 增加插入的项数（*n*）总是会增加假阳性率，因为更多的桶会被设置为 1。
 - en: Increasing the number of hash functions (*k*) can increase or decrease the false
     positive rate depending on the other parameters. If we use too many hash functions,
     we are going to fill up large quantities of the array with each insertion. If
     we use too few, a small number of collisions could produce a false positive.
+  id: totrans-65
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 增加哈希函数的数量（*k*）可以根据其他参数的不同，增加或减少假阳性率。如果使用过多的哈希函数，每次插入都会填满大量的数组。如果使用过少的哈希函数，少量的碰撞可能会产生假阳性。
 - en: '[Table 13-1](#table13-1) provides insight into how the Bloom filter sizes (*m*)
     and number of hash functions (*k*) impact the false positive rate for a fixed
     number of items inserted (*n* = 100).'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: '[表 13-1](#table13-1) 通过展示不同布隆过滤器大小（*m*）和哈希函数数量（*k*）对假阳性率的影响，帮助我们理解对于固定项数（*n*=
+    100）时的假阳性率。'
 - en: 'Table 13-1: Example False Positive Rates for Different Parameterizations (*m*,
     *k*) with *n*= 100'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 表 13-1：不同参数配置（*m*，*k*）下的假阳性率示例（*n*= 100）
 - en: '| ***m*** | ***k* = 1** | ***k* = 3** | ***k* = 5** |'
+  id: totrans-68
   prefs: []
   type: TYPE_TB
+  zh: '| ***m*** | ***k* = 1** | ***k* = 3** | ***k* = 5** |'
 - en: '| --- | --- | --- | --- |'
+  id: totrans-69
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
 - en: '| 200 | 0.3942 | 0.4704 | 0.6535 |'
+  id: totrans-70
   prefs: []
   type: TYPE_TB
+  zh: '| 200 | 0.3942 | 0.4704 | 0.6535 |'
 - en: '| 400 | 0.2214 | 0.1473 | 0.1855 |'
+  id: totrans-71
   prefs: []
   type: TYPE_TB
+  zh: '| 400 | 0.2214 | 0.1473 | 0.1855 |'
 - en: '| 600 | 0.1536 | 0.0610 | 0.0579 |'
+  id: totrans-72
   prefs: []
   type: TYPE_TB
+  zh: '| 600 | 0.1536 | 0.0610 | 0.0579 |'
 - en: '| 800 | 0.1176 | 0.0306 | 0.0217 |'
+  id: totrans-73
   prefs: []
   type: TYPE_TB
+  zh: '| 800 | 0.1176 | 0.0306 | 0.0217 |'
 - en: '| 1000 | 0.0952 | 0.0174 | 0.0094 |'
+  id: totrans-74
   prefs: []
   type: TYPE_TB
+  zh: '| 1000 | 0.0952 | 0.0174 | 0.0094 |'
 - en: Ultimately the optimal parameter setting will depend on the specific problem.
     We need to choose a tradeoff among false positive rate, computational cost, and
     memory cost that best suits our application.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 最终，最佳的参数设置将取决于具体的问题。我们需要在假阳性率、计算成本和内存成本之间选择一个权衡，以最适合我们的应用。
 - en: Bloom Filters vs. Hash Tables
+  id: totrans-76
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 布隆过滤器与哈希表
 - en: 'At this point, the skeptical reader may again fling their hands in the air
     in protest: “Why not just use a hash table? Whenever a key occurs, we can add
     it along with some trivial data, such as a Boolean value of True, to the hash
     table. Then we can search this table for exact match keys. Sure, we might have
     to do some chaining due to collisions, but we’d get exact answers. Why do you
     always make things so complicated?”'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 此时，怀疑的读者可能再次举起双手抗议：“为什么不直接使用哈希表？每当一个键出现时，我们可以将它和一些无关的数据（例如布尔值 True）一起添加到哈希表中。然后我们可以在这个表中搜索精确匹配的键。当然，我们可能由于冲突需要做一些链式操作，但我们可以得到精确的答案。为什么你总是把事情搞得这么复杂？”
 - en: It’s a fair point. Hash tables do allow us to answer the same question that
     Bloom filters answer, and more exactly. But, as our skeptical reader noted, they
     do so at the cost of additional space and potentially runtime. In order for a
@@ -463,24 +630,34 @@
     storing the key itself. Add to that the overhead of pointers in a chained hash
     table, as shown in [Figure 13-8](#figure13-8), and we could be using significantly
     more memory.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是一个公平的观点。哈希表确实允许我们回答布隆过滤器所回答的相同问题，而且更为精确。但正如我们的怀疑读者所指出的那样，它们是以额外的空间和潜在的运行时成本为代价的。为了让哈希表完全解决冲突，我们需要存储足够的信息来确定我们以前是否见过这个确切的键，这意味着需要存储键本身。再加上链式哈希表中指针的开销，如[图
+    13-8](#figure13-8)所示，我们可能会使用更多的内存。
 - en: '![A linked list for a hash table bucket consists of nodes with data for the
     key, the value, and a pointer to the next node.](image_fi/502604c13/f13008.png)'
+  id: totrans-79
   prefs: []
   type: TYPE_IMG
+  zh: '![哈希表桶的链表由包含键、值以及指向下一个节点的指针的数据节点组成。](image_fi/502604c13/f13008.png)'
 - en: 'Figure 13-8: A hash table with chaining requires memory for each key and at
     least one pointer.'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 13-8：具有链式结构的哈希表需要为每个键分配内存，并至少需要一个指针。
 - en: In contrast, the Bloom filter doesn’t bother storing the keys or pointers to
     subsequent nodes. It only keeps around a single binary value for each bucket.
     We can store *m* bins using exactly *m* bits. This extreme space efficiency proves
     valuable for multiple reasons. First, it allows us to vastly increase the number
     of bins (the size of our filter) while keeping the memory manageable. We can store
     32 individual bins for the price of a single 32-bit integer.
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 相比之下，布隆过滤器不需要存储键或指向后续节点的指针。它仅保留每个桶的单一二进制值。我们可以使用恰好 *m* 位来存储 *m* 个桶。这种极端的空间效率具有多方面的价值。首先，它使我们能够在保持内存可管理的情况下大幅增加桶的数量（即过滤器的大小）。我们可以用一个
+    32 位整数的代价存储 32 个独立的桶。
 - en: Second, and more importantly for computationally sensitive applications, it
     often allows us to keep the Bloom filter in memory, or even in the memory’s cache,
     for fast access. Consider the tradeoffs we explored in the previous chapter of
@@ -488,19 +665,26 @@
     Bloom filters work to maximize the amount of the data structure that directly
     helps with filtering with the goal of keeping the whole data structure in very
     fast memory.
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 第二点，更重要的是，对于计算密集型应用，它通常允许我们将布隆过滤器保留在内存中，甚至是在内存缓存中，以便快速访问。考虑我们在上一章中探讨的关于构建 B
+    树节点以减少从较慢内存中检索次数的权衡。布隆过滤器的作用是最大化数据结构中直接有助于过滤的部分，目标是将整个数据结构保留在非常快速的内存中。
 - en: Why This Matters
+  id: totrans-83
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 这为什么很重要
 - en: Bloom filters can be powerful tools when we need to hyper-optimize the tradeoff
     between memory usage and accuracy. They combine the mathematical mappings introduced
     in Chapter 10 with the focus on fitting data into a compact form that can be stored
     in local memory that we saw in Chapter 12. Like caches, they provide an intermediate
     step to an expensive lookup that can help reduce the cost on average.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 布隆过滤器在我们需要在内存使用和准确性之间进行高度优化的权衡时，可以是强大的工具。它们结合了第 10 章中介绍的数学映射，以及第 12 章中我们看到的将数据压缩成可以存储在本地内存中的形式的关注点。像缓存一样，它们提供了一种昂贵查找的中间步骤，有助于平均降低成本。
 - en: More important, however, is that Bloom filters provide a glimpse into a new
     type of data structure—one that can occasionally return a false positive. The
     accuracy of a lookup operation is not guaranteed but rather probabilistically
@@ -509,11 +693,15 @@
     early on. This type of data structure provides a different approach to thinking
     about how we organize data and the relevant tradeoffs. If we are willing to accept
     some (hopefully small) number of errors, how far can we push the efficiency?
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，更重要的是，布隆过滤器提供了一瞥一种新型数据结构——一种可能偶尔返回假阳性的结构。查找操作的准确性无法保证，而是依赖于数据的概率。如果我们运气好，可能会在看到任何假阳性之前插入大量元素。然而，如果运气不好，可能会很早就遇到冲突。这种数据结构提供了一种不同的思维方式来考虑我们如何组织数据及相关的权衡。如果我们愿意接受一些（希望是很小的）错误，我们能够推向多高的效率？
 - en: In the next chapter, we consider a data structure that relies on a different
     type of randomness. Instead of providing a probabilistically correct answer, skip
     lists use randomness to avoid bad worst-case behavior and provide efficient operations
     on average.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一章，我们将考虑一种依赖于不同类型随机性的数据显示结构。跳表（skip list）不是提供概率正确的答案，而是通过随机性避免最坏情况的表现，并在平均情况下提供高效的操作。
