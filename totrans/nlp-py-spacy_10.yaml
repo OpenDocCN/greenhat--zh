@@ -1,21 +1,29 @@
 - en: '**10'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '**10'
 - en: TRAINING MODELS**
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '**训练模型**'
 - en: '![Image](../Images/comm1.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](../Images/comm1.jpg)'
 - en: As you learned in [Chapter 1](../Text/ch01.xhtml#ch01), spaCy contains statistical
     neural network models trained to perform named entity recognition, part-of-speech
     tagging, syntactic dependency parsing, and semantic similarity prediction. But
     you’re not limited to using only pretrained, ready-to-use models. You can also
     train a model with your own training examples, tuning its pipeline components
     for your application’s requirements.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你在[第1章](../Text/ch01.xhtml#ch01)中学到的，spaCy包含了用于执行命名实体识别、词性标注、句法依赖解析和语义相似性预测的统计神经网络模型。但你并不局限于仅使用预训练好的现成模型。你也可以使用自己的训练样本训练一个模型，根据应用需求调整它的管道组件。
 - en: This chapter covers how to train spaCy’s named entity recognizer and dependency
     parser, the pipeline components that you most often need to customize to make
     the model you’re using specific to a particular use case. The reason is that a
@@ -23,163 +31,233 @@
     way of parsing dependencies. You’ll learn how to train an existing model with
     new examples and a blank one from scratch. You’ll also save a customized pipeline
     component to disk so you can load it later in another script or model.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章讲解如何训练spaCy的命名实体识别器和依赖解析器，这些是你最常需要定制的管道组件，以使你使用的模型适应特定的应用场景。原因是某些领域通常需要特定的实体集，且有时需要特定的依赖解析方式。你将学习如何使用新的例子训练现有模型，或者从零开始训练一个空模型。你还将把定制的管道组件保存到磁盘，以便在以后的脚本或模型中加载。
 - en: '**Training a Model’s Pipeline Component**'
+  id: totrans-5
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**训练模型的管道组件**'
 - en: 'You rarely have to train a model from scratch to satisfy your application’s
     specific requirements. Instead, you can use an existing model and update only
     the pipeline component you need to change. This process usually involves two steps:
     preparing *training examples* (sets of sentences with annotations that the model
     can learn from), and then exposing the pipeline component to the training examples,
     as shown in [Figure 10-1](../Text/ch10.xhtml#ch10fig01).'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 你很少需要从零开始训练一个模型来满足你应用的特定需求。相反，你可以使用现有的模型，并仅更新你需要更改的管道组件。这个过程通常包括两个步骤：准备*训练样本*（包含注释的句子集合，模型可以从中学习），然后将管道组件暴露给这些训练样本，正如在[图
+    10-1](../Text/ch10.xhtml#ch10fig01)中所示。
 - en: '![image](../Images/fig10-1.jpg)'
+  id: totrans-7
   prefs: []
   type: TYPE_IMG
+  zh: '![image](../Images/fig10-1.jpg)'
 - en: '*Figure 10-1: The training process for a pipeline component*'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 10-1：管道组件的训练过程*'
 - en: 'To prepare training examples, you convert raw text data into a training example
     containing a sentence and each token’s annotations. During the training process,
     spaCy uses the training examples to correct the model’s weights: the goal is to
     minimize the error (called the *loss*) of the model prediction. Put simply, the
     algorithm calculates the relationship between the token and its annotation to
     determine the likelihood that a token should be assigned that annotation.'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了准备训练样本，你需要将原始文本数据转化为包含句子和每个词元注释的训练样本。在训练过程中，spaCy利用训练样本来调整模型的权重：目标是最小化模型预测的误差（称为*损失*）。简单来说，算法计算词元与其注释之间的关系，以确定该词元应该分配给该注释的可能性。
 - en: A real-world implementation might require hundreds or even thousands of training
     examples to efficiently teach a certain component of a model. Before you start
     training the component, you need to temporarily disable all the model’s other
     pipeline components to protect them from unnecessary alterations.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个现实世界的实现可能需要数百甚至数千个训练样本，才能高效地训练模型的某个组件。在开始训练该组件之前，你需要暂时禁用模型的其他所有管道组件，以保护它们免受不必要的修改。
 - en: '**Training the Entity Recognizer**'
+  id: totrans-11
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**训练实体识别器**'
 - en: Suppose you’re developing a chatbot app for a taxi company. The app must correctly
     recognize all the names referring to districts within the city and its surroundings.
     To accomplish this, you might need to update a model’s named entity recognition
     system with your own examples, making it recognize, for instance, the word “Solnce,”
     which refers to a neighborhood in a city, as a geopolitical entity. The following
     sections describe how you could complete this task.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设你正在为一家出租车公司开发一个聊天机器人应用。该应用必须能够正确识别所有指代城市及其周边区域的地名。为此，你可能需要用你自己的例子来更新模型的命名实体识别系统，使其识别例如“Solnce”这个词——它指的是某个城市的一个社区——作为一个地理政治实体。以下章节将描述你如何完成这个任务。
 - en: '***Deciding Whether You Need to Train the Entity Recognizer***'
+  id: totrans-13
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***决定是否需要训练实体识别器***'
 - en: 'Let’s begin by looking at how the existing named entity recognizer in the default
     English model (generally the `en_core_web_sm` model) recognizes the named entities
     of interest. It’s possible that you won’t need to update the named entity recognizer.
     For this task, you might use sentences common for booking a taxi, like this one:'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们首先看看默认英语模型中的现有命名实体识别器（通常是`en_core_web_sm`模型）是如何识别感兴趣的命名实体的。你可能不需要更新命名实体识别器。对于这项任务，你可以使用像这样的常见出租车预定句子：
 - en: '[PRE0]'
+  id: totrans-15
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'To see how the recognizer will classify “Solnce” in the sentence, print the
     sentence’s named entities using the following script:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 要查看识别器如何在句子中分类“Solnce”，请使用以下脚本打印句子的命名实体：
 - en: '[PRE1]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'In this example, “Solnce” is the only named entity, so the script generates
     the following single-line output:'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个示例中，“Solnce”是唯一的命名实体，因此脚本生成了以下单行输出：
 - en: '[PRE2]'
+  id: totrans-19
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'Note that the output for this entity can vary depending on the model and sentence
     you’re using. To get the description for the `LOC` entity label in the output,
     you can use the `spacy.explain()` function:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，这个实体的输出可能会根据你使用的模型和句子有所不同。要获取输出中`LOC`实体标签的描述，你可以使用`spacy.explain()`函数：
 - en: '[PRE3]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: The result is that the named entity recognizer classified “Solnce” as a non-`GPE`
     location, which doesn’t match what you expect to see. To change this so the recognizer
     classifies “Solnce” as an entity of type `GPE`, you need to update the recognizer,
     as discussed in the following sections.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是命名实体识别器将“Solnce”分类为非`GPE`位置，这与预期不符。要将其更改为将“Solnce”分类为`GPE`类型的实体，你需要更新识别器，如以下章节所述。
 - en: '**NOTE**'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**'
 - en: '*For simplicity, we’re using a single-named entity in this example. But you
     can create more names for districts with which to train the recognizer.*'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: '*为了简单起见，我们在这个示例中使用了一个单一的命名实体。但你可以创建更多地区名称来训练识别器。*'
 - en: Rather than updating the existing recognizer, you could replace it with a custom
     one. However, in that case, you’d need many more training examples to retain the
     functionality that isn’t related to `GPE` entities but you might still need.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 与其更新现有的识别器，你可以用一个自定义识别器来替代它。然而，在这种情况下，你需要更多的训练示例来保留那些与`GPE`实体无关但你可能仍然需要的功能。
 - en: '***Creating Training Examples***'
+  id: totrans-26
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***创建训练示例***'
 - en: Once you know you need to train the entity recognizer to satisfy your app’s
     needs, the next step is to create a set of appropriate training examples. For
     that, you need some relevant text.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦你知道需要训练实体识别器以满足应用需求，下一步是创建一组适当的训练示例。为此，你需要一些相关文本。
 - en: 'Likely, the best data source for creating such a training set is real customer
     input that you gathered previously. Choose utterances that include the named entities
     you need to use for training. Typically, you’d log customer input in a file as
     plaintext. For example, a customer input log file for the taxi app might contain
     the following utterances:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 最佳的数据来源可能是你之前收集的真实客户输入。选择包含你需要用于训练的命名实体的话语。通常，你会将客户输入以纯文本格式记录在文件中。例如，出租车应用的客户输入日志文件可能包含以下话语：
 - en: '[PRE4]'
+  id: totrans-29
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'To create training examples from these utterances, you need to convert them
     into a list of tuples in which each training example represents a separate tuple,
     as shown here:'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 要从这些话语中创建训练示例，你需要将它们转换为元组列表，其中每个训练示例表示一个单独的元组，如下所示：
 - en: '[PRE5]'
+  id: totrans-31
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Each tuple consists of two values: the string representing an utterance ➊ and
     the dictionary for the annotations of the entities found in that utterance. The
     entity’s annotations include its start and end positions in terms of characters
     composing the utterance and the label to be assigned to the entity ➋.'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个元组由两个值组成：一个表示话语的字符串➊和一个包含该话语中找到的实体注释的字典。实体的注释包括其在话语中的起始和结束位置（以构成话语的字符为单位）以及要分配给实体的标签➋。
 - en: '***Automating the Example Creation Process***'
+  id: totrans-33
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***自动化示例创建过程***'
 - en: As you’ve no doubt realized, creating a set of training examples manually can
     be time-consuming and error prone, especially if you have hundreds or thousands
     of utterances to process. You can automate this tedious task by using the following
     script, which quickly creates a set of training examples from the submitted text.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你无疑已经意识到的，手动创建训练示例集可能会耗时且容易出错，尤其是当你需要处理数百或数千条话语时。你可以通过使用以下脚本来自动化这一繁琐的任务，它可以快速从提交的文本中创建一组训练示例。
 - en: '[PRE6]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'For readability, we pick up some utterances for processing in the usual way:
     by hardcoding them in the script ➊. But the commented lines of code show how we
     might pick up utterances from a file instead ➋.'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了便于阅读，我们按照通常的方式处理一些话语：通过在脚本中硬编码它们 ➊。但注释掉的代码行展示了我们如何从文件中获取话语 ➋。
 - en: Once we’ve obtained the utterances—either from a file or passed in to the doc
     explicitly—we can start generating a list of training examples from them. We begin
     by creating an empty list ➌. Next, we need to define a list containing the names
     of entities that we want the model to recognize differently than it currently
     does ➍. (This is the list of districts in this example.)
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦我们获得了话语——无论是来自文件还是明确传递给文档——我们就可以开始从中生成训练示例列表。我们首先创建一个空列表 ➌。接下来，我们需要定义一个包含希望模型以不同方式识别的实体名称的列表
+    ➍。（在这个例子中是区的列表。）
 - en: Remember that real customer input might include entities that the recognizer
     already correctly recognizes (say, Google or London), so we shouldn’t change the
     recognizer’s behavior when it classifies them. We create training examples for
@@ -188,47 +266,66 @@
     implementation must include numerous examples for entities of different types.
     Depending on the application’s needs, the training set might include several hundred
     examples.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 记住，真实的客户输入可能包含识别器已经正确识别的实体（例如，Google 或 London），所以我们不应该在分类这些实体时改变识别器的行为。我们为这些实体创建训练示例，并处理用于生成训练示例的所有实体，而不仅仅是新的实体。真实实现的训练集必须包括不同类型实体的多个示例。根据应用需求，训练集可能包含数百个示例。
 - en: We iterate over the submitted utterances, creating a new empty entities list
     on each iteration. Then, to fill in this list, we loop over the tokens in the
     utterance, finding entities. For each found entity, we determine its start character
     index in the utterance ➎. We then calculate the end index by adding `len(token)`
     to the start index.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们遍历提交的所有话语，在每次迭代中创建一个新的空实体列表。然后，为了填充这个列表，我们遍历话语中的标记，查找实体。对于每个找到的实体，我们确定它在话语中的起始字符索引
+    ➎。然后，我们通过将 `len(token)` 加到起始索引来计算结束索引。
 - en: Also, we must check whether the entity is in the list of entities to which we
     want to assign a new label. If so, we assign it the `GPE` label. Otherwise, the
     recognizer will use the current label in the entity annotations. After that, we
     can define a tuple representing the training example, and then append it to the
     training set ➏.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，我们必须检查该实体是否在我们希望为其分配新标签的实体列表中。如果是，我们为其分配 `GPE` 标签。否则，识别器将使用实体注释中的当前标签。之后，我们可以定义一个表示训练示例的元组，然后将其追加到训练集
+    ➏。
 - en: 'The script sends the training examples being generated to the `train_exams`
     list, which should look as follows after the script execution:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 脚本将正在生成的训练示例发送到 `train_exams` 列表，脚本执行后该列表应该如下所示：
 - en: '[PRE7]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: For simplicity, the training set we use here consists of just a few training
     examples. Notice that only the first one contains an entity from the list of entities
     we need to familiarize the recognizer with (the districts list in this example)
     ➊. That doesn’t mean that the second and third training examples aren’t useful.
     The second training example ➋ mixes in another entity type, which prevents the
     recognizer from “forgetting” what it previously knew.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 为简便起见，我们在这里使用的训练集仅包含少量训练示例。请注意，只有第一个示例包含我们需要让识别器熟悉的实体（本例中的区列表） ➊。这并不意味着第二个和第三个训练示例没有用处。第二个训练示例
+    ➋ 混入了另一种实体类型，防止识别器“忘记”之前学到的内容。
 - en: The third training example doesn’t contain any entity ➌. To improve the learning
     results, we need to mix in not only examples of other entity types, but also examples
     that don’t contain any entities. The following section “[The Training Process](../Text/ch10.xhtml#lev136)”
     discusses the details of the training process.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 第三个训练示例不包含任何实体 ➌。为了改善学习结果，我们需要混合不仅是其他类型实体的示例，还包括不包含任何实体的示例。下一节“[训练过程](../Text/ch10.xhtml#lev136)”将讨论训练过程的详细信息。
 - en: '***Disabling the Other Pipeline Components***'
+  id: totrans-45
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***禁用其他管道组件***'
 - en: 'The spaCy documentation recommends disabling all the other pipeline components
     before you start training a certain pipeline component, so you modify only the
     component you want to update. The following code disables all the pipeline components
@@ -236,40 +333,57 @@
     the script introduced in the preceding section or execute it in the same Python
     session after that script (we’ll append the final piece of code in the next section,
     which covers the training process):'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: spaCy 文档建议在开始训练某个管道组件之前禁用所有其他管道组件，这样你只需修改想要更新的组件。以下代码禁用了除命名实体识别器外的所有管道组件。你需要将这段代码添加到前一节中介绍的脚本，或者在该脚本执行后的同一个
+    Python 会话中执行（我们将在下一节中添加最终的代码片段，涵盖训练过程）：
 - en: '[PRE8]'
+  id: totrans-47
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Now you’re ready to start training the named entity recognizer to teach it to
     find the new entities defined in the training examples.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在你已经准备好开始训练命名实体识别器，让它学习识别训练示例中定义的新实体。
 - en: '***The Training Process***'
+  id: totrans-49
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***训练过程***'
 - en: In the training process, you shuffle and loop over the training examples, adjusting
     the model with weights that more accurately reflect the relationships between
     the tokens and the annotations. Refer back to [Chapter 1](../Text/ch01.xhtml#ch01)
     for a more detailed explanation of neural network models, including what weights
     are.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 在训练过程中，你会对训练示例进行打乱并循环遍历，调整模型，使其权重更加准确地反映令牌和注解之间的关系。欲了解更多关于神经网络模型的详细解释，包括权重的含义，请参考[第1章](../Text/ch01.xhtml#ch01)。
 - en: To improve accuracy, you can apply several techniques to a training loop. For
     example, the following code illustrates how to process your training examples
     in batches. This technique shows the training examples to the model in different
     representations to avoid generalizations found in the training corpus.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了提高准确性，你可以在训练循环中应用几种技术。例如，以下代码演示了如何批量处理训练示例。这种技术通过不同的表示方式展示训练示例，以避免训练语料中出现的泛化问题。
 - en: Append the following code to the script that was first introduced in “[Creating
     Training Examples](../Text/ch10.xhtml#lev141)” on [page 144](../Text/ch10.xhtml#page_144)
     and that was modified in the preceding section.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 将以下代码添加到在“[创建训练示例](../Text/ch10.xhtml#lev141)”一节中首次介绍的脚本中，该脚本在前一节中已被修改。
 - en: '[PRE9]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Before we can begin training, we need to create an *optimizer* ➊—a function
     that will be used during the training process to hold intermediate results between
     updates of the model weights. We could create an optimizer with the `nlp.begin_training()`
@@ -278,8 +392,12 @@
     types, we use the `nlp.entity.create_optimizer()` method. This method creates
     an optimizer for the named entity recognizer without losing an existing set of
     entity types.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们开始训练之前，我们需要创建一个*优化器* ➊——一个在训练过程中用于存储模型权重更新之间中间结果的函数。我们可以使用 `nlp.begin_training()`
+    方法创建优化器。但该方法会移除现有的实体类型。在本示例中，由于我们正在更新现有模型，并且不希望它“遗忘”已有的实体类型，我们使用 `nlp.entity.create_optimizer()`
+    方法。该方法为命名实体识别器创建优化器，并且不会丢失现有的实体类型。
 - en: 'During the training process, the script shows the examples to the model in
     a loop, in random order, to avoid any generalizations that might come from the
     order of the examples ➋. The script also batches the training examples, which
@@ -293,38 +411,53 @@
     parameter ➌. Then we batch the training examples using the `minibatch()` method.
     Doing so sets its size parameter to the iterator generated with the `compounding()`
     method invoked in the preceding line of code ➍.'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 在训练过程中，脚本以循环的方式将示例展示给模型，并且是随机顺序的，以避免因示例的顺序而产生任何泛化 ➋。脚本还会将训练示例分批处理，spaCy文档建议，当训练示例数量足够大时，这可能会提高训练过程的有效性。为了让批次大小在每一步中变化，我们使用`compounding(``)`方法，它生成一个批次大小的生成器。特别地，它生成一个无限的复合值序列：从第一个参数指定的值开始，通过将前一个值乘以作为第三个参数指定的复合率来计算下一个值，并且不超过第二个参数指定的最大值
+    ➌。然后，我们使用`minibatch()`方法批处理训练示例。这样，批次大小参数就会被设置为前一行代码中调用`compounding()`方法生成的迭代器
+    ➍。
 - en: Next, we iterate over the batches, updating the named entity recognizer model
     on each iteration. Each batch requires us to update the model by calling `nlp.update()`
     ➎, which makes a prediction for each entity found in the examples included in
     the batch and then checks the annotations provided to see whether it was correct.
     If the prediction is wrong, the training process adjusts the weights in the underlying
     model so the correct prediction will score higher next time.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们对批次进行迭代，每次迭代时更新命名实体识别器模型。每个批次都需要通过调用`nlp.update()` ➎来更新模型，这会对批次中包含的示例中的每个实体进行预测，然后检查提供的标注，看预测是否正确。如果预测错误，训练过程会调整底层模型中的权重，以便下次正确的预测能得分更高。
 - en: Finally, we need to serialize the updated named entity recognizer component
     to disk so we can load it in another script (or another Python session) later.
     For that, we first must obtain the component from the pipeline ➏ and then save
     it to disk with its `to_disk()` method ➐. Be sure you’ve created the */usr/to*
     directory in your system.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们需要将更新后的命名实体识别器组件序列化到磁盘，以便以后在另一个脚本（或另一个Python会话）中加载它。为此，我们首先必须从管道中获取该组件
+    ➏，然后使用其`to_disk()`方法 ➐将其保存到磁盘。确保你已经在系统中创建了*/usr/to*目录。
 - en: '***Evaluating the Updated Recognizer***'
+  id: totrans-58
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***评估更新后的识别器***'
 - en: Now you can test the updated recognizer. If you’re performing the example discussed
     in this chapter in a Python session, close it, open a new one, and enter the following
     code to make sure the model has made the correct generalizations. (If you’ve built
     a separate script from the code discussed in the previous sections and run it,
     you can run the following code either as a separate script or from within a Python
     session.)
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在你可以测试更新后的识别器。如果你正在Python会话中执行本章讨论的示例，关闭它，打开一个新的会话，并输入以下代码以确保模型已经做出了正确的泛化。（如果你已经从前面的代码段中构建了一个单独的脚本并运行它，你可以将以下代码作为单独的脚本运行，或者在Python会话中运行它。）
 - en: '[PRE10]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: We first load the pipeline components without the named entity recognizer component
     ➊. The reason is that training an existing model’s pipeline component doesn’t
     permanently override the component’s original behavior. When we load a model,
@@ -332,106 +465,157 @@
     default; so to use an updated version, we must explicitly load it from disk. This
     allows us to have several custom versions of the same pipeline component and load
     an appropriate one when necessary.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先加载没有命名实体识别器组件的管道组件 ➊。原因是，训练一个现有模型的管道组件不会永久性地覆盖该组件的原始行为。当我们加载一个模型时，构成模型管道的组件的原始版本会默认加载；因此，要使用更新版，我们必须显式地从磁盘加载它。这使我们能够拥有多个相同管道组件的自定义版本，并在必要时加载适当的版本。
 - en: 'We create this new component in two steps: constructing a new pipeline instance
     from the `EntityRecognizer` class ➋, and then loading the data into it from disk,
     specifying the directory in which we serialized the recognizer ➌.'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们通过两个步骤创建这个新组件：首先从`EntityRecognizer`类构建一个新的管道实例 ➋，然后从磁盘加载数据到其中，指定我们序列化识别器的目录
+    ➌。
 - en: Next, we add the loaded named entity recognizer component to the current pipeline,
     optionally using a custom name ➍. If we print out the names of the currently available
     pipeline components ➎, we should see that custom name among the `'tagger'` and
     `'parser'` names.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们将加载的命名实体识别组件添加到当前的管道中， 可选择使用自定义名称 ➍。如果我们打印出当前可用的管道组件名称 ➎，我们应该能够看到自定义名称在
+    `'tagger'` 和 `'parser'` 名称之间。
 - en: The only task left is test the loaded named entity recognizer component. Be
     sure to use a different sentence than the one used in the training dataset ➏.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 剩下的唯一任务是测试加载的命名实体识别组件。确保使用与训练数据集中的句子不同的句子➏。
 - en: 'As a result, we should see the following output:'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果，我们应该看到如下输出：
 - en: '[PRE11]'
+  id: totrans-66
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: The updated named entity recognizer component can now recognize the custom entity
     names correctly.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 更新后的命名实体识别组件现在可以正确识别自定义实体名称。
 - en: '**Creating a New Dependency Parser**'
+  id: totrans-68
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**创建一个新的依赖解析器**'
 - en: In the following sections, you’ll learn how to create a custom dependency parser
     suitable for a specific task. In particular, you’ll train a parser that reveals
     semantic relations in a sentence rather than syntactic dependencies. *Semantic
     relations* are between the meanings of words and phrases in a sentence.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 在接下来的部分中，你将学习如何创建一个适合特定任务的自定义依赖解析器。特别是，你将训练一个解析器，揭示句子中的语义关系，而不是句法依赖关系。*语义关系*指的是句子中单词和短语的意义之间的关系。
 - en: '***Custom Syntactic Parsing to Understand User Input***'
+  id: totrans-70
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***自定义句法解析以理解用户输入***'
 - en: 'Why would you need semantic relations? Well, suppose your chatbot app is supposed
     to understand a user’s request, expressed in plain English, and then transform
     it into a SQL query to be passed into a database. To achieve this, the app performs
     syntactic parsing to extract the meaning, shredding the input into pieces to use
     in building a database query. For example, imagine you have the following sentence
     to parse:'
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 为什么你需要语义关系呢？假设你的聊天机器人应用需要理解用户用普通英语表达的请求，然后将其转换为SQL查询，以便传递给数据库。为了实现这一点，应用会执行句法解析以提取意义，将输入分解为若干部分，并用它们来构建数据库查询。例如，假设你有以下句子需要解析：
 - en: '[PRE12]'
+  id: totrans-72
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'A SQL query generated from this sentence might look like this:'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 从这个句子生成的SQL查询可能如下所示：
 - en: '[PRE13]'
+  id: totrans-74
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'To begin with, let’s look at how a regular dependency parser would process
     the sample sentence. For that, you might use the following script:'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，让我们看看一个常规的依赖解析器如何处理样本句子。为此，你可以使用以下脚本：
 - en: '[PRE14]'
+  id: totrans-76
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'The script outputs each token’s text, its dependency label, and its syntactic
     head. If you’re using the `en_core_web_sm` model, the result should look as follows:'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 脚本会输出每个标记的文本、其依赖标签和句法头。如果你使用的是`en_core_web_sm`模型，结果应该如下所示：
 - en: '[PRE15]'
+  id: totrans-78
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Diagrammatically, this dependency parsing looks like [Figure 10-2](../Text/ch10.xhtml#ch10fig02).
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 从图示上看，这种依赖关系解析像是[图 10-2](../Text/ch10.xhtml#ch10fig02)。
 - en: '![image](../Images/fig10-2.jpg)'
+  id: totrans-80
   prefs: []
   type: TYPE_IMG
+  zh: '![image](../Images/fig10-2.jpg)'
 - en: '*Figure 10-2: The dependency parsing of the sample sentence*'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 10-2：样本句子的依赖关系解析*'
 - en: This syntactic parsing probably won’t help you generate the desired database
     query from the sentence. The SQL query shown earlier in this section uses the
     `SELECT` statement to select a job that satisfies the requirements “high paid”
     and “no experience.” In this logic, the word “job” should be connected with not
     only “high paid” but also “no experience,” but the syntactic parsing doesn’t connect
     “job” with “no experience.”
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种句法解析可能无法帮助你从句子中生成所需的数据库查询。前面这一节中展示的SQL查询使用`SELECT`语句来选择满足“高薪”和“无经验”要求的工作。在这种逻辑中，“job”不仅应该与“high
+    paid”建立联系，还应该与“no experience”建立联系，但句法解析并没有将“job”与“no experience”连接起来。
 - en: To meet your processing needs, you might want to change labeling in a way that
     will simplify the task of generating database queries. For that, you need to implement
     a custom parser that shows semantic relations rather than syntactic dependencies.
     In this case, that means you’d want an arc between the words “job” and “experience.”
     The following sections describe how to implement this.
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了满足你的处理需求，你可能需要以简化生成数据库查询的方式更改标签。为此，你需要实现一个自定义解析器，显示语义关系，而不是句法依赖关系。在这种情况下，这意味着你希望在“job”和“experience”这两个词之间建立一条弧线。接下来的部分将描述如何实现这一点。
 - en: '***Deciding on Types of Semantic Relations to Use***'
+  id: totrans-84
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***决定使用的语义关系类型***'
 - en: 'First, you need to choose a set of relation types to use for labeling. The
     spaCy documentation contains an example of a custom message parser (*[https://spacy.io/usage/training/#intent-parser](https://spacy.io/usage/training/#intent-parser)*)
     that uses the following semantic relations: `ROOT`, `PLACE`, `ATTRIBUTE`, `QUALITY`,
@@ -439,66 +623,93 @@
     some activity occurs, like “hotel” in the utterance, “I need a hotel in Berlin.”
     “Berlin” would be a `LOCATION` in this same utterance, allowing you to distinguish
     between geographical areas and smaller settings.'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，你需要选择一组关系类型来用于标注。spaCy文档包含一个自定义消息解析器的示例（*[https://spacy.io/usage/training/#intent-parser](https://spacy.io/usage/training/#intent-parser)*)，它使用了以下语义关系：`ROOT`、`PLACE`、`ATTRIBUTE`、`QUALITY`、`TIME`
+    和 `LOCATION`。例如，你可以将`PLACE`标注为某项活动发生的地点，比如在句子“I need a hotel in Berlin.”中的“hotel”。而“Berlin”则会作为该句中的`LOCATION`，这样可以区分地理区域和更小的设置。
 - en: 'To comply with the semantics used in this example, you might add one more type
     to the list: `ACTIVITY`, which you could use to label the word “job” in the sample
     sentence. (Of course, you could just use the original set of relation types. After
     all, a job is typically associated with a workplace, for which you could use the
     type `PLACE`.)'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了遵循这个示例中使用的语义，你可能会向列表中添加一个新类型：`ACTIVITY`，你可以用它来标注样本句子中的“job”一词。（当然，你也可以使用原来的关系类型集。毕竟，工作通常与工作场所相关联，在这种情况下你可以使用`PLACE`类型。）
 - en: '***Creating Training Examples***'
+  id: totrans-87
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***创建训练示例***'
 - en: As usual for the process of training a pipeline component, you start by preparing
     training examples. When training a parser, you need information about each token’s
     dependency label and the head of each relation. In this example, you use only
     a couple of training examples to keep it short and simple. Of course, a real-world
     implementation would require many more to train a parser component.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如训练管道组件的过程通常一样，你首先需要准备训练示例。在训练解析器时，你需要知道每个标记的依赖标签以及每个关系的头词。在这个例子中，你只使用了几个训练示例，以保持简短和简单。当然，现实中的实现需要更多的示例来训练解析器组件。
 - en: '[PRE16]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'Notice that the syntactically related words might not always be related semantically
     in the new parser. To see this clearly, you can perform the following test, which
     generates a list of the heads of the *syntactic* dependencies found in the sample
     sentence from the first training example in the `TRAINING_DATA` list:'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，新的解析器中，语法相关的词语可能不总是语义上相关的。为了清楚地看到这一点，你可以执行以下测试，这会生成一个列表，列出从`TRAINING_DATA`列表中第一个训练示例的样本句子中找到的*句法*依赖的头词：
 - en: '[PRE17]'
+  id: totrans-91
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'Assuming you’re using the `en_core_web_sm` model, this code should output the
     following token head indexes:'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设你使用的是`en_core_web_sm`模型，这段代码应该输出以下的标记头索引：
 - en: '[PRE18]'
+  id: totrans-93
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'When you compare this list with the heads provided for this same sentence in
     the `TRAINING_DATA` list, you should notice discrepancies. For example, in the
     training example, the word “with” is a child of the word “experience,” whereas,
     according to standard syntactic rules, “with” is a child of “job” in this sentence.
     This deviation makes sense if we slightly change the sentence:'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 当你将这个列表与`TRAINING_DATA`列表中为同一句子提供的头词进行对比时，你应该会注意到一些差异。例如，在训练示例中，“with”是“experience”一词的子词，而根据标准的句法规则，“with”在这句话中应该是“job”的子词。如果稍微改变一下句子，这个偏差就能得到合理解释：
 - en: '[PRE19]'
+  id: totrans-95
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: In terms of semantics, “without” can be thought of as a modifier for “experience,”
     because “without” changes the meaning of “experience.” Modifiers, in turn, are
     always dependent on the word they modify. Therefore, considering “without” as
     the child in the without/experience pair in this example is quite reasonable when
     taking semantics into consideration.
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 就语义而言，“without”可以被看作是“experience”的修饰词，因为“without”改变了“experience”的含义。修饰词反过来总是依赖于它所修饰的词。因此，考虑到语义，在这个例子中将“without”视为without/experience对中的子词是相当合理的。
 - en: '***Training the Parser***'
+  id: totrans-97
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***训练解析器***'
 - en: 'The following script illustrates how to train a parser from scratch using a
     blank model. In this example, creating a brand-new parser is more reasonable than
     updating an existing one: the reason is that attempting to train an existing syntactic
@@ -506,72 +717,104 @@
     because the two kinds of relations often conflict. But this doesn’t mean that
     you can’t use your custom parser with existing models. You can load it to any
     model to replace its original syntactic dependency parser.'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下脚本演示了如何从头开始训练一个解析器，使用空白模型。在这个示例中，创建一个全新的解析器比更新现有解析器更为合理：原因在于，尝试训练一个现有的句法依赖解析器来识别语义关系会非常困难，因为这两种关系往往是冲突的。但这并不意味着你不能将自定义解析器与现有模型一起使用。你可以将其加载到任何模型中，替换其原始的句法依赖解析器。
 - en: 'To train the parser, the following script uses the training examples from the
     `TRAINING_DATA` list defined in the preceding section. Be sure to prepend the
     `TRAINING_DATA` list to the code that follows:'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了训练解析器，以下脚本使用了前面部分定义的`TRAINING_DATA`列表中的训练示例。确保在以下代码前添加`TRAINING_DATA`列表：
 - en: '[PRE20]'
+  id: totrans-100
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: We start by creating a blank model ➊. Then we create a blank parser component
     ➋ and add it to the model’s pipeline ➌.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们从创建一个空白模型开始 ➊。然后，我们创建一个空白的解析器组件 ➋，并将其添加到模型的管道中 ➌。
 - en: In this example, we derive the set of labels for the parser to use from the
     `TRAINING_DATA` list that we had to add to the code. We implement this operation
     in two loops. In the outer loop, we iterate over the training examples, extracting
     the tuple with the head and dependency annotations from each example ➍. In the
     inner loop, we iterate over the tuple of annotations, extracting each label from
     the `deps` list ➎ and adding it to the parser ➏.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个示例中，我们从`TRAINING_DATA`列表中派生出解析器需要使用的标签集合，这个列表是我们必须添加到代码中的。我们在两个循环中实现这个操作。在外部循环中，我们遍历训练示例，从每个示例中提取带有头部和依赖注释的元组
+    ➍。在内部循环中，我们遍历这些注释元组，从`deps`列表中提取每个标签 ➎并将其添加到解析器中 ➏。
 - en: Now we can start the training process. First, we acquire an optimizer ➐ and
     then implement a simple training loop ➑, shuffling the training examples in a
     random order ➒. Next, we iterate over the training examples, updating the parser
     model on each iteration.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们可以开始训练过程。首先，我们获取一个优化器 ➐，然后实现一个简单的训练循环 ➑，将训练示例随机打乱顺序 ➒。接着，我们遍历训练示例，在每次迭代时更新解析器模型。
 - en: Finally, we serialize the custom parser to disk so we can load and use it later
     in another script ➓.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们将自定义解析器序列化到磁盘，以便稍后在其他脚本中加载和使用 ➓。
 - en: '***Testing Your Custom Parser***'
+  id: totrans-105
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***测试您的自定义解析器***'
 - en: 'You can load a custom parser from disk to an existing model’s pipeline using
     the following script:'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以使用以下脚本将自定义解析器从磁盘加载到现有模型的管道中：
 - en: '[PRE21]'
+  id: totrans-107
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: Notice that this script is similar to the script for loading a custom named
     entity recognizer shown earlier in “[Evaluating the Updated Recognizer](../Text/ch10.xhtml#lev137)”
     on [page 148](../Text/ch10.xhtml#page_148). We load a regular model, disabling
     a certain component—the parser, in this example ➊. Next, we create a parser ➋
     and load it with the data previously serialized to disk ➌. To make the parser
     available, we need to add it to the model’s pipeline ➍. Then we can test it ➎.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，这个脚本与之前在《[评估更新后的识别器](../Text/ch10.xhtml#lev137)》一节中展示的加载定制命名实体识别器的脚本类似，见[第148页](../Text/ch10.xhtml#page_148)。我们加载一个常规模型，禁用其中的某个组件——在这个例子中是解析器
+    ➊。接着，我们创建一个解析器 ➋并加载之前序列化到磁盘的数据 ➌。为了使解析器可用，我们需要将其添加到模型的管道中 ➍。然后我们可以测试它 ➎。
 - en: 'The script should produce the following output:'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 该脚本应生成以下输出：
 - en: '[PRE22]'
+  id: totrans-110
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: The original parser component has been replaced with the custom one in a regular
     model, whereas the other pipeline components remain the same. Later, we could
     reload the original component by loading the model using `spacy.load('en')`.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 原始的解析器组件已被替换为定制的解析器组件，在常规模型中使用，而其他管道组件保持不变。稍后，我们可以通过使用`spacy.load('en')`加载模型来重新加载原始组件。
 - en: '***Try This***'
+  id: totrans-112
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***试试这个***'
 - en: Now that you have a custom parser trained to reveal semantic relations, you can
     put it to use. Continue with the example from this section by writing a script
     that generates a SQL statement from a plain English request. In that script, check
@@ -579,27 +822,39 @@
     a `SELECT` statement. Then use the `ACTIVITY` element to refer to the database
     table against which the statement being generated will be executed. Use the `QUALITY`
     and `ATTRIBUTE` elements in the statement’s `WHERE` clause.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在你已经有了一个经过训练的自定义解析器，用来揭示语义关系，你可以开始使用它了。继续本节中的示例，编写一个脚本，从普通英语请求中生成 SQL 语句。在该脚本中，检查每个请求的
+    `ROOT` 元素，以确定是否需要构造 `SELECT` 语句。然后使用 `ACTIVITY` 元素引用数据库表，生成的语句将在该表上执行。使用 `QUALITY`
+    和 `ATTRIBUTE` 元素在语句的 `WHERE` 子句中。
 - en: '**Summary**'
+  id: totrans-114
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**总结**'
 - en: You can download a set of pretrained statistical models from spaCy to use immediately.
     But these models might not always suit your purposes. You might want to improve
     a pipeline component in an existing model or create a new component in a blank
     model that will better suit your app’s needs.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以从 spaCy 下载一组预训练的统计模型，立即使用。但这些模型可能并不总是适合你的目的。你可能希望改善现有模型中的某个管道组件，或者创建一个新的组件，放入空白模型中，更好地满足你的应用需求。
 - en: In this chapter, you learned how to train an existing named entity recognizer
     component to recognize an additional set of entities that weren’t labeled correctly
     by default. Then you learned how to train a custom parser component to predict
     a type of tree structure related to input text that shows semantic relations rather
     than syntactic dependencies.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，你学习了如何训练一个现有的命名实体识别组件，以识别默认未正确标注的额外实体。然后，你学习了如何训练一个自定义解析器组件，以预测一种与输入文本相关的树形结构，该结构显示的是语义关系而非句法依赖。
 - en: In both cases, the first (and perhaps the most important and time-consuming)
     step is to prepare training data. Once you’ve done that, you’ll need only a few
     more lines of code to implement a training loop for your custom component.
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这两种情况下，第一步（也许是最重要且最耗时的一步）是准备训练数据。完成此步骤后，你只需要几行代码，就能实现你的自定义组件的训练循环。
