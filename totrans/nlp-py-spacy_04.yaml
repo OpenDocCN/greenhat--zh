@@ -1,0 +1,696 @@
+- en: '**4'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: EXTRACTING AND USING LINGUISTIC FEATURES**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../Images/comm1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In the previous chapters, you learned how to access linguistic features, such
+    as part-of-speech tags, syntactic dependencies, and named entities, as part of
+    the text processing pipeline. This chapter will show you how to use part-of-speech
+    tags and syntactic dependency labels to extract and generate text, allowing you
+    to build question-asking chatbots, locate specific phrases in a text, and more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Almost every NLP application needs to extract specific information from a text
+    and generate new text that is relevant to a particular situation. For example,
+    a chatbot must be able carry on a conversation with a user, which means it must
+    be able to identify specific parts of a user’s text and then generate its own
+    appropriate response. Let’s look at how to do all of that using linguistic features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Extracting and Generating Text with Part-of-Speech Tags**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Part-of-speech tags can help you retrieve specific kinds of information from
+    a text, and they can also help you generate entirely new sentences based on a
+    submitted one. In this section, we’ll introduce you to some new part-of-speech
+    tags, write a script that finds phrases describing amounts of money, and transform
+    statements into questions. For a list of common part-of-speech tags used in spaCy
+    for English models, refer to [Table 2-1](../Text/ch02.xhtml#ch02tab01) on [page
+    22](../Text/ch02.xhtml#page_22).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Numeric, Symbolic, and Punctuation Tags***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In addition to part-of-speech tags for nouns, verbs, and other words in a sentence,
+    spaCy has tags for symbols, numbers, and punctuation marks. Let’s look at these
+    by processing the following sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To begin, let’s extract the coarse-grained part-of-speech features from the
+    tokens in the sentence to see how spaCy distinguishes between different part-of-speech
+    categories. We can do this with the following script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: We create a Doc object for the submitted sentence and then output the coarse-grained
+    part-of-speech tags ➊. We also use the `spacy.explain()` function, which returns
+    a description for a given linguistic feature ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output should look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice that the coarse-grained tagger distinguishes numerals, symbols, and punctuation
+    marks as individual categories. As you can see, it even recognizes “million” spelled
+    out.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now, for the sake of comparison, let’s output both coarse-grained and fine-grained
+    part-of-speech tags for this sample sentence along with a description column for
+    the fine-grained tags:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output should look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: The second and third columns contain the coarse-grained and fine-grained part-of-speech
+    tags, respectively. The fourth column gives descriptions of the fine-grained tags
+    provided in the third column.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The fine-grained tagging divides each category into subcategories. For example,
+    the coarse-grained category `SYM` (symbols) has three fine-grained subcategories.
+    These are `$` for currency symbols, `#` for the number sign, and `SYM` for all
+    the other symbols, such as +, −, ×, ÷, =. This sub-dividing can be useful when
+    you need to distinguish between different types of symbols. For example, you might
+    be processing articles about math and want your script to recognize symbols commonly
+    found in math formulas. Or you might be writing a script that needs to recognize
+    currency symbols in financial reports.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Because spaCy’s part-of-speech tagger relies on a token’s context to generate
+    its label, you might get different labels for tokens used in unusual contexts.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now let’s look at how we can take advantage of these specific part-of-speech
+    tags to extract and generate text.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Extracting Descriptions of Money***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Suppose you’re developing an application for processing financial reports that
+    must extract necessary pieces of information from long, boring texts. In practice,
+    financial reports can be quite large, but all you really need are the figures.
+    In particular, you’re interested in phrases that refer to an amount of money and
+    start with a currency symbol. For example, your script should pick out the phrase
+    “$1.5 million” from the previous sample sentence, but not “2017”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following script illustrates how you might extract this phrase from the
+    sentence, relying on the tokens’ part-of-speech tags only. You can save this script
+    to a file and then run it or execute the code from within a Python session:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: We iterate over the sentence’s tokens ➊, searching for a token whose fine-grained
+    part-of-speech tag is `$` ➋. This tag indicates a currency symbol, and it typically
+    starts a phrase that refers to an amount of money. Once we find a currency symbol,
+    we start composing the phrase by checking whether the tokens that follow the currency
+    symbol in the sentence are numbers. To do this, we implement a `while` loop in
+    which we pick up the tokens located to the right of the currency symbol and check
+    them for the `CD` tag, which is the cardinal number fine-grained part-of-speech-tag
+    ➌. When we reach a nonnumeric token, we quit the `while` loop and break the `for`
+    loop ➍ that iterates over the sentence’s tokens.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When we run the script, the output should look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is exactly the kind of output we are looking for.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Keep in mind that a currency symbol assigned to the `$` fine-grained part-of-speech
+    tag might not necessarily be “$”. The part-of-speech tag might label other common
+    currency symbols, such as £ and €. For example, the preceding script would recognize
+    the phrase “£1.500.000”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'We wrote this script to extract a single phrase referring to an amount of money
+    from the submitted sentence. Once the script finds the phrase, it completes its
+    execution. But in practice, you might have a sentence that has more than one such
+    phrase, as in the following example: “The firm earned $1.5 million in 2017, in
+    comparison with $1.2 million in 2016.”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Modify the script so it extracts every phrase that refers to an amount of money
+    within a sentence. To accomplish this, remove the `break` statement to prevent
+    the loop from ending after it finds the first occurrence of the phrase of interest.
+    Then move the code that’s responsible for preparing and printing a found phrase
+    (the last two lines of the script) into the loop, so you can invoke these two
+    lines for every phrase of interest found in the submitted sentence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Turning Statements into Questions***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Suppose your NLP application must be able to generate a question from a submitted
+    statement. For example, one way chatbots maintain conversations with the user
+    is by asking the user a confirmatory question. When a user says, “I am sure,”
+    the chatbot might ask something like, “Are you really sure?” To do this, the chatbot
+    must be able to generate a relevant question.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s say the user’s submitted sentence is this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This sentence contains several verbs and pronouns, each with different morphologies.
+    To see this more clearly, let’s look at the part-of-speech tags spaCy assigned
+    to the tokens in this sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We print the tokens, their coarse-grained part-of-speech tags, and their fine-grained
+    part-of-speech-tags, producing the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: From the fine-grained part-of-speech tags, you can distinguish between the morphological
+    categories of the verbs and pronouns present in the sentence. For example, the
+    fine-grained part-of-speech tag `PRP` marks personal pronouns and `PRP$` marks
+    possessive pronouns, allowing you to distinguish between these two types of pronouns
+    programmatically. We’ll need this information when working on this example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A confirmatory question to the sentence discussed here might be as follows
+    (another statement would require another confirmatory question, of course):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'From a human perspective, forming this question from the statement looks pretty
+    straightforward: you change the order of some words, alter the pronouns accordingly,
+    and add the adverbial modifier “really” to the main verb (the one that comes right
+    after the subject). But how can you accomplish all these operations programmatically?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s look at some part-of-speech tags. In the sample sentence, the verbs involved
+    in forming the question are “can” and “promise”. The fine-grained part-of-speech
+    tags mark the first one, “can”, as a modal auxiliary verb and the second one as
+    a verb in the base form. Notice that in the preceding confirmatory question, the
+    modal auxiliary verb has switched places with the personal pronoun, a process
+    called *inversion*. We’ll have to implement this in the script.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When it comes to the pronouns, the chatbot should follow a pattern common to
+    regular conversations. [Table 4-1](../Text/ch04.xhtml#ch04tab01) summarizes the
+    use of pronouns in such an application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 4-1:** The Use of Pronouns in a Chatbot'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | **Personal pronouns** | **Possessive pronouns** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| chatbot | I, me | my, mine |'
+  prefs: []
+  type: TYPE_TB
+- en: '| user | you | your, yours |'
+  prefs: []
+  type: TYPE_TB
+- en: In other words, a chatbot refers to itself as “I” or “me,” and it refers to
+    a user as “you.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following steps outline what we need to do to generate a question from
+    the original statement:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Change the order of words in the original sentence from “subject + modal auxiliary
+    verb + infinitive verb” to “modal auxiliary verb + subject + infinitive verb.”
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Replace the personal pronoun “I” (the sentence’s subject) with “you.”
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Replace the possessive pronoun “your” with “my.”
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Place the adverbial modifier “really” before the verb “promise” to emphasize
+    the latter.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Replace the punctuation mark “.” with “?” at the end of the sentence.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The following script implements these steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: We perform the first four steps in separate `for` loops. First, we iterate over
+    the tokens in the sentence and change the order of the subject and verb to make
+    the sentence a question. In this example, we’re looking for the modal auxiliary
+    verb (tagged `MD`) that follows a personal pronoun and is followed by an infinitive
+    verb ➊. Once we find this sequence of words, we move the modal auxiliary verb
+    immediately before the personal pronoun, placing it at the beginning of the sentence
+    ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To compose a new sentence, we use a technique known in Python as *slicing* that
+    allows us to extract a subsequence from a sequence object, such as a string or
+    a list, by specifying the start and end indices. In this case, we can apply slicing
+    to a Doc object to extract a given subsequence of tokens from it. For example,
+    `slice doc[2:]` will contain the doc’s tokens starting from the token at index
+    2 through the end of the doc, which in this case, is “promise it is worth your
+    time.” ➌. Once we move the modal verb to a new position, we exit the `for` loop
+    ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You might wonder why we don’t just use the personal pronoun and auxiliary modal
+    verb’s indices to perform inversion. Because we know the personal pronoun is at
+    index 0 and the modal verb is at index 1, why do we have to use a loop that iterates
+    over the entire set of tokens to find the modal verb’s position? Won’t the verb
+    always follow the subject and so be the second word in the sentence?
+  prefs: []
+  type: TYPE_NORMAL
+- en: The fact is that a sentence doesn’t always start with the subject. For example,
+    what if the sentence were “Sure enough, I can promise it is worth your time.”?
+    In that case, the script would know to omit the first two words and start processing
+    with the subject.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a result of the inversion, we get the new sentence as a string. To make this
+    sentence available for further processing, we need to obtain a Doc object for
+    it ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we create a new `for` loop that will replace the personal pronoun “I”
+    with the personal pronoun “you.” To do this, we search for personal pronouns (tagged
+    `PRP`). If the personal pronoun is “I,” we replace it with “you” ➏. Then we quit
+    the `for` loop.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We repeat this process to replace the possessive pronoun “your” with “my” by
+    searching for the `PRP$` tag ➐. Then, in a new `for` loop, we find a verb in the
+    infinitive form and insert the adverbial modifier “really” before it ➑.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we replace the sentence’s period with a question mark. This is the
+    only step where we don’t need to use a loop. The reason is that in all possible
+    sentences, the period and the question mark go at the end of a sentence, so we
+    can reliably find them using their indices with `len(doc)-1` ➒.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When we run this code, we should get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This script is a good start, but it won’t work with every submitted statement.
+    For example, the statement might contain a personal pronoun other than “I,” but
+    our script doesn’t explicitly check for that. Also, some sentences don’t contain
+    auxiliary verbs, like the sentence “I love eating ice cream.” In those cases,
+    we’d have to use the word “do” to form the question instead of a word like “can”
+    or “should,” like this: “Do you really love eating ice cream?” But if the sentence
+    contains the verb “to be,” as in the sentence “I am sleepy,” we’d have to move
+    that verb to the front, like this: “Are you sleepy?”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A real implementation of this chatbot would have to be able to choose the appropriate
+    option for a submitted sentence. You’ll see a “do” example in “[Deciding What
+    Question a Chatbot Should Ask](../Text/ch04.xhtml#lev53)” on [page 56](../Text/ch04.xhtml#page_56).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Examining the script from “[Turning Statements into Questions](../Text/ch04.xhtml#lev49)”,
+    you might notice that some blocks of code in it look very similar, containing
+    repetitive operations. In every step, you make a replacement in the sentence and
+    then re-tokenize it. That means you might try to generalize the code, putting
+    repetitive operations in a single function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before writing such a function, take some time to understand what parameters
+    it will need to take to perform the text-manipulation operations you see in the
+    script. In particular, you’ll need to explicitly specify what token you’re searching
+    for and what operation you want to perform on it by either replacing it with another
+    token or adding a token before it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once you define this function, you can write the main code that invokes it,
+    implementing the same functionality as the original script.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Using Syntactic Dependency Labels in Text Processing**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As you learned in “[Extracting and Generating Text with Part-of-Speech Tags](../Text/ch04.xhtml#lev45)”
+    on [page 48](../Text/ch04.xhtml#page_48), part-of-speech tags are a powerful tool
+    for smart text processing. But in practice, you might need to know more about
+    a sentence’s tokens to process it intelligently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, you might need to know whether a personal pronoun is the subject
+    of a sentence or a grammatical object. Sometimes, this task is easy. The personal
+    pronouns “I,” “he,” “she,” “they,” and “we” will almost always be the subject.
+    When used as an object, “I” turns into “me,” as in “A postman brought me a letter.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But this might not be as clear when it comes to some other personal pronouns,
+    such as “you” or “it,” which look the same whether they’re used as subjects or
+    objects. Consider the following two sentences: “I know you. You know me.” In the
+    first sentence, “you” is the direct object of the verb “know.” In the second sentence,
+    “you” is the verb’s subject.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s solve this problem using syntactic dependency labels and part-of-speech
+    tags. Then we’ll apply syntactic dependency labels to build a better version of
+    the question-asking chatbot.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Distinguishing Subjects from Objects***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To programmatically determine the role of a pronoun like “you” or “it” in a
+    given sentence, you need to check the dependency label assigned to it. By using
+    part-of-speech tags in conjunction with dependency labels, you can get much more
+    information about the tokens of a sentence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s return to the sentence in the previous example and look at the results
+    of the dependency parsing performed on it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We extract the part-of-speech tags, the dependency labels, and the description
+    for the dependency labels:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: The second and third columns contain the coarse-grained and fine-grained part-of-speech
+    tags, respectively. The fourth column contains the dependency labels, and the
+    fifth column contains descriptions for those dependency labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Combining part-of-speech tags and dependency labels can give you a better picture
+    of the grammatical role of each token in a sentence—more so than just part-of-speech
+    tags or dependency labels alone. For instance, in this example, the part-of-speech
+    tag `VBZ` assigned to the token “is” indicates a verb in the third person singular
+    present, whereas the dependency label `ccomp`, assigned to the same token, indicates
+    that “is” is a *clausal complement* (a dependent clause with an internal subject).
+    In this example, “is” is a clausal complement of the verb “promise” with the internal
+    subject “it.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To figure out the role of “you” in “I know you. You know me.”, we’d check the
+    following list of part-of-speech tags and dependency labels assigned to the tokens:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In both cases, “you” is assigned the same part-of-speech tags: `PRON` and `PRP`
+    (coarse-grained and fine-grained, respectively). But the two cases have different
+    dependency labels: `dobj` in the first sentence and `nsubj` in the second.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Deciding What Question a Chatbot Should Ask***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Sometimes, you might need to navigate a sentence’s dependency tree to extract
+    necessary information. For example, consider the following conversation between
+    a chatbot and its user:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: The chatbot is able to continue the conversation by asking questions. But notice
+    that the presence or absence of an adjectival modifier for the noun “apple” plays
+    a key role in deciding what type of question it should ask.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two basic types of questions in English: yes/no questions and information
+    questions. Yes/no questions, like the one we generated in the example discussed
+    in “[Turning Statements into Questions](../Text/ch04.xhtml#lev49)” on [page 51](../Text/ch04.xhtml#page_51),
+    can have only two possible answers: yes or no. To form a question of this type,
+    you place a modal auxiliary verb before the subject and the main verb after the
+    subject. For example: “Could you modify it?”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Information questions are supposed to be answered with more information than
+    just yes or no. They begin with a question word, such as “what,” “where,” “when,”
+    “why,” or “how.” After the question word, the process of forming an information
+    question is the same as for yes/no questions. For example: “What do you think
+    about it?”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the first case in the preceding apple example, the chatbot asks a yes/no
+    question. In the second case, when the user modifies the noun “apple” with the
+    adjective “green,” the chatbot asks an information question.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The flowchart in [Figure 4-1](../Text/ch04.xhtml#ch04fig01) summarizes this
+    approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig4-1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 4-1: The presence of a modifier in the input sentence determines what
+    question the chatbot asks.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following script simply analyzes a submitted sentence to decide what kind
+    of question to ask and then forms the proper question. We’ll walk through the
+    code in separate sections, but you should save the entire program in a single
+    file called *question.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Begin by importing the `sys` module, which provides functionality for accepting
+    a sentence for processing as an argument:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is an improvement from the previous scripts where we hardcoded the sentence
+    to analyze. Now users can submit their own sentences as input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we define a function that recognizes and extracts any noun chunk that
+    is a direct object from a submitted doc. For example, if you submit a doc that
+    contains the sentence “I want a green apple.”, it will return the chunk “a green
+    apple”:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: We iterate over the tokens in the submitted sentence ➊ and look for the one
+    that acts as a direct object by checking whether its dependency tag is `dobj`
+    ➋. In the sentence “I want a green apple.”, The direct object is the noun “apple.”
+    Once we’ve found the direct object, we need to determine its syntactic children
+    ➌, because they form the chunk that we’ll use to decide what kind of question
+    to ask. For debugging purposes, we might also want to look at the children of
+    the direct object ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To extract the chunk, we slice the Doc object, calculating the start and the
+    end indices of the slice as follows: the start index is the index of the direct
+    object minus the number of its syntactic children. As you might guess, this is
+    the index of the leftmost child. The end index is the index of the direct object
+    plus one, so the last token included in the chunk is the direct object ➎.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For simplicity, the algorithm implemented in this script assumes that a direct
+    object has only leftward children. In fact, this isn’t always the case. For example,
+    in the following sentence, “I want to touch a wall painted green.”, we’ll need
+    to check the left and right children of the direct object “wall.” Also, because
+    “green” is not a direct child of “wall,” we’ll need to walk the dependency tree
+    to determine that “green” is a modifier of “wall.” We’ll discuss premodifiers
+    and postmodifiers in more depth in [Chapter 6](../Text/ch06.xhtml#ch06).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following function examines the chunk and decides what kind of question
+    the chatbot should ask:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: We initialize the `question_type` variable to a value of `yesno`, which represents
+    the yes/no question type ➊. Then, in the submitted chunk, we search for a token
+    tagged `amod`, which stands for adjectival modifier ➋. If we find it, we set the
+    `question_type` variable to `'info'`, which represents the information question
+    type ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once we’ve determined what question type to use, the following function generates
+    a question from the submitted sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: In a sequence of `for` loops, we convert the submitted statement into a question
+    by performing inversion and changing the personal pronouns. In this example, because
+    there is no modal auxiliary verb in the statement, we add the verb “do” before
+    the personal pronoun to form the question. (Remember that this will only work
+    with certain sentences; in a more complete implementation, we’d have to programmatically
+    figure out which processing approach to take.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: If `question_type` is set to `info`, we add the word “why” to the beginning
+    of the question ➊. If the `question_type` variable is set to `yesno` ➋, we insert
+    an adjective to modify the direct object in the question. In this example, we’ve
+    hardcoded the adjective for the sake of simplicity. We’ve chosen the adjective
+    “red”, ➌ which might sound strange in certain sentences. For example, we can say,
+    “Do you want a red orange?” but not “Do you want a red idea?” In a better implementation
+    of this chatbot, we could find a way to programmatically determine a suitable
+    adjective to modify the direct object. We’ll come back to that topic in [Chapter
+    6](../Text/ch06.xhtml#ch06).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice also that the algorithm used here assumes that a submitted sentence ends
+    with a punctuation mark, such as “.” or “!”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now that we’ve defined all the functions, here is the main block of the script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: First, we check whether a user has passed a sentence in as a command line argument
+    ➊. If a sentence has been submitted, we apply spaCy’s pipeline to it, creating
+    a Doc object instance ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We then send the doc to the `find_chunk` function, which should return a noun
+    chunk containing a direct object, such as “a green apple”, for further processing
+    ➌. If there is no such noun chunk in the submitted sentence ➍, we’ll receive the
+    message “The sentence does not contain a direct object.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we pass the chunk we just extracted to the `determine_question_type` function,
+    which determines which question to ask based on the chunk’s structure ➎.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we pass the submitted sentence and the type of question to the `generate_question`
+    function, which will generate an appropriate question and return it as a string
+    ➏.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script’s output depends on the specific sentence submitted. Here are some
+    possible variants:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: If we submit a sentence that contains an adjectival modifier, such as “green”
+    for a direct object like “apple”, the script should generate an information question
+    ➊.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the sentence contains a direct object without an adjectival modifier, the
+    script should respond with a yes/no question ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we submit a sentence with no direct object, the script should recognize this
+    at once and ask us to resubmit ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, if we forget to submit a sentence, the script should respond with an
+    appropriate message ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As noted earlier, the script discussed in the preceding section won’t work with
+    all sentences. The script adds “do” to form a question, which works only with
+    sentences that contain no auxiliary modal verb.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Enhance the functionality of this script so it can also work with statements
+    containing modal auxiliary verbs. For example, given the following statement,
+    “I might want a green apple,” the script should generate “Why might you want a
+    green one?” For details on how to turn a statement containing a modal auxiliary
+    verb into a question, refer to “[Turning Statements into Questions](../Text/ch04.xhtml#lev49)”
+    on [page 51](../Text/ch04.xhtml#page_51).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Linguistic features are at the heart of all NLP tasks. This chapter taught you
+    some techniques for smart text processing and text generation with linguistic
+    features. You learned how to extract phrases of a certain type (say, those that
+    refer to an amount of money), and then wrote a script using dependency labels
+    and part-of-speech tags that generated a meaningful response to the sentence submitted
+    by a user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll return to linguistic features in [Chapter 6](../Text/ch06.xhtml#ch06)
+    where you’ll implement them in more complex scenarios.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,775 @@
+- en: '**7**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**METHODS AND DECORATORS**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Python’s decorators are a handy way to modify functions. Decorators were first
+    introduced in Python 2.2, with the `classmethod()` and `staticmethod()` decorators,
+    but were overhauled to become more flexible and readable. Along with these two
+    original decorators, Python now provides a few right out of the box and supports
+    the simple creation of custom decorators. But it seems as though most developers
+    do not understand how they work behind the scenes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter aims to change that—we’ll cover what a decorator is and how to
+    use it, as well as how to create your own decorators. Then we’ll look at using
+    decorators to create static, class, and abstract methods and take a close look
+    at the `super()` function, which allows you to place implementable code inside
+    an abstract method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Decorators and When to Use Them**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A *decorator* is a function that takes another function as an argument and replaces
+    it with a new, modified function. The primary use case for decorators is in factoring
+    common code that needs to be called before, after, or around multiple functions.
+    If you’ve ever written Emacs Lisp code, you may have used the `defadvice` decorator,
+    which allows you to define code called around a function. If you’ve used method
+    combinations in the Common Lisp Object System (CLOS), Python decorators follow
+    the same concepts. We’ll look at some simple decorator definitions, and then we’ll
+    examine some common situations in which you’d use decorators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Creating Decorators***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The odds are good that you’ve already used decorators to make your own wrapper
+    functions. The dullest possible decorator, and the simplest example, is the `identity()`
+    function, which does nothing except return the original function. Here is its
+    definition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You would then use your decorator like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You enter the name of the decorator preceded by an `@` symbol and then enter
+    the function you want to use it on. This is the same as writing the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: This decorator is useless, but it works. Let’s look at another, more useful
+    example in [Listing 7-1](ch07.xhtml#ch7list1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-1: A decorator to organize functions in a dictionary*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In [Listing 7-1](ch07.xhtml#ch7list1), the `register` decorator stores the
+    decorated function name into a dictionary. The `_functions` dictionary can then
+    be used and accessed using the function name to retrieve a function: `_functions[''foo'']`
+    points to the `foo()` function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following sections, I will explain how to write your own decorators.
+    Then I’ll cover how the built-in decorators provided by Python work and explain
+    how (and when) to use them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Writing Decorators***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'As mentioned, decorators are often used when refactoring repeated code around
+    functions. Consider the following set of functions that need to check whether
+    the username they receive as an argument is the admin or not and, if the user
+    is not an admin, raise an exception:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can see there’s some repeated code here. The obvious first step to making
+    this code more efficient is to factor the code that checks for admin status:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: We’ve moved the checking code into its own function ➊. Now our code looks a
+    bit cleaner, but we can do even better if we use a decorator, as shown in [Listing
+    7-2](ch07.xhtml#ch7list2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-2: Adding a decorator to the factored code*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We define our `check_is_admin` decorator ➊ and then call it whenever we need
+    to check for access rights. The decorator inspects the arguments passed to the
+    function using the `kwargs` variable and retrieves the `username` argument, performing
+    the username check before calling the actual function. Using decorators like this
+    makes it easier to manage common functionality. To anyone with much Python experience,
+    this is probably old hat, but what you might not realize is that this naive approach
+    to implementing decorators has some major drawbacks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Stacking Decorators***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You can also use several decorators on top of a single function or method, as
+    shown in [Listing 7-3](ch07.xhtml#ch7list3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-3: Using more than one decorator with a single function*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, `check_user_is_not()` is a factory function for our decorator `user_check_decorator()`.
+    It creates a function decorator that depends on the `username` variable and then
+    returns that variable. The function `user_check_decorator()` will serve as a function
+    decorator for `get_food()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function `get_food()` gets decorated twice using `check_user_is_not()`.
+    The question here is which username should be checked first—`admin` or `user123`?
+    The answer is in the following code, where I translated [Listing 7-3](ch07.xhtml#ch7list3)
+    into equivalent code without using a decorator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The decorator list is applied from top to bottom, so the decorators closest
+    to the `def` keyword will be applied first and executed last. In the example above,
+    the program will check for `admin` first and then for `user123`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Writing Class Decorators***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'It’s also possible to implement class decorators, though these are less often
+    used in the wild. *Class decorators* work in the same way as function decorators,
+    but they act on classes rather than functions. The following is an example of
+    a class decorator that sets attributes for two classes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When the class is loaded and defined, it will set the `name` and `random_id`
+    attributes, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: As with function decorators, this can be handy for factorizing common code that
+    manipulates classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another possible use for class decorators is to wrap a function or class with
+    classes. For example, class decorators are often used for wrapping a function
+    that’s storing a state. The following example wraps the `print()` function to
+    check how many times it has been called in a session:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can then use this to check how many times the function `print_hello()` has
+    been called:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Retrieving Original Attributes with the update_wrapper Decorator**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: As mentioned, a decorator replaces the original function with a new one built
+    on the fly. However, this new function lacks many of the attributes of the original
+    function, such as its docstring and its name. [Listing 7-4](ch07.xhtml#ch7list4)
+    shows how the function `foobar()` loses its docstring and its name attribute once
+    it is decorated with the `is_admin` decorator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-4: A decorated function loses its docstring and name attributes.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Not having the correct docstring and name attribute for a function can be problematic
+    in various situations, such as when generating the source code documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fortunately, the `functools` module in the Python Standard Library solves this
+    problem with the `update_wrapper()` function, which copies the attributes from
+    the original function that were lost to the wrapper itself. The source code of
+    `update_wrapper()` is shown in [Listing 7-5](ch07.xhtml#ch7list5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-5: The update_wrapper() source code*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In [Listing 7-5](ch07.xhtml#ch7list5), the `update_wrapper()` source code highlights
+    which attributes are worth saving when wrapping a function with a decorator. By
+    default, the `__name__` attribute, `__doc__` attribute, and some other attributes
+    are copied. You can also personalize which attributes of a function are copied
+    to the decorated function. When we use `update_wrapper()` to rewrite our example
+    from [Listing 7-4](ch07.xhtml#ch7list4), things are much nicer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now the `foobar()` function has the correct name and docstring even when decorated
+    by `is_admin`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**wraps: A Decorator for Decorators**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: It can get tedious to use `update_wrapper()` manually when creating decorators,
+    so `functools` provides a decorator for decorators called `wraps`. [Listing 7-6](ch07.xhtml#ch7list6)
+    shows the `wraps` decorator in use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-6: Updating our decorator with wraps from functools*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With `functools.wrap`, the decorator function `check_is_admin()` that returns
+    the `wrapper()` function takes care of copying the docstring, name function, and
+    other information from the function `f` passed as argument. Thus, the decorated
+    function (`get_food()`, in this case) still sees its unchanged signature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Extracting Relevant Information with inspect**'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In our examples so far, we have assumed that the decorated function will always
+    have a `username` passed to it as a keyword argument, but that might not be the
+    case. It might instead have a bunch of information from which we need to extract
+    the username to check. With this in mind, we’ll build a smarter version of our
+    decorator that can look at the decorated function’s arguments and pull out what
+    it needs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For this, Python has the `inspect` module, which allows us to retrieve a function’s
+    signature and operate on it, as shown in [Listing 7-7](ch07.xhtml#ch7list7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-7: Using tools from the inspect module to extract information*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The function that does the heavy lifting here is `inspect.getcallargs()`, which
+    returns a dictionary containing the names and values of the arguments as key-value
+    pairs. In our example, this function returns `{''username'': ''admin'',''type'':
+    ''chocolate''}`. That means that our decorator does not have to check whether
+    the `username` parameter is a positional or a keyword argument; all the decorator
+    has to do is look for `username` in the dictionary.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using `functools.wraps` and the `inspect` module, you should be able to write
+    any custom decorator that you would ever need. However, do not abuse the `inspect`
+    module: while being able to guess what the function will accept as an argument
+    sounds handy, this capability can be fragile, breaking easily when function signatures
+    change. Decorators are a terrific way to implement the *Don’t Repeat Yourself*
+    mantra so cherished by developers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**How Methods Work in Python**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Methods are pretty simple to use and understand, and you’ve likely just used
+    them correctly without delving in much deeper than you needed to. But to understand
+    what certain decorators do, you need to know how methods work behind the scenes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A *method* is a function that is stored as a class attribute. Let’s have a
+    look at what happens when we try to access such an attribute directly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We are told that `get_size()` is a function—but why is that? The reason is
+    that at this stage, `get_size()` is not tied to any particular object. Therefore,
+    it is treated as a normal function. Python will raise an error if we try to call
+    it directly, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Python complains that we have not provided the necessary `self` argument. Indeed,
+    as it is not bound to any object, the `self` argument cannot be set automatically.
+    However, we are able to use the `get_size()` function not only by passing an arbitrary
+    instance of the class to the method if we want to but also by passing *any* object,
+    as long as it has the properties that the method expects to find. Here’s an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This call works, just as promised. It is, however, not very convenient: we
+    have to refer to the class every time we want to call one of its methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So Python goes the extra mile for us by binding a class’s methods to its instances.
+    In other words, we can access `get_size()` from any `Pizza` instance, and, better
+    still, Python will automatically pass the object itself to the method’s `self`
+    parameter, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As expected, we do not have to provide any argument to `get_size()`, since
+    it’s a bound method: its `self` argument is automatically set to our `Pizza` instance.
+    Here is an even clearer example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As long as you have a reference to the bound method, you do not even have to
+    keep a reference to your `Pizza` object. Moreover, if you have a reference to
+    a method but you want to find out which object it is bound to, you can just check
+    the method’s `__self__` property, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Obviously, we still have a reference to our object, and we can find it if we
+    want.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Static Methods**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*Static methods* belong to a class, rather than an instance of a class, so
+    they don’t actually operate on or affect class instances. Instead, a static method
+    operates on the parameters it takes. Static methods are generally used to create
+    utility functions, because they do not depend on the state of the class or its
+    objects.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, in [Listing 7-8](ch07.xhtml#ch7list8), the static `mix_ingredients()`
+    method belongs to the `Pizza` class but could actually be used to mix ingredients
+    for any other food.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-8: Creating a static method as part of a class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You could write `mix_ingredients()` as a non-static method if you wanted to,
+    but it would take a `self` argument that would never actually be used. Using the
+    `@staticmethod` decorator gives us several things.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first is speed: Python does not have to instantiate a bound method for
+    each `Pizza` object we create. Bound methods are objects, too, and creating them
+    has a CPU and memory cost—even if it’s low. Using a static method lets us avoid
+    that, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Second, static methods improve the readability of the code. When we see `@staticmethod`,
+    we know that the method does not depend on the state of the object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Third, static methods can be overridden in subclasses. If instead of a static
+    method, we used a `mix_ingredients()` function defined at the top level of our
+    module, a class inheriting from `Pizza` wouldn’t be able to change the way we
+    mix ingredients for our pizza without overriding the `cook()` method itself. With
+    static methods, the subclasses can override the method for their own purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unfortunately, Python is not always able to detect for itself whether a method
+    is static or not—I call that a defect of the language design. One possible approach
+    is to add a check that detects such pattern and emits a warning using `flake8`.
+    We will look into how to do this in “Extending `flake8` with AST Checks” on [page
+    140](ch09.xhtml#page_140).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Class Methods**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*Class methods* are bound to a class rather than its instances. That means
+    that those methods cannot access the state of the object but only the state and
+    methods of the class. [Listing 7-9](ch07.xhtml#ch7list9) shows how to write a
+    class method.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-9: Binding a class method to its class*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As you can see, there are various ways to access the `get_radius()` class method,
+    but however you choose to access it, the method is always bound to the class it
+    is attached to. Also, its first argument must be the class itself. Remember: classes
+    are objects too!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Class methods are principally useful for creating *factory methods*, which
+    instantiate objects using a different signature than `__init__`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: If we used a `@staticmethod` here instead of a `@classmethod`, we would have
+    to hardcode the `Pizza` class name in our method, making any class inheriting
+    from `Pizza` unable to use our factory for its own purposes. In this case, however,
+    we provide a `from_fridge()` factory method that we can pass a `Fridge` object
+    to. If we call this method with something like `Pizza.from_fridge(myfridge)`,
+    it returns a brand-new `Pizza` with ingredients taken from what’s available in
+    `myfridge`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any time you write a method that cares only about the class of the object and
+    not about the object’s state, it should be declared as a class method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Abstract Methods**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: An *abstract method* is defined in an abstract base class that may not itself
+    provide any implementation. When a class has an abstract method, it cannot be
+    instantiated. As a consequence, an *abstract class* (defined as a class that has
+    at least one abstract method) must be used as a parent class by another class.
+    This subclass will be in charge of implementing the abstract method, making it
+    possible to instantiate the parent class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can use abstract base classes to make clear the relationships between other,
+    connected classes derived from the base class but make the abstract base class
+    itself impossible to instantiate. By using abstract base classes, you can ensure
+    the classes derived from the base class implement particular methods from the
+    base class, or an exception will be raised. The following example shows the simplest
+    way to write an abstract method in Python:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: With this definition, any class inheriting from `Pizza` must implement and override
+    the `get_radius()` method; otherwise, calling the method raises the exception
+    shown here. This is handy for making sure that each subclass of `Pizza` implements
+    its own way of computing and returning its radius.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This way of implementing abstract methods has a drawback: if you write a class
+    that inherits from `Pizza` but forget to implement `get_radius()`, the error is
+    raised only if you try to use that method at runtime. Here’s an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As `Pizza` is directly instantiable, there’s no way to prevent this from happening.
+    One way to make sure you get an early warning about forgetting to implement and
+    override the method, or trying to instantiate an object with abstract methods,
+    is to use Python’s built-in `abc` (abstract base classes) module instead, like
+    so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `abc` module provides a set of decorators to use on top of methods that
+    will be defined as abstracts and a metaclass to enable this. When you use `abc`
+    and its special `metaclass`, as shown above, instantiating a `BasePizza` or a
+    class inheriting from it that doesn’t override `get_radius()` causes a `TypeError`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: We try to instantiate the abstract `BasePizza` class and are immediately told
+    it can’t be done!
+  prefs: []
+  type: TYPE_NORMAL
+- en: While using abstract methods doesn’t guarantee that the method is implemented
+    by the user, this decorator helps you catch the error earlier. This is especially
+    handy when you are providing interfaces that must be implemented by other developers;
+    it’s a good documentation hint.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Mixing Static, Class, and Abstract Methods**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Each of these decorators is useful on its own, but the time may come when you’ll
+    have to use them together.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, you could define a factory method as a class method while forcing
+    the implementation to be made in a subclass. In that case, you’d need to have
+    a class method defined as both an abstract method and a class method. This section
+    gives some tips that will help you with that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, an abstract method’s prototype is not set in stone. When you implement
+    the method, there is nothing stopping you from extending the argument list as
+    you see fit. [Listing 7-10](ch07.xhtml#ch7list10) is an example of code in which
+    a subclass extends the signature of the abstract method of its parent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-10: Using a subclass to extend the signature of the abstract method
+    of its parent*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We define the `Calzone` subclass to inherit from the `BasePizza` class. We
+    can define the `Calzone` subclass’s methods any way we like, as long as they support
+    the interface we define in `BasePizza`. This includes implementing the methods
+    as either class or static methods. The following code defines an abstract `get_ingredients()`
+    method in the base class and a static `get_ingredients()` method in the `DietPizza`
+    subclass:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Even though our static `get_ingredients()` method doesn’t return a result based
+    on the object’s state, it supports our abstract `BasePizza` class’s interface,
+    so it’s still valid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is also possible to use the `@staticmethod` and `@classmethod` decorators
+    on top of `@abstractmethod` in order to indicate that a method is, for example,
+    both static and abstract, as shown in [Listing 7-11](ch07.xhtml#ch7list11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-11: Using a class method decorator with abstract methods*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The abstract method `get_ingredients()` needs to be implemented by a subclass,
+    but it’s also a class method, meaning the first argument it will receive will
+    be a class (not an object).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that by defining `get_ingredients()` as a class method in `BasePizza`
+    like this, you are not forcing any subclasses to define `get_ingredients()` as
+    a class method—it could be a regular method. The same would apply if we had defined
+    it as a static method: there’s no way to force subclasses to implement abstract
+    methods as a specific kind of method. As we have seen, you can change the signature
+    of an abstract method when implementing it in a subclass in any way you like.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Putting Implementations in Abstract Methods***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Hold the phone: in [Listing 7-12](ch07.xhtml#ch7list12), we have an implementation
+    *in* an abstract method. Can we *do* that? The answer is yes. Python does not
+    have a problem with it! You can put code in your abstract methods and call it
+    using `super()`, as demonstrated in [Listing 7-12](ch07.xhtml#ch7list12).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-12: Using an implementation in an abstract method*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this example, every `Pizza` you make that inherits from `BasePizza` has to
+    override the `get_ingredients()` method, but every `Pizza` also has access to
+    the base class’s default mechanism for getting the ingredients list. This mechanism
+    is especially useful when providing an interface to implement while also providing
+    base code that might be useful to all inheriting classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Truth About super***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Python has always allowed developers to use both single and multiple inheritances
+    to extend their classes, but even today, many developers do not seem to understand
+    how these mechanisms, and the `super()` method that is associated with them, work.
+    To fully understand your code, you need to understand the trade-offs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multiple inheritances are used in many places, particularly in code involving
+    a mixin pattern. A *mixin* is a class that inherits from two or more other classes,
+    combining their features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Many of the pros and cons of single and multiple inheritances, composition,
+    or even duck typing are out of scope for this book, so we won’t cover everything
+    here. If you are not familiar with these notions, I suggest you read about them
+    to form your own opinions.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As you should know by now, classes are objects in Python. The construct used
+    to create a class is a special statement that you should be well familiar with:
+    `class classname`(expression of inheritance).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The code in parentheses is a Python expression that returns the list of class
+    objects to be used as the class’s parents. Ordinarily, you would specify them
+    directly, but you could also write something like this to specify the list of
+    parent objects:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This code works as expected: we declare class `A` with `object` as its parent
+    class. The class method `mro()` returns the *method resolution order* used to
+    resolve attributes—it defines how the next method to call is found via the tree
+    of inheritance between classes. The current MRO system was first implemented in
+    Python 2.3, and its internal workings are described in the Python 2.3 release
+    notes. It defines how the system browses the tree of inheritance between classes
+    to find the method to call.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We already saw that the canonical way to call a method in a parent class is
+    to use the `super()` function, but what you probably don’t know is that `super()`
+    is actually a constructor and you instantiate a `super` object each time you call
+    it. It takes either one or two arguments: the first argument is a class, and the
+    second, optional argument is either a subclass or an instance of the first argument.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The object returned by the constructor functions as a proxy for the parent classes
+    of the first argument. It has its own `__getattribute__` method that iterates
+    over the classes in the MRO list and returns the first matching attribute it finds.
+    The `__getattribute__` method is called when an attribute of the `super()` object
+    is retrieved, as shown in [Listing 7-13](ch07.xhtml#ch7list13).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 7-13: The super() function is a constructor that instantiates a super
+    object.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When requesting an attribute of the `super` object of an instance of `C`, the
+    `__getattribute__` method of the `super()` object walks through the MRO list and
+    returns the attribute from the first class it finds that has the `super` attribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In [Listing 7-13](ch07.xhtml#ch7list13), we called `super()` with two arguments,
+    meaning we used a *bound* `super` object. If we call `super()` with only one argument,
+    it returns an *unbound* `super` object instead:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Since no instance has been provided as the second argument, the `super` object
+    cannot be bound to any instance. Therefore, you cannot use this unbound object
+    to access class attributes. If you try, you’ll get the following errors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'At first glance, it might seem like this unbound kind of `super` object is
+    useless, but actually the way the `super` class implements the descriptor protocol
+    `__get__` makes unbound `super` objects useful as class attributes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: The unbound `super` object’s `__get__` method is called using the instance `super(C).__get__(D())`
+    and the attribute name `'foo'` as arguments, allowing it to find and resolve `foo`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Even if you’ve never heard of the descriptor protocol, it’s likely you’ve
+    used it through the @property decorator without knowing it. The descriptor protocol
+    is the mechanism in Python that allows an object stored as an attribute to return
+    something other than itself. This protocol is not covered in this book, but you
+    can find out more about it in the Python data model documentation.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are plenty of situations in which using `super()` can be tricky, such
+    as when handling different method signatures along the inheritance chain. Unfortunately,
+    there’s no silver bullet for all occasions. The best precaution is to use tricks
+    such as having all your methods accept their arguments using `*args, **kwargs`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since Python 3, `super()` has picked up a bit of magic: it can now be called
+    from within a method without any arguments. When no arguments are passed to `super()`,
+    it automatically searches the stack frame for arguments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: The standard way of accessing parent attributes in subclasses is `super()`,
+    and you should always use it. It allows cooperative calls of parent methods without
+    any surprises, such as parent methods not being called or being called twice when
+    multiple inheritances are used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Equipped with what you learned in this chapter, you should be unbeatable on
+    everything that concerns methods definition in Python. Decorators are essential
+    when it comes to code factorization, and proper use of the built-in decorators
+    provided by Python can vastly improve the neatness of your Python code. Abstract
+    classes are especially useful when providing an API to other developers and services.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Class inheritance is not often fully understood, and having an overview of the
+    internal machinery of the language is a good way to fully apprehend how this works.
+    There should be no secrets left on this topic for you now!
+  prefs: []
+  type: TYPE_NORMAL

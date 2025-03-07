@@ -1,0 +1,627 @@
+- en: '**12**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**MANAGING RELATIONAL DATABASES**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Applications will almost always have to store data of some kind, and developers
+    will often combine a relational database management system (RDBMS) with some type
+    of object relational mapping tool (ORM). RDBMSs and ORMs can be tricky and are
+    not a favorite topic for many developers, but sooner or later, they must be addressed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**RDBMSs, ORMs, and When to Use Them**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: An RDBMS is the database that stores an application’s relational data. Developers
+    will use a language like SQL (Structured Query Language) to deal with the relational
+    algebra, meaning that a language like this handles the data management and the
+    relationships between the data. Used together, they allow you to both store data
+    and query that data to get specific information as efficiently as possible. Having
+    a good understanding of relational database structures, such as how to use proper
+    normalization or the different types of serializability, might keep you from falling
+    into many traps. Obviously, such subjects deserve an entire book and won’t be
+    covered in their entirety in this chapter; instead, we’ll focus on using the database
+    via its usual programming language, SQL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Developers may not want to invest in learning a whole new programming language
+    to interact with the RDBMS. If so, they tend to avoid writing SQL queries entirely,
+    relying instead on a library to do the work for them. ORM libraries are commonly
+    found in programming language ecosystems, and Python is no exception.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The purpose of an ORM is to make database systems easier to access by abstracting
+    the process of creating queries: it generates the SQL so you don’t have to. Unfortunately,
+    this abstraction layer can prevent you from performing more specific or low-level
+    tasks that the ORM is simply not capable of doing, such as writing complex queries.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There is also a particular set of difficulties with using ORMs in object-oriented
+    programs that are so common, they are known collectively as the *object-relational
+    impedance mismatch.* This impedance mismatch occurs because relational databases
+    and object-oriented programs have different representations of data that don’t
+    map properly to one another: mapping SQL tables to Python classes won’t give you
+    optimal results, no matter what you do.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Understanding SQL and RDBMSs will allow you to write your own queries, without
+    having to rely on the abstraction layer for everything.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But that’s not to say you should avoid ORMs entirely. ORM libraries can help
+    with rapid prototyping of your application model, and some libraries even provide
+    useful tools such as schema upgrades and downgrades. It’s important to understand
+    that using an ORM is not a substitute for gaining a real understanding of RDBMSs:
+    many developers try to solve problems in the language of their choice rather than
+    using their model API, and the solutions they come up with are inelegant at best.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*This chapter assumes you know basic SQL. Introducing SQL queries and discussing
+    how tables work is beyond the scope of this book. If you’re new to SQL, I recommend
+    learning the basics before continuing. Practical SQL by Anthony DeBarros (No Starch
+    Press, 2018) is a good place to start.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s look at an example that demonstrates why understanding RDBMSs can help
+    you write better code. Say you have a SQL table for keeping track of messages.
+    This table has a single column named `id` representing the ID of the message sender,
+    which is the primary key, and a string containing the content of the message,
+    like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: We want to detect any duplicate messages received and exclude them from the
+    database. To do this, a typical developer might write SQL using an ORM, as shown
+    in [Listing 12-1](ch12.xhtml#ch12list1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-1: Detecting and excluding duplicate messages with an ORM*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This code works for most cases, but it has some major drawbacks:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The duplicate constraint is already expressed in the SQL schema, so there is
+    a sort of code duplication: using `PRIMARY KEY` implicitly defines the uniqueness
+    of the `id` field.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If the message is not yet in the database, this code executes two SQL queries:
+    a `SELECT` statement and then an `INSERT` statement. Executing a SQL query might
+    take a long time and require a round-trip to the SQL server, introducing extraneous
+    delay.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The code doesn’t account for the possibility that someone else might insert
+    a duplicate message after we call `select_by_id()` but before we call `insert()`,
+    which would cause the program to raise an exception. This vulnerability is called
+    a *race condition*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'There’s a much better way to write this code, but it requires cooperation with
+    the RDBMS server. Rather than checking for the message’s existence and then inserting
+    it, we can insert it right away and use a `try...except` block to catch a duplicate
+    conflict:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, inserting the message directly into the table works flawlessly
+    if the message is not already present. If it is, the ORM raises an exception indicating
+    the violation of the uniqueness constraint. This method achieves the same effect
+    as [Listing 12-1](ch12.xhtml#ch12list1) but in a more efficient fashion and without
+    any race condition. This is a very simple pattern, and it doesn’t conflict with
+    any ORM in any way. The problem is that developers tend to treat SQL databases
+    as dumb storage rather than as a tool they can use to get proper data integrity
+    and consistency; consequently, they may duplicate the constraints written in SQL
+    in their controller code rather than in their model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Treating your SQL backend as a model API is good way to make efficient use of
+    it. You can manipulate the data stored in your RDBMS with simple function calls
+    programmed in its own procedural language.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Database Backends**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: ORM supports multiple database backends. No ORM library provides a complete
+    abstraction of all RDBMS features, and simplifying the code to the most basic
+    RDBMS available will make using any advanced RDBMS functions impossible without
+    breaking the abstraction layer. Even simple things that aren’t standardized in
+    SQL, such as handling timestamp operations, are a pain to deal with when using
+    an ORM. This is even more true if your code is RDBMS agnostic. It is important
+    to keep this in mind when you choose your application’s RDBMS.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Isolating ORM libraries (as described in “[External Libraries](ch02.xhtml#lev1sec10)”
+    on [page 22](ch02.xhtml#page_22)) helps mitigate potential problems. This approach
+    allows you to easily swap your ORM library for a different one should the need
+    arise and to optimize your SQL usage by identifying places with inefficient query
+    usage, which lets you bypass most of the ORM boilerplate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, you can use your ORM in a module of your application, such as `myapp.storage`,
+    to easily build in such isolation. This module should export only functions and
+    methods that allow you to manipulate the data at a high level of abstraction.
+    The ORM should be used only from that module. At any point, you will be able to
+    drop in any module providing the same API to replace `myapp.storage`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The most commonly used ORM library in Python (and arguably the de facto standard)
+    is `sqlalchemy`. This library supports a huge number of backends and provides
+    abstraction for most common operations. Schema upgrades can be handled by third-party
+    packages such as `alembic` (*[https://pypi.python.org/pypi/alembic/](https://pypi.python.org/pypi/alembic/)*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some frameworks, such as Django (*[https://www.djangoproject.com](https://www.djangoproject.com)*),
+    provide their own ORM libraries. If you choose to use a framework, it’s smart
+    to use the built-in library because it will often integrate better with the framework
+    than an external one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**WARNING**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*The Module View Controller (MVC) architecture that most frameworks rely on
+    can be easily misused. These frameworks implement (or make it easy to implement)
+    ORM in their models directly, but without abstracting enough of it: any code you
+    have in your view and controllers that use the model will also be using ORM directly.
+    You need to avoid this. You should write a data model that includes the ORM library
+    rather than consists of it. Doing so provides better testability and isolation,
+    and makes swapping out the ORM with another storage technology much easier.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Streaming Data with Flask and PostgreSQL**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Here, I’ll show you how you can use one of *PostgreSQL*’s advanced features
+    to build an HTTP event-streaming system to help master your data storage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Writing the Data-Streaming Application***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The purpose of the micro-application in [Listing 12-2](ch12.xhtml#ch12list2)
+    is to store messages in a SQL table and provide access to those messages via an
+    HTTP REST API. Each message consists of a channel number, a source string, and
+    a content string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-2: SQL table schema for storing messages*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We also want to stream these messages to the client so that it can process
+    them in real time. To do this, we’re going to use the `LISTEN` and `NOTIFY` features
+    of PostgreSQL. These features allow us to listen for messages sent by a function
+    we provide that PostgreSQL will execute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: This code creates a trigger function written in pl/pgsql, a language that only
+    PostgreSQL understands. Note that we could also write this function in other languages,
+    such as Python itself, as PostgreSQL embeds the Python interpreter in order to
+    provide a pl/python language. The single simple operation we’ll be performing
+    here does not necessitate leveraging Python, so sticking to pl/pgsql is a wise
+    choice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function `notify_on_insert()` ➊ performs a call to `pg_notify()` ➋, which
+    is the function that actually sends the notification. The first argument is a
+    string that represents a *channel*, while the second is a string carrying the
+    actual *payload*. We define the channel dynamically based on the value of the
+    channel column in the row. In this case, the payload will be the entire row in
+    JSON format. Yes, PostgreSQL knows how to convert a row to JSON natively!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we want to send a notification message on each `INSERT` performed in
+    the message table, so we need to trigger this function on such events:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: The function is now plugged in and will be executed upon each successful `INSERT`
+    performed in the message table.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can check that it works by using the `LISTEN` operation in `psql`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: As soon as the row is inserted, the notification is sent, and we’re able to
+    receive it through the PostgreSQL client. Now all we have to do is build the Python
+    application that streams this event, shown in [Listing 12-3](ch12.xhtml#ch12list3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 12-3: Listening and receiving the stream of notifications*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 12-3](ch12.xhtml#ch12list3) connects to PostgreSQL using the `psycopg2`
+    library. The `psycopg2` library is a Python module that implements the PostgreSQL
+    network protocol and allows us to connect to a PostgreSQL server to send SQL requests
+    and receive results. We could have used a library that provides an abstraction
+    layer, such as `sqlalchemy`, but abstracted libraries don’t provide access to
+    the `LISTEN` and `NOTIFY` functionality of PostgreSQL. It’s important to note
+    that it is still possible to access the underlying database connection to execute
+    the code when using a library like `sqlalchemy`, but there would be no point in
+    doing that for this example, since we don’t need any of the other features the
+    ORM library provides.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The program listens on `channel_1`, and as soon as it receives a notification,
+    prints it to the screen. If we run the program and insert a row in the `message`
+    table, we get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: As soon as we insert the row, PostgreSQL runs the trigger and sends a notification.
+    Our program receives it and prints the notification payload; here, that’s the
+    row serialized to JSON. We now have the basic ability to receive data as it is
+    inserted into the database, without doing any extra requests or work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Building the Application***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Next, we’ll use *Flask*, a simple HTTP micro-framework, to build our application.
+    We’re going to build an HTTP server that streams the flux of `insert` using the
+    *Server-Sent Events* message protocol defined by HTML5\. An alternative would
+    be to use *Transfer-Encoding: chunked* defined by HTTP/1.1:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: This application is simple enough that it supports streaming but not any other
+    data retrieval operation. We use Flask to route the HTTP request `GET /message/channel`
+    to our streaming code. As soon as the code is called, the application returns
+    a response with the mimetype `text/event-stream` and sends back a generator function
+    instead of a string. Flask will call this function and send results each time
+    the generator yields something.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The generator, `stream_messages()`, reuses the code we wrote earlier to listen
+    to PostgreSQL notifications. It receives the channel identifier as an argument,
+    listens to that channel, and then yields the payload. Remember that we used PostgreSQL’s
+    JSON encoding function in the trigger function, so we’re already receiving JSON
+    data from PostgreSQL. There’s no need for us to transcode the data since it’s
+    fine to send JSON data to the HTTP client.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*For the sake of simplicity, this example application has been written in a
+    single file. If this were a real application, I would move the storage-handling
+    implementation into its own Python module.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can now run the server:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On another terminal, we can connect and retrieve the events as they’re entered.
+    Upon connection, no data is received, and the connection is kept open:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'But as soon as we insert some rows in the `message` table, we’ll start seeing
+    data coming in through the terminal running `curl`. In a third terminal, we insert
+    a message in the database:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here’s the data output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: This data is printed to the terminal running `curl`. This keeps `curl` connected
+    to the HTTP server while it waits for the next flux of messages. We created a
+    streaming service without doing any kind of polling here, building an entirely
+    *push-based* system where information flows from one point to another seamlessly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A naive and arguably more portable implementation of this application would
+    instead repeatedly loop over a `SELECT` statement to poll for new data inserted
+    in the table. This would work with any other storage system that does not support
+    a publish-subscribe pattern as this one does.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Dimitri Fontaine on Databases**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Dimitri is a skilled PostgreSQL Major Contributor who works at Citus Data and
+    argues with other database gurus on the *pgsql-hackers* mailing list. We’ve shared
+    a lot of open source adventures, and he’s been kind enough to answer some questions
+    about what you should do when dealing with databases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**What advice would you give to developers using RDBMSs as their storage backends?**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: RDBMSs were invented in the ’70s to solve some common problems plaguing every
+    application developer at that time, and the main services implemented by RDBMSs
+    were not simply data storage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The main services offered by an RDBMS are actually the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Concurrency:** Access your data for read or write with as many concurrent
+    threads of execution as you want—the RDBMS is there to handle that correctly for
+    you. That’s the main feature you want out of an RDBMS.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Concurrency semantics:** The details about the concurrency behavior when
+    using an RDBMS are proposed with a high-level specification in terms of atomicity
+    and isolation, which are maybe the most crucial parts of ACID (atomicity, consistency,
+    isolation, durability). *Atomicity* is the property that between the time you
+    `BEGIN` a transaction and the time you’re done with it (either `COMMIT` or `ROLLBACK`),
+    no other concurrent activity on the system is allowed to know what you’re doing—whatever
+    that is. When using a proper RDBMS, also include the Data Definition Language
+    (DDL), for example, `CREATE TABLE` or `ALTER TABLE`. *Isolation* is all about
+    what you’re allowed to notice of the concurrent activity of the system from within
+    your own transaction. The SQL standard defines four levels of isolation, as described
+    in the PostgreSQL documentation (*[http://www.postgresql.org/docs/9.2/static/transaction-iso.html](http://www.postgresql.org/docs/9.2/static/transaction-iso.html)*).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The RDBMS takes full responsibility for your data. So it allows the developer
+    to describe their own rules for consistency, and then it will check that those
+    rules are valid at crucial times such as at transaction commit or at statement
+    boundaries, depending on the deferability of your constraints declarations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first constraint you can place on your data is its expected input and output
+    formatting, using the proper data type. An RDBMS will know how to work with much
+    more than text, numbers, and dates and will properly handle dates that actually
+    appear in a calendar in use today.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Data types are not just about input and output formats, though. They also implement
+    behaviors and some level of polymorphism, as we all expect the basic equality
+    tests to be data type specific: we don’t compare text and numbers, dates and IP
+    addresses, arrays and ranges, and so on in the same way.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Protecting your data also means that the only choice for an RDBMS is to actively
+    refuse data that doesn’t match your consistency rules, the first of which is the
+    data type you’ve chosen. If you think it’s okay to have to deal with a date such
+    as 0000-00-00 that never existed in the calendar, then you need to rethink.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The other part of the consistency guarantees is expressed in terms of constraints
+    as in `CHECK` constraints, `NOT NULL` constraints, and constraint triggers, one
+    of which is known as foreign key. All of that can be thought of as a user-level
+    extension of the data type definition and behavior, the main difference being
+    that you can choose to `DEFER` the enforcement of checking those constraints from
+    the end of each statement to the end of the current transaction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The relational bits of an RDBMS are all about modeling your data and the guarantee
+    that all tuples found in a relation share a common set of rules: structure and
+    constraints. When enforcing that, we are enforcing the use of a proper explicit
+    schema to handle our data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Working on a proper schema for your data is known as *normalization*, and you
+    can aim for a number of subtly different normal forms in your design. Sometimes
+    though, you need more flexibility than what is given by the result of your normalization
+    process. Common wisdom is to first normalize your data schema and only then modify
+    it to regain some flexibility. Chances are you actually don’t need more flexibility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When you do need more flexibility, you can use PostgreSQL to try out a number
+    of denormalization options: composite types, records, arrays, H-Store, JSON, or
+    XML to name a few.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s a very important drawback to denormalization though, which is that the
+    query language we’re going to talk about next is designed to handle rather normalized
+    data. With PostgreSQL, of course, the query language has been extended to support
+    as much denormalization as possible when using composite types, arrays or H-Store,
+    and even JSON in recent releases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The RDBMS knows a lot about your data and can help you implement a very fine-grain
+    security model, should you need to do so. The access patterns are managed at the
+    relation and column level, and PostgreSQL also implements `SECURITY DEFINER` stored
+    procedures, allowing you to offer access to sensible data in a very controlled
+    way, much the same as with using saved user ID (SUID) programs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The RDBMS offers to access your data using a SQL, which became the de facto
+    standard in the ’80s and is now driven by a committee. In the case of PostgreSQL,
+    lots of extensions are being added, with each and every major release allowing
+    you to access a very rich DSL language. All the work of query planning and optimization
+    is done for you by the RDBMS so that you can focus on a declarative query where
+    you describe only the result you want from the data you have.
+  prefs: []
+  type: TYPE_NORMAL
+- en: And that’s also why you need to pay close attention to the NoSQL offerings here,
+    as most of those trendy products are in fact not removing just the SQL from the
+    offering but a whole lot of other foundations that you’ve been trained to expect.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**What advice would you give to developers using RDBMSs as their storage backends?**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: My advice is to remember the differences between a *storage backend* and an
+    RDBMS. Those are very different services, and if all you need is a storage backend,
+    maybe consider using something other than an RDBMS.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Most often, though, what you really need is a full-blown RDBMS. In that case,
+    the best option you have is PostgreSQL. Go read its documentation (*[https://www.postgresql.org/docs/](https://www.postgresql.org/docs/)*);
+    see the list of data types, operators, functions, features, and extensions it
+    provides. Read some usage examples on blog posts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then consider PostgreSQL a tool you can leverage in your development and include
+    it in your application architecture. Parts of the services you need to implement
+    are best offered at the RDBMS layer, and PostgreSQL excels at being that trustworthy
+    part of your whole implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**What’s the best way to use or not use an ORM?**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The ORM will best work for *CRUD* applications: create, read, update, and delete.
+    The read part should be limited to a very simple `SELECT` statement targeting
+    a single table, as retrieving more columns than necessary has a significant impact
+    on query performances and resources used.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any column you retrieve from the RDBMS and that you end up not using is pure
+    waste of precious resources, a first scalability killer. Even when your ORM is
+    able to fetch only the data you’re asking for, you still then have to somehow
+    manage the exact list of columns you want in each situation, without using a simple
+    abstract method that will automatically compute the fields list for you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The create, update, and delete queries are simple `INSERT`, `UPDATE`, and `DELETE`
+    statements. Many RDBMSs offer optimizations that are not leveraged by ORMs, such
+    as returning data after an `INSERT`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Furthermore, in the general case, a relation is either a table or the result
+    of any query. It’s common practice when using an ORM to build relational mapping
+    between defined tables and some model classes, or some other helper stubs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you consider the whole SQL semantics in their generalities, then the relational
+    mapper should really be able to map any query against a class. You would then
+    presumably have to build a new class for each query you want to run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The idea when applied to our case is that you trust your ORM to do a better
+    job than you at writing efficient SQL queries, even when you’re not giving it
+    enough information to work out the exact set of data you are interested in.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s true that, at times, SQL can get quite complex, though you’re not going
+    to get anywhere near simplicity by using an API-to-SQL generator that you can’t
+    control.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, there are two cases where you can relax and use your ORM, provided
+    that you’re willing to accept the following compromise: at a later point, you
+    may need to edit your ORM usage out of your codebase.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Time to market:** When you’re really in a hurry and want to gain market share
+    as soon as possible, the only way to get there is to release a first version of
+    your application and idea. If your team is more proficient at using an ORM than
+    handcrafting SQL queries, then by all means just do that. You have to realize,
+    though, that as soon as you’re successful with your application, one of the first
+    scalability problems you will have to solve is going to be related to your ORM
+    producing really bad queries. Also, your usage of the ORM will have painted you
+    into a corner and resulted in bad code design decisions. But if you’re there,
+    you’re successful enough to spend some refactoring money and remove any dependency
+    on the ORM, right?'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**CRUD application:** This is the real thing, where you are only editing a
+    single tuple at a time and you don’t really care about performance, like for the
+    basic admin application interface.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**What are the pros of using PostgreSQL over other databases when working with
+    Python?**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here are my top reasons for choosing PostgreSQL as a developer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Community support:** The PostgreSQL community is vast and welcoming to new
+    users, and folks will typically take the time to provide the best possible answer.
+    The mailing lists are still the best way to communicate with the community.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Data integrity and durability:** Any data you send to PostgreSQL is safe
+    in its definition and your ability to fetch it again later.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Data types, functions, operators, arrays, and ranges:** PostgreSQL has a
+    very rich set of data types that come with a host of operators and functions.
+    It’s even possible to denormalize using arrays or JSON data types and still be
+    able to write advanced queries, including joins, against those.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**The planner and optimizer:** It’s worth taking the time to understand how
+    complex and powerful these are.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Transactional DDL:** It’s possible to `ROLLBACK` almost any command. Try
+    it now: just open your `psql` shell against a database you have and type in `BEGIN;
+    DROP TABLE foo`; ROLLBACK;, where you replace foo with the name of a table that
+    exists in your local instance. Amazing, right?'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**PL/Python (and others such as C, SQL, Javascript, or Lua):** You can run
+    your own Python code on the server, right where the data is, so you don’t have
+    to fetch it over the network just to process it and then send it back in a query
+    to do the next level of `JOIN`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Specific indexing (GiST, GIN, SP-GiST, partial and functional):** You can
+    create Python functions to process your data from within PostgreSQL and then index
+    the result of calling that function. When you issue a query with a `WHERE` clause
+    calling that function, it’s called only once with the data from the query; then
+    it’s matched directly with the contents of the index.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

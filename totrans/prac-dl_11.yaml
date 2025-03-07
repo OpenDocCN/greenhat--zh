@@ -1,0 +1,1850 @@
+- en: '**11'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: EVALUATING MODELS**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/common.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: So far, we’ve evaluated models by looking at their accuracy on a held-out test
+    set. This is natural and intuitive, but as we’ll learn in this chapter, it’s not
+    all that we can, or should, do to evaluate a model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll begin this chapter by defining metrics and delineating some basic assumptions.
+    Then we’ll look at why we need more than just accuracy. We’ll introduce the concept
+    of a confusion matrix and spend time discussing the metrics we can derive from
+    it. From there, we’ll jump to performance curves, which are the best way to compare
+    different models together. Finally, we’ll extend the idea of a confusion matrix
+    to the multiclass case. We won’t say all there is to say about performance metrics,
+    as this area is still somewhat evolving. However, by the end of this chapter,
+    you’ll be familiar with the sorts of numbers that people involved in machine learning
+    will throw around and have a good understanding of what they mean.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definitions and Assumptions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are many other metrics besides accuracy that we can use to help us evaluate
+    how well a model is performing. These allow us to reasonably compare models. Let’s
+    start by defining the word *metric*. For us, a metric is a number or set of numbers
+    that represents something about how well the model is doing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The value of the metric increases or decreases as the performance of the model
+    increases or decreases, or possibly vice versa. At times, we’ll be a bit sloppy
+    and refer to graphs as metrics as well since we use them to judge the performance
+    of a model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’re concerned with evaluating a model for which we have a single held-out
+    test set. We’ll assume that we followed the advice of [Chapter 4](ch04.xhtml#ch04)
+    and built three datasets: a training set to teach the model, a validation set
+    to decide when the model was done training, and a held-out test set to evaluate
+    the trained model. We’ve now trained our model, thereby utilizing the training
+    and validation sets, and want to know how well we’ve done.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have another, implicit assumption in this chapter. It’s a crucial one: we
+    assume that the held-out test set is a good representation of the parent distribution
+    that generated the data. Put another way, the held-out test set must represent
+    the sort of data the model will encounter in the wild in as many ways as possible.
+    For example, the frequency with which particular classes appear in the test set
+    should match, as far as is practical, the expected rates that will be encountered
+    when the model is used.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is necessary because the training set is conditioning the model to expect
+    a particular distribution, a particular set of characteristics, and if the data
+    given to the model when it’s used has different characteristics, the model won’t
+    perform well. A difference in distribution between the training set and the set
+    of data presented to the model when it’s used is one of the most common reasons
+    deployed machine learning models fail in actual use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why Accuracy Is Not Enough
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A binary classifier outputs a single decision for a particular input: class
+    0 or class 1\. Let’s define the following,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*N*[*c*], the number of test examples the model correctly classified'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*N*[*w*], the number of test examples the model got wrong'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, the overall accuracy of this model, a number between 0 and 1, is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/252equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This is the accuracy as we have been using it throughout the book. Note, in
+    this chapter, we will use *ACC* when we mean the overall accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This seems like a pretty reasonable metric, but there are a couple of good reasons
+    not to trust this number too much. For example, *N*[*c*] and *N*[*w*] tell us
+    nothing about the relative frequency of each class. What if one class is rare?
+    Let’s see how that might affect things.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If the model is 95 percent accurate (ACC = 0.95), we might be happy. However,
+    let’s say the frequency (read *prior probability*) of class 1 is only 5 percent,
+    meaning that on average, if we draw 100 samples from the test set, about 5 of
+    them will be of class 1 and the other 95 will be of class 0\. We see that a model
+    that predicts all inputs are of class 0 will be right 95 percent of the time.
+    But consider this: our model might be returning only class 0 for all inputs. If
+    we stick with the overall accuracy, we might think we have a good model when,
+    in fact, we have a terrible model that we could implement in two lines of Python
+    as'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this code, we say that the class is 0 regardless of the input feature vector,
+    *x*. No one would be satisfied with such a model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The prior probabilities of the classes affect how we should think about the
+    overall accuracy. However, if we know the following
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*N*[0], the number of class 0 instances in our test set'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*N*[1], the number of class 1 instances in our test set'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*C*[0], the number of class 0 instances our model found'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*C*[1], the number of class 1 instances our model found'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'we can easily compute the accuracy per class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/253equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The final expression is just another way to compute the overall accuracy because
+    it tallies all of the correct classifications divided by the number of samples
+    tested.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The per class accuracy is better than the overall accuracy because it accounts
+    for any imbalance in the frequency of the respective classes in the test set.
+    For our previous hypothetical test set with the frequency of class 1 at 5 percent,
+    if the classifier were predicting class 0 for all inputs, we would detect it because
+    our per class accuracies would be ACC[0] = 1.0 and ACC[1] = 0.0\. This makes sense.
+    We’d get every class 0 sample correct and every class 1 sample wrong (we’d call
+    them class 0 anyway). Per class accuracies will show up again when we consider
+    evaluating multiclass models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A more subtle reason to not just use the overall accuracy is that being wrong
+    might bring a much higher cost than being right. This introduces something outside
+    just the test set: it introduces the meaning we assign to class 0 and class 1\.
+    For example, if our model is testing for breast cancer, perhaps using the dataset
+    we created in [Chapter 5](ch05.xhtml#ch05), reporting class 1 (malignant) when,
+    in fact, the sample does not represent a malignant case might cause anxiety for
+    the woman waiting for her test results. With further testing, however, she’ll
+    be shown to not have breast cancer after all. But consider the other case. A benign
+    result that is actually malignant might mean that she will not receive treatment,
+    or receive it too late, which could very well be fatal. The relative cost of one
+    class versus another isn’t the same and might literally mean the difference between
+    life and death. The same could be said of a self-driving car that thinks the child
+    playing in the middle of the road is an empty soda can, or any number of other
+    real-world examples.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We use models in the real world, so their outputs are connected to the real
+    world, and sometimes the cost associated with an output is significant. Using
+    just the overall accuracy of a model can be misleading because it does not take
+    the cost of an error into account.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The 2 × 2 Confusion Matrix
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The models we’ve worked with so far have all ultimately assigned each input
+    a class label. For example, a neural network with a logistic output is interpreted
+    as a probability of membership of class 1\. Using a typical threshold of 0.5 lets
+    us assign a class label: if the output is < 0.5, call the input class 0; otherwise,
+    call it class 1\. For other model types, the decision rule is different (for example,
+    voting in *k*-NN), but the effect is the same: we get a class assignment for the
+    input.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we run our entire test set through our model and apply the decision rule,
+    we get the assigned class label along with the true class label for each sample.
+    Again, thinking only of the binary classifier case, we have four possible outcomes
+    for each input sample in regards to the assigned class and the true class (see
+    [Table 11-1](ch11.xhtml#ch11tab1)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-1:** Possible Relationships Between the True Class Label and the
+    Assigned Class Label for a Binary Classifier'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Assigned class** | **True class** | **Case** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0 | 0 | True negative (TN) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0 | 1 | False negative (FN) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 0 | False positive (FP) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 1 | True positive (TP) |'
+  prefs: []
+  type: TYPE_TB
+- en: The *Case* label defines how we’ll talk about these situations. If the actual
+    class of the input is class 0 and the model assigns class 0, we have a correctly
+    identified negative case, so we have a *true negative*, or *TN*. If the actual
+    class is class 1 and the model assigns class 1, we have a correctly identified
+    positive case, so we have a *true positive*, or *TP*. However, if the actual class
+    is class 1 and the model assigns class 0, we have a positive case wrongly called
+    a negative case, so we have a *false negative*, or *FN*. Finally, if the actual
+    class is 0 and the model assigns class 1, we have a negative case wrongly called
+    a positive case, so we have a *false positive*, or *FP*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can place each of the inputs in our test set into one, and only one, of these
+    cases. Doing this lets us tally the number of times each case appears in the test
+    set, which we can present nicely as a table (see [Table 11-2](ch11.xhtml#ch11tab2)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-2:** Definition of the Class Labels in the 2 × 2 Table'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | **Actual class 1** | **Actual class 0** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Model assigns class 1* | TP | FP |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Model assigns class 0* | FN | TN |'
+  prefs: []
+  type: TYPE_TB
+- en: I have placed the case labels (TP, FP, and so forth) in the location where the
+    actual tally counts would go for each case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This table is called a 2 × 2 *confusion matrix* (or 2 × 2 *contingency table*).
+    It is 2 × 2 because there are two rows and two columns. It is a confusion matrix
+    because it shows us at a glance how the classifier is performing and, especially,
+    where it is confused. The classifier is confused when it assigns an instance of
+    one class to the other class. In the 2 × 2 table, this confusion shows up as counts
+    that are not along the main diagonal of the table (upper left to lower right).
+    These are the FP and FN entries. A model that performs flawlessly on the test
+    set will have FP = 0 and FN = 0; it will make no mistakes in assigning class labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Chapter 7](ch07.xhtml#ch07), we experimented with the breast cancer dataset
+    built in [Chapter 5](ch05.xhtml#ch05). We reported the performance of classic
+    models against this dataset by looking at their overall accuracy. This is what
+    the sklearn `score` method returns. Let’s now instead look at some 2 × 2 tables
+    generated from the test set for these models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The code we are looking at is in the file *bc_experiments.py*. This code trains
+    multiple classic model types. Instead of using the overall accuracy, however,
+    let’s introduce a new function that computes the entries in the 2 × 2 table ([Listing
+    11-1](ch11.xhtml#ch11lis1)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def tally_predictions(clf, x, y):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: p = clf.predict(x)
+  prefs: []
+  type: TYPE_NORMAL
+- en: score = clf.score(x,y)
+  prefs: []
+  type: TYPE_NORMAL
+- en: tp = tn = fp = fn = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(len(y)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (p[i] == 0) and (y[i] == 0):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: tn += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif (p[i] == 0) and (y[i] == 1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fn += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: (*\pagebreak*)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif (p[i] == 1) and (y[i] == 0):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fp += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: tp += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: return [tp, tn, fp, fn, score]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-1: Generating tally counts*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This function accepts a trained sklearn model object (`clf`), the test samples
+    (`x`), and the corresponding actual test labels (`y`). The first thing this function
+    does is use the sklearn model to predict a class label for each of the test samples;
+    the result is stored in `p`. It then calculates the overall score, and loops over
+    each of the test samples and compares the predicted class label (`p`) to the actual
+    known class label (`y`) to see if that sample is a true positive, true negative,
+    false positive, or false negative. When done, all of these values are returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Applying `tally_predictions` to the output of *bc_experiments.py* gives us [Table
+    11-3](ch11.xhtml#ch11tab3). Here, the sklearn model type is given.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-3:** 2 × 2 Tables for the Breast Cancer Test Set'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/table11-3.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In [Table 11-3](ch11.xhtml#ch11tab3), we see four 2 × 2 tables corresponding
+    to the test set applied to the respective models: Nearest Centroid, 3-NN, Decision
+    Tree, and linear SVM. From the tables alone, we see that the best-performing model
+    was the 3-NN as it had only one false positive and no false negatives. This means
+    that the model never called a true malignant case benign and only once called
+    a benign case malignant. Given our discussion in the previous section, we see
+    that this is an encouraging result.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Look now at the results for the Nearest Centroid and the Decision Tree. The
+    overall accuracies for these models are 94.7 percent and 93.9 percent, respectively.
+    From the accuracy alone, we might be tempted to say that the Nearest Centroid
+    model is better. However, if we look at the 2 × 2 tables, we see that even though
+    the Decision Tree had more false positives (6), it had only one false negative,
+    while the Nearest Centroid had two false negatives. Again, in this case, a false
+    negative means a missed cancer detection with potentially serious consequences.
+    So, for this dataset, we want to minimize false negatives even if that means we
+    need to tolerate a small increase in false positives. Therefore, we’ll select
+    the Decision Tree over the Nearest Centroid model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Metrics Derived from the 2 × 2 Confusion Matrix
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Looking at the raw 2 × 2 table is helpful, but even more helpful are the metrics
+    derived from it. Let’s look at several of these in this section to see how they
+    can help us interpret the information in the 2 × 2 table. Before we start, however,
+    we should keep in mind that the metrics we’ll discuss are sometimes a bit controversial.
+    There is still healthy academic debate as to which are best to use when. Our intention
+    here is to introduce them via examples, and to describe what it is that they are
+    measuring. As a machine learning practitioner, you’ll encounter virtually all
+    of these from time to time, so it’s wise to at least be familiar with them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deriving Metrics from the 2 × 2 Table
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The first metrics are derived directly from the values in the 2 × 2 table:
+    TP, TN, FP, FN. Think of these as the bread-and-butter metrics. They’re easy to
+    compute and easy to understand. Recall the general form of the 2 × 2 table from
+    [Table 11-2](ch11.xhtml#ch11tab2). We’ll now define two other quantities:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/257equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The *true positive rate (TPR)* is the probability that an actual instance of
+    class 1 will be correctly identified by the model. The TPR is frequently known
+    by other names: *sensitivity*, *recall,* and *hit rate*. You will likely see it
+    referred to as *sensitivity* in medical literature.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The *true negative rate (TNR)* is the probability that an actual instance of
+    class 0 will be correctly identified by the model. The TNR is also known as the
+    *specificity,* again, particularly so in medical literature. Both of these quantities,
+    as probabilities, have a value between 0 and 1; higher is better. A perfect classifier
+    will have TPR = TNR = 1.0; this happens when it makes no mistakes so that FP =
+    FN = 0, always.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The TPR and TNR need to be understood together to assess a model. For example,
+    we previously mentioned that if class 1 is rare and the model always predicts
+    class 0, it will have high accuracy. If we look at TPR and TNR in that case, we’ll
+    see that the TNR is 1 because the model never assigns an instance of class 0 to
+    class 1 (FP = 0). However, the TPR is 0 for the very same reason, all actual instances
+    of class 1 will be misidentified as false negatives; they get assigned to class
+    0\. Therefore, the two metrics together immediately indicate that the model is
+    not a good one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What about the breast cancer case where a false negative might be fatal? How
+    do we want the TPR and TNR to look in this case? Ideally, of course, we want them
+    to both be as high as possible, but we might be willing to use the model anyway
+    if the TPR is very high while the TNR might be lower. In that situation, we know
+    that actual breast cancers, when presented, are detected almost always. Why? Because
+    the false negative count (FN) is virtually 0, so the denominator of the TPR is
+    about TP, which implies a TPR of about 1.0\. If, on the other hand, we tolerate
+    false positives (actual negative instances called malignant by the model), we
+    see that the TNR might be well below 1.0 because the denominator of the TNR includes
+    the FP counts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The TPR and TNR tell us something about the likelihood that the model will
+    pick up actual class 1 and class 0 instances. What it does not tell us, however,
+    is how much faith we should put into the output of the model. For example, if
+    the model says “class 1,” should we believe it? To make that assessment, we need
+    two other metrics derived directly from the 2 × 2 table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/258equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The *positive predictive value (PPV)* is most often known as the *precision*.
+    It’s the probability that when the model says the instance is of class 1, it is
+    of class 1\. Similarly, the *negative predictive value (NPV)* is the probability
+    that the model is correct when it claims an instance is of class 0\. Both of these
+    values are also numbers between 0 and 1, where higher is better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The only difference between the TPR and the PPV is whether we consider false
+    negatives or false positives in the denominator. By including the false positives,
+    the instances the model says are of class 1 when they are really of class 0; we
+    get the probability that the model output is correct.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the case of a model that always predicts class 0, the PPV is undefined because
+    both the TP and FP are zero. All of the class 1 instances are pushed into the
+    FN count, and the TN count includes all the actual class 0 instances. For the
+    case where TPR is high, but TNR is not, we have a nonzero FP count so that the
+    PPV goes down. Let’s make up an example to see why this is so and how we might
+    understand it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s say that our breast cancer model has produced the following 2 × 2 table
+    ([Table 11-4](ch11.xhtml#ch11tab4)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-4:** A Hypothetical 2 × 2 Table for a Breast Cancer Dataset'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | **Actual 1** | **Actual 0** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Model assigns 1* | 312 | 133 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Model assigns 0* | 6 | 645 |'
+  prefs: []
+  type: TYPE_TB
+- en: In this example, the metrics we have covered so far are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*TPR* = 0.9811'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*TNR* = 0.8398'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*PPV* = 0.7011'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*NPV* = 0.9908'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This means a truly malignant case will be called malignant by the model 98 percent
+    of the time, but a benign case will be called benign only 84 percent of the time.
+    The PPV of 70 percent implies that when the model says “malignant,” there is only
+    a 70 percent chance that the case is malignant; however, because of the high TPR,
+    we know that buried in the “malignant” outputs are virtually all of the actual
+    breast cancer cases. Notice also that this implies a high NPV, so when the model
+    says “benign,” we have very high confidence that the instance is not breast cancer.
+    This is what makes the model useful even if the PPV is less than 100 percent.
+    In a clinical setting, this model will warrant further testing when it says “malignant”
+    but in general, no further testing will likely be needed if it says “benign.”
+    Of course, what acceptable levels of these metrics are depends upon the use case
+    for the model. Some might call an NPV of only 99.1 percent too low given the potentially
+    very high cost of missing a cancer detection. Thoughts like these likely also
+    motivate the recommended frequency of screening.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two additional basic metrics we can easily derive from the 2 × 2
+    table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/259equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: These metrics tell us the likelihood that a sample will be a false positive
+    if the actual class is class 0 or a false negative if the actual class is class
+    1, respectively. The FPR will show up again later when we talk about using curves
+    to assess models. Notice that FPR = 1 – TNR and FNR = 1 – TPR.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Calculating these basic metrics is straightforward, especially if we use the
+    output of the `tally_predictions` function defined previously as the input ([Listing
+    11-2](ch11.xhtml#ch11lis2)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def basic_metrics(tally):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: tp, tn, fp, fn, _ = tally
+  prefs: []
+  type: TYPE_NORMAL
+- en: return {
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"TPR": tp / (tp + fn),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"TNR": tn / (tn + fp),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"PPV": tp / (tp + fp),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"NPV": tn / (tn + fn),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (*\pagebreak*)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"FPR": fp / (fp + tn),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"FNR": fn / (fn + tp)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-2: Calculating basic metrics*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We break up the list returned by `tally_predictions`, disregarding the accuracy,
+    and then build and return a dictionary containing each of the six basic metrics
+    we described. Of course, robust code would check for pathological cases where
+    the denominators are zero, but we’ve ignored that code here to preserve clarity
+    in the presentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using Our Metrics to Interpret Models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s use `tally_predictions` and `basic_metrics` to interpret some models.
+    We’ll work with the vector form of the MNIST data but keep only digits 3 and 5
+    so that we have a binary classifier. The code is similar to that found in *mnist_experiments.py*,
+    which we used in [Chapter 7](ch07.xhtml#ch07).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Keeping only digits 3 and 5 leaves us with 11,552 training samples (6,131 3s;
+    5,421 5s) and 1,902 test samples of which 1,010 are 3s and 892 are 5s. The actual
+    code is in *mnist_2x2_tables.py* with selected output in [Table 11-5](ch11.xhtml#ch11tab5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-5:** Selected Output from MNIST 3 vs. 5 Models and Corresponding
+    Basic Metrics'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Model** | **TP** | **TN** | **FP** | **FN** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Nearest Centroid* | 760 | 909 | 101 | 132 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *3-NN* | 878 | 994 | 16 | 14 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Naïve Bayes* | 612 | 976 | 34 | 280 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *RF 500* | 884 | 1,003 | 7 | 8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *LinearSVM* | 853 | 986 | 24 | 39 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **Model** | **TPR** | **TNR** | **PPV** | **NPV** | **FPR** | **FNR** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Nearest Centroid* | 0.8520 | 0.9000 | 0.8827 | 0.8732 | 0.1000 | 0.1480
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *3-NN* | 0.9843 | 0.9842 | 0.9821 | 0.9861 | 0.0158 | 0.0157 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Naïve Bayes* | 0.6851 | 0.9663 | 0.9474 | 0.7771 | 0.0337 | 0.3139 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *RF 500* | 0.9910 | 0.9931 | 0.9921 | 0.9921 | 0.0069 | 0.0090 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *LinearSVM* | 0.9563 | 0.9762 | 0.9726 | 0.9620 | 0.0238 | 0.0437 |'
+  prefs: []
+  type: TYPE_TB
+- en: In [Table 11-5](ch11.xhtml#ch11tab5), we see the raw counts at the top and the
+    metrics defined in this section at the bottom. Lots of numbers! Let’s parse things
+    a bit to see what’s going on. We’ll concentrate on the metrics at the bottom of
+    the table. The first two columns show the true positive rate (sensitivity, recall)
+    and the true negative rate (specificity). These values should be examined together.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If we look at the Nearest Centroid results, we see TPR = 0.8520 and TNR = 0.9000\.
+    Here class 1 is a five, and class 0 is a three. So, the Nearest Centroid classifier
+    will call 85 percent of the fives it sees “five.” Similarly, it will call 90 percent
+    of the threes it sees “three.” While not too shabby, we should not be impressed.
+    Looking down the columns, we see that two models performed very well for these
+    metrics: 3-NN and the Random Forest with 500 trees. In both cases, the TPR and
+    TNR were nearly identical and quite close to 1.0\. This is a sign of the model
+    performing well. Absolute perfection would be TPR = TNR = PPV = NPV = 1.0 and
+    FPR = FNR = 0.0\. The closer we get to perfection, the better. If attempting to
+    pick the best model for this classifier, we would likely choose the Random Forest
+    because it was the closest to perfection on the test set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s look briefly at the Naïve Bayes results. The TNR (specificity) is reasonably
+    high, about 97 percent. However, the TPR (sensitivity) of 68.5 percent is pathetic.
+    Roughly speaking, only two out of every three 5’s presented to this model will
+    be correctly classified. If we examine the next two columns, the positive and
+    negative predictive values, we see a PPV of 94.7 percent, meaning when the model
+    does happen to say the input is a five, we can be somewhat confident that it is
+    a five. However, the negative predictive value isn’t so good at 77.7 percent.
+    Looking at the top portion of [Table 11-5](ch11.xhtml#ch11tab5) shows us what
+    is happening in this case. The FP count is only 34 out of 1010 threes in the test
+    set, but the FN count is high: 280 of the fives were labeled “three.” This is
+    the source of the low NPV for this model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is a good rule of thumb for these metrics: a well-performing model has
+    TPR, TNR, PPV, and NPV very close to 1.0, and FPR and FNR very close to 0.0.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Look again at [Table 11-5](ch11.xhtml#ch11tab5), particularly the lower metrics
+    for the Random Forest. As their names suggest, the FPR and FNR values are rates.
+    We can use them to estimate how often FP and FN will occur when using the model.
+    For example, if we present the model with *N* = 1,000 cases that are threes (class
+    0), we can use the FPR to estimate how many of them the model will call fives
+    (class 1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: estimated number of FP = FPR × N = 0.0069(1000) ≈ 7
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A similar calculation gives us the estimated number of FN for *N* = 1000: instances
+    that are really 5’s:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: estimated number of FN = FNR × N = 0.0090(1000) = 9
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The same holds for the TPR and TNR, which also have “rate” in their names (*N*
+    = 1000 each for actual threes and fives):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: estimated number of TP = TPR × N = 0.9910(1000) = 991
+  prefs: []
+  type: TYPE_NORMAL
+- en: estimated number of FN = FNR × N = 0.9931(1000) = 993
+  prefs: []
+  type: TYPE_NORMAL
+- en: These calculations show how well this model performs on the test data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More Advanced Metrics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Let’s look in this section at what I’m arbitrarily calling *more advanced metrics*.
+    I say they are more advanced because instead of using the 2 × 2 table entries
+    directly, they are built from values calculated from the table itself. In particular,
+    we’ll examine five advanced metrics: informedness, markedness, F1 score, Cohen’s
+    kappa, and the Matthews correlation coefficient (MCC).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Informedness and Markedness
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '*Informedness* and *markedness* go together. They are somewhat less well known
+    than other metrics in this section, but they will hopefully be better known in
+    the future. I said earlier that TPR (sensitivity) and TNR (specificity) should
+    be interpreted together. The informedness (also called Youden’s *J* statistic)
+    does just that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Informedness = TPR + TNR − 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: Informedness is a number in [*–*1,+1] that combines both the TPR and TNR. The
+    higher the informedness is, the better. An informedness of 0 implies random guessing,
+    while an informedness of 1 implies perfection (on the test set). An informedness
+    of less than 0 might suggest a model that is worse than random guessing. An informedness
+    of –1 implies that all true positive instances were called negatives, and vice
+    versa. In that case, we could swap the label the model wants to assign to each
+    input and get a quite good model. Only pathological models lead to negative informedness
+    values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The markedness combines the positive and negative predictive values in the
+    same way that informedness combines TPR and TNR:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Markedness = PPV + NPV − 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: We see that it has the same range as informedness. The informedness says something
+    about how well the model is doing at correctly labeling inputs from each class.
+    The markedness says something about how well the model is doing at being correct
+    when it does claim a particular label for a particular input, be it class 0 or
+    class 1\. Random guessing will give a markedness near 0 and perfection a markedness
+    near 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I like that the informedness and markedness each capture essential aspects
+    of the model’s performance in a single number. Some claim that these metrics are
+    unbiased by the prior probabilities of the particular classes. This means if class
+    1 is significantly less common than class 0, the informedness and markedness are
+    not affected. For in-depth details, see “Evaluation: From Precision, Recall and
+    F-measure to ROC, Informedness, Markedness, and Correlation” by David Martin Powers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: F1 Score
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The *F1 score*, rightly or wrongly, is widely used, and we should be familiar
+    with it. The F1 score combines two basic metrics into one. Its definition is straightforward
+    in terms of precision (PPV) and recall (TPR):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/263equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The F1 score is a number in [0,1], where higher is better. Where does this formula
+    come from? It’s not obvious in this form, but the the F1 score is the harmonic
+    mean of the precision and recall. A *harmonic mean* is the reciprocal of the arithmetic
+    mean of the reciprocals. Like this,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/263equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: One criticism of the F1 score is that it does not take the true negatives into
+    account as informedness does (via the TNR). If we look at the definition of PPV
+    and TPR, we see that both of these quantities depend entirely on the TP, FP, and
+    FN counts from the 2 × 2 table, but not the TN count. Additionally, the F1 score
+    places equal weight on the precision and the recall. Precision is affected by
+    false positives, while recall is affected by false negatives. From the previous
+    breast cancer model, we saw that the human cost of a false negative is substantially
+    higher than a false positive. Some argue that this must be taken into account
+    when evaluating model performance, and indeed it should. However, if the relative
+    costs of a false positive and a false negative are the same, the F1 score will
+    have more meaning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cohen’s Kappa
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '*Cohen’s kappa* is another statistic commonly found in machine learning. It
+    attempts to account for the possibility that the model might put the input into
+    the correct class by accident. Mathematically, the metric is defined as'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/263equ03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where *p*[*o*] is the observed accuracy and *p*[*e*] is the accuracy expected
+    by chance. For a 2 × 2 table, these values are defined to be
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/264equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: with N being the total number of samples in the test set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cohen’s kappa is generally between 0 and 1\. 0 means a complete disagreement
+    between the assigned class labels and the given class labels. A negative value
+    indicates worse than chance agreement. A value near 1 indicates strong agreement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Matthews Correlation Coefficient
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Our final metric is *Matthews correlation coefficient (MCC)*. It is the geometric
+    mean of the informedness and markedness. In that sense, it is, like the F1 score,
+    a combination of two metrics into one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The MCC is defined as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/264equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'which, mathematically, works out to the geometric mean of the informedness
+    and markedness:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/264equ03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The MCC is favored by many because it takes the full 2 × 2 table into account,
+    including the relative frequency of the two classes (the class prior probabilities).
+    This is something that the F1 score does not do because it ignores the true negatives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The MCC is a number between 0 and 1, with higher being better. If considering
+    only one value as a metric for evaluating a binary model, make it the MCC. Note,
+    there are four sums in the denominator of the MCC. If one of these sums is 0,
+    the entire denominator will be 0, which is a problem since we cannot divide by
+    0\. Fortunately, in that case, the denominator can be replaced with 1 to give
+    a still meaningful result. A well-performing model has MCC close to 1.0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Implementing Our Metrics
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Let’s write a function to construct these metrics from a given 2 × 2 table.
+    The code is shown in [Listing 11-3](ch11.xhtml#ch11lis3):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: from math import sqrt
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def advanced_metrics(tally, m):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: tp, tn, fp, fn, _ = tally
+  prefs: []
+  type: TYPE_NORMAL
+- en: n = tp+tn+fp+fn
+  prefs: []
+  type: TYPE_NORMAL
+- en: po = (tp+tn)/n
+  prefs: []
+  type: TYPE_NORMAL
+- en: pe = (tp+fn)*(tp+fp)/n**2 + (tn+fp)*(tn+fn)/n**2
+  prefs: []
+  type: TYPE_NORMAL
+- en: return {
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"F1": 2.0*m["PPV"]*m["TPR"] / (m["PPV"] + m["TPR"]),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"MCC": (tp*tn - fp*fn) / sqrt((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn)),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"kappa": (po - pe) / (1.0 - pe),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"informedness": m["TPR"] + m["TNR"] - 1.0,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"markedness": m["PPV"] + m["NPV"] - 1.0'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 11-3: Calculating advanced metrics*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the sake of simplicity, we’re not checking if the MCC denominator is 0 as
+    a full implementation would.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code takes the tallies and basic metrics as arguments and returns a new
+    dictionary with the more advanced metrics. Let’s see how our MNIST example from
+    [Table 11-5](ch11.xhtml#ch11tab5) looks when we calculate the advanced metrics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Table 11-6](ch11.xhtml#ch11tab6) shows the metrics of this section for the
+    MNIST 3 versus 5 models. A few things are worth noticing. First, the F1 score
+    is always higher than the MCC or Cohen’s kappa. In a way, the F1 score is overly
+    optimistic. As previously noted, the F1 score does not take the true negatives
+    into account, while both the MCC and Cohen’s kappa do.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-6:** Selected Output from MNIST 3 vs. 5 Models and Corresponding
+    Advanced Metrics'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Model** | **F1** | **MCC** | **Cohen’s *κ*** | **Informedness** | **Markedness**
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Nearest Centroid* | 0.8671 | 0.7540 | 0.7535 | 0.7520 | 0.7559 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *3-NN* | 0.9832 | 0.9683 | 0.9683 | 0.9685 | 0.9682 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Naïve Bayes* | 0.7958 | 0.6875 | 0.6631 | 0.6524 | 0.7244 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *RF 500* | 0.9916 | 0.9842 | 0.9842 | 0.9841 | 0.9842 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *LinearSVM* | 0.9644 | 0.9335 | 0.9334 | 0.9325 | 0.9346 |'
+  prefs: []
+  type: TYPE_TB
+- en: Another thing to note is that well-performing models, like 3-NN and the Random
+    Forest, score highly in all of these metrics. When the model performs well, the
+    difference between the F1 score and MCC is smaller than when the model is doing
+    poorly (Naïve Bayes, for example). Notice also that the MCC is always between
+    the informedness and markedness, as a geometric mean will be. Finally, from the
+    values in [Table 11-5](ch11.xhtml#ch11tab5) and [Table 11-6](ch11.xhtml#ch11tab6),
+    we see that the best-performing model is the Random Forest, based on the MCC of
+    0.9842.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, and the two before it, we looked at quite a few metrics and
+    saw how they could be calculated and interpreted. A well-performing model will
+    score highly on all of these metrics. This is the hallmark of a good model. It’s
+    when the models we’re evaluating are less than sterling that the relative differences
+    between the metrics, and the meaning of the metrics, really comes into play. That’s
+    when we need to consider specific metric values and the cost associated with the
+    mistakes the models are making (FP and FN). In those cases, we have to use our
+    judgment and problem-specific factors to decide which model is ultimately selected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, let’s shift gears and take a look at a graphical way of evaluating model
+    performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Receiver Operating Characteristics Curve
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'They say that a picture is worth a thousand words. In this section, we’ll learn
+    that a picture—more accurately, a curve—can be worth upward of a dozen numbers.
+    That is, we’ll learn how to turn the output of a model into a curve that captures
+    more of the performance than the metrics of the previous sections can. Specifically,
+    we’ll learn about the widely used *receiver operating characteristics (ROC) curve*:
+    what it is, how to plot it, and how to use sklearn to plot it for us.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gathering Our Models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To make the curve, we need a model that outputs a probability of belonging to
+    class 1\. In the previous sections, we used models that output a class label so
+    that we could tally the TP, TN, FP, and FN counts. For our ROC curves, we still
+    need these counts, but instead of the class label as model output, we need the
+    probability of class 1 membership. We’ll apply different thresholds to these probabilities
+    to decide what label to give the input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fortunately for us, traditional neural networks (and the deep networks we will
+    see in [Chapter 12](ch12.xhtml#ch12)) output the necessary probability. If we’re
+    using sklearn, other classical models can also be made to output a probability
+    estimate, but we’ll ignore that fact here to keep things simple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Our test case is a series of neural networks trained to decide between even
+    MNIST digits (class 0) and odd MNIST digits (class 1). Our inputs are the vector
+    form of the digits that we’ve been using up to this point in the book. We can
+    use the training and test data we created in [Chapter 5](ch05.xhtml#ch05)—we only
+    need to recode the labels so that digits 0, 2, 4, 6, and 8 are class 0, while
+    digits 1, 3, 5, 7, and 9 are class 1\. That is easily accomplished with a few
+    lines of code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: The directory paths point to the same place the other MNIST data is stored.
+    We use the fact that the remainder when an even number is divided by 2 is always
+    0 or 1 depending on whether the number is even or odd.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'What models will we test? To emphasize the difference between the respective
+    models, we’ll intentionally train models that we know are far from ideal. In particular,
+    we’ll use the following code to generate the models and produce the probability
+    estimates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: The code can be found in the file *mnist_even_odd.py*. The `run` and `nn` functions
+    should be familiar. We used virtually identical versions in [Chapter 10](ch10.xhtml#ch10),
+    where `nn` returns a configured `MLPClassifier` object and `run` trains the classifier
+    and returns the prediction probabilities on the test set. The `main` function
+    loads the train and test sets, limits the training set to the first 1,000 samples
+    (about 500 even and 500 odd), then loops over the hidden layer sizes we will train.
+    The first two are single hidden layer networks with 2 and 100 nodes, respectively.
+    The last two are two hidden layer networks with 100 × 50 and 500 × 250 nodes per
+    layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Plotting Our Metrics
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The output of `clf.predict_proba` is a matrix with as many rows as there are
+    test samples (ten thousand in this case). The matrix has as many columns as there
+    are classes; since we’re dealing with a binary classifier, there are two columns
+    per sample. The first is the probability that the sample is even (class 0), and
+    the second is the probability of the sample being odd (class 1). For example,
+    the first 10 outputs for one of the models are shown in [Table 11-7](ch11.xhtml#ch11tab7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-7:** Example Model Output Showing the Assigned per Class Probabilities
+    Along with the Actual Original Class Label'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class 0** | **Class 1** | **Actual label** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.009678 | 0.990322 | 3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.000318 | 0.999682 | 3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.001531 | 0.998469 | 7 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.007464 | 0.992536 | 3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.011103 | 0.988897 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.186362 | 0.813638 | 7 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.037229 | 0.962771 | 7 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.999412 | 0.000588 | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.883890 | 0.116110 | 6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.999981 | 0.000019 | 6 |'
+  prefs: []
+  type: TYPE_TB
+- en: The first column is the probability of being even, and the second is the probability
+    of being odd. The third column is the actual class label for the sample showing
+    that the predictions are spot on. The odd digits have high class 1 probabilities
+    and low class 0 probabilities, while the opposite is true for the even samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When we build a 2 × 2 table from the performance of a model on a held-out test
+    set, we get a collection of TP, TN, FP, and FN numbers from which we can calculate
+    all the metrics of the previous sections. This includes the true positive rate
+    (TPR, sensitivity) and the false positive rate (FPR, equal to 1 – specificity).
+    Implicit in the table is the threshold we used to decide when the model output
+    should be considered class 1 or class 0\. In the previous sections, this threshold
+    was 0.5\. If the output is ≥ 0.5, we assign the sample to class 1; otherwise,
+    we assign it to class 0\. Sometimes you’ll see this threshold added as a subscript
+    like TPR[0.5] or FPR[0.5].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mathematically, we can consider the TPR and FPR calculated from a 2 × 2 table
+    to be a point on the FPR (x-axis) versus TPR (y-axis) plane, specifically, the
+    point (FPR, TPR). Since both FPR and TPR range from 0 to 1, the point (FPR, TPR)
+    will lie somewhere within a square of length 1 with the lower-left corner of the
+    square at the point (0,0) and the upper-right corner at the point (1,1). Every
+    time we change our decision threshold, we get a new 2 × 2 table leading to a new
+    point on the FPR versus TPR plane. For example, if we change our decision threshold
+    from 0.5 to 0.3 so that each output class 1 probability of 0.3 or higher is called
+    class 1, we’ll get a new 2 × 2 table and a new point, (FPR[0.3],TPR[0.3]), on
+    the plane. As we systematically change the decision threshold from high to low,
+    we generate a sequence of points that we can connect to form a curve.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Curves generated by changing a parameter in this way are called *parametric
+    curves*. The points are functions of the threshold. Let’s call the threshold value
+    *θ* (theta) and vary it from near 1 to near 0\. Doing so lets us calculate a set
+    of points, (FPR[*θ*],TPR[*θ*]), which, when plotted, lead to a curve in the FPR
+    versus TPR plane. As noted earlier, this curve has a name: the receiver operating
+    characteristics (ROC) curve. Let’s look at an ROC curve and explore what such
+    a curve can tell us.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exploring the ROC Curve
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[Figure 11-1](ch11.xhtml#ch11fig1) shows the ROC curve for the MNIST even-versus-odd
+    model with a single hidden layer of 100 nodes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/11fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 11-1: An ROC curve with key elements marked*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The labeled points represent the FPR and TPR for the given threshold values.
+    The dashed line is the diagonal from (0,0) to (1,1). This dashed line represents
+    a classifier that guesses its output randomly. The closer our curve is to this
+    dashed line, the less powerful the model is. If your curve lies on top of the
+    line, you might as well flip a coin and assign the label that way. Any curve below
+    the dashed line is performing *worse* than random guessing. If the model were
+    entirely wrong, meaning it calls all class 1 instances class 0, and *vice versa*,
+    a curious thing happens: we can turn the entirely wrong model into a perfectly
+    correct model by changing all class 1 output to class 0 and all class 0, output
+    to class 1\. It’s unlikely that you will run across a model this bad.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ROC curve in [Figure 11-1](ch11.xhtml#ch11fig1) has a single point labeled
+    *perfection* in the upper-left corner of the graph. This is the ideal we are striving
+    for. We want our ROC curve to move up and to the left toward this point. The closer
+    we get the curve to this point, the better the model is performing against our
+    test set. A perfect model will have an ROC curve that jumps up vertically to this
+    point and then horizontally to the point (1,1). The ROC curve in [Figure 11-1](ch11.xhtml#ch11fig1)
+    is going in the right direction and represents a reasonably well-performing model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Notice the labeled *θ* values. We can select a level of performance from the
+    model by adjusting *θ*. In this case, the typical default value of 0.5 gives us
+    the best performance because that threshold value returns a TPR and FPR with the
+    best balance, the point closest to the upper left of the graph. However, there
+    are reasons we might want to use a different *θ* value. If we make *θ* small,
+    say 0.1, we move along the curve toward the right. Two things happen. First, the
+    TPR goes up to about 0.99, meaning we correctly assign about 99 percent of the
+    real class 1 instances handed to the model to class 1\. Second, the FPR also goes
+    up, to about 0.32, meaning we will simultaneously call about 32 percent of the
+    true negatives (class 0) class 1 as well. If our problem is such that we can tolerate
+    calling some negative instances “positive,” knowing that we now have a meager
+    chance of doing the opposite, calling a positive case “negative,” we might choose
+    to change the threshold to 0.1\. Think of the previous breast cancer example:
+    we never want to call a positive case “negative,” so we tolerate more false positives
+    to know we are not mislabeling any actual positives.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'What does it mean to move the threshold (*θ*) to 0.9? In this case, we’ve moved
+    along the curve to the left, to a point with a very low false-positive rate. We
+    might do this if we want to know with a high degree of confidence that when the
+    model says “class 1,” it is an instance of class 1\. This means we want a high
+    positive predictive value (PPV, precision). Recall the definition of the PPV:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/270equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The PPV is high if FP is low. Setting *θ* to 0.9 makes the FP low for any given
+    test set. For the ROC curve of [Figure 11-1](ch11.xhtml#ch11fig1), moving to *θ*
+    = 0.9 implies an FPR of about 0.02 and a TPR of about 0.71 for a PPV of about
+    0.97\. At *θ* = 0.9, when the model outputs “class 1,” there is a 97 percent chance
+    that the model is correct. In contrast, at *θ* = 0.1, the PPV is about 76 percent.
+    A high threshold can be used in a situation where we are interested in definitely
+    locating an example of class 1 without caring that we might not detect all class
+    1 instances.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Changing the threshold *θ* moves us along the ROC curve. As we do so, we should
+    expect the metrics of the previous section to also change as a function of *θ*.
+    [Figure 11-2](ch11.xhtml#ch11fig2) shows us how the MCC and PPV change with *θ*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/11fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 11-2: How MCC (circles) and PPV (squares) change as the decision threshold
+    (*θ*) changes for the MNIST even/odd model of [Figure 11-1](ch11.xhtml#ch11fig1)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the figure, we see that as the threshold goes up, so does the PPV. The model
+    becomes more confident when it declares an input a member of class 1\. However,
+    this is tempered by the change in MCC, which, as we previously saw, is an excellent
+    single metric measure of overall model performance. In this case, the highest
+    MCC is at *θ* = 0.5, with MCC falling off as the threshold increases or decreases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Comparing Models with ROC Analysis
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The ROC curve gives us a significant amount of information. It’s also handy
+    for comparing models, even if those models are radically different from each other
+    in architecture or approach. However, care must be taken when making the comparison
+    so that the test sets used to generate the curves are ideally the same or very
+    nearly the same.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s use ROC analysis to compare the different MNIST even/odd digit models
+    that we trained previously. We’ll see if this helps us to choose between them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 11-3](ch11.xhtml#ch11fig3) shows the ROC curves for these models with
+    an inset expanding the upper-left corner of the graph to make it easier to distinguish
+    one model from the other. The number of nodes in each hidden layer is indicated
+    to identify the models.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/11fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 11-3: ROC curves for the MNIST even/odd models. The model hidden layer
+    sizes are indicated.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We immediately see that one ROC curve is significantly different from the other
+    three. This is the ROC curve for the model with a single hidden layer with two
+    nodes. All the other ROC curves are above this one. As a general rule, if one
+    ROC curve is entirely above another, then the model that generated the curve can
+    be considered superior. All of the larger MNIST even/odd models are superior to
+    the model with only two nodes in its hidden layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The other three models are quite close to each other, so how do we choose one?
+    The decision isn’t always clear-cut. Following our rule of thumb about ROC curves,
+    we should select the two-layer model with 500 and 250 nodes, respectively, as
+    its ROC curve is above the others. However, we might hesitate depending upon our
+    use case. This model has over 500,000 parameters. Running it requires use of all
+    of those parameters. The 100 × 50 model contains slightly more than 80,000 parameters.
+    That’s less than one-fifth the number of the larger model. We might decide that
+    processing speed considerations eclipse the small improvement in the overall performance
+    of the larger model and select the smaller model. The ROC analysis showed us that
+    doing so involves only a minor performance penalty.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another factor to consider when comparing ROC curves visually is the slope of
+    the curve when the FPR is small. A perfect model has a vertical slope since it
+    jumps immediately from the point (0,0) to (0,1). Therefore, the better model will
+    have an ROC curve that has a steeper slope in the low FPR region.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A commonly used metric derived from the ROC curve is the area under it. This
+    area is usually abbreviated as *AUC* or, in medical circles, *Az*. A perfect ROC
+    curve has an AUC of 1.0 since the curve jumps from (0,0) to (0,1) and then over
+    to (1,1), forming a square of side 1 with an area of 1\. A model that guesses
+    randomly (the diagonal line in the ROC plot) has an AUC of 0.5, the area of the
+    triangle formed by the dashed diagonal line. To calculate the area under an arbitrary
+    ROC curve, one needs to perform numerical integration. Fortunately for us, sklearn
+    knows how to do this, so we don’t need to. We’ll see this shortly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: People often report the AUC, but as time goes by, I’m less and less in favor
+    of it. The main reason is that AUC replaces the highly informative graph with
+    a single number, but different ROC curves can lead to the same AUC. If the AUC
+    of two curves is the same, but one leans far to the right while the other has
+    a steep slope in the low FPR region, we might be tempted to think the models are
+    roughly equivalent in terms of performance, when, in reality, the model with the
+    steeper slope is likely the one we want because it will reach a reasonable TPR
+    without too many false positives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another caution when using the AUC is that the AUC changes only a small amount
+    for even fairly significant changes in other parameters. This makes it difficult
+    for humans to judge well based on AUC values that are only slightly different
+    from each other. For example, the AUC of the MNIST even/odd model with two nodes
+    in its hidden layer is 0.9373, while the AUC of the model with 100 nodes is 0.9722\.
+    Both are well above 0.9 out of a possible 1.0, so, are they both about the same?
+    We know that they are not, since the ROC curves clearly show the two-node model
+    to be well below the other.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating an ROC Curve
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'We are now ready to learn how to create an ROC curve. The easy way to get the
+    ROC curve, and AUC, is to use `sklearn`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: This routine reads a set of labels and the associated per class probabilities,
+    such as the output generated by the code in the previous section. It then calls
+    the sklearn functions `roc_auc_score` and `roc_curve` to return the AUC and the
+    ROC points, respectively. The ROC curve is plotted, saved to disk, and displayed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We need not use sklearn as a black box. We can generate the ROC curve points
+    ourselves quickly enough. We load the same inputs, the labels, and the per class
+    probabilities, but instead of calling a library function, we loop over the threshold
+    values of interest and calculate TP, TN, FP, and FN for each threshold. From these,
+    we can directly calculate the FPR and TPR, which gives us the set of points we
+    need to plot. The code to do this is straightforward:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `main` function loads the labels and probabilities. The loop over `th` applies
+    the different threshold values, accumulating the ROC points in `roc` by calling
+    the `table` function, which calculates the TP, TN, FP, and FN for the current
+    threshold.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `table` function loops over all the per class probabilities assigning a
+    class label of 1 if the class 1 probability is greater than or equal to the current
+    threshold value. This class assignment is then compared to the actual class label,
+    and the appropriate tally counter is incremented.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once the ROC points are calculated, the plot is made by adding the point (0,0)
+    to the beginning of the point list and the point (1,1) to the end of the list.
+    Doing this ensures that the plot extends the full range of FPR values. The points
+    are plotted and saved to disk.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Precision–Recall Curve
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Before leaving this section, we should mention one other evaluation curve that
+    you will run across from time to time in machine learning. This is the *precision-recall
+    (PR) curve*. As the name suggests, it plots the PPV (precision) and TPR (recall,
+    sensitivity) as the decision threshold varies, just like an ROC curve. A good
+    PR curve moves toward the upper right instead of the upper left as a good ROC
+    curve does. The points of this curve are easily generated in sklearn using the
+    `precision_recall_curve` function in the `metrics` module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re not spending time with this curve because it does not take the true negatives
+    into account. Consider the definition of the PPV and TPR to see that this is so.
+    My bias against the PR curve stems from the same concern as my bias against the
+    F1 score. By not taking the true negatives into account, the PR curve and F1 score
+    give an incomplete picture of the quality of the classifier. The PR curve does
+    have utility when the true positive class is rare or when the true negative performance
+    is not essential. However, in general, for evaluating classifier performance,
+    I claim it is best to stick to the ROC curve and the metrics we have defined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Handling Multiple Classes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'All of the metrics we’ve discussed so far apply to binary classifiers only.
+    Of course, we know that many classifiers are multiclass: they output multiple
+    labels, not just 0 or 1\. To evaluate these models, we’ll extend our idea of the
+    confusion matrix to the multiclass case and see that we can also extend some of
+    the metrics we’re already familiar with as well.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We need some multiclass model results to work with. Thankfully, the MNIST data
+    is already multiclass. Recall, we went to the trouble of recoding the labels to
+    make the dataset binary. Here we’ll train models with the same architectures,
+    but this time we’ll leave the labels as they are so that the model will output
+    one of ten labels: the digit it assigned to the test input, the output of the
+    `predict` method of the `MLPClassifier` class. We won’t show the code as it’s
+    identical to the code in the previous section except that `predict` is called
+    in place of `predict_proba`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extending the Confusion Matrix
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The basis for our binary metrics was the 2 × 2 confusion matrix. The confusion
+    matrix is readily extended to the multiclass case. To do that, we let the rows
+    of the matrix represent the actual class labels, while the columns of the matrix
+    represent the model’s predictions. The matrix is square with as many rows and
+    columns as there are classes in the dataset. For MNIST, then, we arrive at a 10
+    × 10 confusion matrix since there are 10 digits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We calculate the confusion matrix from the actual known test labels and the
+    predicted labels from the model. There is a function in the `metrics` module of
+    sklearn, `confusion_matrix`, which we can use, but it’s straightforward enough
+    to calculate it ourselves:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here `n` is the number of classes, fixed at 10 for MNIST. If needed, we could
+    instead determine it from the supplied test labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code is straightforward. The inputs are vectors of the actual labels (`y_test`)
+    and the predicted labels (`y_predict`), and the confusion matrix (`cmat`) is filled
+    in by incrementing each possible index formed from the actual label and the predicted
+    label. For example, if the actual label is 3 and the predicted label is 8, then
+    we add one to `cmat[3,8]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s look at the confusion matrix for a model with one hidden layer of 100
+    nodes ([Table 11-8](ch11.xhtml#ch11tab8)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-8:** Confusion Matrix for the Model with a Single Hidden Layer of
+    100 Nodes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** | **8**
+    | **9** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | 943 | 0 | 6 | 9 | 0 | 10 | 7 | 1 | 4 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 0 | 1102 | 14 | 5 | 1 | 1 | 3 | 1 | 8 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 16 | 15 | 862 | 36 | 18 | 1 | 17 | 24 | 41 | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 3 | 1 | 10 | 937 | 0 | 20 | 3 | 13 | 17 | 6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 2 | 8 | 4 | 2 | 879 | 0 | 14 | 1 | 6 | 66 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 19 | 3 | 3 | 53 | 13 | 719 | 17 | 3 | 44 | 18 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 14 | 3 | 4 | 2 | 21 | 15 | 894 | 1 | 4 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 3 | 21 | 32 | 7 | 10 | 1 | 0 | 902 | 1 | 51 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 17 | 14 | 11 | 72 | 11 | 46 | 21 | 9 | 749 | 24 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 10 | 11 | 1 | 13 | 42 | 5 | 2 | 31 | 10 | 884 |'
+  prefs: []
+  type: TYPE_TB
+- en: The rows represent the actual test sample label, [0,9]. The columns are the
+    label assigned by the model. If the model is perfect, there will be a one-to-one
+    match between the actual label and the predicted label. This is the main diagonal
+    of the confusion matrix. Therefore, a perfect model will have entries along the
+    main diagonal, and all other elements will be 0\. [Table 11-8](ch11.xhtml#ch11tab8)
+    is not perfect, but the largest counts are along the main diagonal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Look at row 4 and column 4\. The place where the row and column meet has the
+    value 879\. This means that there were 879 times when the actual class was 4 and
+    the model correctly predicted “4” as the label. If we look along row 4, we see
+    other numbers that are not zero. Each of these represents a case where an actual
+    4 was called another digit by the model. For example, there were 66 times when
+    a 4 was called a “9” but only one case of a 4 being labeled a “7”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Column 4 represents the cases when the model called the input a “4”. As we saw,
+    it was correct 879 times. However, there were other digits that the model accidentally
+    labeled as “4”, like the 21 times a 6 was called a “4” or the one time a 1 was
+    mistaken for a “4”. There were no cases of a 3 being labeled a “4”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The confusion matrix tells us at a glance how well the model is doing on the
+    test set. We can quickly see if the matrix is primarily diagonal. If it is, the
+    model is doing a good job on the test set. If not, we need to take a closer look
+    to see what classes are being confused with other classes. A simple adjustment
+    to the matrix can help. Instead of the raw counts, which require us to remember
+    how many examples of each class are in the test set, we can divide the values
+    of each row by the sum of the row. Doing so converts the entries from counts to
+    fractions. We can then multiply the entries by 100 to convert to percents. This
+    transforms the confusion matrix into what we’ll call an *accuracy matrix*. The
+    conversion is straightforward:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here `cmat` is the confusion matrix. This produces an accuracy matrix, [Table
+    11-9](ch11.xhtml#ch11tab9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-9:** A Confusion Matrix Presented as per Class Accuracies'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** | **8**
+    | **9** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | **96.2** | 0. | 0.6 | 0.9 | 0. | 1.1 | 0.7 | 0.1 | 0.4 | 0. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 0. | **97.1** | 1.4 | 0.5 | 0.1 | 0.1 | 0.3 | 0.1 | 0.8 | 0. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 1.6 | 1.3 | **83.5** | 3.6 | 1.8 | 0.1 | 1.8 | 2.3 | 4.2 | 0.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 0.3 | 0.1 | 1. | **92.8** | 0. | 2.2 | 0.3 | 1.3 | 1.7 | 0.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 0.2 | 0.7 | 0.4 | 0.2 | **89.5** | 0. | 1.5 | 0.1 | 0.6 | 6.5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 1.9 | 0.3 | 0.3 | 5.2 | 1.3 | **80.6** | 1.8 | 0.3 | 4.5 | 1.8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 1.4 | 0.3 | 0.4 | 0.2 | 2.1 | 1.7 | **93.3** | 0.1 | 0.4 | 0. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 0.3 | 1.9 | 3.1 | 0.7 | 1. | 0.1 | 0. | **87.7** | 0.1 | 5.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 1.7 | 1.2 | 1.1 | 7.1 | 1.1 | 5.2 | 2.2 | 0.9 | **76.9** | 2.4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 1. | 1. | 0.1 | 1.3 | 4.3 | 0.6 | 0.2 | 3. | 1. | **87.6** |'
+  prefs: []
+  type: TYPE_TB
+- en: The diagonal shows the per class accuracies. The worst performing class is 8
+    with an accuracy of 76.9 percent, and the best performing class is 1 with an accuracy
+    of 97.1 percent. The non-diagonal elements are the percentage of the actual class
+    labeled as a different class by the model. For class 0, the model called a true
+    zero class “5” 1.1 percent of the time. The row percentages sum to 100 percent
+    (within rounding error).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why did class 8 do so poorly? Looking across the row for class 8, we see that
+    the model mistook 7.1 percent of the actual 8 instances for a “3” and 5.2 percent
+    of the instances for a “5”. Confusing an 8 with a “3” was the biggest single mistake
+    the model made, though 6.5 percent of 4 instances were labeled “9” as well. A
+    moment’s reflection makes sense of the errors. How often do people confuse 8 and
+    3 or 4 and 9? This model is making errors similar to those humans make.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The confusion matrix can reveal pathological performance as well. Consider the
+    MNIST model in [Figure 11-3](ch11.xhtml#ch11fig3), with a single hidden layer
+    of only two nodes. The accuracy matrix it produces is shown in [Table 11-10](ch11.xhtml#ch11tab10).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can immediately see that this is an inferior model. Column 5 is entirely
+    zero, meaning the model never outputs “5” for any input. Much the same is true
+    for output labels “8” and “9”. On the other hand, the model likes to call inputs
+    “0”, “1”, “2”, or “3” as those columns are densely populated for all manner of
+    input digits. Looking at the diagonal, we see that only 1 and 3 stand a reasonable
+    chance of being correctly identified, though many of these will be called “7”.
+    Class 8 is rarely correctly labeled (1.3 percent). A poorly performing model will
+    have a confusion matrix like this, with oddball outputs and large off-diagonal
+    values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-10:** Accuracy Matrix for the Model with Only Two Nodes in Its Hidden
+    Layer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** | **8**
+    | **9** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **0** | **51.0** | 1.0 | 10.3 | 0.7 | 1.8 | 0.0 | 34.1 | 0.7 | 0.0 | 0.4
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **1** | 0.4 | **88.3** | 0.4 | 1.1 | 0.8 | 0.0 | 0.0 | 9.3 | 1.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **2** | 8.6 | 2.8 | **75.2** | 6.9 | 1.7 | 0.0 | 1.4 | 3.0 | 0.3 | 0.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **3** | 0.2 | 1.0 | 4.9 | **79.4** | 0.3 | 0.0 | 0.0 | 13.5 | 0.0 | 0.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **4** | 28.4 | 31.3 | 7.3 | 2.1 | **9.7** | 0.0 | 0.3 | 13.6 | 1.0 | 0.5
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **5** | 11.4 | 42.5 | 2.2 | 4.9 | 4.4 | **0.0** | 0.1 | 16.5 | 0.9 | 0.3
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **6** | 35.4 | 1.0 | 5.4 | 0.2 | 1.4 | 0.0 | **55.0** | 0.0 | 0.0 | 0.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **7** | 0.4 | 5.2 | 2.0 | 66.2 | 0.8 | 0.0 | 0.0 | **25.5** | 0.2 | 0.3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **8** | 10.5 | 41.9 | 2.8 | 8.0 | 4.1 | 0.0 | 0.1 | 22.1 | **1.3** | 0.4
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **9** | 4.7 | 9.1 | 5.8 | 26.2 | 5.8 | 0.0 | 0.2 | 41.2 | 2.2 | **3.1** |'
+  prefs: []
+  type: TYPE_TB
+- en: Calculating Weighted Accuracy
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The diagonal elements of an accuracy matrix tell us the per class accuracies
+    for the model. We can calculate an overall accuracy by averaging these values.
+    However, this could be misleading if one or more classes is far more prevalent
+    in the test data than the others. Instead of a simple average, we should use a
+    weighted average. The weights are based on the total number of test samples from
+    each class divided by the total number of test samples presented to the model.
+    Say we have three classes and their frequency and per class accuracies in our
+    test set are as in [Table 11-11](ch11.xhtml#ch11tab11):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-11:** Hypothetical per Class Accuracies for a Model with Three Classes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Class** | **Frequency** | **Accuracy** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0 | 4,004 | 88.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 6,502 | 76.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | 8,080 | 65.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: Here we have *N* = 4,004 + 6,502 + 8,080 = 18586 test samples. Then, the per
+    class weights are shown in [Table 11-12](ch11.xhtml#ch11tab12).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-12:** Example per-class weights'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Class | Weight |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0 | 4,004 / 18,586 = 0.2154 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 6,502 / 18,586 = 0.3498 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | 8,080 / 18,586 = 0.4347 |'
+  prefs: []
+  type: TYPE_TB
+- en: The average accuracy can be calculated to be
+  prefs: []
+  type: TYPE_NORMAL
+- en: ACC = 0.2154 × 88.1 + 0.3498 × 76.6 + 0.4347 × 65.2 = 74.1
+  prefs: []
+  type: TYPE_NORMAL
+- en: Philosophically, we should replace the weights with the actual per class prior
+    probabilities, if we know them. These probabilities are the true likelihood of
+    the class appearing in the wild. However, if we assume that the test set is fairly
+    constructed, we’re likely safe using only the per class frequencies. We claim
+    that a properly built test set will represent the true prior class probabilities
+    reasonably well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In code, the weighted mean accuracy can be calculated succinctly from the confusion
+    matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*N* is the total number of samples that were tested, which is just the sum
+    of the entries in the confusion matrix since every sample in the test set falls
+    somewhere in the matrix, and *C* is a vector of the number of samples per class.
+    This is just the sum of the rows of the confusion matrix. The per class accuracy,
+    as a percentage, is calculated from the diagonal elements of the confusion matrix
+    (`np.diag(cmat)`) divided by the number of times each class shows up in the test
+    set, *C*. Multiply by 100 to make these percent accuracies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we summed these per class and divided by the number of classes, we would
+    have the (potentially misleading) unweighted mean accuracy. Instead, we first
+    multiply by *C*/*N*, the fraction of all test samples that were of each class
+    (recall, *C* is a vector), and then sum to get the weighted accuracy. This code
+    works for any size confusion matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the MNIST models of the previous section, we calculate weighted mean accuracies
+    to be those in [Table 11-13](ch11.xhtml#ch11tab13).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-13:** Weighted Mean Accuracies for the MNIST Models'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Architecture** | **Weighted mean accuracy** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | 40.08% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 100 | 88.71% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 100 × 50 | 88.94% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 500 × 250 | 89.63% |'
+  prefs: []
+  type: TYPE_TB
+- en: '[Table 11-13](ch11.xhtml#ch11tab13) shows the sort of diminishing returns we’ve
+    seen previously as the model size increases. The single hidden layer of 100 nodes
+    is virtually identical to the two hidden layer model with 100 and 50 nodes and
+    only 1 percent worse than the much larger model with 500 nodes and 250 nodes in
+    its hidden layers. The model with only two nodes in the hidden layer performs
+    poorly. Since there are 10 classes, random guessing would tend to have an accuracy
+    of 1/10 = 0.1 = 10 percent, so even this very strange model that maps 784 input
+    values (28×28 pixels) to only two and then to ten output nodes is still four times
+    more accurate than random guessing. However, this is misleading on its own because,
+    as we just saw in [Table 11-10](ch11.xhtml#ch11tab10), the confusion matrix for
+    this model is quite strange. We certainly would not want to use this model. Nothing
+    beats careful consideration of the confusion matrix.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multiclass Matthews Correlation Coefficient
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The 2 × 2 confusion matrix led to many possible metrics. While it’s possible
+    to extend several of those metrics to the multiclass case, we’ll consider only
+    the main metric here: the Matthews correlation coefficient (MCC). For the binary
+    case, we saw that the MCC was'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/281equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This can be extended to the multiclass case by using terms from the confusion
+    matrix like so
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/281equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/281equ03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, *K* is the number of classes, and *C* is the confusion matrix. This notation
+    is from the sklearn website’s description of the MCC, giving us a direct view
+    of how it’s implemented. We don’t need to follow the equations in detail; we need
+    to know only that the MCC is built from the confusion matrix in the multiclass
+    case as in the binary case. Intuitively, this makes sense. The binary MCC is a
+    value in the range [*–*1,+1]. The multiclass case changes the lower bound based
+    on the number of classes, but the upper bound remains 1.0, so the closer the MCC
+    is to 1.0, the better the model is doing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calculating the MCC for the MNIST models, as we did for the weighted mean accuracy,
+    gives [Table 11-14](ch11.xhtml#ch11tab14).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 11-14:** The MCC for the MNIST Models'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Architecture** | **MCC** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | 0.3440 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 100 | 0.8747 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 100 × 50 | 0.8773 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 500 × 250 | 0.8849 |'
+  prefs: []
+  type: TYPE_TB
+- en: Again, this shows us that the smallest model is inferior while the other three
+    models are all quite similar in terms of performance. The time to make predictions
+    on the 10,000 test samples, however, varies quite a bit by model. The single hidden
+    layer model with 100 nodes takes 0.052 seconds, while the largest model needs
+    0.283 seconds, over five times longer. If speed is essential, the smaller model
+    might be preferable. Many factors come into play when deciding on a model to use.
+    The metrics discussed in this chapter are guides, but they should not be followed
+    blindly. In the end, only you know what makes sense for the problem you are trying
+    to solve.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we learned why accuracy is not a sufficient measure of the
+    performance of a model. We learned how to generate the 2 × 2 confusion matrix
+    for a binary classifier, and what this matrix tells us about the model’s performance
+    on the held-out test set. We derived basic metrics from the 2 × 2 confusion matrix
+    and used those basic metrics to derive more advanced metrics. We discussed the
+    utility of the various metrics to build our intuition as to how and when to use
+    them. We then learned about the receiver operating characteristics (ROC) curve,
+    including what it illustrates about the model and how to interpret it to compare
+    models against each other. Finally, we introduced the multiclass confusion matrix,
+    giving examples of how to interpret it and how to extend some of the binary classifier
+    metrics to the multiclass case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the next chapter, we’ll reach the pinnacle of our machine learning models:
+    convolutional neural networks (CNNs). The next chapter introduces the basic ideas
+    behind the CNN; later chapters will conduct many experiments using this deep learning
+    architecture.'
+  prefs: []
+  type: TYPE_NORMAL

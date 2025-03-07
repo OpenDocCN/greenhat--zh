@@ -1,0 +1,949 @@
+- en: '**9'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: DATA FLOW IN NEURAL NETWORKS**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/common.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In this chapter, I’ll present how data flows through a trained neural network.
+    In other words, we’ll look at how to go from an input vector or tensor to the
+    output, and the form the data takes along the way. If you’re already familiar
+    with how neural networks function, great, but if not, walking through how data
+    flows from layer to layer will help you build an understanding of the processes
+    involved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we’ll look at how we represent data in two different kinds of networks.
+    Then, we’ll work through a traditional feedforward network to give ourselves a
+    solid foundation. We’ll see just how compact inference with a neural network can
+    be in terms of code. Finally, we’ll follow data through a convolutional neural
+    network by introducing convolutional and pooling layers. The goal of this chapter
+    isn’t to present how popular toolkits pass data around. The toolkits are highly
+    optimized pieces of software, and such low-level knowledge isn’t helpful to us
+    at this stage. Instead, the goal is to help you see how the data flows from input
+    to output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Representing Data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In the end, everything in deep learning is about data. We have data that we’re
+    using to create a model, which we test with more data, ultimately letting us make
+    predictions about even more data. We’ll start by looking at how we represent data
+    in two types of neural networks: traditional neural networks and deep convolutional
+    networks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Traditional Neural Networks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: For a *traditional neural network* or other classical machine learning models,
+    the input is a vector of numbers, the feature vector. The training data is a collection
+    of these vectors, each with an associated label. (We’ll restrict ourselves to
+    basic supervised learning in this chapter.) A collection of feature vectors is
+    conveniently implemented as a matrix, where each row is a feature vector and the
+    number of rows matches the number of samples in the dataset. As we now know, a
+    computer conveniently represents a matrix using a 2D array. Therefore, when working
+    with traditional neural networks or other classical models (support vector machines,
+    random forests, and so on), we’ll represent datasets as 2D arrays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, the iris dataset, which we first encountered in [Chapter 6](ch06.xhtml#ch06),
+    has four features in each feature vector. We represented it as a matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we’ve shown the first five samples as we did in [Chapter 6](ch06.xhtml#ch06).
+    The samples above are all for class 0 (*I. setosa*). To pass this knowledge to
+    the model, we need a matching vector of class labels; `X[i]` returns the feature
+    vector for sample `i`, and `Y[i]` returns the class label. The class label is
+    usually an integer and counts up from zero for each class in the dataset. Some
+    toolkits prefer one-hot-encoded class labels, but we can easily create them from
+    the more standard integer labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Therefore, a traditional dataset uses matrices between layers to hold weights,
+    with the input and output of each layer a vector. This is straightforward enough.
+    What about a more modern, deep network?
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep Convolutional Networks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Deep networks might use feature vectors, especially if the model implements
+    1D convolutions, but more often than not, the entire point of using a deep network
+    is to allow *convolutional layers* to take advantage of spatial relationships
+    in the data. Usually, this means the inputs are images, which we represent using
+    2D arrays. But the input doesn’t always need to be an image. The model is blissfully
+    unaware of *what* the input represents; only the model designer knows, and they
+    decide the architecture based on that knowledge. For simplicity, we’ll assume
+    the inputs are images, since we’re already aware of how computers work with images,
+    at least at a high level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A black-and-white image, or one with shades of gray, known as a grayscale image,
+    uses a single number to represent each pixel’s intensity. Therefore, a grayscale
+    image consists of a single matrix represented in the computer as a 2D array. However,
+    most of the images we see on our computers are color images, not grayscale. Most
+    software represents a pixel’s color by three numbers: the amount of red, the amount
+    of green, and the amount of blue. This is the origin of the *RGB* label given
+    to color images on a computer. There are many other ways of representing colors,
+    but RGB is by far the most common. The blending of these primary colors allows
+    computers to display millions of colors. If each pixel needs three numbers, then
+    a color image isn’t a single 2D array, but three 2D arrays, one for each color.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, in [Chapter 4](ch04.xhtml#ch04), we loaded a color image from
+    `sklearn`. Let’s look at it again to see how it’s arranged in memory:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The image is returned as a NumPy array. Asking for the shape of the array returns
+    a tuple: (427, 640, 3). The array has three dimensions. The first is the height
+    of the image, 427 pixels. The second is the width of the image, 640 pixels. The
+    third is the number of *bands* or *channels*, here three because it’s an RGB image.
+    The first channel is the red component of the color of each pixel, the second
+    the green, and the last the blue. We can look at each channel as a grayscale image
+    if we want:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'PIL refers to Pillow, Python’s library for working with images. If you don’t
+    already have it installed, this will install it for you:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Each image looks similar, but if you place them side by side, you’ll notice
+    differences. See [Figure 9-1](ch09.xhtml#ch09fig01). The net effect of each per-channel
+    image creates the actual color displayed. Replace `china[:,:,0]` with just `china`
+    to see the full color image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/09fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-1: The red (left), green (middle), and blue (right)* `*china*` *image
+    channels*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Inputs to deep networks are often multidimensional. If the input’s a color
+    image, we need to use a 3D tensor to contain the image. We’re not quite done,
+    however. Each input sample to the model is a 3D tensor, but we seldom work with
+    a single sample at a time. When training a deep network, we use *minibatches*,
+    sets of samples processed together to get an average loss. This implies yet another
+    dimension to the input tensor, one that lets us specify *which* member of the
+    minibatch we want. Therefore, the input is a 4D tensor: *N* × *H* × *W* × *C*,
+    with *N* being the number of samples in the minibatch, *H* the height of each
+    image in the minibatch, *W* the width of each image, and *C* the number of channels.
+    We’ll sometimes write this in tuple form as (*N*, *H*, *W*, *C*).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s take a look at some actual data meant for a deep network. The data is
+    the CIFAR-10 dataset. It’s a widely used benchmark dataset and is available here:
+    *[https://www.cs.toronto.edu/~kriz/cifar.html](https://www.cs.toronto.edu/~kriz/cifar.html)*.
+    You don’t need to download the raw dataset, however. We’ve included NumPy versions
+    with the code for this book. As mentioned above, we need two arrays: one for the
+    images and the other for the associated labels. You’ll find them in the *cifar10_test_images.npy*
+    and *cifar10_test_labels.npy* files, respectively. Let’s take a look:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice that the `images` array has four dimensions. The first is the number
+    of images in the array (*N* = 10,000). The second and third tell us that the images
+    are 32×32 pixels. The last tells us that there are three channels, implying the
+    dataset consists of color images. Note that, in general, the number of channels
+    might refer to any collection of data grouped that way—it need not be an actual
+    image. The `labels` vector has 10,000 elements as well. These are the class labels,
+    of which there are 10 classes, a mix of animals and vehicles. For example,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: This indicates that image 123 is of class 2 (bird) and that the label is correct;
+    the image displayed should be that of a bird. Recall that, in NumPy, asking for
+    a single index returns the entire subarray, so `images[123]` is equivalent to
+    `images[123,:,:,:]`. The `fromarray` method of the `Image` class converts a NumPy
+    array to an image so `show` can display it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Working with minibatches means we pass a subset of the entire dataset through
+    the model. If our model uses minibatches of 24, then the input to the deep network,
+    if using CIFAR-10, is a (24, 32, 32, 3) array: 24 images, each of which has 32
+    rows, 32 columns, and 3 channels. We’ll see below that the idea of channels is
+    not restricted to the input to a deep network; it also applies to the shape of
+    the data passed between layers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll return to data for deep networks shortly. But for now, let’s switch gears
+    to the more straightforward topic of dataflow in a traditional, feedforward neural
+    network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data Flow in Traditional Neural Networks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As we indicated above, in a traditional neural network, the weights between
+    layers are stored as matrices. If layer *i* has *n* nodes and layer *i* − 1 has
+    *m* outputs, then the weight matrix between the two layers, ***W[i]***, is an
+    *n* × *m* matrix. When this matrix is multiplied on the right by the *m* × 1 column
+    vector of outputs from layer *i* − 1, the result is an *n* × 1 output representing
+    the input to the *n* nodes for layer *i*. Specifically, we calculate
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***a[i]*** = σ(***W[i]a[i−1]*** + ***b[i]***)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: where ***a[i]***[−1], the *m* × 1 vector of outputs from layer *i* − 1, multiplies
+    ***W[i]*** to produce an *n* × 1 column vector. We add ***b[i]***, the bias values
+    for layer *i*, to this vector and apply the activation function, σ, to every element
+    of the resulting vector, ***W[i]a[i]***[−1] + ***b[i]***, to produce ***a[i]***,
+    the activations for layer *i*. We feed the activations to layer *i* + 1 as the
+    output of layer *i*. By using matrices and vectors, the rules of matrix multiplication
+    automatically calculate all the necessary products without explicit loops in the
+    code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s see an example with a simple neural network. We’ll generate a random dataset
+    with two features and then split this dataset into train and test groups. We’ll
+    use `sklearn` to train a simple feedforward neural network on the training set.
+    The network has a single hidden layer with five nodes and uses a rectified linear
+    activation function (ReLU). We’ll then test the trained network to see how well
+    it learned and, most importantly, look at the actual weight matrices and bias
+    vectors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To build the dataset, we’ll select a set of points in 2D space that are clustered
+    but slightly overlapping. We want the network to have to learn something that
+    isn’t completely trivial. Here is the code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: We need the `MLPClassifier` class from `sklearn`, so we load it first. We then
+    define a 2D dataset, `x`, consisting of two clouds of 50 points each. The points
+    are randomly distributed (`x0`, `y0` and `x1`, `y1`) but centered at (0.2, 0.8)
+    and (0.8, 0.2), respectively ❶. Note, we set the NumPy random number seed to a
+    fixed value, so each run produces the same set of numbers we’ll see below. Feel
+    free to remove this line and experiment with how well the network trains for various
+    generations of the dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We know the first 50 points in `x` are from what we’ll call class 0, and the
+    next 50 points are class 1, so we define a label vector, `y` ❷. Finally, we randomize
+    the order of the points in `x` ❸, being careful to alter the labels in the same
+    way, and we split them into a training set (`x_train`) and labels (`y_train`)
+    and a test set (`x_test`) and labels (`y_test`). We keep 75 percent of the data
+    for training and leave the remaining 25 percent for testing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 9-2](ch09.xhtml#ch09fig02) shows a plot of the full dataset, with each
+    feature on one of the axes. The circles correspond to class 0 instances and the
+    squares to class 1 instances. There is clear overlap between the two classes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/09fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-2: The dataset used to train the neural network, with the class 0
+    instances shown as circles and the class 1 instances as squares*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’re now ready to train the model. The `sklearn` toolkit makes it easy for
+    us, if we use the defaults:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Training involves creating an instance of the model class ❶. Notice that by
+    using the defaults, which include using a ReLU activation function, we only need
+    to specify the number of nodes in the hidden layers. We want one hidden layer
+    with five nodes, so we pass in the tuple `(5,)`. Training is a single call to
+    the `fit` function passing in the training data, `x_train`, and the associated
+    labels, `y_train`. When complete, we test the model by computing the accuracy
+    (`score`) on the test set (`x_test`, `y_test`) and display the result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neural networks are initialized randomly, but because we fixed the NumPy random
+    number seed when we generated the dataset, and because `sklearn` uses the NumPy
+    random number generator as well, the outcome of training the network should be
+    the same for each run of the code. The model has an accuracy of 92 percent on
+    the test data ❷. This is convenient for us but concerning as well—so many toolkits
+    use NumPy under the hood that interactions due to fixing the random number seed
+    are probable, usually undesirable, and perhaps challenging to detect.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re now finally ready to get the weight matrices and bias vectors from the
+    trained network ❸. Because `sklearn` uses `np.dot` for matrix multiplication,
+    we take the transpose of the weight matrices, `W0` and `W1`, to get them in a
+    form that’s easier to follow mathematically. We’ll see precisely why this is necessary
+    below. Likewise, `b0`, the bias vector for the hidden layer, is a 1D NumPy array,
+    so we change it to a column vector. The output layer bias, `b1`, is a scalar,
+    as there is only one output for this network, the value we pass to the sigmoid
+    function to get the probability of class 1 membership.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s walk through the network for the first test sample. To save space, we’ll
+    only show the first three digits of the numeric values, but our calculations will
+    use full precision. The input to the network is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/228equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We want the network to give us an output leading to the likelihood of this input
+    belonging to class 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To get the output of the hidden layer, we multiply ***x*** by the weight matrix,
+    ***W***[0], add the bias vector, ***b***[0], and pass that result through the
+    ReLU:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/228equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The hidden layer to output transition uses the same form, with ***a***[0] in
+    place of ***x***, but here, there is no ReLU applied:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/229equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'To get the final output probability, we use ***a*****[1]**, a scalar value,
+    as the argument to the *sigmoid function*, also called the *logistic function*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/229equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'This means the network has assigned a 35.5 percent likelihood of the input
+    value being a member of class 1\. The usual threshold for class assignment for
+    a binary model is 50 percent, so the network would assign ***x*** to class 0\.
+    A peek at `y_test[0]` tells us the network is correct in this case: ***x*** is
+    from class 0.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data Flow in Convolutional Neural Networks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We saw above how data flow through a traditional neural network was straightforward
+    matrix-vector math. To track data flow through a *convolutional neural network
+    (CNN)*, we need to learn first what the convolution operation is and how it works.
+    Specifically, we’ll learn how to pass data through convolutional and pooling layers
+    to a fully connected layer at the top of the model. This sequence accounts for
+    many CNN architectures, at least at a conceptual level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convolution
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Convolution involves two functions and the *sliding* of one over the other.
+    If the functions are *f*(*x*) and *g*(*x*), convolution is defined as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/09equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Fortunately for us, we’re working in a discrete domain and more often than not
+    with 2D inputs, so the integral is not actually used, though * is still a useful
+    notation for the operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The net effect of [Equation 9.1](ch09.xhtml#ch09equ01) is to slide *g*(*x*)
+    over *f*(*x*) for different shifts. Let’s clarify using a 1D, discrete example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convolution in One Dimension
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: '[Figure 9-3](ch09.xhtml#ch09fig03) shows a plot on the bottom and two sets
+    of numbers labeled *f* and *g* on the top.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/09fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-3: A 1D, discrete convolution*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s start with the numbers shown at the top of [Figure 9-3](ch09.xhtml#ch09fig03).
+    The first row lists the discrete values of *f*. Below that is *g*, a three-element
+    linear ramp. Convolution aligns *g* with the left edge of *f* as shown. We multiply
+    corresponding elements between the two arrays,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2, 6, 15] × [−1, 0, 1] = [−2, 0, 15]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: and then sum the resulting values,
+  prefs: []
+  type: TYPE_NORMAL
+- en: −2 + 0 + 15 = 13
+  prefs: []
+  type: TYPE_NORMAL
+- en: to produce the value that goes in the indicated element of the output, *f* *
+    *g*. To complete the convolution, *g* slides one element to the right, and the
+    process repeats. Note that in [Figure 9-3](ch09.xhtml#ch09fig03), we’re showing
+    every other alignment of *f* and *g* for clarity, so it’ll appear as though *g*
+    is sliding two elements to the right. In general, we refer to *g* as a *kernel*,
+    the set of values that slide over the input, *f*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The plot on the bottom of [Figure 9-3](ch09.xhtml#ch09fig03) is *f*(*x*) = ⌊255
+    exp(−0.5*x*²)⌋ for *x* in [−3, 3] at the points marked with circles. The floor
+    operation makes the output an integer to simplify the discussion below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The square points in [Figure 9-3](ch09.xhtml#ch09fig03) are the output of the
+    convolution of *f*(*x*) with *g*(*x*) = [−1, 0, 1].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The *f* and *f* * *g* points in [Figure 9-3](ch09.xhtml#ch09fig03) are generated
+    via
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: This code requires some explanation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we have `x`, a vector spanning [−3, 3] in 20 steps; this vector generates
+    `f` (*f*(*x*) above). We want `f` to be of integer type, which is what `astype`
+    does for us. Next, we define `g`, the small linear ramp. As we’ll see, the convolution
+    operation slides `g` over the elements of `f` to produce the output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The convolution operation comes next. As convolution is commonly used, NumPy
+    supplies a 1D convolution function, `np.convolve`. The first argument is *f*,
+    and the second is *g*. I’ll explain shortly why we added `[::-1]` to `g` to reverse
+    it. I’ll also explain the meaning of `mode='same'`. The output of the convolution
+    is stored in `fp`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first position shown in the top part of [Figure 9-3](ch09.xhtml#ch09fig03)
+    fills in the 13 in the output. Where does the 6 to the left of the 13 come from?
+    Convolution has issues at the edges of *f*, where the kernel does not entirely
+    cover the input. For a three-element kernel, there will be one edge element on
+    each end of *f*. Kernels typically have an odd number of values, so there is a
+    clear middle element. If *g* had five elements, there would be two elements on
+    each end of *f* that *g* wouldn’t cover.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convolution functions need to make a choice about these edge cases. One option
+    would be to return only the valid portion of the convolution, to ignore the edge
+    cases. If we had used this approach, called *valid convolution*, the output, `yp`,
+    would start with element 13 and be two less in length than the input, `y`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another approach is to fill in missing values in *f* with zero. This is known
+    as *zero padding*, and we typically use it to make the output of a convolution
+    operation the same size as the input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using `mode=''same''` with `np.convolve` selects zero padding. This explains
+    the 6 to the left of the 13\. It’s what we get when adding a zero before the 2
+    in *f* and applying the kernel:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[0, 2, 6] × [−1, 0, 1] = [0, 0, 6], 0 + 0 + 6 = 6'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we wanted only the valid output values, we would have used `mode='valid'`
+    instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The call to `np.convolve` above didn’t use `g`. We passed `g[::-1]` instead,
+    the reverse of `g`. We did this to make `np.convolve` act like the convolutions
+    used in deep neural networks. From a mathematical and signal processing perspective,
+    convolution uses the reverse of the kernel. The `np.convolve` function, therefore,
+    reverses the kernel, meaning we need to reverse it beforehand to get the effect
+    we want. To be technical, if we perform the operation we’ve called *convolution*
+    without flipping the kernel, we’re actually performing *cross-correlation*. This
+    issue seldom comes up in deep learning because we *learn* the kernel elements
+    during training—we don’t assign them ahead of time. With that in mind, any flipping
+    of the kernel by the toolkit process implementing the convolution operation won’t
+    affect the outcome, because the learned kernel values were learned with that flip
+    in place. We’ll assume going forward that there is no flip and, when necessary,
+    we’ll flip the kernels we give to NumPy and SciPy functions. Additionally, we’ll
+    continue to use the term *convolution* in this no-flip-of-the-kernel deep learning
+    sense.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, convolution with discrete inputs involves placing the kernel over
+    the input starting on the left, multiplying matching elements, summing, and putting
+    the result in the output at the point where the center of the kernel matches.
+    The kernel then slides one element to the right, and the process repeats. We can
+    extend the discrete convolution operation to two dimensions. Most modern deep
+    CNNs use 2D kernels, though it’s possible to use 1D and 3D kernels as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convolution in Two Dimensions
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Convolution with a 2D kernel requires a 2D array. Images are 2D arrays of values,
+    and convolution is a common image processing operation. For example, let’s load
+    an image, the face of the raccoon we saw in [Chapter 3](ch03.xhtml#ch03), and
+    alter it with a 2D convolution. Consider the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we’re using the SciPy `convolve2d` function from the `signal` module.
+    First, we load the raccoon image and subset it to a 512×512-pixel image of the
+    raccoon’s face (`img`). Next, we define a 3 × 3 kernel, `k`. Lastly, we convolve
+    the kernel, as it is, with the face image, storing the result in `c`. The `mode='same'`
+    keyword zero pads the image to handle the edge cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code above leads to
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we’re showing the upper 8 × 8 corner of the image and the valid portion
+    of the convolution. Recall, the valid portion is the part where the kernel completely
+    covers the input array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the kernel and the image, the first valid convolution output is −209\. Mathematically,
+    the first step is element-wise multiplication with the kernel,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/233equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: followed by a summation,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 264 + 0 + 0 + 0 + (−560) + 0 + 0 + 0 + 87 = −209
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice how the kernel used wasn’t `k` as we defined it. Instead, `convolve2d`
+    flipped the kernel top to bottom and then left to right before it was applied.
+    The remainder of `c` flows from moving the kernel one position to the right and
+    repeating the multiplication and addition. At the end of a row, the kernel moves
+    down one position and back to the left, until the entire image has been processed.
+    Deep learning toolkits refer to this motion as the *stride*, and it need not be
+    one position or equal in the horizontal and vertical directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 9-4](ch09.xhtml#ch09fig04) shows the effect of the convolution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/09fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-4: The original raccoon face image (left) and the convolution result
+    (right)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To make the image, `c` was shifted up, so the minimum value was zero, and then
+    divided by the maximum to map to [0, 1]. Finally, the output was multiplied by
+    255 and displayed as a grayscale image. The original face image is on the left.
+    The convolved image is on the right. Convolution of the image with the kernel
+    has altered the image, emphasizing some features while suppressing others.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Convolving kernels with images isn’t merely an exercise to help us understand
+    the convolution operation. It’s of profound importance in the training of CNNs.
+    Conceptually, a CNN consists of two main parts: a set of convolution and other
+    layers taught to learn a new representation of the input, and a top-level classifier
+    taught to use the new representation to classify the inputs. It’s the joint learning
+    of the new representation and the classifier that makes CNNs so powerful. The
+    key to learning a new representation of the input is the set of learned convolution
+    kernels. How the kernels alter the input as data flows through the CNN creates
+    the new representation. Training with gradient descent and backpropagation teaches
+    the network which kernels to create.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’re now in a position to follow data through a CNN’s convolutional layers.
+    Let’s take a look.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convolutional Layers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Above, we discussed how deep networks pass tensors from layer to layer and how
+    the tensor usually has four dimensions, *N* × *H* × *W* × *C*. To follow data
+    through a convolutional layer, we’ll ignore *N*, knowing that what we discuss
+    is applied to each sample in the tensor. This leaves us with inputs to the convolutional
+    layer that are *H* × *W* × *C*, a 3D tensor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The output of a convolutional layer is another 3D tensor. The height and width
+    of the output depend on the convolution kernels’ particulars and how we decide
+    to handle the edges. We’ll use valid convolution for the examples here, meaning
+    we’ll discard parts of the input that the kernel doesn’t wholly cover. If the
+    kernel is 3 × 3, the output will be two less in height and width, one less for
+    each edge. A 5 × 5 kernel loses four in height and width, two less for each edge.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The convolutional layer uses sets of *filters* to accomplish its goal. A filter
+    is a stack of kernels. We need one filter for each of the desired output channels.
+    The number of kernels in the stack of each filter matches the number of channels
+    in the input. So, if the input has *M* channels, and we want *N* output channels
+    using *K* × *K* kernels, we need *N* filters, each of which is a stack of *M K*
+    × *K* kernels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additionally, we have a bias value for each of the *N* filters. We’ll see below
+    how the bias is used, but we now know how many parameters we need to learn to
+    implement a convolutional layer with *M* input channels, *K* × *K* kernels, and
+    *N* outputs. It’s *K* × *K* × *M* × *N* for *N* filters with *K* × *K* × *M* parameters
+    each, plus *N* bias terms—one per filter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s make all of this concrete. We have a convolutional layer. The input to
+    the layer is an (*H*,*W*,*C*) = (5,5,2) tensor, meaning a height and width of
+    five and two channels. We’ll use a 3 × 3 kernel with valid convolution, so the
+    output in height and width is 3 × 3 from the 5 × 5 input. We get to select the
+    number of output channels. Let’s use three. Therefore, we need to use convolution
+    and kernels to map a (5,5,2) input to a (3,3,3) output. From what we discussed
+    above, we know we need three filters, and each filter has 3 × 3 × 2 parameters,
+    plus a bias term.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our input stack is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/235equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We’ve split the third dimension to show the two input channels, each 5 × 5.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The three filters are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/236equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Again, we’ve separated the third dimension. Notice how each filter has two 3
+    × 3 kernels, one for each channel of the 5 × 5 × 2 input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s work through applying the first filter, *f*[0]. We need to convolve the
+    first channel of the input with the first kernel of *f*[0]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/236equ02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Then, we need to convolve the second input channel with the second kernel of
+    *f*[0]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/236equ03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Finally, we add the two convolution outputs along with the single bias scalar:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/236equ04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We now have the first 3 × 3 output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Repeating the process above for *f*[1] and *f*[2] gives
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/236equ05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We’ve completed the convolutional layer and generated the 3 × 3 × 3 output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Many toolkits make it easy to add operations in the call that sets up the convolutional
+    layer, but, conceptually, these are layers of their own that accept the 3 × 3
+    × 3 output as an input. For example, if requested, Keras will apply a ReLU to
+    the output. Applying a ReLU, a nonlinearity, to the output of the convolution
+    would give us
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/237equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Note that all elements less than zero are now zero. We use a nonlinearity between
+    convolutional layers for the same reason we use a nonlinear activation function
+    in a traditional neural network: to keep the convolutional layers from collapsing
+    into a single layer. Notice how the operation to generate the filter outputs is
+    purely linear; each output element is a linear combination of input values. Adding
+    the ReLU breaks this linearity.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One reason for the creation of convolutional layers was to reduce the number
+    of learned parameters. For the example above, the input was 5 × 5 × 2 = 50 elements.
+    The desired output was 3 × 3 × 3 = 27 elements. A fully connected layer between
+    these would need to learn 50 × 27 = 1,350 weights, plus another 27 bias values.
+    However, the convolutional layer learned three filters, each with 3 × 3 × 2 weights,
+    as well as three bias values, for a total of 3(3 × 3 × 2) + 3 = 57 parameters.
+    Adding the convolutional layer saved learning some 1,300 additional weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The output of a convolutional layer is often the input to a pooling layer. Let’s
+    consider that type of layer next.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pooling Layers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Convolutional networks often use *pooling layers* after convolutional layers.
+    Their use is a bit controversial, as they discard information, and the loss of
+    information might make it harder for the network to learn spatial relationships.
+    Pooling is generally performed in the spatial domain along the input tensor’s
+    height and width while preserving the number of channels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The pooling operation is straightforward: you move a window over the image,
+    usually 2 × 2 with a stride of two, to group values. The specific pooling operation
+    performed on each group is either max or average. The max-pooling operation preserves
+    the maximum value in the window and discards the rest. Average pooling takes the
+    mean of the values in the window.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A 2 × 2 window with a stride of two results in a reduction of a factor of two
+    in each spatial direction. Therefore, a (24,24,32) input tensor leads to a (12,12,32)
+    output tensor. [Figure 9-5](ch09.xhtml#ch09fig05) illustrates the process for
+    maximum pooling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/09fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-5: Max pooling with a 2* × *2 window and a stride of two*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One channel of the input, with a height and width of eight, is on the left.
+    The 2 × 2 window slides over the input, jumping by two, so there is no overlap
+    of windows. The output for each 2 × 2 region of the input is the maximum value.
+    Average pooling would instead output the mean of the four numbers. As with normal
+    convolution, at the end of the row, the window slides down two positions, and
+    the process repeats to change the 8 × 8 input channel to a 4 × 4 output channel.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As mentioned above, pooling without overlap in the windows loses spatial information.
+    This has caused some in the deep learning community, most notably Geoffrey Hinton,
+    to lament its use, as dropping spatial information distorts the relationship between
+    objects or parts of objects in the input. For example, applying a 2 × 2 max pooling
+    window with a stride of one instead of two to the input matrix of [Figure 9-5](ch09.xhtml#ch09fig05)
+    produces
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](Images/238equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This is a 7 × 7 output, which only loses one row and column of the original
+    8 × 8 input. In this case, the input matrix was randomly generated, so we should
+    expect a max-pooling operation biased toward eights and nines—there is no structure
+    to capture. This is not usually the case in an actual CNN, of course, as it’s
+    the spatial structure inherent in the inputs we wish to utilize.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pooling is commonly used in deep learning, especially for CNNs, so it’s essential
+    to understand what a pooling operation is doing and be aware of its potential
+    pitfalls. Let’s move on now to the output end of a CNN, typically the fully connected
+    layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fully Connected Layers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A fully connected layer in a deep network is, in terms of weights and data,
+    identical to a regular layer in a traditional neural network. Many deep networks
+    concerned with classification pass the output of a set of convolution and pooling
+    layers to the first fully connected layer via a layer that flattens the tensor,
+    essentially unraveling it into a vector. Once the output is a vector, the fully
+    connected layer uses a weight matrix in the same way a traditional neural network
+    does to map a vector input to a vector output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data Flow Through a Convolutional Neural Network
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s put all the pieces together to see how data flows through a CNN from input
+    to output. We’ll use a simple CNN trained on the MNIST dataset, a collection of
+    28×28-pixel grayscale images of handwritten digits. The architecture is shown
+    next.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Input → Conv(32) → Conv(64) → Pool → Flatten → Dense(128) → Dense(10)
+  prefs: []
+  type: TYPE_NORMAL
+- en: The input is a 28×28-pixel grayscale image (one channel). The convolutional
+    layers (conv) use 3 × 3 kernels and valid convolution, so their output’s height
+    and width are two less than their input. The first convolutional layer learns
+    32 filters while the second learns 64\. We’re ignoring layers that do not affect
+    the amount of data in the network, like the ReLU layers after the convolutional
+    layers. The max-pooling layer is assumed to use a 2 × 2 window with a stride of
+    two. The first fully connected layer (dense) has 128 nodes, followed by an output
+    layer of 10 nodes, one for each digit, 0 to 9.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The tensors passed through this network for a single input sample are
+  prefs: []
+  type: TYPE_NORMAL
+- en: (28,28,1) →(26,26,32) →(24,24,64) →(12,12,64) → 9216 → 128 → 10
+  prefs: []
+  type: TYPE_NORMAL
+- en: Input        Conv        Conv         Pool      Flatten  Dense   Dense
+  prefs: []
+  type: TYPE_NORMAL
+- en: The flatten layer unravels the (12,12,64) tensor to form a vector of 9,216 elements
+    (12 × 12 × 64 = 9,216). We pass the 9,216 elements that the flatten layer outputs
+    through the first dense layer to generate 128 output values, and the last step
+    takes the 128-element vector and maps it to 10 output values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note, the values above refer to the *data* passed through the network for each
+    input sample, one of the *N* samples in the minibatch. This is not the same as
+    the number parameters (weights and biases) the network needed to learn during
+    training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The network shown above was trained on the MNIST digits using Keras. [Figure
+    9-6](ch09.xhtml#ch09fig06) illustrates the action of the network for two inputs
+    by showing, visually, the output of each layer. Specifically, it shows each layer’s
+    output for two input images, depicting a 4 and a 6.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/09fig06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-6: A visual representation of the output of a CNN for two sample
+    inputs*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Starting at the top, we see the two inputs. For the figure, intensities have
+    been reversed, so darker represents higher numeric values. The input is a (28,28,1)
+    tensor, the 1 indicating a single-channel grayscale image. Valid convolution with
+    a 3 × 3 kernel returns a 26 × 26 output. The first convolutional layer learned
+    32 filters, so the output is a (26,26,32) tensor. In the figure, we show the output
+    of each filter as an image. Zero is scaled to midlevel gray (intensity 128), more
+    positive values are darker, and more negative values are lighter. We see differences
+    in how the inputs have been affected by the learned filters. The single input
+    channel means each filter in this layer is a single 3 × 3 kernel. Transitions
+    between light and dark indicate edges in particular orientations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We pass the (26,26,32) tensor through a ReLU (not shown here) and then through
+    the second convolutional layer. The output of this layer is a (24,24,64) tensor
+    shown as an 8 × 8 grid of images in the figure. We can see many parts of the input
+    digits highlighted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pooling layer preserves the number of channels but reduces the spatial dimension
+    by two. In image form, the 8 × 8 grid of 24×24-pixel images is now an 8 × 8 grid
+    of 12×12-pixel images. The flatten operation maps the (12,12,64) tensor to a 9,216-element
+    vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The output of the first dense layer is a vector of 128 numbers. For [Figure
+    9-6](ch09.xhtml#ch09fig06), we show this as a 128-element bar code. The values
+    run from left to right. The height of each bar is unimportant and was selected
+    only to make the bar code easy to see. The bar code generated from the input image
+    is the final representation that the top layer of 10 nodes uses to create the
+    output passed through the softmax function. The highest softmax output is used
+    to select the class label, “4” or “6.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: Therefore, we can think of all the CNN layers through the first dense layer
+    as mapping inputs to a new representation, one that makes it easy for a simple
+    classifier to handle. Indeed, if we pass 10 examples of “4” and “6” digits through
+    this network and display the resulting 128-node feature vectors, we get [Figure
+    9-7](ch09.xhtml#ch09fig07), where we can easily see the difference between the
+    digit patterns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/09fig07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 9-7: The first fully connected layer outputs for multiple “4” and “6”
+    inputs*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Of course, the entire point of writing digits as we do is to make it easy for
+    humans to see the differences between them. While we could teach ourselves to
+    differentiate digits using the 128-element vector images, we naturally prefer
+    to use the written digits because of habitual use and the fact we already employ
+    highly sophisticated hierarchical feature detectors via our brain’s visual system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The example of a CNN learning a new input representation that’s more conducive
+    to interpretation by a machine is worth bearing in mind, since what a human might
+    use in an image as a clue to its classification is not necessarily what a network
+    learns to use. This might explain, in part, why certain preprocessing steps, like
+    the changes made to training samples during data augmentation, are so effective
+    in helping the network learn to generalize, when many of those alterations seem
+    strange to us.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The goal of this chapter was to demonstrate how neural networks manipulate
+    data from input to output. Naturally, we couldn’t cover all network types, but,
+    in general, the principles are the same: for traditional neural networks, data
+    is passed from layer to layer as a vector, and for deep networks, it’s passed
+    as a tensor, typically of four dimensions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We learned how to present data to a network, either as a feature vector or a
+    multidimensional input. We followed this by looking at how to pass data through
+    a traditional neural network. We saw how the vectors used as input to, and output
+    from, a layer made the implementation of a traditional neural network a straightforward
+    exercise in matrix-vector multiplication and addition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we saw how a deep convolutional network passes data from layer to layer.
+    We learned first about the convolution operation and then about the specifics
+    of how convolutional and pooling layers manipulate data as tensors—a 3D tensor
+    for each sample in the input minibatch. At the top of a CNN meant for classification
+    are fully connected layers, which we saw act precisely as they do in a traditional
+    neural network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We ended the chapter by showing, visually, how input images moved through a
+    CNN to produce an output representation, allowing the network to label the inputs
+    correctly. We briefly discussed what this process might mean in terms of what
+    a network picks up on during training and how that might differ from what a human
+    naturally sees in an image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We are now in a position to discuss backpropagation, the first of the two critical
+    algorithms that, together with gradient descent, make training deep neural networks
+    possible.
+  prefs: []
+  type: TYPE_NORMAL

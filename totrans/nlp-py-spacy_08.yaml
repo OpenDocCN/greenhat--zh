@@ -1,0 +1,696 @@
+- en: '**8'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: INTENT RECOGNITION**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../Images/comm1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A chatbot should be smart enough to understand a user’s needs. For example,
+    a conversational chatbot must recognize a user’s intent to properly sustain a
+    conversation with the user, and a food-ordering chatbot needs to understand a
+    customer’s intent to take an order. Although the task of intent recognition was
+    touched on in previous chapters, this chapter discusses it in more depth.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ll start by recognizing a user’s intent by extracting the transitive verb
+    and direct object of an utterance. Then you’ll explore how to derive a user’s
+    intent from a sequence of sentences, recognize synonyms for different possible
+    intents, and determine a user’s intent using semantic similarity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Extracting the Transitive Verb and Direct Object for Intent Recognition**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You can typically recognize a user’s intent in three steps: parsing the sentence
+    into tokens, connecting the tokens with labeled arcs representing syntactic relations,
+    and navigating the arcs to extract the relevant tokens. In many cases, extracting
+    the sentence’s transitive verb and direct object can identify the user’s intent,
+    as shown by the syntactic dependency parsing in [Figure 8-1](../Text/ch08.xhtml#ch08fig01).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig8-1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-1: An example of a graphical representation of a sentence’s syntactic
+    structure*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The arc connecting the transitive verb with the direct object indicates that
+    the user’s intent is finding a hotel, or just `findHotel`, if you merged the transitive
+    verb and the direct object into a single word. You could use this structure as
+    an *intent identifier* in a later part of a program, as in the following code
+    fragment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*In [Chapter 11](../Text/ch11.xhtml#ch11), you’ll see more detailed examples
+    of how to use intent identifiers in a chatbot app’s code.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: But sometimes finding the meaning from the transitive verb/direct object pair
+    isn’t so easy. You might need to explore the transitive verb and direct object’s
+    syntactic relations to find the verb and noun that best describe the intent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In other situations, a user’s intent isn’t expressed explicitly, so you must
+    figure out an implied intent. In this section, you’ll learn strategies for extracting
+    intent using the syntactic dependency structure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Obtaining the Transitive Verb/Direct Object Pair***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Let’s start by extracting the transitive verb/direct object pair from a sentence
+    by checking the dependency label of each token, looking for `dobj`. Once we find
+    the direct object, we can easily get the corresponding transitive verb by obtaining
+    the syntactic head of the direct object, as illustrated in the following script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this script, we apply the pipeline to a sample sentence ➊ and then iterate
+    over the tokens, searching for the one whose dependency label is `dobj` ➋. When
+    it’s found, we determine the corresponding transitive verb by obtaining the direct
+    object’s head ➌. In this example, we also concatenate the transitive verb and
+    its direct object to express the intent in the form of a single word.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script generates the following string:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Keep in mind that not all sentences containing a transitive verb/direct object
+    pair express intent. For example, “He gave me a book” is just a statement of fact.
+    We could filter out such sentences by checking the verb’s characteristics, picking
+    up only those sentences whose verbs are in the present tense and not third person.
+    Still, it would be uncommon to hear a sentence like that from a customer talking
+    to a chatbot that takes orders for a business.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Extracting Multiple Intents with token.conjuncts***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Sometimes, you might find a sentence that seems to express more than one intent.
+    For example, consider the following sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this scenario, a user wants to order a pizza and a cola. But in most cases,
+    you can consider these intents part of a single complex intent. Although a user
+    requests items of different types, you’d typically treat this sentence as a single
+    order consisting of several items. In this example, you might recognize the intent
+    as `orderPizza`, formed by combining the transitive verb and direct object pair,
+    but extract `pizza` and `cola` as items for the order being placed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 8-2](../Text/ch08.xhtml#ch08fig02) shows the dependency tree for the
+    sample sentence.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig8-2.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-2: The dependency tree of a sentence containing a direct object and
+    its conjunct*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the diagram, you can see two arrows pointing to the arcs for the direct
+    object “pizza” and the conjunct “cola” associated with it. The *conjunct* of a
+    noun is another noun that is joined to it by a conjunction, such as “and,” “or,”
+    and so on. To extract the direct object and the conjunct associated with it, we
+    can use the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: We extract the conjunct associated with the direct object using the `conjuncts`
+    property of the Token object used for the direct object ➊. Once we’ve obtained
+    the direct object and its conjuncts, we combine them into a single list ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script output should be as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To compose the intent, we should extract the verb, too. The simplest way to
+    obtain it when we already have the direct object is to obtain the direct object’s
+    syntactic head (you saw an example of this in “[Obtaining the Transitive Verb/Direct
+    Object Pair](../Text/ch08.xhtml#lev105)” on [page 113](../Text/ch08.xhtml#page_113)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Then, using the text property of the verb and the direct object, we can compose
+    the intent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the script provided in on [page 114](../Text/ch08.xhtml#page_114), you accessed
+    the conjunct linked to the direct object through the Token object’s `conjuncts`
+    property. In a new script, replace that line with code that extracts the conjunct
+    by finding the arc labeled `conj` moving outward from the direct object. You can
+    do this within the same loop in which you obtain the direct object by finding
+    the arc labeled `dobj`. Be sure to check that the head of the `conj` arc matches
+    the direct object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Using Word Lists to Extract the Intent***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In some cases, tokens other than the transitive verb and direct object best
+    describe the user’s intent. These tokens are typically related to the transitive
+    verb or direct object. So you’ll need to go a step further and explore the transitive
+    verb and direct object’s syntactic relations to discover the words that best formulate
+    the intent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As an example, consider the following utterance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this sentence, the words “want” and “pizza” best describe the intent, but
+    neither word is a direct object or transitive verb. However, looking at the utterance’s
+    dependency tree, you’ll see that “want” and “pizza” are related to the transitive
+    verb “place” and the direct object “order,” respectively. [Figure 8-3](../Text/ch08.xhtml#ch08fig03)
+    shows the dependency tree discussed here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig8-3.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-3: The dependency tree of an utterance whose transitive verb and
+    direct object don’t convey the user’s intent*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To extract these words from the utterance, we’ll use a list of predefined words,
+    and then search the user’s utterance for those words.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An experienced programmer might call into question the effectiveness of hardcoding
+    such a list, because it can be quite long, especially if used in many different
+    contexts. But if the list is intended for a specific context, say, ordering pizza,
+    it can be surprisingly short, which makes this approach very efficient. The following
+    code implements this approach:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As always, we start by finding and extracting the direct object and its transitive
+    verb ➊. Once we’ve obtained them, we check whether they can be found in the corresponding
+    lists of predefined words. Here, we use simplified lists, of course: the `verbList`
+    list contains the verbs a customer might use to place an order, and the `objList`
+    contains direct objects that are possible menu items. We start by checking the
+    transitive verb ➋. If it’s not in the list of allowed verbs ➌, we check the main
+    verb (`ROOT`) of the sentence, which is the head of the transitive verb. If the
+    transitive verb is the main verb of the sentence, this implementation will work
+    anyway, because the head of the main verb (`ROOT`) refers to itself.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we move on to checking the direct object ➍. If it’s not in the list of
+    allowed words, we check its syntactic children. We start by checking the preposition
+    of the direct object. If it exists, we pick up the preposition’s child (it can
+    have only one child) ➎, which is always the object of the preposition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To make this approach applicable to a wider variety of cases, it’s not enough
+    to just check for prepositions in the direct object’s children. For example, this
+    logic wouldn’t work for the following utterance: “I want to place a pizza order,”
+    where there is no preposition child branch. Instead, the direct object has a left
+    child, “pizza,” which spaCy tags as a compound. Therefore, we check for compounds
+    in the direct object’s children ➏.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, we print the string representing the intent identifier. We should
+    get the following string:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice that we use `wantPizza` as the intent identifier instead of `placeOrder`
+    (which we would have gotten if we’d simply used the transitive verb/direct object
+    pair). This approach allows us to reduce the number of intent identifiers used
+    in the application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Finding the Meanings of Words Using Synonyms and Semantic Similarity**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: English, like many other natural languages, lets you express the same thoughts
+    and intents in different ways, because it contains *synonyms*—words or phrases
+    that mean nearly the same thing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a developer of a chatbot application, you need to account for the fact that
+    your users might use a fairly wide set of phrases for each intent the application
+    is supposed to support. This means that your application must recognize synonymous
+    phrases in user input. In fact, if you’re building your chatbot on a popular bot
+    platform, such as Google’s Dialogflow, you’re required to submit a set of phrases
+    for each possible intent. You then use these utterances behind the scenes to train
+    the bot’s model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s more than one approach to recognizing synonyms. One option is to use
+    a set of predefined lists of synonyms. You check a word of interest against those
+    lists, recognizing the word’s meaning based on the list in which it was found.
+    Another option is to recognize synonyms based on semantic similarity, a task described
+    in [Chapter 5](../Text/ch05.xhtml#ch05) in detail. I discuss both approaches in
+    the following sections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Recognizing Synonyms Using Predefined Lists***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You already know that, in most cases, the transitive verb and its direct object
+    best describe the intent of a phrase. A simple way to recognize whether two phrases
+    express the same intent is to make sure the transitive verbs in both phrases are
+    synonymous and their direct objects are synonyms as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, the following three sentences express the same intent, which you
+    might define as `orderPizza`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To process these utterances, you use the following steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Perform dependency parsing to extract a transitive verb and its direct object
+    from a sentence.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Check with the predefined lists of synonyms to replace the transitive verb and
+    the direct object with words that the application recognizes.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Compose the string that represents the intent.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The diagram in [Figure 8-4](../Text/ch08.xhtml#ch08fig04) summarizes these steps,
+    illustrating how this might work for, say, “I want a dish.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig8-4.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-4: Processing intent recognition using lists of synonyms*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After dependency parsing (done implicitly when you apply the pipeline to an
+    utterance), you extract the direct object and the transitive verb, and then check
+    them against the corresponding list of synonyms. If you find a match, you replace
+    the word with the one that tops the list, which the application should recognize.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s examine what a Python implementation of this scenario might look like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: We start by creating a Doc object instance for the sample sentence. Then we
+    iterate over the dependency tree available through the Doc object, extracting
+    the transitive verb and its direct object ➊. Next, we create a list of tuples
+    containing all allowable transitive verbs along with their synonyms ➋. The first
+    element in each tuple contains a transitive verb that the application can recognize,
+    and the other elements in the tuple are its synonyms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that we’ve defined the allowable transitive verbs and their synonyms and
+    put them all in a list of tuples, we can loop over the entire list to find a tuple
+    that contains the transitive verb extracted from the sample sentence ➌.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, we create a list of tuples for the recognized direct objects and
+    their synonyms, and then find the tuple containing the direct object extracted
+    from the sample ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, we concatenate the first elements of the chosen tuples to compose
+    the intent name ➎. As a result, the print command should output the following
+    string:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Keep in mind that the set of synonyms to choose for a given verb depends largely
+    on the type of application we’re creating. For example, in the context of a bot
+    application that takes pizza orders, the verbs “make” and “give” can be considered
+    synonymous. The reason is that users might interchangeably use the phrases “Make
+    me a pizza” and “Give me a pizza” when ordering a pizza.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Use the sample code provided on [page 118](../Text/ch08.xhtml#page_118) as
+    the basis for creating a new script. Make the script retain the original functionality
+    but generate “unrecognized” as the intent name when the transitive verb, its direct
+    object, or both can’t be found in the respective lists. To test your code, experiment
+    with the sample sentence, changing it so the new functionality can be seen in
+    action. For example, you might use the following sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Test it with a sentence containing a verb that isn’t included in the list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, you might try to handle the conjunction problem discussed in the previous
+    sections using synonym lists.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Recognizing Implied Intents Using Semantic Similarity***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Real-world implementations will likely include more complex logic than you’ve
+    seen in the examples provided in this chapter so far. Even using a large set of
+    predefined lists of synonyms won’t always work. The reason is that users express
+    their intentions in many different ways, and they don’t always do so explicitly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recognizing an implied intent depends heavily on the context. For example, if
+    your bot is designed for a specific type of task, say, ordering food, it should
+    recognize phrases that imply a request, such as “I feel like eating a pie.”, as
+    the intention to place a pizza order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One widely known technique to make the user express their intent more clearly
+    is asking clarifying questions. To determine what question to ask, you can calculate
+    the semantic similarity of the previous user utterance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 8-5](../Text/ch08.xhtml#ch08fig05) illustrates how to implement this
+    task.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig8-5.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-5: Recognizing an implied intent by calculating semantic similarity
+    and asking clarifying questions*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You start by analyzing the dependency tree of the input utterance to extract
+    the direct object and its transitive verb. If, for example, the direct object
+    can’t be found in the predefined list of synonyms, as discussed in “[Recognizing
+    Synonyms Using Predefined Lists](../Text/ch08.xhtml#lev110)” on [page 117](../Text/ch08.xhtml#page_117),
+    you might try to determine how similar the direct object is to the words included
+    in the list. Based on the results of calculating semantic similarity, you can
+    then generate a clarifying user question.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s implement this technique in code, which I’ll break up into sections.
+    As usual, we start with applying the text-processing pipeline to the sample sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then we extract the direct object token:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We create a token for the word “food.” We’ll calculate the semantic similarity
+    between this token and the direct object token:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If the level of similarity is greater than a predefined threshold, the application
+    guesses that the user is most likely interested in placing an order. Then it asks
+    a clarifying question to confirm this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Recall from [Chapter 5](../Text/ch05.xhtml#ch05) that spaCy uses word vectors
+    to calculate the semantic similarity of tokens. The closer two vectors are in
+    the vector space, the higher the level of similarity is between them. In this
+    example, we use 0.6 as the minimum degree of similarity required to assume the
+    direct object resembles a food product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Of course, you won’t know in advance which phrases the user will use and how
+    easy it will be to recognize the user’s intent. Neither will your application.
+    That’s why real-world applications typically combine several approaches to recognize
+    intent. Combine the approach based on recognizing synonyms with the approach based
+    on handling implied intents, discussed in the previous sections, so you can handle
+    more possible situations. Start by trying to extract the intent from an utterance
+    using the synonyms-based approach. Then, if that fails, try the approach based
+    on using semantic similarity. If both approaches fail, you might label the utterance
+    as expressing an unrecognized intent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Extracting Intent from a Sequence of Sentences**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In a discourse, the words reflecting a user’s intent might appear across different
+    sentences, as in the following example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Your bot should be ready to handle this scenario by extracting a user’s intent
+    from an entire discourse. In this section, I’ll walk you through a technique for
+    doing this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Walking the Dependency Structures of a Discourse***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s start by looking at the dependency parsing for the discourse, which will
+    disclose the transitive verb/direct object pairs in each sentence, as shown in
+    [Figure 8-6](../Text/ch08.xhtml#ch08fig06).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig8-6.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-6: A visual representation of the dependency parsing of the entire
+    discourse*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pale arrow in the diagram represents the dependency of interest. In other
+    words, you want to replace the substitute “one” with the noun “pizza” it stands
+    for. But the dependency parser in spaCy doesn’t show this link because it can’t
+    connect tokens from different sentences. So the task of determining these dependencies
+    is left to you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Replacing Proforms with Their Antecedents***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'An *antecedent* is an expression (such as a word or clause) that gives its
+    meaning to a *proform* (such as a pronoun or pro-verb). In this kind of intent
+    extraction, you’ll have to determine the antecedents and replace the corresponding
+    proforms with them. You can do so using the following steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parse the dependencies of the entire discourse.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Dissect the discourse into sentences.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Find the antecedent for the pronoun that is the direct object of the transitive
+    verb to be used in the intent definition.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[Figure 8-7](../Text/ch08.xhtml#ch08fig07) shows these steps diagrammatically.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig8-7.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 8-7: A graphical depiction of extracting intent from a sequence of
+    sentences*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In spaCy, we can implement the first two steps with a couple lines of code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: We convert the object that the `doc.sents` property returns into a list so we
+    can refer to each sentence in the text by its index. (We could also directly iterate
+    over a sequence of sentences contained in `doc.sents` using a `for` loop.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we define two lists containing the allowable transitive verbs and allowable
+    direct objects, respectively:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: These lists contain tuples of synonyms (refer to “[Recognizing Synonyms Using
+    Predefined Lists](../Text/ch08.xhtml#lev110)” on [page 117](../Text/ch08.xhtml#page_117)
+    for details).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We also need to define a list for allowable substitutes. To do so, we must
+    determine what proforms the direct object could be. Let’s first figure out what
+    other phrases we could use in place of the last sentence, and then highlight the
+    direct object in each phrase. Possible alternatives include the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So, we can define the substitute list as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Unlike the transitive verb and direct object lists, the substitute list has
+    a simple structure, because we don’t need to group substitutes. The same substitute
+    could refer to any of the direct objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In addition to the lists, we might want to define a dictionary to hold the
+    intent definition parts as they’re being extracted:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we’re ready to start the intent recognition process:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: The outer loop iterates over the sequence of sentences held in the Doc object.
+    The inner loop, in turn, iterates over the tokens found in a sentence. We check
+    each token to see whether it’s a direct object. If it is, we determine whether
+    the direct object is part of either the direct object synonyms list or the substitutes
+    list ➊. We also check whether the corresponding transitive verb is in the transitive
+    verb synonyms list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We extract the direct object only if it’s in either the direct object synonyms
+    list or the substitutes list ➋. For example, we wouldn’t be interested in extracting
+    the transitive verb from the following phrase (unless we sell apples, of course):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Nor are we interested in a transitive verb if it’s not in the allowable list
+    ➌, even if its direct object satisfies this condition, as in the following phrase:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: That’s why, before picking up the transitive verb, we check not only whether
+    the direct object is in either the direct object synonyms list or the substitutes
+    list, but also whether the transitive verb is in the transitive verb synonyms
+    list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, to pick up the direct object that defines the intent, we make sure
+    we can find it in the direct object synonyms list ➍. Now we can compose the intent
+    definition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Optionally, we might want to print it to make sure everything works as expected:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We should get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: This result indicates that the user intends to order a pizza.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In some discourses, several sentences might separate an antecedent from its
+    proform. For example, consider the following sequence of sentences:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Edit the script provided on [page 124](../Text/ch08.xhtml#page_124) so it can
+    handle this or a similar sequence of sentences.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Intent recognition is a complex task that might require you to combine several
+    approaches. In this chapter, you learned how to extract the most important parts
+    of an utterance’s dependency tree for intent recognition. Then you analyzed them
+    using predefined lists, semantic similarity, or both approaches. You also extracted
+    the intent from a sequence of sentences by replacing proforms with their antecedents.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,399 @@
+- en: '10'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Hash Tables
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: This chapter introduces *hash tables*, dynamic data structures hyper-optimized
+    for insertions and lookups. Hash tables use mathematical functions to point us
+    toward the data’s location. They are particularly useful in pure storage cases
+    where the goal is to find and retrieve information quickly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is the type of tradeoff we might want to make for our coffee pantry. Forget
+    trying to sort coffees by expiration date or tastiness—we are true coffee aficionados
+    who effortlessly remember the smallest details of every bean in our pantry. For
+    any given attribute (or combination of attributes), we can instantly remember
+    the coffee’s name. By the time we walk to the coffee pantry, we’ve already decided
+    which coffee we want. Storing our coffee selection in sorted order along these
+    other dimensions will just slow us down. What we need is efficient retrieval:
+    given just the name of the coffee we want to drink, we want to find those beans
+    with minimal effort. Hash tables enable exactly this type of rapid retrieval by
+    name.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arrays provide a compact structure for storing individual pieces of data and
+    a mechanism for efficient retrieval—but only when we know the item’s index. With
+    an index, we can look up any element in constant time. As we saw in Chapter 2,
+    without an index, the process for looking up items in an array becomes more complicated.
+    If we only have the item’s value, then we need to search through the array to
+    find its correct location. We can find items efficiently with binary search only
+    at the cost of keeping the array in sorted order, which makes for inefficient
+    insertions and deletions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After the past chapters of exploring data structures and algorithms to efficiently
+    search for target values, imagine we could build a magical function that mapped
+    our target value directly to its index (with a few caveats, of course). This is
+    the core idea behind hash tables. Hash tables use mathematical functions to compute
+    a value’s index in our data structure, allowing us to map directly from value
+    to an array bin. The downside is that no mapping is perfect. We will see how different
+    values can map to the same location, causing collisions. We will then examine
+    two approaches to resolving collisions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As with all data structures, hash tables are not a perfect solution for every
+    problem—we’ll examine both the benefits and the tradeoffs, including the use of
+    memory and worst-case performance. In doing so, we’ll examine a new way to organize
+    data by using mathematical mappings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Storage and Search with Keys
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Before we delve into the mechanics of hash tables, let’s consider an idealized
+    indexing scheme for efficient retrieval of integer values—maintaining an individual
+    array bin for each *possible* value and indexing that bin with the value itself.
+    This structure is shown in [Figure 10-1](#figure10-1). To insert the value 9,
+    we simply place it in the bin at index 9\. Under this arrangement, we can insert
+    or retrieve items in constant time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![An array with ten bins numbered 0 to 9\. Bins 1, 5, and 7 have arrows to
+    data outside the array. The remaining bins have slashes to indicate they are empty.](image_fi/502604c10/f10001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-1: A large array with a bin for every potential entry'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The obvious downside of our idealized data structure is the absurd cost of maintaining
+    an array of every possible key. Consider the case of storing all possible 16-digit
+    credit card numbers. We’d need several quadrillion bins, 10^(16) to be exact.
+    That is a lot of memory. Worse, it’s unlikely that we would even use this many
+    bins. If we are writing a program to track the corporate credit cards for a 1,000-person
+    company, we need only a tiny fraction of the available bins—one bin out of every
+    10^(13) we’ve allocated. The rest are wasted. They sit empty, hoping that someday
+    they’ll have data to store. Similarly, we wouldn’t want to reserve a spot in the
+    library for every possible book, a room in a hotel for every possible patron,
+    or a spot in our coffee pantry for every known coffee. That’d be absurd (except
+    maybe for the coffee).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But, as a thought experiment, let’s consider how this idealized data structure
+    could work for other types of data. We immediately run into the question of what
+    value to use for more complex data types, such as strings or even composite data
+    types. Suppose we’re looking to create a simple database of coffee records. Chapter
+    3 showed how to use an array of pointers to store such dynamically sized data,
+    as in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: We could still place all our items in a single massive array with one bin for
+    every *possible* entry. In this case, the bin contains not just a single value
+    but a pointer to a more complex data structure, as in the array of pointers in
+    [Figure 10-2](#figure10-2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![An array for ten bins, numbered 0 through 9\. Each bin contains an arrow
+    pointing to data outside the array.](image_fi/502604c10/f10002.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-2: An array of pointers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, this still leaves the question of how to do the actual lookup. If
+    we want to find the rating we gave for “Jeremy’s Gourmet High-Caffeine Experience:
+    Medium Roast,” one of the coffees introduced in Chapter 6, we cannot use the entire
+    composite data structure as the value. We do not have all this information on
+    hand. Even if we did have the full information on hand, it is not clear how we
+    would use a composite data structure or even a string as an index.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Computer programs often use keys to identify records. A *key* is a single value
+    stored with or derived from the data itself that can be used to identify a record.
+    In the case of an RSVP list, the key might be the string containing the invitee’s
+    name; in the case of our coffee records, the key could be the name or barcode
+    of the coffee. In many data structures, from sorted arrays to tries, we use the
+    key to organize the data. For the numerical examples earlier in this book, the
+    key is just the value itself. Each search of a sorted array or binary search tree
+    for a specific numeric value corresponded to retrieving a record by looking for
+    a matching numeric key. Similarly, the tries introduced in Chapter 6 use a string
+    for the key.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This does not solve the indexing problem though. Unless we have an integer
+    key, we still cannot index the array bin. Arrays do not have a bin with index
+    “Jeremy’s Gourmet High-Caffeine Experience: Medium Roast.” We can search over
+    our data structure, looking for a record with a matching key. Linear scan and
+    binary search both work this way, using a target value as the key. However, we’ve
+    lost the magic of our idealized data structure. We are back to searching for a
+    matching key.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In some cases, we might be able to find a natural numeric key for our records.
+    In the coffee example, we could list every coffee we’ve ever tasted in order of
+    when we first tasted it and use the corresponding date as a key. If “Jeremy’s
+    Gourmet High-Caffeine Experience: Medium Roast” was first sampled on January 1,
+    2020 (and we magically remember that), we could retrieve the record with a binary
+    search. Alternatively, we could use the coffee’s barcode or its page number in
+    the *Compendium of World Coffees, Brands, and Manufacturers*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: More generally, we want a function that generates an index from our key. In
+    the next section, we introduce hash functions, which solve exactly this problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hash Tables
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Hash tables use mathematical mappings to compress the key space. They squish
+    large key spaces into a small domain by using a *hash function* to map the raw
+    key into the location in the table (also called the *hash value*). We denote the
+    hash function that maps key *k* into a table with *b* bins as a function *f*(*k*)
+    with range [*0*, *b* − 1]*.*This mapping solves both problems from the previous
+    section. We no longer require an infinite number of bins. We just need *b* of
+    them. As we will see, functions can also map non-integers onto a numerical range,
+    solving the problem of non-integer keys.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A simple example hash function for integer keys is to use the division method
+    to compute the hash value from the numeric key. We divide the key by the number
+    of bins and take the remainder:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*f*(*k*) = *k* % *b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: where *%* is the modulo operation. Every possible (integer) key is mapped to
+    a single bin within the correct range [*0*, *b* − 1]*.* For example, for a 20-bin
+    hash table, this function would produce the mappings shown in [Table 10-1](#table10-1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 10-1: Example Mappings for the Division Method of Hashing with 20 Bins'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ***k*** | ***f*(*k*)** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 5 | 5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 20 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 21 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 34 | 14 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 41 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Consider the problem of mapping the space of all credit card numbers into 100
+    bins. The division method compresses the key space from 16 digits to 2 digits
+    using the last 2 digits of the card’s number. Of course, this simplistic mapping
+    might not produce the best results for some key distributions. If we have many
+    credit cards ending in 10, they will all map to the same bin. However, it solves
+    one of our core problems: with a single (and efficient) mathematical computation,
+    we’ve compressed a large range of keys to a limited number of indices.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The skeptical reader might balk at the description above: “We can’t store two
+    different items in the same element of the array. You told us so in Chapter 1.
+    And hash functions can clearly map two different values to the same bin. Just
+    look at [Table 10-1](#table10-1). Both 21 and 41 map to bin 1.” This is the aforementioned
+    caveat. Unfortunately, hash functions are not truly magical. As we will see in
+    the next section, this complexity is where the rest of the hash table’s structure
+    comes in—to handle collisions. For now, we can note that the hash function partitions
+    our keys into disjoint sets and we only need to worry about collisions within
+    a set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hash functions are not limited to numbers. We can similarly define a hash function
+    that maps a coffee’s name to a bin. This allows us to directly access the coffee
+    record for any entry in two steps, as shown in [Figure 10-3](#figure10-3). First,
+    we use the coffee’s name to compute its hash value. The key “House Blend” is mapped
+    to a value of 6; we will describe a simple method for hashing strings later the
+    chapter. Second, we look up the hash value in our table by using the hash value
+    as an index into our array. We could even use this scheme to map our extensive
+    real-world coffee collection to a fixed number of shelves in our coffee pantry.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The left side shows a list of coffee names, such as “House Blend” and “Morning
+    Shock.” The Middle column holds hash functions  that mapping the string to a numeric
+    value. House Blend maps to 6\. Arrows point from the hash functions to the corresponding
+    bin in the array in the right column.](image_fi/502604c10/f10003.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-3: Hash functions mapping strings to indices within an array'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One real-world example of hash tables is the registration tables we see throughout
+    our lives, whether at the first day of summer camp, the morning of a race, or
+    the beginning of an academic conference. The items to be stored (registration
+    packets) are partitioned into unique bins based on their key (the name). People
+    can find their correct bin by applying a hash function that is usually as simple
+    as a sign mapping a range of the alphabet to a given line. Names starting with
+    A−D go to line 1, names with E−G go to line 2, and so forth.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Collisions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Even the best hash functions in the world won’t provide perfect one-to-one
+    mappings of keys to bins. To do that, we’d need to return to our ginormous array
+    and its excessive use of memory. Any mathematical function that maps a large set
+    of keys to a much smaller set of values will encounter occasional *collisions*—instances
+    where two keys map to the same hash value. Imagine applying this approach to mapping
+    license plates to 10 parking spaces by taking the first number on the license
+    plate. We don’t need our coworker’s license plate to exactly match our own in
+    order to start a fight over a parking space. Imagine you go to register your car,
+    with the plate “Binary Search Trees Are #1,” only to find that your coworker has
+    already claimed the spot with the plate “100,000 Data Structures and Counting.”
+    Both plates may happen to hash to 1, so they would be assigned the same spot.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have lines at a conference’s registration table because of collisions. Consider
+    a conference registration that hashes into eight lines based on the first letter
+    of your last name. Everyone with a name starting with A−D goes to table 1, everyone
+    with a name starting with E−G goes to table 2, and so forth. If we have more than
+    a handful of attendees, we’re almost guaranteed to see a collision. If there were
+    no collisions, everyone would have their own place to check in. Instead, attendees
+    with surnames A−D wait in the same line because their keys (last names) collide.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can alleviate some of the collisions by increasing the size of our hash table
+    or by choosing a better hash function. However, as long as our key space is larger
+    than the number of bins, it’s not possible to eliminate collisions altogether.
+    We need a way to gracefully handle two pieces of data fighting to sit in the same
+    place. If this were a kindergarten class, we might be able to employ such strategies
+    as “Ann was sitting there first,” or “You need to learn to share.” None of these
+    approaches work in data structure context. We can’t ignore new keys or overwrite
+    the older data. The point of a data structure is to store all the requisite data.
+    In the next two sections, we consider chaining and linear probing, two common
+    approaches for handling collisions in a hash table.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Chaining
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Chaining is an approach for handling collisions within a hash table by employing
+    additional structure *within* the bins. Instead of storing a fixed piece of data
+    (or a pointer to a single piece of data) in each bin, we can store the pointer
+    to the head of a linked list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: These lists are like our line of conference attendees. Each person in line is
+    a unique individual, but maps to the same registration table.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As shown in [Figure 10-4](#figure10-4), each bin’s list contains all the data
+    that mapped to that bin. This allows us to store multiple elements in each bin.
+    Each item in our linked list corresponds to one of the elements inserted into
+    the bin.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![An array with 5 bins is arranged vertically on the left. Each bin has an
+    arrow pointing from it, indicating a list. The arrow from the first bin points
+    to the start of a linked list with three nodes.](image_fi/502604c10/f10004.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10-4: A hash table using a linked list to store entries within the same
+    bin'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The code for inserting a new item into a hash table with chaining is relatively
+    simple:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: We start by computing the hash value for the `key` ❶ and checking the corresponding
+    bin. If the bin is empty (the pointer is `null`), we create a new linked list
+    node holding the `key` and `value` inserted ❷. Otherwise, we need to scan through
+    the bin’s linked list and check each element for a matching key ❸. The `WHILE`
+    loop checks that we have neither found the correct key (`current.key != key`)
+    nor run off the end of the list (`current.next != null`). If the list already
+    contains a matching key, we update the value associated with the key ❹. Otherwise,
+    we append the new key and its corresponding value to the end of the list ❺.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Search follows a similar approach. However, the logic is simpler because we
+    no longer need to insert new nodes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: The code for search starts by computing the hash value for the `key` ❶, checking
+    the corresponding bin, and returning `null` if the bin is empty ❷. Otherwise,
+    it scans over each element of the linked list using a `WHILE` loop ❸ and returns
+    the value for the matching key ❹. If we make it to the end of the list without
+    finding a matching key, the code returns `null` to indicate that the key is not
+    present in the table ❺.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, when removing an item, we need to find it in the list and, if it is
+    present, splice it out. The following code both removes and returns the linked
+    list node matching the target key:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The code again starts by computing the hash value for the `key`, checking the
+    corresponding bin, and returning `null` if it is empty ❶. If the bin is not empty,
+    we scan through it using a `WHILE` loop and look for a matching key ❷. In order
+    to splice out the correct element, we need to track one additional piece of information:
+    the final linked list node before the current node. If we find a match ❸, we need
+    to check whether we are removing the first element in the list (`last` is `null`).
+    If not, we can modify the `last` node’s `next` ``pointer to skip the node we are
+    removing ❹. Otherwise, we need to modify the pointer from the start of the hash
+    bin to skip the node ❺. Finally, we return `null` if we do not find a matching
+    node.``'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6] HashTableEntry {     Type: key     Type: value } [PRE7] HashTable {     Integer:
+    size     Integer: num_keys     Array of HashTableEntry: bins } [PRE8] HashTableInsert(HashTable:
+    ht, Type: key, Type: value):   ❶ Integer: index = HashFunction(key, ht.size)   ❷
+    Integer: count = 0      HashTableEntry: current = ht.bins[index]   ❸ WHILE current
+    != null AND current.key != key AND count != ht.size:         index = index + 1       ❹
+    IF index >= ht.size:             index = 0         current = ht.bins[index]         count
+    = count + 1    ❺ IF count == ht.size:         return False    ❻ IF current ==
+    null:         ht.bins[index] = HashTableEntry(key, value)         ht.num_keys
+    = ht.num_keys + 1     ELSE:       ❼ ht.bins[index].value = value     return True
+    [PRE9] HashTableLookup(HashTable: ht, Type: key):   ❶ Integer: index = HashFunction(key,
+    ht.size)   ❷ Integer: count = 0      HashTableEntry: current = ht.bins[index]   ❸
+    WHILE current != null AND current.key != key AND count != ht.size:         index
+    = index + 1       ❹ IF index >= ht.size:             index = 0         current
+    = ht.bins[index]         count = count + 1      # Return the value if we found
+    a match.   ❺ IF current != null AND current.key == key:         return current.value   ❻
+    return null [PRE10] StringHash(String: key, Integer: size):     Integer: total
+    = 0     FOR EACH character in key:         total = CONST * total + CharacterToNumber(character)     return
+    total % size [PRE11]`'
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,353 @@
+- en: '**4**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**HANDLING TIMESTAMPS AND TIME ZONES**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../images/common01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Time zones are complicated. Most people expect dealing with time zones to involve
+    merely adding or subtracting a few hours from the universal time reference, UTC
+    (Coordinated Universal Time), from −12 hours to +12 hours.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, reality shows otherwise: time zones are not logical or predictable.
+    There are time zones with 15-minute granularity; countries that change time zones
+    twice a year; countries that use a custom time zone during summer, known as daylight
+    saving time, that starts on different dates; plus tons of special and corner cases.
+    These make the history of time zones interesting but also complicate how to handle
+    them. All of those particularities should make you stop and think when dealing
+    with time zones.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter will outline why dealing with time zones is tricky and how to best
+    handle them in your programs. We’ll look at how to build timestamp objects, how
+    and why to make them time zone aware, and how to deal with corner cases you might
+    come across.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**The Problem of Missing Time Zones**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A timestamp without a time zone attached gives no useful information, because
+    without the time zone, you cannot infer what point in time your application is
+    really referring to. Without their respective time zones, therefore, you can’t
+    compare two timestamps; that would be like comparing days of the week without
+    accompanying dates—whether Monday is before or after Tuesday depends on what weeks
+    they’re in. Timestamps without time zones attached should be considered irrelevant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For that reason, your application should never have to handle timestamps with
+    no time zone. Instead, it must raise an error if no time zone is provided, or
+    it should make clear what default time zone is assumed—for example, it’s common
+    practice to choose UTC as the default time zone.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You also must be careful of making any kind of time zone conversion before *storing*
+    your timestamps. Imagine a user creates a recurring event every Wednesday at 10:00
+    AM in their local time zone, say Central European Time (CET). CET is an hour ahead
+    of UTC, so if you convert that timestamp to UTC to store it, the event will be
+    stored as every Wednesday at 09:00 AM. The CET time zone switches from UTC+01:00
+    to UTC+02:00 in the summer, so on top of that, in the summer months, your application
+    will compute that the event starts at 11:00 AM CET every Wednesday. You can see
+    how this program quickly becomes redundant!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that you understand the general problem of handling time zones, let’s dig
+    into our favorite language. Python comes with a timestamp object named `datetime.datetime`
+    that can store date and time precise to the microsecond. The `datetime.datetime`
+    object can be either time zone *aware*, in which case it embeds time zone information,
+    or time zone *unaware*, in which case it does not. Unfortunately, the `datetime`
+    API returns a time zone–unaware object by default, as you’ll soon see in [Listing
+    4-1](ch04.xhtml#ch4list1). Let’s look at how to build a default timestamp object
+    and then how to rectify it so that it uses time zones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Building Default datetime Objects**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To build a `datetime` object with the current date and time as values, you can
+    use the `datetime.datetime.utcnow()` function. This function retrieves the date
+    and time for the UTC time zone right now, as shown in [Listing 4-1](ch04.xhtml#ch4list1).
+    To build this same object using the date and time for the time zone of the region
+    the machine is in, you can use the `datetime.datetime.now()` method. [Listing
+    4-1](ch04.xhtml#ch4list1) retrieves the time and date for both UTC and my region’s
+    time zone.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 4-1: Getting the time of the day with datetime*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We import the `datetime` library and define the `datetime` object as using the
+    UTC time zone. This returns a UTC timestamp whose values are year, month, date,
+    hours, minutes, seconds, and microseconds ➊, respectively, in the listing. We
+    can check whether this object has time zone information by checking the `tzinfo`
+    object, and here we’re told that it doesn’t ➋.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We then create the `datetime` object using the `datetime.datetime.now()` method
+    to retrieve the current date and time in the default time zone for the region
+    of the machine:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: This timestamp, too, is returned without any time zone, as we can tell from
+    the absence of the `tzinfo` field ➌—if the time zone information had been present,
+    it would have appeared at the end of the output as something like `tzinfo=<UTC>`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `datetime` API always returns unaware `datetime` objects by default, and
+    since there is no way for you to tell what the time zone is from the output, these
+    objects are pretty useless.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Armin Ronacher, creator of the Flask framework, suggests that an application
+    should always assume the unaware `datetime` objects in Python are UTC. However,
+    as we just saw, this doesn’t work for objects returned by `datetime.datetime.now()`.
+    When you are building datetime objects, I strongly recommend that you always make
+    sure they are time zone aware. That ensures you can always compare your objects
+    directly and check whether they are returned correctly with the information you
+    need. Let’s see how to create time zone–aware timestamps using `tzinfo` objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**BONUS: CONSTRUCT ING A DATETIME OB JECT FROM A DATE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can also build your own `datetime` object with a particular date by passing
+    the values you want for the different components of the day, as shown in [Listing
+    4-2](ch04.xhtml#ch4list2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 4-2: Building your own `timestamp` object*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Time Zone–Aware Timestamps with dateutil**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'There are already many databases of existing time zones, maintained by central
+    authorities such as IANA (Internet Assigned Numbers Authority), which are shipped
+    with all major operating systems. For this reason, rather than creating our own
+    time zone classes and manually duplicating those in each Python project, Python
+    developers rely on the `dateutil` project to obtain `tzinfo` classes. The `dateutil`
+    project provides the Python module `tz`, which makes time zone information available
+    directly, without much effort: the `tz` module can access the operating system’s
+    time zone information, as well as ship and embed the time zone database so it
+    is directly accessible from Python.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can install `dateutil` using `pip` with the command `pip install python-dateutil`.
+    The `dateutil` API allows you to obtain a `tzinfo` object based on a time zone
+    name, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `dateutil.tz.gettz()` method returns an object implementing the `tzinfo`
+    interface. This method accepts various string formats as argument, such as the
+    time zone based on a location (for example, “Europe/Paris”) or a time zone relative
+    to GMT. The `dateutil` time zone objects can be used as `tzinfo` classes directly,
+    as demonstrated in [Listing 4-3](ch04.xhtml#ch4list3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 4-3: Using dateutil objects as tzinfo classes*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As long as you know the name of the desired time zone, you can obtain a `tzinfo`
+    object that matches the time zone you target. The `dateutil` module can access
+    the time zone managed by the operating system, and if that information is for
+    some reason unavailable, will fall back on its own list of embedded time zones.
+    If you ever need to access this embedded list, you can do so via the `datetutil.zoneinfo`
+    module:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: In some cases, your program does not know which time zone it’s running in, so
+    you’ll need to determine it yourself. The `datetutil.tz.gettz()` function will
+    return the local time zone of your computer if you pass no argument to it, as
+    shown in [Listing 4-4](ch04.xhtml#ch4list4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 4-4: Obtaining your local time zone*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see, we pass two dates to `localzone.tzname(datetime.datetime())`
+    separately, and `dateutil` is able to tell us that one is in Central European
+    Summer Time (CEST) and the other is in Central European Time (no summer). If you
+    pass in your current date, you’ll get your own current time zone.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can use objects from the `dateutil` library in `tzinfo` classes without
+    having to bother implementing those yourself in your application. This makes it
+    easy to convert unaware `datetime` objects to aware `datetime` objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**IMPLEMENTING YOUR OWN TIME ZONE CLASSES**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A class exists in Python that allows you to implement time zone classes yourself:
+    the `datetime.tzinfo` class is an abstract class that provides a base for implementing
+    classes representing time zones. If you ever want to implement a class to represent
+    a time zone, you need to use this as the parent class and implement three different
+    methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`utcoffset(dt)`, which must return an offset from UTC in minutes east of UTC
+    for the time zone'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`dst(dt)`, which must return the daylight saving time adjustment in minutes
+    east of UTC for the time zone'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`tzname(dt)`, which must return the name of the time zone as a string'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: These three methods will embed a `tzinfo object`, allowing you to translate
+    any time zone–aware `datetime` to another time zone.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, as mentioned, since time zone databases exist, it’s impractical to
+    implement those time zone classes oneself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Serializing Time Zone–Aware datetime Objects**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You’ll often need to transport a `datetime` object from one point to another,
+    where those different points might not be Python native. The typical case nowadays
+    would be with an HTTP REST API, which must return `datetime` objects serialized
+    to a client. The native Python method named `isoformat` can be used to serialize
+    `datetime` objects for non-Python native points, as shown in [Listing 4-5](ch04.xhtml#ch4list5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 4-5: Serializing a time zone–aware datetime object*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We define a new function called `utcnow` and tell it explicitly to return an
+    object with the UTC time zone ➊. As you can see, the object returned now contains
+    time zone information ➋. We then format the string using the ISO format ➌, ensuring
+    the timestamp also contains some time zone information (the `+00:00` part).
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can see I’ve used the method `isoformat()` to format the output. I recommend
+    that you always format your `datetime` input and output strings using ISO 8601,
+    with the method `datetime.datetime.isoformat()`, to return timestamps formatted
+    in a readable way that includes the time zone information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Your ISO 8601–formatted strings can then be converted to native `datetime.datetime`
+    objects. The `iso8601` module offers only one function, `parse_date`, which does
+    all the hard work of parsing the string and determining the timestamp and time
+    zone values. The `iso8601` module is not provided as a built-in module in Python,
+    so you need to install it using `pip install iso8601`. [Listing 4-6](ch04.xhtml#ch4list6)
+    shows how to parse a timestamp using ISO 8601.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 4-6: Using the iso8601 module to parse an ISO 8601–formatted timestamp*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Listing 4-6](ch04.xhtml#ch4list6), the `iso8601` module is used to construct
+    a `datetime` object from a string. By calling `iso8601.parse_date` on a string
+    containing an ISO 8601–formatted timestamp ➊, the library is able to return a
+    `datetime` object. Since that string does not contain any time zone information,
+    the `iso8601` module assumes that the time zone is UTC. If a time zone contains
+    correct time zone information, the `iso8601` module returns correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using time zone–aware `datetime` objects and using ISO 8601 as the format for
+    their string representation is a perfect solution for most problems around time
+    zone, making sure no mistakes are made and building great interoperability between
+    your application and the outside world.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Solving Ambiguous Times**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are certain cases where the time of the day can be ambiguous; for example
+    during the daylight saving time transition when the same “wall clock” time occurs
+    twice a day. The `dateutil` library provides us with the `is_ambiguous` method
+    to distinguish such timestamps. To show this in action, we’ll create an ambiguous
+    timestamp in [Listing 4-7](ch04.xhtml#ch4list7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 4-7: A confusing timestamp, occurring during the daylight saving time
+    crossover*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the night of October 30, 2017, Paris switched from summer to winter time.
+    The city switched at 3:00 AM, when the time goes back to 2:00 AM. If we try to
+    use a timestamp at 2:30 on that date, there is no way for this object to be sure
+    whether it is after or before the daylight saving time change.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, it is possible to specify which side of the fold a timestamp is on
+    by using the `fold` attribute, added to `datetime` objects from Python 3.6 by
+    PEP 495 (Local Time Disambiguation—*[https://www.python.org/dev/peps/pep-0495/](https://www.python.org/dev/peps/pep-0495/)*).
+    This attribute indicates which side of the fold the datetime is on, as demonstrated
+    in [Listing 4-8](ch04.xhtml#ch4list8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Listing 4-8: Disambiguating the ambiguous timestamp*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ll need to use this in only very rare cases, since ambiguous timestamps
+    occur only in a small window. Sticking to UTC is a great workaround to keep life
+    simple and avoid running into time zone issues. However, it is good to know that
+    the `fold` attribute exists and that `dateutil` is able to help in such cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In this chapter, we have seen how crucial it is to carry time zone information
+    in time stamps. The built-in `datetime` module is not complete in this regard,
+    but the `dateutil` module is a great complement: it allows us to get `tzinfo`-compatible
+    objects that are ready to be used. The `dateutil` module also helps us solve subtle
+    issues such as daylight saving time ambiguity.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ISO 8601 standard format is an excellent choice for serializing and unserializing
+    timestamps because it is readily available in Python and compatible with any other
+    programming language.
+  prefs: []
+  type: TYPE_NORMAL

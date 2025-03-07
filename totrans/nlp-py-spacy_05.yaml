@@ -1,0 +1,614 @@
+- en: '**5'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: WORKING WITH WORD VECTORS**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Image](../Images/comm1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Word vectors are the series of real numbers that represent the meanings of natural
+    language words. As you learned in [Chapter 1](../Text/ch01.xhtml#ch01), they allow
+    machines to understand human language. In this chapter, you’ll use word vectors
+    to calculate the semantic similarity of different texts, which will allow you
+    to, for example, classify those texts based on the topics they cover.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ll start by taking a conceptual look at word vectors so you can get an idea
+    of how to mathematically calculate the semantic similarity between the words represented
+    in the form of vectors. Then you’ll learn how machine learning algorithms generate
+    the word vectors implemented in spaCy models. You’ll use spaCy’s *similarity method*,
+    which compares the word vectors of container objects to determine the closeness
+    of their meanings. You’ll also learn how to use word vectors in practice and perform
+    preprocessing steps, such as choosing keywords, to make your operations more efficient.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Understanding Word Vectors**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When building statistical models, we map words to vectors of real numbers that
+    reflect the words’ semantic similarity. You can imagine a word vector space as
+    a cloud in which the vectors of words with similar meanings are located nearby.
+    For instance, the vector representing the word “potato” should be closer to the
+    vector of the word “carrot” than to that of the word “crying.” To generate these
+    vectors, we must be able to encode the meaning of these words. There are a few
+    approaches to encoding meaning, which we’ll outline in this section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Defining Meaning with Coordinates***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'One way to generate meaningful word vectors is by assigning an object or category
+    from the real world to each coordinate of a word vector. For example, suppose
+    you’re generating word vectors for the following words: Rome, Italy, Athens, and
+    Greece. The word vectors should mathematically reflect the fact that Rome is the
+    capital of Italy and is related to Italy in a way that Athens is not. At the same
+    time, they should reflect the fact that Athens and Rome are capital cities, and
+    that Greece and Italy are countries. [Table 5-1](../Text/ch05.xhtml#ch05tab01)
+    illustrates what this vector space might look like in the form of a matrix.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 5-1:** A Simplified Word Vector Space'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | **Country** | **Capital** | **Greek** | **Italian** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Italy | 1 | 0 | 0 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Rome | 0 | 1 | 0 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Greece | 1 | 0 | 1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Athens | 0 | 1 | 1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: We’ve distributed the meaning of each word between its coordinates in a four-dimensional
+    space, representing the categories “Country,” “Capital,” “Greek,” and “Italian.”
+    In this simplified example, a coordinate value can be either 1 or 0, indicating
+    whether or not a corresponding word belongs to the category.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once you have a vector space in which vectors of numbers capture the meaning
+    of corresponding words, you can use vector arithmetic on this vector space to
+    gain insight into a word’s meaning. To find out which country Athens is the capital
+    of, you could use the following equation, where each token stands for its corresponding
+    vector and X is an unknown vector:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This equation expresses an analogy in which X represents the word vector that
+    has the same relationship to `Athens` as `Italy` has to `Rome`. To solve for X,
+    we can rewrite the equation like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: We first subtract the vector `Rome` from the vector `Italy` by subtracting the
+    corresponding vector elements. Then we add the sum of the resulting vector and
+    the vector `Athens`. [Table 5-2](../Text/ch05.xhtml#ch05tab02) summarizes this
+    calculation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 5-2:** Performing a Vector Math Operation on a Word Vector Space'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  |  | **Country** | **Capital** | **Greek** | **Italian** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ― | Italy | 1 | 0 | 0 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| + | Rome | 0 | 1 | 0 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Athens | 0 | 1 | 1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Greece | 1 | 0 | 1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: By subtracting the word vector for Rome from the word vector for Italy and then
+    adding the word vector for Athens, we get a vector that is equal to the vector
+    `Greece`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Using Dimensions to Represent Meaning***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Although the vector space we just created had only four categories, a real-world
+    vector space might require tens of thousands. A vector space of this size would
+    be impractical for most applications, because it would require a huge word-embedding
+    matrix. For example, if you had 10,000 categories and 1,000,000 entities to encode,
+    you’d need a 10,000 × 1,000,000 embedding matrix, making operations on it too
+    time-consuming. The obvious approach to reducing the size of the embedding matrix
+    is to reduce the number of categories in the vector space.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instead of using coordinates to represent all categories, a real-world implementation
+    of a word vector space uses the distance between vectors to quantify and categorize
+    semantic similarities. The individual dimensions typically don’t have inherent
+    meanings. Instead, they represent locations in the vector space, and the distance
+    between vectors indicates the similarity of the corresponding words’ meanings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is a fragment of the 300-dimensional word vector space extracted
+    from the *fastText,* a word vector library, which you can download at *[https://fasttext.cc/docs/en/english-vectors.html](https://fasttext.cc/docs/en/english-vectors.html)*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Each line contains a word represented as a vector of real numbers in multidimensional
+    space. Graphically, we can represent a 300-dimensional vector space like this
+    one with either a 2D or 3D projection. To prepare such a projection, we can use
+    first two or three principal coordinates of a vector, respectively. [Figure 5-1](../Text/ch05.xhtml#ch05fig01)
+    shows vectors from a 300-dimensional vector space in a 2D projection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](../Images/fig5-1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 5-1: A fragment of a 2D projection of a multidimensional vector space*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One interesting detail you might notice here is that the lines connecting Greece
+    with Athens and Italy with Rome, respectively, are almost parallel. Their lengths
+    also look comparable. In practice, this means that if you have three out of the
+    above four vectors, you can calculate an approximate location of the missing one,
+    since you know where to shift the vector and how far.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The vectors in the diagram illustrate a country-capital relation, but they could
+    easily have another type of relation, such as male-female, verb tense, and so
+    on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***The Similarity Method***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In spaCy, every type of container object has a *similarity method* that allows
+    you to calculate a semantic similarity estimate between two container objects
+    of any type by comparing their word vectors. To calculate the similarity of spans
+    and documents, which don’t have their own word vectors, spaCy averages the word
+    vectors of the tokens they contain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**NOTE**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*spaCy’s small models (those whose model size indicator is %`sm`) don’t include
+    word vectors. You can still use the similarity method with these models to compare
+    tokens, spans, and documents, but the results won’t be as accurate.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can calculate the semantic similarity of two container objects even if the
+    two objects are different. For example, you can compare a Token object with a
+    Span object, a Span object with a Doc object, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following example computes how similar a Span object is to a Doc object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: This code calculates a semantic similarity estimate between the sentence “I
+    want a green apple.” and the phrase “a green apple” derived from this same sentence.
+    As you can see, the computed degree of similarity is high enough to consider the
+    content of two objects similar (the degree of similarity ranges from 0 to 1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Not surprisingly, the `similarity()` method returns 1 when you compare an object
+    with itself:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also compare a Doc object with a slice from another Doc object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we compare the sentence “I like red oranges.” stored in `doc2` with the
+    span “a green apple” extracted from `doc`. In this case, the degree of similarity
+    is not so high this time. Yes, oranges and apples are both fruits (the similarity
+    method recognizes this fact), but the verbs “want” and “like” express different
+    states of being.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can also compare two tokens. In the following example, we compare the Token
+    object “oranges” to a Span object containing a single token “apple.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: First, we explicitly convert the Span object containing a single token “oranges”
+    to a Token object by referring to the first element in the span. Then we calculate
+    how similar it is to the span “apple.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `similarity()` method can recognize words that belong to the same or similar
+    categories and that often appear in related contexts, showing a high level of
+    similarity for such words.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Choosing Keywords for Semantic Similarity Calculations***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The similarity method will calculate semantic similarity for you, but for the results
+    of that calculation to be useful, you need to choose the right keywords to compare.
+    To understand why, consider the following text snippet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: We might classify this text in a variety of ways depending on the set of categories
+    we want to use. If, for example, we’re searching for texts about highest plants
+    on the planet, the phrases “tallest trees” and “in the world” will be the key
+    ones. Comparing these phrases with the search phrases “highest plants” and “on
+    the planet” should show a high level of the semantic similarity. We can do this
+    by extracting noun chunks using a Doc object’s `doc.noun_chunk` property and then
+    checking the similarity of those noun chunks and the search phrases using the
+    similarity method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But if we’re looking for texts about places in the world, “California” will
+    be the keyword. Of course, we don’t know in advance which geopolitical name might
+    occur in a text: it could be California or, say, Amazonia. But whatever it is,
+    it should be semantically similar to a word like “geography,” which we can compare
+    with the text’s other nouns (or, even better, with its named entities only). If
+    we’re able to determine that there’s a high level of similarity, we can assume
+    that the named entity in question represents a geopolitical name. (We might also
+    extract the `token.ent_type` attribute of a Token object to do this, as described
+    in [Chapter 2](../Text/ch02.xhtml#ch02). But we wouldn’t be able to use named
+    entity recognition to check the similarity of words that aren’t named entities,
+    say, fruits.)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Installing Word Vectors**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If a spaCy model is installed in your Python environment, you can start using
+    word vectors right away. You can also install a third-party word vector package.
+    Various statistical models use different word vectors, so the results of your
+    operations will differ slightly based on the model you’re using. You can try several
+    models to determine which one works better in your particular application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Taking Advantage of Word Vectors That Come with spaCy Models***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Word vectors come as part of many spaCy models. For example, `en_vectors_web_lg`
+    includes more than one million unique word vectors defined on a 300-dimensional
+    vector space. Check out *[https://github.com/explosion/spacy-models/releases/](https://github.com/explosion/spacy-models/releases/)*
+    for details on a particular model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Typically, small models (those whose names end with `sm`) don’t contain word
+    vectors. Instead, they come with context-sensitive *tensors*, which still allow
+    you to work with the similarity methods to compare tokens, spans, and documents—although
+    at the expense of accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To follow along with the examples given in this chapter, you can use any spaCy
+    model, even small ones. But you’ll get more accurate results if you install a
+    larger model. For details on how to install a spaCy model, refer to “[Installing
+    Statistical Models for spaCy](../Text/ch02.xhtml#lev14)” on [page 16](../Text/ch02.xhtml#page_16).
+    Note that you might have more than one model installed in your environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Using Third-Party Word Vectors***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You can also use third-party packages of word vectors with spaCy. You can check
+    whether a third-party will work better for your application than native word vectors
+    available in a spaCy model. For example, you can use a fastText pretrained model
+    with English word vectors, which you can download at *[https://fasttext.cc/docs/en/english-vectors.html](https://fasttext.cc/docs/en/english-vectors.html)*.
+    The name of a package will identify the size of the package and word vectors,
+    and the kind of data used to train the word vectors. For example, *wiki-news-300d-1M.vec.zip*
+    indicates that it contains one million 300-dimensional word vectors trained on
+    Wikipedia and the *statmt.org* news dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After downloading a package, unzip it, and then create a new model from the
+    vectors in the package that you can use with spaCy. To do this, navigate to the
+    folder where you saved the package, and then use the `init-model` command line
+    utility, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The command converts the vectors taken from the *wiki-news-300d-1M.vec* file
+    into spaCy’s format and creates the new model directory */tmp/en_vectors_wiki_lg*
+    for them. If everything goes well, you’ll see the following messages:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once you’ve created the model, you can load it like a regular spaCy model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then you can create a Doc object as you normally would:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Unlike a regular spaCy model, a third-party model converted for use in spaCy
+    might not support some of spaCy’s operations against text contained in a doc object.
+    For example, if you try to shred a doc into sentences using `doc.sents`, you’ll
+    get the following error: `ValueError: [E030] Sentence boundaries unset...`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Comparing spaCy Objects**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let’s use word vectors to calculate the similarity of container objects, the
+    most common task for which we use word vectors. In the rest of this chapter, we’ll
+    explore some scenarios in which you’d want to determine the semantic similarity
+    of linguistic units.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Using Semantic Similarity for Categorization Tasks***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Determining two objects’ syntactic similarity can help you sort texts into
+    categories or pick out only the relevant texts. For example, suppose you’re sorting
+    through user comments posted to a website to find all the comments related to
+    the word “fruits.” Let’s say you have the following utterances to evaluate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can easily recognize that only the second sentence is directly related to
+    fruits because it contains the word “citrus.” But to pick out this sentence programmatically,
+    you’ll have to compare the word vector for the word “fruits” with word vectors
+    in the sample sentences.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s start with the simplest but least successful way of doing this task:
+    comparing “fruits” to each of the sentences. As stated earlier, spaCy determines
+    the similarity of two container objects by comparing their corresponding word
+    vectors. To compare a single token with an entire sentence, spaCy averages the
+    sentence’s word vectors to generate an entirely new vector. The following script
+    compares each of the preceding sentence samples with the word “fruits”:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: We first create a Token object for the word “fruits” ➊. Then we apply the pipeline
+    to the sentences we’re categorizing, creating a single Doc object to hold all
+    of them ➋. We shred the doc into sentences ➌, and then print each of the sentences
+    and their semantic similarity to the token “fruits,” which we acquire using the
+    token object’s similarity method ➍.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output should look something like this (although the actual figures will
+    depend on the model you use):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: The degree of similarity between the word “fruits” and the first sentence is
+    very small, indicating that the sentence has nothing to do with fruits. The second
+    sentence—the one that includes the word “citrus”—is the most closely related to
+    “fruits,” meaning the script correctly identified the relevant sentence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But notice that the script also identified the third sentence as being somehow
+    related to fruits, probably because it includes the word “tree,” and fruits grow
+    on trees. It would be naive to think that the similarity measuring algorithm “knows”
+    that orange and citrus are fruits. All it knows is that these words (“orange”
+    and “citrus”) often share the same context with word “fruit” and therefore they’ve
+    been put close to it in the vector space. But the word “tree” can also often be
+    found in the same context as the word “fruit.” For example, the phrase “fruit
+    tree” is not uncommon. For that reason the level of similarity calculated between
+    “fruits” (or “fruit” as its lemma) and “tree” is close to the result we got for
+    “citrus” and “fruits.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s another problem with this approach to categorizing texts. In practice,
+    of course, you might sometimes have to deal with texts that are much larger than
+    the sample texts used in this section. If the text you’re averaging is very large,
+    the most important words might have little to no effect on the syntactic similarity
+    value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To get more accurate results from the similarity method, we’ll need to perform
+    some preparations on a text. Let’s look at how we can improve the script.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Extracting Nouns as a Preprocessing Step***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A better technique for performing categorization would be to extract the most
+    important words and compare only those. Preparing a text for processing in this
+    way is called *preprocessing*, and it can help make your NLP operations more successful.
+    For example, instead of comparing the word vectors for the entire objects, you
+    could try comparing the word vectors for certain parts of speech. In most cases,
+    you’ll focus on nouns—whether they act as subjects, direct objects, or indirect
+    objects—to recognize the meaning conveyed in the text in which they occur. For
+    example, in the sentence “Nearly all wild lions live in Africa,” you’ll probably
+    focus on lions, Africa, or lions in Africa. Similarly, in the sentence about fruits,
+    we focused on picking out the noun “citrus.” In other cases, you’ll need other
+    words, like verbs, to decide what a text is about. Suppose you run an agricultural
+    produce business and must classify offers from those who produce, process, and
+    sell farm products. You often see sentences like, “We grow vegetables,” or “We
+    take tomatoes for processing.” In this example, the verbs are just as important
+    as nouns in the utterances in the previous examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s modify the script on [page 70](../Text/ch05.xhtml#page_70). Instead of
+    comparing “fruits” to entire sentences, we’ll compare it to the sentences’ nouns
+    only:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: We start by defining the token “fruits,” which is then used for a series of
+    comparisons ➊. Iterating over the tokens in each sentence ➋, we extract the nouns
+    and store them in a Python list ➌. Next, we join the nouns in the list into a
+    plain string ➍, and then convert that string into a Doc object ➎. We then compare
+    this Doc with the token “fruits” to determine their degree of semantic similarity.
+    We store each token’s syntactic similarity value in a Python dictionary ➏, which
+    we finally print out.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script’s output should look something like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you compare these figures with the results of the previous script, you’ll
+    notice that this time the level of the similarity with the word “fruits” is higher
+    for each sentence. But the overall results look similar: the similarity of the
+    first sentence is the lowest, whereas the similarity of the other two are much
+    higher.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Try This***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the previous example, comparing “fruits” to nouns only, you improved the
+    results of the similarity calculations by taking into account only the words that
+    matter most (nouns, in this case). You compared the word “fruits” with all the
+    nouns extracted from each sentence, combined. Taking it one step further, you
+    could look at how each of these nouns is semantically related to the word “fruits”
+    to find out which one shows the highest level of similarity. This can be useful
+    in evaluating the overall similarity of the document to the word “fruits.” To
+    accomplish this, you need to modify the previous script so it determines the similarity
+    between the token “fruits” and each of the nouns in a sentence, finding the noun
+    that shows the highest level of similarity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '***Extracting and Comparing Named Entities***'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In some cases, instead of extracting every noun from the texts you’re comparing,
+    you might want to extract a certain kind of noun only, such as named entities.
+    Let’s say you’re comparing the following texts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: “Google Search, often referred to as simply Google, is the most used search
+    engine nowadays. It handles a huge number of searches each day.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: “Microsoft Windows is a family of proprietary operating systems developed and
+    sold by Microsoft. The company also produces a wide range of other software for
+    desktops and servers.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: “Titicaca is a large, deep, mountain lake in the Andes. It is known as the highest
+    navigable lake in the world.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Ideally, your script should recognize that the first two texts are about large
+    technology companies, but the third text isn’t. But comparing all the nouns in
+    this text wouldn’t be very helpful, because many of them, such as “number” in
+    the first sentence, aren’t relevant to the context. The differences between the
+    sentences involve the following words: “Google,” “Search,” “Microsoft,” “Windows,”
+    “Titicaca,” and “Andes.” spaCy recognizes all of these as named entities, which
+    makes it a breeze to find and extract them from a text, as illustrated in the
+    following script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: We group the Docs with the sample texts into a list to make it possible to iterate
+    over them in a loop ➊. We define a Python dictionary to store the keywords for
+    each text ➋. In a loop iterating over the Docs ➌, we extract these keywords in
+    a separate list for each text, selecting only the words marked as named entities
+    ➍. Then we print out the list to see what it contains ➎. Next, we convert this
+    list into a plain string ➏ to which we then apply the pipeline, converting it
+    to a Doc object ➐. We then append the Doc to the `spans` dictionary defined earlier
+    ➑.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The script should produce the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now we can see the words in each text whose vectors we’ll compare.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we call `similarity()` on these spans and print the results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This time the output should look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: These figures indicate that the highest level of similarity exists between the
+    first and second texts, which are both about American IT companies. How can word
+    vectors “know” about this fact? They probably know because the words “Google”
+    and “Microsoft” have been found more often in the same texts of the training text
+    corpus rather than in the company of the words “Titicaca” and “Andes.”
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Summary**'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, you worked with word vectors, which are vectors of real numbers
+    that represent the meanings of words. These representations let you use math to
+    determine the semantic similarity of linguistic units, a useful task for categorizing
+    texts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But the math approach might not work as well when you’re trying to determine
+    the similarity of two texts without applying any preliminary steps to those texts.
+    By applying preprocessing, you can reduce the text to the words that are most
+    important in figuring out what the text is about. In particularly large texts,
+    you might pick out the named entities found in it, because they most likely best
+    describe the text’s category.
+  prefs: []
+  type: TYPE_NORMAL

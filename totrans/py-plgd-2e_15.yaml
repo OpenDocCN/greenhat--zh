@@ -1,0 +1,4326 @@
+- en: '[11](nsp-venkitachalam503045-0008.xhtml#rch11)'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Volume Rendering
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-circle-image.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Magnetic resonance imaging (MRI) and computed tomography (CT) scans are diagnostic
+    processes that create *volumetric data*, data that consists of a set of 2D images
+    showing cross sections through a 3D volume. *Volume rendering* is a computer graphics
+    technique used to construct 3D images from this type of volumetric data. Although
+    volume rendering is commonly used to analyze medical scans, it can also be used
+    to create 3D scientific visualizations in academic disciplines such as geology,
+    archaeology, and molecular biology.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The data captured by MRI and CT scans typically follows the form of a 3D grid
+    of dimensions *N*[x]×*N*[y]×*N*[z]. In other words, there are *N*[z] 2D “slices,”
+    where each slice is an image of size *N*[x]×*N*[y]. Volume rendering algorithms
+    are used to display the collected slice data with some type of transparency, and
+    various techniques are used to accentuate the parts of the rendered volume that
+    are of interest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this project, you’ll look at a volume rendering called *volume ray casting*,
+    which takes full advantage of the graphics processing unit (GPU) to perform computations
+    using OpenGL Shading Language (GLSL) shaders. Your code executes for every pixel
+    onscreen and leverages the GPU, which is designed to do parallel computations
+    efficiently. You’ll use a folder of 2D images consisting of slices from a 3D data
+    set to construct a volume-rendered image using the volume ray casting algorithm.
+    You’ll also implement a method to show 2D slices of the data in the x-, y-, and
+    z-directions so users can scroll through the slices using the arrow keys. Keyboard
+    commands will let the user toggle between the 3D rendering and the 2D slices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here are some of the topics covered in this project:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Using GLSL for GPU computations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Creating vertex and fragment shaders
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Representing 3D volumetric data and using the volume ray casting algorithm
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Using `numpy` arrays for 3D transformation matrices
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[How It Works](nsp-venkitachalam503045-0008.xhtml#rah1301)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are various ways to render a 3D data set. In this project, you’ll use
+    the volume ray casting method, which is an *image*-*based* rendering technique
+    used to generate the final image from the 2D slices, pixel by pixel. In contrast,
+    typical 3D rendering methods are *object based*: they begin with a 3D object representation
+    and then apply transformations to generate the pixels in the projected 2D image.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the volume ray casting method that you’ll use in this project, for each pixel
+    in the output image, a ray is shot into the discrete 3D volumetric data set, which
+    is typically represented as a cuboid. As the ray passes through the volume, the
+    data is sampled at regular intervals, and the samples are combined, or *composited*,
+    to compute the color value or intensity of the final image. (You might think of
+    this process as similar to stacking a bunch of transparencies on top of each other
+    and holding them up against a bright light to see a blend of all the sheets.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: While volume ray casting rendering implementations typically use techniques
+    such as applying gradients to improve the appearance of the final render, filtering
+    to isolate 3D features, and using spatial optimization techniques to improve speed,
+    you’ll just implement the basic ray casting algorithm and composite the final
+    image by X-ray casting. (My implementation is largely based on the seminal paper
+    on this topic by Kruger and Westermann, published in 2003.[1](nsp-venkitachalam503045-0025.xhtml#fn4))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Data Format](nsp-venkitachalam503045-0008.xhtml#rbh1301)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For this project, you’ll use medical data from 3D scans from the Stanford Volume
+    Data Archive.[2](nsp-venkitachalam503045-0025.xhtml#fn5) This archive offers a
+    few excellent 3D medical data sets (both CT and MRI) of TIFF images, one for each
+    2D cross section of the volume. You’ll read a folder of these images into an OpenGL
+    3D texture; this is sort of like stacking a set of 2D images to form a cuboid,
+    as shown in [Figure 11-1](nsp-venkitachalam503045-0025.xhtml#fig11-1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f11001.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-1: Building 3D volumetric data from 2D slices'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recall from [Chapter 9](nsp-venkitachalam503045-0023.xhtml#ch09) that a 2D texture
+    in OpenGL is addressed with a 2D coordinate (*s*, *t*). Similarly, a 3D texture
+    is addressed using a 3D texture coordinate of the form (*s*, *t*, *p*). As you’ll
+    see, storing the volumetric data as a 3D texture allows you to access the data
+    quickly and provides you with interpolated values required by your ray casting
+    scheme.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Ray Generation](nsp-venkitachalam503045-0008.xhtml#rbh1302)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Your goal in this project is to generate a perspective projection of the 3D
+    volumetric data, as shown in [Figure 11-2](nsp-venkitachalam503045-0025.xhtml#fig11-2).
+    The figure shows the OpenGL view frustum, as discussed in [Chapter 9](nsp-venkitachalam503045-0023.xhtml#ch09).
+    Specifically, it shows how a ray from the eye enters this frustum at the near
+    plane, passes through the cubic volume (which contains the volumetric data), and
+    exits from the rear at the far plane.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f11002.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-2: A perspective projection of 3D volumetric data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To implement ray casting, you need to generate rays that go into the volume.
+    For each pixel in the output window shown in [Figure 11-2](nsp-venkitachalam503045-0025.xhtml#fig11-2),
+    you generate a vector *R* that goes into the volume you consider a unit cube (which
+    I’ll refer to as the *color cube*) defined between the coordinates (0, 0, 0) and
+    (1, 1, 1). You color each point inside this cube with the RGB values equal to
+    the 3D coordinates of the cube. The origin is colored (0, 0, 0), or black; the
+    (1, 0, 0) corner is red; and the point on the cube diagonally opposite the origin
+    is colored (1, 1, 1), or white. [Figure 11-3](nsp-venkitachalam503045-0025.xhtml#fig11-3)
+    shows this cube.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f11003.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-3: A color cube'
+  prefs: []
+  type: TYPE_NORMAL
+- en: NOTE In OpenGL, a color can be represented as a strip of 8-bit unsigned values
+    (*r*, *g*, *b*), where *r*, *g*, and *b* are in the range [0, 255]. It can also
+    be represented as a triplet of 32-bit floating-point values (*r*, *g*, *b*), where
+    *r*, *g*, and *b* are in the range [0.0, 1.0]. These representations are equivalent.
+    For example, the red color (255, 0, 0) in the former is the same as (1.0, 0.0,
+    0.0) in the latter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To draw the cube, first draw its six faces using the OpenGL primitive `GL_TRIANGLES`.
+    Then color each vertex and use the interpolation provided by OpenGL when it rasterizes
+    polygons to take care of the colors between each vertex. For example, [Figure
+    11-4(a)](nsp-venkitachalam503045-0025.xhtml#fig11-4) shows the three front-faces
+    of the cube. The back-faces of the cube are drawn in [Figure 11-4(b)](nsp-venkitachalam503045-0025.xhtml#fig11-4)
+    by setting OpenGL to cull front-faces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f11004.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-4: The color cube used to compute rays'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you subtract the colors in [Figure 11-4(a)](nsp-venkitachalam503045-0025.xhtml#fig11-4)
+    from [Figure 11-4(b)](nsp-venkitachalam503045-0025.xhtml#fig11-4) by subtracting
+    (*r*, *g*, *b*)[front] from (*r*, *g*, *b*)[back], you actually compute a set
+    of vectors that go from the front to the back of the cube because each color (*r*, *g*, *b*)
+    on this cube is the same as the 3D coordinate at that color’s location. [Figure 11-4(c)](nsp-venkitachalam503045-0025.xhtml#fig11-4)
+    shows the result. (Negative values have been flipped to positive for the purposes
+    of this illustration because negative numbers cannot be displayed as colors directly.)
+    Reading the color value (*r*, *g*, *b*) of a pixel, as shown in [Figure 11-4(c)](nsp-venkitachalam503045-0025.xhtml#fig11-4),
+    gives the (*r*[x], *r*[y], *r*[z]) coordinates for the ray passing into the volume
+    at that point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once you have the casting rays, you render them into an image or 2D texture
+    for later use with OpenGL’s frame buffer object (FBO) feature. After this texture
+    is generated, you can access it inside the shaders that you’ll use to implement
+    the ray casting algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ray Casting in the GPU
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To implement the ray casting algorithm, you first draw the back-faces of the
+    color cube into an FBO. Next, the front-faces are drawn on the screen. The bulk
+    of the ray casting algorithm happens in the fragment shader for this second rendering,
+    which runs for each pixel in the output. The ray is computed by subtracting the
+    front-face color of the incoming fragment from the back-face color of the color
+    cube, which is read in from a texture. The computed ray is then used to accumulate
+    and compute the final pixel value using the 3D volumetric texture data, available
+    within the shader.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Showing 2D Slices
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In addition to the 3D rendering, you show 2D slices of the data by extracting
+    the 2D cross section from the 3D data perpendicular to the x-, y-, or z-axis and
+    applying that as a texture on a quad. Because you store the volume as a 3D texture,
+    you can easily get the required data by specifying the texture coordinates (*s*,
+    *t*, *p*). OpenGL’s built-in texture interpolation gives you the texture values
+    anywhere inside the 3D texture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The OpenGL Window](nsp-venkitachalam503045-0008.xhtml#rbh1303)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As in your other OpenGL projects, this project uses the GLFW library to display
+    the OpenGL window. You’ll use handlers for drawing, for resizing the window, and
+    for keyboard events. You’ll use keyboard events to toggle between volume and slice
+    rendering, as well as for rotating and slicing through the 3D data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Requirements](nsp-venkitachalam503045-0008.xhtml#rah1302)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You’ll use `PyOpenGL`, a popular Python binding for OpenGL, for rendering. You’ll
+    also use the Python Imaging Library (PIL) to load the 2D images from the volumetric
+    data set, and you’ll use `numpy` arrays to represent 3D coordinates and transformation
+    matrices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Code](nsp-venkitachalam503045-0008.xhtml#rah1303)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You’ll begin by generating a 3D texture from the volumetric data read in from
+    the image files. Next, you’ll look at a color cube technique for generating rays
+    from the eye that point into the volume, which is a key concept in implementing
+    the volume ray casting algorithm. You’ll look at how to define the cube geometry
+    as well as how to draw the back- and front-faces of this cube. You’ll then explore
+    the volume ray casting algorithm and the associated vertex and fragment shaders.
+    Finally, you’ll learn how to implement 2D slicing of the volumetric data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This project has seven Python files:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glutils.py Contains the utility methods for OpenGL shaders, transformations,
+    and so on
+  prefs: []
+  type: TYPE_NORMAL
+- en: makedata.py Contains utility methods for creating volumetric data for testing
+  prefs: []
+  type: TYPE_NORMAL
+- en: raycast.py Implements the `RayCastRender` class for ray casting
+  prefs: []
+  type: TYPE_NORMAL
+- en: raycube.py Implements the `RayCube` class for use in `RayCastRender`
+  prefs: []
+  type: TYPE_NORMAL
+- en: slicerender.py Implements the `SliceRender` class for 2D slicing of volumetric
+    data
+  prefs: []
+  type: TYPE_NORMAL
+- en: volreader.py Contains the utility method to read volumetric data into the OpenGL
+    3D texture
+  prefs: []
+  type: TYPE_NORMAL
+- en: volrender.py Contains the main methods that create the GLFW window and the renderers
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll cover all but two of these files in this chapter. The *makedata.py* file
+    lives with the other project files for this chapter at [https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender).
+    The *glutils.py* file can be downloaded from [https://github.com/mkvenkit/pp2e/tree/main/common](https://github.com/mkvenkit/pp2e/tree/main/common).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Generating a 3D Texture](nsp-venkitachalam503045-0008.xhtml#rbh1304)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The first step is to read the volumetric data from a folder containing images,
+    as shown in the following code. To see the complete *volreader.py* code, skip
+    ahead to [“The Complete 3D Texture Code”](nsp-venkitachalam503045-0025.xhtml#ah1307)
+    on [page 241](nsp-venkitachalam503045-0025.xhtml#p241). You can also find the
+    *volreader.py* file at [https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender).
+    Note that the `loadTexture()` function in this file is used to open an image file,
+    read the contents, and create an OpenGL texture object out of it, which is subsequently
+    used in rendering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def loadVolume(dirName):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""read volume from directory as a 3D texture"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# list images in directory'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ files = sorted(os.listdir(dirName))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print(''loading images from: %s'' % dirName)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: imgDataList = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: count = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: width, height = 0, 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for file in files:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ file_path = os.path.abspath(os.path.join(dirName, file))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'try:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# read image'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ img = Image.open(file_path)
+  prefs: []
+  type: TYPE_NORMAL
+- en: imgData = np.array(img.getdata(), np.uint8)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# check if all images are of the same size'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❹ if count is 0:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: width, height = img.size[0], img.size[1]
+  prefs: []
+  type: TYPE_NORMAL
+- en: imgDataList.append(imgData)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❺ if (width, height) == (img.size[0], img.size[1]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: imgDataList.append(imgData)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('mismatch')
+  prefs: []
+  type: TYPE_NORMAL
+- en: raise RunTimeError("image size mismatch")
+  prefs: []
+  type: TYPE_NORMAL
+- en: count += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# print img.size'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❻ except:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# skip'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print(''Invalid image: %s'' % file_path)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# load image data into single array'
+  prefs: []
+  type: TYPE_NORMAL
+- en: depth = count
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❼ data = np.concatenate(imgDataList)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print(''volume data dims: %d %d %d'' % (width, height, depth))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `loadVolume()` method first lists the files in the given directory using
+    the `listdir()` method from the `os` module ❶. Then you iterate through the image
+    files themselves, loading them one at a time. To do this, you append the current
+    filename to the directory using `os.path.abspath()` and `os.path.join()` ❷, eliminating
+    the need to deal with relative filepaths and operating system–specific path conventions.
+    (You often see this useful idiom in Python code that traverses files and directories.)
+    Next, you use the `Image` class from the PIL to load the current image into an
+    8-bit `numpy` array ❸. If the file specified isn’t an image or if the image fails
+    to load, an exception is thrown, which you catch by printing an error ❻.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because you’re loading these image slices into a 3D texture, you need to ensure
+    they all have the same dimensions (width × height), which you confirm at ❹ and
+    ❺. You store the dimensions for the first image and compare them against new incoming
+    images. Once all the images are loaded into individual arrays, you create the
+    final array containing the 3D data by joining these arrays using the `concatenate()`
+    method from `numpy` ❼.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `loadVolume()` function continues by loading the array of 3D image data
+    into an OpenGL texture:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# load data into 3D texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ texture = glGenTextures(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_3D, texture)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ glTexImage3D(GL_TEXTURE_3D, 0, GL_RED,
+  prefs: []
+  type: TYPE_NORMAL
+- en: width, height, depth, 0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_RED, GL_UNSIGNED_BYTE, data)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# return texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ return (texture, width, height, depth)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here you create an OpenGL texture ❶ and set parameters for filtering and unpacking.
+    Then you load the 3D data array into the OpenGL texture ❷. The format used here
+    is `GL_RED`, and the data format is `GL_UNSIGNED_BYTE` because you have only one
+    8-bit value associated with each pixel in the data. Finally, you return the OpenGL
+    texture ID and the dimensions of the 3D texture ❸.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Generating Rays](nsp-venkitachalam503045-0008.xhtml#rbh1305)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The code for generating the rays is encapsulated in a class called `RayCube`.
+    This class is responsible for drawing the color cube and has methods to draw the
+    back-faces of the cube to an FBO or texture and to draw the front-faces of the
+    cube to the screen. To see the complete *raycube.py* code, skip ahead to [“The
+    Complete Ray Generation Code”](nsp-venkitachalam503045-0025.xhtml#ah1308) on [page
+    242](nsp-venkitachalam503045-0025.xhtml#p242). You can also find the *raycube.py*
+    file at [https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, let’s define the shaders used by this class. The shaders will be compiled
+    as part of the `RayCube` class’s constructor:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ strVS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 410 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: layout(location = 1) in vec3 cubePos;
+  prefs: []
+  type: TYPE_NORMAL
+- en: layout(location = 2) in vec3 cubeCol;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uMVMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uPMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec4 vColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set back-face color
+  prefs: []
+  type: TYPE_NORMAL
+- en: vColor = vec4(cubeCol.rgb, 1.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // transformed position
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec4 newPos = vec4(cubePos.xyz, 1.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set position
+  prefs: []
+  type: TYPE_NORMAL
+- en: gl_Position = uPMatrix * uMVMatrix * newPos;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ strFS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 410 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: in vec4 vColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec4 fragColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fragColor = vColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You define the vertex shader used by the `RayCube` class ❶. This shader has
+    two input attributes, `cubePos` and `cubeCol`, which are used to access the position
+    and color values of the vertices, respectively. The modelview and projection matrices
+    are passed in with the uniform variables `uMVMatrix` and `uPMatrix`, respectively.
+    The `vColor` variable is declared as output because it needs to be passed on to
+    the fragment shader, where it will be interpolated. The fragment shader ❷ sets
+    the fragment color to the (interpolated) value of the incoming `vColor` set in
+    the vertex shader.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Defining the Color Cube Geometry
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Now let’s look at the geometry of the color cube, defined in the `RayCube`
+    class’s constructor:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class RayCube:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, width, height):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: --`snip`--
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# cube vertices'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ vertices = numpy.array([
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 0.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 1.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 1.0, 1.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '], numpy.float32)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# cube colors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ colors = numpy.array([
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 0.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 1.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 1.0, 1.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '], numpy.float32)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# individual triangles'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ indices = numpy.array([
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4, 5, 7,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7, 5, 6,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5, 1, 6,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6, 1, 2,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1, 0, 2,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2, 0, 3,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0, 4, 3,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3, 4, 7,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6, 2, 7,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7, 2, 3,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4, 0, 5,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5, 0, 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: '], numpy.int16)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You define the cube geometry ❶ and the colors ❷ as `numpy` arrays. Notice that
+    the values in these two definitions are the same. As we discussed earlier, the
+    color of each pixel in the color cube corresponds to that pixel’s 3D coordinates.
+    The color cube has six faces, each of which can be drawn as two triangles, for
+    a total of 6×6, or 36, vertices. But rather than specify all 36 vertices, you
+    specify just the cube’s eight corners ❶ and then define the triangles formed with
+    those corners using an `indices` array ❸, as illustrated in [Figure 11-5](nsp-venkitachalam503045-0025.xhtml#fig11-5).
+    The first two sets of three indices, for example, (4, 5, 7) and (7, 5, 6), define
+    the triangles on the top face of the cube.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f11005.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-5: Using indexing, a cube can be represented as a collection of triangles,
+    with each face composed of two triangles.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, still within the `RayCube` class constructor, you need to put the vertex
+    information into buffers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set up vertex array object (VAO)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vao = glGenVertexArrays(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(self.vao)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# vertex buffer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vertexBuffer = glGenBuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.vertexBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferData(GL_ARRAY_BUFFER, 4*len(vertices), vertices, GL_STATIC_DRAW)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# vertex buffer – cube vertex colors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.colorBuffer = glGenBuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.colorBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferData(GL_ARRAY_BUFFER, 4*len(colors), colors, GL_STATIC_DRAW)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# index buffer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.indexBuffer = glGenBuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.indexBuffer); ❶
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2*len(indices), indices,
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_STATIC_DRAW)
+  prefs: []
+  type: TYPE_NORMAL
+- en: As with previous projects, you create and bind to a vertex array object (VAO)
+    and then define the buffers it manages. One difference here is that the `indices`
+    array is given the designation `GL_ELEMENT_ARRAY_BUFFER` ❶, which means the elements
+    in its buffer will be used to index and access the data in the color and vertex
+    buffers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating the Frame Buffer Object
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Now let’s jump to the `RayCube` class method that creates the frame buffer
+    object, where you’ll direct your rendering:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def initFBO(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create frame buffer object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.fboHandle = glGenFramebuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.texHandle = glGenTextures(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create depth buffer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.depthHandle = glGenRenderbuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindFramebuffer(GL_FRAMEBUFFER, self.fboHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glActiveTexture(GL_TEXTURE0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_2D, self.texHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set parameters to draw the image at different sizes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set up texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.width, self.height,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0, GL_RGBA, GL_UNSIGNED_BYTE, None)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind texture to FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_TEXTURE_2D, self.texHandle, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ glBindRenderbuffer(GL_RENDERBUFFER, self.depthHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width, self.height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind depth buffer to FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_RENDERBUFFER, self.depthHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# check status'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ status = glCheckFramebufferStatus(GL_FRAMEBUFFER)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if status == GL_FRAMEBUFFER_COMPLETE:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pass
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# print "fbo %d complete" % self.fboHandle'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif status == GL_FRAMEBUFFER_UNSUPPORTED:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print "fbo %d unsupported" % self.fboHandle
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print "fbo %d Error" % self.fboHandle
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here you create a frame buffer object, a 2D texture, and a render buffer object;
+    then you set up the texture parameters ❶. The texture is bound to the frame buffer
+    ❷, and at ❸ and in the lines that follow, the render buffer sets up a 24-bit depth
+    buffer and is attached to the frame buffer. Next, you check the status of the
+    frame buffers ❹ and print a status message if something goes wrong. Now, as long
+    as the frame buffer and render buffer are bound correctly, all of your rendering
+    will go into the texture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rendering the Back-Faces of the Cube
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Here is the code for rendering the back-faces of the color cube:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def renderBackFace(self, pMatrix, mvMatrix):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""renders back-face of ray-cube to a texture and returns it"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# render to FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ glBindFramebuffer(GL_FRAMEBUFFER, self.fboHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set active texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glActiveTexture(GL_TEXTURE0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind to FBO texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_2D, self.texHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# render cube with face culling enabled'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ self.renderCube(pMatrix, mvMatrix, self.program, True)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ glBindTexture(GL_TEXTURE_2D, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindFramebuffer(GL_FRAMEBUFFER, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindRenderbuffer(GL_RENDERBUFFER, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# return texture ID'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ return self.texHandle
+  prefs: []
+  type: TYPE_NORMAL
+- en: First you bind the FBO ❶, set the active texture unit, and bind to the texture
+    handle so that you can render to the FBO. Then you call the `RayCube` class’s
+    `renderCube()` method ❷, which we’ll look at soon. It has a face-culling flag
+    as an argument, allowing you to draw either the front-face or the back-face of
+    the cube using the same code. You set the flag to `True` to make the back-faces
+    appear in the FBO texture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, you make the necessary calls to unbind from the FBO so that other rendering
+    code is unaffected ❸. Finally, you return the FBO texture ID ❹ for use in the
+    next stage of the algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rendering the Front-Faces of the Cube
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The following code is used to draw the front-faces of the color cube during
+    the second rendering pass of the ray casting algorithm:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def renderFrontFace(self, pMatrix, mvMatrix, program):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""render front-face of ray-cube"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# no face culling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderCube(pMatrix, mvMatrix, program, False)
+  prefs: []
+  type: TYPE_NORMAL
+- en: This method simply calls `renderCube()`, with the face-culling flag set to `False`
+    so the front-faces will appear.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rendering the Whole Cube
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Now let’s look at the `renderCube()` method, which draws the color cube discussed
+    previously:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def renderCube(self, pMatrix, mvMatrix, program, cullFace):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""renderCube uses face culling if flag set"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set shader program'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUseProgram(program)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set projection matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniformMatrix4fv(glGetUniformLocation(program, b'uPMatrix'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1, GL_FALSE, pMatrix)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set modelview matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniformMatrix4fv(glGetUniformLocation(program, b'uMVMatrix'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1, GL_FALSE, mvMatrix)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# enable face culling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDisable(GL_CULL_FACE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❶ if cullFace:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glFrontFace(GL_CCW)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glCullFace(GL_FRONT)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glEnable(GL_CULL_FACE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(self.vao)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# animated slice'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ glDrawElements(GL_TRIANGLES, self.nIndices, GL_UNSIGNED_SHORT, None)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# reset cull face'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if cullFace:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# disable face culling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDisable(GL_CULL_FACE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: You clear the color and depth buffers, select the shader program, and set the
+    transformation matrices. Then you set a flag to control face culling ❶, which
+    determines whether the cube’s front-face or back-face is drawn. Notice that you
+    use `glDrawElements()` ❷ because you’re using an index array to render the cube,
+    rather than a vertex array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Resizing the Window
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Because the FBO is created for a particular window size, you need to re-create
+    it when the window size changes. To do that, you create a resize handler for the
+    `RayCube` class, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def reshape(self, width, height):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width = width
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height = height
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.aspect = width/float(height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# re-create FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.clearFBO()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.initFBO()
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `reshape()` method is called when the OpenGL window is resized. It checks
+    the new window dimensions and then clears and re-creates the FBO.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Implementing the Ray Casting Algorithm](nsp-venkitachalam503045-0008.xhtml#rbh1306)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Next, you’ll implement the ray casting algorithm in the `RayCastRender` class.
+    The core of the algorithm happens inside the fragment shader used by this class,
+    which also uses the `RayCube` class to help generate the rays. To see the complete
+    *raycast.py* code, skip ahead to [“The Complete Volume Ray Casting Code”](nsp-venkitachalam503045-0025.xhtml#ah1309)
+    on [page 248](nsp-venkitachalam503045-0025.xhtml#p248). You can also find this
+    file at [https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Begin in the `RayCastRender` constructor by creating a `RayCube` object and
+    loading the shaders:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class RayCastRender:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, width, height, volume):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""RayCastRender construction"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create RayCube object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ self.raycube = raycube.RayCube(width, height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set dimensions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width = width
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height = height
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.aspect = width/float(height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create shader'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ self.program = glutils.loadShaders(strVS, strFS)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ self.texVolume, self.Nx, self.Ny, self.Nz = volume
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# initialize camera'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ self.camera = Camera()
+  prefs: []
+  type: TYPE_NORMAL
+- en: The constructor creates an object of type `RayCube` ❶, which is used to generate
+    rays. You load the shaders used by the ray casting ❷ and then set the OpenGL 3D
+    texture and dimensions ❸, which were passed into the constructor as the tuple
+    `volume`. Next, you create a `Camera` object ❹, which you’ll use to set up the
+    OpenGL perspective transformation for the 3D rendering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NOTE The `Camera` class, also declared in *raycast.py*, is basically the same
+    as the one used in [Chapter 10](nsp-venkitachalam503045-0024.xhtml#ch10). You’ll
+    see it in the complete code listing on [page 248](nsp-venkitachalam503045-0025.xhtml#p248).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is the rendering method for `RayCastRender`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def draw(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# build projection matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ pMatrix = glutils.perspective(45.0, self.aspect, 0.1, 100.0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# modelview matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ mvMatrix = glutils.lookAt(self.camera.eye, self.camera.center,
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.camera.up)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# render'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# generate ray-cube back-face texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ texture = self.raycube.renderBackFace(pMatrix, mvMatrix)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set shader program'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ glUseProgram(self.program)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set window dimensions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniform2f(glGetUniformLocation(self.program, b"uWinDims"),
+  prefs: []
+  type: TYPE_NORMAL
+- en: float(self.width), float(self.height))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind to texture unit 0, which represents back-faces of cube'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❺ glActiveTexture(GL_TEXTURE0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_2D, texture)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniform1i(glGetUniformLocation(self.program, b"texBackFaces"), 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# texture unit 1: 3D volume texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❻ glActiveTexture(GL_TEXTURE1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_3D, self.texVolume)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniform1i(glGetUniformLocation(self.program, b"texVolume"), 1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# draw front-face of cubes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❼ self.raycube.renderFrontFace(pMatrix, mvMatrix, self.program)
+  prefs: []
+  type: TYPE_NORMAL
+- en: First you set up a perspective projection matrix for the rendering, using the
+    `glutils.perspective()` utility method ❶. Then you set the current camera parameters
+    into the `glutils.lookAt()` method ❷. Next, the first pass of the rendering is
+    done ❸, using the `renderBackFace()` method in `RayCube` to draw the back-faces
+    of the color cube into a texture. (This method also returns the ID of the generated
+    texture.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: You continue by enabling the shaders for the ray casting algorithm ❹. Then you
+    set up the textures for use in the shader program. The texture returned at ❸ is
+    set up as texture unit 0 ❺, and the 3D texture created from the volumetric data
+    you read in is set up as texture unit 1 ❻. Finally, you render the front-faces
+    of the cube using the `renderFrontFace()` method in `RayCube` ❼. When this code
+    is executed, the shaders for `RayCastRender` will act on the vertices and fragments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Vertex Shader
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Now you come to the shaders used by `RayCastRender`. Let’s look at the vertex
+    shader first:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: strVS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 410 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: ❶ layout(location = 1) in vec3 cubePos;
+  prefs: []
+  type: TYPE_NORMAL
+- en: layout(location = 2) in vec3 cubeCol;
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ uniform mat4 uMVMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uPMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ out vec4 vColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set position
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ gl_Position = uPMatrix * uMVMatrix * vec4(cubePos.xyz, 1.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set color
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❺ vColor = vec4(cubeCol.rgb, 1.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First you set the input variables of position and color ❶. The layout uses the
+    same indices as defined in the `RayCube` vertex shader because `RayCastRender`
+    uses the VBO defined in that class to draw the geometry, and the locations in
+    the shaders have to match. Then you define the input transformation matrices ❷
+    and set a color value as the shader output ❸. The usual transformation computes
+    the built-in `gl_Position` output ❹, before you set the output as the current
+    color of the cube vertex ❺. The latter will be interpolated across vertices to
+    give you the correct color in the fragment shader.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Fragment Shader
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The fragment shader is the star of the show. It implements the core of the ray
+    casting algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: strFS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 410 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: in vec4 vColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform sampler2D texBackFaces;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform sampler3D texVolume;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform vec2 uWinDims;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec4 fragColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // start of ray
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ vec3 start = vColor.rgb;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // calculate texture coordinates at fragment,
+  prefs: []
+  type: TYPE_NORMAL
+- en: // which is a fraction of window coordinates
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ vec2 texc = gl_FragCoord.xy/uWinDims.xy;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // get end of ray by looking up back-face color
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ vec3 end = texture(texBackFaces, texc).rgb;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // calculate ray direction
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ vec3 dir = end – start;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // normalized ray direction
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec3 norm_dir = normalize(dir);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // the length from front to back is calculated and
+  prefs: []
+  type: TYPE_NORMAL
+- en: // used to terminate the ray
+  prefs: []
+  type: TYPE_NORMAL
+- en: float len = length(dir.xyz);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // ray step size
+  prefs: []
+  type: TYPE_NORMAL
+- en: float stepSize = 0.01;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // X-ray projection
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec4 dst = vec4(0.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // step through the ray
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❺ for(float t = 0.0; t < len; t += stepSize) {
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set position to endpoint of ray
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❻ vec3 samplePos = start + t*norm_dir;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // get texture value at position
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❼ float val = texture(texVolume, samplePos).r;
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec4 src = vec4(val);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set opacity
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❽ src.a *= 0.1;
+  prefs: []
+  type: TYPE_NORMAL
+- en: src.rgb *= src.a;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // blend with previous value
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❾ dst = (1.0 - dst.a)*src + dst;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // exit loop when alpha exceeds threshold
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❿ if(dst.a >= 0.95)
+  prefs: []
+  type: TYPE_NORMAL
+- en: break;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set fragment color
+  prefs: []
+  type: TYPE_NORMAL
+- en: fragColor = dst;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The input to the fragment shader is the cube vertex color. The fragment shader
+    also has access to the 2D texture generated by rendering the color cube, the 3D
+    texture containing the volumetric data, and the dimensions of the OpenGL window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While the fragment shader executes, you send in the front-faces of the cube,
+    so by looking up the incoming color value ❶, you get the starting point of the
+    ray that goes into this cube. (Recall the discussion in [“Ray Generation”](nsp-venkitachalam503045-0025.xhtml#bh1302)
+    on [page 217](nsp-venkitachalam503045-0025.xhtml#p217) about the connection between
+    the colors in the cube and the ray directions.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: You calculate the texture coordinate of the incoming fragment on the screen
+    ❷. Here, dividing the location of the fragment in window coordinates by the window
+    dimensions maps the location to the range [0, 1]. The ending point of the ray
+    is obtained by looking up the back-face color of the cube using this texture coordinate
+    ❸.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You next calculate the ray direction ❹ and then calculate the normalized direction
+    and length of this ray, which will be useful in the ray casting computation. Then
+    you loop through the volume using the ray’s starting point and direction until
+    it hits the ray’s endpoint ❺. In this loop, you compute the ray’s current position
+    inside the data volume ❻ and look up the data value at this point ❼. You then
+    perform the blending equation at ❽ and ❾, which gives you the X-ray effect. You
+    combine the `dst` value with the current value of the intensity (which is attenuated
+    using the alpha value), and the process continues along the ray. The alpha value
+    keeps increasing until it equals the maximum threshold of 0.95 ❿, at which point
+    you exit the loop. The end result is a sort of average opacity through the volume
+    at each pixel, which produces a “see-through” or X-ray effect. (Try varying the
+    threshold and alpha attenuation to produce different effects.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Showing 2D Slices](nsp-venkitachalam503045-0008.xhtml#rbh1307)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to showing the 3D view of the volumetric data, you want to show
+    2D slices of the data in the x-, y-, and z-directions onscreen. The code for this
+    is encapsulated in a class called `SliceRender`, which creates 2D volumetric slices.
+    To see the complete *slicerender.py* code, skip ahead to [“The Complete 2D Slicing
+    Code”](nsp-venkitachalam503045-0025.xhtml#ah1310) on [page 251](nsp-venkitachalam503045-0025.xhtml#p251).
+    You can also find the *slicerender.py* file at [https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the initialization code in the `SliceRender` class constructor that
+    sets up the geometry for the slices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class SliceRender:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, width, height, volume):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: --`snip`--
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set up vertex array object (VAO)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vao = glGenVertexArrays(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(self.vao)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# define quad vertices'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ vertexData = numpy.array([0.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 0.0, 0.0], numpy.float32)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# vertex buffer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vertexBuffer = glGenBuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.vertexBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferData(GL_ARRAY_BUFFER, 4*len(vertexData), vertexData,
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_STATIC_DRAW)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# enable arrays'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glEnableVertexAttribArray(self.vertIndex)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set buffers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.vertexBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glVertexAttribPointer(self.vertIndex, 3, GL_FLOAT, GL_FALSE, 0, None)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: This code sets up a VAO to manage the VBO, as in earlier examples. You define
+    the geometry of a square in the XY plane ❶. (The vertex order is that of the `GL_TRIANGLE_STRIP`,
+    introduced in [Chapter 9](nsp-venkitachalam503045-0023.xhtml#ch09).) You’ll use
+    this same geometry regardless of whether you’re showing slices perpendicular to
+    *x*, *y*, or *z*. All that changes between these cases is the data plane that
+    you pick to display from within the 3D texture. We’ll return to this idea when
+    we look at the vertex shader.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s a method to render the 2D slices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def draw(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# clear buffers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# build projection matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ pMatrix = glutils.ortho(-0.6, 0.6, -0.6, 0.6, 0.1, 100.0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# modelview matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ mvMatrix = numpy.array([1.0, 0.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 1.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: -0.5, -0.5, -1.0, 1.0], numpy.float32)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# use shader'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUseProgram(self.program)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set projection matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniformMatrix4fv(self.pMatrixUniform, 1, GL_FALSE, pMatrix)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set modelview matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniformMatrix4fv(self.mvMatrixUniform, 1, GL_FALSE, mvMatrix)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set current slice fraction'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ glUniform1f(glGetUniformLocation(self.program, b"uSliceFrac"),
+  prefs: []
+  type: TYPE_NORMAL
+- en: float(self.currSliceIndex)/float(self.currSliceMax))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set current slice mode'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ glUniform1i(glGetUniformLocation(self.program, b"uSliceMode"),
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mode)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# enable texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glActiveTexture(GL_TEXTURE0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_3D, self.texture)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniform1i(glGetUniformLocation(self.program, b"tex"), 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(self.vao)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# draw'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each 2D slice is a square, which you build up using an OpenGL triangle strip
+    primitive. This code goes through the render setup for the triangle strip. Note
+    that you implement the orthographic projection using the `glutils.ortho()` method
+    at ❶. You set up a projection that adds a 0.1 buffer around the unit square representing
+    the slice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you draw something with OpenGL, the default view (without any transformation
+    applied) puts the eye at (0, 0, 0) looking down the z-axis with the y-axis pointing
+    up. Applying the translation (−0.5, −0.5, −1.0) to your geometry centers it on
+    the z-axis ❷. You set the current slice fraction ❸ (where, for example, the 10th
+    slice out of 100 would be 0.1), set the slice mode ❹ (to view the slices in the
+    x-, y-, or z-direction, as represented by the integers 0, 1, and 2, respectively),
+    and set both values to the shaders.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Vertex Shader
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Now let’s look at the vertex shader for `SliceRender`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: strVS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 410 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: in vec3 aVert;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uMVMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uPMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform float uSliceFrac;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform int uSliceMode;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec3 texcoord;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main() {
+  prefs: []
+  type: TYPE_NORMAL
+- en: // x slice
+  prefs: []
+  type: TYPE_NORMAL
+- en: if (uSliceMode == 0) {
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ texcoord = vec3(uSliceFrac, aVert.x, 1.0-aVert.y);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // y slice
+  prefs: []
+  type: TYPE_NORMAL
+- en: else if (uSliceMode == 1) {
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ texcoord = vec3(aVert.x, uSliceFrac, 1.0-aVert.y);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // z slice
+  prefs: []
+  type: TYPE_NORMAL
+- en: else {
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ texcoord = vec3(aVert.x, 1.0-aVert.y, uSliceFrac);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // calculate transformed vertex
+  prefs: []
+  type: TYPE_NORMAL
+- en: gl_Position = uPMatrix * uMVMatrix * vec4(aVert, 1.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The vertex shader takes the triangle strip vertex array as input and sets a
+    texture coordinate as output. The current slice fraction and slice mode are passed
+    in as uniform variables `uSliceFrac` and `uSliceMode`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The shader has three branches, depending on the slice mode. For example, if
+    `uSliceMode` is `0`, you calculate the texture coordinates for an *x* slice ❶.
+    Because you’re slicing perpendicular to the x-direction, you want a slice parallel
+    to the YZ plane. The 3D vertices coming in to the vertex shader also double as
+    the 3D texture coordinates because they are in the range [0, 1], so the texture
+    coordinates are given as (*f*, *V*[x], *V*[y]), where *f* is the fraction of the
+    slice number in the direction of the x-axis and where *V*[x] and *V*[y] are the
+    vertex coordinates. Unfortunately, the resulting image will appear upside down
+    because the OpenGL coordinate system has its origin at the bottom left, with the
+    y-direction pointing up; this is the reverse of what you want. To resolve this
+    problem, you change the texture coordinate *t* to (1 − *t*) and use (*f*, *V*[x],
+    1 − *V*[y]) ❶. You use similar logic to compute the texture coordinates for y-
+    ❷ and z- ❸ direction slices if the `uSliceMode` value is `1` or `2`, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Fragment Shader
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Here is the fragment shader:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: strFS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 410 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: ❶ in vec3 texcoord;
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ uniform sampler3D texture;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec4 fragColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main() {
+  prefs: []
+  type: TYPE_NORMAL
+- en: // look up color in texture
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ vec4 col = texture(tex, texcoord);
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ fragColor = col.rrra;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The fragment shader declares `texcoord` as input ❶, which was set as output
+    in the vertex shader. The texture sampler is declared as `uniform` ❷. You look
+    up the texture color using `texcoord` ❸ and set `fragColor` as the output ❹. (Because
+    you read in your texture only as the red channel, you use `col.rrra`.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: A User Interface for 2D Slicing
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Now you need a way for the user to slice through the data. Do this using a
+    keyboard handling method on the `SliceRender` class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def keyPressed(self, key):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""keypress handler"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❶ if key == ''x'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mode = SliceRender.XSLICE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# reset slice index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceIndex = int(self.Nx/2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceMax = self.Nx
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif key == ''y'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mode = SliceRender.YSLICE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# reset slice index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceIndex = int(self.Ny/2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceMax = self.Ny
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif key == ''z'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mode = SliceRender.ZSLICE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# reset slice index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceIndex = int(self.Nz/2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceMax = self.Nz
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif key == ''l'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ self.currSliceIndex = (self.currSliceIndex + 1) % self.currSliceMax
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif key == ''r'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceIndex = (self.currSliceIndex - 1) % self.currSliceMax
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the X, Y, or Z key on the keyboard is pressed, `SliceRender` switches to
+    the *x*, *y*, or *z* slice mode. You can see this in action for the *x* slice,
+    for example ❶, where you set the appropriate mode, set the current slice index
+    to the middle of the data, and update the maximum slice number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the left or right arrow key on the keyboard is pressed, you page through
+    the slices. For instance, the slice index is incremented ❷ when the left arrow
+    key is pressed. The modulo operator (`%`) ensures that the index “rolls over”
+    to 0 when you exceed the maximum value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Putting the Code Together](nsp-venkitachalam503045-0008.xhtml#rbh1308)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let’s take a quick look at the main file in the project, *volrender.py*. This
+    file uses a class `RenderWin`, which creates and manages the GLFW OpenGL window.
+    (I won’t cover this class in detail because it’s similar to the class used in
+    [Chapters 9](nsp-venkitachalam503045-0023.xhtml#ch09) and [10](nsp-venkitachalam503045-0024.xhtml#ch10).)
+    To see the complete *volrender.py* code, skip ahead to [“The Complete Main File
+    Code”](nsp-venkitachalam503045-0025.xhtml#ah1311) on [page 254](nsp-venkitachalam503045-0025.xhtml#p254).
+    You can also find the *volrender.py* file at [https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the initialization code for this class, you create the renderer as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class RenderWin:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, imageDir):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: --`snip`--
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# load volume data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❶ self.volume = volreader.loadVolume(imageDir)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create renderer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ self.renderer = RayCastRender(self.width, self.height, self.volume)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here you read the 3D data into an OpenGL texture using the `loadVolume()` function
+    we discussed earlier ❶. Then you create an object of type `RayCastRender` to display
+    the data ❷.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Keypress Handler
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The `RenderWindow` class needs its own keyboard handler method for toggling
+    between volume and slice rendering and for closing the window. This method also
+    passes along keypresses to the `RayCastRender` and `SliceRender` classes’ keyboard
+    handlers, to either rotate the camera or navigate through the 2D slices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def onKeyboard(self, win, key, scancode, action, mods):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# print ''keyboard: '', win, key, scancode, action, mods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# ESC to quit'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if key is glfw.GLFW_KEY_ESCAPE:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer.close()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.exitNow = True
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❶ if action is glfw.GLFW_PRESS or action is glfw.GLFW_REPEAT:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if key == glfw.GLFW_KEY_V:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# toggle render mode'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❷ if isinstance(self.renderer, RayCastRender):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer = SliceRender(self.width, self.height,
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.volume)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer = RayCastRender(self.width, self.height,
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.volume)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# call reshape on renderer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer.reshape(self.width, self.height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# send keypress to renderer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❸ keyDict = {glfw.GLFW_KEY_X: ''x'', glfw.GLFW_KEY_Y: ''y'','
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'glfw.GLFW_KEY_Z: ''z'', glfw.GLFW_KEY_LEFT: ''l'','
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'glfw.GLFW_KEY_RIGHT: ''r''}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'try:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer.keyPressed(keyDict[key])
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'except:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pass
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pressing ESC quits the program. You set other keypresses to work whether you
+    have just pressed the key down or you are keeping it pressed ❶. If the V key is
+    pressed, you toggle the renderer between volume and slice ❷, using Python’s `isinstance()`
+    method to identify the current class type. To handle any other keypress events
+    (X, Y, Z, or the left and right arrows), you use a dictionary ❸ and pass the keypress
+    to the current renderer’s `keyPressed()` handler method. We looked at the slice
+    renderer’s `keyPressed()` method in [“A User Interface for 2D Slicing”](nsp-venkitachalam503045-0025.xhtml#ch1313)
+    on [page 237](nsp-venkitachalam503045-0025.xhtml#p237), for example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NOTE I’m choosing not to pass in the `glfw.KEY` values directly and using a
+    dictionary to convert these to character values instead, because it’s a good practice
+    to reduce dependencies in source files. Currently, the only file in this project
+    that depends on GLFW is *volrender.py*. If you were to pass GLFW-specific types
+    into other code, they would need to import and depend on the GLFW library too.
+    Then, if you were to switch to a different OpenGL windowing toolkit, the code
+    would become messy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Running the Program](nsp-venkitachalam503045-0008.xhtml#rah1304)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Here is a sample run of the application using data from the Stanford Volume
+    Data Archive:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $ `python volrender.py --dir mrbrain-8bit/`
+  prefs: []
+  type: TYPE_NORMAL
+- en: You should see something like [Figure 11-6](nsp-venkitachalam503045-0025.xhtml#fig11-6).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f11006.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11-6: A sample run of *volrender.py*. The image on the left is the volumetric
+    rendering, and the image on the right is a 2D slice.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As the application runs, use the V key to toggle between volume and slice rendering.
+    In slice mode, use the X, Y, and Z keys to change the slicing axis, and use the
+    arrow keys to change the slicing location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Summary](nsp-venkitachalam503045-0008.xhtml#rah1305)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this chapter, you implemented the volume ray casting algorithm using Python
+    and OpenGL. You learned how to use GLSL shaders to implement this algorithm efficiently,
+    as well as how to create 2D slices from the volumetric data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Experiments!](nsp-venkitachalam503045-0008.xhtml#rah1306)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Here are a few ways you could keep tinkering with the volume ray casting program:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Currently, it’s hard to see the boundary of the volumetric data “cube” in
+    the ray casting mode. Implement a class `WireFrame` that draws a box around this
+    cube. Color the x-, y-, and z-axes red, green, and blue, respectively, and give
+    each its own shaders. You’ll use `WireFrame` from within the `RayCastRender` class.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Implement data scaling. In the current implementation, you’re drawing a
+    cube for the volume and a square for 2D slices, which assumes you have a symmetric
+    data set (that the number of slices are the same in each direction), but most
+    real data has a varying number of slices. Medical data, in particular, often has
+    fewer slices in the z-direction, with dimensions such as 256×256×99, for example.
+    To display this data correctly, you have to introduce a scale into your computations.
+    One way to do so is to apply the scale to the cube vertices (3D volume) and square
+    vertices (2D slice). The user can then input the scaling parameters as command
+    line arguments.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '3\. Our volume ray casting implementation uses X-ray casting to calculate the
+    final color or intensity of a pixel. Another popular way to do this is to use
+    *maximum intensity projection (MIP)* to set the maximum intensity at each pixel.
+    Implement this in your code. (Hint: in the fragment shader of `RayCastRender`,
+    modify the code that steps through the ray to check and set the maximum value
+    along the ray, instead of blending values.)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '4\. Currently, the only UI you have implemented is rotation around the x-,
+    y-, and z-axes. Implement a zoom feature so pressing I/O will zoom in/out of the
+    volume-rendered image. You could do this by setting the appropriate camera parameters
+    in the `glutils.lookAt()` method, with one caveat: if you move your view inside
+    the data cube, the ray casting will fail because OpenGL will clip the front-faces
+    of the cube; the ray computation needed for ray casting requires both the front-
+    and back-faces of the color cube to be rendered correctly. Instead, zoom by adjusting
+    the field of view in the `glutils.projecton()` method.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[The Complete 3D Texture Code](nsp-venkitachalam503045-0008.xhtml#rah1307)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here’s the full *volreader.py* code listing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import os
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: from PIL import Image
+  prefs: []
+  type: TYPE_NORMAL
+- en: import OpenGL
+  prefs: []
+  type: TYPE_NORMAL
+- en: from OpenGL.GL import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: from scipy import misc
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def loadVolume(dirName):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""read volume from directory as a 3D texture"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# list images in directory'
+  prefs: []
+  type: TYPE_NORMAL
+- en: files = sorted(os.listdir(dirName))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print(''loading images from: %s'' % dirName)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: imgDataList = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: count = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: width, height = 0, 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for file in files:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: file_path = os.path.abspath(os.path.join(dirName, file))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'try:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# read image'
+  prefs: []
+  type: TYPE_NORMAL
+- en: img = Image.open(file_path)
+  prefs: []
+  type: TYPE_NORMAL
+- en: imgData = np.array(img.getdata(), np.uint8)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# check if all are of the same size'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if count is 0:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: width, height = img.size[0], img.size[1]
+  prefs: []
+  type: TYPE_NORMAL
+- en: imgDataList.append(imgData)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if (width, height) == (img.size[0], img.size[1]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: imgDataList.append(imgData)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('mismatch')
+  prefs: []
+  type: TYPE_NORMAL
+- en: raise RunTimeError("image size mismatch")
+  prefs: []
+  type: TYPE_NORMAL
+- en: count += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# print img.size'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'except:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# skip'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print(''Invalid image: %s'' % file_path)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# load image data into single array'
+  prefs: []
+  type: TYPE_NORMAL
+- en: depth = count
+  prefs: []
+  type: TYPE_NORMAL
+- en: data = np.concatenate(imgDataList)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print(''volume data dims: %d %d %d'' % (width, height, depth))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# load data into 3D texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: texture = glGenTextures(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_3D, texture)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexImage3D(GL_TEXTURE_3D, 0, GL_RED,
+  prefs: []
+  type: TYPE_NORMAL
+- en: width, height, depth, 0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_RED, GL_UNSIGNED_BYTE, data)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# return texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return (texture, width, height, depth)
+  prefs: []
+  type: TYPE_NORMAL
+- en: load texture
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'def loadTexture(filename):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: img = Image.open(filename)
+  prefs: []
+  type: TYPE_NORMAL
+- en: img_data = np.array(list(img.getdata()), 'B')
+  prefs: []
+  type: TYPE_NORMAL
+- en: texture = glGenTextures(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glPixelStorei(GL_UNPACK_ALIGNMENT,1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_2D, texture)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.size[0], img.size[1],
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
+  prefs: []
+  type: TYPE_NORMAL
+- en: return texture
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Complete Ray Generation Code](nsp-venkitachalam503045-0008.xhtml#rah1308)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here’s the full code listing for the `RayCube` class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import OpenGL
+  prefs: []
+  type: TYPE_NORMAL
+- en: from OpenGL.GL import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: from OpenGL.GL.shaders import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy, math, sys
+  prefs: []
+  type: TYPE_NORMAL
+- en: import volreader, glutils
+  prefs: []
+  type: TYPE_NORMAL
+- en: strVS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 330 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: layout(location = 1) in vec3 cubePos;
+  prefs: []
+  type: TYPE_NORMAL
+- en: layout(location = 2) in vec3 cubeCol;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uMVMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uPMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec4 vColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set back-face color
+  prefs: []
+  type: TYPE_NORMAL
+- en: vColor = vec4(cubeCol.rgb, 1.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // transformed position
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec4 newPos = vec4(cubePos.xyz, 1.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set position
+  prefs: []
+  type: TYPE_NORMAL
+- en: gl_Position = uPMatrix * uMVMatrix * newPos;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: strFS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 330 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: in vec4 vColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec4 fragColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fragColor = vColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class RayCube:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""class used to generate rays used in ray casting"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, width, height):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""RayCube constructor"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set dims'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width, self.height = width, height
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create shader'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.program = glutils.loadShaders(strVS, strFS)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# cube vertices'
+  prefs: []
+  type: TYPE_NORMAL
+- en: vertices = numpy.array([
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 0.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 1.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 1.0, 1.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '], numpy.float32)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# cube colors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: colors = numpy.array([
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 0.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 1.0, 1.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 1.0, 1.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '], numpy.float32)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# individual triangles'
+  prefs: []
+  type: TYPE_NORMAL
+- en: indices = numpy.array([
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4, 5, 7,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7, 5, 6,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5, 1, 6,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6, 1, 2,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1, 0, 2,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2, 0, 3,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0, 4, 3,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3, 4, 7,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6, 2, 7,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7, 2, 3,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4, 0, 5,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5, 0, 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: '], numpy.int16)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.nIndices = indices.size
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set up vertex array object (VAO)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vao = glGenVertexArrays(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(self.vao)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# vertex buffer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vertexBuffer = glGenBuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.vertexBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferData(GL_ARRAY_BUFFER, 4*len(vertices), vertices, GL_STATIC_DRAW)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# vertex buffer - cube vertex colors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.colorBuffer = glGenBuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.colorBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferData(GL_ARRAY_BUFFER, 4*len(colors), colors, GL_STATIC_DRAW);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# index buffer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.indexBuffer = glGenBuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.indexBuffer);
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2*len(indices), indices,
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_STATIC_DRAW)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# enable attrs using the layout indices in shader'
+  prefs: []
+  type: TYPE_NORMAL
+- en: aPosLoc = 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: aColorLoc = 2
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind buffers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glEnableVertexAttribArray(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glEnableVertexAttribArray(2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# vertex'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.vertexBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glVertexAttribPointer(aPosLoc, 3, GL_FLOAT, GL_FALSE, 0, None)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# color'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.colorBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glVertexAttribPointer(aColorLoc, 3, GL_FLOAT, GL_FALSE, 0, None)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.indexBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.initFBO()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def renderBackFace(self, pMatrix, mvMatrix):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""renders back-face of ray-cube to a texture and returns it"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# render to FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindFramebuffer(GL_FRAMEBUFFER, self.fboHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set active texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glActiveTexture(GL_TEXTURE0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind to FBO texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_2D, self.texHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# render cube with face culling enabled'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderCube(pMatrix, mvMatrix, self.program, True)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_2D, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindFramebuffer(GL_FRAMEBUFFER, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindRenderbuffer(GL_RENDERBUFFER, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# return texture ID'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return self.texHandle
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def renderFrontFace(self, pMatrix, mvMatrix, program):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""render front-face of ray-cube"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# no face culling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderCube(pMatrix, mvMatrix, program, False)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def renderCube(self, pMatrix, mvMatrix, program, cullFace):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""render cube using face culling if flag set"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set shader program'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUseProgram(program)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set projection matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniformMatrix4fv(glGetUniformLocation(program, b'uPMatrix'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1, GL_FALSE, pMatrix)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set modelview matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniformMatrix4fv(glGetUniformLocation(program, b'uMVMatrix'),
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1, GL_FALSE, mvMatrix)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# enable face culling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDisable(GL_CULL_FACE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if cullFace:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glFrontFace(GL_CCW)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glCullFace(GL_FRONT)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glEnable(GL_CULL_FACE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(self.vao)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# animated slice'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDrawElements(GL_TRIANGLES, self.nIndices, GL_UNSIGNED_SHORT, None)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# reset cull face'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if cullFace:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# disable face culling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDisable(GL_CULL_FACE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def reshape(self, width, height):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width = width
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height = height
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.aspect = width/float(height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# re-create FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.clearFBO()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.initFBO()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def initFBO(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create frame buffer object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.fboHandle = glGenFramebuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.texHandle = glGenTextures(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create depth buffer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.depthHandle = glGenRenderbuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindFramebuffer(GL_FRAMEBUFFER, self.fboHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glActiveTexture(GL_TEXTURE0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_2D, self.texHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set parameters to draw the image at different sizes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set up texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.width, self.height,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0, GL_RGBA, GL_UNSIGNED_BYTE, None)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind texture to FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_TEXTURE_2D, self.texHandle, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindRenderbuffer(GL_RENDERBUFFER, self.depthHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width, self.height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind depth buffer to FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_RENDERBUFFER, self.depthHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# check status'
+  prefs: []
+  type: TYPE_NORMAL
+- en: status = glCheckFramebufferStatus(GL_FRAMEBUFFER)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if status == GL_FRAMEBUFFER_COMPLETE:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pass
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# print "fbo %d complete" % self.fboHandle'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif status == GL_FRAMEBUFFER_UNSUPPORTED:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("fbo %d unsupported" % self.fboHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("fbo %d Error" % self.fboHandle)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_2D, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindFramebuffer(GL_FRAMEBUFFER, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindRenderbuffer(GL_RENDERBUFFER, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: return
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def clearFBO(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""clears old FBO"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# delete FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if glIsFramebuffer(self.fboHandle):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDeleteFramebuffers(1, int(self.fboHandle))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# delete texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if glIsTexture(self.texHandle):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDeleteTextures(int(self.texHandle))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def close(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""call this to free up OpenGL resources"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_2D, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindFramebuffer(GL_FRAMEBUFFER, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindRenderbuffer(GL_RENDERBUFFER, 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# delete FBO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if glIsFramebuffer(self.fboHandle):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDeleteFramebuffers(1, int(self.fboHandle))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# delete texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if glIsTexture(self.texHandle):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDeleteTextures(int(self.texHandle))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# delete render buffer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if glIsRenderbuffer(self.depthHandle):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDeleteRenderbuffers(1, int(self.depthHandle))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# delete buffers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDeleteBuffers(1, self._vertexBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDeleteBuffers(1, &_indexBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDeleteBuffers(1, &_colorBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Complete Volume Ray Casting Code](nsp-venkitachalam503045-0008.xhtml#rah1309)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here’s the full *raycast.py* code listing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import OpenGL
+  prefs: []
+  type: TYPE_NORMAL
+- en: from OpenGL.GL import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: from OpenGL.GL.shaders import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: import math, sys
+  prefs: []
+  type: TYPE_NORMAL
+- en: import raycube, glutils, volreader
+  prefs: []
+  type: TYPE_NORMAL
+- en: strVS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 330 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: layout(location = 1) in vec3 cubePos;
+  prefs: []
+  type: TYPE_NORMAL
+- en: layout(location = 2) in vec3 cubeCol;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uMVMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uPMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec4 vColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set position
+  prefs: []
+  type: TYPE_NORMAL
+- en: gl_Position = uPMatrix * uMVMatrix * vec4(cubePos.xyz, 1.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set color
+  prefs: []
+  type: TYPE_NORMAL
+- en: vColor = vec4(cubeCol.rgb, 1.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: strFS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 330 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: in vec4 vColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform sampler2D texBackFaces;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform sampler3D texVolume;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform vec2 uWinDims;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec4 fragColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // start of ray
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec3 start = vColor.rgb;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // calculate texture coords at fragment,
+  prefs: []
+  type: TYPE_NORMAL
+- en: // which is a fraction of window coords
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec2 texc = gl_FragCoord.xy/uWinDims.xy;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // get end of ray by looking up back-face color
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec3 end = texture(texBackFaces, texc).rgb;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // calculate ray direction
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec3 dir = end - start;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // normalized ray direction
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec3 norm_dir = normalize(dir);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // the length from front to back is calculated and
+  prefs: []
+  type: TYPE_NORMAL
+- en: // used to terminate the ray
+  prefs: []
+  type: TYPE_NORMAL
+- en: float len = length(dir.xyz);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // ray step size
+  prefs: []
+  type: TYPE_NORMAL
+- en: float stepSize = 0.01;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // X-ray projection
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec4 dst = vec4(0.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // step through the ray
+  prefs: []
+  type: TYPE_NORMAL
+- en: for(float t = 0.0; t < len; t += stepSize) {
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set position to endpoint of ray
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec3 samplePos = start + t*norm_dir;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // get texture value at position
+  prefs: []
+  type: TYPE_NORMAL
+- en: float val = texture(texVolume, samplePos).r;
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec4 src = vec4(val);
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set opacity
+  prefs: []
+  type: TYPE_NORMAL
+- en: src.a *= 0.1;
+  prefs: []
+  type: TYPE_NORMAL
+- en: src.rgb *= src.a;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // blend with previous value
+  prefs: []
+  type: TYPE_NORMAL
+- en: dst = (1.0 - dst.a)*src + dst;
+  prefs: []
+  type: TYPE_NORMAL
+- en: // exit loop when alpha exceeds threshold
+  prefs: []
+  type: TYPE_NORMAL
+- en: if(dst.a >= 0.95)
+  prefs: []
+  type: TYPE_NORMAL
+- en: break;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // set fragment color
+  prefs: []
+  type: TYPE_NORMAL
+- en: fragColor =  dst;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Camera:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""helper class for viewing"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.r = 1.5
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.theta = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.center = [0.5, 0.5, 0.5]
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.eye = [0.5 + self.r, 0.5, 0.5]
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.up = [0.0, 0.0, 1.0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def rotate(self, clockWise):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""rotate eye by one step"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if clockWise:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.theta = (self.theta + 5) % 360
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.theta = (self.theta - 5) % 360
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# recalculate eye'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.eye = [0.5 + self.r*math.cos(math.radians(self.theta)),
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.5 + self.r*math.sin(math.radians(self.theta)),
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.5]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class RayCastRender:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""class that does Ray Casting"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, width, height, volume):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""RayCastRender constr"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create RayCube object'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.raycube = raycube.RayCube(width, height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set dimensions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width = width
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height = height
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.aspect = width/float(height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create shader'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.program = glutils.loadShaders(strVS, strFS)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.texVolume, self.Nx, self.Ny, self.Nz = volume
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# initialize camera'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.camera = Camera()
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def draw(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# build projection matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pMatrix = glutils.perspective(45.0, self.aspect, 0.1, 100.0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# modelview matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: mvMatrix = glutils.lookAt(self.camera.eye, self.camera.center,
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.camera.up)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# render'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# generate ray-cube back-face texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: texture = self.raycube.renderBackFace(pMatrix, mvMatrix)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set shader program'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUseProgram(self.program)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set window dimensions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniform2f(glGetUniformLocation(self.program, b"uWinDims"),
+  prefs: []
+  type: TYPE_NORMAL
+- en: float(self.width), float(self.height))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# texture unit 0, which represents back-faces of cube'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glActiveTexture(GL_TEXTURE0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_2D, texture)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniform1i(glGetUniformLocation(self.program, b"texBackFaces"), 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# texture unit 1: 3D volume texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glActiveTexture(GL_TEXTURE1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_3D, self.texVolume)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniform1i(glGetUniformLocation(self.program, b"texVolume"), 1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# draw front-face of cubes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.raycube.renderFrontFace(pMatrix, mvMatrix, self.program)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '#self.render(pMatrix, mvMatrix)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def keyPressed(self, key):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if key == ''l'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.camera.rotate(True)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif key == ''r'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.camera.rotate(False)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def reshape(self, width, height):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width = width
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height = height
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.aspect = width/float(height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.raycube.reshape(width, height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def close(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.raycube.close()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Complete 2D Slicing Code](nsp-venkitachalam503045-0008.xhtml#rah1310)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here is the full 2D slicing code listing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import OpenGL
+  prefs: []
+  type: TYPE_NORMAL
+- en: from OpenGL.GL import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: from OpenGL.GL.shaders import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy, math, sys
+  prefs: []
+  type: TYPE_NORMAL
+- en: import volreader, glutils
+  prefs: []
+  type: TYPE_NORMAL
+- en: strVS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 330 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: in vec3 aVert;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uMVMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform mat4 uPMatrix;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform float uSliceFrac;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform int uSliceMode;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec3 texcoord;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main() {
+  prefs: []
+  type: TYPE_NORMAL
+- en: // x slice
+  prefs: []
+  type: TYPE_NORMAL
+- en: if (uSliceMode == 0) {
+  prefs: []
+  type: TYPE_NORMAL
+- en: texcoord = vec3(uSliceFrac, aVert.x, 1.0-aVert.y);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // y slice
+  prefs: []
+  type: TYPE_NORMAL
+- en: else if (uSliceMode == 1) {
+  prefs: []
+  type: TYPE_NORMAL
+- en: texcoord = vec3(aVert.x, uSliceFrac, 1.0-aVert.y);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // z slice
+  prefs: []
+  type: TYPE_NORMAL
+- en: else {
+  prefs: []
+  type: TYPE_NORMAL
+- en: texcoord = vec3(aVert.x, 1.0-aVert.y, uSliceFrac);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: // calculate transformed vertex
+  prefs: []
+  type: TYPE_NORMAL
+- en: gl_Position = uPMatrix * uMVMatrix * vec4(aVert, 1.0);
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: strFS = """
+  prefs: []
+  type: TYPE_NORMAL
+- en: version 330 core
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: in vec3 texcoord;
+  prefs: []
+  type: TYPE_NORMAL
+- en: uniform sampler3D tex;
+  prefs: []
+  type: TYPE_NORMAL
+- en: out vec4 fragColor;
+  prefs: []
+  type: TYPE_NORMAL
+- en: void main() {
+  prefs: []
+  type: TYPE_NORMAL
+- en: // look up color in texture
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec4 col = texture(tex, texcoord);
+  prefs: []
+  type: TYPE_NORMAL
+- en: fragColor = col.rrra;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class SliceRender:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# slice modes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: XSLICE, YSLICE, ZSLICE = 0, 1, 2
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, width, height, volume):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""SliceRender constructor"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width = width
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height = height
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.aspect = width/float(height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# slice mode'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mode = SliceRender.ZSLICE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create shader'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.program = glutils.loadShaders(strVS, strFS)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUseProgram(self.program)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.pMatrixUniform = glGetUniformLocation(self.program, b'uPMatrix')
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mvMatrixUniform = glGetUniformLocation(self.program, b"uMVMatrix")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# attributes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vertIndex = glGetAttribLocation(self.program, b"aVert")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set up vertex array object (VAO)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vao = glGenVertexArrays(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(self.vao)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# define quad vertices'
+  prefs: []
+  type: TYPE_NORMAL
+- en: vertexData = numpy.array([0.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.0, 0.0, 0.0], numpy.float32)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# vertex buffer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vertexBuffer = glGenBuffers(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.vertexBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBufferData(GL_ARRAY_BUFFER, 4*len(vertexData), vertexData,
+  prefs: []
+  type: TYPE_NORMAL
+- en: GL_STATIC_DRAW)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# enable arrays'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glEnableVertexAttribArray(self.vertIndex)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set buffers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindBuffer(GL_ARRAY_BUFFER, self.vertexBuffer)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glVertexAttribPointer(self.vertIndex, 3, GL_FLOAT, GL_FALSE, 0, None)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# load texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.texture, self.Nx, self.Ny, self.Nz = volume
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# current slice index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceIndex = int(self.Nz/2);
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceMax = self.Nz;
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def reshape(self, width, height):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width = width
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height = height
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.aspect = width/float(height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def draw(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# clear buffers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# build projection matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pMatrix = glutils.ortho(-0.6, 0.6, -0.6, 0.6, 0.1, 100.0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# modelview matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: mvMatrix = numpy.array([1.0, 0.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 1.0, 0.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.0, 0.0, 1.0, 0.0,
+  prefs: []
+  type: TYPE_NORMAL
+- en: -0.5, -0.5, -1.0, 1.0], numpy.float32)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# use shader'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUseProgram(self.program)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set projection matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniformMatrix4fv(self.pMatrixUniform, 1, GL_FALSE, pMatrix)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set modelview matrix'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniformMatrix4fv(self.mvMatrixUniform, 1, GL_FALSE, mvMatrix)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set current slice fraction'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniform1f(glGetUniformLocation(self.program, b"uSliceFrac"),
+  prefs: []
+  type: TYPE_NORMAL
+- en: float(self.currSliceIndex)/float(self.currSliceMax))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set current slice mode'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniform1i(glGetUniformLocation(self.program, b"uSliceMode"),
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mode)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# enable texture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glActiveTexture(GL_TEXTURE0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindTexture(GL_TEXTURE_3D, self.texture)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glUniform1i(glGetUniformLocation(self.program, b"tex"), 0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# bind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(self.vao)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# draw'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# unbind VAO'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glBindVertexArray(0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def keyPressed(self, key):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""keypress handler"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if key == ''x'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mode = SliceRender.XSLICE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# reset slice index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceIndex = int(self.Nx/2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceMax = self.Nx
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif key == ''y'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mode = SliceRender.YSLICE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# reset slice index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceIndex = int(self.Ny/2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceMax = self.Ny
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif key == ''z'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.mode = SliceRender.ZSLICE
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# reset slice index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceIndex = int(self.Nz/2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceMax = self.Nz
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif key == ''l'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceIndex = (self.currSliceIndex + 1) % self.currSliceMax
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif key == ''r'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.currSliceIndex = (self.currSliceIndex - 1) % self.currSliceMax
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def close(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pass
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Complete Main File Code](nsp-venkitachalam503045-0008.xhtml#rah1311)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here is the full code listing for the main file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: import sys, argparse, os
+  prefs: []
+  type: TYPE_NORMAL
+- en: from slicerender import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: from raycast import *
+  prefs: []
+  type: TYPE_NORMAL
+- en: import glfw
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class RenderWin:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""GLFW Rendering window class"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, imageDir):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# save current working directory'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cwd = os.getcwd()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# initialize glfw; this changes cwd'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwInit()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# restore cwd'
+  prefs: []
+  type: TYPE_NORMAL
+- en: os.chdir(cwd)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# version hints'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwWindowHint(glfw.GLFW_CONTEXT_VERSION_MAJOR, 3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwWindowHint(glfw.GLFW_CONTEXT_VERSION_MINOR, 3)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwWindowHint(glfw.GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwWindowHint(glfw.GLFW_OPENGL_PROFILE,
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.GLFW_OPENGL_CORE_PROFILE)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# make a window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width, self.height = 512, 512
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.aspect = self.width/float(self.height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.win = glfw.glfwCreateWindow(self.width, self.height, b"volrender")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# make context current'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwMakeContextCurrent(self.win)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# initialize GL'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glViewport(0, 0, self.width, self.height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glEnable(GL_DEPTH_TEST)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glClearColor(0.0, 0.0, 0.0, 0.0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# set window callbacks'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwSetMouseButtonCallback(self.win, self.onMouseButton)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwSetKeyCallback(self.win, self.onKeyboard)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwSetWindowSizeCallback(self.win, self.onSize)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# load volume data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.volume =  volreader.loadVolume(imageDir)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create renderer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer = RayCastRender(self.width, self.height, self.volume)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# exit flag'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.exitNow = False
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def onMouseButton(self, win, button, action, mods):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# print ''mouse button: '', win, button, action, mods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pass
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def onKeyboard(self, win, key, scancode, action, mods):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# print ''keyboard: '', win, key, scancode, action, mods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# ESC to quit'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if key is glfw.GLFW_KEY_ESCAPE:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer.close()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.exitNow = True
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if action is glfw.GLFW_PRESS or action is glfw.GLFW_REPEAT:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if key == glfw.GLFW_KEY_V:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# toggle render mode'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if isinstance(self.renderer, RayCastRender):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer = SliceRender(self.width, self.height,
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.volume)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer = RayCastRender(self.width, self.height,
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.volume)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# call reshape on renderer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer.reshape(self.width, self.height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'else:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# send keypress to renderer'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'keyDict = {glfw.GLFW_KEY_X: ''x'', glfw.GLFW_KEY_Y: ''y'','
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'glfw.GLFW_KEY_Z: ''z'', glfw.GLFW_KEY_LEFT: ''l'','
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'glfw.GLFW_KEY_RIGHT: ''r''}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'try:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer.keyPressed(keyDict[key])
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'except:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pass
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def onSize(self, win, width, height):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# print ''onsize: '', win, width, height'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.width = width
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.height = height
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.aspect = width/float(height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: glViewport(0, 0, self.width, self.height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer.reshape(width, height)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def run(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# start loop'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'while not glfw.glfwWindowShouldClose(self.win) and not self.exitNow:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# render'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.renderer.draw()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# swap buffers'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwSwapBuffers(self.win)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# wait for events'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwWaitEvents()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# end'
+  prefs: []
+  type: TYPE_NORMAL
+- en: glfw.glfwTerminate()
+  prefs: []
+  type: TYPE_NORMAL
+- en: main() function
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'def main():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('starting volrender...')
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create parser'
+  prefs: []
+  type: TYPE_NORMAL
+- en: parser = argparse.ArgumentParser(description="Volume Rendering...")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# add expected arguments'
+  prefs: []
+  type: TYPE_NORMAL
+- en: parser.add_argument('--dir', dest='imageDir', required=True)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# parse args'
+  prefs: []
+  type: TYPE_NORMAL
+- en: args = parser.parse_args()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create render window'
+  prefs: []
+  type: TYPE_NORMAL
+- en: rwin = RenderWin(args.imageDir)
+  prefs: []
+  type: TYPE_NORMAL
+- en: rwin.run()
+  prefs: []
+  type: TYPE_NORMAL
+- en: call main
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'if __name__ == ''__main__'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: main()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[1](nsp-venkitachalam503045-0025.xhtml#fn4r) J. Kruger and R. Westermann, “Acceleration
+    Techniques for GPU-based Volume Rendering,” IEEE Visualization, 2003.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2](nsp-venkitachalam503045-0025.xhtml#fn5r) [https://graphics.stanford.edu/data/voldata/](https://graphics.stanford.edu/data/voldata/)'
+  prefs: []
+  type: TYPE_NORMAL

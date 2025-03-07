@@ -1,0 +1,1487 @@
+- en: '**10'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: EXPERIMENTS WITH NEURAL NETWORKS**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/common.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In [Chapter 9](ch09.xhtml#ch09), we discussed the theory behind neural networks.
+    In this chapter, we’ll trade equations for code and run a number of experiments
+    designed to increase our intuition regarding the essential parameters of neural
+    networks: architecture and activation functions, batch size, base learning rate,
+    training set size, L2 regularization, momentum, weight initialization, feature
+    ordering, and the precision of the weights and biases.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To save space and eliminate tedious repetition, we won’t show the specific code
+    for each experiment. In most cases, the code is only trivially different from
+    the previous example; we’re usually changing only the particular argument to the
+    `MLPClassifier` constructor we’re interested in. The code for each experiment
+    is included in the set of files associated with this book, and we’ll list the
+    network parameters and the name of the file. When necessary, we’ll provide code
+    to clarify a particular approach. We’ll show the code for the first experiment
+    in its entirety.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our Dataset
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We’ll be working with the MNIST dataset’s vector form, which we assembled in
+    [Chapter 5](ch05.xhtml#ch05). Recall that this dataset consists of 28×28 pixel
+    8-bit grayscale images of handwritten digits, [0,9]. In vector form, each 28 ×
+    28 image is unraveled into a vector of 28 × 28 = 784 elements, all bytes ([0,255]).
+    The unraveling lays each row end to end. Therefore, each sample has 784 elements
+    and an associated label. The training set has 60,000 samples, while the test set
+    has 10,000\. For our experiments, we won’t use all of the data in the training
+    set. This is to help illustrate the effect of network parameters and to keep our
+    training times reasonable. Refer back to [Figure 5-3](ch05.xhtml#ch5fig3) for
+    representative MNIST digits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The MLPClassifier Class
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The `MLPClassifier` class follows the same format as the other sklearn classifiers.
+    There is a constructor and the expected methods: `fit` for training, `score` for
+    applying the classifier to test data, and `predict` to make a prediction on unknown
+    inputs. We’ll also use `predict_proba` to return the actual predicted per class
+    probabilities. The constructor has many options:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here we’ve provided the default values for each parameter. See the sklearn documentation
+    page at [http://scikit-learn.org/](http://scikit-learn.org/) for a complete description
+    of each parameter. We’ll set some of these to specific values, and others will
+    be changed for the experiments while still others are relevant in only specific
+    situations. The key parameters we’ll work with are in [Table 10-1](ch10.xhtml#ch10tab1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following set of experiments explores the effect of various `MLPClassifier`
+    parameters. As mentioned, we’ll show all the code used for the first experiment,
+    understanding that only small changes are needed to perform the other experiments.
+    At times, we’ll show little code snippets to make the change concrete.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 10-1:** Important `MLPClassifier` Constructor Keywords and Our Default
+    Values for Them'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Keyword** | **Description** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `hidden_layer_sizes` | Tuple giving the hidden layer sizes |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `activation` | Activation function type; for example, ReLU |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `alpha` | L2 parameter—we called it *λ* (lambda) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `batch_size` | Minibatch size |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `learning_rate_init` | The learning rate, *η* (eta) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `max_iter` | Number of training epochs |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `warm_start` | Continue training or start again |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `momentum` | Momentum |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `solver` | Solver algorithm ("sgd") |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `nesterovs_momentum` | Use Nesterov momentum (False) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `early_stopping` | Use early stopping (False) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `learning_rate` | Learning rate schedule ("constant") |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `tol` | Stop early if loss change < tol (1e-8) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `verbose` | Output to console while training (False) |'
+  prefs: []
+  type: TYPE_TB
+- en: Architecture and Activation Functions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When designing a neural network, we immediately face two fundamental questions:
+    what architecture and what activation function? These are arguably the most important
+    deciding factors for a model’s success. Let’s explore what happens when we train
+    a model using different architectures and activation functions while holding the
+    training dataset fixed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Code
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As promised, for this first experiment we’ll show the code in its entirety,
+    starting with the helper functions in [Listing 10-1](ch10.xhtml#ch10lis1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: import time
+  prefs: []
+  type: TYPE_NORMAL
+- en: from sklearn.neural_network import MLPClassifier
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def run(x_train, y_train, x_test, y_test, clf):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: s = time.time()
+  prefs: []
+  type: TYPE_NORMAL
+- en: (*\pagebreak*)
+  prefs: []
+  type: TYPE_NORMAL
+- en: clf.fit(x_train, y_train)
+  prefs: []
+  type: TYPE_NORMAL
+- en: e = time.time()-s
+  prefs: []
+  type: TYPE_NORMAL
+- en: loss = clf.loss_
+  prefs: []
+  type: TYPE_NORMAL
+- en: weights = clf.coefs_
+  prefs: []
+  type: TYPE_NORMAL
+- en: biases = clf.intercepts_
+  prefs: []
+  type: TYPE_NORMAL
+- en: params = 0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for w in weights:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: params += w.shape[0]*w.shape[1]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for b in biases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: params += b.shape[0]
+  prefs: []
+  type: TYPE_NORMAL
+- en: return [clf.score(x_test, y_test), loss, params, e]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def nn(layers, act):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: return MLPClassifier(solver="sgd", verbose=False, tol=1e-8,
+  prefs: []
+  type: TYPE_NORMAL
+- en: nesterovs_momentum=False, early_stopping=False,
+  prefs: []
+  type: TYPE_NORMAL
+- en: learning_rate_init=0.001, momentum=0.9, max_iter=200,
+  prefs: []
+  type: TYPE_NORMAL
+- en: hidden_layer_sizes=layers, activation=act)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-1: Helper functions for experimenting with the architecture and
+    activation function. See* mnist_nn_experiments.py.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Listing 10-1](ch10.xhtml#ch10lis1) imports the usual modules and then defines
+    two helper functions, `run` and `nn`. Starting with `nn`, we see that all it does
+    is return an instance of `MLPClassifier` using the hidden layer sizes and the
+    given activation function type.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The hidden layer sizes are given as a tuple, where each element is the number
+    of nodes in the corresponding layer. Recall that sklearn works with only fully
+    connected layers, so a single number is all we need to specify the size. The input
+    samples given for training determine the size of the input layer. Here the input
+    samples are vectors representing the digit images, so there are 28 × 28 = 784
+    nodes in the input layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What about the output layer? It’s not specified explicitly because it depends
+    on the number of classes in the training labels. The MNIST dataset has 10 classes,
+    so there will be 10 nodes in the output layer. When the `predict_proba` method
+    is called to get an output probability, sklearn applies a softmax over the 10
+    outputs. If the model is binary, meaning the only class labels are 0 and 1, then
+    there is only one output node, a logistic (sigmoid), representing the probability
+    of belonging to class 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now let’s look at the parameters we passed in to `MLPClassifier`. First, we
+    explicitly state that we want to use the SGD solver. The solver is the approach
+    used to modify the weights and biases during training. All the solvers use backprop
+    to calculate the gradients; how we use those gradients varies. Plain vanilla SGD
+    is good enough for us right now.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we set a low tolerance so that we’ll train the requested number of epochs
+    (`max_iter`). We also turn off Nesterov momentum (a variant of standard momentum)
+    and early stopping (generally useful but not desired here).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The initial learning rate is set to the default value of 0.001, as is the value
+    of standard momentum, 0.9\. The number of epochs is arbitrarily set to 200 (the
+    default), but we’ll explore this more in the experiments that follow. Please indulge
+    your curiosity at all times and see what changing these values does to things.
+    For consistency’s sake, we’ll use these values as defaults throughout unless they
+    are the parameters we want to experiment with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The other helper function in [Listing 10-1](ch10.xhtml#ch10lis1) is `run`. This
+    function will train and test the classifier object it’s passed using the standard
+    sklearn `fit` and `score` methods. It also does some other things that we have
+    not seen before.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In particular, after timing how long training takes, we extract the final training
+    loss value, the network weights, and the network biases from the `MLPClassifier`
+    object so that we can return them. The `MLPClassifier` class minimizes the log-loss,
+    which we described in [Chapter 9](ch09.xhtml#ch09). We store the log-loss in the
+    `loss_` member variable. The size of this value, and how it changes during training,
+    gives us a clue as to how well the network is learning. In general, the smaller
+    the log-loss, the better the network is doing. As you explore neural networks
+    more and more, you’ll begin to develop intuition for what a good loss value is
+    and whether the training process is learning quickly or not by how rapidly the
+    loss changes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The weights and biases are stored in the `coefs_` and `intercepts_` member variables.
+    These are lists of NumPy matrices (weights) and vectors (biases), respectively.
+    Here we use them to calculate the number of parameters in the network by summing
+    the number of elements in each matrix and vector. This is what the two small loops
+    in the `run` function do. Finally, we return all this information, including the
+    score against the test set, to the `main` function. The `main` function is shown
+    in [Listing 10-2](ch10.xhtml#ch10lis2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def main():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = np.load("mnist_train_vectors.npy").astype("float64")/256.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = np.load("mnist_train_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test = np.load("mnist_test_vectors.npy").astype("float64")/256.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test = np.load("mnist_test_labels.npy")
+  prefs: []
+  type: TYPE_NORMAL
+- en: N = 1000
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_train = x_train[:N]
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_train = y_train[:N]
+  prefs: []
+  type: TYPE_NORMAL
+- en: x_test  = x_test[:N]
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_test  = y_test[:N]
+  prefs: []
+  type: TYPE_NORMAL
+- en: layers = [
+  prefs: []
+  type: TYPE_NORMAL
+- en: (1,), (500,), (800,), (1000,), (2000,), (3000,),
+  prefs: []
+  type: TYPE_NORMAL
+- en: (1000,500), (3000,1500),
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2,2,2), (1000,500,250), (2000,1000,500),
+  prefs: []
+  type: TYPE_NORMAL
+- en: ']'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for act in ["relu", "logistic", "tanh"]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("%s:" % act)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for layer in layers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: scores = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: loss = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: tm = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for i in range(10):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: s,l,params,e = run(x_train, y_train, x_test, y_test,
+  prefs: []
+  type: TYPE_NORMAL
+- en: nn(layer,act))
+  prefs: []
+  type: TYPE_NORMAL
+- en: scores.append(s)
+  prefs: []
+  type: TYPE_NORMAL
+- en: loss.append(l)
+  prefs: []
+  type: TYPE_NORMAL
+- en: tm.append(e)
+  prefs: []
+  type: TYPE_NORMAL
+- en: s = np.array(scores)
+  prefs: []
+  type: TYPE_NORMAL
+- en: l = np.array(loss)
+  prefs: []
+  type: TYPE_NORMAL
+- en: t = np.array(tm)
+  prefs: []
+  type: TYPE_NORMAL
+- en: n = np.sqrt(s.shape[0])
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print("    layers: %14s, score= %0.4f +/- %0.4f,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: loss = %0.4f +/- %0.4f (params = %6d, time = %0.2f s)" % \
+  prefs: []
+  type: TYPE_NORMAL
+- en: (str(layer), s.mean(), s.std()/n, l.mean(),
+  prefs: []
+  type: TYPE_NORMAL
+- en: l.std()/n, params, t.mean()))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Listing 10-2: The `main` function for experimenting with the architecture
+    and activation function. See* mnist_nn_experiments.py.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first load the MNIST train and test data stored in `x_train` (samples) and
+    `y_train` (labels), and `x_test` and `y_test`. Notice that we divide the samples
+    by 256.0 to make them floats in the range [0,1). This normalization is the only
+    preprocessing we’ll do in this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As the full training set has 60,000 samples and we want to run many training
+    sessions, we’ll use only the first 1,000 samples for training. We’ll likewise
+    keep the first 1,000 test samples. Our goal in this chapter is to see relative
+    differences as we change parameters, not to build the best model possible, so
+    we’ll sacrifice the quality of the model to get results in a reasonable timeframe.
+    With 1,000 training samples, we’ll have only 100 instances of each digit type,
+    on average. We’ll vary the number of training samples for specific experiments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `layers` list holds the different architectures we’ll explore. Ultimately,
+    we’ll pass these values to the `hidden_layer_sizes` argument of the `MLPClassifier`
+    constructor. Notice that we’ll examine architectures ranging from a single hidden
+    layer with a single node to three hidden layers with up to 2,000 nodes per layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `main` loop runs over three activation function types: rectified linear
+    unit, logistic (sigmoid) unit, and the hyperbolic tangent. We’ll train a model
+    for each combination of activation function type and architecture (`layers`).
+    Moreover, since we know neural network training is stochastic, we’ll train 10
+    models for each combination and report the mean and standard error of the mean,
+    so we’re not thrown off by a particularly bad model that isn’t representative.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Note** *When you run the code in the experiments that follow, you’ll likely
+    generate warning messages from sklearn like this one:*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*The messages are sklearn’s way of telling you that the number of training
+    iterations completed before sklearn felt that the network had converged to a good
+    set of weights.The warnings are safe to ignore and can be disabled completely
+    by adding `-W ignore` to the command line when you run the code; for example:*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Results
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Running this code takes several hours to complete, and produces output with
+    lines that look something like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: This tells us that using a ReLU activation function, and an architecture with
+    two hidden layers of 3,000 and 1,500 nodes each, the models had an average score
+    of 88.2 percent and an average final training loss of 0.21 (remember that lower
+    is better). It also tells us that the neural network had a total of nearly 6.9
+    million parameters and took, on average, a little more than four minutes to train.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Table 10-2](ch10.xhtml#ch10tab2) summarizes the scores for the various network
+    architectures and activation function types.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 10-2:** Mean Score (mean ± SE) on the MNIST Test Set as a Function
+    of the Architecture and Activation Function Type'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Architecture | ReLU | Tanh | Logistic (sigmoid) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 0.2066 ± 0.0046 | 0.2192 ± 0.0047 | 0.1718 ± 0.0118 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 500 | 0.8616 ± 0.0014 | 0.8576 ± 0.0011 | 0.6645 ± 0.0029 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 800 | 0.8669 ± 0.0014 | 0.8612 ± 0.0011 | 0.6841 ± 0.0030 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1000 | 0.8670 ± 0.001 | 0.8592 ± 0.0014 | 0.6874 ± 0.0028 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2000 | 0.8682 ± 0.0008 | 0.8630 ± 0.0012 | 0.7092 ± 0.0029 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3000 | 0.8691 ± 0.0005 | 0.8652 ± 0.0011 | 0.7088 ± 0.0024 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1000; 500 | 0.8779 ± 0.0011 | 0.8720 ± 0.0011 | 0.1184 ± 0.0033 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3000; 1500 | 0.8822 ± 0.0007 | 0.8758 ± 0.0009 | 0.1221 ± 0.0001 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1000; 500; 250 | 0.8829 ± 0.0011 | 0.8746 ± 0.0012 | 0.1220 ± 0.0000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2000; 1000; 500 | 0.8850 ± 0.0007 | 0.8771 ± 0.0010 | 0.1220 ± 0.0000 |'
+  prefs: []
+  type: TYPE_TB
+- en: In each case, we show the mean score on the reduced test set averaged over the
+    10 models trained (plus or minus the standard error of the mean). There is quite
+    a bit of information in this table, so let’s look at it carefully.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we look at the activation type, we immediately see something is off. The
+    results for the logistic activation function show improved scores as the single
+    hidden layer gets larger, something we might expect to see, but when we move to
+    more than one hidden layer, the network fails to train. We know that it was unable
+    to train because the scores on the test set are abysmal. If you check the output,
+    you’ll see that the loss values do not go down. If the loss value does not decrease
+    while training proceeds, something is wrong.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s not immediately evident why training failed for the logistic activation
+    function case. One possibility is a bug in sklearn, but this is rather unlikely
+    given how widely used the toolkit is. The most likely culprit has to do with network
+    initialization. The sklearn toolkit uses the standard, commonly used initialization
+    schemes we discussed in [Chapter 8](ch08.xhtml#ch08). But these are tailored for
+    ReLU and tanh activation functions and may not be performing well for the logistic
+    case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For our purposes, we can view this failure as a glaring sign that the logistic
+    activation function is not a good one to use for the hidden layers. Sadly, this
+    is precisely the activation function that was widely used throughout much of the
+    early history of neural networks, so we were shooting ourselves in the foot from
+    the beginning. No wonder it took so long for neural networks to finally find their
+    proper place! From here on out, we’ll ignore the logistic activation function
+    results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider again the scores for the single hidden layer networks (see [Table
+    10-2](ch10.xhtml#ch10tab2), rows 1–6). For the ReLU and tanh activation functions,
+    we see a steady improvement in the performance of the networks. Also, note that
+    in each case, the ReLU activation function slightly outperforms tanh for the same
+    number of nodes in the hidden layer, though these differences are likely not statistically
+    significant with only 10 models per architecture. Still, it follows a general
+    observation prevalent in the community: ReLU is preferred to tanh.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we look at the remaining rows of [Table 10-2](ch10.xhtml#ch10tab2), we see
+    that adding a second and even third hidden layer continues to improve the test
+    scores but with diminishing returns. This is also a widely experienced phenomenon
+    that we should look at a little more closely. In particular, we should consider
+    the number of parameters in the models of [Table 10-2](ch10.xhtml#ch10tab2). This
+    makes the comparison a bit unfair. If, instead, we train models that have closely
+    matched numbers of parameters, then we can more fairly compare the performance
+    of the models. Any differences in performance we see can be plausibly attributed
+    to the number of layers used since the overall number of parameters will be virtually
+    the same.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By modifying the layers array in [Listing 10-2](ch10.xhtml#ch10lis2), we can
+    train multiple versions of the architectures shown in [Table 10-3](ch10.xhtml#ch10tab3).
+    The number of nodes per layer was selected to parallel the overall number of parameters
+    in the models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 10-3:** Model Architectures Tested to Produce [Figure 10-1](ch10.xhtml#ch10fig1)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Architecture | Number of parameters |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1000 | 795,010 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2000 | 1,590,010 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4000 | 3,180,010 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 8000 | 6,360,010 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 700; 350 | 798,360 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1150; 575 | 1,570,335 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1850; 925 | 3,173,685 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2850; 1425 | 6,314,185 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 660; 330; 165 | 792,505 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1080; 540; 270 | 1,580,320 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1714; 857; 429 | 3,187,627 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2620; 1310; 655 | 6,355,475 |'
+  prefs: []
+  type: TYPE_TB
+- en: Where did the magic numbers in [Table 10-3](ch10.xhtml#ch10tab3) come from?
+    We first picked the single-layer sizes we wanted to test. We then determined the
+    number of parameters in models with those architectures. Next, we crafted two-layer
+    architectures using the rules of thumb from [Chapter 8](ch08.xhtml#ch08) so that
+    the number of parameters in those models will be close to the corresponding number
+    of parameters in the single-layer models. Finally, we repeated the process for
+    three-layer models. Doing things this way lets us compare the performance of the
+    models for very similar numbers of parameters. In essence, we’re fixing the number
+    of parameters in the model and altering only the way they interact with each other.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training models as we did in [Listing 10-2](ch10.xhtml#ch10lis2), but this time
+    averaging 25 models instead of just 10, gives us [Figure 10-1](ch10.xhtml#ch10fig1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-1: Scores (mean ± E) on the MNIST test set for the architectures
+    of [Table 10-3](ch10.xhtml#ch10tab3) as a function of the number of parameters
+    in the network*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s parse [Figure 10-1](ch10.xhtml#ch10fig1). First, note that the x-axis,
+    the number of parameters in the model, is given in millions. Second, we can compare
+    the three lines going vertically as those models all have similar numbers of parameters.
+    The legend tells us which plot represents models with one, two, or three hidden
+    layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Looking at the leftmost points, representing the smallest models in each case,
+    we see that changing from a single layer to two layers gives us a jump in model
+    performance. Also, moving from two layers to three results in another, smaller
+    rise. This repeats for all the layer sizes moving left to right. We’ll address
+    the dip in performance between the two largest models for single- and double-layer
+    architectures in a bit. Fixing the number of parameters but increasing the depth
+    of the network (number of layers) results in better performance. We might be tempted
+    here to say, “Go deep, not wide,” but there will be cases where this doesn’t work.
+    Still, it’s worth remembering: more layers can help, not just a wider layer with
+    more nodes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: What about the dip for the largest models in the one- and two-layer cases? These
+    are the rightmost points of [Figure 10-1](ch10.xhtml#ch10fig1). Recall, the models
+    used to make the plot were trained with only 1,000 samples each. For the largest
+    models, there likely wasn’t enough data to adequately train such a wide model.
+    If we were to increase the number of training samples, which we can do because
+    we have 60,000 to choose from for MNIST, we might see the dip go away. I’ll leave
+    this as an exercise for the reader.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Batch Size
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let’s now turn our attention to how batch size affects training. Recall that
+    here *batch size* means minibatch size, a subset of the full training set used
+    in the forward pass to calculate the average loss over the minibatch. From this
+    loss, we use backprop to update the weights and biases. Processing a single minibatch,
+    then, results in a single gradient-descent step—a single update to the parameters
+    of the network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll train a fixed-size subset of MNIST for a set number of epochs with different
+    minibatch sizes to see how that affects the final test scores. Before we do that,
+    however, we need to understand, for epochs and minibatches, the process sklearn
+    uses to train a neural network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s look briefly at the actual sklearn source code for the `MLPClassifier`
+    class, in the `_fit_stochastic` method, found at [https://github.com/scikit-learn/scikit-learn/blob/7389dba/sklearn/neural_network/multilayer_perceptron.py](https://github.com/scikit-learn/scikit-learn/blob/7389dba/sklearn/neural_network/multilayer_perceptron.py).
+    Understanding that this method is an internal one and might change from version
+    to version, we see code that looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: There are two `for` loops, the first over the number of epochs (`max_iter`),
+    and the second over the number of minibatches present in the training data. The
+    `gen_batches` function returns minibatches from the training set. In reality,
+    it returns slice indices with `X[batch_slice]` returning the actual training samples,
+    but the effect is the same. The calls to `_backprop` and `update_params` complete
+    the gradient descent step for the current minibatch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An *epoch* is a full pass through the minibatches present in the training set.
+    The minibatches themselves are groupings of the training data so that looping
+    over the minibatches uses all the samples in the training set once. If the number
+    of training samples is not an integer multiple of the minibatch size, the final
+    minibatch will be smaller than expected, but that will not affect training in
+    the long run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can view this graphically as in [Figure 10-2](ch10.xhtml#ch10fig2), where
+    we see how an epoch is built from the minibatches in the training set. In [Figure
+    10-2](ch10.xhtml#ch10fig2), the entire training set is represented as the epoch
+    with *n* samples. A minibatch has *m* samples, as indicated. The last minibatch
+    is smaller than the rest to indicate that the *n*/*m* might not be an integer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-2: The relationship between epochs (*n*), minibatches (*m*), and
+    samples* {x[*0*],x[*1*], …,x[*n-1*]}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 10-2](ch10.xhtml#ch10fig2) also implies that the order of the samples
+    in the training set is essential, which is why we shuffled the datasets when we
+    made them. The sklearn toolkit will also rearrange the samples after every epoch
+    during training if desired. As long as a minibatch is, statistically, a random
+    sample from the training set as a whole, things should be okay. If the minibatch
+    is not, then it might give a biased view of the gradient direction during backprop.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our minibatch experiment will fix the number of MNIST training samples at 16,384
+    while we vary the minibatch size. We’ll also fix the number of epochs at 100\.
+    The scores we report are the mean and standard error for five different runs of
+    the same model, each with a different random initialization. The `MLPClassifier`
+    object is therefore instantiated via
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: This code indicates that all of the models have two hidden layers of 1,000 and
+    500 nodes, respectively, making the architecture of the entire network 784-1000-500-10
+    when adding in the nodes of the input and output layers. The only parameter that
+    varies when defining a network is the `batch_size`. We’ll use the batch sizes
+    in [Table 10-4](ch10.xhtml#ch10tab4) along with the number of gradient descent
+    steps taken for each epoch (see [Figure 10-2](ch10.xhtml#ch10fig2)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 10-4:** Minibatch Sizes and the Corresponding Number of Gradient Descent
+    Steps per Epoch'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Minibatch size | SGD steps per epoch |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | 8,192 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4 | 4,096 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 8 | 2,048 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 16 | 1,024 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 32 | 512 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 64 | 256 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 128 | 128 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 256 | 64 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 512 | 32 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1,024 | 16 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2,048 | 8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4,096 | 4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 8,192 | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 16,384 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: When the minibatch size is 2, over 8,000 gradient descent steps will be taken
+    per epoch, but when the minibatch size is 8,192, only 2 gradient descent steps
+    are taken. Fixing the number of epochs should favor a smaller minibatch size since
+    there will be correspondingly more gradient descent steps, implying more opportunity
+    to move toward the optimal set of network parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 10-3](ch10.xhtml#ch10fig3) plots the mean score as a function of the
+    minibatch size. The code that generated the data for the plot is in the *mnist_nn_experiments
+    _batch_size.py* file. The plotting code itself is in *mnist_nn_experiments_batch
+    _size_plot.py*. The curve that concerns us for the moment is the one using circles.
+    We’ll explain the square symbol curve shortly.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-3: Average score on the MNIST test set as a function of minibatch
+    size (mean* ± *SE) for a fixed number of epochs (100) regardless of the minibatch
+    size (circles) or a fixed number of minibatches (squares)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here we’ve fixed the number of epochs at 100, so by varying the minibatch size,
+    we vary the number of gradient steps: the larger the minibatch, the *fewer* gradient
+    steps we take. Because the minibatch is larger, the steps themselves are based
+    on a more faithful representation of the actual gradient direction; however, the
+    number of steps is reduced because there are fewer minibatches per epoch, leading
+    to poorer convergence: we are not reaching a good minimum of the loss function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A more “fair” test might be to see what happens when we adjust the number of
+    epochs so that the number of *minibatches* examined is constant regardless of
+    the minibatch size. One way to do that is to note that the number of minibatches
+    per epoch is *n*/*m*, where *n* is the number of training samples, and *m* is
+    the number of minibatches. If we call the overall number of minibatches we want
+    to run *M*, then, to hold it fixed, we need to set the number of *epochs* to
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/235equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: so that regardless of *m*, we perform a total of *M* gradient descent steps
+    during training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s keep the same set of minibatches but alter the number of epochs according
+    to the preceding equation. We need to select *M*, the overall number of minibatches
+    (gradient descent steps). Let’s set it to *M* = 8,192 so that the number of epochs
+    is an integer in each case. When the minibatch size is 2, we use one epoch to
+    get 8,192 minibatches. And when the minibatch size is 16,384 (*n* is still also
+    16,384 samples), we get 8,192 epochs. If we do this, we get a completely different
+    set of results, the square symbol curve in [Figure 10-3](ch10.xhtml#ch10fig3),
+    where we see that the mean score is pretty much a constant representing the constant
+    number of gradient descent updates performed during training. When the minibatch
+    size is small, corresponding to points near 0 in [Figure 10-3](ch10.xhtml#ch10fig3),
+    we do see a degradation in performance, but after a certain minibatch size, the
+    performance levels off, reflecting the constant number of gradient descent updates
+    combined with a reasonable estimate of the true gradient from using a large enough
+    minibatch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the set of base neural network parameters, specifically for a fixed learning
+    rate, fixing the number of epochs results in reduced performance because of the
+    design of sklearn. Fixing the number of minibatches examined results in mainly
+    constant performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Base Learning Rate
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In [Chapter 9](ch09.xhtml#ch09), we introduced the basic equation for updating
+    the weights of a neural network during training:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*w* ← *w* – *η*Δ*w*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here *η* (eta) is the learning rate, the parameter that controls the step size
+    based on the gradient value, *Δw*. In sklearn, *η* is specified via the `learning`
+    `_rate_init` parameter. During training, the learning rate is often reduced, so
+    that the step sizes get smaller the closer we get to the training minimum (hopefully!).
+    For our experiments here, however, we’re using a constant learning rate, so whatever
+    value we set `learning_rate_init` to persists throughout the entire training session.
+    Let’s see how this value affects learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For this experiment, we fix the minibatch size at 64 samples and the architecture
+    to (1000,500), meaning two hidden layers with 1,000 and 500 nodes, respectively.
+    We then look at two main effects. The first is what we get when we fix the number
+    of epochs regardless of the base learning rate. In this case, we’ll always take
+    a set number of gradient descent steps during training. The second case fixes
+    the *product* of the base learning rate and the number of epochs. This case is
+    interesting because it looks at the effect on the test score of fewer large steps
+    versus many small steps. The code for these experiments is in *mnist_experiments_base_lr.py*.
+    The training set is the first 20,000 MNIST samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first experiment fixes the epochs at 50 and loops over different base learning
+    rates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The second uses the same base learning rates but varies the number of epochs
+    so that in each case the product of the base learning rate and epochs is 1.5\.
+    This leads to the following number of epochs matched to the preceding base learning
+    rates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Running the two experiments takes some time. When they’re complete, we can plot
+    the test score as a function of the base learning rate size. Doing this gives
+    us [Figure 10-4](ch10.xhtml#ch10fig4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-4: MNIST test scores as a function of the base learning rate. The
+    circles represent the fixed epochs case. The squares are the fixed product of
+    the base learning rate and the epochs case.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 10-4](ch10.xhtml#ch10fig4) shows two plots. In the first plot, using
+    circles, the number of epochs was fixed at 50\. Fixing the number of epochs fixes
+    the number of gradient descent steps taken during training. We then vary the learning
+    rate. The larger the learning rate, the bigger the steps we’ll take.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Imagine walking over a football field, attempting to get to the very center
+    from one of the corners in a limited number of steps. If we take large steps,
+    we might move over a lot of ground quickly, but we won’t be able to zero in on
+    the center because we’ll keep stepping past it. If we take tiny steps, we’ll cover
+    only a short distance from the corner toward the center. We might be on track,
+    but since we’re allowed only a certain number steps, we can’t reach the center.
+    Intuitively, we can perhaps convince ourselves that there is a sweet spot where
+    the step size and the number of steps we get to take combine to get us to the
+    center.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We see this effect in the circle plot of [Figure 10-4](ch10.xhtml#ch10fig4).
+    The leftmost point represents the case of tiny steps. We do relatively poorly
+    because we haven’t traversed enough of the error space to find the minimum. Similarly,
+    the rightmost point represents taking very large steps. We do poorly because we
+    keep stepping past the minimum. The best score happens when the number of steps
+    we get to make and the size of those steps work together to move us to the minimum.
+    In the figure, this happens when the base learning rate is 0.1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now let’s look at the square symbol plot in [Figure 10-4](ch10.xhtml#ch10fig4).
+    This plot comes from the scores found when the product of the base learning rate
+    and the number of epochs is constant, meaning small learning rates will run for
+    a large number of epochs. For the most part, the test scores are the same for
+    all base learning rates except the very largest. In our walking over the football
+    field thought experiment, the square symbol plot corresponds to taking a few large
+    steps or very many small steps. We can imagine both approaches getting us close
+    to the center of the field, at least until our step size is too large to let us
+    land at the center.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some readers might be objecting at this point. If we compare the first three
+    points of both the circle and square plots in [Figure 10-4](ch10.xhtml#ch10fig4),
+    we see a large gap. For the circles, the performance improves as the base learning
+    rate increases. For the squares, however, the performance remains high and constant
+    regardless of the base learning rate. For the circles, we trained for 50 epochs,
+    always. This is a more significant number of epochs than were used for the squares
+    plot for the corresponding base learning rates. This means that in the circles’
+    case, we stomped around quite a bit after we got near the center of the field.
+    For the case of the squares, however, we limited the number of epochs, so we stopped
+    walking when we were near the center of the field, hence the improved performance.
+    This implies that we need to adjust the number of epochs (gradient descent steps
+    taken) to match the learning rate so that we get near to the minimum of the loss
+    function quickly, without a lot of stomping around, but not so quickly that we
+    are taking large steps that won’t let us converge on the minimum.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thus far we’ve been holding the learning rate constant throughout training.
+    Because of space considerations, we can’t fully explore the effect of changing
+    the learning rate during training. Still, we can at least use our football field
+    thought experiment to help us visualize why changing the learning rate during
+    training makes sense. Recall, the network is initialized intelligently but randomly.
+    This means we start somewhere on the field at random. The odds are low that this
+    arbitrary position is near the center, the minimum of the error surface, so we
+    do need to apply gradient descent to move us closer to the center. At first, we
+    might as well take significant steps to move quickly through the field. Since
+    we are following the gradient, this moves us toward the center. If we keep taking
+    large steps, however, we might overshoot the center. After taking a few large
+    steps, we might think it wise to start taking smaller steps, believing that we
+    are now closer to our goal of reaching the center. The more we walk, the smaller
+    our steps so we can get as close to the center as possible. This is why the learning
+    rate is typically reduced during training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training Set Size
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We’ve mentioned that the number of samples in the training set affects performance
+    significantly. Let’s use the MNIST data to quantify this assertion. For this experiment,
+    we’ll vary the number of training set samples while adjusting the number of epochs
+    so that in each case, we take (approximately) 1,000 gradient descent steps during
+    training. The code for this experiment is in *mnist_nn_experiments_samples.py*.
+    In all cases, the minibatch size is 100, and the architecture of the network has
+    two hidden layers of 1,000 and 500 nodes, respectively. [Figure 10-5](ch10.xhtml#ch10fig5)
+    shows the results of this experiment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-5: MNIST test scores as a function of the number of training samples*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 10-5](ch10.xhtml#ch10fig5) is particularly satisfying because it shows
+    exactly what we’d expect to see. If we have too little training data, we cannot
+    learn to generalize well because we’re training the model with a very sparse sample
+    from the parent distribution. As we add more and more training data, we’d expect
+    a potentially rapid rise in the performance of the network since the training
+    set is a better and better sample of the parent distribution we’re asking the
+    model to learn.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 10-5](ch10.xhtml#ch10fig5) shows that increasing the training set size
+    results in diminishing returns. Moving from 1,000 to 5,000 training set samples
+    results in a substantial improvement in performance, but moving from 5,000 to
+    even 10,000 samples gives us only a small performance boost, and further increases
+    in the training set size level off at some ceiling performance. We can think of
+    this level region as having reached some capacity—that the model has pretty much
+    learned all it will learn from the dataset. At this point, we might think of enlarging
+    the network architecture to see if we get a jump in test set scores provided we
+    have enough training samples available.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: L2 Regularization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In [Chapter 9](ch09.xhtml#ch09), we discussed regularization techniques that
+    improve network generalization, including L2 regularization. We saw that L2 regularization,
+    which adds a new term to the loss function during training, is functionally equivalent
+    to weight decay and penalizes the network during training if the weights get large.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In sklearn, the parameter controlling the strength of L2 regularization is `alpha`.
+    If this parameter is 0, there is no L2 regularization, while the regularization
+    increases in intensity as `alpha` increases. Let’s explore the effect of L2 regularization
+    on our MNIST networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For this experiment, we’ll fix the minibatch size at 64\. We’ll also set the
+    momentum to 0 so that the effect we see is due to L2 regularization alone. Finally,
+    we’ll use a smaller network with two hidden layers of 100 and 50 nodes each and
+    a small training set of the first 3,000 MNIST samples. The code is in *mnist_nn_experiments_L2.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unlike the previous experiments, in this case, we’d like to evaluate the test
+    data after each training epoch so that we can watch the network learn over the
+    training process. If it is learning, the error on the test set will go down as
+    the number of training epochs increases. We know that sklearn will loop over all
+    the minibatches in the dataset for one epoch, so we can set the number of training
+    epochs to 1\. However, if we set `max_iter` to 1 and then call the `fit` method,
+    the next time we call `fit`, we’ll start over with a newly initialized network.
+    This won’t help us at all; we need to preserve the weights and biases between
+    calls to `fit`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fortunately for us, the creators of sklearn thought ahead and added the `warm_start`
+    parameter. If this parameter is set to `True`, a call to `fit` will *not* re-initialize
+    the network but will use the existing weights and biases. If we set `max_iter`
+    to 1 and `warm_start` to `True`, we’ll be able to watch the network learn by calling
+    `score` after each epoch of training. Calling `score` gives us the accuracy on
+    the test data. If we want the error, the value we need to track is 1 – `score`.
+    This is the value we plot as a function of epoch. The `alpha` values we’ll plot
+    are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: We’ve made these rather large compared to the default so we can see the effect.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Focusing on the test error only, the code for evaluating a single epoch is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, `fit` is called to perform one epoch of training. Then we calculate the
+    error on the test set and store it in `val_err`. Setting `warm_start` to `True`
+    after calling `fit` ensures that the first call to `epoch` will properly initialize
+    the network, but subsequent calls will keep the weights and biases from the previous
+    call.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Training then happens in a simple loop:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: This loop collects the per epoch results and returns them to the `main` function,
+    which itself loops over the *α* values we’re interested in.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s run this code and plot `val_err`, the test error, as a function of the
+    number of epochs for each `alpha`. [Figure 10-6](ch10.xhtml#ch10fig6) is the result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-6: MNIST test error as a function of training epoch for different
+    values of α*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first thing we notice in [Figure 10-6](ch10.xhtml#ch10fig6) is that any
+    nonzero value for *α* produces a lower test error compared to not using L2 regularization
+    at all. We can conclude that L2 regularization is helpful. The different *α* values
+    all result in approximately the same test error, but larger values are slightly
+    more effective and reach a lower test error sooner. Compare *α* = 0.1 to *α* =
+    0.4, for example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Notice that larger *α* values seem noisier: the plot is thicker as the error
+    jumps around more, relative to the smaller *α* values. To understand this, think
+    about the total loss minimized during training. When *α* is large, we’re placing
+    more importance on the L2 term relative to the network’s error over the minibatch.
+    This means that when we ask the network to adjust the weights and biases during
+    backprop, it’ll be more strongly affected by the magnitude of the parameters of
+    the network than the training data itself. Because the network is focusing less
+    on reducing the loss due to the training data, we might expect the per epoch test
+    error to vary more.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Momentum
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Momentum alters the weight update during training by adding in a fraction of
+    the gradient value used to update the weight in the previous minibatch. The fraction
+    is specified as a multiplier on the previous gradient value, [0,1]. We covered
+    momentum in [Chapter 9](ch09.xhtml#ch09).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s see how changing this parameter affects training. In this case, the setup
+    for the experiment is simple. It’s identical to the approach used previously for
+    L2 regularization, but instead of fixing the momentum parameter (*μ*) and varying
+    the L2 weight (*α*), we’ll fix *α* = 0.0001 and vary *μ*. All the other parts
+    remain the same: training by single epochs, the network configuration, and so
+    forth. See the file *mnist_nn_experiments_momentum.py*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We’ll explore these momentum values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: They range from no momentum term (*μ* = 0) to a large momentum term (*μ* = 0.99).
+    Running the experiment produces [Figure 10-7](ch10.xhtml#ch10fig7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Figure 10-7](ch10.xhtml#ch10fig7), we see three distinct regions. The first,
+    represented by no momentum or relatively small momentum values (*μ* = 0.3, *μ*
+    = 0.5), shows the highest test set error. The second shows improvement with moderate
+    momentum values (*μ* = 0.7, *μ* = 0.9), including the “standard” (sklearn default)
+    value of 0.9\. In this case, however, a large momentum of 0.99 lowers the test
+    set error from about 7.5 percent to about 6 percent. Momentum helps and should
+    be used, especially with values near the standard of 0.9\. In practice, people
+    seldom seem to alter the momentum much, but as this example shows, sometimes it
+    makes a big difference to the results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-7: MNIST test error as a function of training epoch for different
+    values of μ*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that we severely limited the training set to a mere 3,000 samples, about
+    300 per digit, which likely made momentum matter more because the training set
+    was a small and less complete of a sample of the parent distribution we want the
+    model to learn. Increasing the training set size to 30,000 results in a different,
+    and more typical, ordering of the plot, where a momentum of 0.9 is the best option.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Weight Initialization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Once treated rather cavalierly, the initial set of values used for the weights
+    and biases of a network is now known to be extremely important. The simple experiment
+    of this section shows this plainly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sklearn toolkit initializes the weights and biases of a neural network by
+    calling the `_init_coef` method of the `MLPClassifier` class. This method selects
+    weights and biases randomly according to the Glorot algorithm we discussed in
+    [Chapter 9](ch09.xhtml#ch09). This algorithm sets the weights and biases to values
+    sampled uniformly from the range
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/243equ01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where *f*[*in*] is the number of inputs and *f*[*out*] is the number of outputs
+    for the current layer being initialized. If the activation function is a sigmoid,
+    *A* = 2; otherwise, *A* = 6.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we play a little trick, we can change the way that sklearn initializes the
+    network and thereby experiment with alternative initialization schemes. The trick
+    uses Python’s object-oriented programming abilities. If we make a subclass of
+    `MLPClassifier`, let’s call it simply `Classifier`, we can override the `_init_coef`
+    method with our own. Python also allows us to add new member variables to a class
+    instance arbitrarily, which gives us all we need.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The remainder of the experiment follows the format of the previous sections.
+    We’ll ultimately plot the test error by epoch of the MNIST digits trained on a
+    subset of the full data for different initialization approaches. The model itself
+    will use the first 6,000 training samples, a minibatch size of 64, a constant
+    learning rate of 0.01, a momentum of 0.9, an L2 regularization parameter of 0.2,
+    and an architecture with two hidden layers of 100 and 50 nodes each. See *mnist_nn_experiments_init.py*
+    for this experiment’s code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll test four new weight initialization schemes along with the standard Glorot
+    approach of sklearn. The schemes are shown in [Table 10-5](ch10.xhtml#ch10tab5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 10-5:** Weight Initialization Schemes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Name | Equation | Description |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Glorot | ![Image](Images/244equ01.jpg) | sklearn default |'
+  prefs: []
+  type: TYPE_TB
+- en: '| He | ![Image](Images/244equ02.jpg) | He initialization for ReLU |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Xavier | ![Image](Images/244equ03.jpg) | Alternate Xavier |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Uniform | 0.01(*U*(0,1)-0.5) | Classic small uniform |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Gaussian | 0.005*N*(0,1) | Classic small Gaussian |'
+  prefs: []
+  type: TYPE_TB
+- en: Recall that *N*(0,1) refers to a sample from a bell curve with a mean of 0 and
+    a standard deviation of 1 while *U*(0,1) refers to a sample drawn uniformly from
+    [0,1), meaning all values in that range are equally likely except 1.0\. Each of
+    the new initialization methods sets the bias values to 0, always. However, sklearn’s
+    Glorot implementation sets the bias values in the same way it sets the weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Note** *As mentioned in [Chapter 9](ch09.xhtml#ch09) , both* Xavier *and*
+    Glorot *refer to the same person, Xavier Glorot. We’re differentiating here because
+    the form we’re calling* Xavier *is referred to as such in other machine learning
+    toolkits like Caffe, and the equation used is different from the equation used
+    in the original paper.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This all sounds nice and neat, but how to implement it in code? First, we define
+    a new Python class, `Classifier`, which is a subclass of `MLPClassifier`. As a
+    subclass, the new class immediately inherits all the functionality of the superclass
+    (`MLPClassifier`) while allowing us the freedom to override any of the superclass
+    methods with our own implementation. We simply need to define our own version
+    of `_init_coef` with the same arguments and return values. In code, it looks like
+    this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: The initialization we perform depends on the value of `init_scheme`. This is
+    a new member variable that we use to select the initialization method (see [Table
+    10-6](ch10.xhtml#ch10tab6)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Table 10-6:** Initialization Scheme and `init_scheme` Value'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Value | Initialization method |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0 | sklearn default |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | Classic small uniform |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | Classic small Gaussian |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | He initialization |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4 | Alternate Xavier |'
+  prefs: []
+  type: TYPE_TB
+- en: We set the variable immediately after creating the `Classifier` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We know that training a network more than once results in slightly different
+    performance because of the way the network is initialized. Therefore, training
+    a single network for each initialization type will likely lead to a wrong view
+    of how well the initialization performs because we might hit a bad set of initial
+    weights and biases. To mitigate this, we need to train multiple versions of the
+    network and report the average performance. Since we want to plot the test error
+    as a function of the training epoch, we need to track the test error at each epoch
+    for each training of each initialization scheme. This suggests a three-dimensional
+    array:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: We have `trainings` trainings of each initialization type (`init_types`) for
+    a maximum of `epochs` epochs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With all of this in place, the generation and storage of the actual experiment
+    output is straightforward, if rather slow, taking the better part of a day to
+    run:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here `nn` is the classifier instance to train, `init_scheme` sets the initialization
+    scheme to use, and `run` is the function we defined earlier to train and test
+    the network incrementally.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we set the number of training sessions to 10, the number of epochs to 4,000,
+    and plot the mean test error per epoch, we get [Figure 10-8](ch10.xhtml#ch10fig8).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-8: MNIST test error as a function of training epoch for different
+    weight initialization methods (mean over 10 training runs)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s understand what the figure is showing us. The five initialization approaches
+    are marked, each pointing to one of the five curves in the figure. The curves
+    themselves are familiar to us by now; they show the test set error as a function
+    of the training epoch. In this case, the value plotted for each curve is the average
+    over 10 training runs of the same network architecture initialized with the same
+    approach but different random values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We immediately see two distinct groups of results. On the top, we have the test
+    error for the classic initialization approaches using small uniform or normally
+    distributed values (Gaussian). On the bottom, we have the results for the more
+    principled initialization in current use. Even this basic experiment shows the
+    effectiveness of modern initialization approaches quite clearly. Recall, the classic
+    approaches were part of the reason neural networks had a bad name a few decades
+    ago. Networks were finicky and difficult to train in large part because of improper
+    initialization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Looking at the bottom set of results, we see that for this experiment, there
+    is little difference between the sklearn default initialization, which we are
+    calling *Glorot*, and the initialization approach of He. The two plots are virtually
+    identical. The plot labeled *Xavier* is slightly worse at first , but toward the
+    end of our training runs matches the other two. Sklearn is using a good initialization
+    strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The plot also shows us something else. For the classic initialization approaches,
+    we see the test set error level off and remain more or less constant. For the
+    modern initialization approaches, we observe the test error increase slightly
+    with the training epoch. This is particularly true for the Glorot and He methods.
+    This increase is a telltale sign of overfitting: as we keep training, the model
+    stops learning general features of the parent distribution and starts to focus
+    on specific features of the training set. We didn’t plot the training set error,
+    but it would be going down even as the test set error starts to rise. The lowest
+    test set error is at about 1,200 epochs. Ideally, this would be where we stop
+    training because we have the most reliable evidence that the model is in a good
+    place to correctly predict new, unseen inputs. Further training tends to degrade
+    model generalization.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why did the increase in the test error happen? The likely cause of this effect
+    is too small of a training set, only 6,000 samples. Also, the model architecture
+    is not very large, with only 100 and 50 nodes in the hidden layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This section dramatically demonstrates the benefit of using current, state-of-the-art
+    network initialization. When we explore convolutional neural networks in [Chapter
+    12](ch12.xhtml#ch12), we’ll use these approaches exclusively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Feature Ordering
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We’ll end our MNIST experiments with a bit of fun that we’ll return to again
+    when we’re exploring convolutional neural networks. All of the experiments so
+    far use the MNIST digits as a vector made by laying the rows of the digit images
+    end to end. When we do this, we know that the elements of the vector are related
+    to each other in a way that will reconstruct the digit should we take the vector
+    and reshape it into a 28 × 28 element array. This means, except for the end of
+    one row and the beginning of the next, that the pixels in the row are still part
+    of the digit—the spatial relationship of the components of the image is preserved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, if we scramble the pixels of the image, but always scramble the pixels
+    in the same way, we’ll destroy the local spatial relationship between the pixels.
+    This local relationship is what we use when we look at the image to decide what
+    digit it represents. We look for the top part of a 5 to be a straight line segment
+    and the bottom portion to curve on the right side, and so forth.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Look at [Figure 7-3](ch07.xhtml#ch7fig3). The figure shows MNIST digit images
+    on the top row and what the same digit images look like after scrambling (bottom).
+    In [Chapter 7](ch07.xhtml#ch07), we showed that this scrambling does not affect
+    the accuracy of classic machine learning models; the models consider the inputs
+    holistically, not by local spatial relationships as we do. Is this true for neural
+    networks as well? Also, if true, will the network learn as quickly with the scrambled
+    inputs as it does with the original images? Let’s find out.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code for this experiment is found in *mnist_nn_experiments_scrambled .py*,
+    where we simply define our now expected neural network model
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: and train it on the first 6,000 MNIST digit samples—first as usual, and then
+    using the scrambled versions. We compute the test set error as a function of the
+    epoch and average the results over 10 runs before plotting. The result is [Figure
+    10-9](ch10.xhtml#ch10fig9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![image](Images/10fig09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Figure 10-9: MNIST test error as a function of training epoch for scrambled
+    and unscrambled digits*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the figure, we see the answer to our earlier questions. First, yes, traditional
+    neural networks do interpret their input vectors holistically, like the classic
+    models. Second, yes, the network learns just as rapidly with the scrambled digits
+    as it does with the unscrambled ones. The difference between the scrambled and
+    unscrambled curves in [Figure 10-9](ch10.xhtml#ch10fig9) is not statistically
+    significant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: These results indicate that (traditional) neural networks “understand” their
+    inputs in their entirety and do not look for local spatial relationships. We’ll
+    see a different outcome to this experiment when we work with convolutional neural
+    networks ([Chapter 12](ch12.xhtml#ch12)). It’s precisely this lack of spatial
+    awareness (assuming images as inputs) that limited neural networks for so long
+    and led to the development of convolutional neural networks, which are spatially
+    aware.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we explored the concepts developed in [Chapters 8](ch08.xhtml#ch08)
+    and [9](ch09.xhtml#ch09) via experiments with the MNIST dataset. By varying key
+    parameters associated with the network architecture and gradient descent learning
+    process, we increased our intuition as to how the parameters influence the overall
+    performance of the network. Space considerations prevented us from thoroughly
+    exploring all the `MLPClassifier` options, so I encourage you to experiment more
+    on your own. In particular, experiment with using the different solvers, Nesterov
+    momentum, early stopping, and, particularly crucial for training convolutional
+    neural networks, nonconstant learning rates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next chapter explores techniques and metrics for evaluating the performance
+    of machine learning models. This interlude before we jump to convolutional neural
+    networks will supply us with tools we can use to help understand the performance
+    of more advanced model types.
+  prefs: []
+  type: TYPE_NORMAL
