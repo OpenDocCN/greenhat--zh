@@ -336,6 +336,7 @@
   id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个内层列表包含单个交易的项集，而整个 `transactions` 列表包含 20 笔交易。为了保持原始酸奶/酸奶油示例中定义的数量比例，数据集包含五笔包含酸奶的交易，六笔包含酸奶油的交易，以及四笔同时包含酸奶和酸奶油的交易。
 - en: 'To run the transaction data through mlxtend’s Apriori algorithm, you need to
     transform it into a *one-hot encoded Boolean array*, a structure where each column
     represents an item that can be purchased, each row represents a transaction, and
@@ -345,6 +346,9 @@
   id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了通过 mlxtend 的 Apriori 算法处理交易数据，你需要将其转换为 *独热编码布尔数组*，这种结构中每一列代表一个可以购买的商品，每一行代表一笔交易，每个值要么是
+    `True`（如果交易中包括该商品），要么是 `False`（如果交易中不包括该商品）。在这里，你通过 mlxtend 的 `TransactionEncoder`
+    对象执行必要的转换：
 - en: '[PRE9]'
   id: totrans-48
   prefs: []
@@ -357,6 +361,8 @@
   id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 你创建一个 `TransactionEncoder` 对象 ❶ 并使用它将 `transactions` 列表列表转换为一个名为 `encoded_array`
+    的独热编码布尔数组 ❷。然后你将这个数组转换为一个名为 `df_itemsets` 的 pandas DataFrame ❸，其片段如下所示：
 - en: '[PRE10]'
   id: totrans-50
   prefs: []
@@ -369,6 +375,7 @@
   id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 该 DataFrame 由 20 行和 20 列组成，行代表交易，列代表商品。为了确认原始的列表列表包含 20 笔交易并涉及 20 个可能的商品，可以使用以下代码：
 - en: '[PRE11]'
   id: totrans-52
   prefs: []
@@ -378,11 +385,13 @@
   id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这两种情况下，你应该得到 `20`。
 - en: Identifying Frequent Itemsets
   id: totrans-54
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 识别频繁项集
 - en: 'Now that the transaction data is in a usable format, you can use mlxtend’s
     `apriori()` function to identify all the frequent itemsets in the transaction
     data—that is, all the items or groups of items with a high enough support metric.
@@ -390,6 +399,7 @@
   id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，交易数据已经是可用格式，你可以使用 mlxtend 的 `apriori()` 函数来识别交易数据中的所有频繁项集——也就是说，识别所有支持度足够高的商品或商品组合。操作如下：
 - en: '[PRE12]'
   id: totrans-56
   prefs: []
@@ -406,6 +416,10 @@
   id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 你从 `mlxtend.frequent_patterns` 模块导入 `apriori()` 函数。然后调用该函数，将包含交易数据的 DataFrame
+    作为第一个参数传递。你还将 `min_support` 参数设置为 `0.1`，以返回至少支持度为 10% 的项集。（记住，支持度指标表示某个商品或商品组合出现在交易中的百分比。）你将
+    `use_colnames` 设置为 `True`，以通过名称（如 `curd` 或 `sour cream`）而非索引号来识别每个项集中的列。结果，`apriori()`
+    返回如下 DataFrame：
 - en: '[PRE13]'
   id: totrans-58
   prefs: []
@@ -421,6 +435,9 @@
   id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前所述，项集可以由一个或多个商品组成，实际上，`apriori()` 返回了几个单一商品的项集。最终，mlxtend 在生成关联规则时会忽略这些单一商品的项集，但在成功生成规则时，仍然需要
+    *所有* 频繁项集的数据（包括那些只有一个商品的项集）。不过，出于兴趣，你此时可能希望仅查看包含多个商品的项集。为此，首先在 `frequent_itemsets`
+    DataFrame 中添加一个 `length` 列，如下所示：
 - en: '[PRE14]'
   id: totrans-60
   prefs: []
@@ -431,6 +448,7 @@
   id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，使用 pandas 的选择语法来过滤 DataFrame，仅保留 `length` 字段值为 `2` 或更多的行：
 - en: '[PRE15]'
   id: totrans-62
   prefs: []
@@ -440,6 +458,7 @@
   id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将看到以下结果，且没有任何单一项项集：
 - en: '[PRE16]'
   id: totrans-64
   prefs: []
@@ -451,11 +470,14 @@
   id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，值得重申的是，mlxtend 在生成关联规则时需要所有频繁项集的信息。因此，请确保你没有从原始 `frequent_itemsets` DataFrame
+    中删除任何行。
 - en: Generating Association Rules
   id: totrans-66
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 生成关联规则
 - en: 'You’ve identified all the itemsets that meet the desired support threshold.
     The second step of the Apriori algorithm is to generate association rules for
     those itemsets. For this, you use the `association_rules()` function from mlxtend’s
@@ -463,6 +485,8 @@
   id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 你已经找出了所有满足所需支持度阈值的项集。Apriori 算法的第二步是为这些项集生成关联规则。为此，你使用 mlxtend `frequent_patterns`
+    模块中的 `association_rules()` 函数：
 - en: '[PRE17]'
   id: totrans-68
   prefs: []
@@ -477,6 +501,8 @@
   id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，你调用 `association_rules()` 函数，将 `frequent_itemsets` DataFrame 作为第一个参数传入。你还选择了一个用于评估规则的指标，并设置了该指标的阈值。具体来说，你指定该函数仅返回置信度指标为
+    0.5 或更高的关联规则。如前一节所述，函数会自动跳过生成单一项集的规则。
 - en: 'The `association_rules()` function returns the rules in the form of a DataFrame,
     where each row represents a single association rule. The DataFrame has columns
     for the antecedents, consequents, and various metrics, including support, confidence,
@@ -484,6 +510,7 @@
   id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: '`association_rules()` 函数返回以 DataFrame 形式表示的规则，每一行代表一个关联规则。该 DataFrame 包含前提、后果和各种指标的列，包括支持度、置信度和提升度。在这里，你可以打印出选择的列：'
 - en: '[PRE18]'
   id: totrans-71
   prefs: []
@@ -493,6 +520,7 @@
   id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将看到以下输出：
 - en: '[PRE19]'
   id: totrans-73
   prefs: []
@@ -509,11 +537,15 @@
   id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 看这些规则，有些可能显得冗余。例如，既有 `bread -> butter` 规则，又有 `butter -> bread` 规则。同样，也有多个基于
+    `(bread, cheese, butter)` 项集的规则。部分原因是，正如本章早些时候提到的，置信度并不是对称的；如果你交换规则中的前提和后果，置信度值可能会变化。此外，对于一个三项项集，提升度也可能会根据哪些项目是前提，哪些是后果而发生变化。因此，`(bread,
+    cheese) -> butter` 的提升度与 `(bread, butter) -> cheese` 的提升度不同。
 - en: Visualizing Association Rules
   id: totrans-75
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 可视化关联规则
 - en: As you learned in Chapter 8, visualization is a simple yet powerful technique
     for analyzing data. In the context of a market basket analysis, visualization
     provides a convenient way to evaluate the strength of a set of association rules
@@ -523,6 +555,8 @@
   id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你在第 8 章中学到的，数据可视化是一种简单而强大的分析技术。在市场购物篮分析的背景下，可视化提供了一种便捷的方式，通过查看不同前提/后果对的指标来评估一组关联规则的强度。在这一节中，你将使用
+    Matplotlib 将前一节生成的关联规则可视化为带注释的热力图。
 - en: A *heatmap* is a grid-like plot where cells are color-coded to indicate their
     value. In this example, you’ll create a heatmap showing the lift metric of the
     various association rules. You’ll arrange all the antecedents along the y-axis
@@ -532,6 +566,8 @@
   id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: '*热力图* 是一种网格状的图表，其中的单元格通过颜色编码来表示其值。在这个例子中，你将创建一个显示各种关联规则提升度的热力图。你将把所有前提沿着 y
+    轴排列，后果沿着 x 轴排列，并在规则的前提和后果相交的区域填充颜色，以表示该规则的提升度。颜色越深，提升度越高。'
 - en: 'To create the visualization, you first make an empty DataFrame, into which
     you copy the `antecedents`, `consequents`, and `lift` columns of the `rules` DataFrame
     created earlier:'
