@@ -1801,6 +1801,7 @@
   id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: 这张图像是32×32像素。我们从图像中随机抽取一个28×28像素的补丁，相当于将图像在随机的*x*或*y*位置上平移最多4个像素，而无需担心填补空白像素。如果我们先旋转图像，旋转过程中会进行像素插值，然后再裁剪去除边缘区域，这时我们仍然不需要担心空白像素。Keras提供了通过图像生成器对象来执行这些操作的工具，这个生成器在训练过程中使用。我们在使用Keras构建模型时会利用这个工具，但为了理解整个过程，暂时我们自己手动完成所有这些操作。
 - en: We need to mention one point here. So far, we’ve talked about building a dataset
     for training a model. What should we do when we want to use the model? Do we hand
     the model random croppings of the test inputs as well? No. Instead, we hand the
@@ -1811,6 +1812,8 @@
   id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要在这里提到一点。到目前为止，我们讨论的是如何为训练模型构建数据集。那么，当我们想要使用模型时该怎么办呢？我们是否也会给模型提供测试输入的随机裁剪？不，正确的做法是给模型提供一个以图像中心为基准的裁剪。所以，对于CIFAR-10，我们会将每个32
+    × 32的测试输入裁剪成28 × 28，去掉外侧6个像素，然后将其输入模型。我们这么做是因为中心裁剪仍然代表了实际的测试图像，而不是某种增强版本的图像。
 - en: '[Figure 5-7](ch05.xhtml#ch5fig7) illustrates what we mean by rotations, flips,
     random croppings for training, and center cropping for testing. In (a) we rotate
     the image and take a center crop. The output image is in the white square. In
@@ -1820,169 +1823,210 @@
   id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图5-7](ch05.xhtml#ch5fig7)说明了我们所说的旋转、翻转、训练时的随机裁剪和测试时的中心裁剪的含义。在(a)中，我们旋转图像并进行中心裁剪，输出图像位于白色方框内。在(b)中，我们进行左右翻转并随机裁剪。在(c)中，我们做两个随机裁剪，但不进行翻转；在(d)中，我们对测试图像进行中心裁剪，且不进行旋转或翻转。有些人会对测试图像进行增强，但我们在这里不这么做。'
 - en: '![image](Images/05fig07.jpg)'
   id: totrans-282
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/05fig07.jpg)'
 - en: '*Figure 5-7: Rotate, then center crop (a). Flip left to right, then crop randomly
     (b). Two random crops during training (c). Center crop for testing, with no rotation
     or flip (d).*'
   id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图5-7：旋转，然后中心裁剪（a）。左右翻转，然后随机裁剪（b）。训练时的两个随机裁剪（c）。测试时的中心裁剪，不旋转或翻转（d）。*'
 - en: '[Listing 5-7](ch05.xhtml#ch5lis7) shows how to augment the CIFAR-10 training
     set with random crops, rotations, and flips.'
   id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: '[列表5-7](ch05.xhtml#ch5lis7)展示了如何通过随机裁剪、旋转和翻转来增强CIFAR-10训练集。'
 - en: import numpy as np
   id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: import numpy as np
 - en: from PIL import Image
   id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: from PIL import Image
 - en: '❶ def augment(im, dim):'
   id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: '❶ def augment(im, dim):'
 - en: img = Image.fromarray(im)
   id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: img = Image.fromarray(im)
 - en: 'if (np.random.random() < 0.5):'
   id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if (np.random.random() < 0.5):'
 - en: img = img.transpose(Image.FLIP_LEFT_RIGHT)
   id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: img = img.transpose(Image.FLIP_LEFT_RIGHT)
 - en: 'if (np.random.random() < 0.3333):'
   id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if (np.random.random() < 0.3333):'
 - en: z = (32-dim)/2
   id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: z = (32-dim)/2
 - en: r = 10*np.random.random()-5
   id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: r = 10*np.random.random()-5
 - en: img = img.rotate(r, resample=Image.BILINEAR)
   id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: img = img.rotate(r, resample=Image.BILINEAR)
 - en: img = img.crop((z,z,32-z,32-z))
   id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: img = img.crop((z,z,32-z,32-z))
 - en: 'else:'
   id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 'else:'
 - en: x = int((32-dim-1)*np.random.random())
   id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: x = int((32-dim-1)*np.random.random())
 - en: y = int((32-dim-1)*np.random.random())
   id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: y = int((32-dim-1)*np.random.random())
 - en: img = img.crop((x,y,x+dim,y+dim))
   id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: img = img.crop((x,y,x+dim,y+dim))
 - en: return np.array(img)
   id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: return np.array(img)
 - en: 'def main():'
   id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def main():'
 - en: ❷ x = np.load("../data/cifar10/cifar10_train_images.npy")
   id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: ❷ x = np.load("../data/cifar10/cifar10_train_images.npy")
 - en: y = np.load("../data/cifar10/cifar10_train_labels.npy")
   id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: y = np.load("../data/cifar10/cifar10_train_labels.npy")
 - en: factor = 10
   id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: factor = 10
 - en: dim = 28
   id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: dim = 28
 - en: z = (32-dim)/2
   id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: z = (32-dim)/2
 - en: newx = np.zeros((x.shape[0]*factor, dim,dim,3), dtype="uint8")
   id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: newx = np.zeros((x.shape[0]*factor, dim,dim,3), dtype="uint8")
 - en: newy = np.zeros(y.shape[0]*factor, dtype="uint8")
   id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: newy = np.zeros(y.shape[0]*factor, dtype="uint8")
 - en: k=0
   id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: k=0
 - en: '❸ for i in range(x.shape[0]):'
   id: totrans-310
   prefs: []
   type: TYPE_NORMAL
+  zh: '❸ for i in range(x.shape[0]):'
 - en: im = Image.fromarray(x[i,:])
   id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: im = Image.fromarray(x[i,:])
 - en: im = im.crop((z,z,32-z,32-z))
   id: totrans-312
   prefs: []
   type: TYPE_NORMAL
+  zh: im = im.crop((z,z,32-z,32-z))
 - en: newx[k,...] = np.array(im)
   id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: newx[k,...] = np.array(im)
 - en: newy[k] = y[i]
   id: totrans-314
   prefs: []
   type: TYPE_NORMAL
+  zh: newy[k] = y[i]
 - en: k += 1
   id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: k += 1
 - en: 'for j in range(factor-1):'
   id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for j in range(factor-1):'
 - en: newx[k,...] = augment(x[i,:], dim)
   id: totrans-317
   prefs: []
   type: TYPE_NORMAL
+  zh: newx[k,...] = augment(x[i,:], dim)
 - en: newy[k] = y[i]
   id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: newy[k] = y[i]
 - en: k += 1
   id: totrans-319
   prefs: []
   type: TYPE_NORMAL
+  zh: k += 1
 - en: idx = np.argsort(np.random.random(newx.shape[0]))
   id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: idx = np.argsort(np.random.random(newx.shape[0]))
 - en: newx = newx[idx]
   id: totrans-321
   prefs: []
   type: TYPE_NORMAL
+  zh: newx = newx[idx]
 - en: newy = newy[idx]
   id: totrans-322
   prefs: []
