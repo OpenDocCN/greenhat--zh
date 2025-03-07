@@ -25,7 +25,7 @@
   id: totrans-3
   prefs: []
   type: TYPE_NORMAL
-  zh: 本章介绍了*缓存*，一种旨在通过将部分数据存储在离计算更近的位置来降低高数据访问成本的数据结构。正如我们在前几章中所看到的，数据访问的成本是影响我们算法效率的关键因素。这不仅关系到我们如何组织存储中的数据，也关系到我们使用的存储类型。我们说数据是*本地的*，当它存储在离处理器更近的位置时，这样可以更快地进行处理。如果我们将一些数据从更昂贵、远离的地方复制到本地存储中，我们就能显著提高数据的读取速度。
+  zh: 本章介绍了*缓存*，一种数据结构，通过将一些数据存储在离计算更近的位置来缓解高数据访问成本。正如我们在前几章中所看到的，数据访问的成本是我们算法效率的一个关键因素。这不仅与我们如何组织存储中的数据有关，还与我们使用的存储类型有关。当数据存储得离处理器更近时，我们称之为*本地*数据，这样可以更快地进行处理。如果我们将一些数据从更昂贵、距离较远的位置复制到本地存储中，我们就可以显著加快数据的读取速度。
 - en: For example, we might use caches to accelerate access to web pages. Loading
     a web page consists of querying a server for the information contained on the
     page, transferring that data to your local computer, and rendering this information
@@ -37,7 +37,7 @@
   id: totrans-4
   prefs: []
   type: TYPE_NORMAL
-  zh: 例如，我们可以使用缓存来加速网页的访问。加载网页的过程包括查询服务器获取页面上的信息，将这些数据传输到本地计算机，并在视觉上呈现这些信息。如果网页包含大量元素，如图像或视频，我们可能需要传输大量数据。为了减少这种成本，浏览器会缓存常访问的数据。每次访问页面时，浏览器不会重新下载我们最喜欢网站的logo，而是将该图像保存在计算机硬盘的本地缓存中，这样可以更快地从磁盘读取它。
+  zh: 例如，我们可能会使用缓存来加速网页访问。加载一个网页的过程包括查询服务器获取页面上的信息，将这些数据传输到本地计算机，并将其以视觉形式呈现。如果网页包含大的元素，例如图片或视频，我们可能需要传输大量数据。为了减少这一成本，浏览器会缓存常用的数据。这样，我们每次访问网页时，不必重新下载我们最喜欢网站的logo，浏览器会将这个图片保存在本地缓存中，以便从硬盘快速读取。
 - en: How should we choose which data to load into our cache? Obviously, we can’t
     store everything. If we could, we wouldn’t need the cache in the first place—we’d
     just copy the entire data set into the closest memory. There are a range of caching
@@ -49,13 +49,13 @@
   id: totrans-5
   prefs: []
   type: TYPE_NORMAL
-  zh: 我们应该如何选择哪些数据加载到缓存中呢？显然，我们无法存储所有的东西。如果我们能够存储所有数据，那我们就不需要缓存了——我们直接把整个数据集复制到最近的内存中就行了。缓存有多种策略，其有效性总是取决于具体的使用场景。在这一章中，我们结合之前探讨的数据结构，构建了一种策略——最少最近使用（LRU）缓存，它能极大地提高我们最喜欢的咖啡店的运营效率。我们还将简要讨论几种其他缓存策略以做对比。
+  zh: 我们应该如何选择将哪些数据加载到缓存中呢？显然，我们不可能将所有东西都存储在缓存里。如果能这样做，我们根本不需要缓存——我们只需将整个数据集复制到最近的内存中。本章中，我们将结合之前探索过的数据结构，构建一种缓存策略——最少最近使用（LRU）缓存，它能大大提高我们最爱的咖啡店的运营效率。同时，我们也将简要讨论几种其他的缓存策略进行对比。
 - en: Introducing Caches
   id: totrans-6
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
-  zh: 引入缓存
+  zh: 缓存介绍
 - en: Up to this point, we’ve treated all of the computer’s storage equally, a single
     bookshelf from which we can grab any item we need with approximately the same
     amount of effort. However, data storage is not this straightforward. We can think
@@ -68,7 +68,7 @@
   id: totrans-7
   prefs: []
   type: TYPE_NORMAL
-  zh: 到目前为止，我们对计算机的所有存储进行了等同处理，把它当作一个单一的书架，可以大致用相同的精力拿到任何我们需要的物品。然而，数据存储并非如此简单。我们可以把存储看作一个大型的多层图书馆。我们将受欢迎的书籍安排在靠近入口的书架上，以满足大多数读者的需求，而把发霉的计算机科学旧期刊堆放在地下室。我们甚至可能有一个外部仓库，存储那些很少使用的书籍，直到某位读者特别请求它们。想要查找关于PILOT编程语言的资料？很可能它不在受欢迎书籍区域。
+  zh: 到目前为止，我们把计算机的所有存储都视作相同的，像一个单一的书架，我们可以从中取出任何需要的物品，所需的努力大致相同。然而，数据存储并非如此简单。我们可以将存储想象成一个大型的多层图书馆。热门书籍的书架位于入口附近，以满足大多数顾客的需求，而那些发霉的老旧计算机科学期刊则被放置在地下室。我们甚至可能有一个远离现场的仓库，专门存储那些很少使用的书籍，直到顾客特意要求它们。想要找到关于PILOT编程语言的资料？很可能它不会出现在热门推荐区。
 - en: In addition to paying attention to how we organize data within our program,
     we need to consider *where* the data is stored. Not all data storage is equal.
     In fact, for different mediums, there is often a tradeoff among the size of storage
@@ -84,7 +84,9 @@
   id: totrans-8
   prefs: []
   type: TYPE_NORMAL
-  zh: 除了关注我们在程序中如何组织数据外，我们还需要考虑数据存储的*位置*。并非所有数据存储都是平等的。实际上，对于不同的存储介质，通常存在存储容量、速度和成本之间的权衡。CPU本身的内存（寄存器或本地缓存）速度极快，但只能存储非常有限的数据。计算机的随机存取内存（RAM）提供了更大的存储空间，但速度较慢。硬盘的容量显著更大，但比RAM慢得多。通过网络访问可以访问范围更广的存储，例如整个互联网，但也带来了相应的开销。在处理非常大的数据集时，可能无法将全部数据加载到内存中，这会对算法的性能产生巨大影响。理解这些权衡如何影响算法的性能非常重要。
+  zh: 除了注意我们如何在程序中组织数据外，我们还需要考虑*数据存储的位置*。并非所有的数据存储方式都是相同的。实际上，对于不同的介质，存储容量、速度和成本之间通常存在权衡。CPU
+    内存（寄存器或本地缓存）非常快速，但只能存储非常有限的数量。计算机的随机存取存储器（RAM）提供了更大的存储空间，但速度较慢。硬盘的存储量比 RAM 大得多，但比
+    RAM 慢得多。调用网络可以访问海量存储，例如整个互联网，但也会带来相应的开销。处理非常大的数据集时，可能无法将整个数据集加载到内存中，这会对算法的性能产生重大影响。理解这些权衡如何影响算法性能非常重要。
 - en: Compare this to our own morning coffee-making routine. While it would be ideal
     to have thousands of varieties at our fingertips, our apartment can store only
     a limited amount of coffee. Down the street is a coffee distributor stocked with
@@ -95,7 +97,7 @@
   id: totrans-9
   prefs: []
   type: TYPE_NORMAL
-  zh: 将此与我们自己早晨制作咖啡的例程进行比较。虽然理想情况下我们可以随时得到成千上万种咖啡，但我们的公寓只能存储有限的咖啡。街道尽头有一家咖啡供应商，那里储备了成百上千种咖啡，但我们真的希望每次想喝新的一杯咖啡时都走到那儿去吗？相反，我们在公寓里存储了我们最喜欢的少量咖啡。这个本地存储加速了我们早晨咖啡的制作过程，让我们在踏入外界之前就能享受第一杯咖啡。
+  zh: 将此与我们自己的早晨咖啡制作过程进行对比。虽然理想情况下我们可以随时得到成千上万种咖啡，但我们的公寓只能存储有限量的咖啡。街角有一家咖啡分销商，提供数百种咖啡品种，但我们真的想每次做咖啡时都走到那里去吗？相反，我们将少量我们喜欢的咖啡存放在公寓里。这种本地存储加快了我们早晨咖啡的制作速度，让我们在走出家门之前就能享受到第一杯咖啡。
 - en: Caches are a step before accessing expensive data, as shown in [Figure 11-1](#figure11-1).
     Before calling out to a remote server or even accessing our local hard drive,
     we check whether we already have the data stored locally in the cache. If we do,
@@ -106,20 +108,20 @@
   id: totrans-10
   prefs: []
   type: TYPE_NORMAL
-  zh: 缓存是在访问昂贵数据之前的一步，如[图 11-1](#figure11-1)所示。在调用远程服务器或访问本地硬盘之前，我们会检查是否已经将数据存储在本地缓存中。如果有，我们直接从缓存中访问数据，这样既便宜又快捷。当我们在缓存中找到数据时，这就是一次*缓存命中*。我们可以停止查找，避免访问更昂贵的存储。如果数据不在缓存中，那就是*缓存未命中*。我们会叹气，然后继续进行更昂贵的访问。
+  zh: 缓存是访问昂贵数据之前的一个步骤，如[图 11-1](#figure11-1)所示。在调用远程服务器或访问本地硬盘之前，我们会检查数据是否已被存储在本地缓存中。如果有，我们直接从缓存中快速、便宜地访问数据。当我们在缓存中找到数据时，这就是一次*缓存命中*。我们可以停止查找，避免访问更昂贵的存储。如果数据不在缓存中，那就是*缓存未命中*。我们叹息一声，然后继续执行更昂贵的访问。
 - en: '![The cache sits between the algorithm and expensive data store. Arrows labeled
     “query” point from the algorithm to the cache and from the cache to the data store.
     Arrows labeled “reply” point the other direction.](image_fi/502604c11/f11001.png)'
   id: totrans-11
   prefs: []
   type: TYPE_IMG
-  zh: '![缓存位于算法和昂贵的数据存储之间。标记为“查询”的箭头从算法指向缓存，再从缓存指向数据存储。标记为“回复”的箭头则指向相反方向。](image_fi/502604c11/f11001.png)'
+  zh: '![缓存位于算法和昂贵数据存储之间。标有“查询”的箭头指向缓存和数据存储，标有“回复”的箭头指向相反方向。](image_fi/502604c11/f11001.png)'
 - en: 'Figure 11-1: A cache sits between the algorithm and a slow, expensive data
     store.'
   id: totrans-12
   prefs: []
   type: TYPE_NORMAL
-  zh: 图 11-1：缓存位于算法和慢速、昂贵的数据存储之间。
+  zh: 图 11-1：缓存位于算法和缓慢、昂贵的数据存储之间。
 - en: Picture this in the context of a busy coffee counter. The daily menu contains
     10 coffees ranging in popularity from the mega-popular house brew to the rarely
     purchased mint-cinnamon-pumpkin explosion. At the far end of the counter sits
@@ -132,7 +134,7 @@
   id: totrans-13
   prefs: []
   type: TYPE_NORMAL
-  zh: 想象一下在一个繁忙的咖啡柜台的情景。每日菜单上有10种咖啡，从超受欢迎的招牌咖啡到很少有人购买的薄荷肉桂南瓜爆炸口味不等。在柜台的最远端是一个咖啡站，那里有10壶咖啡，每壶都放在自己的加热器上。收到订单后，咖啡师走到咖啡站，倒满相应的咖啡。每天走上几英里，咖啡师请求老板在收银台旁边安装另一个加热器，好让他们的疲惫双脚得到休息。老板同意了，但问道：“你打算把哪种咖啡放在收银台附近？”这个问题让咖啡师十分困扰，他们尝试了几种策略。
+  zh: 试想一下在一个繁忙的咖啡柜台上的场景。每日菜单包含10种咖啡，从极受欢迎的常规咖啡到很少有人购买的薄荷肉桂南瓜爆炸。柜台的另一端是一个咖啡站，站上有10个咖啡壶，每个壶上都有加热器。当收到订单时，咖啡师走到咖啡站，拿起适当的咖啡装入杯中。每天走了几英里后，咖啡师请求老板在收银台旁安装另一个加热器，这样他们可以让疲惫的双脚得到休息。老板同意了，但问道：“你打算将哪种咖啡放在收银台旁？”这个问题让咖啡师陷入沉思，他们尝试了一些策略。
 - en: The barista quickly realizes that it isn’t just a question of which coffee,
     but also when they should change it. They can store different coffees locally
     at different points of the day. They try keeping the house brew in the cache all
@@ -145,7 +147,7 @@
   id: totrans-14
   prefs: []
   type: TYPE_NORMAL
-  zh: 咖啡师很快意识到，这不仅仅是选择哪种咖啡的问题，还包括什么时候更换它。他们可以在一天中的不同时间点存储不同的咖啡。他们尝试了全天把招牌咖啡保持在缓存中，晚上把低咖啡因咖啡放得更近，在过去10分钟内没有顾客时将当前选择换成招牌咖啡。有些策略有效，而有些则失败，尤其是涉及到缓存薄荷肉桂南瓜爆炸口味时，结果更是惨不忍睹。如果咖啡师选择得当，大部分订单都能命中缓存，他们就能避免长时间的步行。如果选择不当，附近的咖啡对于大多数订单来说是无用的。
+  zh: 咖啡师很快意识到，这不仅仅是选择哪种咖啡的问题，还要考虑何时该更换咖啡。他们可以根据一天中的不同时间在本地存储不同的咖啡。他们尝试将常规咖啡保持在缓存中整天，晚上将低咖啡因咖啡放得更近，当过去10分钟内没有顾客时，则将当前选择更换为常规咖啡。一些策略有效，而其他的，尤其是涉及缓存薄荷肉桂南瓜爆炸的策略，失败得很惨。如果咖啡师做出正确的选择，大多数订单会导致缓存命中，他们可以避免长时间走路。如果选择错误，本地咖啡对大多数订单都没用。
 - en: The barista could further improve the situation by installing a second heater
     by the register. Instead of storing a single flavor nearby, they can now store
     two. The cost, however, is that this second heater uses up precious counter real
@@ -157,7 +159,7 @@
   id: totrans-15
   prefs: []
   type: TYPE_NORMAL
-  zh: 咖啡师可以通过在收银台旁安装第二个加热器进一步改善情况。他们现在可以不只存储一种咖啡，而是存储两种。然而，代价是这个第二个加热器占用了宝贵的柜台空间。无论是计算机还是咖啡店都有有限的本地空间。我们不能将每种咖啡都存储在收银台旁边，就像我们不能将整个互联网存储在计算机的RAM中一样。如果我们将缓存做得太大，就需要使用更慢的存储设备来容纳它。这就是缓存的基本权衡——使用的内存与带来的加速之间的平衡。
+  zh: 咖啡师可以进一步改善情况，在收银台旁安装第二个加热器。这样他们就可以不只存储一种咖啡口味，而是存储两种。然而，代价是这个第二个加热器占用了宝贵的柜台空间。无论是计算机还是咖啡店，都有有限的本地空间。我们不能把所有的咖啡都存放在收银台旁，也不能将整个互联网存储在电脑的RAM中。如果我们把缓存做得太大，就需要使用更慢的存储来存储它。这就是缓存的基本权衡——使用的内存与提供的加速之间的权衡。
 - en: When the cache fills up, we determine which data to keep and which data to replace.
     We say the replaced data is *evicted* from the cache. Perhaps the triple-caffeinated
     blend replaces the decaf during a fall morning rush. By evicting the decaf from
@@ -169,13 +171,13 @@
   id: totrans-16
   prefs: []
   type: TYPE_NORMAL
-  zh: 当缓存满时，我们需要决定保留哪些数据，替换哪些数据。我们说被替换的数据被*驱逐*出缓存。也许在一个秋天的早晨高峰期，三重浓缩咖啡会替代低咖啡因咖啡。通过将低咖啡因咖啡从附近的加热器上驱逐，咖啡师节省了数小时的步行时间来取用更流行的混合咖啡。不同的缓存方法采用不同的驱逐策略来决定哪些数据被替换，从统计数据访问的频率到预测这些数据是否会在不久的将来再次使用。
+  zh: 当缓存满了，我们需要确定保留哪些数据，替换掉哪些数据。我们说被替换的数据是*从缓存中驱逐*出去的。也许在秋季早高峰时，三倍咖啡因的混合咖啡替代了低咖啡因咖啡。通过将低咖啡因咖啡从附近的加热器中驱逐，咖啡师节省了几个小时的路程去取更时髦的混合咖啡。不同的缓存方法使用不同的驱逐策略来确定替换哪些数据，从统计数据被访问的次数到预测这些数据是否会在不久的将来再次被使用。
 - en: LRU Eviction and Caches
   id: totrans-17
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
-  zh: LRU 驱逐与缓存
+  zh: LRU 驱逐和缓存
 - en: The *least recently used (LRU) cache* stores recently used information. LRU
     caches are a simple and common approach that provide a good illustration of the
     types of tradeoffs we face in using caches. The intuition behind this caching
@@ -189,7 +191,7 @@
   id: totrans-18
   prefs: []
   type: TYPE_NORMAL
-  zh: '*最久未使用（LRU）缓存* 存储最近使用的信息。LRU缓存是一种简单且常见的方法，能够很好地说明我们在使用缓存时面临的各种权衡。这个缓存策略的直觉是，我们可能会重新访问最近需要的信息，这与我们上面提到的网页浏览示例非常契合。如果我们经常访问相同的页面集，那么将这些页面的某些（不变的）元素存储在本地就有意义。我们不需要每次访问网站时都重新请求该站点的徽标。LRU缓存由一定量的存储组成，存储的是最近访问过的项目。当缓存满时，缓存会开始驱逐最老的项目——即那些最久未使用的。'
+  zh: '*最近最少使用（LRU）缓存*存储最近使用的信息。LRU缓存是一种简单而常见的做法，它很好地展示了我们在使用缓存时面临的各种权衡。这个缓存策略的直觉是：我们很可能会重新访问最近需要的信息，这与我们上面提到的浏览网页的例子非常契合。如果我们反复访问相同的一组网页，保存这些网页的一些（不变的）元素在本地是有好处的。我们不需要每次访问时重新请求网站的logo。LRU缓存由一组存储空间组成，存放最近访问的项目。当缓存满时，它会开始逐出较旧的项目——那些最近最少使用的项目。'
 - en: If our barista decides to treat the heater closest to the register as an LRU
     cache, they keep the last ordered coffee on that heater. When they receive an
     order for something different, they take the current cached coffee back to the
@@ -199,7 +201,7 @@
   id: totrans-19
   prefs: []
   type: TYPE_NORMAL
-  zh: 如果我们的咖啡师决定将靠近收银台的加热器当作一个LRU缓存，他们会将最后点的咖啡放在那个加热器上。当他们收到一个不同的订单时，他们会把当前缓存的咖啡拿回咖啡站，将其放在那里的加热器上，然后取回新的咖啡。他们将这杯新的咖啡带回收银台，用它来完成订单，然后把它留在那里。
+  zh: 如果我们的咖啡师决定将靠近收银台的加热器当作LRU缓存，他们会将最近点的咖啡放在那个加热器上。当他们收到不同的订单时，他们会将当前缓存的咖啡拿回咖啡站，放在那里的加热器上，并取回新咖啡。然后，他们将这杯新咖啡带回收银台，用来完成订单，并将其留在那里。
 - en: 'If every customer orders something different, this strategy just adds overhead.
     Instead of walking to the end of the counter with a cup, the barista is now making
     the same journey with a pot of coffee—probably complaining under their breadth
@@ -213,7 +215,7 @@
   id: totrans-20
   prefs: []
   type: TYPE_NORMAL
-  zh: 如果每个顾客点的都是不同的东西，那么这个策略只会增加开销。咖啡师不再是拿着一杯咖啡走到柜台的尽头，而是要拿着一壶咖啡走同样的路程——可能会低声抱怨柜台的长度，或者带着不满的情绪评判顾客的口味：“谁会点薄荷肉桂南瓜爆炸？”然而，如果大多数顾客点的是相似的咖啡，这个策略可以非常有效。三位顾客连续点了普通咖啡，就意味着节省了两趟来回的路程。随着顾客互动的影响，这个优势可以进一步放大。在看到前面的人点了南瓜混合饮料之后，下一个顾客做出了（值得怀疑的）决定，选择了复制前人的订单，说：“我要一样的。”
+  zh: 如果每个顾客点的都是不同的东西，那么这个策略就只会增加开销。咖啡师不再是拿着一杯咖啡走到柜台的尽头，而是拿着一壶咖啡走同样的路——可能会在心里抱怨柜台太长，或者在心里对顾客的口味进行评判：“谁会点薄荷肉桂南瓜爆炸味？”然而，如果大多数顾客点的咖啡相似，那么这个策略就会非常有效。三位顾客连续点普通咖啡就意味着节省了两趟来回的时间。随着顾客之间的互动效果，这个优势还会得到进一步的放大。在看到前面的人点了南瓜口味的混合咖啡后，下一位顾客做出了（值得怀疑的）决定，决定复制前者的选择，说：“我也要一样的。”
 - en: This is exactly the scenario we can run into when browsing our favorite website.
     We move from one page of the site to another page of the same site. Certain elements,
     such as logos, will reappear on subsequent pages, leading to a significant savings
@@ -221,13 +223,13 @@
   id: totrans-21
   prefs: []
   type: TYPE_NORMAL
-  zh: 这正是我们在浏览自己最喜欢的网站时可能遇到的场景。我们从网站的一个页面跳转到同一网站的另一个页面。某些元素，如徽标，会在后续页面中重新出现，从而通过将这些项目保存在缓存中节省了大量时间。
+  zh: 这正是我们在浏览自己最喜欢的网站时可能遇到的情况。我们从网站的一个页面跳转到同一网站的另一个页面。一些元素，如logo，会在后续页面中重复出现，因此将这些元素保存在缓存中可以带来显著的节省。
 - en: Building an LRU Cache
   id: totrans-22
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
-  zh: 构建一个LRU缓存
+  zh: 构建LRU缓存
 - en: 'Caching with the LRU eviction policy requires us to support two operations:
     looking up an arbitrary element and finding the least recently used element (for
     eviction). We must be able to perform both operations quickly. After all, the
@@ -237,7 +239,7 @@
   id: totrans-23
   prefs: []
   type: TYPE_NORMAL
-  zh: 使用LRU驱逐策略的缓存要求我们支持两个操作：查找任意元素和找到最久未使用的元素（用于驱逐）。我们必须能够快速执行这两项操作。毕竟，缓存的目的是加速查找。如果我们必须扫描整个无结构的数据集来检查缓存命中，我们更可能增加开销而不是节省时间。
+  zh: 使用LRU逐出策略的缓存要求我们支持两个操作：查找任意元素和找到最近最少使用的元素（用于逐出）。我们必须能够快速执行这两个操作。毕竟，缓存的目的是加速查找。如果我们必须扫描整个未结构化的数据集来检查缓存是否命中，那么我们更可能增加开销而不是节省时间。
 - en: 'We can construct an LRU cache using two previously explored components: a hash
     table and a queue. The hash table allows us to perform fast lookups, efficiently
     retrieving any items that are in the cache. The queue is a FIFO data structure
@@ -248,7 +250,7 @@
   id: totrans-24
   prefs: []
   type: TYPE_NORMAL
-  zh: 我们可以使用之前讨论过的两个组件构建一个 LRU 缓存：哈希表和队列。哈希表使我们能够快速查找，高效地检索缓存中的任何项。队列是一个 FIFO 数据结构，它帮助我们跟踪哪些项最近没有被使用。我们可以通过出队列中的*最早*项，而不是遍历每一项并检查时间戳，来确定要删除的数据，如下面的代码所示。这提供了一种高效的方式来确定删除哪些数据。
+  zh: 我们可以使用两个之前探讨过的组件来构建一个LRU缓存：哈希表和队列。哈希表使我们能够快速查找，高效地检索缓存中的任何项。队列是一个先进先出（FIFO）的数据结构，它允许我们追踪哪些项最近没有被使用。我们可以通过将队列中*最早*的项出队，而不是扫描每一项并检查时间戳，来高效地确定要移除的数据，如以下代码所示。
 - en: '[PRE0]'
   id: totrans-25
   prefs: []
@@ -263,8 +265,8 @@
   id: totrans-26
   prefs: []
   type: TYPE_NORMAL
-  zh: 哈希表中的每个条目都存储一个复合数据结构，至少包含三个条目：键、相应的值（或该条目的数据）以及指向缓存队列中相应节点的指针。这最后一部分信息至关重要，因为我们需要一种方式来查找和修改队列中的条目。如[清单
-    11-1](#listing11-1)所示，我们将这些信息直接存储在哈希表节点的值条目中。
+  zh: 哈希表中的每个条目都存储一个复合数据结构，其中包含至少三个条目：键、对应的值（或该条目的数据），以及指向缓存队列中相应节点的指针。最后一条信息至关重要，因为我们需要一种方法来查找和修改队列中的条目。正如在[列表
+    11-1](#listing11-1)中所示，我们将这些信息直接存储在哈希表节点的值条目中。
 - en: '[PRE1]'
   id: totrans-27
   prefs: []
@@ -275,7 +277,7 @@
   id: totrans-28
   prefs: []
   type: TYPE_NORMAL
-  zh: 清单 11-1：包含数据的键、值以及指向其在队列中节点的链接的缓存项数据结构
+  zh: 列表 11-1：包含数据键、值和链接到队列节点的缓存条目的数据结构
 - en: '[Figure 11-2](#figure11-2) shows the resulting diagram of how these pieces
     fit together. The diagram looks a bit complex but becomes easier to understand
     when we break it down into two parts. On the left is the hash table. As in Chapter
@@ -287,28 +289,28 @@
   id: totrans-29
   prefs: []
   type: TYPE_NORMAL
-  zh: '[图 11-2](#figure11-2)展示了这些组件如何组合在一起的结果图。图看起来有点复杂，但当我们将其分解成两部分时，就会变得更容易理解。左侧是哈希表。如第
-    10 章所述，每个哈希值对应一个条目的链表。这些条目的值是[清单 11-1](#listing11-1)中的`CacheEntry`数据结构。右侧是队列数据结构，存储条目的键。一个指针跨越这些数据结构，指向`CacheEntry`数据结构并指向具有相应键的队列节点。'
+  zh: '[图 11-2](#figure11-2)展示了这些组件如何组合在一起的结果图。图看起来有点复杂，但当我们将其拆分成两部分时会变得更容易理解。左侧是哈希表。如同第10章所述，每个哈希值对应一个链表。链表中条目的值是[列表
+    11-1](#listing11-1)中的`CacheEntry`数据结构。右侧是队列数据结构，用来存储条目的键。一个单独的指针连接这些数据结构，将`CacheEntry`数据结构链接到队列中具有相应键的节点。'
 - en: Of course, the real-world layout of the components in [Figure 11-2](#figure11-2)
     throughout the computer’s memory is even messier than it appears in the diagram,
     because the nodes do not actually reside next to each other.
   id: totrans-30
   prefs: []
   type: TYPE_NORMAL
-  zh: 当然，在[图 11-2](#figure11-2)中，组件在计算机内存中的实际布局比图中所示的还要杂乱，因为节点实际上并不相邻。
+  zh: 当然，计算机内存中[图 11-2](#figure11-2)中组件的实际布局比图示看起来更加混乱，因为节点并不真正彼此相邻。
 - en: '![A hash table on the left includes an entry for each cache entry with pointers
     to an additional CacheEntry node. Each of the CacheEntry nodes has a single pointer
     that links to an entry in the queue on the right.](image_fi/502604c11/f11002.png)'
   id: totrans-31
   prefs: []
   type: TYPE_IMG
-  zh: '![左侧的哈希表包括每个缓存项的条目，并指向额外的 CacheEntry 节点。每个 CacheEntry 节点有一个单一指针，链接到右侧队列中的条目。](image_fi/502604c11/f11002.png)'
+  zh: '![左侧的哈希表包含每个缓存项的条目，并指向一个额外的CacheEntry节点。每个CacheEntry节点有一个指针，指向右侧队列中的一个条目。](image_fi/502604c11/f11002.png)'
 - en: 'Figure 11-2: An LRU cache implemented as a combination of a hash table and
     queue'
   id: totrans-32
   prefs: []
   type: TYPE_NORMAL
-  zh: 图 11-2：LRU 缓存的实现，结合了哈希表和队列
+  zh: 图 11-2：作为哈希表和队列结合体实现的LRU缓存
 - en: In [Listing 11-2](#listing11-2), we define a single lookup function, `CacheLookup`,
     that returns the value for a given lookup key. If there is a cache hit, the lookup
     function returns the value directly and updates how recently that data was accessed.
@@ -317,7 +319,7 @@
   id: totrans-33
   prefs: []
   type: TYPE_NORMAL
-  zh: 在[清单 11-2](#listing11-2)中，我们定义了一个查找函数`CacheLookup`，该函数返回给定查找键的值。如果是缓存命中，查找函数将直接返回值并更新该数据的最近访问时间。如果是缓存未命中，函数将通过耗时的查找获取数据，将其插入缓存，并在必要时删除最旧的数据。
+  zh: 在[列表 11-2](#listing11-2)中，我们定义了一个名为`CacheLookup`的查找函数，该函数返回给定查找键的值。如果是缓存命中，查找函数会直接返回该值，并更新数据最近的访问时间。如果是缓存未命中，函数将通过昂贵的查找获取数据，将其插入缓存中，并在必要时删除最旧的数据。
 - en: '[PRE2]'
   id: totrans-34
   prefs: []
@@ -327,13 +329,13 @@
   id: totrans-35
   prefs: []
   type: TYPE_NORMAL
-  zh: 清单 11-2：通过键查找项的代码
+  zh: 列表 11-2：根据键查找项的代码
 - en: This code starts by checking whether `key` occurs in our cache table ❶. If so,
     we have a cache hit. Otherwise, we have a cache miss.
   id: totrans-36
   prefs: []
   type: TYPE_NORMAL
-  zh: 这段代码首先检查`key`是否出现在缓存表中❶。如果存在，则为缓存命中；否则，表示缓存未命中。
+  zh: 这段代码首先检查`key`是否出现在我们的缓存表中 ❶。如果是，我们就得到了缓存命中。否则，我们就是缓存未命中。
 - en: We deal with the case of a cache miss first. If the hash table returns `null`,
     we need to fetch the data from the more expensive data store. We store this newly
     retrieved value in the cache, evicting the (oldest) item from the front of the
@@ -348,10 +350,7 @@
   id: totrans-37
   prefs: []
   type: TYPE_NORMAL
-  zh: 我们首先处理缓存未命中的情况。如果哈希表返回`null`，我们需要从更昂贵的数据存储中获取数据。我们将新获取的值存储到缓存中，同时驱逐队列最前面的（最旧的）项。我们分三步完成这项操作。首先，如果缓存已满
-    ❷，我们将队列中最旧项的键出队，并用该键删除哈希表中对应的条目。这样就完成了最旧项的驱逐。其次，我们检索新数据 ❸。第三，我们将（`key`，`data`）对插入缓存。我们将`key`入队到队列末尾
-    ❹。然后，我们创建一个新的哈希表条目，包含新的`key`、`data`和指向该键在队列中对应位置的指针（使用队列的`back`指针）。我们将该条目存储到哈希表中
-    ❺。
+  zh: 我们首先处理缓存未命中的情况。如果哈希表返回`null`，我们需要从更昂贵的数据存储中获取数据。我们将新检索到的值存储在缓存中，并从队列的前端驱逐（最旧的）项目。我们通过三步操作来完成这项工作。首先，如果缓存已满❷，我们从队列中出队最旧项的键，并使用它从哈希表中删除相应的条目。这样就完成了最旧项的驱逐。第二步，我们检索新的数据❸。第三步，我们将（`key`，`data`）对插入到缓存中。我们将`key`入队到队尾❹。然后，我们创建一个新的哈希表条目，包含新的`key`、`data`和指向队列中该键相应位置的指针（使用队列的`back`指针）。我们将此条目存储在哈希表中❺。
 - en: The final block of code handles the case of a cache hit. When we see a cache
     hit, we want to move the element for this key from its current position to the
     back of the queue. After all, we’ve just seen it. It should now be the last element
@@ -362,21 +361,20 @@
   id: totrans-38
   prefs: []
   type: TYPE_NORMAL
-  zh: 最后一段代码处理缓存命中的情况。当我们看到缓存命中时，我们希望将该键对应的元素从当前位置移到队列的末尾。毕竟，我们刚刚访问过它，它现在应该是我们希望丢弃的最后一个元素。我们通过两个步骤来移动该元素。首先，我们使用`RemoveNode`函数和指向节点的指针从队列中移除它
-    ❻。其次，我们将该键重新入队到队列末尾 ❼，并更新指向该队列节点的指针 ❽。
+  zh: 最后一段代码处理缓存命中的情况。当我们看到缓存命中时，我们希望将该键的元素从当前位置移动到队列的尾部。毕竟，我们刚刚看过它。现在它应该是我们最后一个想丢弃的元素。我们通过两步来移动该元素。首先，我们使用`RemoveNode`函数将其从队列中删除，使用指向该节点的指针❻。其次，我们将键重新入队到队尾❼，并更新指向该队列节点的指针❽。
 - en: We can picture this update operation in the context of a line of customers in
     a coffee shop. If a customer leaves the line, they lose their position. When they
     rejoin the line in the future, they do so at the back.
   id: totrans-39
   prefs: []
   type: TYPE_NORMAL
-  zh: 我们可以将此更新操作类比为咖啡店排队的顾客。如果一个顾客离开了队列，他们就失去了当前位置。当他们将来重新加入队列时，他们会排到队尾。
+  zh: 我们可以将此更新操作想象成咖啡店排队的场景。如果有顾客离开排队，他们就失去了原本的位置。当他们将来重新加入队伍时，他们会排到队尾。
 - en: Updating an Element’s Recency
   id: totrans-40
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
-  zh: 更新元素的最近访问时间
+  zh: 更新元素的最近性
 - en: 'In order to support the `RemoveNode` operation in [Listing 11-2](#listing11-2),
     we need to change our queue to support *updating* an element’s position. We need
     to move recently accessed items from their current position in the queue to the
@@ -386,7 +384,7 @@
   id: totrans-41
   prefs: []
   type: TYPE_NORMAL
-  zh: 为了支持[清单 11-2](#listing11-2)中的`RemoveNode`操作，我们需要修改队列以支持*更新*元素的位置。我们需要将最近访问的项从队列中的当前位置移动到队尾，以表明它们是最近访问的。首先，我们将第4章中的队列实现修改为使用双向链表，这样可以高效地从队列中间移除项：
+  zh: 为了支持在[清单 11-2](#listing11-2)中执行`RemoveNode`操作，我们需要修改队列以支持*更新*元素的位置。我们需要将最近访问的项目从当前队列位置移到队尾，以表明它们是最近访问的。首先，我们将第4章中的队列实现修改为使用双向链表，这将使我们能够高效地从队列中间删除项目：
 - en: '[PRE3]'
   id: totrans-42
   prefs: []
@@ -398,25 +396,25 @@
   id: totrans-43
   prefs: []
   type: TYPE_NORMAL
-  zh: 如[图 11-3](#figure11-3)所示，`next`字段指向当前节点后面的节点（即下一个将被出队的节点），而`prev`字段指向当前节点前面的节点。
+  zh: 如[图 11-3](#figure11-3)所示，`next`字段指向当前节点直接后面的节点（下一个出队的节点），而`prev`字段指向当前节点之前的节点。
 - en: '![A queue with elements 31, 41, 5, 92, and 65\. Each node contains a single
     number and links to both the next and previous number in the queue.](image_fi/502604c11/f11003.png)'
   id: totrans-44
   prefs: []
   type: TYPE_IMG
-  zh: '![包含31、41、5、92和65的队列。每个节点包含一个数字，并链接到队列中下一个和前一个数字。](image_fi/502604c11/f11003.png)'
+  zh: '![包含元素31、41、5、92和65的队列。每个节点包含一个数字，并且链接到队列中下一个和前一个数字。](image_fi/502604c11/f11003.png)'
 - en: 'Figure 11-3: A queue implemented as a doubly linked list'
   id: totrans-45
   prefs: []
   type: TYPE_NORMAL
-  zh: 图 11-3：作为双向链表实现的队列
+  zh: 图 11-3：一个实现为双向链表的队列
 - en: 'Second, we modify the enqueue and dequeue operations accordingly. For both
     enqueue and dequeue, we add extra logic to update the previous pointers. The primary
     change from Chapter 4 is in how we set the `prev` pointer:'
   id: totrans-46
   prefs: []
   type: TYPE_NORMAL
-  zh: 其次，我们相应地修改入队和出队操作。对于入队和出队，我们增加了额外的逻辑来更新前一个指针。与第4章的主要变化在于我们如何设置`prev`指针：
+  zh: 接下来，我们相应地修改入队和出队操作。对于入队和出队，我们添加了额外的逻辑来更新前驱指针。与第4章的主要不同在于我们如何设置`prev`指针：
 - en: '[PRE4]'
   id: totrans-47
   prefs: []
@@ -427,7 +425,7 @@
   id: totrans-48
   prefs: []
   type: TYPE_NORMAL
-  zh: 在入队操作中，代码需要将新节点的`prev`指针设置为之前的最后一个元素`q.back` ❶。
+  zh: 在入队操作中，代码需要将新节点的`prev`指针设置为前一个最后元素`q.back`❶。
 - en: '[PRE5]'
   id: totrans-49
   prefs: []
@@ -438,7 +436,7 @@
   id: totrans-50
   prefs: []
   type: TYPE_NORMAL
-  zh: 出队操作将新前端节点的`prev`指针设置为`null`，以表示它前面没有节点 ❶。
+  zh: 出队操作将新的队头节点的`prev`指针设置为`null`，表示它前面没有节点❶。
 - en: Finally, we add the `RemoveNode` operation, which provides the ability to remove
     a node from the middle of our queue. This is where the use of a doubly linked
     list helps. By keeping pointers in both directions, we do not need to scan the
@@ -449,7 +447,8 @@
   id: totrans-51
   prefs: []
   type: TYPE_NORMAL
-  zh: 最后，我们添加了`RemoveNode`操作，它提供了从队列中间移除节点的能力。此时双向链表的使用就发挥了作用。通过保持双向指针，我们无需扫描整个队列来找到当前节点之前的条目。`RemoveNode`的代码通过调整相邻节点（`node.prev`和`node.next`）、队列前端（`q.front`）和队列后端（`q.back`）的指针来移除节点。
+  zh: 最后，我们添加了`RemoveNode`操作，它提供了从队列中间移除节点的功能。这时双向链表的使用就派上了用场。通过在两个方向上保持指针，我们无需扫描整个队列来找到当前节点前面的节点。`RemoveNode`的代码通过调整来自相邻节点的指针（`node.prev`
+    和 `node.next`）、队列前端的指针（`q.front`）和队列后端的指针（`q.back`），来完成这一操作。
 - en: '[PRE6]'
   id: totrans-52
   prefs: []
@@ -460,7 +459,7 @@
   id: totrans-53
   prefs: []
   type: TYPE_NORMAL
-  zh: 这段代码包含多个`IF`语句，用于处理从队列两端添加或移除的特殊情况。
+  zh: 这段代码包含多个`IF`语句，用来处理从队列两端添加或移除元素的特殊情况。
 - en: 'One question remains: How can we efficiently find the element we want to remove
     and reinsert? We can’t afford to scan through the entire queue while searching
     for the node to update. Supporting a cache hit requires speedy lookups. In the
@@ -470,7 +469,7 @@
   id: totrans-54
   prefs: []
   type: TYPE_NORMAL
-  zh: 还有一个问题：我们如何高效地找到要移除并重新插入的元素？我们不能在寻找要更新的节点时扫描整个队列。支持缓存命中需要快速查找。在我们上面的缓存示例中，我们直接从缓存的条目维护一个指针，指向队列中的元素。这使我们能够通过跟踪指针，在常数时间内访问、移除和重新插入元素。
+  zh: 还有一个问题需要解决：我们如何高效地找到我们想要移除和重新插入的元素？我们不能在搜索更新节点时扫描整个队列。支持缓存命中的前提是快速查找。在上面的缓存示例中，我们直接从缓存条目指向队列中的元素。这使得我们能够通过跟随指针，在常数时间内访问、移除和重新插入元素。
 - en: Other Eviction Strategies
   id: totrans-55
   prefs:
@@ -487,7 +486,7 @@
   id: totrans-56
   prefs: []
   type: TYPE_NORMAL
-  zh: 让我们考虑三种与LRU驱逐策略比较的替代驱逐策略——最近最少使用、最不常用和预测驱逐。目标不是对这些方法进行深入分析，而是帮助你直观地理解选择缓存策略时可能出现的各种权衡。对于特定场景，最佳的缓存策略取决于该场景的具体情况。了解这些权衡将帮助你为你的用例选择最佳策略。
+  zh: 让我们考虑三种替代的驱逐策略——最近使用、最少使用和预测驱逐——与LRU驱逐的比较。目标并不是深入分析这些方法，而是帮助你培养对选择缓存策略时所涉及的各种权衡的直觉。对于特定情境，最优的缓存策略将取决于该情境的具体情况。了解这些权衡将帮助你为你的使用场景选择最佳策略。
 - en: LRU is a good eviction strategy when we see bursts of common usage among certain
     cache items but expect the distribution of cached items to change over time. The
     local pot of coffee near the register described earlier is an excellent example.
@@ -497,7 +496,7 @@
   id: totrans-57
   prefs: []
   type: TYPE_NORMAL
-  zh: 当我们看到某些缓存项在使用频率上出现突发性高峰，但又预计缓存项的分布会随时间变化时，LRU是一种不错的驱逐策略。之前描述的注册台附近的咖啡壶就是一个很好的例子。当有人点了一种新类型的咖啡时，咖啡师走到柜台的另一端，取回旧的咖啡豆，拿出新的咖啡豆，并将咖啡壶放在收银台旁边。
+  zh: LRU 是一种有效的驱逐策略，适用于当我们看到某些缓存项的使用频繁出现突增，但预计缓存项的分布会随时间变化的情况。前面提到的靠近收银台的本地咖啡壶就是一个很好的例子。当有人点了一种新类型的咖啡时，咖啡师会走到柜台的另一端，拿走旧的咖啡混合物，取回新的混合物，并把咖啡壶放在收银台旁边。
 - en: Let’s contrast that with evicting the *most recently used (MRU)* element. You
     can picture this in the context of an ebook reader that prefetches and caches
     books that you might enjoy. Since it is unlikely that we will read a book twice
@@ -509,7 +508,8 @@
   id: totrans-58
   prefs: []
   type: TYPE_NORMAL
-  zh: 让我们将其与驱逐*最近最少使用（MRU）*元素进行对比。你可以把它想象成一个电子书阅读器，它会预取并缓存你可能喜欢的书籍。由于我们不太可能连续两次阅读同一本书，因此将最近读完的书从缓存中移除，以腾出空间给新书，可能是合理的。虽然MRU对于不常重复出现的项来说是一种不错的策略，但同样的驱逐策略如果应用于我们的咖啡储藏室，将会带来不断的悲剧。试想一下，如果每次我们煮一杯咖啡时都必须驱逐掉最喜欢的常备咖啡豆，那该有多糟糕。
+  zh: 让我们将其与逐出*最近使用（MRU）*元素进行对比。在电子书阅读器的情境下，可以想象它预取并缓存你可能喜欢的书籍。由于我们不太可能连续两次读同一本书，因此可能会合理地从缓存中丢弃最近阅读完的书籍，以腾出空间放入新的书籍。虽然
+    MRU 对于重复出现频率不高的项目来说是一种有效的方法，但这种驱逐策略会在我们的咖啡库中带来持续的麻烦。想象一下，如果每次我们煮咖啡时都被迫驱逐掉我们最喜欢的咖啡混合物，那该有多糟。
 - en: Instead of considering *when* the item was last accessed, we could also track
     how many times it has been accessed in total. The *least frequently used (LFU)*
     eviction strategy discards the element with the smallest count. This approach
@@ -525,7 +525,7 @@
   id: totrans-59
   prefs: []
   type: TYPE_NORMAL
-  zh: 我们可以不考虑*上次访问该项目的时间*，而是追踪它被访问的总次数。*最不常用（LFU）*驱逐策略会丢弃访问次数最少的元素。这种方法在缓存的数据集保持稳定时特别有效，比如我们家里常备的咖啡种类。我们不会因为最近在本地咖啡馆尝试了季节限定的混合咖啡，就将我们家里常备的三种咖啡中的一种丢弃。缓存中的物品有着经过验证的使用记录，它们会一直存在——至少在我们找到新的最爱之前。遗憾的是，当口味变化时，新的流行物品可能需要一段时间才能积累足够的访问次数，进入我们的缓存。如果我们遇到了一款比家中所有咖啡更好的新咖啡，我们就需要多次品尝，做很多次咖啡店的回访，然后才会为自己购买这种咖啡豆。
+  zh: 我们可以不考虑*最后一次访问*的时间，而是跟踪该项总共被访问了多少次。*最少频繁使用（LFU）*驱逐策略会丢弃访问次数最少的元素。当我们的缓存数据保持稳定时，这种方法非常有效，比如我们家里常备的经典咖啡品种。我们不会因为最近在当地咖啡店尝试了季节性咖啡豆就把三种常用的咖啡豆中的一种淘汰掉。缓存中的物品有着良好的历史记录，且通常会留在缓存中——至少在我们找到新的最爱之前。然而，当偏好发生变化时，新出现的热门物品可能需要一段时间才能积累足够的访问次数进入缓存。如果我们遇到一种比家里所有咖啡豆都更好的新咖啡，我们可能需要反复品尝许多杯咖啡，进行多次到咖啡店的拜访，才最终会为家里购买该咖啡豆。
 - en: The *predictive evictio**n* strategy provides a forward-looking approach that
     tries to predict what elements will be needed in the future. Instead of relying
     on simple counts or timestamps, we can build a model to predict what cache entries
@@ -542,7 +542,7 @@
   id: totrans-60
   prefs: []
   type: TYPE_NORMAL
-  zh: '*预测驱逐（predictive eviction）*策略提供了一种前瞻性的方式，试图预测未来哪些元素会被需要。我们不仅依赖简单的计数或时间戳，而是可以建立一个模型，预测哪些缓存项最可能在未来被访问。该缓存的有效性取决于模型的准确性。如果我们拥有一个非常准确的模型，例如预测我们将只在10月和11月将常备的咖啡豆换成季节性秋季咖啡豆，那么命中率会大大提高。然而，如果模型不准确，可能会将每个月与去年该月第一次喝到的咖啡联系起来，我们可能就会重蹈覆辙，在8月时喝下薄荷肉桂南瓜拿铁。预测驱逐的另一个缺点是，它增加了缓存本身的复杂性。单纯的计数或时间戳已经不够，缓存必须学习一个模型。'
+  zh: '*预测驱逐*策略提供了一种前瞻性的方式，尝试预测未来需要哪些元素。我们可以构建一个模型，预测哪些缓存条目最有可能在未来被访问，而不是依赖简单的计数或时间戳。如果我们有一个高度准确的模型，比如预测我们只会在十月和十一月之间从常用的咖啡豆切换到季节性的秋季咖啡豆，我们就可以大大提高命中率。然而，如果模型不准确，可能会错误地将每个月与去年那个时候我们喝的第一杯咖啡关联起来，这样我们可能会发现自己在八月再次犯下那个错误，喝着薄荷肉桂南瓜拿铁。预测驱逐的另一个缺点是，它增加了缓存本身的复杂性。现在，仅仅跟踪简单的计数或时间戳已经不够了；相反，缓存必须学习一个模型。'
 - en: Why This Matters
   id: totrans-61
   prefs:
@@ -559,7 +559,7 @@
   id: totrans-62
   prefs: []
   type: TYPE_NORMAL
-  zh: 缓存可以减轻处理高成本存储介质时的访问开销。缓存并不是直接访问昂贵的存储，而是将一部分数据存储在更接近且更快速的地方。如果我们选择正确的缓存策略，就可以通过从缓存中提取数据而非从较慢的位置获取数据，节省大量时间。这使得缓存成为我们计算工具箱中常见且强大的工具。它们在现实世界中得到了广泛应用，从网页浏览器到图书馆的书架，再到咖啡馆。
+  zh: 缓存可以在处理昂贵的存储介质时减轻一些访问成本。缓存将部分数据存储在更接近且更快速的地方，而不是每次都调用昂贵的存储。如果我们选择正确的缓存策略，就可以通过从缓存中获取数据而非从较慢的位置提取数据，节省大量时间。这使得缓存成为我们计算工具箱中常见且强大的工具。它们在现实世界中得到了广泛应用，从网页浏览器到图书馆书架，再到咖啡店。
 - en: Caches also illustrate several key concepts. First, they highlight the potential
     tradeoffs to consider when accessing data from different mediums. If we could
     store everything in the fastest memory, we wouldn’t need caches. Unfortunately,
@@ -571,7 +571,7 @@
   id: totrans-63
   prefs: []
   type: TYPE_NORMAL
-  zh: 缓存还展示了几个关键概念。首先，它们突出了在从不同介质访问数据时需要考虑的潜在权衡。如果我们能够将所有数据存储在最快的内存中，就不需要缓存了。不幸的是，这通常不可行；我们的算法将需要访问更大、更慢的数据存储，因此理解这一点可能带来的潜在成本是值得的。在下一章中，我们将介绍B树，一种基于树的数据结构，它减少了数据访问的次数。这种优化有助于减少当我们无法将数据存储在附近的快速内存中时的整体成本。
+  zh: 缓存还展示了几个关键概念。首先，它们突出了在从不同媒介访问数据时需要考虑的潜在权衡。如果我们能将所有数据存储在最快的内存中，就不需要缓存了。不幸的是，这通常不可行；我们的算法将需要访问更大、更慢的数据存储，因此理解这一过程可能带来的成本是很有意义的。在下一章中，我们将介绍B树，一种基于树的数据结构，它减少了所需的数据访问次数。这种优化有助于降低在数据无法存放在附近的快速内存中时的整体成本。
 - en: Second, caches revisit the data structure–tuning question that we saw in previous
     chapters. Both the size of the cache and the eviction strategy are parameters
     that can have massive impact on your cache’s performance. Consider the problem
@@ -582,7 +582,7 @@
   id: totrans-64
   prefs: []
   type: TYPE_NORMAL
-  zh: 其次，缓存重新审视了我们在前几章中看到的数据结构调优问题。缓存的大小和驱逐策略都是可以对缓存性能产生巨大影响的参数。考虑选择缓存大小的问题。如果缓存太小，它可能存不下足够的数据来提供益处。我们咖啡馆里那唯一的附近咖啡壶只能帮到那么多。另一方面，缓存过大则会占用可能被算法其他部分所需的重要内存资源。
+  zh: 其次，缓存重新审视了我们在前几章中看到的数据结构调整问题。缓存的大小和驱逐策略都是可能对缓存性能产生巨大影响的参数。考虑选择缓存大小的问题。如果缓存太小，它可能无法存储足够的数据以提供好处。我们咖啡馆里那只单独的咖啡壶帮忙也有限。另一方面，缓存过大将占用重要的内存资源，这些资源可能会被算法的其他部分所需要。
 - en: Finally, and most importantly for this book’s purposes, caches illustrate how
     we can combine basic data structures, such as the hash table and the queue, to
     provide more complex and impactful behaviors. In this case, by using pointers
@@ -591,4 +591,4 @@
   id: totrans-65
   prefs: []
   type: TYPE_NORMAL
-  zh: 最后，最重要的是，对于本书的目的，缓存展示了我们如何结合基本数据结构，如哈希表和队列，来提供更复杂和更有影响力的行为。在这种情况下，通过使用指针将哈希表条目与队列中的节点关联起来，我们可以高效地追踪缓存中下一个应当被移除的条目。
+  zh: 最后，也是对本书最重要的一点，缓存展示了我们如何将基本数据结构，如哈希表和队列，结合起来以提供更复杂和更具影响力的行为。在这种情况下，通过使用指针将哈希表条目与队列中的节点连接起来，我们可以高效地跟踪缓存中下一个应被移除的条目。
