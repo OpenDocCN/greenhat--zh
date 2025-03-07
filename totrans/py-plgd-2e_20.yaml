@@ -1,0 +1,1520 @@
+- en: '[15](nsp-venkitachalam503045-0008.xhtml#rch15)'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Audio ML on Pi
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-circle-image.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In the past decade, *machine learning (ML)* has taken the world by storm. It’s
+    everywhere from facial recognition to predictive text to self-driving cars, and
+    we keep hearing about novel applications of ML seemingly every day. In this chapter,
+    you’ll use Python and TensorFlow to develop an ML-based speech recognition system
+    that will run on an inexpensive Raspberry Pi computer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Speech recognition systems are already deployed in a huge number of devices
+    and appliances in the form of voice assistants such as Alexa, Google, and Siri.
+    These systems can perform tasks ranging from setting reminders to switching on
+    your home lights from your office. But all of these platforms require your device
+    to be connected to the internet and for you to sign up for their services. This
+    brings up issues of privacy, security, and power consumption. Does your light
+    bulb *really* need to be connected to the internet to respond to a voice command?
+    The answer is *no*. With this project, you’ll get a sense of how to design a speech
+    recognition system that works on a low-power device, without the device needing
+    to be connected to the internet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some of the concepts you’ll learn about through this project are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Using a machine learning workflow to solve a problem
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Creating an ML model with TensorFlow and Google Colab
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Streamlining an ML model for use on a Raspberry Pi
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Processing audio and generating spectrograms with the short-time Fourier transform
+    (STFT)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Leveraging multiprocessing to run tasks in parallel
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[A Machine Learning Overview](nsp-venkitachalam503045-0008.xhtml#rah1701)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: It’s impossible to do justice to a topic as vast as machine learning in a single
+    section of a single book chapter. Instead, our approach will be to treat ML as
+    just another tool for solving a problem—in this case, how to distinguish between
+    different spoken words. In truth, ML frameworks like TensorFlow have become so
+    mature and easy to use these days that it’s possible to effectively apply ML to
+    a problem without being an expert in the subject. So in this section, we’ll only
+    briefly touch upon the ML terminology relevant to the project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ML is a small part of the larger computer science discipline of *artificial
+    intelligence (AI)*, although when AI is mentioned in the popular press, ML is
+    usually what they mean. ML itself is made of various subdisciplines that involve
+    different approaches and algorithms. In this project, you’ll use a subset of ML
+    called *deep learning*, which harnesses *deep neural networks (**DNNs)* to identify
+    features and patterns in large sets of data. DNNs have their origin in *artificial
+    neural networks (ANNs)*, which are loosely based on neurons in our brains. ANNs
+    consists of a bunch of *nodes* with multiple inputs. Each node also has a *weight*
+    associated with it. The output of an ANN is typically a nonlinear function of
+    the inputs and weights. This output can be connected to the input of another ANN.
+    When you have more than one layer of ANNs, the network becomes a deep neural network.
+    Typically, the more layers the network has—that is, the deeper it goes—the more
+    accurate the learning model becomes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For this project, you’ll be using a *supervised learning* process, which can
+    be divided into two phases. First is the *training phase*, where you show the
+    model several inputs and their expected outputs. For example, if you were trying
+    to build a human presence detection system to recognize whether or not there’s
+    a person in a video frame, you would use the training phase to show examples of
+    both cases (human versus no human), with each example labeled correctly. Next
+    is the *inference phase*, where you show new inputs and the model makes predictions
+    about them based on what it learned during training. Continuing the example, you’d
+    show your human presence detection system new video frames, and the model would
+    predict whether or not there’s a human in each frame. (There are also *unsupervised
+    learning* processes, in which the ML system attempts to find patterns by itself,
+    based on unlabeled data.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: An ML model has many numerical *parameters* that help it process data. During
+    training, these parameters are adjusted automatically to minimize errors between
+    the expected values and the values the model predicts. Usually a class of algorithms
+    called *gradient descent* is used to minimize the error. In addition to the parameters
+    of an ML model, which are adjusted during training, there are also *hyperparameters*,
+    variables that are adjusted for the model as a whole, such as which neural network
+    architecture to use or the size of your training batch. [Figure 15-1](nsp-venkitachalam503045-0030.xhtml#fig15-1)
+    shows the neural network architecture I’ve chosen for this project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f15001.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15-1: The neural network architecture for the speech recognition project'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each layer in the network architecture represents some form of processing on
+    the data that helps improve the model’s accuracy. The design of the network isn’t
+    trivial, but just defining each layer won’t tell us much about how it works. A
+    broader question to consider is *why* I’ve chosen this particular network. The
+    answer is that one needs to determine the best network architecture for the project
+    at hand via experimentation. It’s common to try different neural network architectures
+    and see which one produces the most accurate results after training. There are
+    also architectures published by ML researchers that are known to perform well,
+    and that’s a good place to start for practical applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NOTE For more information on machine learning, I highly recommend the book
+    *Deep Learning: A Visual Approach* by Andrew Glassner (No Starch Press, 2021).
+    The book will gives you a good intuition about the subject without getting too
+    much into the math or code. For a comprehensive, hands-on approach, I also recommend
+    the online ML courses on Coursera taught by Andrew Ng.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[How It Works](nsp-venkitachalam503045-0008.xhtml#rah1702)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this project, you’ll use Google’s TensorFlow machine learning framework to
+    train a neural network using a collection of audio files containing speech commands.
+    Then you’ll load an optimized version of the trained model onto a Raspberry Pi
+    equipped with a microphone so the Pi can recognize the commands when you speak
+    them. [Figure 15-2](nsp-venkitachalam503045-0030.xhtml#fig15-2) shows a block
+    diagram for the project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f15002.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15-2: A block diagram of the speech recognition project'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the training portion of the project, you’ll work in Google Colab (short
+    for Colaboratory), a free cloud-based service that lets you write and run Python
+    programs in your web browser. There are two advantages to using Colab. First,
+    you don’t need to install TensorFlow locally on your computer, nor deal with incompatibility
+    issues related to various versions of TensorFlow. Second, Colab runs on machines
+    that are likely much more powerful than yours, so the training process will go
+    more quickly. For training data, you’ll use the Mini Speech Commands dataset from
+    Google, a subset of a larger Speech Commands dataset published in 2018\. It consists
+    of thousands of sample recordings of the words *yes*, *no*, *up*, *down*, *left*,
+    *right*, *stop*, and *go*, all standardized as 16-bit WAV files with a 16,000
+    Hz sampling rate. You’ll generate a *spectrogram* of each recording, an image
+    that shows how the frequency content of the audio changes over time, and use those
+    spectrograms to train a deep neural network (DNN) via TensorFlow.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NOTE The training portion of this project takes inspiration from Google’s official
+    TensorFlow example called “Simple Audio Recognition.” You’ll use the same neural
+    network architecture as that example. However, the rest of the project deviates
+    significantly from Google’s example, since our goal is to recognize live audio
+    on a Raspberry Pi, whereas the latter runs inference on existing WAV files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once the training is complete, you’ll convert the trained model to a simplified
+    format called TensorFlow Lite, which is designed to run on less capable hardware
+    such as embedded systems, and load that streamlined model onto the Raspberry Pi.
+    There you’ll run Python code to continuously monitor the audio input from a USB
+    microphone, take spectrograms of the audio, and perform inference on that data
+    to identify the spoken commands from the training set. You’ll print out the commands
+    that the model identifies to the serial monitor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Spectrograms](nsp-venkitachalam503045-0008.xhtml#rbh1701)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A key step in this project is generating spectrograms of the audio data—both
+    the preexisting data used to train the model and the real-time data encountered
+    during inference. In [Chapter 4](nsp-venkitachalam503045-0016.xhtml#ch04), you
+    saw how a spectral plot reveals the frequencies present in an audio sample at
+    a particular moment in time. Then, in [Chapter 13](nsp-venkitachalam503045-0028.xhtml#ch13),
+    you learned how spectral plots are calculated with a mathematical tool called
+    a *discrete Fourier transform (DFT)*. A spectrogram is essentially just a series
+    of spectral plots, generated through a sequence of Fourier transformers, which
+    together reveal how the frequency content of some audio data evolves over time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You need a spectrogram, rather than a single spectral plot, of each audio sample
+    because the sound of human speech is incredibly complex. Even in the case of a
+    single word, the frequencies present in the sound change significantly—and in
+    distinctive ways—as the word is spoken. For this project, you’ll be working with
+    one-second-long audio clips, each consisting of 16,000 samples. If you computed
+    a single DFT of the entire clip in one go, you wouldn’t get an accurate picture
+    of how the frequencies change over the course of the clip, and thus you wouldn’t
+    be able to reliably identify the word being spoken. Instead, you’ll divide the
+    clip into a bunch of overlapping intervals and compute the DFT for each of these
+    intervals, giving you the series of spectral plots needed for a spectrogram. [Figure
+    15-3](nsp-venkitachalam503045-0030.xhtml#fig15-3) illustrates this type of computation,
+    called a *short-time Fourier transform (**STFT)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f15003.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15-3: Computing the spectrogram of a signal'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The STFT gives you *M* DFTs of the audio, taken at even time intervals. Time
+    is shown along the x-axis of the spectrogram. Each DFT gives you *N* frequency
+    bins and the intensity of the sound within each of those bins. The frequency bins
+    are mapped to the y-axis of the spectrogram. Thus, the spectrogram takes the form
+    of an *M*×*N* image. Each column of pixels in the image represents one of the
+    DFTs, with color used to convey the intensity of the signal in a given frequency
+    band.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You might be wondering why we need to use Fourier transforms at all for this
+    project. Why not use the waveforms of the audio clips directly, instead of extracting
+    the frequency information from those waveforms? For an answer, consider [Figure
+    15-4](nsp-venkitachalam503045-0030.xhtml#fig15-4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f15004_annotated.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15-4: The waveform and spectrogram of speech samples'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The top half of the figure shows the waveform of a recording made by speaking
+    the sequence “Left, right, left, right.” The bottom half of the figure shows a
+    spectrogram of that recording. Looking just at the waveform, you can see that
+    the two *left*s look vaguely similar, as do the two *right*s, but it’s hard to
+    pick out strong identifying characteristics of each word’s waveform. By contrast,
+    the spectrogram reveals more visual features associated with each word, like the
+    bright C-shaped curve (shown by the arrows) in each instance of *right*. We can
+    see these distinctive features more clearly with our own eyes, and a neural network
+    can “see” them as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the end, since a spectrogram is essentially an image, taking spectrograms
+    of the data turns a speech recognition problem into an image classification problem,
+    allowing us to leverage the rich set of ML techniques that already exist for classifying
+    images. (Of course, a waveform can be treated as an image too, but as you’ve seen,
+    a spectrogram is better at capturing the “signature” of the audio data and hence
+    more suited for ML applications.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Inference on the Raspberry Pi](nsp-venkitachalam503045-0008.xhtml#rbh1702)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The code on the Raspberry Pi must accomplish several tasks: it needs to read
+    the audio input from the attached microphone, compute the spectrogram of that
+    audio, and do inference using the trained TensorFlow Lite model. Here’s one possible
+    sequence of operations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Read microphone data for one second.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Process data.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 3\. Do inference.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 4\. Repeat.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'There’s a big problem with this approach, however. While you’re busy with steps
+    2 and 3, more speech data could be coming in, which you’ll end up missing. The
+    solution is to use Python multiprocessing to perform different tasks concurrently.
+    Your main process will just collect the audio data and put it in a queue. In a
+    separate, simultaneous process, you’ll take this data out of the queue and run
+    inference on it. Here’s what the new scheme looks like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Main Process
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Read microphone data for one second.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Put data into the queue.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Inference Process
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Check if there’s any data in the queue.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Run inference on the data.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Now the main process won’t miss any audio input, since putting data into the
+    queue is a very quick operation. But there’s another problem. You’re collecting
+    one-second audio samples continuously from the microphone and processing them,
+    but you can’t assume that all spoken commands will fit cleanly into those one-second
+    intervals. A command could come at an edge and be broken up across two consecutive
+    samples, in which case it probably won’t be identified during inference. A better
+    approach is to create overlapping samples, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Main Process
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. For the very first frame, collect a two-second sample.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Put the two-second sample into the queue.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 3\. Collect another one-second sample.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 4\. Create a two-second sample by moving the latter half of the sample from
+    step 2 to the front and replacing the second half with the sample from step 3.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 5\. Return to step 2.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Inference Process
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Check if there’s any data in the queue.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Do inference on a one-second portion of the two-second data based on peak
+    amplitude.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 3\. Return to step 1.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In this new scheme, each sample placed into the queue is two seconds long, but
+    there’s a one-second overlap between consecutive samples, as illustrated in [Figure
+    15-5](nsp-venkitachalam503045-0030.xhtml#fig15-5). This way, even if a word is
+    partially cut off in one sample, you’ll get the full word in the next sample.
+    You’ll still run inference on only one-second clips, which you’ll center on the
+    point in the two-second sample that has the highest amplitude value. This is the
+    part of the sample most likely to contain a spoken word. You need the clips to
+    be one second long for consistency with the training data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f15005.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15-5: The two-frame overlapping scheme'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Through this combination of multiprocessing and overlapping samples, you’ll
+    design a speech recognition system that minimizes missing inputs and improves
+    inference results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Requirements](nsp-venkitachalam503045-0008.xhtml#rah1703)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'For this project, you’ll need to sign up with Google Colab to train your ML
+    model. On the Raspberry Pi, you’ll need the following Python modules:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • `tflite_runtime` for running the TensorFlow inference
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • `scipy` for computing the STFT of audio waveforms
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • `numpy` arrays for handling audio data
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • `pyaudio` for streaming audio data from the microphone input
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The installation for these modules is covered in [Appendix B](nsp-venkitachalam503045-0032.xhtml#appb).
+    You’ll also use Python’s built-in `multiprocessing` module for running ML inference
+    in a separate thread from the audio processing thread.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the hardware department, you’ll need the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • One Raspberry Pi 3B+ or newer
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • One 5 V power supply for the Raspberry Pi
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • One 16GB SD card
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • One single-channel USB microphone compatible with the Pi
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Various types of USB microphones are compatible with the Raspberry Pi. [Figure
+    15-6](nsp-venkitachalam503045-0030.xhtml#fig15-6) shows an example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f15006.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15-6: A USB microphone for the Raspberry Pi'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To check if your Pi can recognize your USB microphone, SSH into your Pi and
+    run the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now plug your microphone into a USB port on the Pi. You should see something
+    similar to the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[26965.023138] usb 1-1.3: New USB device found, idVendor=cafe, idProduct=4010,
+    bcdDevice= 1.00'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[26965.023163] usb 1-1.3: New USB device strings: Mfr=1, Product=2, SerialNumber=3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[26965.023179] usb 1-1.3: Product: Mico'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[26965.023194] usb 1-1.3: Manufacturer: Electronut Labs'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[26965.023209] usb 1-1.3: SerialNumber: 123456'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The information should match the specs of your microphone, indicating it’s been
+    correctly identified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Code](nsp-venkitachalam503045-0008.xhtml#rah1704)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The code for this project exists in two parts: the training portion, which
+    you’ll run in Google Colab, and the inference portion, which you’ll run on your
+    Raspberry Pi. We’ll examine these parts one at a time.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Training the Model in Google Colab](nsp-venkitachalam503045-0008.xhtml#rbh1703)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this section, we’ll look at the Google Colab code needed to train the speech
+    recognition model. I recommend working with Colab in the Chrome web browser. You’ll
+    begin by getting set up and downloading the training dataset. Then you’ll run
+    some code to get to know the data. You’ll clean up the data to prepare it for
+    training and explore how to generate spectrograms from the data. Finally, you’ll
+    put what you’ve learned to work by creating and training the model. The end result
+    will be a *.tflite* file, a streamlined TensorFlow Lite version of the trained
+    model that you can load onto your Raspberry Pi. You can also download this file
+    from the book’s GitHub repository at [https://github.com/mkvenkit/pp2e/tree/main/audioml](https://github.com/mkvenkit/pp2e/tree/main/audioml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: A Google Colab notebook consists of a series of cells where you enter one or
+    more lines of Python code. Once you’ve entered your desired code into a cell,
+    you run it by clicking the Play icon in the top-left corner of the cell. Any output
+    associated with that cell’s code will then appear beneath the cell. Throughout
+    this section, each code listing will represent a complete Google Colab cell. The
+    cell’s output, if any, will be shown in gray at the end of the listing, beneath
+    a dashed line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Setting Up
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'You begin your Colab notebook with some initial setup. First you import the
+    required Python modules:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the next cell, you do some initialization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here you initialize the random functions you’ll be using to shuffle the input
+    filenames.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, download the training data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: data_dir = 'data/mini_speech_commands'
+  prefs: []
+  type: TYPE_NORMAL
+- en: data_path = pathlib.Path(data_dir)
+  prefs: []
+  type: TYPE_NORMAL
+- en: filename = 'mini_speech_commands.zip'
+  prefs: []
+  type: TYPE_NORMAL
+- en: url = "http://storage.googleapis.com/download.tensorflow.org/data/mini_speech_commands.zip"
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if not data_path.exists():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: tf.keras.utils.get_file(filename, origin=url, extract=True, cache_dir='.',
+  prefs: []
+  type: TYPE_NORMAL
+- en: cache_subdir='data')
+  prefs: []
+  type: TYPE_NORMAL
+- en: This cell downloads the Mini Speech Commands dataset from Google and extracts
+    the data into a directory called *data*. Since you’re using Colab, the data will
+    be downloaded to the filesystem on the cloud, not to your local machine, and when
+    your session ends, these files will be deleted. While the session is still active,
+    however, you don’t want to have to keep downloading the data every time you run
+    the cell. The `tf.keras.utils.``get_file()` function caches the data so you won’t
+    need to keep downloading it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting to Know the Data
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Before you start training your model, it would be useful to take a look at
+    what you just downloaded to get to know your data. You can use Python’s `glob`
+    module, which helps you find files and directories through pattern matching:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: commands = ['up', 'no', 'stop', 'left', 'right', 'go', 'down', 'yes']
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: ❶ wav_file_names = glob.glob(data_dir + '/*/*')
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ np.random.shuffle(wav_file_names)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(len(wav_file_names))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for file_name in wav_file_names[:5]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(file_name)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '8000'
+  prefs: []
+  type: TYPE_NORMAL
+- en: data/mini_speech_commands/down/27c30960_nohash_0.wav
+  prefs: []
+  type: TYPE_NORMAL
+- en: data/mini_speech_commands/go/19785c4e_nohash_0.wav
+  prefs: []
+  type: TYPE_NORMAL
+- en: data/mini_speech_commands/yes/d9b50b8b_nohash_0.wav
+  prefs: []
+  type: TYPE_NORMAL
+- en: data/mini_speech_commands/no/f953e1af_nohash_3.wav
+  prefs: []
+  type: TYPE_NORMAL
+- en: data/mini_speech_commands/stop/f632210f_nohash_0.wav
+  prefs: []
+  type: TYPE_NORMAL
+- en: You use `glob` again, this time showing it the pattern `'/*/*'` to list all
+    the files in the subdirectories ❶. Then you randomly shuffle the returned list
+    of filenames to reduce any bias in the training data ❷. You print the total number
+    of files found, as well as the first five filenames. The output indicates that
+    there are 8,000 WAV files in the dataset, and it gives you some idea of how the
+    files are named—for example, *f632210f_nohash_0.wav*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, take a look at some individual WAV files from the dataset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: filepath = 'data/mini_speech_commands/stop/f632210f_nohash_1.wav' ❶
+  prefs: []
+  type: TYPE_NORMAL
+- en: rate, data = wavfile.read(filepath) ❷
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("rate = {}, data.shape = {}, data.dtype = {}".format(rate, data.shape,
+    data.dtype))
+  prefs: []
+  type: TYPE_NORMAL
+- en: filepath = 'data/mini_speech_commands/no/f953e1af_nohash_3.wav'
+  prefs: []
+  type: TYPE_NORMAL
+- en: rate, data = wavfile.read(filepath)
+  prefs: []
+  type: TYPE_NORMAL
+- en: print("rate = {}, data.shape = {}, data.dtype = {}".format(rate, data.shape,
+    data.dtype))
+  prefs: []
+  type: TYPE_NORMAL
+- en: rate = 16000, data.shape = (13654,), data.dtype = int16
+  prefs: []
+  type: TYPE_NORMAL
+- en: rate = 16000, data.shape = (16000,), data.dtype = int16
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You set the name of a WAV file you want to look at ❶ and use the `wavefile`
+    module from `scipy` to read data from the file ❷. Then you print the sampling
+    rate, shape (number of samples), and type of the data. You do the same for a second
+    WAV file. The output shows that the sampling rates of both the WAV files are 16,000,
+    as expected, and that each sample is a 16-bit integer for both—also expected.
+    However, the shape indicates the first file has only 13,654 samples, and this
+    is a problem. To train the neural network, each WAV file needs to have the same
+    length; in this case, you’d like each recording to be one second, or 16,000 samples,
+    long. Unfortunately, not all the files in the dataset fit that standard. We’ll
+    look at a solution to this problem shortly, but first, try plotting the data from
+    one of these WAV files:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](images/nsp-venkitachalam503045-g15001.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: You use `matplotlib` to create a plot of the audio waveform ❶. The WAV files
+    in this dataset contain 16-bit signed data, which can range from −32,768 to +32,767\.
+    The y-axis of the plot shows you that the data in this file ranges from only around
+    −10,000 to +7,500\. The plot’s x-axis also underscores that the data is short
+    of the necessary 16,000 samples—the axis runs only to 14,000.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cleaning the Data
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You’ve seen that the dataset needs to be standardized so that each clip is one
+    second long. This type of preparatory work is called *data cleaning*, and you
+    can do it by padding the audio data with zeros until it reaches a length of 16,000
+    samples. You should clean the data further by *normalizing* it—mapping the value
+    of each sample from range [−32,768, +32,767] to range [−1, 1]. This type of normalization
+    is crucial for machine learning, as keeping the input data small and uniform will
+    help the training. (For the mathematically curious, large numbers in the inputs
+    will cause problems in the convergence of gradient descent algorithms used to
+    train the data.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: As an example of data cleaning, here you apply both padding and normalization
+    to the WAV file you viewed in the previous listing. Then you plot the results
+    to confirm that the cleaning has worked.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](images/nsp-venkitachalam503045-g15002.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: You create a 16-bit `numpy` array of length 16,000 filled with zeros ❶. Then
+    you use the array slice operator, `[:]`, to copy the contents of the too-short
+    WAV file into the beginning of the array ❷. Here `data.shape[0]` gives you the
+    number of samples in the original WAV file, since `data.shape` is a tuple in the
+    form `(13654,)`. You now have one second of WAV data, consisting of the original
+    audio data followed by a padding of zeros as needed. You next create a normalized
+    version of the data by dividing the values in the array by 32,768, the maximum
+    value a 16-bit integer could have ❸. Then you plot the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The x-axis of the output shows that the data has been padded to extend to 16,000
+    samples, with the values from around 14,000 to 16,000 all being zero. Also, the
+    y-axis shows that the values have all been normalized to fall nicely within the
+    range of (−1, 1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Looking at Spectrograms
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'As we’ve discussed, you won’t be training your model on the raw data from the
+    WAV files. Instead, you’ll generate spectrograms of the files and use them to
+    train the model. Here’s an example of how to generate a spectrogram:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Training the Model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: You’re now ready to turn your attention to training the ML model, and that largely
+    means leaving behind Python libraries like `numpy` and `scipy` in favor of TensorFlow
+    methods and data structures like `tf.Tensor` and `tf.data.Dataset`. You’ve been
+    using `numpy` and `scipy` so far because they’ve provided a convenient way to
+    explore the speech commands dataset, and in fact you could continue using them,
+    but then you’d miss out on the optimization opportunities provided by TensorFlow,
+    which is designed for large-scale ML systems. You’ll find that TensorFlow has
+    near-identical functions for most of the computations you’ve done until now, so
+    the transition will be smooth. For our purposes, when I refer to a *tensor* in
+    the upcoming discussion, understand that it’s similar to talking about a `numpy`
+    array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To train the ML model, you need to be able to extract the spectrogram and label
+    ID (the spoken command) from the filepath of an input audio file. For that, first
+    create a function that computes an STFT:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The function takes in `x`, the data extracted from a WAV file, and computes
+    its STFT using `scipy`, as before ❶. Then you convert the returned `numpy` array
+    to a `tf.Tensor` object and return the result ❷. There is, in fact, a TensorFlow
+    method called `tf.signal.stft()` that’s similar to the `scipy.signal.stft()` method,
+    so why not use it? The answer is that the TensorFlow method won’t be available
+    on the Raspberry Pi, where you’ll be using the slimmed-down TensorFlow Lite interpreter.
+    Any preprocessing you do during the training phase should be identical to any
+    preprocessing you do during inference, so you need to ensure that you use the
+    same functions in Colab as you’ll use on the Pi.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now you can make use of your `stft()` function in a helper function that extracts
+    the spectrogram and label ID from a filepath.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: You start by reading the file using `tf.io.read_file()` and decoding the WAV
+    format using the `tf.audio.decode_wav()` function. (The latter is comparable to
+    the `scipy.io.wavfile.read()` function you used previously.) You then use `tf.squeeze()`
+    to change the shape of the `data` tensor from (*N*, 1) to (*N*, ), which is required
+    for functions coming ahead. Next, you create a tensor for zero-padding the data
+    ❶. Tensors are immutable objects, however, so you can’t copy the WAV data directly
+    into a tensor full of zeros, as you did earlier with `numpy` arrays. Instead,
+    you create a tensor with the exact number of zeros you need to pad the data, and
+    then you concatenate it with the data tensor ❷.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You next use `tf.py_function()` to call the `stft()` function you defined earlier
+    ❸. In this call, you also need to specify the input and the data type of the output.
+    This is a common method for calling a non-TensorFlow function from TensorFlow.
+    You then do some reshaping of the tensor returned by `stft()`. First you use `set_shape()`
+    to reshape it to (129, 124), which is necessary because you’re going from a TensorFlow
+    function to a Python function and back. Then you run `tf.expand_dims(spec, -1)`
+    to add a third dimension, going from (129, 124) to (129, 124, 1). The extra dimension
+    is needed for the neural network model you’ll be building. Finally, you extract
+    the label (for example, `'no'`) associated with the filepath ❹ and convert the
+    label string to the integer `label_id` ❺, which is the index of the string in
+    your `commands` list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, you need to get the input files ready for training. Recall that you had
+    8,000 audio files in the subdirectories and that you randomly shuffled their filepath
+    strings and put them into a list called `wav_file_names`. Now you’ll partition
+    the data into three: 80 percent, or 6,400 files, for training; 10 percent, or
+    800 files, for validation; and the other 10 percent for testing. Such partitioning
+    is a common practice in machine learning. Once the model is trained using training
+    data, you can use the validation data to tweak the model’s accuracy by changing
+    the hyperparameters. The testing data is used only for checking the final accuracy
+    of the (tweaked) model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you load the filepath strings into TensorFlow `Dataset` objects. These
+    objects are critical to working with TensorFlow; they hold your input data and
+    allow for data transformations, and all this can happen at a large scale:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Take a look at what you just created:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for val in train_ds.take(5):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print(val)
+  prefs: []
+  type: TYPE_NORMAL
+- en: tf.Tensor(b'data/mini_speech_commands/stop/b4aa9fef_nohash_2.wav', shape=(),
+    dtype=string)
+  prefs: []
+  type: TYPE_NORMAL
+- en: tf.Tensor(b'data/mini_speech_commands/stop/962f27eb_nohash_0.wav', shape=(),
+    dtype=string)
+  prefs: []
+  type: TYPE_NORMAL
+- en: --snip--
+  prefs: []
+  type: TYPE_NORMAL
+- en: tf.Tensor(b'data/mini_speech_commands/left/cf87b736_nohash_1.wav', shape=(),
+    dtype=string)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Each `Dataset` object contains a bunch of tensors of type `string`, each holding
+    a filepath. What you really need, however, are the `(spec, label_id)` pairs corresponding
+    to those filepaths. You create those here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: You use `map()` to apply your `get_spec_label_pair()` function to each `Dataset`
+    object. This technique of mapping a function to a list of things is common in
+    computing. Essentially, you’re going through each filepath in the `Dataset` object,
+    calling `get_spec_label_pair()` on it, and storing the resulting `(spec, label_id)`
+    pair in a new `Dataset` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now you further prepare the dataset for training by splitting it up into smaller
+    batches:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here you set the training and validation datasets to have a batch size of 64\.
+    This is a common technique for speeding up the training process. If you tried
+    to work with all 6,400 training samples and 800 validation samples at once, it
+    would require a huge amount of memory and would slow down the training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now you’re finally ready to create your neural network model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: model.compile(
+  prefs: []
+  type: TYPE_NORMAL
+- en: optimizer=tf.keras.optimizers.Adam(),
+  prefs: []
+  type: TYPE_NORMAL
+- en: loss=`tf.keras.losses`.SparseCategoricalCrossentropy(from_logits=True),
+  prefs: []
+  type: TYPE_NORMAL
+- en: metrics=['accuracy'],
+  prefs: []
+  type: TYPE_NORMAL
+- en: )
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: test_audio = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: test_labels = []
+  prefs: []
+  type: TYPE_NORMAL
+- en: '❶ for audio, label in test_ds:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: test_audio.append(audio.numpy())
+  prefs: []
+  type: TYPE_NORMAL
+- en: test_labels.append(label.numpy())
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❷ test_audio = np.array(test_audio)
+  prefs: []
+  type: TYPE_NORMAL
+- en: test_labels = np.array(test_labels)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❸ y_pred = np.argmax(model.predict(test_audio), axis=1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: y_true = test_labels
+  prefs: []
+  type: TYPE_NORMAL
+- en: ❹ test_acc = sum(y_pred == y_true) / len(y_true)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'print(f''Test set accuracy: {test_acc:.0%}'')'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 25/25 [==============================] - 1s 35ms/step
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Test set accuracy: 84%'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You first fill in two lists, `test_audio` and `test_labels`, by iterating through
+    the test dataset `test_ds` ❶. Then you create `numpy` arrays from these lists
+    ❷ and run inference on the data ❸. You compute the test accuracy by summing up
+    the number of times the predictions matched the true value and dividing them by
+    the total number of items ❹. The output shows an accuracy of 84 percent. Not perfect,
+    but good enough for this project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Exporting the Model to the Pi
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Congratulations! You have a fully trained machine learning model. Now you need
+    to get it from Colab onto your Raspberry Pi. The first step is to save it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This saves the model to a file on the cloud called *audioml.sav*. Next, convert
+    that file to the TensorFlow Lite format so you can use it on your Pi:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You create a `TFLiteConverter` object, passing in the saved model filename ❶.
+    Then you do the conversion ❷ and write the simplified TensorFlow model to a file
+    called *audioml.tflite* ❸. Now you need to download this *.tflite* file from Colab
+    onto your computer. Running the following snippet will give you a browser prompt
+    to save the *.tflite* file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Once you have the file, you can transfer it to your Raspberry Pi using SSH as
+    we’ve discussed in other chapters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Using the Model on the Raspberry Pi](nsp-venkitachalam503045-0008.xhtml#rbh1704)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Now we’ll turn our attention to the Raspberry Pi portion of the code. This code
+    uses parallel processing to take in audio data from the microphone, prepare that
+    data for your trained ML model, and show the data to the model to perform inference.
+    As usual, you can write the code on your local machine and then transfer it to
+    your Pi via SSH. To view the complete code, see [“The Complete Code”](nsp-venkitachalam503045-0030.xhtml#ah1708)
+    on [page 389](nsp-venkitachalam503045-0030.xhtml#p389). You can also download
+    the code from [https://github.com/mkvenkit/pp2e/tree/main/audioml](https://github.com/mkvenkit/pp2e/tree/main/audioml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Setting Up
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Start by importing the required modules:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next, you initialize some parameters that are defined as global variables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`VERBOSE_DEBUG` is a flag you’ll use in many places in the code. For now, you
+    set it to `False`, but if set to `True` (via a command line option), it will print
+    out a lot of debugging information.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: NOTE I’ve omitted the `print()` statements for debugging from the code listings
+    that follow. You can find them in the full code listing and on the book’s GitHub
+    repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next global variables are for working with the audio input. `CHUNK` sets
+    the number of data samples read at a time using `PyAudio`, and `FORMAT` specifies
+    that the audio data will consist of 16-bit integers. You set `CHANNELS` to `1`,
+    since you’ll be using a single-channel microphone, and `SAMPLE_RATE` to `16000`
+    for consistency with the ML training data. `RECORD_SECONDS` indicates that you’ll
+    be grouping the audio into one-second increments (which you’ll stitch together
+    into overlapping two-second clips, as discussed earlier). You calculate the number
+    of chunks in each one-second recording as `NCHUNKS`. You’ll use `ND` and `NDH`
+    to implement the overlapping technique—more on that later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, you initialize the device index number of the microphone to `-1` ❶.
+    You’ll need to update this value at the command line once you know your microphone’s
+    index. Here’s a function to help you figure that out. You’ll be able to call this
+    function as a command line option.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: You initialize `PyAudio` ❶ and get a count of the audio devices it detects ❷.
+    Then you iterate through the devices ❸. For each one, you retrieve information
+    about the device using `get_device_info_by_index()` and print out devices with
+    one or more input channels—that is, microphones. You finish by cleaning up `PyAudio`
+    ❹.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s what a typical output of the function looks like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: This indicates there’s an input device called Mico with a default sample rate
+    of 16,000 and an index of `1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Taking In Audio Data
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'One of the main tasks for the Pi is to continuously take in the audio input
+    from the microphone and break it up into clips that you can run inference on.
+    You create a `get_live_input()` function for this purpose. It takes in the `interpreter`
+    object needed to work with the TensorFlow Lite model. Here’s the start of the
+    function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: As we discussed in [“How It Works,”](nsp-venkitachalam503045-0030.xhtml#ah1702)
+    you’ll need to use separate processes for reading the audio data and doing the
+    inference to avoid missing any input. You create a `multiprocessing.``Queue` object
+    that the processes will use to communicate with each other ❶. Then you create
+    the inference process using `multiprocessing.``Process()` ❷. You specify the name
+    of the handler function for the process as `inference_process`, which takes the
+    `dataq` and `interpreter` objects as arguments (we’ll view this function later).
+    You next start the process so the inference will run parallel to the data capture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You continue the `get_live_input()` function by initializing `PyAudio:`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: You create a `PyAudio` object `p` ❶ and open an audio input stream ❷, using
+    some of your global variables as parameters. Then you discard the first one second
+    of data ❸. This is to disregard any spurious data that comes in when the microphone
+    is enabled for the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now you’re ready to start reading the data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: You initialize `count` to `0` ❶. You’ll use this variable to keep track of the
+    number of one-second frames of audio data read in. Then you initialize a 16-bit
+    array `inference_data` with zeros ❷. It has `ND` elements, which corresponds to
+    two seconds of audio. You next enter a `while` loop to process the audio data
+    continuously ❸. In it, you use a `for` loop ❹ to read in one second of audio data,
+    one chunk at a time, appending those chunks to the list `chunks`. Once you have
+    a full second of data, you convert it into a `numpy` array ❺.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, still within the `while` loop started in the previous listing, you implement
+    the technique we discussed in [“How It Works”](nsp-venkitachalam503045-0030.xhtml#ah1702)
+    to create overlapping two-second audio clips. You get help from your `NDH` global
+    variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: The very first time a one-second frame is read in, it’s stored in the first
+    half of `inference_data` ❶. The next frame that comes in is stored in the second
+    half of `inference_data` ❷. Now you have a full two seconds of audio data, so
+    you put `inference_data` into the queue for the inference process to pick it up
+    ❸. For every subsequent frame, the second half of the data is moved to the first
+    half of `inference_data` ❹, the new data is set to the second half ❺, and `inference_data`
+    is added to the queue ❻. This creates the desired one-second overlap between each
+    consecutive two-second audio clip.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `while` loop occurs inside a `try` block. To exit the loop, you just need
+    to press CTRL-C and trigger the following `except` block:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: This `except` block performs some basic cleanup by stopping and closing the
+    stream and by terminating `PyAudio`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Preparing the Audio Data
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Next, you’ll create a few functions to prepare the audio data for inference.
+    First is `process_audio_data()`, which takes in a raw two-second clip of audio
+    data pulled from the queue and extracts the most interesting one second of audio
+    from it, based on peak amplitude. We’ll look at this function across several listings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: You want to skip doing any inference on the microphone audio input if nobody
+    is talking. There will always be some noise in the environment, however, so you
+    can’t simply look for the signal to be 0\. Instead, you’ll skip inference if the
+    peak-to-peak amplitude (the difference between the highest value and the lowest
+    value) of the audio is below a certain threshold. For this, you first divide the
+    audio by `32768` to normalize it to a range of (−1, 1), and you pass the result
+    to `np.ptp()` to get the peak-to-peak amplitude ❶. The normalization makes it
+    easier to express the threshold as a fraction. You return an empty list (which
+    will bypass the inference process) if the peak-to-peak amplitude is below `0.3`
+    ❷. You may need to adjust this threshold value depending on the noise level of
+    your environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `process_audio_data()` function continues with another technique for normalizing
+    any audio data that won’t be skipped:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: When you normalized the data before skipping quiet audio samples, you divided
+    the audio by 32,768, the maximum possible value of a 16-bit signed integer. In
+    most cases, however, the peak amplitude of the audio data will be well below this
+    value. Now you want to normalize the audio such that its maximum amplitude, whatever
+    that may be, is scaled to 1\. To do this, you first determine the peak amplitude
+    in the audio signal and then divide the signal by that amplitude value ❶. Then
+    you compute the new peak-to-peak value of the normalized audio ❷ and use this
+    value to scale and center the data ❸. Specifically, the expression `(waveform
+    – np.min(waveform))/PTP` will scale the waveform values to the range (0, 1). Multiplying
+    this by 2 and subtracting 1 will put the values in the range (−1, 1), which is
+    what you need.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The next part of the function extracts one second of audio from the data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: You want to make sure you’re getting the most interesting one second of the
+    data, so you find the array index where the audio amplitude is at the maximum
+    ❶. Then you try to grab 8,000 values before ❷ and after ❸ this index to get a
+    full second of data, using `max()` and `min()` to ensure that the start and end
+    indices don’t fall out of range of the original clip. You use slicing to extract
+    the relevant audio data ❹. Because of the `max()` and `min()` operations, you
+    may end up with less than 16,000 samples, but the neural network strictly requires
+    each input to be 16,000 samples long. To address this problem, you pad the data
+    with zeros, using the same `numpy` techniques you saw during training. Then you
+    return the result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Figure 15-7](nsp-venkitachalam503045-0030.xhtml#fig15-7) summarizes the `process_audio_data()`
+    function by showing an example waveform at the various stages of processing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f15007.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15-7: The audio preparation process at various stages'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The top waveform in [Figure 15-7](nsp-venkitachalam503045-0030.xhtml#fig15-7)
+    shows the unprocessed audio. The second waveform shows the audio with the values
+    normalized to range (−1, 1). The third waveform shows the audio after a shift
+    and scale—notice on the y-axis how the waveform now fills the entire (−1, 1) range.
+    The fourth waveform consists of 16,000 samples extracted from the third one, centered
+    on the peak amplitude.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, you need a `get_spectrogram()` function for computing the spectrogram
+    of the audio data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: You call your `process_audio_data()` function to prepare the audio ❶. If the
+    function returns an empty list (because the audio is too quiet), `get_spectrogram()`
+    returns an empty list as well ❷. Next, you compute the spectrogram with `signal`.`stft()`
+    from `scipy`, exactly as you did when training the model ❸. You then calculate
+    the absolute value of the STFT ❹ to convert from complex numbers—again, as you
+    did during training—and return the result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running Inference
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The heart of this project is using your trained model to run inference on the
+    incoming audio data and identify any spoken commands. Recall that this occurs
+    in a separate process from the code for taking in audio data from the microphone.
+    Here’s the handler function that coordinates this process:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: The inference process runs continuously inside a `while`. Within this loop,
+    you check if there’s any data in the queue ❶, and if so, you retrieve it ❷. Then
+    you run inference on it with the `run_inference()` function, which we’ll look
+    at next, but only if the `success` flag is `False` ❸. This flag keeps you from
+    responding to the same speech command twice. Recall that because of the overlap
+    technique, the second half of one audio clip will be repeated as the first half
+    of the next clip. This lets you catch any audio commands that might be split across
+    two frames, but it means that once you have a successful inference, you should
+    skip the next element in the queue because it will have a portion of the audio
+    from the previous element. When you do a skip like this, you reset `success` to
+    `False` ❹ to start running inference again on the next piece of data that comes
+    in.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now let’s look at the `run_inference()` function, where the inference is actually
+    carried out:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The function takes in the raw audio data (`waveform`) for interacting with
+    your TensorFlow Lite model (`interpreter`). You call `get_spectrogram()` to process
+    the audio and generate the spectrogram ❶, and if the audio was too quiet, you
+    return `False`. Then you get the input ❷ and output ❸ details from the TensorFlow
+    Lite interpreter. These tell you what the model is expecting as input and what
+    you can expect from it as output. This is what `input_details` looks like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[{''name'': ''serving_default_input_5:0'', ''index'': 0, ''shape'': array([1,
+    129, 124,   1]),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''shape_signature'': array([ -1, 129, 124,   1]), ''dtype'': <class ''numpy.float32''>,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''quantization'': (0.0, 0), ''quantization_parameters'': {''scales'': array([],
+    dtype=float32),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''zero_points'': array([], dtype=int32), ''quantized_dimension'': 0}, ''sparsity_parameters'':
+    {}}]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Notice that `input_details` is an array with a dictionary inside it. The `''shape''`
+    entry is especially of interest: `array([1, 129, 124, 1])`. You’ve already ensured
+    that your spectrogram, which will be the input to the interpreter, is shaped to
+    this value. The `''index''` entry is just the index of the tensor in the tensor
+    list inside the interpreter, and `''dtype''` is the expected data type of the
+    input, which in this case is `float32`, a signed 32-bit float. You’ll need to
+    reference both `''index''` and `''dtype''` later in the `run_inference()` function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s `output_details`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[{''name'': ''StatefulPartitionedCall:0'', ''index'': 17, ''shape'': array([1,
+    8]), ''shape_signature'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'array([-1,  8]), ''dtype'': <class ''numpy.float32''>, ''quantization'': (0.0,
+    0),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '''quantization_parameters'': {''scales'': array([], dtype=float32), ''zero_points'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'array([], dtype=int32), ''quantized_dimension'': 0}, ''sparsity_parameters'':
+    {}}]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Notice the `'shape'` entry in this dictionary. It shows that the output will
+    be an array of shape (1, 8). The shape corresponds to the label IDs of the eight
+    speech commands.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You continue the `run_inference()` function by actually running inference on
+    the input data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'First you convert the spectrogram data to 32-bit floating point values ❶. Recall
+    that your audio data started as 16-bit integers. The scaling and other processing
+    operations converted the data to 64-bit floats, but as you saw in `input_details`,
+    the TensorFlow Lite model requires 32-bit floats, which is the reason for the
+    conversion. You next set the input value to the appropriate tensor inside the
+    interpreter ❷. Here the `[0]` accesses the first (and only) element in `input_details`,
+    which as you saw is a dictionary, and `[''index'']` retrieves the value under
+    that key in the dictionary to specify which tensor you’re setting. You run inference
+    on the input using the `invoke()` method ❸. Then you retrieve the output tensor
+    using similar indexing to the input ❹ and get the output itself by extracting
+    the first element from the `output_data` array ❺. (Since you provided only one
+    input, you expect only one output.) Here’s an example of what `yvals` looks like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[  6.640185  -26.032831  -26.028618  8.746256  62.545185  -0.5698182  -15.045679  -29.140179 ]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'These eight numbers correspond to the eight commands you trained the model
+    with. The values indicate the likelihood of the input data being each word. In
+    this particular array, the value at index `4` is by far the largest, so that’s
+    what the neural network is predicting as the most probable answer. Here’s how
+    you interpret the result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: You define a `commands` list in the same order as you used during training.
+    It’s important to keep the order consistent across training and inference, or
+    you’ll end up misinterpreting the results! Then you use `np.``argmax()` to get
+    the index of the highest value in the output data and use that index to pick up
+    the corresponding string from `commands`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Writing the main() Function
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Now let’s look at the `main()` function, which brings everything together:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: You start by setting `VERBOSE_DEBUG` as a global, since you’ll be setting it
+    in this function and don’t want it to be treated as a local variable. Then you
+    create a familiar `argparse.ArgumentParser` object and add a mutually exclusive
+    group to the parser ❶, since some of your command line options won’t be compatible
+    with each other. Those are the `--list` option ❷, which will list all the `PyAudio`
+    devices so you can get your microphone’s index number; the `--input` option ❸,
+    which lets you specify a WAV file to use as input instead of live data from the
+    microphone (useful for testing); and the `--index` option ❹, which starts capturing
+    audio and running inference using the microphone with the specified index. You
+    also add the non–mutually exclusive `--verbose` option ❺ to print out detailed
+    debug information as the program is run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, you create the TensorFlow Lite interpreter so you can use the ML model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here you create an `Interpreter` object, passing it the *audioml.tflite* file
+    with the model you created during training. Then you call `allocate_tensors()`
+    to prepare the necessary tensors for running the inference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `main()` function finishes with branches for the different command line
+    arguments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the `--input` command line option is used, you get the name of the WAV file
+    ❶ and read its contents ❷. The resulting data is passed along for inference ❸.
+    If the `--list` option is used, you call your `list_devices()` function ❹. If
+    the `--index` option is used, you parse the device index ❺ and start processing
+    live audio by calling the `get_live_input()` function ❻.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Running the Speech Recognition System](nsp-venkitachalam503045-0008.xhtml#rah1705)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To run the project, gather your Python code and the *audioml.tflite* file into
+    a folder on your Pi. For testing, you can also download the *right.wav* file from
+    the book’s GitHub repository and add that to the folder. You can work with your
+    Pi via SSH, as explained in [Appendix B](nsp-venkitachalam503045-0032.xhtml#appb).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, try using the `--input` command line option to run inference on a WAV
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here’s the output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice that the program has correctly identified the *right* command recorded
+    on the WAV file ❶.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now plug your microphone into the Pi and use the `--list` option to determine
+    its index number, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Your output should be similar to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this example, the microphone has index `1`. Use that number to run the `--index`
+    command to do some live speech detection! Here’s an example run:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: After starting the program and getting the “Listening . . .” prompt, I spoke
+    the words *left* and *right*. The output at ❶ and ❷ indicates that the program
+    was able to identify the commands correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Try running the program with the `--verbose` option to see more information
+    about how it’s working. Also, try speaking different commands in quick succession
+    to verify whether the multiprocessing and overlapping techniques are working.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Summary](nsp-venkitachalam503045-0008.xhtml#rah1706)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This chapter introduced you to the world of machine learning. You learned how
+    to train a deep neural network to recognize speech commands using the TensorFlow
+    framework, and you converted the resulting model to a TensorFlow Lite format for
+    use on a resource-constrained Raspberry Pi. You also learned about spectrograms
+    and the importance of processing input data before ML training. You practiced
+    using Python multiprocessing, reading USB microphone input on a Raspberry Pi using
+    `PyAudio`, and running a TensorFlow Lite interpreter for ML inference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Experiments!](nsp-venkitachalam503045-0008.xhtml#rah1707)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '1\. Now that you know how to process speech commands on a Raspberry Pi, you
+    can build an assistive device that responds to those commands by doing more than
+    printing out the identified words. For example, you could use the commands *left*,
+    *right*, *up*, *down*, *stop*, and *go* to control a camera (or laser!) mounted
+    on a pan/tilt mount. Hint: you''ll need to retrain the ML model with just these
+    six commands. You’ll also need to get a two-axis pan/tilt bracket with two servo
+    motors attached. The servos will be connected to the Raspberry Pi and controlled
+    based on the inference results.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Read about the *mel spectrogram*, a variant of the spectrogram you used
+    for this project that’s better suited for human speech data.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 3\. Try modifying the neural network by adding or removing some layers. For
+    example, remove the second Conv2D layer. See how the changes affect the training
+    accuracy of the model and the inference accuracy on the Pi.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 4\. This project used an ad hoc neural network, but there are also pretrained
+    neural networks available that you could leverage. For example, read up on MobileNet
+    V2\. What changes are needed to adapt your project to use this network instead?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[The Complete Code](nsp-venkitachalam503045-0008.xhtml#rah1708)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here’s a complete listing of the code that goes on the Raspberry Pi, including
+    the `print()` statements for verbose debugging. The Google Colab notebook code
+    can be found at [https://github.com/mkvenkit/pp2e/blob/main/audioml/audioml.ipynb](https://github.com/mkvenkit/pp2e/blob/main/audioml/audioml.ipynb).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE

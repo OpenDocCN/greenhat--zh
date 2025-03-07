@@ -1,0 +1,813 @@
+- en: '[14](nsp-venkitachalam503045-0008.xhtml#rch14)'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: IoT Garden
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-circle-image.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We live in an era where our phones talk to light bulbs and where toothbrushes
+    want to access the internet. This is possible through the *Internet of Things
+    (**IoT**)*, networks of everyday devices embedded with sensors that communicate
+    with each other and the internet, usually in a wireless fashion. In this chapter,
+    you’ll build your own IoT sensor network to monitor the temperature and humidity
+    conditions in your garden. The network will consist of one or more low-power devices
+    running Python code and transmitting real-time sensor data wirelessly to a Raspberry
+    Pi. The Pi will log the data and make it available over a local web server. You’ll
+    be able to view the sensor data through a web browser, as well as receive real-time
+    alerts on your mobile device when extreme conditions occur.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some of the concepts you’ll learn about through this project are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • Putting together a low-power IoT sensor network
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Understanding the basics of the Bluetooth Low Energy (BLE) protocol
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Building a BLE scanner on the Raspberry Pi
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Using a SQLite database to store sensor data
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Running a web server on the Pi using `Bottle`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • Using If This Then That (IFTTT) to send alerts to your mobile phone
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[How It Works](nsp-venkitachalam503045-0008.xhtml#rah1601)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The IoT devices you’ll use for this project are Adafruit BLE Sense boards, which
+    have built-in temperature and humidity sensors. The devices periodically take
+    measurements and transmit the sensor data wirelessly using Bluetooth Low Energy
+    (BLE), which we’ll discuss soon. This data is picked up by the Raspberry Pi running
+    a BLE scanner. The Pi uses a database to store and retrieve the data, and it also
+    runs a web server so it can display the data on a web page. Additionally, the
+    Pi has logic to detect anomalies in the temperature and humidity data and to send
+    an alert to a user’s mobile device via the IFTTT service when such anomalies occur.
+    [Figure 14-1](nsp-venkitachalam503045-0029.xhtml#fig14-1) summarizes the architecture
+    of the project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f14001.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 14-1: The IoT garden system architecture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may wonder why you need the Raspberry Pi at all. Why can’t the sensor devices
+    talk directly to the internet instead of going through the Pi? The answer lies
+    in power consumption. If the devices were talking directly to the internet via
+    a protocol like Wi-Fi, they would typically consume more than 10 times the power
+    compared to using BLE. This is important, because IoT devices are usually powered
+    by batteries, and we expect them to last a very long time. The arrangement in
+    [Figure 14-1](nsp-venkitachalam503045-0029.xhtml#fig14-1), where you have a network
+    of low-power wireless devices talking to a gateway (the Raspberry Pi, in this
+    case), is a common architecture in the world of IoT.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another feature of this project’s architecture is that your data remains in
+    your hands—inside a database on your Pi, to be precise. You aren’t blasting it
+    over the internet, but rather confining it to your local network. This may not
+    be critical for basic garden data, but it’s still good to know that an IoT device
+    doesn’t always *need* to send everything over the internet for it to be useful.
+    Privacy and security are two good reasons for exposing your data to the internet
+    only when it’s really necessary. In this case, you’ll still make use of the internet
+    a little bit to send the IFTTT alerts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Bluetooth Low Energy](nsp-venkitachalam503045-0008.xhtml#rbh1601)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: BLE is a subset of the same wireless technology standard that enables Bluetooth
+    headphones and speakers, but it’s optimized for low-power, battery-operated devices.
+    BLE is how your smartphone speaks to your smartwatch or your fitness tracker,
+    for example. Devices that communicate over BLE can be categorized as either *central*
+    or *peripheral*. Usually, central devices are more capable hardware such as laptops
+    and phones, while peripheral devices are less capable hardware such as fitness
+    bands and beacons. In this project, the Raspberry Pi is the central device, and
+    the Adafruit BLE Sense boards are the peripherals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NOTE The distinction between central and peripheral devices isn’t always clear-cut.
+    Modern BLE chips allow the same piece of hardware to function as a central device,
+    a peripheral, or a combination of both.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A BLE peripheral makes its presence known via *advertisement packets*, as shown
+    in [Figure 14-2](nsp-venkitachalam503045-0029.xhtml#fig14-2). These packets of
+    data, which are typically sent out every few milliseconds, contain information
+    such as the name of the peripheral, its transmission power, its manufacturer data,
+    whether the central device can connect to it, and so on. The central device continuously
+    scans for advertisement packets, and it can use information in the packets to
+    establish communication with the peripheral.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f14002.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 14-2: The BLE advertising scheme'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The amount of data in an advertisement packet is limited to just 31 bytes to
+    conserve the peripheral’s battery, but the peripheral can optionally send an additional
+    packet of information via a separate transmission called a *scan response*. The
+    peripheral indicates whether a scan response is available as part of its normal
+    advertisement packet. If the central device wants the extra data, it then sends
+    a scan response request, which prompts the peripheral to take a break from sending
+    advertisement packets and send the scan response instead. For this project, though,
+    you need very little data from the sensors, so you can just put the temperature
+    and humidity data directly in the advertisement packets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'On the Raspberry Pi side, you’ll build a BLE scanner using BlueZ, the official
+    Bluetooth protocol stack on Linux. Specifically, you’ll make use of the following
+    three command line programs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: hciconfig Resets BLE on the Pi during program initialization
+  prefs: []
+  type: TYPE_NORMAL
+- en: hcitool       Scans for BLE peripherals
+  prefs: []
+  type: TYPE_NORMAL
+- en: hcidump       Reads the advertisement data from the BLE peripherals
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`hciconfig` and `hcitool` come as part of the Raspberry Pi OS installation,
+    but you’ll need to install `hcidump` from a terminal, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here’s what a typical command line session on the Raspberry Pi looks like with
+    these tools. First, run `hcidump` in a shell to get ready to output data packets
+    once the scan begins:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This tells you that `hcidump` is waiting for BLE input. Next, run the `lescan`
+    command with `hcitool` in a different shell to start scanning for BLE devices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This indicates that the scanner has detected a whole lot of BLE devices (they’re
+    everywhere these days!). The moment you run the `lescan` command, `hcidump` starts
+    printing out advertisement packet data, so your `hcidump` shell should now be
+    full of messages like the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The messages are output as hexadecimal bytes (rather than human-readable text)
+    because you started `hcidump` with the `--raw` option.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This example illustrated using the BlueZ tools manually at the command line.
+    For the project, you’ll instead execute the commands from inside the Python code
+    running on your Pi. The Python code will also read the advertisement packets and
+    get the sensor data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Bottle Web Framework](nsp-venkitachalam503045-0008.xhtml#rbh1602)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To monitor the sensor data via a web interface, you’ll need to have the Pi
+    run a web server. To do this, you’ll use `Bottle`, a Python web framework with
+    a simple interface. (In fact, the entire library consists of a single source file
+    named *bottle.py*.) Here’s the code needed to serve a simple web page from a Pi
+    using `Bottle`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: This code first defines a route to a URL or path (in this case, `/hello`) where
+    the client can send data requests ❶, and it uses the `route()` method from `Bottle`
+    as a Python decorator to bind to the `hello()` function, which will act as a handler
+    for that route. This way, when the user navigates to the route, `Bottle` will
+    call the `hello()` function, which returns a string ❷. The `run()` method ❸ starts
+    the `Bottle` server, which can now accept connections from clients. Here we’re
+    assuming that the server is running on port 8080 on a Pi called `iotgarden`. Notice
+    that the `debug` flag is set to `True` to make it easier to diagnose problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Run this code on your Wi-Fi–connected Pi, open a browser on any computer connected
+    to the local network, and visit *http://<iotgarden>.local:8080/hello/*, substituting
+    in your Pi’s name as appropriate. `Bottle` should serve you a web page with the
+    text “Hello Bottle World!” With just a few lines of code, you’ve created a web
+    server.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that you’ll be using `Bottle` routing functions slightly differently in
+    your project compared to this simple example, because you’ll be binding the routes
+    to class methods rather than free functions like `hello()` shown previously. There
+    will be more on this later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The SQLite Database](nsp-venkitachalam503045-0008.xhtml#rbh1603)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You need a place to store the sensor data so you can retrieve it in the future.
+    You could write the data to a text file, but the retrieval process would quickly
+    get cumbersome. Instead, you’ll store the data with SQLite, a lightweight, easy-to-use
+    database perfect for embedded systems like the Raspberry Pi. To access SQLite
+    in Python, you’ll use the `sqlite3` library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'SQLite databases are manipulated using SQL, a standard language for database
+    systems. The SQL statements are written as strings in your Python code. You don’t
+    need to be a SQL expert to use SQLite for this project, however. You’ll need only
+    a few commands, which we’ll discuss as they arise. To get a feel for how it works,
+    let’s look at a simple example of using SQLite in a Python interpreter session.
+    First, here’s how to create a database and add some entries to it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `import sqlite3`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `con = sqlite3.``connect(''test.db'')` ❶'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `cur = con.``cursor()` ❷'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `cur.``execute("``CREATE TABLE sensor_data (``TS datetime,` `ID text,`
+    `VAL numeric)")` ❸'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `for i in range(10):`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '...   `cur.execute("INSERT into sensor_data VALUES (datetime(''now''),''ABC'', ?)",
+    (i, ))` ❹'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `con.``commit()` ❺'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `con.``close()`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `exit()`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here you call the `sqlite3.connect()` method with the name of the database
+    (`test.db` in this case) ❶. This method either returns a connection to an existing
+    database or creates a new one if the database with the given name doesn’t exist.
+    Then you create a *cursor* using the connection object ❷. This is a construct
+    that lets you interact with the database to create tables, make new entries, and
+    retrieve data. You use the cursor to execute a SQL statement that creates a database
+    table called `sensor_data` with the following columns: `TS` (timestamp), which
+    is of the type `datetime`; `ID` of type `text`; and `VAL` of type `numeric` ❸.
+    Next, you add 10 entries to this database by executing SQL `INSERT` statements
+    in a `for` loop. Each statement adds the entry with the current timestamp, the
+    string `''ABC''`, and the loop index `i` ❹. The `?` is a formatting placeholder
+    used by SQLite, and the actual values are specified using a tuple. Finally, you
+    commit the changes to the database to make them permanent ❺, before closing the
+    database connection.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now let’s retrieve some values from the database:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Once again, you establish a connection to the database and create a cursor to
+    interact with it. Then you execute a `SELECT` SQL query to retrieve some data
+    ❶. In this query, you ask for all rows (`SELECT *`) from the `sensor_data` table
+    for which the entry in the `VAL` column is greater than `5`. You print the results
+    of the query, which are accessible through the cursor’s `fetchall()` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Requirements](nsp-venkitachalam503045-0008.xhtml#rah1602)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: On the Raspberry Pi, you’ll need the `bottle` module to create a web server,
+    the `sqlite3` module to work with a SQLite database, and `matplotlib` to plot
+    the sensor data. The BLE Sense boards don’t have enough computing power to run
+    a full version of Python, so instead you’ll program them using CircuitPython,
+    an open source derivative of MicroPython maintained by Adafruit. We’re using CircuitPython
+    for this project, rather than MicroPython as you saw in [Chapter 12](nsp-venkitachalam503045-0027.xhtml#ch12),
+    since the former has more library support for the Adafruit-made devices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You’ll also need the following hardware for this project:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • One or more Adafruit Feather Bluefruit nRF52840 Sense boards, as per your
+    need
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • One Raspberry Pi 3B+ (or newer) board with SD card and power supply adapter
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • One 3.7 V LiPo battery or USB power supply per BLE Sense board
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Figure 14-3](nsp-venkitachalam503045-0029.xhtml#fig14-3) shows the required
+    hardware.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f14003.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 14-3: The hardware required for the project'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can hook up your Raspberry Pi indoors, close to your garden, and place your
+    BLE Sense boards with suitable power supply units and protective enclosures in
+    the garden.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Raspberry Pi Setup](nsp-venkitachalam503045-0008.xhtml#rbh1604)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To start this project, you’ll need to set up your Raspberry Pi. Please follow
+    the instructions in [Appendix B](nsp-venkitachalam503045-0032.xhtml#appb). The
+    project code that follows assumes that you’ve named you Pi `iotgarden`, which
+    allows you to access it on the network as `iotgarden.local`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[CircuitPython Setup](nsp-venkitachalam503045-0008.xhtml#rbh1605)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To install CircuitPython, follow these steps for each of your Adafruit BLE
+    Sense boards:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Visit [https://circuitpython.org/downloads](https://circuitpython.org/downloads),
+    search for your Bluefruit Sense board, and download the board’s CircuitPython
+    installer file, which has a *.uf2* extension. Take note of the CircuitPython version
+    number you’re downloading.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Connect the Adafuit board to a USB port on your computer and double-click
+    the Reset button on the board. The LED on the board should turn green, and you
+    should see a new drive appear on your computer called FTHRSNSBOOT.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 3\. Drag the *.uf2* file into the FTHRSNSBOOT drive. Once the file is copied,
+    the LED on the board will flash, and a new drive called CIRCUITPY will appear
+    on your computer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Next, you need to install the required Adafruit libraries on your board. Here’s
+    how:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Visit [https://circuitpython.org/libraries](https://circuitpython.org/libraries)
+    and download the *.zip* file with the library bundle corresponding to your version
+    of CircuitPython.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Unzip the downloaded file and copy the following files/folders into a folder
+    called *lib* inside the CIRCUITPY drive. (Create the *lib* folder if it doesn’t
+    exist.)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: ◦ *adafruit_apds9960*
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ◦ *adafruit_ble*
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ◦ *adafruit_bme280*
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ◦ *adafruit_bmp280.mpy*
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ◦ *adafruit_bus_device*
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ◦ *adafruit_lis3mdl.mpy*
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ◦ *adafruit_lsm6ds*
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ◦ *adafruit_register*
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ◦ *adafruit_sht31d.mpy*
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ◦ *neopixel.mpy*
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 3\. Press Reset on the board and you’re all set to use the board for this project.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: By default, CircuitPython will run code from any file in CIRCUITPY named *code.py*.
+    You’ll need to copy to the drive the *ble_sensors.py* file discussed in the following
+    section and rename it *code.py* to run the project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[If This Then That Setup](nsp-venkitachalam503045-0008.xhtml#rbh1606)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'IFTTT is a web service that lets you create automated responses to specific
+    actions. You’ll use IFTTT to send alerts to your mobile phone when something is
+    really off with the temperature or humidity levels your sensors are picking up.
+    Follow these steps to get set up to receive IFTTT alerts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Visit the IFTTT website ([https://ifttt.com](https://ifttt.com)) and sign
+    up for an account.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Download the IFTTT app to your smartphone and set it up.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 3\. While signed into your IFTTT account in your browser, click **Create**.
+    Then click the **Add** button in the If This box.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 4\. Search for and select **Webhooks** on the Choose a Service page that comes
+    up. Then select **Receive a Web Request with a JSON Payload**.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 5\. Under Event Name, enter **TH_alert** (note the capitalization) and press
+    **Create Trigger**.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 6\. You should now be back on the Create page. Click the **Add** button in the
+    Then That box.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 7\. Search for and select **Notifications**. Then click **Send a Notification
+    from the IFTTT App**.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 8\. In the page that comes up, add the text “T/H Alert!” to the Message box.
+    Then click **Add Ingredient** and select **OccuredAt**. Click **Add Ingredient**
+    again and select **JsonPayload**.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 9\. Click the **Create Action** button to return to the Create screen. Then
+    click **Continue** and **Finish** to finalize the alert.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'You’ll need your IFTTT key to trigger alerts from your Python code. To look
+    it up, follow these steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. On the IFTTT website, click the round account icon in the top-right corner
+    of the screen and select **My Services**.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Click the **Webhooks** link, and then click the **Documentation** button.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 3\. A page should load with your key written across the top. Take note of the
+    key. You’ll also find information on this page about how to send a test alert
+    to your smartphone. Be sure to fill in **TH_alert** as the event name if you run
+    a test.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[The Code](nsp-venkitachalam503045-0008.xhtml#rah1603)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The code for this project is spread over these Python files:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ble_sensors.py The CircuitPython code that runs in the Adafruit BLE Sense boards.
+    It reads from the temperature and humidity sensors and puts the data in BLE advertisement
+    packets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: BLEScanner.py Implements the BLE scanner on the Raspberry Pi, using BlueZ tools
+    to read advertisement data. This code also sends the IFTTT alerts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: server.py Implements the `Bottle` web server on the Raspberry Pi.
+  prefs: []
+  type: TYPE_NORMAL
+- en: iotgarden.py The main program file. This code sets up the SQLite database and
+    starts the BLE scanner and the web server.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In addition to the Python files, the project has a subfolder called *static*
+    with some extra files used by the `Bottle` web server:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: static/style.css The style sheet for the HTML returned by the server
+  prefs: []
+  type: TYPE_NORMAL
+- en: static/server.js The JavaScript code returned by the server that fetches sensor
+    data
+  prefs: []
+  type: TYPE_NORMAL
+- en: The full code for the project is available at [https://github.com/mkvenkit/pp2e/tree/main/iotgarden](https://github.com/mkvenkit/pp2e/tree/main/iotgarden).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The CircuitPython Code](nsp-venkitachalam503045-0008.xhtml#rbh1607)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The CircuitPython code running on the BLE Sense board has a straightforward
+    purpose: it reads data from the built-in temperature and humidity sensors and
+    puts that data in the board’s BLE advertisement packets. This deceptively simple
+    task requires you to import a surprising number of modules. To see the complete
+    code listing, skip ahead to [“The Complete CircuitPython Code”](nsp-venkitachalam503045-0029.xhtml#ah1607)
+    on [page 343](nsp-venkitachalam503045-0029.xhtml#p343). The code is also available
+    at [https://github.com/mkvenkit/pp2e/blob/main/iotgarden/ble_sensors/ble_sensors.py](https://github.com/mkvenkit/pp2e/blob/main/iotgarden/ble_sensors/ble_sensors.py).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: You import Python’s built-in `time` and `struct` modules for sleeping and packing
+    data, respectively. The `board` module gives you access to the `I2C` library,
+    which allows the BLE chip on the board to communicate with the sensors using the
+    I²C protocol (pronounced ``“eye-squared-C”). The `adafruit_bmp280` and `adafruit_sht31d`
+    modules are required for communicating with the sensors, and the `BLERadio` class
+    is for enabling BLE and sending advertisement packets. The imports at ❶ and ❷
+    give you access to the Adafruit BLE advertising modules necessary for creating
+    your own custom advertisement packets featuring the sensor data. Additionally,
+    you’ll use the `_bleio` module to get the MAC address of the device and `neopixel`
+    to control the board’s LED.``
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7] class IOTGAdvertisement(Advertisement):     flags = None   ❶ match_prefixes
+    = (         struct.pack(             "<BHBH",  # prefix format             0xFF,     #
+    0xFF is "Manufacturer Specific Data" as per BLE spec             0x0822,   # 2-byte
+    company ID             struct.calcsize("<H9s"), # data format             0xabcd
+    # our ID         ), # comma required - a tuple is expected     )   ❷ manufacturer_data
+    = LazyObjectField(         ManufacturerData,         "manufacturer_data",         advertising_data_type=0xFF,
+    # 0xFF is "Manufacturer Specific Data"                                     # as
+    per BLE spec         company_id=0x0822,          # 2-byte company ID         key_encoding="<H",
+        )     # set manufacturer data field   ❸ md_field = ManufacturerDataField(0xabcd,
+    "<9s")  [PRE8] def main():     # initialize I2C   ❶ i2c = board.I2C()     # initialize
+    sensors   ❷ bmp280 = adafruit_bmp280.Adafruit_BMP280_I2C(i2c)   ❸ sht31d = adafruit_sht31d.SHT31D(i2c)
+        # initialize BLE   ❹ ble = BLERadio()     # create custom advertisement object
+      ❺ advertisement = IOTGAdvertisement()     # append first 2 hex bytes (4 characters)
+    of MAC address to name   ❻ addr_bytes = _bleio.adapter.address.address_bytes     name
+    = "{0:02x}{1:02x}".format(addr_bytes[5], addr_bytes[4]).upper()     # set device
+    name   ❼ ble.name = "IG" + name  [PRE9]     # set initial value     # will use
+    only first 5 chars of name   ❶ advertisement.md_field = ble.name[:5] + "0000"
+        # BLE advertising interval in seconds     BLE_ADV_INT = 0.2     # start BLE
+    advertising   ❷ ble.start_advertising(advertisement, interval=BLE_ADV_INT)     #
+    set up NeoPixels and turn them all off      pixels = neopixel.NeoPixel(board.NEOPIXEL,
+    1,                                 brightness=0.1, auto_write=False)  [PRE10]
+        # main loop     while True:         # print values - this will be available
+    on serial       ❶ print("Temperature: {:.1f} C".format(bmp280.temperature))         print("Humidity:
+    {:.1f} %".format(sht31d.relative_humidity))         # get sensor data       ❷
+    T = int(bmp280.temperature)+ 40         H = int(sht31d.relative_humidity)         #
+    stop advertising       ❸ ble.stop_advertising()         # update advertisement
+    data       ❹ advertisement.md_field = ble.name[:5] + chr(T) + chr(H) + "00"         #
+    start advertising       ❺ ble.start_advertising(advertisement, interval=BLE_ADV_INT)
+            # blink neopixel LED         pixels.fill((255, 255, 0))         pixels.show()
+            time.sleep(0.1)         pixels.fill((0, 0, 0))         pixels.show()         #
+    sleep for 2 seconds       ❻ time.sleep(2)  [PRE11] Temperature: 26.7 C Humidity:
+    55.6 %  [PRE12]`  [PRE13] class BLEScanner:     def __init__(self, dbname):         """BLEScanner
+    constructor"""         self.T = 0         self.H = 0         # max values         self.TMAX
+    = 30         self.HMIN = 20         # timestamp for last alert       ❶ self.last_alert
+    = time.time()         # alert interval in seconds       ❷ self.ALERT_INT = 60
+            # scan interval in seconds       ❸ self.SCAN_INT = 10       ❹ self._dbname
+    = dbname       ❺ self.hcitool = None         self.hcidump = None       ❻ self.task
+    = None         # -----------------------------------------------         # peripheral
+    allow list - add your devices here!         # -----------------------------------------------
+          ❼ self.allowlist = ["`DE:74:03:D9:3D:8B`"]  [PRE14] def start_scan(self):
+        """starts the BlueZ tools required for scanning"""     print("BLE scan started...")
+        # reset device   ❶ ret = subprocess.run([''sudo'', ''-n'', ''hciconfig'',
+    ''hci0'', ''reset''],                          stdout=subprocess.DEVNULL)     print(ret)
+        # start hcitool process   ❷ self.hcitool = subprocess.Popen([''sudo'', ''-n'',
+    ''hcitool'',                                      ''lescan'', ''--duplicates''],
+                                        stdout=subprocess.DEVNULL)     # start hcidump
+    process   ❸ self.hcidump = subprocess.Popen([''sudo'', ''-n'', ''hcidump'', ''--raw''],
+                                        stdout=subprocess.PIPE)  [PRE15] def stop_scan(self):
+        """stops BLE scan by killing BlueZ tools processes"""     subprocess.run([''sudo'',
+    ''kill'', str(self.hcidump.pid), ''-s'', ''SIGINT''])     subprocess.run([''sudo'',
+    ''-n'', ''kill'', str(self.hcitool.pid),                      ''-s'', "SIGINT"])
+        print("BLE scan stopped.")  [PRE16] def parse_hcidump(self):     data = ""
+        (macid, name, T, H) = (None, None, None, None)     while True:       ❶ line
+    = self.hcidump.stdout.readline()       ❷ line = line.decode()         if line.startswith(''>
+    ''):             data = line[2:]         elif line.startswith(''< ''):             data
+    = ""         else:             if data:               ❸ data += line               ❹
+    data = " ".join(data.split())               ❺ fields = self.parse_data(data)                     success
+    = False                   ❻ try:                         macid = fields["macid"]
+                            T = fields["T"]                         H = fields["H"]
+                            name = fields["name"]                         success
+    = True                     except KeyError:                         # skip this
+    error, since this indicates                         # invalid data                       ❼
+    pass                     if success:                       ❽ return (macid, name,
+    T, H)  [PRE17] > 04 3E 1B 02 01 02 01 8B 3D D9 03 74 DE 0F 0E FF 22 08 0A 31   FE
+    49 4F 54 47 31 1B 36 30 CB  [PRE18] >>> `x = "ab cd\n ef\tff\r\n"` >>> `x.split()`
+    [''ab'', ''cd'', ''ef'', ''ff''] >>> `" ".join(x.split())` ''ab cd ef ff''  [PRE19]
+    def parse_data(self, data):     fields = {}     # parse MACID   ❶ x = [int(val,
+    16) for val in data.split()]   ❷ macid = ":".join([format(val, ''02x'').upper()
+    for val in x[7:13][::-1]])     # check if MACID is in allowlist   ❸ if macid in
+    self.allowlist:         # look at 6th byte to see PDU type       ❹ if (x[5] ==
+    0x02): # ADV_IND           ❺ fields["macid"] = macid             # parse data
+              ❻ fields["T"] = x[26]             fields["H"] = x[27]           ❼ name
+    = "".join([format(val, ''02x'').upper() for val in x[21:26]])           ❽ name
+    = bytearray.fromhex(name).decode()             fields["name"] = name     return
+    fields  [PRE20] >>> `data = "04 3E 1C 02 01 02 01 8B 3D D9 03 74 DE 10 0F FF 22`
+    `            08 0B 31 FE 49 4F 54 47 31 61 62 63 64 BD"` >>> `x = [int(val, 16)
+    for val in data.split()]` >>> `x` [4, 62, 28, 2, 1, 2, 1, 139, 61, 217, 3, 116,
+    222, 16, 15, 255, 34,  8, 11, 49, 254, 73, 79, 84, 71, 49, 97, 98, 99, 100, 189]
+    >>> `x[7:13][::-1`] [222, 116, 3, 217, 61, 139] >>> `[format(val, ''02x'').upper()
+    for val in x[7:13][::-1]]` [''DE'', ''74'', ''03'', ''D9'', ''3D'', ''8B''] >>>
+    `":".join([format(val, ''02x'').upper() for val in x[7:13][::-1]])` ''DE:74:03:D9:3D:8B''  [PRE21]
+    def send_alert(self):     # check T, H   ❶ delta = time.time() - self.last_alert
+      ❷ if ((self.T > self.TMAX) or (self.H < self.HMIN)) and                                      (delta
+    > self.ALERT_INT):         print("Triggering IFTTT alert!")       ❸ key = ''`ABCDEF`''
+    # USE YOUR KEY HERE!       ❹ url = ''https://maker.ifttt.com/trigger/TH_alert/json/with/key/''
+    + key         json_data = {"T": self.T, "H": self.H}       ❺ r = requests.post(url,
+    data = json_data)         # save last alert         self.last_alert = time.time()  [PRE22]
+    def scan_task(self):     """the scanning task which is run on a separate thread"""
+        # start BLE scan   ❶ self.start_scan()     # get data   ❷ (macid, name, self.T,
+    self.H) = self.parse_hcidump()     # correct temperature offset     self.T = self.T
+    - 40     print(self.T, self.H)     # stop BLE scan   ❸ self.stop_scan()     #
+    send alert if required   ❹ self.send_alert()     # write to db     # connect to
+    database     con = sqlite3.connect(self._dbname)     cur = con.cursor()     devID
+    = macid     # add data     with con:       ❺ cur.execute("INSERT INTO iotgarden_data
+    VALUES (?, ?, ?, ?, ?)",                 (devID, name, datetime.now(), self.T,
+    self.H))     # commit changes     con.commit()     # close db     con.close()
+        # schedule the next task   ❻ self.task = Timer(self.SCAN_INT, self.scan_task)
+      ❼ self.task.start()  [PRE23] class IOTGServer:     def __init__(self, dbname,
+    host, port):         self._dbname = dbname         self._host = host         self._port
+    = port         # create bottle object       ❶ self._app = Bottle()  [PRE24] def
+    run(self):     # ----------     # add routes:     # ----------     # T/H data
+      ❶ self._app.route(''/thdata'')(self.thdata)     # plot image   ❷ self._app.route(''/image/<macid>'')(self.plot_image)
+        # static files - CSS, JavaScript   ❸ self._app.route(''/static/<filename>'')(self.st_file)
+        # main HTML page   ❹ self._app.route(''/'')(self.main_page)     # start server
+      ❺ self._app.run(host=self._host, port=self._port)  [PRE25]     def main_page(self):
+            """main HTML page"""       ❶ response.content_type = ''text/html''         strHTML
+    = """ <!DOCTYPE html> <html> <head> ❷ <link href="static/style.css" rel="stylesheet">
+    ❸ <script src="static/server.js"></script> </head> <body> <div id = "title">The
+    IoT Garden </div> <hr/> ❹ <div id="sensors"></div> </body> </html>"""         return
+    strHTML  [PRE26] def st_file(self, filename):     """serves static files"""     return
+    static_file(filename, root=''./static'')  [PRE27] def plot_image(self, macid):
+        """create a plot of sensor data by reading database"""     # get data   ❶
+    data = self.get_data(macid)     # create plot     plt.legend([''T'', ''H''], loc=''upper
+    left'')   ❷ plt.plot(data)     # save to a buffer   ❸ buf = io.BytesIO()   ❹ plt.savefig(buf,
+    format=''png'')     # reset stream position to start     buf.seek(0)     # read
+    image data as bytes   ❺ img_data = buf.read()     # set response type     response.content_type
+    = ''image/png''     # return image data as bytes   ❻ return img_data  [PRE28]
+    def get_data(self, macid):     # connect to database     con = sqlite3.connect(self._dbname)
+        cur = con.cursor()     data = []   ❶ for row in cur.execute("SELECT * FROM
+    iotgarden_data                         where DEVID = :dev_id LIMIT 100", {"dev_id" :
+    macid}):       ❷ data.append((row[3], row[4]))     # commit changes     con.commit()
+        # close db     con.close()     return data  [PRE29] def thdata(self):     """connect
+    to database and retrieve latest sensor data"""     # connect to database     con
+    = sqlite3.connect(self._dbname)     cur = con.cursor()     macid = ""     name
+    = ""     # set up a device list     devices = []     # get unique device list
+    from db   ❶ devid_list = cur.execute("SELECT DISTINCT DEVID FROM iotgarden_data")
+        for devid in devid_list:       ❷ for row in cur.execute("SELECT * FROM iotgarden_data
+                where DEVID = :devid ORDER BY TS DESC LIMIT 1",             {"devid" :
+    devid[0]}):           ❸ devices.append({''macid'': macid, ''name'': name, ''T'' :
+    T, ''H'': H})         # commit changes     con.commit()     # close db     con.close()
+        # return device dictionary   ❹ return {"devices" : devices}  [PRE30] // async
+    function that fetches data from server async function fetch_data() {   ❶ let response
+    = await fetch(''thdata'');   ❷ devices_json = await response.json();     console.log(''updating
+    HTML...'');   ❸ devices = devices_json["devices"];   ❹ let strHTML = "";   ❺ var
+    ts = new Date().getTime();   ❻ for (let i = 0; i < devices.length; i++) {         //
+    console.log(devices[i].macid)         strHTML = ''<div class="thdata">'';         strHTML
+    += ''<span>'' + devices[i].name + ''('' + devices[i].macid             + ''):
+    </span>'';         strHTML += ''<span>T = '' + devices[i].T +                    ''
+    C ('' + (9.0*devices[i].T/5.0 + 32.0) + '' F),</span>'';         strHTML += ''<span>
+    H = '' + devices[i].H + '' % </span>'';         strHTML += ''</div>''; // thdata
+            // create image div       ❼ strHTML += ''<div class="imdiv"><img src="image/''
+    +             devices[i]["macid"] + ''?ts='' + ts + ''"></div>'';         // add
+    divider         strHTML += ''<hr/>'';     }     // set HTML data   ❽ document.getElementById("sensors").innerHTML
+    = strHTML; };  [PRE31] ❶ <div class="thdata">     <span>IGDE74(DE:74:03:D9:3D:8B):
+    </span>     <span>T = 26 C, (73.4 F),</span>     <span>H = 55 % </span> </div>
+    ❷ <div class="imdiv">   ❸ <img src="image/DE:74:03:D9:3D:8B?ts=1635673486192">
+    </div> ❹ <hr>  [PRE32] // fetch once on load ❶ window.onload = function() {     fetch_data();
+    }; // now fetch data every 30 seconds ❷ setInterval(fetch_data, 30000)  [PRE33]
+    html {     background-color: gray; } body {     min-height: 100vh;     max-width:
+    800px;     background-color: #444444;     margin-left: auto;     margin-right:
+    auto;     margin-top: 0; } h1 {     color: #aaaaaa;     font-family: "Times New
+    Roman", Times, serif; } #title {     font-family: "Times New Roman", Times, serif;
+        font-size: 40px;     text-align: center; } ❶ .thdata {     display: flex;
+        justify-content: center;     width: 80%;     color: #aaaaaa;     font-family:
+    Arial, Helvetica, sans-serif;     font-size: 24px;     margin: auto; } ❷ .imdiv
+    {     display: flex;     justify-content: center; }  [PRE34] def setup_db(dbname):
+        """set up the database"""     # connect to database - will create new if needed
+      ❶ con = sqlite3.connect(dbname)     cur = con.cursor()     # drop if table exists
+      ❷ cur.execute("DROP TABLE IF EXISTS iotgarden_data")     # create table   ❸
+    cur.execute("CREATE TABLE iotgarden_data(DEVID TEXT, NAME TEXT,                  TS
+    DATETIME, T NUMERIC, H NUMERIC)")  [PRE35] def print_db(dbname):     """prints
+    contents of database"""     # connect to database     con = sqlite3.connect(dbname)
+        cur = con.cursor()   ❶ for row in cur.execute("SELECT * FROM iotgarden_data"):
+           print(row)  [PRE36] def main():     print("starting iotgarden...")     #
+    set up cmd line argument parser     parser = argparse.ArgumentParser(description="iotgarden.")
+        # add arguments   ❶ parser.add_argument(''--createdb'', action=''store_true'',
+    required=False)   ❷ parser.add_argument(''--lsdb'', action=''store_true'', required=False)
+      ❸ parser.add_argument(''--hostname'', dest=''hostname'', required=False)     args
+    = parser.parse_args()     # set database name   ❹ dbname = ''iotgarden.db''     if
+    (args.createdb):         print("Setting up database...")       ❺ setup_db(dbname)
+            print("done. exiting.")         exit(0)     if (args.lsdb):         print("Listing
+    database contents...")       ❻ print_db(dbname)         print("done. exiting.")
+            exit(0)     # set hostname   ❼ hostname = ''iotgarden.local''     if (args.hostname):
+            hostname = args.hostname     # create BLE scanner   ❽ bs = BLEScanner(dbname)
+        # start BLE     bs.start()     # create server   ❾ server = IOTGServer(dbname,
+    hostname, 8080)     # run server     server.run()  [PRE37]`  [PRE38] $ `sudo hcitool
+    lescan`  [PRE39] LE Scan... 57:E0:F5:93:AD:B1 (unknown) 57:E0:F5:93:AD:B1 (unknown)
+    DE:74:03:D9:3D:8B (unknown) DE:74:03:D9:3D:8B IOTG1 27:FE:36:49:F0:2E (unknown)
+    7A:17:EB:3C:04:A5 (unknown) 7A:17:EB:3C:04:A5 (unknown)  [PRE40] $ `sudo python
+    iotgarden.py`  [PRE41] starting iotgarden... BLE scan started... CompletedProcess(args=[''sudo'',
+    ''hciconfig'', ''hci0'', ''reset''], returncode=0) 04 3E 1C 02 01 02 01 8B 3D
+    D9 03 74 DE 10 0F FF 22 08 0B CD AB 49 4F 54 47 31 1A 3A 30 30 C9 26 58 BLE scan
+    stopped. Bottle v0.12.19 server starting up (using WSGIRefServer())... Listening
+    on http://iotgarden.local:8080/ Hit Ctrl-C to quit.  [PRE42] Triggering IFTTT
+    alert!  [PRE43] """ iotgarden.py Main program for the IoT Garden project. Sets
+    up database, starts the Bottle web server, and the BLE scanner. Author: Mahesh
+    Venkitachalam """ import argparse import sqlite3 from BLEScanner import BLEScanner
+    from server import IOTGServer def print_db(dbname):     """prints contents of
+    database"""     # connect to database     con = sqlite3.connect(dbname)     cur
+    = con.cursor()     for row in cur.execute("SELECT * FROM iotgarden_data"):         print(row)
+    def setup_db(dbname):     """set up the database"""     # connect to database
+    - will create new if needed     con = sqlite3.connect(dbname)     cur = con.cursor()
+        # drop if table exists     cur.execute("DROP TABLE IF EXISTS iotgarden_data")
+        # create table     cur.execute("CREATE TABLE iotgarden_data(DEVID TEXT, NAME
+    TEXT,                  TS DATETIME, T NUMERIC, H NUMERIC)") def main():     print("starting
+    iotgarden...")     # set up cmd line argument parser     parser = argparse.ArgumentParser(description="iotgarden.")
+        # add arguments     parser.add_argument(''--createdb'', action=''store_true'',
+    required=False)     parser.add_argument(''--lsdb'', action=''store_true'', required=False)
+        parser.add_argument(''--hostname'', dest=''hostname'', required=False)     args
+    = parser.parse_args()     # set database name     dbname = ''iotgarden.db''     if
+    (args.createdb):         print("Setting up database...")         setup_db(dbname)
+            print("done. exiting.")         exit(0)     if (args.lsdb):         print("Listing
+    database contents...")         print_db(dbname)         print("done. exiting.")
+            exit(0)     # set hostname     hostname = ''iotgarden.local''     if (args.hostname):
+            hostname = args.hostname     # create BLE scanner     bs = BLEScanner(dbname)
+        # start BLE     bs.start()     # create server     server = IOTGServer(dbname,
+    hostname, 8080)     # run server     server.run() # call main if __name__ == "__main__":
+        main()  [PRE44]`'
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,1191 @@
+- en: '[5](nsp-venkitachalam503045-0008.xhtml#rch05)'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Flocking Boids
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-circle-image.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Look closely at a flock of birds or a school of fish, and you’ll notice that
+    although the group is composed of individual creatures, the group as a whole seems
+    to have a life of its own. The birds in a flock align with each other as they
+    move and flow over and around obstacles. They break formation when disturbed or
+    startled, but then they regroup, as if controlled by some larger force.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In 1986, Craig Reynolds created a realistic-looking simulation of the flocking
+    behavior of birds called the *Boids model*. One remarkable thing about the Boids
+    model (named after the stereotypical New Yorker’s pronunciation of the word *birds*)
+    is that only three simple rules govern the interaction between individuals in
+    the flock, yet the model produces remarkably realistic flocking behavior. The
+    Boids model is widely studied and has even been used to animate computer-generated
+    swarms like the marching penguins in the movie *Batman Returns* (1992).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this project, you’ll use Reynolds’s three rules to create a Boids simulation
+    of the flocking behavior of *N* birds and plot their positions and directions
+    of movement over time. You’ll also provide a method to add a bird to the flock,
+    as well as a scatter effect that you can use to study the impact of a local disturbance
+    on the flock. Boids is called an *N*-body simulation because it models a dynamic
+    system of *N* particles that exert forces on each other.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[How It Works](nsp-venkitachalam503045-0008.xhtml#rah0701)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The three core rules of the Boids simulation are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Separation Keep a minimum distance between the boids.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alignment Point each boid in the average direction of movement of its local
+    flockmates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cohesion Move each boid toward the center of mass of its local flockmates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Boids simulations can add other rules too, such as ones to avoid obstacles
+    or scatter the flock when it’s disturbed, as you’ll learn in the following sections.
+    To create the Boids animation, you’ll do the following for every time step in
+    the simulation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1\. For all boids in the flock:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: a. Apply the three core rules.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: b. Apply any additional rules.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: c. Apply all boundary conditions.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 2\. Update the positions and velocities of the boids.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 3\. Plot the new positions and velocities.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: As you’ll see, these simple steps create a flock with evolving, complex behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Requirements](nsp-venkitachalam503045-0008.xhtml#rah0702)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'These are the Python modules you’ll be using in this simulation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: • `numpy` arrays to store the positions and velocities of the boids
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • The `matplotlib` library to animate the boids
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • `argparse` to process command line options
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: • The `scipy.spatial.distance` module, which has some really neat methods for
+    calculating distances between points
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: I chose to use `matplotlib` for boids as a matter of simplicity and convenience.
+    To draw a huge number of boids as quickly as possible, you might use something
+    like the OpenGL library. We’ll explore graphics in more detail in [Part III](nsp-venkitachalam503045-0018.xhtml#pt03)
+    of this book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[The Code](nsp-venkitachalam503045-0008.xhtml#rah0703)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You’ll encapsulate the behavior of a group of boids in a class called `Boids`.
+    First you’ll set the initial positions and velocities of the boids. Next, you’ll
+    set up the boundary conditions for the simulation, look at how the boids are drawn,
+    and implement the Boids simulation rules discussed earlier. Finally, you’ll add
+    some interesting events to the simulation by allowing the user to add boids and
+    scatter the flock. To see the full project code, skip ahead to [“The Complete
+    Code”](nsp-venkitachalam503045-0017.xhtml#ah0707) on [page 96](nsp-venkitachalam503045-0017.xhtml#p96).
+    You can also download it from the book’s GitHub repository at [https://github.com/mkvenkit/pp2e/blob/main/boids/boids.py](https://github.com/mkvenkit/pp2e/blob/main/boids/boids.py).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Initializing the Simulation](nsp-venkitachalam503045-0008.xhtml#rbh0701)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Boids simulation needs to compute the position and velocities of the boids
+    at each step by pulling information from `numpy` arrays. At the beginning of the
+    simulation, you use the `Boids` class’s `__init__()` method to create those arrays
+    and initialize all boids in approximately the center of the screen, with their
+    velocities set in random directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'First you import the modules required for the program and set the width and
+    height of the simulation window on the screen ❶. Then you begin declaring the
+    `Boids` class. Within the class’s `__init__()` method, you create a `numpy` array
+    called `pos` to store the x- and y-coordinates of all the boids ❷. For the initial
+    value of each pair of coordinates, you start with the center of the window, `[width/2.0,
+    height/2.0]`, and add a random displacement of up to 10 units. The code `np.random.rand(2*N)`
+    creates a one-dimensional array of 2*N* random numbers in the range [0, 1], which
+    you multiply by 10 to scale to a range of [0, 10]. The `reshape()` call converts
+    the one-dimensional array into a two-dimensional array of shape (*N*, 2), perfect
+    for storing *N* pairs of x- and y-coordinates. Notice, too, the `numpy` broadcasting
+    rules in action here: the 1×2 array `[width/2.0, height/2.0]` representing the
+    center of the window is added to each element in the *N*×2 array to randomly offset
+    each boid’s position from the center.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, you create an array of random unit velocity vectors (these are vectors
+    of magnitude 1.0, pointing in random directions) for each boid using the following
+    method: given an angle *t*, the pair of numbers (cos(*t*), sin(*t*)) lie on a
+    circle of radius 1.0, centered at the origin (0, 0). If you draw a line from the
+    origin to a point on this circle, it becomes a unit vector that depends on the
+    angle *t*. So if you choose *t* at random, you end up with a random velocity vector.
+    [Figure 5-1](nsp-venkitachalam503045-0017.xhtml#fig5-1) illustrates this scheme.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f05001.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5-1: Generating random unit velocity vectors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returning to the code, you put this method into action by first generating an
+    array of *N* random angles in the range [0, 2π] ❸. Then you create an array of
+    random unit velocity vectors by calculating the cosine and sine of those angles
+    ❹. You group the coordinates of each vector using Python’s built-in `zip()` method.
+    The following is a simple example of `zip()`. This joins two lists into a list
+    of tuples. The `list()` is needed because just calling `zip` will create only
+    an iterator—you need all the elements in the list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: In summary, you’ve generated two arrays that will be useful throughout the simulation,
+    `pos` and `vel`. The first contains random positions clustered within a 10-pixel
+    radius around the center of the screen, and the second contains unit velocities
+    pointing in random directions. This means that at the start of the simulation,
+    the boids will all hover around the center of the screen, pointed in random directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `__init__()` method continues by declaring some constant values that will
+    help govern the simulation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here you define the minimum distance of approach between two boids ❶. You’ll
+    use this value later to apply the separation rule. Then you define `maxRuleVel`,
+    which limits how much a boid’s velocity can be changed each time one of the simulation
+    rules is applied ❷. You also define `maxVel`, which sets an overall limit on the
+    boids’ velocities ❸.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Setting Boundary Conditions](nsp-venkitachalam503045-0008.xhtml#rbh0702)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Birds fly in a boundless sky, but the boids must play in limited space. To create
+    that space, you’ll set boundary conditions, as you did with the toroidal boundary
+    condition in the Game of Life simulation in [Chapter 3](nsp-venkitachalam503045-0015.xhtml#ch03).
+    In this case, you’ll apply a *tiled boundary condition* (actually the continuous
+    space version of the boundary condition you used in [Chapter 3](nsp-venkitachalam503045-0015.xhtml#ch03)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Think of the Boids simulation as taking place in a tiled space: when a boid
+    moves out of a tile, it moves in from the opposite direction to an identical tile.
+    The main difference between the toroidal and tiled boundary conditions is that
+    this Boids simulation won’t take place on a discrete grid; instead, the birds
+    move over a continuous region. [Figure 5-2](nsp-venkitachalam503045-0017.xhtml#fig5-2)
+    shows what those tiled boundary conditions look like.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f05002.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5-2: Tiled boundary conditions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Look at the tile in the middle. The birds flying out to the right are entering
+    the tile on the right, but the boundary conditions ensure that they actually come
+    right back into the center tile through the tile at the left. You can see the
+    same thing happening at the top and bottom tiles.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You implement the tiled boundary conditions for the Boids simulation as a method
+    on the `Boids` class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: This method applies the tiled boundary conditions to each set of boid coordinates
+    in the `pos` array. For example, if an x-coordinate is greater than the width
+    of the window ❶, you set it back to the left edge of the window. The `deltaR`
+    in this line provides a slight buffer, which allows the boid to move slightly
+    outside the window before it starts coming back in from the opposite direction,
+    thus producing a better visual effect. You perform a similar check at the left,
+    top, and bottom edges of the window.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Drawing a Boid](nsp-venkitachalam503045-0008.xhtml#rbh0703)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To build the animation, you need to know each boid’s position and velocity and
+    have a way to indicate both the position and direction of motion at each time
+    step.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Plotting the Boid’s Body and Head
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To animate the boids, you use `matplotlib` and a little trick to plot both the
+    position and velocity. Draw each boid as two circles, as shown in [Figure 5-3](nsp-venkitachalam503045-0017.xhtml#fig5-3).
+    The larger circle represents the body, and the smaller one represents the head.
+    Point *P* marks the center of the body. For our purposes, you can consider *P*
+    to be the position of the boid, and you’ll set it using coordinates from the `pos`
+    array discussed earlier. Point *H* is the center of the head. You calculate the
+    position of *H* according to the formula *H* = *P* + *k* × *V*, where *V* is the
+    velocity of the boid and *k* is a constant representing the distance from the
+    center of the body to the center of the head. This way, the boid’s head will be
+    aligned with its direction of motion at any given time, which visually communicates
+    the boid’s direction of movement more clearly than just drawing the body alone.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f05003.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5-3: Representing a boid'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following snippet from the program’s `main()` function, you draw the
+    boid’s body and head as circular markers using `matplotlib`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: You set the size and shape of the markers for the boid’s body (`pts`) ❶ and
+    head (`head`) ❷. The `'k'` and `'r'` strings specify the colors black and red,
+    respectively, and `'o'` produces a circular marker. The `ax.plot()` method returns
+    a list of `matplotlib.lines.Line2D` objects. The `,` syntax in these lines picks
+    up the first and only element in this list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You next initialize a `matplotlib animation.FuncAnimation()` object ❸, which
+    sets up a callback function `tick()` to be called for every frame of the animation
+    (we’ll look at this function later in the chapter). The `fargs` parameter lets
+    you specify the arguments of the callback function, and you also set the time
+    interval (50 milliseconds in this case) at which this function will be called.
+    Now that you know how to draw the body and the head, let’s see how to update their
+    positions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Updating the Boid’s Position
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Once the animation starts, you need to update both the boid’s position and
+    the location of the head, which tells you the direction in which the boid is moving.
+    You do so with this code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: First you calculate the position of the head by applying the *H* = *P* + *k* × *V*
+    formula discussed earlier. You use a *k* value of 10 units in the direction of
+    the velocity (`vel`). You then update (`reshape`) the `matplotlib` axis (`set_data`)
+    with the new values of the head position. The `[::2]` picks out the even-numbered
+    elements (x-axis values) from the velocity list, and the `[1::2]` picks out the
+    odd-numbered elements (y-axis values).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Applying the Rules of the Boids](nsp-venkitachalam503045-0008.xhtml#rbh0704)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In this section, we’ll look at how to implement the three rules of the Boids
+    simulation—separation, alignment, and cohesion—to recalculate the boids’ velocities
+    at each time step. We’ll start by focusing just on the separation rule. The goal
+    is to generate a new velocity vector for each boid that pushes it away from its
+    nearby flockmates, defined as all the boids within a certain radius *R*. Given
+    two boids *i* and *j* with positions *P*[i] and *P*[j], *P*[i] − *P*[j] produces
+    a new velocity vector for boid *i* that points away from boid *j*. We’ll call
+    this a *displacement vector*. To calculate a new velocity vector *V*[i] for boid
+    *i* that on average pushes it away from *all* its nearby flockmates, simply sum
+    all the displacement vectors between boid *i* and each boid within radius *R*.
+    In other words, *V*[i] = (*P*[i] − *P*[1]) + (*P*[i] − *P*[2]) + . . . (*P*[i]
+    − *P*[N]), provided the distance between boids *i* and *j* is less than *R*. You
+    can write this more formally as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-m05001.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Notice that implementing this rule—and, indeed, implementing the other Boids
+    rules as well—involves calculating the distance between each boid and every other
+    boid to determine which boids are local flockmates. The traditional way to do
+    this in Python would be to use a pair of nested loops to iterate through the boids.
+    As you’ll see, however, `numpy` arrays provide more efficient methods that bypass
+    the need for loops. We’ll implement both approaches and compare the results and
+    then apply what we’ve learned to the actual simulation code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using Nested Loops
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'First, let’s define a function `test1()` that implements the separation rule
+    in a straightforward way, using loops:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: This code uses a nested pair of loops. The outer loop ❶ goes through each boid
+    in the `pos` array. The inner loop ❷ computes the distance between the current
+    boid and each other boid in the array. If the distance is less than the threshold
+    defined as the function’s `radius` parameter ❸, you calculate the displacement
+    vector as discussed earlier and add the result to `val` ❹. At the end of each
+    cycle of the inner loop, `val` holds a new velocity that will push the current
+    boid away from its neighbors. You store that velocity back in the `vel` array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using numpy Methods
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Now let’s define a function `test2()` that does the same thing “the `numpy`
+    way,” avoiding loops and using highly optimized `numpy` methods. You’ll also use
+    methods from the `scipy.spatial.distance` module to efficiently calculate the
+    distance between points:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You use the `squareform()` and `pdist()` methods (defined in the `scipy` library)
+    to calculate the distances between every possible pair of points in the `pos`
+    array ❶. For an array of *N* points, `squareform()` gives you an *N*×*N* matrix,
+    where any given entry *M*[ij] is the distance between points *P*[i] and *P*[j].
+    Let’s consider a quick example of how that looks. In this code, you call the methods
+    on an array of three points:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Since you provide an array of three points, the result is a 3×3 matrix of distance
+    calculations. The values in the first row, for example, tell you the distance
+    between the first point (`[0.0, 0.0]`) and each point in the array. The zeros
+    running diagonally down the array correspond to the distance between each point
+    and itself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Returning to the `test2()` function, you next filter the matrix based on whether
+    the distance is less than the specified `radius` ❷. Using the same example array
+    of three points, you have the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `<` comparison creates a Boolean matrix of `True/False` values corresponding
+    to the original distance matrix—`True` if a distance is less than the given threshold
+    (in this example, 1.4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Back in `test2()`, you use a modified version of the equation for *V*[i] discussed
+    earlier, broadcast over the entire `pos` array ❸. That equation can be rewritten
+    as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-m05002.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, the second summation term on the right includes only the points *P* that
+    satisfy the distance criteria. The number of elements in the summation term is
+    *m*. This equation can again be written as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-m05003.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where *D*[ij] is row *i* of the Boolean matrix you generated ❷, *m* is the number
+    of `True` values in that row, and *P*[j] is all the points *P* that fall within
+    the specified radius of the current boid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `D.sum` method ❸ adds up the `True` values in the Boolean matrix in a column-wise
+    fashion, giving you *m* from the equation. The reshape is required because the
+    result of the sum is a one-dimensional array of *N* values (shape (*N*, )), and
+    you want it to be of shape (*N*, 1) so it’s compatible for multiplication with
+    the position array. The `D.dot(pos)` part of the line ❸ is taking the dot product
+    (multiplication) of the Boolean matrix and the array of boid positions, which
+    corresponds to the *D*[ij]*P*[j] part of the equation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Comparing Approaches
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Comparing the two approaches, `test2()` is much more compact than `test1()`,
+    but its real advantage is speed. Let’s use the Python `timeit` module to evaluate
+    the performance of the two functions. First, enter the code for the functions
+    `test1()` and `test2()` in a file named *test.py*, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now use the `timeit` module in a Python interpreter session to compare the
+    performance of the two functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `from` `timeit import timeit`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `timeit(''test1(pos, 100)'', ''from test import test1, N, pos, width, height'',
+    number=100)`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '7.880876064300537'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '>>> `timeit(''test2(pos, 100)'', ''from test import test2, N, pos, width, height'',
+    number=100)`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '0.036969900131225586'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On my computer, the `numpy` code without loops runs about 200 times faster than
+    the code that uses explicit loops! But why? Aren’t they both doing more or less
+    the same thing?
+  prefs: []
+  type: TYPE_NORMAL
+- en: As an interpreted language, Python is inherently slower than compiled languages
+    like C. The `numpy` library brings the convenience of Python and performance nearly
+    equal to that of C by providing highly optimized methods that operate on arrays
+    of data. In general, you’ll find that `numpy` works best when you reorganize your
+    algorithm as steps that operate on entire arrays at once, without looping through
+    individual elements to perform computations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Writing the Final Method
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Now that you’ve compared the two approaches, you’re ready to use what you’ve
+    learned to write a final version of the method that applies all three rules of
+    the simulation and returns updated velocities for all the boids. The `applyRules()`
+    method, part of the `Boids` class, uses the optimized `numpy` techniques discussed
+    earlier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: You compute the pairwise distance matrix between the boids using the `squareform()`
+    and `pdist()` methods from the `scipy` library, as discussed earlier ❶. When you
+    apply the separation rule using `numpy` methods ❷, each boid is pushed away from
+    neighboring boids within a distance of `minDist` (25 pixels). The calculated velocities
+    are clamped, or restricted, to a certain maximum value using the `Boids` class’s
+    `limit()` method ❸, which we’ll look at later. Without this restriction, the velocities
+    would increase with each time step, and the simulation would go haywire.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You next generate a new Boolean matrix using a distance threshold of 50 pixels
+    rather than 25 ❹. You’ll use this broader definition of neighboring flockmates
+    to apply the alignment and cohesion rules. The alignment rule is implemented so
+    that each boid is influenced by and aligns itself with the average velocity of
+    its neighbors. You get that average simply by taking the dot product of `D` (the
+    Boolean matrix) and the velocity array ❺. Once again, you restrict the calculated
+    velocities to a maximum so they don’t increase indefinitely. (Using the compact
+    `numpy` syntax makes all these computations simple and fast.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, you apply the cohesion rule by adding the positions of all the neighboring
+    boids and then subtracting the position of the current boid ❼. This produces a
+    velocity vector for each boid that points to the *centroid* or geometric center
+    of its neighbors. Again, you limit the velocities to keep them from getting out
+    of control.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each of the three rules produces its own velocity vector for each boid. At ❻
+    and ❽, you add these vectors together, producing an overall velocity vector for
+    each boid that reflects the influence of all three simulation rules. You store
+    the final velocity vectors in the `vel` array.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Limiting the Velocities
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In the previous section, you saw how the `limit()` method was called after
+    applying each rule to keep the boids’ velocities from getting out of control.
+    Here’s that method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This method is designed to take in an array of velocity vectors, extract each
+    individual vector ❶, and pass it along to the `limitVec()` method, which looks
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: You use the `norm()` function from the `numpy` library to calculate the magnitude
+    of the vector ❶. If it exceeds the maximum, you scale the x and y portions of
+    the vector in proportion to the vector’s magnitude ❷. The maximum value was defined
+    as `self.maxRuleVel = 0.03` as part of the initialization of the `Boids` class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Influencing the Simulation](nsp-venkitachalam503045-0008.xhtml#rbh0705)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The core rules in the Boids simulation will cause the boids to automatically
+    exhibit flocking behavior. But let’s make things more interesting by allowing
+    the user to influence the simulation as it runs. Specifically, you’ll create the
+    ability to add boids to the flock or make the flock scatter with the click of
+    your mouse.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first step to inject events into the simulation while it’s running is to
+    add an *event handler* to the `matplotlib` canvas. This is a piece of code that
+    calls a function every time a certain event, such as a mouse click, happens. Here’s
+    how to do it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: You use the `mpl_connect()` method to add a button press event handler to the
+    `matplotlib` canvas. This handler will call the `buttonPress()` method of the
+    `Boids` class every time a mouse button is pressed in the simulation window. Next,
+    you need to define the `buttonPress()` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adding a Boid
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The first part of the `buttonPress()` method adds a boid to the simulation at the
+    location of your cursor and assigns that boid a random velocity, when the *left*
+    mouse button is pressed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: First you ensure that the mouse event is a left-click ❶. Then you append the
+    mouse location given by (`event.xdata, event.ydata`) to the array of boid positions
+    ❷. You also generate a random velocity vector, add it to the array of boid velocities
+    ❸, and increment the count of boids by 1 ❹.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scattering the Boids
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The three simulation rules keep the boids in a flock as they move around. But
+    what happens when the flock is disturbed? To simulate this situation, you can
+    introduce a “scatter” effect: when you right-click in the simulation window, the
+    flock will scatter from the location of the click. You can think of this as how
+    the flock might respond to the sudden appearance of a predator or a loud noise
+    that spooks the birds. You implement this effect as a continuation of the `buttonPress()`
+    method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here you check whether the mouse button press is a right-click event ❶. If so,
+    you change the velocity for every boid by adding a vector that points away from
+    the point where the disturbance arose (that is, where the mouse was clicked).
+    You calculate this vector much like you calculated the displacement vectors for
+    the separation rule. If *P*[i] is the position of a boid and *P*[m] is the point
+    where the mouse was clicked, *P*[i] − *P*[m] is a vector that points away from
+    the mouse click. You multiply this vector by `0.1` to keep the magnitude of the
+    disturbance small. Initially, the boids will fly away from that point, but as
+    you’ll see, the three rules prevail, and the boids will coalesce again as a flock.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Incrementing the Simulation](nsp-venkitachalam503045-0008.xhtml#rbh0706)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: At each time step in the simulation, you need to apply the rules to calculate
+    the boids’ new velocities, update the boids’ positions based on those velocities,
+    enforce the boundary conditions, and redraw everything in the display window.
+    You can coordinate all this activity from the `tick()` function, which will be
+    called at each frame of the `matplotlib` animation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The stand-alone `tick()` function simply calls the `tick()` method of the `Boids`
+    class. The latter is defined as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: This method is where everything comes together. You apply the boid rules using
+    the `applyRules()` method that we already looked at ❶. Then you limit the computed
+    velocities of the boids using the `self.maxVel` threshold ❷. (Even though you
+    limited the velocity vector generated by each individual rule, the overall velocity
+    determined by adding all three rules together may still be too large.) You next
+    compute the updated positions of the boids by adding the new velocity vectors
+    to the old array of positions ❸. For example, if a boid was at position [0, 0]
+    and has a velocity vector of [1, 1], its new position after one time step would
+    be [1, 1]. You apply the boundary conditions for the simulation by calling `applyBC()`
+    ❹.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The call to `pts.set_data()` ❺ updates the `matplotlib` axis with the boids’
+    new positions. The `[::2]` picks out the even-numbered elements (x-axis values)
+    from the `pos` array, and the `[1::2]` picks out the odd-numbered elements (y-axis
+    values). This will redraw the larger circles representing the boids’ bodies. Next,
+    you need to draw the smaller circles representing the boids’ heads. You calculate
+    the position of each boid’s head so it will point in the boid’s direction of motion
+    by applying the *H* = *P* + *k* × *V* formula discussed earlier ❻. Recall that
+    *P* is the center of a boid’s body, *k* is a constant representing the distance
+    from the center of the body to the center of the head (you use a value of 10 units),
+    and *V* is the boid’s velocity. Once you have the new head positions, you draw
+    them via the same technique you used to draw the bodies ❼.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Parsing Arguments and Instantiating the Boids](nsp-venkitachalam503045-0008.xhtml#rbh0707)'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The program’s `main()` function begins by handling command line arguments and
+    instantiating the `Boids` class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: You use the familiar `argparse` module to create a command line option for setting
+    the initial number of boids in the simulation ❶. If no argument is provided at
+    the command line, the simulation defaults to 100 boids ❷. You set the simulation
+    in motion by creating an object of the `Boids` class ❸.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `main()` function continues with the code to create and animate a `matplotlib`
+    plot. We’ve already discussed this code in [“Plotting the Boid’s Body and Head”](nsp-venkitachalam503045-0017.xhtml#ch0701)
+    on [page 84](nsp-venkitachalam503045-0017.xhtml#p84).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Running the Boids Simulation](nsp-venkitachalam503045-0008.xhtml#rah0704)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Let’s see what happens when you run the simulation. Enter the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Boids simulation should start with all the boids clustered around the center
+    of the window. Let the simulation run for a while, and the boids should start
+    to flock as they form a pattern similar to the one shown in [Figure 5-4](nsp-venkitachalam503045-0017.xhtml#fig5-4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](images/nsp-venkitachalam503045-f05004.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5-4: A sample run of the Boids simulation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Left-click the simulation window. A new boid should appear at that location,
+    and its velocity should change as it encounters the flock. Now right-click. The
+    flock should initially scatter from your cursor but then recoalesce.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Summary](nsp-venkitachalam503045-0008.xhtml#rah0705)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this project, you simulated the flocking of birds (or boids) using the three
+    rules proposed by Craig Reynolds. You looked at how operating on an entire `numpy`
+    array at once is much faster than performing the same operations inside an explicit
+    loop. You used the `scipy.spatial` module to perform fast and convenient distance
+    calculations, and you implemented a `matplotlib` trick that uses two markers to
+    represent both the position and the direction of points. Finally, you added interactivity
+    to the simulation in the form of an event handler to respond to button presses
+    within the `matplotlib` plot.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Experiments!](nsp-venkitachalam503045-0008.xhtml#rah0706)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Here are some ways you might further explore flocking behavior:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1\. Implement obstacle avoidance for your flock of boids by writing a new method
+    called `avoidObstacle()` and applying it right after you apply the three rules,
+    as follows:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The `avoidObstacle()` method should use a predefined tuple (*x*, *y*, *R*) to
+    add an additional velocity term to a boid, pushing it away from the obstacle location
+    (*x*, *y*), but only when the boid is within radius *R* of the obstacle. Think
+    of this as the distance at which a boid sees the obstacle and steers away from
+    it. You can specify the (*x*, *y*, *R*) tuple using a command line option.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 2\. What happens when the boids fly through a strong gust of wind? Simulate
+    this by adding a global velocity component to all the boids at random time steps
+    in the simulation. The boids should temporarily be affected by the wind but return
+    to the flock once the wind stops.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[The Complete Code](nsp-venkitachalam503045-0008.xhtml#rah0707)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Here’s the complete code for the Boids simulation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: boids.py
+  prefs: []
+  type: TYPE_NORMAL
+- en: An implementation of Craig Reynolds's Boids simulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Author: Mahesh Venkitachalam'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: import argparse
+  prefs: []
+  type: TYPE_NORMAL
+- en: import math
+  prefs: []
+  type: TYPE_NORMAL
+- en: import numpy as np
+  prefs: []
+  type: TYPE_NORMAL
+- en: import matplotlib.pyplot as plt
+  prefs: []
+  type: TYPE_NORMAL
+- en: import matplotlib.animation as animation
+  prefs: []
+  type: TYPE_NORMAL
+- en: from scipy.spatial.distance import squareform, pdist
+  prefs: []
+  type: TYPE_NORMAL
+- en: from numpy.linalg import norm
+  prefs: []
+  type: TYPE_NORMAL
+- en: width, height = 640, 480
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'class Boids:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""class that represents Boids simulation"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def __init__(self, N):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""initialize the Boids simulation"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# init position & velocities'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.pos = [width/2.0, height/2.0] +
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10*np.random.rand(2*N).reshape(N, 2)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# normalized random velocities'
+  prefs: []
+  type: TYPE_NORMAL
+- en: angles = 2*math.pi*np.random.rand(N)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vel = np.array(list(zip(np.cos(angles), np.sin(angles))))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.N = N
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# min dist of approach'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.minDist = 25.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# max magnitude of velocities calculated by "rules"'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.maxRuleVel = 0.03
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# max magnitude of final velocity'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.maxVel = 2.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def tick(self, frameNum, pts, head):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""update the simulation by one time step"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# apply rules'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vel += self.applyRules()
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.limit(self.vel, self.maxVel)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.pos += self.vel
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.applyBC()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# update data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pts.set_data(self.pos.reshape(2*self.N)[::2],
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.pos.reshape(2*self.N)[1::2])
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec = self.pos + 10*self.vel/self.maxVel
+  prefs: []
+  type: TYPE_NORMAL
+- en: head.set_data(vec.reshape(2*self.N)[::2],
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec.reshape(2*self.N)[1::2])
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def limitVec(self, vec, maxVal):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""limit magnitude of 2D vector"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: mag = norm(vec)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if mag > maxVal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: vec[0], vec[1] = vec[0]*maxVal/mag, vec[1]*maxVal/mag
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def limit(self, X, maxVal):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""limit magnitude of 2D vectors in array X to maxValue"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for vec in X:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.limitVec(vec, maxVal)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def applyBC(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""apply boundary conditions"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: deltaR = 2.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'for coord in self.pos:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if coord[0] > width + deltaR:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: coord[0] = - deltaR
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if coord[0] < - deltaR:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: coord[0] = width + deltaR
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if coord[1] > height + deltaR:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: coord[1] = - deltaR
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if coord[1] < - deltaR:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: coord[1] = height + deltaR
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def applyRules(self):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# get pairwise distances'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.distMatrix = squareform(pdist(self.pos))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# apply rule #1 - separation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: D = self.distMatrix < self.minDist
+  prefs: []
+  type: TYPE_NORMAL
+- en: vel = self.pos*D.sum(axis=1).reshape(self.N, 1) - D.dot(self.pos)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.limit(vel, self.maxRuleVel)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# different distance threshold'
+  prefs: []
+  type: TYPE_NORMAL
+- en: D = self.distMatrix < 50.0
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# apply rule #2 - alignment'
+  prefs: []
+  type: TYPE_NORMAL
+- en: vel2 = D.dot(self.vel)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.limit(vel2, self.maxRuleVel)
+  prefs: []
+  type: TYPE_NORMAL
+- en: vel += vel2;
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# apply rule #1 - cohesion'
+  prefs: []
+  type: TYPE_NORMAL
+- en: vel3 = D.dot(self.pos) - self.pos
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.limit(vel3, self.maxRuleVel)
+  prefs: []
+  type: TYPE_NORMAL
+- en: vel += vel3
+  prefs: []
+  type: TYPE_NORMAL
+- en: return vel
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def buttonPress(self, event):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""event handler for matplotlib button presses"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# left-click - add a boid'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if event.button == 1:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.pos = np.concatenate((self.pos,
+  prefs: []
+  type: TYPE_NORMAL
+- en: np.array([[event.xdata, event.ydata]])),
+  prefs: []
+  type: TYPE_NORMAL
+- en: axis=0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# random velocity'
+  prefs: []
+  type: TYPE_NORMAL
+- en: angles = 2*math.pi*np.random.rand(1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: v = np.array(list(zip(np.sin(angles), np.cos(angles))))
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vel = np.concatenate((self.vel, v), axis=0)
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.N += 1
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# right-click - scatter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'elif event.button == 3:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# add scattering velocity'
+  prefs: []
+  type: TYPE_NORMAL
+- en: self.vel += 0.1*(self.pos - np.array([[event.xdata, event.ydata]]))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'def tick(frameNum, pts, head, boids):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"""update function for animation"""'
+  prefs: []
+  type: TYPE_NORMAL
+- en: boids.tick(frameNum, pts, head)
+  prefs: []
+  type: TYPE_NORMAL
+- en: return pts, head
+  prefs: []
+  type: TYPE_NORMAL
+- en: main() function
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'def main():'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# use sys.argv if needed'
+  prefs: []
+  type: TYPE_NORMAL
+- en: print('starting boids...')
+  prefs: []
+  type: TYPE_NORMAL
+- en: parser = argparse.ArgumentParser(description=
+  prefs: []
+  type: TYPE_NORMAL
+- en: '"Implementing Craig Reynolds''s Boids...")'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# add arguments'
+  prefs: []
+  type: TYPE_NORMAL
+- en: parser.add_argument('--num-boids', dest='N', required=False)
+  prefs: []
+  type: TYPE_NORMAL
+- en: args = parser.parse_args()
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# number of boids'
+  prefs: []
+  type: TYPE_NORMAL
+- en: N = 100
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'if args.N:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: N = int(args.N)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# create boids'
+  prefs: []
+  type: TYPE_NORMAL
+- en: boids = Boids(N)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# setup plot'
+  prefs: []
+  type: TYPE_NORMAL
+- en: fig = plt.figure()
+  prefs: []
+  type: TYPE_NORMAL
+- en: ax = plt.axes(xlim=(0, width), ylim=(0, height))
+  prefs: []
+  type: TYPE_NORMAL
+- en: pts = ax.plot([], [], markersize=10,
+  prefs: []
+  type: TYPE_NORMAL
+- en: c='k', marker='o', ls='None')
+  prefs: []
+  type: TYPE_NORMAL
+- en: head, = ax.plot([], [], markersize=4,
+  prefs: []
+  type: TYPE_NORMAL
+- en: c='r', marker='o', ls='None')
+  prefs: []
+  type: TYPE_NORMAL
+- en: anim = animation.FuncAnimation(fig, tick, fargs=(pts[0], head, boids),
+  prefs: []
+  type: TYPE_NORMAL
+- en: interval=50)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '# add a "button press" event handler'
+  prefs: []
+  type: TYPE_NORMAL
+- en: cid = fig.canvas.mpl_connect('button_press_event', boids.buttonPress)
+  prefs: []
+  type: TYPE_NORMAL
+- en: plt.show()
+  prefs: []
+  type: TYPE_NORMAL
+- en: call main
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'if __name__ == ''__main__'':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: main()
+  prefs: []
+  type: TYPE_NORMAL
