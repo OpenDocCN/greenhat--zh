@@ -1,0 +1,549 @@
+- en: '10'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Analyzing Time Series Data
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Time series data*, or *timestamped data*, is a set of data points indexed
+    in chronological order. Common examples include economic indices, weather records,
+    and patient health indicators, all captured over time. This chapter covers techniques
+    for analyzing time series data and extracting meaningful statistics from it using
+    the pandas library. We’ll focus on analyzing stock market data, but the same techniques
+    can be applied to all kinds of time series data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Regular vs. Irregular Time Series
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'A time series can be created for any variable that changes over time, and those
+    changes can be recorded either at regular or irregular time intervals. Regular
+    intervals are more common. In finance, for example, it’s typical to use a time
+    series to track the price of a stock from one day to the next, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, the `Date` column in this time series contains timestamps, arranged
+    in chronological order, for a sequence of consecutive days. The corresponding
+    data points, often referred to as *observations*, are presented in the `Closing
+    Price` column. Time series of this type are said to be *regular* or *continuous*
+    because the observations are made continuously through time at regular intervals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another example of a regular time series would be a collection of latitude
+    and longitude coordinates for a vehicle, recorded every minute, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here the timestamps are times, not dates, but they still proceed in chronological
+    order, minute by minute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Unlike regular time series, *irregular time series* are used to record sequences
+    of events as they occur or are planned to occur, not at regular intervals. As
+    a simple example, consider the agenda of a conference:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: The timestamps for this series of data points are irregularly distributed, based
+    on the amount of time each event is expected to take.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Irregular time series are commonly used in applications where the data comes
+    unpredictably. For software developers, a typical irregular time series would
+    be a log of errors encountered while running a server or executing an application.
+    It’s hard to predict when the errors will occur, and they almost certainly won’t
+    happen at regular intervals. To give another example, an application that tracks
+    electricity consumption may use an irregular time series to record anomalies such
+    as bursts and failures that occur randomly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What regular and irregular time series have in common is that data points in
+    them are listed in chronological order. Indeed, time series analysis hinges on
+    this key feature. Strict chronological order is what allows you to consistently
+    compare events or values within a time series, identifying key statistics and
+    trends.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case of stock data, for example, the chronological order lets you track
+    a stock’s performance over time. In the case of the minute-by-minute geo coordinates
+    of a vehicle, you might use adjacent pairs of coordinates to calculate the distance
+    driven each minute and then use that distance to compare the vehicle’s average
+    speed from one minute to the next. Meanwhile, the chronological order of the conference
+    agenda lets you immediately see the expected duration of each event.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In some cases, the timestamps themselves may not actually be needed to analyze
+    the time series; all that matters is that the records in the series are in chronological
+    order. Consider the following irregular time series of two consecutive error messages
+    your script might return when trying to connect to a MySQL database with the wrong
+    password:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The second error message tells you that the variable named `cursor` hasn’t
+    been defined. However, the root of the problem can be understood only if you look
+    at the preceding error message: since the password was incorrect, no connection
+    could be established to the database, so no `cursor` object could be created.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analyzing a sequence of error messages is a common task for programmers, but
+    it’s usually done manually, without any coding. For the rest of the chapter, we’ll
+    focus on time series with numeric data points, since these can readily be analyzed
+    using Python scripts. In particular, we’ll look at how to extract meaningful information
+    from regular time series containing stock market data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Common Time Series Analysis Techniques
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Suppose you want to analyze a time series of daily closing stock prices for
+    a given stock over a certain period of time. In this section, you’ll learn some
+    common techniques to use in your analysis, but first you’ll need some stock data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As you saw in Chapters 3 and 5, you can obtain stock market data within a Python
+    script using the yfinance library. Here, for example, you gather the stock data
+    for the TSLA (Tesla, Inc.) ticker for the last five trading days:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result takes the form of a pandas DataFrame and will look something like
+    the following (your dates and the data returned will vary):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, the DataFrame is indexed by date, meaning the data is a proper,
+    chronologically arranged time series. There are columns for the opening and closing
+    price as well as the day’s high and low prices. Meanwhile, the `Volume` column
+    shows the total number of shares traded that day, and the two rightmost columns
+    provide details about the dividends and splits the company has given to its shareholders.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You likely won’t need all of these columns for your analysis. In fact, for
+    now you just need the `Close` column. Here you print it out as a pandas Series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The Series will look similar to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you’re ready to begin your time series analysis. We’ll focus on two common
+    techniques: calculating percentage changes over time and performing aggregate
+    calculations within a rolling time window. You’ll see how these techniques can
+    work together to reveal trends in the data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calculating Percentage Changes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Perhaps the most typical time series analysis technique is to track how much
+    the observed data changes over time. In the case of stock market data, this might
+    involve calculating the percentage change of a stock value over a certain time
+    interval. This way, you can quantify how the stock is performing and develop a
+    short-term investment strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Technically speaking, a percentage change is the difference (expressed as a
+    percent) between values from two different points in time. To calculate such a
+    change, you therefore need to be able to shift data points in time. That is, you
+    shift the older data point forward in time so it aligns with the newer data point;
+    then you can compare the data points and calculate the percentage change.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When a time series is implemented as a pandas Series or DataFrame, you can
+    use the `shift()` method to shift data points in time by the desired number of
+    periods. Continuing with our TSLA ticker example, you might want to know how much
+    the stock’s closing price has changed over a period of two days. In this case,
+    you’d use `shift(2)` to bring the closing price from two days earlier in line
+    with the closing price for a given day. To get a feel for how shifting works,
+    here you shift the `Close` column forward two days, save the result as `2DaysShift`,
+    and concatenate the result with the original `Close` column:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output should look something like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, the values in the `Close` column are echoed in the `2DaysShift`
+    column, offset by two days. The first two values in `2DaysShift` are `NaN` because
+    you don’t have prices from two days earlier for the first two days in the time
+    series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To find the percentage change between the price from two days earlier and the
+    price for a given day, you could take the difference between the given day’s value
+    and the earlier value and divide it by the earlier value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In financial analysis, however, it’s common to instead divide the new value
+    by the old value and take the natural logarithm of the result. This calculation
+    provides an almost exact approximation of the percentage change when the change
+    is within the range +/– 5 percent, and it remains very close up to +/– 20 percent.
+    Here, you calculate the two-day percentage difference using the natural logarithm
+    and store the result as a new column called `2daysRise` in the `df` DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You obtain a day’s closing price and divide it by the closing price two trading
+    days earlier, accessed using `shift(2)`. Then you use NumPy’s `log()` function
+    to take the natural logarithm of the result. Now you can print the `Close` and
+    `2daysRise` columns of the DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The outputted time series will look similar to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `2daysRise` column shows the percentage change of the stock compared to
+    two days earlier. Once again, the first two values in the column are `NaN` because
+    you don’t have prices from two days earlier for the first two days in the time
+    series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rolling Window Calculations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Another common time series analysis technique is to compare each value with
+    the average value over *n* periods. This is called a *rolling window calculation*:
+    you create a time window of a fixed size and perform an aggregate calculation
+    on the values within that time window as it moves, or *rolls*, across the time
+    series. In the case of stock data, you might use a rolling window calculation
+    to find the average closing price of the two previous days, then compare the current
+    day’s closing price with that average. This would give you a sense of the stock
+    price’s stability over time.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Every pandas object has a `rolling()` method for looking at a rolling window
+    of values. Here, you use it in combination with `shift()` and `mean()` to find
+    the average Tesla stock price for the previous two days:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the first line, you use `shift(1)` to shift the data points in the series
+    by one day. You do this because you want to exclude the current day’s price when
+    calculating an average to be compared with it. Next, you form the rolling window
+    with `rolling(2)`, indicating that you want to draw on two consecutive rows when
+    you make your calculations. Finally, you invoke the `mean()` method to calculate
+    an average for each pair of consecutive rows covered by the rolling window. You
+    store the results in a new column called `2daysAvg`, which you print, along with
+    the `Close` column. The resulting DataFrame will look something like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: The prices in the `2daysAvg` column are averages of the two previous trading
+    days. For example, the value assigned to `2022-01-12` is the average of the prices
+    on `2022-01-10` and `2022-01-11`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calculating the Percentage Change of a Rolling Average
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Given a rolling average of the previous two days’ closing prices, the next
+    logical step is to calculate the percentage change between each day’s price and
+    its associated rolling average. Here you perform that calculation, once again
+    using the natural logarithm to approximate the percentage change:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You store the results in a new column called `2daysAvgRise`. Then you print
+    the `Close`, `2daysRise`, and `2daysAvgRise` columns together. The output will
+    look similar to this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: For this particular time series, both of the newly created metrics, `2daysRise`
+    and `2daysAvgRise`, show both negative and positive values. This indicates that
+    the stock’s closing price was volatile throughout the period of observation. Of
+    course, your own results might reveal a different trend.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multivariate Time Series
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A *multivariate time series* is a time series with more than one variable that
+    changes over time. When you first obtained the Tesla stock data through the yfinance
+    library, for example, it came as a multivariate time series, since it included
+    not just the stock’s closing price but also the opening price, high and low prices,
+    and several other data points for each day. In this case, the multivariate time
+    series tracked multiple features of the same object, an individual stock. Other
+    multivariate time series may track the same feature of several different objects,
+    such as the closing prices of multiple stocks gathered for the same period of
+    time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following script, you create this second type of a multivariate time
+    series, obtaining five days’ worth of stock data for multiple tickers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: You first define the `stocks` DataFrame ❶, where you’ll accumulate the closing
+    prices for multiple tickers. Then you define a list of tickers ❷ and iterate over
+    the list ❸, using the yfinance library to obtain the last five days of data for
+    each ticker. Within the loop, you reduce the `hist` DataFrame returned by yfinance
+    to a single-column DataFrame containing the closing prices of the given stock,
+    along with the corresponding timestamps as the index ❹. You then check if the
+    `stocks` DataFrame is empty ❺. If it is, it’s your first time through the loop,
+    so you initialize the `stocks` DataFrame with the `hist` DataFrame ❻. On subsequent
+    iterations, `stocks` won’t be empty, so you join the current `hist` DataFrame
+    to the `stocks` DataFrame, adding another ticker’s closing prices to the dataset
+    ❼. The `if/else` structure is needed because you can’t perform a join operation
+    on an empty DataFrame.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The resulting `stocks` DataFrame will look similar to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: You have a multivariate time series, with the different columns showing the
+    closing prices of different stocks, all across the same span of time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Processing Multivariate Time Series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Processing multivariate time series is similar to working with single-variable
+    time series except that you have to deal with several variables within each row.
+    Therefore, your calculations often occur inside a loop iterating over the columns
+    in the series. For example, suppose you want to filter the `stocks` DataFrame,
+    weeding out the tickers whose prices dropped more than some threshold (say, 3
+    percent) below the previous day’s price at least once in the given period. Here
+    you iterate over the columns and analyze the data for each ticker to determine
+    which stocks should be kept in the DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: First, you create a list to accumulate the column names you want to keep ❶.
+    Then you iterate over the columns of the `stocks` DataFrame ❷, determining whether
+    each column contains any values that are more than 3 percent lower than the value
+    in the previous row. Specifically, you use the `[]` operator to filter the DataFrame
+    and the `shift()` method to compare each day’s closing price to that of the previous
+    day. If a column doesn’t contain any values that meet the filtering condition
+    (that is, if the filtered column is empty), you append the column name to the
+    `stocks_to_keep` list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given the `stocks` DataFrame shown previously, the resulting `stocks_to_keep`
+    list will look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, TSLA and MSFT aren’t in the list, because they contained one
+    or more values that fell more than 3 percent below the previous day’s closing
+    price. Of course, your own results will vary; you might end up with an empty list
+    or a list that includes all the tickers. In those cases, try experimenting with
+    the filtering threshold. If the list is empty, try decreasing the threshold from
+    0.97 to 0.96 or lower. In contrast, if the list includes all the tickers, try
+    increasing the threshold.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here you print the `stocks` DataFrame so that it includes only the columns
+    from the `stocks_to_keep` list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In my case, the output looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: As expected, the `TSLA` and `MSFT` columns have been filtered out because they
+    contain one or more values that exceed the 3 percent threshold of volatility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analyzing Dependencies Between Variables
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One common task when analyzing multivariate time series is to identify relationships
+    between different variables in the dataset. These relationships may or may not
+    exist. For example, there’s likely some degree of dependency between a stock’s
+    opening and closing prices since on a given day the closing price rarely differs
+    from the opening price by more than a few percent. On the other hand, you may
+    not find a dependency between the closing prices of two stocks from different
+    sectors of the economy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this section, we’ll look at some techniques for verifying the existence
+    of a relationship between time series variables. To demonstrate, we’ll examine
+    whether there’s a dependency between the change in a stock’s price and its sales
+    volume. To start with, run the following script to obtain a month’s worth of stock
+    data for your analysis:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As you’ve already seen, yfinance generates a multivariate time series in the
+    form of a DataFrame with many columns. For the purpose of this example, you only
+    need two of them: `Close` and `Volume`. Here, you reduce the DataFrame accordingly
+    and change the `Close` column’s name to `Price`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To determine if there’s a relationship between the `Price` and `Volume` columns,
+    you should calculate the percentage change in each column from day to day. Here
+    you calculate the daily percentage change in the `Price` column using `shift(1)`
+    and NumPy’s `log()` function, as discussed previously, and store the result in
+    a new `priceRise` column:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You use the same technique to create a `volumeRise` column, which shows the
+    percentage change in volume compared to the previous day:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: As noted earlier, the natural logarithm provides a close approximation of the
+    percentage change within a range of +/– 20 percent. While some values in the `volumeRise`
+    column may well exceed this range, you still can use `log()` here because a high
+    degree of accuracy isn’t required in this example; stock market analysis is typically
+    more focused on predicting trends than finding exact values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you now print the `df` DataFrame, it will look something like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: If there were a dependency between price and volume, you would expect above-average
+    changes in price (that is, increased volatility) to correlate with above-average
+    changes in volume. To see if this is the case, you should set some threshold for
+    the `priceRise` column and view only those rows where the percentage change in
+    price is above that threshold. Looking through the values in the `priceRise` column
+    in this particular output, for example, you might choose a 5 percent threshold.
+    Another dataset may suggest another threshold, such as 3 or 7 percent. The idea
+    is that only a few records should cross the threshold, so as a general rule, the
+    more volatile the stock, the higher the threshold should be.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here you print just those rows where `priceRise` exceeds the threshold:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You use the `abs()` function to get the absolute value of a percentage change
+    so that, for example, both `0.06` and `-0.06` satisfy the condition specified
+    here. Given the sample data shown previously, you end up with the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next, you calculate the average volume change over the entire series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For this particular series, the result is the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, you calculate the average volume change for just those rows with above-average
+    changes in price. If the result is greater than the average volume change across
+    the entire series, you’ll know there’s a connection between increased volatility
+    and increased volume:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is what you get for this particular series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, the average volume change calculated over the filtered series
+    is much higher than the average volume change calculated over the entire series.
+    This suggests there may be a positive correlation between price volatility and
+    sales volume volatility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: As you learned in this chapter, a time series is a dataset organized in chronological
+    order, where one or more variables change over time. Taking stock market data
+    as an example, you looked at some techniques for using pandas to analyze time
+    series data in order to derive useful statistics from it. You learned to shift
+    data points in a time series in order to calculate changes over time. You also
+    learned to perform rolling window calculations, or aggregations within a fixed-size
+    time interval that moves across the whole series. Together, these techniques help
+    you make judgments about trends in the data. Finally, you looked at methods for
+    identifying dependencies between different variables in a multivariate time series.
+  prefs: []
+  type: TYPE_NORMAL

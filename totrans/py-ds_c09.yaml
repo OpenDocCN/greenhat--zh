@@ -1,0 +1,571 @@
+- en: '9'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Analyzing Location Data
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Everything happens somewhere. That’s why the location of an object can be just
+    as important as its nonspatial attributes for the purposes of data analysis. In
+    fact, spatial and nonspatial data often go hand in hand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As an example, consider a ride-sharing app. Once you’ve ordered a ride, you
+    might want to track the location of the car on a map in real time while it’s heading
+    to you. You might also want know some basic nonspatial information about the car
+    and driver assigned to your order: the make and model of the car, the driver’s
+    rating, and so on.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the last chapter, you saw how to work with location data to generate maps.
+    In this chapter, you’ll learn more about how to use Python to collect and analyze
+    location data, and you’ll see how to integrate both spatial and nonspatial data
+    in your analysis. Throughout, we’ll consider the example of a taxi management
+    service, and we’ll try to answer the central question of which cab should be assigned
+    to a particular job.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Obtaining Location Data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The first step in performing a spatial analysis is to obtain location data for
+    the objects of interest. In particular, this location data should take the form
+    of *geographical coordinates* (*geo coordinates* for short), or latitude and longitude
+    values. This coordinate system enables every location on the planet to be specified
+    as a set of numbers, meaning the locations can be analyzed programatically. In
+    this section, we’ll consider ways to obtain the geo coordinates of both stationary
+    and moving objects. This will demonstrate how our example taxi service might determine
+    a customer’s pick-up location as well as the real-time locations of its various
+    cabs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Turning a Human-Readable Address into Geo Coordinates
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Most humans think in terms of street names and building numbers rather than
+    geo coordinates. That’s why it’s common for taxi services, food delivery apps,
+    and the like to let users specify pick-up and drop-off locations as street addresses.
+    Behind the scenes, however, many of these services convert human-readable addresses
+    into the corresponding geo coordinates. That way the app can perform calculations
+    with the location data, such as determining the nearest available cab to the specified
+    pick-up location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'How do you convert from street addresses to geo coordinates? One way is to
+    use Geocoding, an API provided by Google for this purpose. To interact with the
+    Geocoding API from a Python script, you’ll need to use the googlemaps library.
+    Install it using the `pip` command, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: You’ll also need to get an API key for the Geocoding API using a Google Cloud
+    account. For information about acquiring an API key, see [https://developers.google.com/maps/documentation/geocoding/get-api-key](https://developers.google.com/maps/documentation/geocoding/get-api-key).
+    Details on the API’s cost structure are available at [https://cloud.google.com/maps-platform/pricing](https://cloud.google.com/maps-platform/pricing).
+    As of this writing, Google provides a $200 monthly credit to API users, which
+    is enough for you to experiment with the code in this book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following script illustrates a sample call to the Geocoding API using googlemaps.
+    This call obtains the latitude and longitude coordinates corresponding to the
+    address 1600 Amphitheatre Parkway, Mountain View, CA:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In this script, you establish a connection to the API and send the address
+    you want to convert. The API returns a JSON document with a nested structure.
+    The geo coordinates are stored under the key `location`, which is a subfield of
+    `geometry`. In the last line, you access and print the coordinates, yielding the
+    following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Getting the Geo Coordinates of a Moving Object
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You now know how to obtain the geo coordinates of a fixed location via its street
+    address, but how can you get the real-time geo coordinates of a moving object,
+    such as a taxi? Some taxi services might use specialized GPS devices for this
+    purpose, but we’ll focus instead on a low-cost, easy-to-implement solution. All
+    that’s required is a smartphone.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Smartphones detect their location with built-in GPS sensors and can be tuned
+    to share that information. Here, we’ll look at how to collect smartphone GPS coordinates
+    via the popular messaging app Telegram. Using the Telegram Bot API, you’ll create
+    a *bot*, an application that runs within Telegram. Bots are commonly used for
+    natural language processing, but this one will collect and log the geolocation
+    data of Telegram users who choose to share their data with the bot.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Setting Up a Telegram Bot
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To create a Telegram bot, you’ll need to download the Telegram app and create
+    an account. Then follow these steps using either a smartphone or a PC:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the Telegram app, search for @BotFather. BotFather is a Telegram bot that
+    manages all the other bots in your account.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: On the BotFather page, click **Start** to see the list of commands that you
+    can use to set up your Telegram bots.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Enter `/newbot` in the message box. You’ll be prompted for a name and a username
+    for your bot. Then you’ll be given an authorization token for the new bot. Take
+    note of this token; you’ll need it when you program the bot.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'After completing these steps, you can implement the bot with Python using the
+    python-telegram-bot library. Install the library like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The tools you’ll need to program the bot are in the library’s `telegram.ext`
+    module. It’s built on top of the Telegram Bot API.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Programming the Bot
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Here, you use the `telegram.ext` module of the python-telegram-bot library
+    to program the bot to listen for and log GPS coordinates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `main()` function contains the common invocations found in a script implementing
+    a Telegram bot. You start by creating an `Updater` object ❺, passing it your bot’s
+    authorization token (generated by BotFather). This object orchestrates the bot
+    execution process throughout the script. You then use the `Dispatcher` object
+    associated with the `Updater` to add a handler function called `get_location()`
+    for incoming messages ❻. By specifying `Filters.location`, you add a filter to
+    the handler so it will only be called when the bot receives messages that include
+    the sender’s location data. You start the bot by invoking the `start_polling()`
+    method of the `Updater` object ❼. Because `start_polling()` is a non-blocking
+    method, you also have to call the `Updater` object’s `idle()` method ❽ in order
+    to block the script until a message is received.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At the beginning of the script, you define the `get_location()` handler ❶. Within
+    the handler, you store the incoming message as `msg`, then you extract the sender’s
+    location data using the message’s `location` property ❷. You also log the sender’s
+    username and generate a string containing the current time. Then, using Python’s
+    `csv` module, you store all this information as a row in a CSV file ❸ at a location
+    of your choice. You also transmit the location data back to the sender so they
+    know that their location has been received ❹.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting Data from the Bot
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Run the script on an internet-connected machine. Once it’s running, users can
+    follow a few simple steps to start sharing their real-time location data with
+    the bot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Create a Telegram account.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In Telegram, tap the name of the bot.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Tap the Paperclip icon and select **Location** from the menu.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Choose **Share My Location For** and set how long Telegram will share live location
+    data with the bot. Options include 15 minutes, 1 hour, or 8 hours.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The screenshot in [Figure 9-1](#figure9-1) shows how easy it is to share your
+    real-time location in Telegram.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A screenshot of the Telegram app with the Location option selected.](image_fi/502208c09/f09001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-1: Sharing your smartphone’s live location in Telegram'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once users start sharing their location data, the bot will start sending that
+    data to a CSV file in the form of rows that might look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: The first field in each row contains a username, the second and third fields
+    contain the latitude and longitude of the user’s location, and the fourth field
+    contains a timestamp. For some tasks, such as finding the closest car to a certain
+    pick-up location, you’d only need the latest row for each car. Other tasks, however,
+    such as calculating the overall distance of a ride, would benefit from multiple
+    rows of data for the given car, sorted by time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Spatial Data Analysis with geopy and Shapely
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Spatial data analysis boils down to answering questions about relationships:
+    Which object is closest to a certain location? Are two objects in the same area?
+    In this section, you’ll answer these common spatial analysis questions using two
+    Python libraries, geopy and Shapely, all within the context of our example taxi
+    service.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since geopy is designed for performing calculations based on geo coordinates,
+    it’s particularly suited for answering questions about distance. Meanwhile, Shapely
+    specializes in defining and analyzing geometric planes, so it’s ideal for determining
+    whether an object falls within a certain area. As you’ll see, both libraries can
+    play a role in identifying the best cab for a given job.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Before you proceed, install the libraries as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finding the Closest Object
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Continuing with our taxi service example, we’ll look at how to use location
+    data to identify the closest cab to a pick-up place. To start, you’ll need some
+    sample location data. If you deployed the Telegram bot discussed in the previous
+    section, you may already have some data in the form of a CSV file. Here, you load
+    the data into a pandas DataFrame so you can easily sort and filter it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you didn’t deploy a Telegram bot, you can instead create a list of tuples
+    with some sample location data and load it into a DataFrame as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Either way, you’ll get a DataFrame called `df` with columns for the cab ID,
+    latitude, longitude, and timestamp.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The DataFrame has multiple rows for each cab, but to identify the cab closest
+    to a pick-up place, you only need each cab’s most recent location. You can filter
+    out the unnecessary rows as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, you sort the rows by the `cab` and `tm` fields in descending order. This
+    operation groups the dataset by the `cab` column and puts the latest row for each
+    cab first within its group. Then you apply the `drop_duplicates()` method to eliminate
+    all but the first row for each cab. The resulting `latestrows` DataFrame looks
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You now have a DataFrame with just the most recent location data for each cab.
+    For the convenience of future computing, you next convert the DataFrame into a
+    simpler Python structure, a list of lists. This way you’ll be able to more easily
+    append new fields to each row, such as a field for the distance between the cab
+    and the pick-up place:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `values` property of `latestrows` returns a NumPy representation of the
+    DataFrame, which you then convert to a list of lists using `tolist()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You’re now ready to calculate the distance between each cab and a pick-up place.
+    You’ll use the geopy library, which can accomplish this task with just a few lines
+    of code. Here you use the `distance()` function from geopy’s `distance` module
+    to make the necessary calculations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For simplicity, you set the pick-up place by manually defining the latitude
+    and longitude coordinates. In practice, however, you might use Google’s Geocoding
+    API to generate the coordinates automatically from a street address, as discussed
+    earlier in the chapter. Next, you iterate over each row in your dataset and calculate
+    the distance between each cab and the pick-up place by calling `distance()` ❶.
+    This function takes two tuples containing latitude/longitude coordinates as arguments.
+    By adding `.m`, you retrieve the distance in meters. For demonstration purposes,
+    you’ll print the result of each distance calculation; then you append it to the
+    end of the row as a new field. The script produces the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Clearly `cab_112` is closer, but how can you determine that programmatically?
+    Use Python’s built-in `min()` function, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You feed the data to `min()` and use a lambda function to evaluate its sorting
+    order based on the item at index `4` of each row. This is the newly appended distance
+    calculation. You then print the result in a human-readable format, yielding the
+    following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example, you calculated the straight-line distance between each cab
+    and the pick-up location. While this information can certainly be useful, real-world
+    cars almost never drive in a perfectly straight line from one place to another.
+    The layout of streets means that the actual distance a cab must drive to reach
+    a pick-up location will be greater than the straight-line distance. With this
+    in mind, next we’ll look at a more reliable way to match pick-up locations to
+    cabs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finding Objects in a Certain Area
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Often, the right question to ask to determine the best cab for a job isn’t “Which
+    cab is the closest?” but rather “Which cab is in a certain area that includes
+    the pick-up location?” This isn’t just because the driving distance between two
+    points is almost always greater than the straight-line distance between them.
+    In practice, barriers such as rivers or railroad tracks often divide geographical
+    areas into separate zones that are only connected at a limited number of points
+    by bridges, tunnels, and the like. This can make straight-line distances highly
+    misleading. Consider the example in [Figure 9-2](#figure9-2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A map  divided  by a river, with location labels for pick-up and cab_112
+    on one side of the river, and for cab_26 on the other side. ](image_fi/502208c09/f09002.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-2: Obstacles like rivers can make distance measurements misleading.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see, `cab_26` is spatially closest to the pick-up place in this scenario,
+    but because of the river, `cab_112` will likely be able to get there faster. You
+    can easily figure this out looking at the map, but how can you reach the same
+    conclusion with a Python script? One way is to divide the area into a number of
+    smaller *polygons*, or areas enclosed by a set of connected straight lines, and
+    then check which cabs are within the same polygon as the pick-up location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this particular example, you should define a polygon that encompasses the
+    pick-up location and has a boundary along the river. You can identify the polygon’s
+    boundaries manually through Google Maps: right-click several points that connect
+    to form a closed polygon, and note each point’s geo coordinates. Once you have
+    the coordinates, you can define the polygon in Python using the Shapely library.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s how to create a polygon with Shapely and check whether a given point
+    is inside that polygon:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You first import two Shapely classes, `Point` and `Polygon` ❶, then you create
+    a `Polygon` object using a list of latitude/longitude tuples ❷. This object represents
+    the area north of the river, including the pick-up location. Next, you create
+    several `Point` objects representing the locations of `cab_26`, `cab_112`, and
+    the pick-up place, respectively ❸. Finally, you perform a series of spatial queries
+    to detect if a certain point is inside the polygon using Shapely’s `within()`
+    method ❹. As a result, the script should produce the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Combining Both Approaches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: So far, we’ve chosen the best cab for a pick-up by calculating linear distances
+    and by finding the closest cab within a certain area. In fact, the most accurate
+    way to find the right cab may be to use elements of both approaches. This is because
+    it isn’t necessarily safe to blindly exclude all the cabs that aren’t in the same
+    polygon as the pick-up location. A cab in an adjacent polygon may still be closest
+    in terms of actual driving distance even allowing for the possibility that the
+    cab must get around a river or other obstacle. The key is to consider the entry
+    points between one polygon and another. [Figure 9-3](#figure9-3) shows how we
+    might take this into account.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The same map as Figure 9-2\. A dotted line follows the shape of the river.
+    An equal sign marks a bridge across the river. Arrows go from cab_26 to the bridge
+    and from the bridge to pick-up. Another arrow goes from cab_112 to pick-up.](image_fi/502208c09/f09003-r.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9-3: Using entry points to connect adjacent areas'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The dotted line running across the middle of the figure represents the boundary
+    dividing the area into two polygons: the one north of the river and the one south
+    of the river. The equal sign laid on the bridge marks the entry point where cabs
+    can move from one polygon to the other. For cabs in the polygon bordering that
+    of the pick-up place, the distance to the pick-up place is composed of two intervals:
+    the interval between the cab’s current location and the entry point, and the interval
+    between the entry point and the pick-up place.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To find the closest cab, you should therefore determine which polygon each
+    cab is in and use that determination to decide how to calculate the distance from
+    that cab to the pick-up location: either a direct straight-line distance if the
+    cab is in the same polygon as the pick-up location, or the distance by way of
+    the entry point if it’s in an adjacent polygon. Here you make that calculation
+    just for `cab_26`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The script uses both Shapely and geopy. First you define a Shapely `Polygon`
+    object including the pick-up location, as before ❶. You likewise define `Point`
+    objects for the cab, the pick-up location, and the entry point ❷. Then you calculate
+    the distance in meters with the help of geopy’s `distance()` function. If the
+    cab is within the polygon, you find the distance directly between the cab and
+    the pick-up location ❸. If not, you first calculate the distance between the cab
+    and the entry point and then the distance between the entry point and the pick-up
+    place, summing them to get the total distance ❹. Here’s the result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Combining Spatial and Nonspatial Data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: So far in this chapter, you’ve worked exclusively with spatial data, but it’s
+    important to realize that spatial analyses often need to factor in nonspatial
+    data as well. For example, what’s the use of knowing that a store is located within
+    10 miles of your current location if you don’t know whether the item you want
+    is currently in stock there? Or, turning back to our taxi example, what’s the
+    use of being able to determine the closest cab to a pick-up location if you don’t
+    know whether that cab is available or currently serving another order? In this
+    section, we’ll examine how to account for nonspatial data as part of a spatial
+    analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deriving Nonspatial Attributes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Information about the current availability of cabs could be derived from a
+    dataset containing ride orders. Once an order is assigned to a cab, this information
+    might be placed in an `orders` data structure, where orders are listed as either
+    open (in process) or closed (completed). According to this scheme, identifying
+    only those orders that are open would tell you which cabs are unavailable to serve
+    a new order. Here’s how you could implement this logic in Python:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `orders` list of tuples used in this example might be derived from a more
+    complete dataset, such as a collection of all the orders opened within the last
+    two hours, that includes additional information about each order (pick-up location,
+    drop-off location, start time, end time, and so on). For simplicity, here the
+    dataset has already been reduced to just the fields needed for the current task.
+    You convert the list into a DataFrame, then filter it to include only the orders
+    whose status is `open`. Finally, you convert the DataFrame into a list containing
+    only the values from the `cab` column. This list of unavailable cabs looks as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Armed with this list, you need to check the other cabs and determine which
+    is the closest to the pick-up place. Append this code to the previous script:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For the purposes of the example, you manually define the geo coordinates of
+    the pick-up place and all the cabs as tuples, and you send the coordinates of
+    the cabs to a dictionary, where the keys are the cab names. Then you iterate over
+    the dictionary, and for each cab not in `unavailable_list`, you use geopy to calculate
+    the distance between the cab and the pick-up place. Finally, you print the entire
+    list of available cabs with their distances to the pick-up place, as well as just
+    the closest cab, yielding the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, `cab_26` is the closest available cab.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Joining Spatial and Nonspatial Datasets
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the previous example, you kept the spatial data (each cab’s location) and
+    the nonspatial data (which cabs were available) in separate data structures. Sometimes,
+    however, it may be advantageous to combine spatial and nonspatial data in the
+    same structure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider that a cab may need to satisfy some other conditions apart from availability
+    to be assigned to an order. For example, a client may need a cab with a baby seat.
+    To find the right cab, you’ll need to rely on a dataset that includes nonspatial
+    information about the cabs as well as each cab’s distance from the pick-up location.
+    For the former, you may use a dataset that contains just two columns: the cab
+    name and the presence of a baby seat. You create it here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cabs with a `1` in the second column have a baby seat. Next you convert the
+    list to a DataFrame. You also create a second DataFrame from `dist_list, the list
+    of available cabs and their distances to the pick-up place that you generated
+    in the preceding section:`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25] df_cabs = pd.DataFrame(cabs_list, columns =[''cab'', ''seat'']) df_dist
+    = pd.DataFrame(dist_list, columns =[''cab'', ''dist'']) [PRE26] df = pd.merge(df_cabs,
+    df_dist, on=''cab'', how=''inner'') [PRE27]  cab  seat  dist 0   cab_26     0  2165
+    1  cab_112     1  2861 [PRE28] result_list = list(df.itertuples(index=False,name=None))
+    result_list = [x for x in result_list if x[1] == 1] [PRE29] print(min(result_list,
+    key=lambda x: x[2])) [PRE30] (''cab_112'', 1, 2861) [PRE31]`'
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,575 @@
+- en: '6'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Aggregating Data
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: To get the most decision-making value out of your data, you’ll often need to
+    generate aggregations of the data. *Aggregation* is a process of collecting data
+    so that it can be presented in summary form, grouped by subtotals, totals, averages,
+    or other statistics. This chapter explores aggregation techniques built into pandas
+    and discusses how you can use them to analyze your data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Aggregation is an efficient way to get a big-picture overview of a large dataset,
+    allowing you to answer questions about the values in the data. For example, a
+    large retail business might want to determine product performance based on brand
+    or look at the sales totals for different regions. A website owner might want
+    to identify the most attractive resources on the site based on the number of visitors.
+    A climatologist might need to determine the sunniest places in a region based
+    on the average number of sunny days per year.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An aggregation can answer questions like these by collecting specific data values
+    together and presenting them in a summarized format. Since aggregation presents
+    information based on related clusters of data, it implies first grouping the data
+    by one or more attributes. In the case of the large retailer, this might mean
+    grouping the data by brand, or perhaps by both region and date.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the examples that follow, you’ll see how grouping, along with *aggregate
+    functions* applied to each group of rows, can be implemented when using pandas
+    DataFrames. An aggregate function returns a single result row based on an entire
+    group of rows, thus forming a single aggregated summary row for each group.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data to Aggregate
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To see how aggregation works, we’ll create a set of example DataFrames containing
+    sales data for an online outdoor fashion retailer. The data will include values
+    such as order numbers and dates; details about the items purchased in each order,
+    such as price and quantity; the employees who fulfill each order; and the locations
+    of the company’s fulfillment warehouses. In a real application, this data would
+    most likely be stored in a database that you could access from your Python code,
+    as described in Chapter 5. For simplicity, we’ll instead load the data into the
+    DataFrames from lists of tuples. You can download the lists of tuples from this
+    book’s GitHub repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s start with some sample orders. The list named `orders` contains several
+    tuples, each of which represents one order. Each tuple has three fields: the order
+    number, the date, and the ID of the employee who fulfilled the order, respectively:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Import pandas and load the list into a DataFrame like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Order details (also known as *order lines*) are usually stored in another data
+    container. In this case, we have a list of tuples named `details` that you’ll
+    load into another DataFrame. Each tuple represents a line of an order, with fields
+    corresponding to the order number, item name, brand, price, and quantity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We’ll store information about the company’s employees in a third DataFrame.
+    Create it from another list of tuples called `emps` with employee numbers, names,
+    and locations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, we have the city and region of each warehouse in a list of tuples
+    named `locations`, which you’ll store in a fourth DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now that you’ve loaded the data into DataFrames, you can aggregate it in many
+    ways, allowing you to answer all sorts of questions about the state of the business.
+    For example, you might want to look at the sales performance for different regions,
+    generating subtotals by date. To do this, you’ll first need to combine the relevant
+    data into a single DataFrame. Then you can group the data and apply aggregate
+    functions to the groups.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Combining DataFrames
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'You’ll often need to collect data from many different containers before you
+    have everything you need to produce the desired aggregation. Our example is no
+    exception. Even the data representing the orders is distributed between two different
+    DataFrames: `df_orders` and `df_details`. Your goal is to generate the sums of
+    sales by region and by date. What DataFrames do you need to combine, and what
+    columns from each should you include?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since you need to total up the sales numbers, you’ll have to include the `Price`
+    and `Quantity` columns from `df_details`. The `Date` column from `df_orders` and
+    the `Region` column from `df_locations` have to be included as well. This means
+    you’ll have to join the following DataFrames: `df_orders`, `df_details`, and `df_locations`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `df_orders` and `df_details` DataFrames can be joined directly with a single
+    call of the pandas `merge()` method, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You join the DataFrames based on the `OrderNo` column. You don’t have to specify
+    this explicitly, because `OrderNo` is present in both DataFrames and is therefore
+    chosen by default. The newly merged DataFrame now contains one record for each
+    order line, as in `df_details`, but with the information added from the corresponding
+    records from `df_orders`. To see the records in the merged DataFrame, you can
+    simply print the DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The content of `df_sales` will look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As you can see in the `Quantity` column, there may be more than one of an item
+    in a single order line. You therefore need to multiply the values of the `Price`
+    and `Quantity` fields to calculate the total of an order line. You can store the
+    result of this multiplication in a new field of the DataFrame, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: This adds a `Total` column to the DataFrame, in addition to the existing seven
+    columns. You now have the option to remove the columns that you don’t need for
+    generating the sums of sales by region and date. At this stage, you only need
+    to retain the `Date`, `Total`, and `Empno` columns. The first two will obviously
+    be essential to your calculations. We’ll discuss the need for `Empno` momentarily.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To filter the DataFrame down to the necessary columns, pass a list of the column
+    names in to the `[]` operator of the DataFrame, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You now need to join the `df_sales` DataFrame that you just created with the
+    `df_regions` DataFrame. However, you can’t join them directly, because they don’t
+    have any columns in common. Instead, you’ll have to join them via the `df_emps`
+    DataFrame, which shares one column with `df_sales` and one with `df_regions`.
+    Specifically, `df_sales` and `df_emps` can be joined on the `Empno` column, which
+    is why we kept the column in `df_sales`, while `df_emps` and `df_locations` can
+    be joined on the `Location` column. Implement these joins with the `merge()` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A printout of this `df_result` DataFrame will look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once again, you might want to remove unnecessary columns and keep only those
+    that you actually need. This time you can get rid of the `Empno`, `Empname`, and
+    `Location` columns, leaving only `Date`, `Region`, and `Total`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now the content of `df_result` appears as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Without including unnecessary columns, the `df_result` DataFrame is now ideally
+    formatted for aggregating the sales data by region and by date.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Grouping and Aggregating the Data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'To perform aggregate calculations on your data, you must first sort it into
+    relevant groups. The pandas `groupby()` function splits a DataFrame’s data into
+    subsets that have matching values for one or more columns. For our example, you
+    can use `groupby()` to group the `df_result` DataFrame by date and region. Then
+    you can apply the pandas `sum()` aggregation function to each group. You can perform
+    both operations in a single line of code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first grouping is based on the `Date` column. Then, within each date, you
+    group based on `Region`. The `groupby()` function returns an object to which you
+    then apply the `sum()` aggregation function. This function sums up the values
+    of numeric columns. In this particular example, `sum()` is applied only to the
+    `Total` column because this is the only numeric column in the DataFrame. (If the
+    DataFrame had other numeric columns, the aggregation function would be applied
+    to those too.) You end up with the following DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Both `Date` and `Region` are index columns of the new DataFrame. Together they
+    form a *hierarchical index*, also known as a *multilevel index*, or just a *MultiIndex*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A MultiIndex makes it possible to work with data that has an arbitrary number
+    of dimensions within the 2D structure of a DataFrame by using multiple columns
+    to uniquely identify each row. In our case, the `df_date_region` DataFrame can
+    be viewed as a 3D dataset, with three axes corresponding to dates, regions, and
+    aggregate values (each axis represents the corresponding dimension), as described
+    in [Table 6-1](#table6-1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 6-1: The Three Dimensions of the `df_date_region` DataFrame'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Axis** | **Coordinates** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Date | 2022-02-04, 2022-02-05, 2022-02-06 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Region | West, East |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Aggregation | Total |'
+  prefs: []
+  type: TYPE_TB
+- en: Our DataFrame’s MultiIndex enables us to write queries that navigate the DataFrame’s
+    dimensions, accessing totals by date, region, or both. We’ll be able to uniquely
+    identify each row of the DataFrame and access selected aggregated values within
+    different groups of data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Viewing Specific Aggregations by MultiIndex
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Viewing specific categories of information in a DataFrame is a common requirement.
+    For example, in the case of the `df_date_region` DataFrame you’ve just created,
+    you might need to obtain the aggregated sales figures only for a certain date,
+    or for a particular region and a certain date at the same time. You can use the
+    DataFrame’s index (or MultiIndex) to find the required aggregation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To get a feel for working with a MultiIndex, it will help to see how each MultiIndex
+    value is represented in Python. You can use the `df_date_region` DataFrame’s `index`
+    property for this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `index` property returns all the index values, or row labels, of a DataFrame,
+    whether that DataFrame has a simple index or a MultiIndex. Here are the MultiIndex
+    values for `df_date_region`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As you can see, each MultiIndex value is a tuple that you can use to access
+    a corresponding sales figure in the `Total` field. With this in mind, here’s how
+    to access the total figures for a certain date and region:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You place the tuple representing the desired MultiIndex in the `[]` operator
+    ❷ and pass it to the pandas `index.isin()` method. The method requires the passed
+    parameter to be an iterable (list or tuple), Series, DataFrame, or dictionary,
+    which is why you place the desired MultiIndex in square brackets. The method returns
+    a Boolean array indicating whether the data at each of the DataFrame’s index values
+    corresponds to the index value(s) you specify: `True` for matches or `False` otherwise.
+    In this particular example, the `isin()` method generates the array `[False, False,
+    False, True, False, False]`, meaning that the fourth index value is a match.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You then pass the Boolean array to the `df_date_region` DataFrame in the `[]`
+    operator ❶, resulting in the corresponding sales figure being selected, as shown
+    here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You aren’t limited to retrieving only a single row from the DataFrame. You
+    can pass more than one index value to `index.isin()` to get a set of corresponding
+    sales figures, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This will retrieve the following two rows from `df_date_region`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Although this particular example uses two neighboring indices, you can in fact
+    pass any indices into `index.isin()` in any order, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The set of retrieved rows will appear as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice that the order of the retrieved records matches the order of the records
+    in the DataFrame rather than the order in which you specified the indices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Slicing a Range of Aggregated Values
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Just as you can use slicing to obtain a range of values from a list, you can
+    use it to extract a range of aggregated values from a DataFrame. You would do
+    this in the `df_date_region` DataFrame by providing two tuples specifying the
+    MultiIndex keys of the start and end positions of the slice range. The following
+    example obtains the range of aggregated values for dates from `2022-02-04` through
+    `2022-02-05` for all regions. You simply place the start and end MultiIndex keys
+    in square brackets, separated by a colon:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As a result, you get the following rows of the DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Since in this particular example you’re obtaining the sales figures for all
+    regions within a specified date range, you can leave off the region names and
+    pass only the dates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: This should give you exactly the same result as the preceding example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Slicing Within Aggregation Levels
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'You might want to slice your aggregations within the different levels of a
+    hierarchical index. In our example, the highest aggregation level is the `Date`
+    level, within which we have the `Region` level. Say you need to obtain the sales
+    figures for a specific slice of dates, selecting all the contents of the `Region`
+    level. You can do this with Python’s `slice()` function in conjunction with the
+    DataFrame’s `loc` property, as illustrated here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: You use `slice()` twice here. In the first instance, `slice()` defines the slicing
+    range for `Date`, the highest aggregation level, generating the `slice` object
+    that specifies the start and end dates. The second time you invoke `slice()`,
+    you do so for the `Region` level (the next lowest level). By specifying `None`,
+    you select all the contents of the `Region` level. In the `[]` operator of the
+    `loc` property, you also include a comma followed by a colon (`:`). This syntax
+    specifies that you’re using row labels rather than column labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The result set is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the next example, you replace `slice(None)` with `slice(''East'')`, thus
+    reducing the sales figures being retrieved to only rows containing `East`, taken
+    from within the specified date range:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This will retrieve the following rows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: You could specify a range for the `Region` level rather than a single value,
+    just as you specify a range for the `Date` level. In this particular example,
+    however, that range could only start with `'East'` and end with `'West'`, implemented
+    as `slice('East','West')`. Since this is the maximum possible range, a call of
+    `slice('East','West')` will be equal to a call of `slice(None)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adding a Grand Total
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When it comes to aggregating sales data, you might ultimately want to calculate
+    the grand total, or the sum of all the other sales value totals, and add it to
+    the DataFrame. In our example, since all the totals are in a single DataFrame,
+    `df_date_region`, you can use the pandas `sum()` method to find the total sales
+    across all regions and all dates. The method calculates the sum of the values
+    for a specified axis, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, `sum()` returns a pandas Series with the sum over the `Total` column
+    in the `df_date_region` DataFrame. Remember that it isn’t necessary to specify
+    the `Total` column in your call to `sum()`, since it automatically applies to
+    any numeric data. The content of the `ps` Series will be as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To append the newly created Series to the `df_date_region` DataFrame, you have
+    to first give it a name. This name will be used as the index for the grand total
+    row in the DataFrame. Because index keys are tuples in the `df_date_region` DataFrame,
+    you use a tuple for the Series name as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first `''All''` in the tuple relates to the `Date` component of the index
+    key, while the second relates to the `Region` index key component. Now you can
+    append the Series to the DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you print out the newly created DataFrame, its content will look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can access the grand total row by its index, as you would any other row
+    in a DataFrame. Here, you pass the tuple representing the index of the row to
+    the `index.isin()` method, as discussed earlier:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This will give you the grand total row:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: Adding Subtotals
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Apart from adding up the grand total, you might also want to add subtotals
+    for each date to the DataFrame so that the resulting DataFrame appears as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Generating this DataFrame requires a few steps. First you group the DataFrame
+    by the `Date` level of the index. Then you iterate over the resulting GroupBy
+    object, accessing each date along with a set of rows (known as a *subframe*) containing
+    the region and total information for that date. You then select and append each
+    subframe to an empty DataFrame, along with a corresponding subtotal row. Here’s
+    how:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: You begin by creating an empty DataFrame, `df_totals`, to receive the final
+    data ❶. You then create a GroupBy object ❷, grouping the `df_date_region` DataFrame
+    by the top hierarchical level (`level=0`) of its index (that is, the `Date` column)
+    and enter a `for` loop iterating over the GroupBy object. With each iteration,
+    you get a date and its corresponding subframe. You append the subframe to the
+    `df_totals` DataFrame ❸, then create the subtotal row in the form of a Series
+    containing the sum of the subframe’s rows ❹. Next, you name that Series with its
+    associated date and `'All'` to denote all regions ❺, then append the Series to
+    the `df_totals` DataFrame ❻.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, you append the grand total row to the DataFrame, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: As a result, you get a DataFrame that has both the sales sum for each date and
+    the overall total for all the dates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Selecting All Rows in a Group
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In addition to aiding with aggregation, the `groupby()` function also helps
+    you to select all the rows belonging to a certain group. To accomplish this, objects
+    returned by `groupby()` provide the `get_group()` method. Here’s how it works:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You group the `df_result` DataFrame by `Date` and `Region`, passing the column
+    names in as a list to `groupby()`, just like you did previously. Then you invoke
+    the `get_group()` method on the resulting GroupBy object, passing a tuple with
+    the desired index. This returns the following DataFrame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, the result set isn’t an aggregation. Rather, it includes all
+    the order rows related to the specified date and region.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You learned in this chapter that aggregation is the process of gathering data
+    and expressing it in a summarized format. Typically, this process involves splitting
+    data into groups and then computing summaries for each group. The examples in
+    this chapter showed how to aggregate data contained in pandas DataFrames, employing
+    DataFrame methods and properties such as `merge()`, `groupby()`, `sum()`, `index`,
+    and `loc`. You learned to take advantage of a DataFrame’s hierarchical index,
+    or MultiIndex, to model multilevel relationships in the data being aggregated.
+    You also learned to view and slice aggregated data selectively using a MultiIndex.
+  prefs: []
+  type: TYPE_NORMAL
