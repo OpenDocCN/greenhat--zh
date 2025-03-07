@@ -1058,11 +1058,14 @@
   id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 在着色器的`main()`方法中，你设置了一个旋转矩阵❹，它绕着 x 轴按给定的角度`uTheta`进行旋转。你通过连接投影矩阵、模型视图矩阵和旋转矩阵来计算`gl_Position`❺。这将为你提供着色器输出顶点的位置。接着，你设置了一个二维向量作为纹理坐标❻。你可能记得你为一个以原点为中心、边长为
+    1.0 的正方形定义了三角形条带。因为纹理坐标的范围是[0, 1]，你可以通过将(0.5, 0.5)加到 x 和 y 值上来生成这些纹理坐标。这也展示了着色器在计算中的强大和巨大的灵活性。纹理坐标和其他变量并非不可更改；你可以将它们设置为几乎任何值。
 - en: 'Now let’s look at the fragment shader, which computes the output pixels of
     our OpenGL program:'
   id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们来看一下片段着色器，它计算我们 OpenGL 程序的输出像素：
 - en: '[PRE15]'
   id: totrans-138
   prefs: []
@@ -1080,6 +1083,8 @@
   id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 你首先定义了片段着色器的输入——在本例中是你在顶点着色器中设置为输出的纹理坐标❶。回想一下，片段着色器是按像素操作的，因此为这些变量设置的值是当前像素的值，这些值是跨多边形进行插值的。你声明了一个`sampler2D`变量❷，它链接到一个特定的纹理单元，并用于查找纹理值，还有一个布尔型的
+    uniform 标志`showCircle`❸，它是从 Python 代码中设置的。你还声明了`fragColor`作为片段着色器的输出❹。默认情况下，它会被送到屏幕上（经过最终的帧缓冲操作，如深度测试和混合）。
 - en: Within the `main()` method, if the `showCircle` flag is not set ❼, you use the
     GLSL `texture()` method to look up the texture color value using the texture coordinate
     and the sampler. In effect, you’re just texturing the triangle strip using the
@@ -1095,17 +1100,24 @@
   id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 在`main()`方法中，如果没有设置`showCircle`标志❼，你使用 GLSL 的`texture()`方法，通过纹理坐标和采样器查找纹理颜色值。实际上，你只是用星形图像给三角形条带加上纹理。然而，如果`showCircle`标志为`true`❺，你使用
+    GLSL 内建的`distance()`方法来检查当前像素与多边形中心的距离。它使用（插值后的）纹理坐标进行此操作，而这些坐标是由顶点着色器传递过来的。如果距离大于某个阈值（在此案例中为
+    0.5），你调用 GLSL 的`discard()`方法，这将丢弃当前像素。如果距离小于阈值，则从纹理中设置相应的颜色❻。基本上，这么做是为了忽略位于正方形中心半径为
+    0.5 的圆形外部的像素，从而在`showCircle`被设置时将多边形切割成一个圆形。
 - en: '[Utility Functions](nsp-venkitachalam503045-0008.xhtml#rbh1109)'
   id: totrans-141
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[工具函数](nsp-venkitachalam503045-0008.xhtml#rbh1109)'
 - en: 'I’ve referred to several utility functions defined for you in *glutils.py*
     to make working with OpenGL easier. Let’s look at an example of one of those functions
     now. The `loadTexture()` function loads an image into an OpenGL texture:'
   id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 我提到过为了方便使用 OpenGL，你可以使用在*glutils.py*中定义的几个工具函数。现在我们来看其中一个函数的例子。`loadTexture()`函数将图像加载到
+    OpenGL 纹理中：
 - en: '[PRE16]'
   id: totrans-143
   prefs: []
@@ -1129,15 +1141,23 @@
   id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: '`loadTexture()` 函数使用 Python Imaging Library (PIL) 的 `Image` 模块来读取图像文件 ❶。然后，它将
+    `Image` 对象中的数据提取到一个 8 位的 `numpy` 数组 ❷ 中，并创建一个 OpenGL `texture` 对象 ❸，这是在 OpenGL
+    中操作纹理的前提。接下来，你执行了现在熟悉的绑定操作，将 `texture` 对象 ❹ 绑定，这样所有后续与纹理相关的设置都会应用于该对象。你将数据的解包对齐方式设置为
+    1 ❺，这意味着图像数据将被硬件视为 1 字节或 8 位数据。从 ❻ 开始，你告诉 OpenGL 如何处理纹理的边缘。在这个例子中，你指示它将纹理颜色限制到几何体的边缘。（在指定纹理坐标时，通常使用字母
+    `S` 和 `T` 来表示轴，而不是 `x` 和 `y`。）在 ❼ 和接下来的行中，你指定了纹理在拉伸或压缩时映射到多边形的插值方式。在这种情况下，指定了*线性过滤*。最后，你将图像数据设置到已绑定的纹理
+    ❽ 中。此时，图像数据已传输到图形内存，纹理已经可以使用。'
 - en: '[Running the OpenGL Application](nsp-venkitachalam503045-0008.xhtml#rah1104)'
   id: totrans-145
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '[运行 OpenGL 应用程序](nsp-venkitachalam503045-0008.xhtml#rah1104)'
 - en: 'Here is a sample run of the project:'
   id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是该项目的一个示例运行：
 - en: '[PRE17]'
   id: totrans-147
   prefs: []
@@ -1148,11 +1168,13 @@
   id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以在 [图 9-1](nsp-venkitachalam503045-0023.xhtml#fig9-1) 中看到输出。记得尝试按键切换圆形的显示与隐藏。
 - en: '[Summary](nsp-venkitachalam503045-0008.xhtml#rah1105)'
   id: totrans-149
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '[总结](nsp-venkitachalam503045-0008.xhtml#rah1105)'
 - en: Congratulations on completing your first program using Python and OpenGL! Through
     this project, you’ve learned about creating 3D transformations, using the OpenGL
     3D graphics pipeline, and using GLSL vertex and fragment shaders to create interesting
@@ -1161,15 +1183,19 @@
   id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 恭喜你完成了使用 Python 和 OpenGL 编写的第一个程序！通过这个项目，你学会了如何创建 3D 变换，使用 OpenGL 3D 图形管线，以及使用
+    GLSL 顶点和片段着色器来创建有趣的 3D 图形。你已经开始了进入迷人的 3D 图形编程世界的旅程。
 - en: '[Experiments!](nsp-venkitachalam503045-0008.xhtml#rah1106)'
   id: totrans-151
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '[实验！](nsp-venkitachalam503045-0008.xhtml#rah1106)'
 - en: 'Here are some ideas for modifying this project:'
   id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是一些修改此项目的想法：
 - en: '1\. The vertex shader in this project rotates the square around the x-axis
     (1, 0, 0). Can you make it rotate around the y-axis (0, 0, 1)? You can do this
     in one of two ways: first, by modifying the rotation matrix in the shader, or
@@ -1179,6 +1205,8 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 1\. 本项目中的顶点着色器使得正方形围绕 x 轴 (1, 0, 0) 旋转。你能使其围绕 y 轴 (0, 0, 1) 旋转吗？你可以通过两种方式来实现：第一，修改着色器中的旋转矩阵；第二，在
+    Python 代码中计算这个矩阵，并将其作为*uniform* 传递给着色器。试试看这两种方法！
 - en: '2\. In the project, the texture coordinates are generated inside the vertex
     shader and passed to the fragment shader. This is a trick, and it works only because
     of the convenient values chosen for the vertices of the triangle strip. Pass the
@@ -1191,6 +1219,9 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 2\. 在该项目中，纹理坐标是在顶点着色器内生成并传递到片段着色器的。这是一种技巧，只有选择了合适的三角形条的顶点值才有效。将纹理坐标作为单独的属性传递到顶点着色器中，类似于传递顶点的方式。现在，你能让星形纹理*拼接*在三角形条上吗？你希望在正方形上显示一个
+    4×4 的星形网格，而不是单一的星星。（提示：使用大于 1.0 的纹理坐标，并在 `glTexParameterf()` 中将 `GL_TEXTURE_WRAP_S/T`
+    参数设置为 `GL_REPEAT`。）
 - en: '3\. By changing just your fragment shader, can you make your square look like
     [Figure 9-6](nsp-venkitachalam503045-0023.xhtml#fig9-6)? (Hint: use the GLSL `sin()`
     function.)'
