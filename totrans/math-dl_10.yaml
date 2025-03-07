@@ -1702,44 +1702,56 @@
   id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: TensorFlow 以与我们在前一节中做的方式类似的方式生成反向传播所需的导数。像加法一样，每个操作都知道如何根据其输入创建输出的导数。再加上链式法则，这就是实现反向传播所需的全部内容。图的遍历方式取决于
+    *图求值引擎* 和特定的模型架构，但图会根据前向和反向传播的需要进行遍历。请注意，由于计算图将表达式分解为更小的操作，每个操作都知道如何在反向步骤中处理梯度（就像我们在上面为
+    `ActivationLayer` 和 `FullyConnectedLayer` 所做的那样），因此可以在层中使用自定义函数，而无需处理导数。图引擎会为你做这件事，只要你使用引擎已经支持的原始操作。
 - en: 'Let’s walk through the forward and backward passes of a computational graph.
     This example comes from the 2015 paper “TensorFlow: Large-Scale Machine Learning
     on Heterogeneous Distributed Systems” (*[https://arxiv.org/pdf/1603.04467.pdf](https://arxiv.org/pdf/1603.04467.pdf)*).'
   id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们走一遍计算图的前向和反向传播。这一例子来自于 2015 年的论文《TensorFlow：异构分布式系统上的大规模机器学习》(*[https://arxiv.org/pdf/1603.04467.pdf](https://arxiv.org/pdf/1603.04467.pdf)*)。
 - en: A hidden layer in a fully connected model is expressed as
   id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 完全连接模型中的隐藏层表示为
 - en: '***y*** = **σ**(***Wx*** + ***b***)'
   id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: '***y*** = **σ**(***Wx*** + ***b***)'
 - en: for weight matrix ***W***, bias vector ***b***, input ***x***, and output ***y***.
   id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于权重矩阵 ***W***、偏置向量 ***b***、输入 ***x*** 和输出 ***y***。
 - en: '[Figure 10-4](ch10.xhtml#ch10fig04) shows the same equation as a computational
     graph.'
   id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 10-4](ch10.xhtml#ch10fig04) 以计算图的形式展示了相同的方程。'
 - en: '![image](Images/10fig04.jpg)'
   id: totrans-242
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/10fig04.jpg)'
 - en: '*Figure 10-4: The computational graphs representing the forward and backward
     passes through one layer of a feedforward neural network*'
   id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 10-4：表示前向传播和反向传播的计算图，经过一个前馈神经网络的层*'
 - en: '[Figure 10-4](ch10.xhtml#ch10fig04) presents two versions. The top of the figure
     shows the forward pass, where data flows from ***x***, ***W***, and ***b*** to
     produce the output. Notice how the arrows lead left to right.'
   id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 10-4](ch10.xhtml#ch10fig04) 展示了两个版本。图的顶部显示了前向传播，其中数据从 ***x***、***W*** 和
+    ***b*** 流动，以生成输出。注意箭头是从左到右指向的。'
 - en: Note the sources are tensors, here either vectors or matrices. The outputs of
     operations are also tensors. The tensors flow through the graph, hence the name
     *TensorFlow*. [Figure 10-4](ch10.xhtml#ch10fig04) represents matrix multiplication
@@ -1747,6 +1759,8 @@
   id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，源是张量，这里是向量或矩阵。操作的输出也是张量。张量在图中流动，因此得名 *TensorFlow*。[图 10-4](ch10.xhtml#ch10fig04)
+    将矩阵乘法表示为 `@`，这是 NumPy 的矩阵乘法操作符。激活函数是 **σ**。
 - en: For the backward pass, the sequence of derivatives begins with ∂***y***/∂***y***
     = 1 and flows back through the graph from operator output to inputs. If there
     is more than one input, there is more than one output derivative. In practice,
@@ -1756,6 +1770,7 @@
   id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于反向传播，导数的序列从 ∂***y***/∂***y*** = 1 开始，并从操作符输出通过图流回输入。如果有多个输入，就会有多个输出导数。在实际操作中，图的求值引擎会按正确的顺序处理适当的操作符。每个操作符在其被处理时，都能获得所需的输入导数。
 - en: '[Figure 10-4](ch10.xhtml#ch10fig04) uses ∂ before an operator to indicate the
     derivatives the operator generates. For example, the addition operator (∂+) produces
     two outputs because there are two inputs, ***Wx*** and ***b***. The same is true
@@ -1764,6 +1779,8 @@
   id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 10-4](ch10.xhtml#ch10fig04) 在操作符前使用 ∂ 来表示操作符生成的导数。例如，加法操作符 (∂+) 生成两个输出，因为有两个输入，***Wx***
+    和 ***b***。矩阵乘法 (∂@) 也是如此。激活函数的导数表示为 **σ**′。'
 - en: Notice that arrows run from ***W*** and ***x*** in the forward pass to the derivative
     of the matrix multiplication operator in the backward pass. Both ***W*** and ***x***
     are necessary to calculate ∂***y***/∂***W*** and ∂***y***/∂***x***—see [Equation
@@ -1776,6 +1793,9 @@
   id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，箭头从***W***和***x***在前向传播中指向反向传播中的矩阵乘法算符的导数。***W***和***x***都是计算∂***y***/∂***W***和∂***y***/∂***x***所必需的—请参见[方程式
+    10.13](ch10.xhtml#ch10equ13)和[方程式 10.11](ch10.xhtml#ch10equ11)。没有箭头从***b***指向矩阵乘法算符，因为∂***y***/∂***b***不依赖于***b***—请参见[方程式
+    10.12](ch10.xhtml#ch10equ12)。如果在[图 10-4](ch10.xhtml#ch10fig04)所示的网络结构下方还有一层，则矩阵乘法算符输出的∂***y***/∂***x***将成为反向传播经过该层的输入，依此类推。
 - en: The power of computational graphs makes modern deep learning toolkits highly
     general and supports almost any network type and architecture, without burdening
     the user with detailed and highly tedious gradient calculations. As you continue
@@ -1784,11 +1804,13 @@
   id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算图的强大功能使得现代深度学习工具包具有高度的通用性，支持几乎任何网络类型和架构，而不会让用户承担繁琐且复杂的梯度计算工作。当你继续探索深度学习时，请感激这些工具包仅凭几行代码便能实现的可能性。
 - en: Summary
   id: totrans-250
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 总结
 - en: This chapter introduced backpropagation, one of the two pieces needed to make
     deep learning practical. First, we worked through calculating the necessary derivatives
     by hand for a tiny network and saw how laborious a process it was. However, we
@@ -1796,6 +1818,7 @@
   id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章介绍了反向传播，这是使深度学习实用的两个关键组成部分之一。首先，我们手动计算了一个小型网络所需的导数，了解了这一过程是多么繁琐。然而，我们成功地训练了这个小型网络。
 - en: Next, we used our matrix calculus knowledge from [Chapter 8](ch08.xhtml#ch08)
     to find the equations for multilayer fully connected networks and created a simple
     toolkit in the same vein as toolkits like Keras. With the toolkit, we successfully
@@ -1805,6 +1828,7 @@
   id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们使用来自[第8章](ch08.xhtml#ch08)的矩阵微积分知识，找出了多层全连接网络的方程式，并创建了一个与Keras等工具包类似的简单工具包。通过这个工具包，我们成功地使用MNIST数据集训练了一个高准确率的模型。尽管该工具包在隐藏层数量和大小方面具有高效和通用性，但它仅限于全连接模型。
 - en: We ended the chapter with a cursory look at how modern deep learning toolkits
     like TensorFlow implement models and automate backpropagation. The computational
     graph enables arbitrary combinations of primitive operations, each of which can
@@ -1813,9 +1837,11 @@
   id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章最后简要介绍了现代深度学习工具包（如TensorFlow）如何实现模型并自动化反向传播。计算图使得任意组合的基本操作成为可能，每个操作都可以根据需要反向传递梯度，从而支持深度学习中复杂的模型架构。
 - en: The second half of training a deep model is gradient descent, which puts the
     gradients calculated by backpropagation to work. Let’s now turn our attention
     that way.
   id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练深度模型的第二部分是梯度下降，它将通过反向传播计算出的梯度付诸实践。现在让我们把注意力转向这一部分。
