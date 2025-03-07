@@ -1,20 +1,29 @@
 - en: '[13](nsp-venkitachalam503045-0008.xhtml#rch13)'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '[13](nsp-venkitachalam503045-0008.xhtml#rch13)'
 - en: Laser Audio Display with a Raspberry Pi
+  id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 Raspberry Pi 进行激光音频显示
 - en: '![](images/nsp-venkitachalam503045-circle-image.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-circle-image.jpg)'
 - en: In [Chapter 12](nsp-venkitachalam503045-0027.xhtml#ch12), you used a Pico, a
     tiny microcontroller, to generate musical tones. In this chapter, you’ll use a
     much more powerful embedded system, the Raspberry Pi, to produce interesting laser
     patterns based on audio signals.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 [第 12 章](nsp-venkitachalam503045-0027.xhtml#ch12)中，你使用了 Pico 这一微型微控制器来生成音乐音调。在本章中，你将使用一个更强大的嵌入式系统——Raspberry
+    Pi，通过音频信号生成有趣的激光图案。
 - en: The [previous chapter’s](nsp-venkitachalam503045-0027.xhtml#ch12) Pico had an
     RP2040 microcontroller with dual ARM Cortex-M0 processors running at speeds of
     up to 133 MHz, with 264KB of random access memory (RAM) and 2MB of nonvolatile
@@ -24,8 +33,13 @@
     still pales in comparison to a standard desktop or laptop computer, the Pi is
     nonetheless capable of running a Linux-based operating system and full-fledged
     Python, unlike the Pico.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: '[前一章](nsp-venkitachalam503045-0027.xhtml#ch12)的 Pico 配备了一个 RP2040 微控制器，内有双
+    ARM Cortex-M0 处理器，最高运行速度可达 133 MHz，配备 264KB 的随机存取内存（RAM）和 2MB 的外部闪存存储器。相比之下，Raspberry
+    Pi 3B+ 配备了一个更强大的 ARM Cortex-A53 处理器，工作频率为 1.4 GHz，拥有 1GB 的 RAM 和根据 SD 卡不同，存储容量为几
+    GB。虽然与标准的桌面或笔记本电脑相比，Pi 仍显得逊色，但它仍然能够运行基于 Linux 的操作系统，并且支持完整的 Python 环境，而 Pico 并不具备这个能力。'
 - en: In this chapter, you’ll use Python on the Raspberry Pi to read an audio file
     in the WAV format, perform computations based on the real-time audio data, and
     use that data to adjust the speed and direction of rotation of two motors in a
@@ -33,57 +47,85 @@
     an inexpensive laser module, producing Spirograph-like patterns that change in
     response to the audio. You’ll also simultaneously stream the audio to a speaker
     so you can hear the WAV file playing as you watch your laser light show.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，你将使用 Raspberry Pi 上的 Python 读取 WAV 格式的音频文件，基于实时音频数据进行计算，并利用这些数据调节激光显示装置中两个电机的转速和旋转方向。你将把镜子安装在电机上，以反射便宜的激光模块发出的光束，生成类似斯波罗图的图案，并根据音频信号的变化而变化。同时，你还会将音频同时播放到扬声器上，让你在观看激光灯光秀的同时，听到
+    WAV 文件的播放。
 - en: 'This project will push your knowledge of Python further as you learn to use
     the Raspberry Pi. Here are some of the topics we’ll cover:'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 本项目将进一步推动你对 Python 的理解，同时你还将学习如何使用 Raspberry Pi。以下是我们将要涵盖的主题：
 - en: • Generating interesting patterns with a laser and two rotating mirrors
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 使用激光和两个旋转镜子生成有趣的图案
 - en: • Getting frequency information from a signal using the fast Fourier transform
     (FFT)
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 使用快速傅里叶变换（FFT）获取信号的频率信息
 - en: • Computing FFTs using `numpy`
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 使用 `numpy` 计算 FFT
 - en: • Reading audio from WAV files
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 从 WAV 文件中读取音频
 - en: • Outputting audio data using `pyaudio`
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 使用 `pyaudio` 输出音频数据
 - en: • Driving motors with a Raspberry Pi
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 使用 Raspberry Pi 驱动电机
 - en: • Toggling a laser module on/off with a metal-oxide-semiconductor field-effect
     transistor (MOSFET)
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 使用金属氧化物半导体场效应晶体管（MOSFET）控制激光模块的开关
 - en: '[How It Works](nsp-venkitachalam503045-0008.xhtml#rah1501)'
+  id: totrans-14
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '[工作原理](nsp-venkitachalam503045-0008.xhtml#rah1501)'
 - en: You’ll use a Raspberry Pi to work with the audio data and control the hardware.
     [Figure 13-1](nsp-venkitachalam503045-0028.xhtml#fig13-1) shows a block diagram
     of what you’ll create in this project.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将使用 Raspberry Pi 处理音频数据并控制硬件。[图 13-1](nsp-venkitachalam503045-0028.xhtml#fig13-1)
+    显示了你将在本项目中创建的框图。
 - en: '![](images/nsp-venkitachalam503045-f13001.jpg)'
+  id: totrans-16
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13001.jpg)'
 - en: 'Figure 13-1: A block diagram of the laser audio project'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 13-1：激光音频项目的框图
 - en: The Raspberry Pi will use a WAV file in two ways. It will play the file through
     an attached speaker by way of `pyaudio`, while also analyzing the audio data in
     real time using a mathematical technique called a *fast Fourier transform (FFT)*.
@@ -92,12 +134,16 @@
     up directly to these external components. Instead, you’ll connect it indirectly
     through a motor driver board and a MOSFET. Before you begin, let’s consider in
     more detail how some of these aspects of the project will work.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 树莓派将以两种方式使用WAV文件。它将通过`pyaudio`将文件通过附加的扬声器播放，同时使用一种叫做*快速傅里叶变换（FFT）*的数学技术实时分析音频数据。树莓派将利用FFT数据通过其通用输入输出（GPIO）引脚驱动电机和激光器，但为了保护树莓派免受损害，你不会将它直接连接到这些外部组件。相反，你将通过电机驱动板和MOSFET间接连接它。在开始之前，我们先详细考虑一下项目中这些方面是如何工作的。
 - en: '[Generating Patterns with a Laser](nsp-venkitachalam503045-0008.xhtml#rbh1501)'
+  id: totrans-19
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[用激光生成图案](nsp-venkitachalam503045-0008.xhtml#rbh1501)'
 - en: To generate the laser patterns in this project, you’ll use a laser module and
     two mirrors attached to the shafts of two small DC motors, as shown in [Figure
     13-2](nsp-venkitachalam503045-0028.xhtml#fig13-2). Think of the laser as an intense
@@ -108,44 +154,62 @@
     the reflection projected will remain a fixed point, even as the motor spins. Because
     the plane of reflection of the laser is perpendicular to the spinning axis of
     the motor, it’s as if the mirror isn’t rotating at all.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了在这个项目中生成激光图案，你将使用一个激光模块和两个安装在两个小型直流电机轴上的镜子，如[图13-2](nsp-venkitachalam503045-0028.xhtml#fig13-2)所示。可以把激光看作是一束强烈的光，它即使在长距离投射时也会保持聚焦在一个小点上。这种聚焦之所以可能，是因为激光束的波被组织成只朝一个方向传播，并且它们彼此是同相的。如果你将激光照射到平面镜（[图13-2](nsp-venkitachalam503045-0028.xhtml#fig13-2)中的镜子A）的表面，投射出的反射点将保持固定，即使电机旋转。因为激光的反射平面垂直于电机的旋转轴，就好像镜子根本没有旋转。
 - en: Now, say the mirror is attached at an angle relative to the motor shaft, as
     shown on the right of [Figure 13-2](nsp-venkitachalam503045-0028.xhtml#fig13-2)
     (mirror B). As the shaft rotates, the projected point will trace an ellipse, and
     if the motor is spinning fast enough, the viewer will perceive the moving dot
     as a continuous shape.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设镜子相对于电机轴以一定角度安装，如[图13-2](nsp-venkitachalam503045-0028.xhtml#fig13-2)右侧所示（镜子B）。当轴旋转时，投射点将描绘出一个椭圆形，如果电机转速足够快，观察者将会将运动中的点看作一个连续的形状。
 - en: '![](images/nsp-venkitachalam503045-f13002.jpg)'
+  id: totrans-22
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13002.jpg)'
 - en: 'Figure 13-2: The flat mirror (mirror A) reflects a single dot. The reflection
     off the slanted mirror (mirror B) creates a circle as the motor spins.'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-2：平面镜（镜子A）反射出一个单一的点。倾斜镜子的反射（镜子B）随着电机旋转，形成一个圆形。
 - en: What if both mirrors are slanted and you arrange them so that the point reflected
     off mirror A is projected onto mirror B? Now when motors A and B spin, the pattern
     created by the reflected point will be a combination of the two rotational movements
     of motors A and B, producing interesting patterns, as shown in [Figure 13-3](nsp-venkitachalam503045-0028.xhtml#fig13-3).
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果两个镜子都倾斜，并且你将它们排列使得从镜子A反射的点投射到镜子B上呢？现在，当电机A和B旋转时，由反射点形成的图案将是电机A和B两种旋转运动的组合，产生有趣的图案，如[图13-3](nsp-venkitachalam503045-0028.xhtml#fig13-3)所示。
 - en: '![](images/nsp-venkitachalam503045-f13003.jpg)'
+  id: totrans-25
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13003.jpg)'
 - en: 'Figure 13-3: Reflecting laser light off two rotating, slanted mirrors produces
     interesting, complex patterns.'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-3：激光光束反射通过两面旋转的倾斜镜子，产生有趣且复杂的图案。
 - en: The exact patterns produced will depend on the speed and direction of rotation
     of the two motors, but they will be similar to the hypotrochoids produced by the
     Spirograph you explored in [Chapter 2](nsp-venkitachalam503045-0013.xhtml#ch02).
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 产生的确切图案将取决于两个电机的旋转速度和方向，但它们将类似于你在[第2章](nsp-venkitachalam503045-0013.xhtml#ch02)中探索的涡轮图形（Hypotrochoid）。
 - en: Motor Control
+  id: totrans-28
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 电机控制
 - en: You’ll use the Raspberry Pi to control the speed and direction of your motors
     through a technique called *pulse width modulation (**PWM)*. This is a way to
     power a device (such as a motor) by sending digital pulses that switch on and
@@ -155,39 +219,55 @@
     a percentage. To illustrate, [Figure 13-4](nsp-venkitachalam503045-0028.xhtml#fig13-4)
     shows three signals with the same frequency but different duty cycles—25 percent,
     50 percent, and 75 percent.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将使用树莓派通过一种叫做*脉冲宽度调制（**PWM**）*的技术来控制电机的速度和方向。这是一种通过发送快速开关的数字脉冲来为设备（如电机）供电的方式，使得设备“看到”一个连续的电压。发送到设备的信号具有固定的频率，但数字脉冲的开启时间比例，称为*占空比*，是可以变化的。占空比以百分比表示。举例来说，[图13-4](nsp-venkitachalam503045-0028.xhtml#fig13-4)展示了三个信号，它们的频率相同，但占空比不同——25%、50%和75%。
 - en: '![](images/nsp-venkitachalam503045-f13004.jpg)'
+  id: totrans-30
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13004.jpg)'
 - en: 'Figure 13-4: PWM signals with different duty cycles'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-4：具有不同占空比的PWM信号
 - en: The higher the duty cycle percentage, the longer the pulse is on for each cycle
     of the signal. The motor receiving the signal will perceive those longer pulses
     as a higher continuous voltage. By manipulating the duty cycle, you can thus provide
     varying power levels to the motors in this project, which will result in variations
     in motor speed and changes in the laser pattern.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 占空比百分比越高，每个信号周期内脉冲开启的时间越长。接收信号的电机将把这些较长的脉冲感知为较高的持续电压。通过调整占空比，你可以为本项目中的电机提供不同的功率，从而导致电机速度的变化和激光图案的变化。
 - en: NOTE PWM has many applications beyond motor control. It could also be used,
     for example, to control the brightness of dimmable LEDs.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意：PWM不仅仅用于电机控制，它还有许多其他应用。例如，它也可以用来控制可调光LED的亮度。
 - en: Motors operate at a relatively high voltage, but the Raspberry Pi can handle
     only so much current before it’s damaged. You’ll be using a TB6612FNG motor driver
     breakout board, similar to the ones shown in [Figure 13-5](nsp-venkitachalam503045-0028.xhtml#fig13-5),
     to act as an intermediary between the Pi and the motors, keeping the Pi safe.
     Many variants of this board are available, and you can choose any one of them,
     as long as you’re careful to wire it up correctly.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 电机在较高电压下运行，但树莓派只能处理有限的电流，否则会损坏。你将使用一块TB6612FNG电机驱动扩展板，类似于[图13-5](nsp-venkitachalam503045-0028.xhtml#fig13-5)中展示的那种，作为树莓派和电机之间的中介，从而保护树莓派的安全。市面上有很多该板的变种，你可以选择其中任何一种，只要你确保正确连接。
 - en: '![](images/nsp-venkitachalam503045-f13005.jpg)'
+  id: totrans-35
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13005.jpg)'
 - en: 'Figure 13-5: TB6612FNG motor driver breakout printed circuit boards (PCBs)'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-5：TB6612FNG电机驱动扩展板（PCB）
 - en: The bottom of the breakout board should have pin information. It’s also a good
     idea to look at the TB6612FNG chip datasheet, which you can download from the
     internet. The *A* and *B* in the pin names denote the two motors. The IN pins
@@ -197,56 +277,84 @@
     motor, which is exactly what you need for this project. We won’t go into the details
     of how this board works, but if you’re curious, you can start by reading up on
     an *H-bridge*, a common circuit design that uses MOSFETs to control motors.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 扩展板的底部应该有引脚信息。查看TB6612FNG芯片的数据手册也是个好主意，你可以从网上下载该手册。引脚名称中的*A*和*B*代表两个电机。IN引脚控制电机的方向，01和02引脚为电机供电，而PWM引脚通过脉冲宽度调制控制电机的速度。通过向这些引脚写入数据，你可以控制每个电机的旋转方向和速度，这正是你在这个项目中需要的功能。我们不会深入讨论这块板如何工作，但如果你有兴趣，可以从了解*H桥*开始，它是一种常用的电路设计，使用MOSFETs来控制电机。
 - en: NOTE You could replace this breakout part with any motor control circuit you’re
     familiar with, as long as you modify the code appropriately.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意：你可以将这个扩展部分替换为任何你熟悉的电机控制电路，只要你相应地修改代码即可。
 - en: Laser Module
+  id: totrans-39
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 激光模块
 - en: For the laser, you’ll use an inexpensive laser module breakout PCB similar to
     the one shown in [Figure 13-6](nsp-venkitachalam503045-0028.xhtml#fig13-6).
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于激光，你将使用一块廉价的激光模块扩展PCB，类似于[图13-6](nsp-venkitachalam503045-0028.xhtml#fig13-6)中展示的那种。
 - en: '![](images/nsp-venkitachalam503045-f13006.jpg)'
+  id: totrans-41
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13006.jpg)'
 - en: 'Figure 13-6: A laser module'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-6：激光模块
 - en: Different variants of laser modules are available. You want one with a 650 nanometer
     (nm) red laser that operates at 5 volts (V). (The 650 nm refers to the laser’s
     wavelength.) Be sure you understand the polarity and connections of this board
     before you use it for the project. Test it separately using a 5 V power supply.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 市面上有不同种类的激光模块。你需要一个具有 650 纳米（nm）红色激光、工作电压为 5 伏特（V）的模块。（650 nm 指的是激光的波长。）在使用该模块进行项目之前，确保理解该板的极性和连接方式。使用
+    5 V 电源单独测试它。
 - en: MOSFET
+  id: totrans-44
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: MOSFET
 - en: To turn the laser module on and off using the Raspberry Pi, you’ll use an *N-channel
     MOSFET*, which you can think of as an electrically controlled switch. You can
     use almost any N-channel MOSFET for the project, but the BS170 is cheap and readily
     available. [Figure 13-7](nsp-venkitachalam503045-0028.xhtml#fig13-7) shows the
     pin numbering for the MOSFET, as well as how to connect it to the laser module
     and the Raspberry Pi.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 要使用树莓派开关激光模块，你将使用一个 *N 通道 MOSFET*，它可以看作是一个电子控制开关。你可以为这个项目使用几乎任何 N 通道 MOSFET，但
+    BS170 便宜且容易获取。[图 13-7](nsp-venkitachalam503045-0028.xhtml#fig13-7) 显示了 MOSFET
+    的引脚编号，以及如何将其连接到激光模块和树莓派。
 - en: '![](images/nsp-venkitachalam503045-f13007.jpg)'
+  id: totrans-46
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13007.jpg)'
 - en: 'Figure 13-7: BS170 MOSFET connections'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 13-7：BS170 MOSFET 连接
 - en: The 10 kΩ resistor “pulls” the gate pin of the MOSFET to the ground, so it isn’t
     triggered when the Raspberry Pi GPIO pin is in a floating state (for example,
     after a GPIO cleanup). When you send a HIGH to the GPIO, the MOSFET switch turns
     on, effectively connecting the laser module to VM and GND and powering it on.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 10 kΩ 电阻将 MOSFET 的门极引脚拉到地面，因此当树莓派的 GPIO 引脚处于浮动状态时（例如，GPIO 清理后），MOSFET 不会被触发。当你向
+    GPIO 发送 HIGH 信号时，MOSFET 开关被打开，有效地将激光模块与 VM 和 GND 连接，并使其通电。
 - en: Why do you need a MOSFET? Can’t you just connect the laser module directly to
     a GPIO pin of the Raspberry Pi? That’s not a great idea, because the MOSFET can
     take a lot more current than your Raspberry Pi. Using a MOSFET isolates your Pi
@@ -254,12 +362,18 @@
     cheap MOSFET than your comparatively expensive Raspberry Pi! In general, the MOSFET
     trick is a good thing to remember whenever you want to control an external device
     with your Raspberry Pi.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 为什么需要 MOSFET？难道不能直接将激光模块连接到树莓派的 GPIO 引脚吗？那不是一个好主意，因为 MOSFET 可以承受比树莓派更多的电流。使用
+    MOSFET 可以将树莓派与负载上电流激增的情况隔离开来。与其烧掉相对便宜的 MOSFET，不如烧掉相对昂贵的树莓派！一般来说，当你想用树莓派控制外部设备时，记住
+    MOSFET 技巧是一个好习惯。
 - en: '[Analyzing Audio with the Fast Fourier Transform](nsp-venkitachalam503045-0008.xhtml#rbh1502)'
+  id: totrans-50
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[使用快速傅里叶变换分析音频](nsp-venkitachalam503045-0008.xhtml#rbh1502)'
 - en: Because the ultimate goal in this project is to control motor speeds based on
     audio input, you need to be able to analyze the audio in real time. Recall from
     [Chapter 4](nsp-venkitachalam503045-0016.xhtml#ch04) that tones from an acoustic
@@ -270,30 +384,44 @@
     of many discrete samples. In this project, you’ll use Python to implement a *fast
     Fourier transform (FFT)* algorithm to compute the DFT. (Throughout this chapter,
     I’ll use *FFT* to refer to both the algorithm and the result.)
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 因为这个项目的最终目标是基于音频输入控制电机速度，你需要能够实时分析音频。回想一下[第 4 章](nsp-venkitachalam503045-0016.xhtml#ch04)，从声学乐器发出的音调是由多个频率或泛音混合而成。事实上，任何声音都可以使用
+    *傅里叶变换* 分解成其组成的频率。当傅里叶变换应用于数字信号时，结果称为 *离散傅里叶变换（**DFT**）*，因为数字信号由多个离散样本组成。在这个项目中，你将使用
+    Python 实现 *快速傅里叶变换（FFT）* 算法来计算 DFT。（在本章中，我将使用 *FFT* 来指代算法和结果。）
 - en: '[Figure 13-8](nsp-venkitachalam503045-0028.xhtml#fig13-8) shows a simple example
     of an FFT. The top frame of the figure shows the waveform of a signal that combines
     just two sine waves. This plot is in the *time domain* because it’s showing how
     the signal’s amplitude varies over time. The bottom frame of the figure shows
     the FFT corresponding to that signal. The FFT is in the *frequency domain*; it’s
     showing what frequencies are present in the signal at a given moment in time.'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图13-8](nsp-venkitachalam503045-0028.xhtml#fig13-8)展示了一个简单的FFT示例。图形的上框显示了一个包含两条正弦波的信号波形。这个图是在*时域*中，因为它展示了信号的振幅如何随时间变化。图形的下框展示了该信号的FFT。FFT位于*频域*，它展示了信号在某一时刻所包含的频率。'
 - en: '![](images/nsp-venkitachalam503045-f13008.jpg)'
+  id: totrans-53
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13008.jpg)'
 - en: 'Figure 13-8: An audio signal containing multiple frequencies (top) and its
     corresponding FFT (bottom)'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-8：包含多个频率的音频信号（上图）及其对应的FFT（下图）
 - en: 'The wave in the top frame can be expressed by the following equation, which
     sums the two sine waves:'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 上框中的波形可以通过以下方程表示，该方程是两条正弦波的和：
 - en: '*y*(*t*) = 4sin(2π10*t*) + 2.5sin(2π30*t*)'
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: '*y*(*t*) = 4sin(2π10*t*) + 2.5sin(2π30*t*)'
 - en: Notice the 4 and 10 in the expression for the first wave—4 is the amplitude
     of the wave, and 10 is the frequency (in hertz). Meanwhile, the second wave has
     an amplitude of 2.5 and a frequency of 30 Hz. Take a look at the FFT in the bottom
@@ -301,21 +429,30 @@
     has revealed the signal’s component frequencies. The FFT also identifies the relative
     amplitude of each frequency; the intensity of the first peak is about twice that
     of the second peak.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意第一个波形中的4和10——4是波形的振幅，10是频率（以赫兹为单位）。而第二个波形的振幅为2.5，频率为30 Hz。查看图形下框的FFT，你会看到它有两个峰值，分别在10
+    Hz和30 Hz处。FFT揭示了信号的组成频率。FFT还可以识别每个频率的相对振幅；第一个峰值的强度大约是第二个峰值的两倍。
 - en: Now let’s look at a more realistic example. [Figure 13-9](nsp-venkitachalam503045-0028.xhtml#fig13-9)
     shows a complex audio signal in the top frame and the corresponding FFT in the
     bottom frame. Notice that the FFT contains many more peaks at a variety of intensities,
     indicating that the signal contains many more frequencies.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们看一个更现实的例子。[图13-9](nsp-venkitachalam503045-0028.xhtml#fig13-9)展示了上框中的复杂音频信号和下框中的对应FFT。注意，FFT包含了更多的峰值，强度各异，表明信号包含了更多的频率。
 - en: '![](images/nsp-venkitachalam503045-f13009.jpg)'
+  id: totrans-59
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13009.jpg)'
 - en: 'Figure 13-9: The FFT algorithm takes an amplitude signal (top) and computes
     its component frequencies (bottom).'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-9：FFT算法将振幅信号（上图）转换为其组成频率（下图）。
 - en: To compute an FFT, you need a set of samples. The choice of the number of samples
     is a bit arbitrary, but a small sample size wouldn’t give you a good picture of
     the signal’s frequency content and might also mean a higher computational load
@@ -324,160 +461,236 @@
     be getting a “real-time” frequency response for the signal. For the purposes of
     this project, a sample size of 2,048 will work. At a sampling rate of 44,100 Hz,
     2,048 samples represent about 0.046 seconds of audio.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 要计算FFT，你需要一组样本。样本数的选择有些随意，但样本数过小无法很好地展现信号的频率内容，而且可能会增加计算负担，因为你需要每秒计算更多的FFT。另一方面，样本数过大则会使信号的变化被平滑掉，因此你无法获得信号的“实时”频率响应。对于本项目，2,048的样本大小是合适的。在44,100
+    Hz的采样率下，2,048个样本大约代表0.046秒的音频。
 - en: 'You’ll use `numpy` to compute an FFT to split the audio data into its constituent
     frequencies, and then you’ll use that information to control the motors. First
     you’ll split the range of frequencies (in Hz) into three bands: [0, 100], [100,
     1000], and [1000, 2500]. You’ll compute an average amplitude level for each band,
     and each value will affect the motors and resulting laser pattern differently,
     as follows:'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将使用`numpy`来计算FFT，将音频数据分解为其组成频率，然后利用这些信息来控制电机。首先，你将把频率范围（以赫兹为单位）分为三个频段：[0, 100]，[100,
+    1000]和[1000, 2500]。你将计算每个频段的平均振幅，每个值将以不同的方式影响电机和最终的激光图案，具体如下：
 - en: • Changes in the average amplitude of low frequencies will affect the speed
     of the first motor.
+  id: totrans-63
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 低频平均振幅的变化将影响第一个电机的速度。
 - en: • Changes in the average amplitude of middle frequencies will affect the speed
     of the second motor.
+  id: totrans-64
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 中频的平均振幅变化会影响第二个电机的速度。
 - en: • When high frequencies peak above a certain threshold, the first motor will
     change direction.
+  id: totrans-65
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 当高频信号超过某一阈值时，第一个电机会改变方向。
 - en: With these rules, the laser pattern will change in response to the audio signal.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这些规则时，激光图案会根据音频信号发生变化。
 - en: '[Requirements](nsp-venkitachalam503045-0008.xhtml#rah1502)'
+  id: totrans-67
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '[需求](nsp-venkitachalam503045-0008.xhtml#rah1502)'
 - en: 'In this project, you’ll use the following Python modules:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 在此项目中，您将使用以下 Python 模块：
 - en: • `RPi.GPIO` to set up PWM and control the output of the pins
+  id: totrans-69
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • `RPi.GPIO` 用于设置 PWM 并控制引脚输出
 - en: • `time` for pausing between operations
+  id: totrans-70
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • `time` 用于操作间的暂停
 - en: • `wave` to read WAV files
+  id: totrans-71
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • `wave` 用于读取 WAV 文件
 - en: • `pyaudio` to process and stream audio data
+  id: totrans-72
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • `pyaudio` 用于处理和流式传输音频数据
 - en: • `numpy` for FFT computations
+  id: totrans-73
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • `numpy` 用于 FFT 计算
 - en: • `argparse` to process command line arguments
+  id: totrans-74
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • `argparse` 用于处理命令行参数
 - en: 'You’ll also need the following items to build the project:'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 您还需要以下物品来搭建此项目：
 - en: • One Raspberry Pi 3B+ or newer
+  id: totrans-76
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一台 Raspberry Pi 3B+ 或更新版本
 - en: • One 5 V adapter to power the Raspberry Pi
+  id: totrans-77
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一个 5 V 适配器，用于为 Raspberry Pi 供电
 - en: • One powered speaker with AUX (line-in) input (most Bluetooth speakers have
     an AUX input these days)
+  id: totrans-78
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一台带有 AUX（音频输入）接口的电源扬声器（如今大多数蓝牙扬声器都有 AUX 输入）
 - en: • One TB6612FNG motor breakout board
+  id: totrans-79
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一个 TB6612FNG 电机拆分板
 - en: • One laser module breakout board
+  id: totrans-80
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一个激光模块拆分板
 - en: • One 10 kΩ resistor
+  id: totrans-81
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一个 10 kΩ 电阻
 - en: • One BS170 N-channel MOSFET or equivalent
+  id: totrans-82
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一个 BS170 N-channel MOSFET 或等效型号
 - en: • Two DC motors like the ones used in a small toy, rated for 9 V
+  id: totrans-83
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 两个 9 V 小玩具电机
 - en: • Two small mirrors, approximately 1 inch or less in diameter
+  id: totrans-84
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 两面小镜子，直径大约 1 英寸或更小
 - en: • One 3.7 V 18650 2000 mAh (3C) lithium-ion battery with holder (or use four
     AA batteries on a holder)
+  id: totrans-85
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一个 3.7 V 18650 2000 mAh（3C）锂离子电池及电池架（或使用四个 AA 电池和电池架）
 - en: • Two 3D-printed parts to fix the mirrors onto the motor shafts (optional)
+  id: totrans-86
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 两个 3D 打印部件，用于将镜子固定在电机轴上（可选）
 - en: • One rectangular base, about 8 inches by 6 inches, to mount the hardware
+  id: totrans-87
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一个约 8 英寸 x 6 英寸的矩形底座，用于安装硬件
 - en: • Some LEGO bricks to raise the motors and laser module off the base so the
     mirrors can spin freely
+  id: totrans-88
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一些 LEGO 积木，用于将电机和激光模块从底座抬起，以便镜子能自由旋转
 - en: • A hot glue gun
+  id: totrans-89
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一把热熔胶枪
 - en: • Superglue to fix the mirrors to the motor shafts
+  id: totrans-90
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 强力胶水，用于将镜子固定在电机轴上
 - en: • A soldering iron
+  id: totrans-91
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一把电烙铁
 - en: • A breadboard
+  id: totrans-92
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 一个面包板
 - en: • Wires to make connections (single-core hookup wires with male pins on both
     sides work nicely)
+  id: totrans-93
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: • 用于连接的电线（带有双侧插头的单股连接线效果最好）
 - en: '[Setting Up the Raspberry Pi](nsp-venkitachalam503045-0008.xhtml#rbh1503)'
+  id: totrans-94
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[设置 Raspberry Pi](nsp-venkitachalam503045-0008.xhtml#rbh1503)'
 - en: To set up your Raspberry Pi, see [Appendix B](nsp-venkitachalam503045-0032.xhtml#appb).
     Follow the instructions in the appendix, and make sure you’ve installed the `numpy`
     and `pyaudio`Python packages required for this project. You’ll write code on the
     Raspberry Pi via a Secure Shell (SSH). You can set up Microsoft Visual Studio
     Code to work remotely on the Pi using an SSH from your laptop or desktop computer.
     This is also explained in [Appendix B](nsp-venkitachalam503045-0032.xhtml#appb).
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置 Raspberry Pi，请参见 [附录 B](nsp-venkitachalam503045-0032.xhtml#appb)。按照附录中的说明操作，并确保已安装本项目所需的
+    `numpy` 和 `pyaudio` Python 包。您将通过安全外壳（SSH）在 Raspberry Pi 上编写代码。您可以通过 SSH 在笔记本或台式电脑上设置
+    Microsoft Visual Studio Code 远程操作 Raspberry Pi。附录 B 中也有相关说明。[附录 B](nsp-venkitachalam503045-0032.xhtml#appb)
 - en: '[Constructing the Laser Display](nsp-venkitachalam503045-0008.xhtml#rbh1504)'
+  id: totrans-96
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[构建激光显示](nsp-venkitachalam503045-0008.xhtml#rbh1504)'
 - en: Before you hook up all the hardware, you should prepare the motors and the laser
     module for the laser display. The first order of business is to attach the mirrors
     to the motors. Each mirror has to be at a slight angle relative to the motor shaft.
@@ -485,8 +698,10 @@
     down on a flat surface and put a drop of hot glue in the center. Carefully dip
     the motor shaft in the glue, keeping it at a slight angle to the perpendicular
     with respect to the mirror, until the glue hardens.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 在连接所有硬件之前，您应该为激光显示准备电机和激光模块。第一步是将镜子固定到电机上。每个镜子都需要相对于电机轴有一个轻微的角度。可以使用热熔胶来完成这项操作。将镜子正面朝下放在平面上，并在中心滴一滴热熔胶。小心地将电机轴浸入胶水中，保持它与镜子的垂直线有轻微的角度，直到胶水凝固。
 - en: A better way would be to use a motor flange with a slanted face to which you
     can easily stick the mirror. But where would you find such a part? You can make
     it yourself using 3D printing! [Figure 13-10(a)](nsp-venkitachalam503045-0028.xhtml#fig13-10)
@@ -495,46 +710,68 @@
     shows the 3D printed parts. The mirror the laser strikes first will use the flange
     with the lesser tilt (5 degrees), and the second mirror will use the one with
     more tilt (10 degrees).
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 更好的方法是使用一个带有倾斜面的电机法兰，你可以轻松地将镜子粘贴到上面。但你能在哪找到这样的零件呢？你可以通过3D打印自己制作！[图13-10(a)](nsp-venkitachalam503045-0028.xhtml#fig13-10)展示了我使用免费开源程序OpenSCAD创建的3D设计。你可以从本书的GitHub仓库下载该设计。[图13-10(b)](nsp-venkitachalam503045-0028.xhtml#fig13-10)展示了3D打印的零件。激光首先打在的镜子将使用倾斜角度较小的法兰（5度），第二个镜子则使用倾斜角度较大的法兰（10度）。
 - en: '![](images/nsp-venkitachalam503045-f13010a.jpg)'
+  id: totrans-99
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13010a.jpg)'
 - en: (a)
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: (a)
 - en: '![](images/nsp-venkitachalam503045-f13010b.jpg)'
+  id: totrans-101
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13010b.jpg)'
 - en: (b)
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: (b)
 - en: 'Figure 13-10: An OpenSCAD model (a) and 3D-printed flanges (b)'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-10：OpenSCAD模型（a）和3D打印的法兰（b）
 - en: Print the flanges yourself if you have a 3D printer, or get them printed from
     a 3D printing service. (Either way, it will be inexpensive.) Once you have the
     parts, use superglue to attach the flanges to the motor shafts and the mirrors
     to the flanges. [Figure 13-11](nsp-venkitachalam503045-0028.xhtml#fig13-11) shows
     the fully assembled parts.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你有3D打印机，可以自己打印法兰，或者从3D打印服务商那里打印。（无论哪种方式，都不会很贵。）当你得到这些零件后，使用超级胶水将法兰粘在电机轴上，并将镜子固定在法兰上。[图13-11](nsp-venkitachalam503045-0028.xhtml#fig13-11)展示了完全组装好的零件。
 - en: '![](images/nsp-venkitachalam503045-f13011.jpg)'
+  id: totrans-105
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13011.jpg)'
 - en: 'Figure 13-11: Attach the mirrors to each motor shaft at a slight angle.'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-11：将镜子以轻微的角度附着到每个电机轴上。
 - en: To test the assembly, spin the mirror with your hand while shining the laser
     module at it. You should find the reflection of the laser dot moves in an ellipse
     when projected on a flat surface. Do the same for the second mirror. It should
     create a wider ellipse because of the larger angle with respect to the motor shaft.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了测试组件，手动旋转镜子，同时将激光模块对准镜子。你应该能发现激光点的反射在投射到平面表面时形成椭圆形。对第二个镜子进行相同操作。由于相对于电机轴的角度较大，它应该会形成一个更大的椭圆。
 - en: Aligning the Mirrors
+  id: totrans-108
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 调整镜子
 - en: Next, align the laser module with the mirrors so that the laser reflects from
     mirror A to mirror B, as shown in [Figure 13-12](nsp-venkitachalam503045-0028.xhtml#fig13-12).
     Be sure that the reflected laser light from mirror A stays within the circumference
@@ -542,20 +779,28 @@
     and error.) To test the arrangement, manually rotate mirror A. Also, be sure to
     position mirror B so that the light reflected from its surface will fall on a
     flat surface (like a wall) for the full range of rotation of both mirrors.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，将激光模块与镜子对齐，使激光从镜子A反射到镜子B，如[图13-12](nsp-venkitachalam503045-0028.xhtml#fig13-12)所示。确保镜子A反射的激光光束在镜子A的整个旋转范围内保持在镜子B的周长内。（这将需要一些反复试验。）为了测试排列，手动旋转镜子A。同时，确保将镜子B放置在合适的位置，使得镜子B表面反射的光线能够照射到平面表面（如墙面），并覆盖两个镜子整个旋转的范围。
 - en: '![](images/nsp-venkitachalam503045-f13012.jpg)'
+  id: totrans-110
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13012.jpg)'
 - en: 'Figure 13-12: The alignment of the laser and the mirrors'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13-12：激光与镜子的对准
 - en: 'NOTE As you tweak the alignment, you’ll need to keep the laser pointer on.
     You can do this by running the project code as follows: `python laser_audio.py
     --test_laser`. This command simply turns on the MOSFET controlling the laser module,
     as we’ll discuss later in the chapter.'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意 在调整对准时，你需要保持激光指示器开启。你可以通过运行以下项目代码来实现：`python laser_audio.py --test_laser`。该命令仅仅是打开控制激光模块的MOSFET，稍后我们将在本章讨论这一点。
 - en: Once you’re happy with the placement of the mirrors, hot-glue the laser module
     and the two motors with attached mirrors onto three identical blocks (LEGO blocks
     work great!) to raise them up so that the motors will be able to rotate freely.
@@ -563,123 +808,195 @@
     arrangement, mark the location of each by tracing their edge with a pencil. Then
     hot-glue the blocks onto the board. Or use a LEGO baseplate and simply attach
     the LEGO blocks to the baseplate.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦你对镜子的放置位置感到满意，用热熔胶将激光模块和附加镜子的两个电机粘到三个相同的块上（乐高积木效果很好！），这样可以将电机抬高，使其能够自由旋转。接下来，将这些块放在安装板上，当你对它们的位置满意时，用铅笔勾画出每个块的位置。然后将块用热熔胶固定在板上。或者你可以使用乐高底板，直接将乐高积木固定在底板上。
 - en: Powering the Motors
+  id: totrans-114
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 给电机供电
 - en: If your motors didn’t come with wires attached to their terminals (most don’t),
     solder wires to both terminals, being sure to leave sufficient wire (say, 6 inches)
     so that you can attach the motors to the motor driver board. The motors can be
     powered by a 3.7 V lithium-ion battery, or a 4x AA battery pack.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你的电机没有附带连接线（大多数电机是没有的），请将电线焊接到两个端子上，并确保留下足够的线长（比如 6 英寸），以便将电机连接到电机驱动板。电机可以由
+    3.7 V 锂离子电池或 4 节 AA 电池组供电。
 - en: '[Hooking Up the Hardware](nsp-venkitachalam503045-0008.xhtml#rbh1505)'
+  id: totrans-116
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[硬件连接](nsp-venkitachalam503045-0008.xhtml#rbh1505)'
 - en: Now to hook up the hardware. You need to connect the Raspberry Pi, the motor
     driver board, the MOSFET, the laser module board, and the motors. The Raspberry
     Pi has a collection of GPIO pins for connecting to other hardware. To understand
     the pin layout, I highly recommend you visit the website [https://pinout.xyz](https://pinout.xyz/).
     It gives you a handy visual reference and explains the various pin functions.
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在开始连接硬件。你需要将树莓派、电机驱动板、MOSFET、激光模块板和电机连接起来。树莓派有一组 GPIO 引脚用于连接其他硬件。为了理解引脚布局，我强烈推荐你访问网站
+    [https://pinout.xyz](https://pinout.xyz/)，它提供了一个便捷的视觉参考，并解释了各种引脚的功能。
 - en: NOTE There are a few different conventions for referring to pin numbers on a
     Raspberry Pi. For this project, we’ll use the *BCM pin-numbering* convention.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意：在提到树莓派的引脚编号时，有几种不同的约定。在本项目中，我们将使用*BCM引脚编号*约定。
 - en: '[Table 13-1](nsp-venkitachalam503045-0028.xhtml#tab13-1) lists the connections
     you need to make.'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: '[表 13-1](nsp-venkitachalam503045-0028.xhtml#tab13-1) 列出了你需要连接的接口。'
 - en: 'Table 13-1: Hardware Wiring Connections'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 表 13-1：硬件接线连接
 - en: '| From | To |'
+  id: totrans-121
   prefs: []
   type: TYPE_TB
+  zh: '| 从 | 到 |'
 - en: '| --- | --- |'
+  id: totrans-122
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- |'
 - en: '| Raspberry Pi GPIO 12 | TB6612FNG PWMA |'
+  id: totrans-123
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 GPIO 12 | TB6612FNG PWMA |'
 - en: '| Raspberry Pi GPIO 13 | TB6612FNG PWMB |'
+  id: totrans-124
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 GPIO 13 | TB6612FNG PWMB |'
 - en: '| Raspberry Pi GPIO 7 | TB6612FNG AIN1 |'
+  id: totrans-125
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 GPIO 7 | TB6612FNG AIN1 |'
 - en: '| Raspberry Pi GPIO 8 | TB6612FNG AIN2 |'
+  id: totrans-126
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 GPIO 8 | TB6612FNG AIN2 |'
 - en: '| Raspberry Pi GPIO 5 | TB6612FNG BIN1 |'
+  id: totrans-127
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 GPIO 5 | TB6612FNG BIN1 |'
 - en: '| Raspberry Pi GPIO 6 | TB6612FNG BIN2 |'
+  id: totrans-128
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 GPIO 6 | TB6612FNG BIN2 |'
 - en: '| Raspberry Pi GPIO 22 | TB6612FNG STBY |'
+  id: totrans-129
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 GPIO 22 | TB6612FNG STBY |'
 - en: '| Raspberry Pi GND | TB6612FNG GND |'
+  id: totrans-130
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 GND | TB6612FNG GND |'
 - en: '| Raspberry Pi 3V3 | TB6612FNG VCC |'
+  id: totrans-131
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 3V3 | TB6612FNG VCC |'
 - en: '| Raspberry Pi GPIO 25 | BS170 GATE (also to GND via 10 kΩ resistor) |'
+  id: totrans-132
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 GPIO 25 | BS170 GATE（也通过 10 kΩ 电阻连接到 GND） |'
 - en: '| Raspberry Pi GND | BS170 SOURCE |'
+  id: totrans-133
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 GND | BS170 SOURCE |'
 - en: '| Laser module GND | BS170 DRAIN |'
+  id: totrans-134
   prefs: []
   type: TYPE_TB
+  zh: '| 激光模块 GND | BS170 DRAIN |'
 - en: '| Laser module VCC | Battery pack VCC (+) |'
+  id: totrans-135
   prefs: []
   type: TYPE_TB
+  zh: '| 激光模块 VCC | 电池组 VCC（+） |'
 - en: '| Battery pack GND (−) | TB6612FNG GND |'
+  id: totrans-136
   prefs: []
   type: TYPE_TB
+  zh: '| 电池组 GND（−） | TB6612FNG GND |'
 - en: '| Battery pack VCC (+) | TB6612FNG VM |'
+  id: totrans-137
   prefs: []
   type: TYPE_TB
+  zh: '| 电池组 VCC（+） | TB6612FNG VM |'
 - en: '| Motor #1 connector #1 (polarity doesn’t matter) | TB6612FNG A01 |'
+  id: totrans-138
   prefs: []
   type: TYPE_TB
+  zh: '| 电机 #1 连接器 #1（极性无关） | TB6612FNG A01 |'
 - en: '| Motor #1 connector #2 (polarity doesn’t matter) | TB6612FNG A02 |'
+  id: totrans-139
   prefs: []
   type: TYPE_TB
+  zh: '| 电机 #1 连接器 #2（极性无关） | TB6612FNG A02 |'
 - en: '| Motor #2 connector #1 (polarity doesn’t matter) | TB6612FNG B01 |'
+  id: totrans-140
   prefs: []
   type: TYPE_TB
+  zh: '| 电机 #2 连接器 #1（极性无关） | TB6612FNG B01 |'
 - en: '| Motor #2 connector #2 (polarity doesn’t matter) | TB6612FNG B02 |'
+  id: totrans-141
   prefs: []
   type: TYPE_TB
+  zh: '| 电机 #2 连接器 #2（极性无关） | TB6612FNG B02 |'
 - en: '| Raspberry Pi 3.5 mm audio jack | AUX input of powered speaker |'
+  id: totrans-142
   prefs: []
   type: TYPE_TB
+  zh: '| 树莓派 3.5 mm 音频插孔 | 有源扬声器的 AUX 输入 |'
 - en: '[Figure 13-13](nsp-venkitachalam503045-0028.xhtml#fig13-13) shows everything
     wired up.'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 13-13](nsp-venkitachalam503045-0028.xhtml#fig13-13) 展示了完整的接线图。'
 - en: '![](images/nsp-venkitachalam503045-f13013.jpg)'
+  id: totrans-144
   prefs: []
   type: TYPE_IMG
+  zh: '![](images/nsp-venkitachalam503045-f13013.jpg)'
 - en: 'Figure 13-13: The completely wired-up laser display'
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 13-13：完全接线的激光显示
 - en: Now let’s look at the code.
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们来看看代码。
 - en: '[The Code](nsp-venkitachalam503045-0008.xhtml#rah1503)'
+  id: totrans-147
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '[代码](nsp-venkitachalam503045-0008.xhtml#rah1503)'
 - en: The code for this project is in the file *laser_audio.py*. You’ll begin with
     some basic setup. Then you’ll define functions to operate and test the motors
     and laser, as well as a function to process audio data from a WAV file and control
@@ -687,156 +1004,250 @@
     line options through the `main()` function. To see the full program, skip ahead
     to [“The Complete Code”](nsp-venkitachalam503045-0028.xhtml#ah1507) on [page 305](nsp-venkitachalam503045-0028.xhtml#p305).
     You can also download the code at [https://github.com/mkvenkit/pp2e/tree/main/laser_audio](https://github.com/mkvenkit/pp2e/tree/main/laser_audio).
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 该项目的代码位于 *laser_audio.py* 文件中。你将从一些基本设置开始。接着，你将定义控制电机和激光器的函数，以及一个用于处理 WAV 文件中的音频数据并基于这些数据控制电机的函数。最后，你将把所有内容整合起来，并通过
+    `main()` 函数接受命令行选项。要查看完整的程序，请跳转到 [“完整代码”](nsp-venkitachalam503045-0028.xhtml#ah1507)
+    在 [第305页](nsp-venkitachalam503045-0028.xhtml#p305)。你也可以在 [https://github.com/mkvenkit/pp2e/tree/main/laser_audio](https://github.com/mkvenkit/pp2e/tree/main/laser_audio)
+    下载代码。
 - en: '[Setting Up](nsp-venkitachalam503045-0008.xhtml#rbh1506)'
+  id: totrans-149
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '[设置](nsp-venkitachalam503045-0008.xhtml#rbh1506)'
 - en: 'Start by importing the required modules:'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先导入所需的模块：
 - en: import RPi.GPIO as GPIO
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: import RPi.GPIO as GPIO
 - en: import time
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: import time
 - en: import argparse
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: import argparse
 - en: import pyaudio
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: import pyaudio
 - en: import wave
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: import wave
 - en: import numpy as np
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: import numpy as np
 - en: The `RPi.GPIO` module lets you use the pins of the Raspberry Pi. You’ll use
     the `time` module to put delays in your code, and you’ll use `argparse` to add
     command line arguments to the program. The `pyaudio` and `wave` modules will help
     you read data from WAV files and output an audio stream. Finally, you’ll use `numpy`
     to compute the FFT of the audio data.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: '`RPi.GPIO` 模块让你可以使用树莓派的引脚。你将使用 `time` 模块在代码中加入延时，使用 `argparse` 添加命令行参数。`pyaudio`
+    和 `wave` 模块将帮助你从 WAV 文件读取数据并输出音频流。最后，你将使用 `numpy` 计算音频数据的 FFT。'
 - en: 'Next, you initialize a few global variables:'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，你初始化了一些全局变量：
 - en: define pin numbers
+  id: totrans-159
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 定义引脚编号
 - en: uses TB6612FNG motor driver pin naming
+  id: totrans-160
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 TB6612FNG 电机驱动器的引脚命名方式
 - en: PWMA = 12
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: PWMA = 12
 - en: PWMB = 13
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: PWMB = 13
 - en: AIN1 = 7
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: AIN1 = 7
 - en: AIN2 = 8
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: AIN2 = 8
 - en: BIN1 = 5
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: BIN1 = 5
 - en: BIN2 = 6
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: BIN2 = 6
 - en: STBY = 22
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: STBY = 22
 - en: LASER = 25
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: LASER = 25
 - en: This code stores the pin numbers for all the Raspberry Pi pins used in the project.
     `PWMA`, `PWMB`, `AIN1`, `AIN2`, `BIN1`, `BIN2`, and `STBY` are pins that connect
     to the TB6612FNG motor driver. The `LASER` pin will connect to the gate of the
     MOSFET, which can turn the laser module on and off. Note that you’re using the
     BCM pin-numbering convention here.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码存储了项目中使用的所有树莓派引脚的引脚编号。`PWMA`、`PWMB`、`AIN1`、`AIN2`、`BIN1`、`BIN2` 和 `STBY`
+    是连接到 TB6612FNG 电机驱动器的引脚。`LASER` 引脚将连接到 MOSFET 的栅极，用于控制激光模块的开关。请注意，这里使用的是 BCM 引脚编号方式。
 - en: 'Continue with a few more global variables:'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来再定义一些全局变量：
 - en: global PWM objects
+  id: totrans-171
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: global PWM 对象
 - en: pwm_a = None
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: pwm_a = None
 - en: pwm_b = None
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: pwm_b = None
 - en: size of audio data read in
+  id: totrans-174
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 读取的音频数据大小
 - en: CHUNK = 2048
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: CHUNK = 2048
 - en: FFT size
+  id: totrans-176
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: FFT 大小
 - en: N = CHUNK
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: N = CHUNK
 - en: Here you initialize the variables `pwm_a` and `pwm_b` that will represent `PWM`
     objects, which you’ll use to control the motors. You set them to `None` here because
     it’s too early in the code to create the actual `PWM` objects. You also set `CHUNK`,
     the number of audio data samples you’ll read in from the WAV file at a time, and
     `N`, the number of samples you’ll use to compute the FFT.
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，你初始化了 `pwm_a` 和 `pwm_b` 变量，它们将表示 `PWM` 对象，之后你将使用它们来控制电机。你将它们设置为 `None`，因为在代码的这一部分还不适合创建实际的
+    `PWM` 对象。你还设置了 `CHUNK`，即从 WAV 文件中一次读取的音频数据样本数，以及 `N`，即用于计算 FFT 的样本数。
 - en: 'You finish setting up by initializing the GPIO pins. This is necessary to use
     the pins. Define a function `init_pins()` for this purpose:'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 完成设置后，你需要初始化 GPIO 引脚才能使用它们。为此，定义一个函数 `init_pins()`：
 - en: 'def init_pins():'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 'def init_pins():'
 - en: '"""set up pins"""'
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: '"""设置引脚"""'
 - en: ❶ global pwm_a, pwm_b
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: ❶ global pwm_a, pwm_b
 - en: '# use BCM pin numbering'
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 使用 BCM 引脚编号'
 - en: ❷ GPIO.setmode(GPIO.BCM)
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: ❷ GPIO.setmode(GPIO.BCM)
 - en: '# put pins into a list'
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 将引脚放入列表中'
 - en: pins = [PWMA, PWMB, AIN1, AIN2, BIN1, BIN2, STBY, LASER]
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: pins = [PWMA, PWMB, AIN1, AIN2, BIN1, BIN2, STBY, LASER]
 - en: '# set up pins as outputs'
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 将引脚设置为输出'
 - en: ❸ GPIO.setup(pins, GPIO.OUT)
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: ❸ GPIO.setup(pins, GPIO.OUT)
 - en: '# set PWM'
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 设置 PWM'
 - en: pwm_a = GPIO.PWM(PWMA, 100)
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: pwm_a = GPIO.PWM(PWMA, 100)
 - en: pwm_b = GPIO.PWM(PWMB, 100)
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: pwm_b = GPIO.PWM(PWMB, 100)
 - en: First you indicate that `pwm_a` and `pwm_b` are global variables ❶, since you’ll
     be setting them inside this function. Then you set the pin mode to the BCM numbering
     convention ❷. Next, you put the pin variables you set earlier into a `pins` list
@@ -845,78 +1256,101 @@
     The argument `100` is the frequency, in hertz, of the signal that will drive each
     motor. You’ll vary the duty cycles of those signals to control the motors’ speeds
     using pulse width modulation.
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
 - en: '[Controlling the Hardware](nsp-venkitachalam503045-0008.xhtml#rbh1507)'
+  id: totrans-193
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'You need some helper functions to control the laser module and the motors.
     Let’s look first at the function that toggles the laser module:'
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
 - en: 'def laser_on(on):'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
 - en: '# pin 25 controls laser ctrl mosfet'
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(LASER, on)
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
 - en: This function takes a parameter `on` that will be a Boolean `True/False` value.
     You pass that parameter to the `GPIO.output()` method to set the `LASER` pin on
     (`True`) or off (`False`). This will trigger the MOSFET to turn the laser module
     on or off.
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
 - en: 'Next, define a function `start_motors()` to turn the motors on at the start
     of the project:'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
 - en: 'def start_motors():'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
 - en: '"""start both motors"""'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
 - en: '# enable driver chip'
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ GPIO.output(STBY, GPIO.HIGH)
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
 - en: '# set motor direction for channel A'
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
 - en: ❷ GPIO.output(AIN1, GPIO.HIGH)
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
 - en: ❸ GPIO.output(AIN2, GPIO.LOW)
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
 - en: '# set motor direction for channel B'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN1, GPIO.HIGH)
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN2, GPIO.LOW)
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
 - en: '# set PWM for channel A'
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
 - en: duty_cycle = 10
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
 - en: ❹ pwm_a.start(duty_cycle)
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
 - en: '# set PWM for channel B'
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_b.start(duty_cycle)
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
 - en: First you set the `STBY` (standby) pin to `HIGH` ❶, which in effect turns on
@@ -927,49 +1361,64 @@
     to set the speed of the motors ❹. You set the duty cycle (which correlates to
     the motor speed) to 10 percent, a relatively low value, since this is just an
     initializing call.
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
 - en: 'You also need a function to stop the motors from spinning at the end of the
     project. Here’s the definition:'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
 - en: 'def stop_motors():'
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
 - en: '"""stop both motors"""'
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
 - en: '# stop PWM'
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ pwm_a.stop()
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
 - en: ❷ pwm_b.stop()
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
 - en: '# brake A'
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN1, GPIO.HIGH)
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN2, GPIO.HIGH)
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
 - en: '# brake B'
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN1, GPIO.HIGH)
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN2, GPIO.HIGH)
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
 - en: '# disable driver chip'
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
 - en: ❸ GPIO.output(STBY, GPIO.LOW)
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
 - en: To stop the motors from spinning, you first stop the PWM signals going to the
@@ -977,64 +1426,84 @@
     pins all to `HIGH`, which has the effect of “braking” each motor to a stop. Finally,
     you disable the motor driver by setting the `STBY` pin to `LOW` ❸. Standby mode
     saves power when the motors aren’t required to function.
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
 - en: You need one more helper function to set the speed and direction of both motors.
     You’ll use this function to adjust the motors based on your real-time audio analysis.
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
 - en: 'def set_motor_speed_dir(dca, dcb, dira, dirb):'
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
 - en: '"""set speed and direction of motors"""'
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
 - en: '# set duty cycle'
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ pwm_a.ChangeDutyCycle(dca)
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_b.ChangeDutyCycle(dcb)
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
 - en: '# set direction A'
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
 - en: '❷ if dira:'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN1, GPIO.HIGH)
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN2, GPIO.LOW)
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
 - en: '❸ else:'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN1, GPIO.LOW)
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN2, GPIO.HIGH)
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
 - en: 'if dirb:'
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN1, GPIO.HIGH)
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN2, GPIO.LOW)
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
 - en: 'else:'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN1, GPIO.LOW)
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN2, GPIO.HIGH)
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
 - en: 'The `set_motor_speed_dir()` function takes four parameters: `dca` and `dcb`
@@ -1046,9 +1515,11 @@
     motor A spin in one direction. However, if `dira` is `False` ❸, you set the pins
     the opposite way, which will spin the motor in the other direction. You do the
     same thing for motor B using the `dirb` parameter.'
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
 - en: '[Processing the Audio](nsp-venkitachalam503045-0008.xhtml#rbh1508)'
+  id: totrans-251
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1056,66 +1527,87 @@
     data from a WAV file, outputs an audio stream with `pyaudio`, analyzes the audio
     data by computing an FFT, and uses the resulting analysis to control the motors.
     We’ll look at the function in sections.
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
 - en: 'def process_audio(filename):'
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
 - en: print("opening {}...".format(filename))
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
 - en: '# open WAV file'
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ wf = wave.open(filename, 'rb')
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
 - en: '# print audio details'
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
 - en: ❷ print("SW = {}, NCh = {}, SR = {}".format(wf.getsampwidth(),
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
 - en: wf.getnchannels(), wf.getframerate()))
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
 - en: '# check for supported format'
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
 - en: '❸ if wf.getsampwidth() != 2 or wf.getnchannels() != 1:'
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
 - en: print("Only single channel 16 bit WAV files are supported!")
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
 - en: wf.close()
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
 - en: return
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
 - en: '# create PyAudio object'
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
 - en: ❹ p = pyaudio.PyAudio()
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
 - en: '# open an output stream'
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
 - en: ❺ stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
 - en: channels=wf.getnchannels(),
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
 - en: rate=wf.getframerate(),
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
 - en: output=True)
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
 - en: '# read first frame'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
 - en: 'You start by using the `wave` module to open the audio file passed into the
@@ -1125,6 +1617,7 @@
     number of channels in the audio, and `SR` is the sampling rate. To keep the project
     simple, you’ll support only single-channel, 16-bit WAV files as input. You check
     for these specs ❸, and if the input doesn’t match, you return from the function.'
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
 - en: Next, you create the `PyAudio` object that you’ll use to stream data from the
@@ -1133,110 +1626,174 @@
     number of channels, and sample rate as the WAV file ❺. For the Raspberry Pi, the
     default sound output is the 3.5 mm audio jack on the board. As long as your speaker
     is plugged into this jack, you’ll hear the sound output.
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，你创建了`PyAudio`对象，用于将数据从WAV文件流式传输到输出 ❹。然后你打开一个`pyaudio`输出流（如`output=True`参数所示），并将其配置为与WAV文件的采样宽度、通道数和采样率相同
+    ❺。对于树莓派，默认的音频输出是板上的3.5毫米音频插孔。只要你的扬声器插入这个插孔，就可以听到声音输出。
 - en: 'Here’s the next part of the function:'
+  id: totrans-275
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面是函数的下一部分：
 - en: ❶ data = wf.readframes(CHUNK)
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: ❶ data = wf.readframes(CHUNK)
 - en: ❷ buf = np.frombuffer(data, dtype=np.int16)
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: ❷ buf = np.frombuffer(data, dtype=np.int16)
 - en: '# store sample rate'
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 存储采样率'
 - en: ❸ SR = wf.getframerate()
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: ❸ SR = wf.getframerate()
 - en: '# start motors'
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 启动电机'
 - en: start_motors()
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: start_motors()
 - en: '# laser on'
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 激光开'
 - en: laser_on(True)
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: laser_on(True)
 - en: Here you read `CHUNK` samples from the WAV file into variable `data` ❶. Remember,
     you’ve set `CHUNK` to `2048`, and each sample is 2 bytes wide, so you’ll be reading
     a total of 2,048 16-bit values. You read only one chunk of data because of how
     the function’s main loop is structured, as you’ll see soon.
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里你从WAV文件中读取`CHUNK`个样本到变量`data`中 ❶。记住，你已经将`CHUNK`设置为`2048`，而每个样本宽度为2字节，因此你将读取总共2,048个16位值。由于函数主循环的结构，你一次只读取一个数据块，稍后你会看到这一点。
 - en: The `readframes()` method returns a `bytes` object, but you use the `numpy`
     library’s `frombuffer()` function to convert the `bytes` object into a `numpy`
     array of 16-bit integers called `buf` ❷. You store the sampling rate (the `wave`
     module calls it the *frame rate*) in variable `SR` ❸; you’ll need it later. Then
     you call the `start_motors()` and `laser_on()` functions, which we’ve already
     discussed, to get the motors and the laser module going.
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: '`readframes()`方法返回一个`bytes`对象，但你使用`numpy`库的`frombuffer()`函数将`bytes`对象转换为名为`buf`的16位整数的`numpy`数组
+    ❷。你将采样率（`wave`模块称之为*帧率*）存储在变量`SR`中 ❸；稍后你会用到它。然后你调用`start_motors()`和`laser_on()`函数，我们之前已经讨论过，用来启动电机和激光模块。'
 - en: Next, you enter the function’s main loop, which outputs the audio and performs
     the FFT. The loop works on one chunk of audio data at a time, which is why you
     read only a single chunk of data in the previous code listing. Notice that the
     loop occurs inside a `try` block. Later, you’ll write an `except` block to handle
     any problems that arise during the execution of the loop.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，你进入函数的主循环，该循环输出音频并执行FFT。循环一次处理一个音频数据块，这就是为什么在前面的代码中你只读取一个数据块的原因。注意，循环发生在`try`块内。稍后你会写一个`except`块来处理循环执行过程中可能出现的任何问题。
 - en: '# read audio data from WAV file'
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 从WAV文件读取音频数据'
 - en: 'try:'
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 'try:'
 - en: '# loop till there is no data to be read'
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 循环直到没有数据可读'
 - en: '❶ while len(data) > 0:'
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: '❶ while len(data) > 0:'
 - en: '# write stream to output'
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 将流写入输出'
 - en: ❷ stream.write(data)
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: ❷ stream.write(data)
 - en: '# ensure enough samples for FFT'
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 确保有足够的样本用于FFT'
 - en: '❸ if len(buf) == N:'
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: '❸ if len(buf) == N:'
 - en: ❹ buf = np.frombuffer(data, dtype=np.int16)
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: ❹ buf = np.frombuffer(data, dtype=np.int16)
 - en: '# do FFT'
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 执行FFT'
 - en: ❺ fft = np.fft.rfft(buf)
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: ❺ fft = np.fft.rfft(buf)
 - en: ❻ fft = np.abs(fft) * 2.0/N
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: ❻ fft = np.abs(fft) * 2.0/N
 - en: '# calc levels'
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 计算音量等级'
 - en: '# get average of 3 frequency bands'
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 获取3个频段的平均值'
 - en: '# 0-100 Hz, 100-1000 Hz, and 1000-2500 Hz'
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: '# 0-100 Hz, 100-1000 Hz, 和 1000-2500 Hz'
 - en: ❼ levels = [np.sum(fft[0:100])/100,
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: ❼ levels = [np.sum(fft[0:100])/100,
 - en: np.sum(fft[100:1000])/900,
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: np.sum(fft[100:1000])/900,
 - en: np.sum(fft[1000:2500])/1500]
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: np.sum(fft[1000:2500])/1500]
 - en: The main loop repeats until `data` is empty ❶, meaning you’ve gotten to the
     end of the WAV file. In the loop, you write the current chunk of data to the `pyaudio`
     output stream ❷. This will allow you to hear the WAV file you’re processing at
@@ -1246,8 +1803,11 @@
     because the last chunk of data read in may not have the full number of samples
     needed for the FFT. In that case, you’ll simply skip calculating the FFT and updating
     the motors, since the audio file is basically over anyway.
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 主循环重复进行，直到`data`为空 ❶，这意味着你已经读取到WAV文件的末尾。在循环中，你将当前数据块写入`pyaudio`输出流 ❷。这样，你可以在驱动电机的同时听到正在处理的WAV文件。然后你检查当前数据块中是否有`N`个样本来计算FFT
+    ❸（你在代码开始时将`N`设置为`2048`，与数据块大小相同）。这个检查是必要的，因为最后一个读取的数据块可能没有足够的样本用于FFT。在这种情况下，你会跳过FFT的计算和电机的更新，因为音频文件已经基本结束。
 - en: 'Next, you load the audio data into a `numpy` array of 16-bit integers ❹. With
     the data in this format, computing the FFT is quite straightforward: you simply
     use the `rfft()` method from the `numpy.fft` module ❺. This method takes a signal
@@ -1256,6 +1816,7 @@
     however, so you use the `abs()` method to get the magnitudes of these complex
     numbers, which are real ❻. The `2.0/N` is a normalization factor you use to map
     the FFT values to the expected range.'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
 - en: 'Continuing the loop, you extract the relevant information from the FFT to control
@@ -1266,6 +1827,7 @@
     average amplitude value of the frequencies in each band by using the `numpy.``sum()`
     method and dividing the result by the number of frequencies in that band ❼. You
     store the three averages in a Python list.'
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
 - en: 'Notice that you’re doing two different things in the `while` loop: sending
@@ -1274,45 +1836,58 @@
     enough—it finishes before the current chunk of audio data has finished playing.
     Try an experiment: put a time delay right after FFT, and see what happens to the
     sound output!'
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
 - en: Now you need to convert the average amplitudes from the FFT into motor speeds
     and directions, still within the `while` loop started in the previous listing.
     The speeds need to be percentages, while the directions need to be `True/False`
     values.
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
 - en: '# speed1'
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ dca = int(5*levels[0])  percent 60
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
 - en: '# speed2'
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
 - en: ❷ dcb = int(100 + levels[1])  percent 60
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
 - en: '# dir'
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: dira = False
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
 - en: dirb = True
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
 - en: '❸ if levels[2] > 0.1:'
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
 - en: dira = True
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
 - en: '# set motor direction and speed'
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
 - en: ❹ set_motor_speed_dir(dca, dcb, dira, dirb)
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
 - en: First you take the value from the lowest frequency band, scale it by a factor
@@ -1321,11 +1896,13 @@
     speed of motor A. Then you add `100` to the value from the middle frequency band
     and again use the modulus operator to place it in the [0, 60] range ❷. This value
     controls the speed of motor B.
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: NOTE It’s not a good idea to run the motors too fast at first, which is why
     this code limits the motors’ speeds to 60 percent. Once you’re confident the display
     is working, you can try increasing the speed threshold at ❶ and ❷.
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
 - en: By default, you set `dira` to `False` to run motor A in one direction, but you
@@ -1333,6 +1910,7 @@
     above a threshold of `0.1` ❸. Meanwhile, you keep motor B’s direction constant
     by setting `dirb` to `True`. Finally, you call your `set_motor_speed_dir()` function
     to run the motors at the speeds and directions you’ve calculated ❹.
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
 - en: NOTE There’s no particularly elegant rule governing how you convert the FFT
@@ -1344,39 +1922,51 @@
     with the calculations and create your own conversions. There are no wrong answers
     here, as long as your method puts the motor speeds in the [0, 100] range (or less
     to avoid high speeds) and sets the directions to be `True` or `False`.
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
 - en: 'Here’s the remainder of the `process_audio()` function:'
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
 - en: '# read next'
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ data = wf.readframes(CHUNK)
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
 - en: '❷ except BaseException as err:'
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
 - en: print("Unexpected {}, type={}".format(err, type(err)))
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
 - en: '❸ finally:'
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("Finally: Pyaudio clean up...")'
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
 - en: stream.stop_stream()
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
 - en: stream.close()
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
 - en: '# stop motors'
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
 - en: stop_motors()
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
 - en: First you conclude the `while` loop by reading in the next chunk of audio data
@@ -1387,93 +1977,122 @@
     cleanup in a `finally` block ❸ that will execute whether or not any exceptions
     are thrown. In this block, you stop the `pyaudio` output stream and close it,
     and you call your `stop_motors()` function to stop the motors from spinning.
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
 - en: '[Testing the Motors](nsp-venkitachalam503045-0008.xhtml#rbh1509)'
+  id: totrans-337
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'For testing purposes, it would be useful to be able to manually set the speed
     and direction of the motors and view the resulting laser pattern. Here’s a `test_motors()`
     function that makes this possible:'
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
 - en: 'def test_motors():'
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
 - en: '"""test motors by manually setting speed and direction"""'
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
 - en: '# turn laser on'
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ laser_on(True)
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
 - en: '# start motors'
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
 - en: ❷ start_motors()
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
 - en: '# read user input'
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
 - en: 'try:'
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
 - en: 'while True:'
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
 - en: ❸ print("Enter dca dcb dira dirb (eg. 50 100 1 0):")
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
 - en: '# read input'
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
 - en: str_in = input()
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
 - en: '# parse values'
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
 - en: ❹ vals = [int(val) for val in str_in.split()]
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
 - en: '# sanity check'
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
 - en: 'if len(vals) == 4:'
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
 - en: ❺ set_motor_speed_dir(vals[0], vals[1], vals[2], vals[3])
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
 - en: 'else:'
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
 - en: print("Input error!")
+  id: totrans-357
   prefs: []
   type: TYPE_NORMAL
 - en: 'except:'
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
 - en: print("Exiting motor test!")
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
 - en: '❻ finally:'
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
 - en: '# stop motors'
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
 - en: stop_motors()
+  id: totrans-362
   prefs: []
   type: TYPE_NORMAL
 - en: '# turn laser off'
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
 - en: laser_on(False)
+  id: totrans-364
   prefs: []
   type: TYPE_NORMAL
 - en: 'You begin by turning on the laser ❶ and starting the motors ❷. Then you enter
@@ -1485,47 +2104,60 @@
     each substring into an integer ❹. After a sanity check to ensure that you did,
     in fact, get four numbers as input, you run the motors using the provided values
     ❺.'
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
 - en: This runs in a loop, so you can try inputting various speed and direction values
     to see the result. Since the `while` loop is placed inside a `try` block, pressing
     CTRL-C will throw an exception and exit from the test when you’re ready. Then,
     in the `finally` block ❻, you stop the motors and turn the laser off.
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
 - en: '[Putting It All Together](nsp-venkitachalam503045-0008.xhtml#rbh1510)'
+  id: totrans-367
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'As usual, the `main()` function takes in command line arguments and sets the
     project in motion. Let’s look at the command line arguments first:'
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
 - en: 'def main():'
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
 - en: '"""main calling function"""'
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
 - en: '# set up args parser'
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ parser = argparse.ArgumentParser(description="A laser audio display.")
+  id: totrans-372
   prefs: []
   type: TYPE_NORMAL
 - en: '# add arguments'
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
 - en: parser.add_argument('--test_laser', action='store_true', required=False)
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
 - en: parser.add_argument('--test_motors', action='store_true', required=False)
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
 - en: parser.add_argument('--wav_file', dest='wav_file', required=False)
+  id: totrans-376
   prefs: []
   type: TYPE_NORMAL
 - en: args = `parser`.`parse_args`()
+  id: totrans-377
   prefs: []
   type: TYPE_NORMAL
 - en: Here you follow the familiar pattern of creating an `ArgumentParser` object
@@ -1534,93 +2166,123 @@
     on and is useful when you’re building the motor and laser assembly. The `--test_motors`
     option is for testing the motors, and the `--wav_file` option lets you specify
     the WAV file to be read in for the laser audio display.
+  id: totrans-378
   prefs: []
   type: TYPE_NORMAL
 - en: 'Here’s the rest of the `main()` function:'
+  id: totrans-379
   prefs: []
   type: TYPE_NORMAL
 - en: '# initialize pins'
+  id: totrans-380
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ init_pins()
+  id: totrans-381
   prefs: []
   type: TYPE_NORMAL
 - en: '# main loop'
+  id: totrans-382
   prefs: []
   type: TYPE_NORMAL
 - en: 'try:'
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
 - en: '❷ if args.test_laser:'
+  id: totrans-384
   prefs: []
   type: TYPE_NORMAL
 - en: print("laser on...")
+  id: totrans-385
   prefs: []
   type: TYPE_NORMAL
 - en: laser_on(True)
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
 - en: 'try:'
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
 - en: '# wait in a loop'
+  id: totrans-388
   prefs: []
   type: TYPE_NORMAL
 - en: 'while True:'
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
 - en: time.sleep(0.1)
+  id: totrans-390
   prefs: []
   type: TYPE_NORMAL
 - en: 'except:'
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
 - en: '# turn laser off'
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
 - en: laser_on(False)
+  id: totrans-393
   prefs: []
   type: TYPE_NORMAL
 - en: '❸ elif args.test_motors:'
+  id: totrans-394
   prefs: []
   type: TYPE_NORMAL
 - en: print("testing motors...")
+  id: totrans-395
   prefs: []
   type: TYPE_NORMAL
 - en: test_motors()
+  id: totrans-396
   prefs: []
   type: TYPE_NORMAL
 - en: '❹ elif args.wav_file:'
+  id: totrans-397
   prefs: []
   type: TYPE_NORMAL
 - en: print("starting laser audio display...")
+  id: totrans-398
   prefs: []
   type: TYPE_NORMAL
 - en: process_audio(args.wav_file)
+  id: totrans-399
   prefs: []
   type: TYPE_NORMAL
 - en: 'except (Exception) as e:'
+  id: totrans-400
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("Exception: {}".format(e))'
+  id: totrans-401
   prefs: []
   type: TYPE_NORMAL
 - en: print("Exiting.")
+  id: totrans-402
   prefs: []
   type: TYPE_NORMAL
 - en: '# turn laser off'
+  id: totrans-403
   prefs: []
   type: TYPE_NORMAL
 - en: ❺ laser_on(False)
+  id: totrans-404
   prefs: []
   type: TYPE_NORMAL
 - en: '# call at the end'
+  id: totrans-405
   prefs: []
   type: TYPE_NORMAL
 - en: ❻ GPIO.cleanup()
+  id: totrans-406
   prefs: []
   type: TYPE_NORMAL
 - en: print("Done.")
+  id: totrans-407
   prefs: []
   type: TYPE_NORMAL
 - en: You call the `init_pins()` function you defined earlier to initialize the Raspberry
@@ -1634,9 +2296,11 @@
     so when the user presses CTRL-C, you break out of the loop for any of the three
     modes. To finish, you turn the laser off ❺ and do a GPIO cleanup ❻ before exiting
     the program.
+  id: totrans-408
   prefs: []
   type: TYPE_NORMAL
 - en: '[Running the Laser Display](nsp-venkitachalam503045-0008.xhtml#rah1504)'
+  id: totrans-409
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1646,32 +2310,41 @@
     B](nsp-venkitachalam503045-0032.xhtml#appb) and run the program from a shell.
     I recommend testing the laser display part first by running the program in test
     mode.
+  id: totrans-410
   prefs: []
   type: TYPE_NORMAL
 - en: WARNING The project has high-speed spinning mirrors. Please wear appropriate
     eye protection or cover the setup with a transparent box before running the program
     to avoid injuries.
+  id: totrans-411
   prefs: []
   type: TYPE_NORMAL
 - en: 'Here’s a sample run of the test mode:'
+  id: totrans-412
   prefs: []
   type: TYPE_NORMAL
 - en: $ `python laser_audio.py --test_motors`
+  id: totrans-413
   prefs: []
   type: TYPE_NORMAL
 - en: testing motors...
+  id: totrans-414
   prefs: []
   type: TYPE_NORMAL
 - en: 'Enter dca dcb dira dirb (eg. 50 100 1 0):'
+  id: totrans-415
   prefs: []
   type: TYPE_NORMAL
 - en: '`30 40 0 1`'
+  id: totrans-416
   prefs: []
   type: TYPE_NORMAL
 - en: 'Enter dca dcb dira dirb (eg. 50 100 1 0):'
+  id: totrans-417
   prefs: []
   type: TYPE_NORMAL
 - en: '`40 30 1 0`'
+  id: totrans-418
   prefs: []
   type: TYPE_NORMAL
 - en: You can use this test to run both motors through various combinations of speeds
@@ -1679,6 +2352,7 @@
     as you change the values. To stop the program and the motors, press CTRL-C. Note
     that if you enter duty cycle (speed) values greater than 80, the motors will spin
     really fast. Be careful!
+  id: totrans-419
   prefs: []
   type: TYPE_NORMAL
 - en: 'If the test succeeds, you’re ready to move on to the real show. Copy a WAV
@@ -1688,28 +2362,35 @@
     sample file is also available in the project’s GitHub repository.) When the audio
     file is in place, run the program as follows, substituting your desired filename
     after the `--wave_file` option:'
+  id: totrans-420
   prefs: []
   type: TYPE_NORMAL
 - en: '`python3 laser_audio.py --wav_file bensound-allthat-16.wav`'
+  id: totrans-421
   prefs: []
   type: TYPE_NORMAL
 - en: You should see the laser display produce lots of interesting patterns that change
     in time with the music, as shown in [Figure 13-14](nsp-venkitachalam503045-0028.xhtml#fig13-14).
+  id: totrans-422
   prefs: []
   type: TYPE_NORMAL
 - en: '![](images/nsp-venkitachalam503045-f13014.jpg)'
+  id: totrans-423
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 13-14: The complete wiring of the laser display and a pattern projected
     on the wall'
+  id: totrans-424
   prefs: []
   type: TYPE_NORMAL
 - en: Try experimenting with different WAV files, or with different calculations for
     converting the FFT information to motor settings, to see how the visualization
     responds.
+  id: totrans-425
   prefs: []
   type: TYPE_NORMAL
 - en: '[Summary](nsp-venkitachalam503045-0008.xhtml#rah1505)'
+  id: totrans-426
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1718,18 +2399,22 @@
     and a motor driver. You used `numpy` to compute the FFT of audio data, and you
     used `pyaudio` to stream audio output in real time. You even learned to control
     a laser using a MOSFET!
+  id: totrans-427
   prefs: []
   type: TYPE_NORMAL
 - en: '[Experiments!](nsp-venkitachalam503045-0008.xhtml#rah1506)'
+  id: totrans-428
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'Here are some ways you can modify this project:'
+  id: totrans-429
   prefs: []
   type: TYPE_NORMAL
 - en: 1\. The program used an arbitrary scheme to convert the FFT values into motor
     speed and direction data. Try changing this scheme. For example, experiment with
     different frequency bands and criteria for changing motor directions.
+  id: totrans-430
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
@@ -1740,10 +2425,12 @@
     This computation is similar to the FFT calculation. Once you read in a chunk of
     audio data and put it into a `numpy` array `x`, you can compute the RMS value
     as follows:'
+  id: totrans-431
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: rms = np.sqrt(np.mean(x**2))
+  id: totrans-432
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
@@ -1751,6 +2438,7 @@
     signed integer, which can have a maximum value of 32,768 (a useful number to keep
     in mind for normalization). Use this RMS amplitude in conjunction with the FFT
     to generate a greater variation of laser patterns.
+  id: totrans-433
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
@@ -1759,734 +2447,971 @@
     like the one shown in [Figure 13-15](nsp-venkitachalam503045-0028.xhtml#fig13-15),
     of both the audio data and the FFT as the audio plays through a speaker? This
     is intended to run on your computer, not your Raspberry Pi.
+  id: totrans-434
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '![](images/nsp-venkitachalam503045-f13015.jpg)'
+  id: totrans-435
   prefs:
   - PREF_IND
   type: TYPE_IMG
 - en: 'Figure 13-15: A real-time FFT visualization'
+  id: totrans-436
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
 - en: 'Here are a few hints to solve this problem:'
+  id: totrans-437
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
 - en: ◦ Use `matplotlib` for plotting.
+  id: totrans-438
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
 - en: ◦ Use Python’s `multiprocessing` package so your music streaming output and
     plotting can happen simultaneously.
+  id: totrans-439
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
 - en: ◦ Use the `numpy.fft.``rfftfreq()` method to get the frequencies corresponding
     to the FFT values, for ease of plotting.
+  id: totrans-440
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
 - en: (The solution code for this experiment is in the book’s GitHub repository, but
     give it a shot yourself first!)
+  id: totrans-441
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
 - en: '[The Complete Code](nsp-venkitachalam503045-0008.xhtml#rah1507)'
+  id: totrans-442
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'Here’s the complete Python code for this project:'
+  id: totrans-443
   prefs: []
   type: TYPE_NORMAL
 - en: '"""'
+  id: totrans-444
   prefs: []
   type: TYPE_NORMAL
 - en: laser_audio.py
+  id: totrans-445
   prefs: []
   type: TYPE_NORMAL
 - en: Creates a laser display that changes in time to music.
+  id: totrans-446
   prefs: []
   type: TYPE_NORMAL
 - en: Uses Python on a Raspberry Pi.
+  id: totrans-447
   prefs: []
   type: TYPE_NORMAL
 - en: 'Author: Mahesh Venkitachalam'
+  id: totrans-448
   prefs: []
   type: TYPE_NORMAL
 - en: '"""'
+  id: totrans-449
   prefs: []
   type: TYPE_NORMAL
 - en: import RPi.GPIO as GPIO
+  id: totrans-450
   prefs: []
   type: TYPE_NORMAL
 - en: import time
+  id: totrans-451
   prefs: []
   type: TYPE_NORMAL
 - en: import argparse
+  id: totrans-452
   prefs: []
   type: TYPE_NORMAL
 - en: import pyaudio
+  id: totrans-453
   prefs: []
   type: TYPE_NORMAL
 - en: import wave
+  id: totrans-454
   prefs: []
   type: TYPE_NORMAL
 - en: import numpy as np
+  id: totrans-455
   prefs: []
   type: TYPE_NORMAL
 - en: define pin numbers
+  id: totrans-456
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: uses TB6612FNG motor driver pin naming
+  id: totrans-457
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: PWMA = 12
+  id: totrans-458
   prefs: []
   type: TYPE_NORMAL
 - en: PWMB = 13
+  id: totrans-459
   prefs: []
   type: TYPE_NORMAL
 - en: AIN1 = 7
+  id: totrans-460
   prefs: []
   type: TYPE_NORMAL
 - en: AIN2 = 8
+  id: totrans-461
   prefs: []
   type: TYPE_NORMAL
 - en: BIN1 = 5
+  id: totrans-462
   prefs: []
   type: TYPE_NORMAL
 - en: BIN2 = 6
+  id: totrans-463
   prefs: []
   type: TYPE_NORMAL
 - en: STBY = 22
+  id: totrans-464
   prefs: []
   type: TYPE_NORMAL
 - en: LASER = 25
+  id: totrans-465
   prefs: []
   type: TYPE_NORMAL
 - en: global PWM objects
+  id: totrans-466
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: pwm_a = None
+  id: totrans-467
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_b = None
+  id: totrans-468
   prefs: []
   type: TYPE_NORMAL
 - en: size of audio data read in
+  id: totrans-469
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: CHUNK = 2048
+  id: totrans-470
   prefs: []
   type: TYPE_NORMAL
 - en: FFT size
+  id: totrans-471
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: N = CHUNK
+  id: totrans-472
   prefs: []
   type: TYPE_NORMAL
 - en: 'def init_pins():'
+  id: totrans-473
   prefs: []
   type: TYPE_NORMAL
 - en: '"""set up pins"""'
+  id: totrans-474
   prefs: []
   type: TYPE_NORMAL
 - en: global pwm_a, pwm_b
+  id: totrans-475
   prefs: []
   type: TYPE_NORMAL
 - en: '# use BCM pin numbering'
+  id: totrans-476
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.setmode(GPIO.BCM)
+  id: totrans-477
   prefs: []
   type: TYPE_NORMAL
 - en: '# put pins into a list'
+  id: totrans-478
   prefs: []
   type: TYPE_NORMAL
 - en: pins = [PWMA, PWMB, AIN1, AIN2, BIN1, BIN2, STBY, LASER]
+  id: totrans-479
   prefs: []
   type: TYPE_NORMAL
 - en: '# set up pins as outputs'
+  id: totrans-480
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.setup(pins, GPIO.OUT)
+  id: totrans-481
   prefs: []
   type: TYPE_NORMAL
 - en: '# set PWM'
+  id: totrans-482
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_a = GPIO.PWM(PWMA, 100)
+  id: totrans-483
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_b = GPIO.PWM(PWMB, 100)
+  id: totrans-484
   prefs: []
   type: TYPE_NORMAL
 - en: 'def laser_on(on):'
+  id: totrans-485
   prefs: []
   type: TYPE_NORMAL
 - en: '"""turn laser MOSFET on/off"""'
+  id: totrans-486
   prefs: []
   type: TYPE_NORMAL
 - en: '# pin 25 controls laser ctrl mosfet'
+  id: totrans-487
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(LASER, on)
+  id: totrans-488
   prefs: []
   type: TYPE_NORMAL
 - en: 'def test_motors():'
+  id: totrans-489
   prefs: []
   type: TYPE_NORMAL
 - en: '"""test motors by manually setting speed and direction"""'
+  id: totrans-490
   prefs: []
   type: TYPE_NORMAL
 - en: '# turn laser on'
+  id: totrans-491
   prefs: []
   type: TYPE_NORMAL
 - en: laser_on(True)
+  id: totrans-492
   prefs: []
   type: TYPE_NORMAL
 - en: '# start motors'
+  id: totrans-493
   prefs: []
   type: TYPE_NORMAL
 - en: start_motors()
+  id: totrans-494
   prefs: []
   type: TYPE_NORMAL
 - en: '# read user input'
+  id: totrans-495
   prefs: []
   type: TYPE_NORMAL
 - en: 'try:'
+  id: totrans-496
   prefs: []
   type: TYPE_NORMAL
 - en: 'while True:'
+  id: totrans-497
   prefs: []
   type: TYPE_NORMAL
 - en: print("Enter dca dcb dira dirb (eg. 50 100 1 0):")
+  id: totrans-498
   prefs: []
   type: TYPE_NORMAL
 - en: '# read input'
+  id: totrans-499
   prefs: []
   type: TYPE_NORMAL
 - en: str_in = input()
+  id: totrans-500
   prefs: []
   type: TYPE_NORMAL
 - en: '# parse values'
+  id: totrans-501
   prefs: []
   type: TYPE_NORMAL
 - en: vals = [int(val) for val in str_in.split()]
+  id: totrans-502
   prefs: []
   type: TYPE_NORMAL
 - en: '# sanity check'
+  id: totrans-503
   prefs: []
   type: TYPE_NORMAL
 - en: 'if len(vals) == 4:'
+  id: totrans-504
   prefs: []
   type: TYPE_NORMAL
 - en: set_motor_speed_dir(vals[0], vals[1], vals[2], vals[3])
+  id: totrans-505
   prefs: []
   type: TYPE_NORMAL
 - en: 'else:'
+  id: totrans-506
   prefs: []
   type: TYPE_NORMAL
 - en: print("Input error!")
+  id: totrans-507
   prefs: []
   type: TYPE_NORMAL
 - en: 'except:'
+  id: totrans-508
   prefs: []
   type: TYPE_NORMAL
 - en: print("Exiting motor test!")
+  id: totrans-509
   prefs: []
   type: TYPE_NORMAL
 - en: 'finally:'
+  id: totrans-510
   prefs: []
   type: TYPE_NORMAL
 - en: '# stop motors'
+  id: totrans-511
   prefs: []
   type: TYPE_NORMAL
 - en: stop_motors()
+  id: totrans-512
   prefs: []
   type: TYPE_NORMAL
 - en: '# turn laser off'
+  id: totrans-513
   prefs: []
   type: TYPE_NORMAL
 - en: laser_on(False)
+  id: totrans-514
   prefs: []
   type: TYPE_NORMAL
 - en: 'def start_motors():'
+  id: totrans-515
   prefs: []
   type: TYPE_NORMAL
 - en: '"""start both motors"""'
+  id: totrans-516
   prefs: []
   type: TYPE_NORMAL
 - en: '# enable driver chip'
+  id: totrans-517
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(STBY, GPIO.HIGH)
+  id: totrans-518
   prefs: []
   type: TYPE_NORMAL
 - en: '# set motor direction for channel A'
+  id: totrans-519
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN1, GPIO.HIGH)
+  id: totrans-520
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN2, GPIO.LOW)
+  id: totrans-521
   prefs: []
   type: TYPE_NORMAL
 - en: '# set motor direction for channel B'
+  id: totrans-522
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN1, GPIO.HIGH)
+  id: totrans-523
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN2, GPIO.LOW)
+  id: totrans-524
   prefs: []
   type: TYPE_NORMAL
 - en: '# set PWM for channel A'
+  id: totrans-525
   prefs: []
   type: TYPE_NORMAL
 - en: duty_cycle = 0
+  id: totrans-526
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_a.start(duty_cycle)
+  id: totrans-527
   prefs: []
   type: TYPE_NORMAL
 - en: '# set PWM for channel B'
+  id: totrans-528
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_b.start(duty_cycle)
+  id: totrans-529
   prefs: []
   type: TYPE_NORMAL
 - en: 'def stop_motors():'
+  id: totrans-530
   prefs: []
   type: TYPE_NORMAL
 - en: '"""stop both motors"""'
+  id: totrans-531
   prefs: []
   type: TYPE_NORMAL
 - en: '# stop PWM'
+  id: totrans-532
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_a.stop()
+  id: totrans-533
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_b.stop()
+  id: totrans-534
   prefs: []
   type: TYPE_NORMAL
 - en: '# brake A'
+  id: totrans-535
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN1, GPIO.HIGH)
+  id: totrans-536
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN2, GPIO.HIGH)
+  id: totrans-537
   prefs: []
   type: TYPE_NORMAL
 - en: '# brake B'
+  id: totrans-538
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN1, GPIO.HIGH)
+  id: totrans-539
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN2, GPIO.HIGH)
+  id: totrans-540
   prefs: []
   type: TYPE_NORMAL
 - en: '# disable driver chip'
+  id: totrans-541
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(STBY, GPIO.LOW)
+  id: totrans-542
   prefs: []
   type: TYPE_NORMAL
 - en: 'def set_motor_speed_dir(dca, dcb, dira, dirb):'
+  id: totrans-543
   prefs: []
   type: TYPE_NORMAL
 - en: '"""set speed and direction of motors"""'
+  id: totrans-544
   prefs: []
   type: TYPE_NORMAL
 - en: '# set duty cycle'
+  id: totrans-545
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_a.ChangeDutyCycle(dca)
+  id: totrans-546
   prefs: []
   type: TYPE_NORMAL
 - en: pwm_b.ChangeDutyCycle(dcb)
+  id: totrans-547
   prefs: []
   type: TYPE_NORMAL
 - en: '# set direction A'
+  id: totrans-548
   prefs: []
   type: TYPE_NORMAL
 - en: 'if dira:'
+  id: totrans-549
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN1, GPIO.HIGH)
+  id: totrans-550
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN2, GPIO.LOW)
+  id: totrans-551
   prefs: []
   type: TYPE_NORMAL
 - en: 'else:'
+  id: totrans-552
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN1, GPIO.LOW)
+  id: totrans-553
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(AIN2, GPIO.HIGH)
+  id: totrans-554
   prefs: []
   type: TYPE_NORMAL
 - en: 'if dirb:'
+  id: totrans-555
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN1, GPIO.HIGH)
+  id: totrans-556
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN2, GPIO.LOW)
+  id: totrans-557
   prefs: []
   type: TYPE_NORMAL
 - en: 'else:'
+  id: totrans-558
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN1, GPIO.LOW)
+  id: totrans-559
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.output(BIN2, GPIO.HIGH)
+  id: totrans-560
   prefs: []
   type: TYPE_NORMAL
 - en: 'def process_audio(filename):'
+  id: totrans-561
   prefs: []
   type: TYPE_NORMAL
 - en: '"""reads WAV file, does FFT and controls motors"""'
+  id: totrans-562
   prefs: []
   type: TYPE_NORMAL
 - en: print("opening {}...".format(filename))
+  id: totrans-563
   prefs: []
   type: TYPE_NORMAL
 - en: '# open WAV file'
+  id: totrans-564
   prefs: []
   type: TYPE_NORMAL
 - en: wf = wave.open(filename, 'rb')
+  id: totrans-565
   prefs: []
   type: TYPE_NORMAL
 - en: '# print audio details'
+  id: totrans-566
   prefs: []
   type: TYPE_NORMAL
 - en: print("SW = {}, NCh = {}, SR = {}".format(wf.getsampwidth(),
+  id: totrans-567
   prefs: []
   type: TYPE_NORMAL
 - en: wf.getnchannels(), wf.getframerate()))
+  id: totrans-568
   prefs: []
   type: TYPE_NORMAL
 - en: '# check for supported format'
+  id: totrans-569
   prefs: []
   type: TYPE_NORMAL
 - en: 'if wf.getsampwidth() != 2 or wf.getnchannels() != 1:'
+  id: totrans-570
   prefs: []
   type: TYPE_NORMAL
 - en: print("Only single channel 16 bit WAV files are supported!")
+  id: totrans-571
   prefs: []
   type: TYPE_NORMAL
 - en: wf.close()
+  id: totrans-572
   prefs: []
   type: TYPE_NORMAL
 - en: return
+  id: totrans-573
   prefs: []
   type: TYPE_NORMAL
 - en: '# create PyAudio object'
+  id: totrans-574
   prefs: []
   type: TYPE_NORMAL
 - en: p = pyaudio.PyAudio()
+  id: totrans-575
   prefs: []
   type: TYPE_NORMAL
 - en: '# open an output stream'
+  id: totrans-576
   prefs: []
   type: TYPE_NORMAL
 - en: stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+  id: totrans-577
   prefs: []
   type: TYPE_NORMAL
 - en: channels=wf.getnchannels(),
+  id: totrans-578
   prefs: []
   type: TYPE_NORMAL
 - en: rate=wf.getframerate(),
+  id: totrans-579
   prefs: []
   type: TYPE_NORMAL
 - en: output=True)
+  id: totrans-580
   prefs: []
   type: TYPE_NORMAL
 - en: '# read first frame'
+  id: totrans-581
   prefs: []
   type: TYPE_NORMAL
 - en: data = wf.readframes(CHUNK)
+  id: totrans-582
   prefs: []
   type: TYPE_NORMAL
 - en: buf = np.frombuffer(data, dtype=np.int16)
+  id: totrans-583
   prefs: []
   type: TYPE_NORMAL
 - en: '# store sample rate'
+  id: totrans-584
   prefs: []
   type: TYPE_NORMAL
 - en: SR = wf.getframerate()
+  id: totrans-585
   prefs: []
   type: TYPE_NORMAL
 - en: '# start motors'
+  id: totrans-586
   prefs: []
   type: TYPE_NORMAL
 - en: start_motors()
+  id: totrans-587
   prefs: []
   type: TYPE_NORMAL
 - en: '# laser on'
+  id: totrans-588
   prefs: []
   type: TYPE_NORMAL
 - en: laser_on(True)
+  id: totrans-589
   prefs: []
   type: TYPE_NORMAL
 - en: '# read audio data from WAV file'
+  id: totrans-590
   prefs: []
   type: TYPE_NORMAL
 - en: 'try:'
+  id: totrans-591
   prefs: []
   type: TYPE_NORMAL
 - en: '# loop till there is no data to be read'
+  id: totrans-592
   prefs: []
   type: TYPE_NORMAL
 - en: 'while len(data) > 0:'
+  id: totrans-593
   prefs: []
   type: TYPE_NORMAL
 - en: '# write stream to output'
+  id: totrans-594
   prefs: []
   type: TYPE_NORMAL
 - en: stream.write(data)
+  id: totrans-595
   prefs: []
   type: TYPE_NORMAL
 - en: '# ensure enough samples for FFT'
+  id: totrans-596
   prefs: []
   type: TYPE_NORMAL
 - en: 'if len(buf) == N:'
+  id: totrans-597
   prefs: []
   type: TYPE_NORMAL
 - en: buf = np.frombuffer(data, dtype=np.int16)
+  id: totrans-598
   prefs: []
   type: TYPE_NORMAL
 - en: '# do FFT'
+  id: totrans-599
   prefs: []
   type: TYPE_NORMAL
 - en: fft = np.fft.rfft(buf)
+  id: totrans-600
   prefs: []
   type: TYPE_NORMAL
 - en: fft = np.abs(fft) * 2.0/N
+  id: totrans-601
   prefs: []
   type: TYPE_NORMAL
 - en: '# calc levels'
+  id: totrans-602
   prefs: []
   type: TYPE_NORMAL
 - en: '# get average of 3 frequency bands'
+  id: totrans-603
   prefs: []
   type: TYPE_NORMAL
 - en: '# 0-100 Hz, 100-1000 Hz, and 1000-2500 Hz'
+  id: totrans-604
   prefs: []
   type: TYPE_NORMAL
 - en: levels = [np.sum(fft[0:100])/100,
+  id: totrans-605
   prefs: []
   type: TYPE_NORMAL
 - en: np.sum(fft[100:1000])/900,
+  id: totrans-606
   prefs: []
   type: TYPE_NORMAL
 - en: np.sum(fft[1000:2500])/1500]
+  id: totrans-607
   prefs: []
   type: TYPE_NORMAL
 - en: '# speed1'
+  id: totrans-608
   prefs: []
   type: TYPE_NORMAL
 - en: dca = int(5*levels[0])  percent 60
+  id: totrans-609
   prefs: []
   type: TYPE_NORMAL
 - en: '# speed2'
+  id: totrans-610
   prefs: []
   type: TYPE_NORMAL
 - en: dcb = int(100 + levels[1])  percent 60
+  id: totrans-611
   prefs: []
   type: TYPE_NORMAL
 - en: '# dir'
+  id: totrans-612
   prefs: []
   type: TYPE_NORMAL
 - en: dira = False
+  id: totrans-613
   prefs: []
   type: TYPE_NORMAL
 - en: dirb = True
+  id: totrans-614
   prefs: []
   type: TYPE_NORMAL
 - en: 'if levels[2] > 0.1:'
+  id: totrans-615
   prefs: []
   type: TYPE_NORMAL
 - en: dira = True
+  id: totrans-616
   prefs: []
   type: TYPE_NORMAL
 - en: '# set motor direction and speed'
+  id: totrans-617
   prefs: []
   type: TYPE_NORMAL
 - en: set_motor_speed_dir(dca, dcb, dira, dirb)
+  id: totrans-618
   prefs: []
   type: TYPE_NORMAL
 - en: '# read next'
+  id: totrans-619
   prefs: []
   type: TYPE_NORMAL
 - en: data = wf.readframes(CHUNK)
+  id: totrans-620
   prefs: []
   type: TYPE_NORMAL
 - en: 'except BaseException as err:'
+  id: totrans-621
   prefs: []
   type: TYPE_NORMAL
 - en: print("Unexpected {}, type={}".format(err, type(err)))
+  id: totrans-622
   prefs: []
   type: TYPE_NORMAL
 - en: 'finally:'
+  id: totrans-623
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("Finally: Pyaudio clean up...")'
+  id: totrans-624
   prefs: []
   type: TYPE_NORMAL
 - en: stream.stop_stream()
+  id: totrans-625
   prefs: []
   type: TYPE_NORMAL
 - en: stream.close()
+  id: totrans-626
   prefs: []
   type: TYPE_NORMAL
 - en: '# stop motors'
+  id: totrans-627
   prefs: []
   type: TYPE_NORMAL
 - en: stop_motors()
+  id: totrans-628
   prefs: []
   type: TYPE_NORMAL
 - en: '# close WAV file'
+  id: totrans-629
   prefs: []
   type: TYPE_NORMAL
 - en: wf.close()
+  id: totrans-630
   prefs: []
   type: TYPE_NORMAL
 - en: 'def main():'
+  id: totrans-631
   prefs: []
   type: TYPE_NORMAL
 - en: '"""main calling function"""'
+  id: totrans-632
   prefs: []
   type: TYPE_NORMAL
 - en: '# set up args parser'
+  id: totrans-633
   prefs: []
   type: TYPE_NORMAL
 - en: parser = argparse.ArgumentParser(description="A laser audio display.")
+  id: totrans-634
   prefs: []
   type: TYPE_NORMAL
 - en: '# add arguments'
+  id: totrans-635
   prefs: []
   type: TYPE_NORMAL
 - en: parser.add_argument('--test_laser', action='store_true', required=False)
+  id: totrans-636
   prefs: []
   type: TYPE_NORMAL
 - en: parser.add_argument('--test_motors', action='store_true', required=False)
+  id: totrans-637
   prefs: []
   type: TYPE_NORMAL
 - en: parser.add_argument('--wav_file', dest='wav_file', required=False)
+  id: totrans-638
   prefs: []
   type: TYPE_NORMAL
 - en: args = parser.parse_args()
+  id: totrans-639
   prefs: []
   type: TYPE_NORMAL
 - en: '# initialize pins'
+  id: totrans-640
   prefs: []
   type: TYPE_NORMAL
 - en: init_pins()
+  id: totrans-641
   prefs: []
   type: TYPE_NORMAL
 - en: '# main loop'
+  id: totrans-642
   prefs: []
   type: TYPE_NORMAL
 - en: 'try:'
+  id: totrans-643
   prefs: []
   type: TYPE_NORMAL
 - en: 'if args.test_laser:'
+  id: totrans-644
   prefs: []
   type: TYPE_NORMAL
 - en: print("laser on...")
+  id: totrans-645
   prefs: []
   type: TYPE_NORMAL
 - en: laser_on(True)
+  id: totrans-646
   prefs: []
   type: TYPE_NORMAL
 - en: 'try:'
+  id: totrans-647
   prefs: []
   type: TYPE_NORMAL
 - en: '# wait in a loop'
+  id: totrans-648
   prefs: []
   type: TYPE_NORMAL
 - en: 'while True:'
+  id: totrans-649
   prefs: []
   type: TYPE_NORMAL
 - en: time.sleep(1)
+  id: totrans-650
   prefs: []
   type: TYPE_NORMAL
 - en: 'except:'
+  id: totrans-651
   prefs: []
   type: TYPE_NORMAL
 - en: '# turn laser off'
+  id: totrans-652
   prefs: []
   type: TYPE_NORMAL
 - en: laser_on(False)
+  id: totrans-653
   prefs: []
   type: TYPE_NORMAL
 - en: 'elif args.test_motors:'
+  id: totrans-654
   prefs: []
   type: TYPE_NORMAL
 - en: print("testing motors...")
+  id: totrans-655
   prefs: []
   type: TYPE_NORMAL
 - en: test_motors()
+  id: totrans-656
   prefs: []
   type: TYPE_NORMAL
 - en: 'elif args.wav_file:'
+  id: totrans-657
   prefs: []
   type: TYPE_NORMAL
 - en: print("starting laser audio display...")
+  id: totrans-658
   prefs: []
   type: TYPE_NORMAL
 - en: process_audio(args.wav_file)
+  id: totrans-659
   prefs: []
   type: TYPE_NORMAL
 - en: 'except (Exception) as e:'
+  id: totrans-660
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("Exception: {}".format(e))'
+  id: totrans-661
   prefs: []
   type: TYPE_NORMAL
 - en: print("Exiting.")
+  id: totrans-662
   prefs: []
   type: TYPE_NORMAL
 - en: '# turn laser off'
+  id: totrans-663
   prefs: []
   type: TYPE_NORMAL
 - en: laser_on(False)
+  id: totrans-664
   prefs: []
   type: TYPE_NORMAL
 - en: '# call at the end'
+  id: totrans-665
   prefs: []
   type: TYPE_NORMAL
 - en: GPIO.cleanup()
+  id: totrans-666
   prefs: []
   type: TYPE_NORMAL
 - en: print("Done.")
+  id: totrans-667
   prefs: []
   type: TYPE_NORMAL
 - en: call main
+  id: totrans-668
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: 'if __name__ == ''__main__'':'
+  id: totrans-669
   prefs: []
   type: TYPE_NORMAL
 - en: main()
+  id: totrans-670
   prefs: []
   type: TYPE_NORMAL
