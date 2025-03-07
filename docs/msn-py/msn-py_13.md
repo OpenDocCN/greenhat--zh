@@ -2,13 +2,13 @@
 
 ESCAPE: 完整游戏代码**
 
-![image](../images/common01.jpg)
+![image](img/common01.jpg)
 
 本附录展示了 *Escape* 游戏的最终代码。你可以将其作为参考，查看在哪些位置放置特定的函数和代码块，或者如果你想一次性查看完整代码，也可以通读一遍。此代码不包括在构建游戏时编写的临时部分，比如 EXPLORER 部分。它只包含最终游戏中的代码。
 
 请记住，你也可以下载 *escape.py* 文件并在 IDLE 中查看，通过按 CTRL-F 进行搜索。
 
-我已将 PLAYER_NAME 更改为 “Captain” 在此代码中。当你构建或自定义游戏时，你可以使用你自己的名字（参见 [Listing 4-1](ch04.xhtml#ch04list1) 中的 ➊，位于 [第 63 页](ch04.xhtml#page_63)）。
+我已将 PLAYER_NAME 更改为 “Captain” 在此代码中。当你构建或自定义游戏时，你可以使用你自己的名字（参见 Listing 4-1 中的 ➊，位于 第 63 页）。
 
 为了测试这个项目，我使用本书中的说明重新构建了游戏。这个游戏代码来自已经在 Windows、Raspberry Pi 3 Model B+ 和 Raspberry Pi 2 Model B 上测试完成的游戏代码。
 
@@ -130,11 +130,11 @@ images.spacesuit_back_3_shadow
 
 ],
 
-"down": [images.宇航服前面_阴影, images.宇航服前面_1_阴影,
+"down": [images.宇航服前面 _ 阴影, images.宇航服前面 _1_ 阴影,
 
-images.宇航服前面_2_阴影, images.宇航服前面_3_阴影,
+images.宇航服前面 _2_ 阴影, images.宇航服前面 _3_ 阴影,
 
-images.宇航服前面_3_阴影
+images.宇航服前面 _3_ 阴影
 
 ]
 
@@ -144,9 +144,9 @@ player_image_shadow = PLAYER_SHADOW["down"][0]
 
 PILLARS = [
 
-images.柱子, images.柱子_95, images.柱子_80,
+images.柱子, images.柱子 _95, images.柱子 _80,
 
-images.柱子_60, images.柱子_50
+images.柱子 _60, images.柱子 _50
 
 ]
 
@@ -248,7 +248,7 @@ GAME_MAP  += [
 
 #简单的有效性检查，确保数据录入正确
 
-assert len(GAME_MAP)-1 == MAP_SIZE, "地图大小与GAME_MAP不匹配"
+assert len(GAME_MAP)-1 == MAP_SIZE, "地图大小与 GAME_MAP 不匹配"
 
 ###############
 
@@ -492,7 +492,7 @@ objects = {
 
 68: [images.food, None,  
 
-“一个食物袋。用它恢复100%的能量。”，“即食食品”],
+“一个食物袋。用它恢复 100%的能量。”，“即食食品”],
 
 69: [images.book, None, “这本书上写着‘别惊慌’”],
 
@@ -500,7 +500,7 @@ objects = {
 
 70: [images.mp3_player, None,
 
-“一台MP3播放器，装载着最新的歌曲”，“一台MP3播放器”],
+“一台 MP3 播放器，装载着最新的歌曲”，“一台 MP3 播放器”],
 
 71: [images.lander, None, "贵宾犬，一个小型太空探索飞行器。 \
 
@@ -510,11 +510,11 @@ objects = {
 
 Poodle", "一个通信无线电"],
 
-73: [images.gps_module, None, "一个GPS模块", "一个GPS模块"],
+73: [images.gps_module, None, "一个 GPS 模块", "一个 GPS 模块"],
 
 74: [images.positioning_system, None, "定位系统的一部分。 \
 
-需要一个GPS模块。", "一个定位接口"],
+需要一个 GPS 模块。", "一个定位接口"],
 
 75: [images.positioning_system, None,
 
@@ -562,7 +562,7 @@ items_player_may_stand_on = items_player_may_carry + [0, 39, 2, 48]
 
 # Scenery describes objects that cannot move between rooms.
 
-# 房间号: [[物体编号，y位置，x位置]...]
+# 房间号: [[物体编号，y 位置，x 位置]...]
 
 scenery = {
 
@@ -660,7 +660,7 @@ check_counter += 1
 
 print(check_counter, "景观项")
 
-assert check_counter == 161, "预期161个景观项"
+assert check_counter == 161, "预期 161 个景观项"
 
 assert checksum == 200095, "景观数据错误"
 
@@ -668,7 +668,7 @@ print("景观校验和: " + str(checksum))
 
 for room in range(1, 26): # 在行星位置添加随机景观。
 
-if room != 13: # 跳过房间13。
+if room != 13: # 跳过房间 13。
 
 scenery_item = random.choice([16, 28, 29, 30])
 
@@ -692,9 +692,9 @@ for room_number in [5, 10, 15, 20, 25]: # 添加右侧围栏
 
 scenery[room_number] += [[31, room_coordinate, 12]]
 
-del scenery[21][-1] # 删除房间21中的最后一块围栏面板
+del scenery[21][-1] # 删除房间 21 中的最后一块围栏面板
 
-del scenery[25][-1] # 删除房间25中的最后一块围栏面板
+del scenery[25][-1] # 删除房间 25 中的最后一块围栏面板
 
 ###############
 
@@ -1218,7 +1218,7 @@ if room_map[y][x] in items_player_may_stand_on:
 
 draw_image(objects[room_map[y][x]][0], y, x)
 
-# 房间26中的压力垫在此处添加，以便道具可以放置在其上。
+# 房间 26 中的压力垫在此处添加，以便道具可以放置在其上。
 
 if current_room == 26:
 
@@ -1236,7 +1236,7 @@ for x in range(room_width):
 
 item_here = room_map[y][x]
 
-# 玩家不能走到255位置：它标记了宽物体占据的空间。
+# 玩家不能走到 255 位置：它标记了宽物体占据的空间。
 
 if item_here not in items_player_may_stand_on + [255]:
 
@@ -1342,7 +1342,7 @@ screen.draw.text(text_to_show,
 
 # 道具是可能在房间间移动、出现或消失的物体。
 
-# 所有道具必须在这里设置。游戏中尚未出现的道具进入房间0。
+# 所有道具必须在这里设置。游戏中尚未出现的道具进入房间 0。
 
 # object number : [room, y, x]
 
@@ -1742,7 +1742,7 @@ elif item_carrying == 72 or item_player_is_on == 72:
 
 use_message = "你呼叫了救援。救援船正在来。\
 
-会合区域13，外部。"
+会合区域 13，外部。"
 
 props[40][0] = 13
 
@@ -1794,7 +1794,7 @@ if current_room == 27:
 
 open_door(26)
 
-props[25][0] = 0 # 从RM32到工程舱的门
+props[25][0] = 0 # 从 RM32 到工程舱的门
 
 props[26][0] = 0 # 工程舱内的门
 
@@ -1802,7 +1802,7 @@ clock.schedule_unique(shut_engineering_door, 60)
 
 use_message = "你按下了按钮"
 
-show_text("通往工程舱的门已打开60秒", 1)
+show_text("通往工程舱的门已打开 60 秒", 1)
 
 sounds.say_doors_open.play()
 
@@ -1894,7 +1894,7 @@ time.sleep(0.5)
 
 def game_completion_sequence():
 
-global launch_frame #(初始值为0，在VARIABLES部分设置)
+global launch_frame #(初始值为 0，在 VARIABLES 部分设置)
 
 box = Rect((0, 150), (800, 600))
 
@@ -2014,9 +2014,9 @@ if door_frame_number == 5:
 
 if door_frames[-1] == images.floor:
 
-props[door_object_number][0] = 0  # 从props列表中移除门
+props[door_object_number][0] = 0  # 从 props 列表中移除门
 
-# 从props重新生成房间地图
+# 从 props 重新生成房间地图
 
 # 如有必要，将门放入房间。
 
@@ -2030,7 +2030,7 @@ def shut_engineering_door():
 
 global current_room, door_room_number, props
 
-props[25][0] = 32  # 从32号房间到工程区的门。
+props[25][0] = 32  # 从 32 号房间到工程区的门。
 
 props[26][0] = 27  # 工程区内部的门。
 
@@ -2070,7 +2070,7 @@ clock.unschedule(door_in_room_26)
 
 return
 
-# prop 21 是26号房间的门。
+# prop 21 是 26 号房间的门。
 
 if ((player_y == 8 and player_x == 2) or props[63] == [26, 8, 2]) \
 
@@ -2094,7 +2094,7 @@ and airlock_door_frame > 0:
 
 if airlock_door_frame == 5:
 
-# 将门添加到props和地图中，以便显示动画。
+# 将门添加到 props 和地图中，以便显示动画。
 
 props[21][0] = 26
 

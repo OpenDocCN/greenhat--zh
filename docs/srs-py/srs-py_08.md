@@ -2,7 +2,7 @@
 
 **函数式编程**
 
-![image](../images/common01.jpg)
+![image](img/common01.jpg)
 
 许多 Python 开发者并不了解在 Python 中使用函数式编程的广泛性，这真是太可惜了：除了少数例外，函数式编程允许你编写更简洁和高效的代码。而且，Python 对函数式编程的支持非常广泛。
 
@@ -52,7 +52,7 @@ return mylist[:-1]  # 这返回 mylist 的副本
 
 #### ***创建生成器***
 
-如前所述，你通过编写一个普通函数并在函数体内包含 yield 来创建一个生成器。[Listing 8-1](ch08.xhtml#ch8list1) 创建了一个名为 mygenerator() 的生成器，包含了三个 yield，这意味着它会在接下来的三次 next() 调用中进行迭代。
+如前所述，你通过编写一个普通函数并在函数体内包含 yield 来创建一个生成器。Listing 8-1 创建了一个名为 mygenerator() 的生成器，包含了三个 yield，这意味着它会在接下来的三次 next() 调用中进行迭代。
 
 >> def mygenerator():
 
@@ -110,13 +110,13 @@ Traceback (most recent call last): File "<stdin>", line 1, in <module>
 
 MemoryError
 
-哎呀，结果我们不能用仅有的128MB内存构建1000万个条目的列表！
+哎呀，结果我们不能用仅有的 128MB 内存构建 1000 万个条目的列表！
 
 **警告**
 
-*在Python 3中，range()在迭代时返回一个生成器。要在Python 2中获取生成器，你必须使用xrange()。此函数在Python 3中不再存在，因为它已不再需要。*
+*在 Python 3 中，range()在迭代时返回一个生成器。要在 Python 2 中获取生成器，你必须使用 xrange()。此函数在 Python 3 中不再存在，因为它已不再需要。*
 
-让我们尝试使用生成器，仍然保持128MB的限制：
+让我们尝试使用生成器，仍然保持 128MB 的限制：
 
 $ ulimit -v 131072
 
@@ -134,13 +134,13 @@ $ python3
 
 找到了
 
-这次，我们的程序顺利执行。当它被迭代时，range()类返回一个生成器，该生成器动态生成我们的整数列表。更好的是，由于我们只对第50,000个数字感兴趣，因此生成器仅需要生成50,000个数字就停止了，而不是构建完整的列表。
+这次，我们的程序顺利执行。当它被迭代时，range()类返回一个生成器，该生成器动态生成我们的整数列表。更好的是，由于我们只对第 50,000 个数字感兴趣，因此生成器仅需要生成 50,000 个数字就停止了，而不是构建完整的列表。
 
 通过动态生成值，生成器允许你以最小的内存和处理周期消耗来处理大数据集。每当你需要处理大量值时，生成器可以帮助你高效地处理它们。
 
-#### ***使用yield返回和传递值***
+#### ***使用 yield 返回和传递值***
 
-yield语句还有一个较少使用的特性：它可以像函数调用一样返回一个值。这使我们能够通过调用生成器的send()方法将一个值传递给生成器。作为使用send()的示例，我们将编写一个名为shorten()的函数，它接受一个字符串列表并返回一个由这些相同字符串组成的列表，只不过是被截断的（[示例 8-2](ch08.xhtml#ch8list2)）。
+yield 语句还有一个较少使用的特性：它可以像函数调用一样返回一个值。这使我们能够通过调用生成器的 send()方法将一个值传递给生成器。作为使用 send()的示例，我们将编写一个名为 shorten()的函数，它接受一个字符串列表并返回一个由这些相同字符串组成的列表，只不过是被截断的（示例 8-2）。
 
 def shorten(string_list):
 
@@ -178,9 +178,9 @@ except StopIteration:
 
 pass
 
-*示例 8-2：使用send()返回和使用值*
+*示例 8-2：使用 send()返回和使用值*
 
-在这个例子中，我们编写了一个名为shorten()的函数，它接受一个字符串列表，并返回一个由这些相同字符串组成的列表，只不过是被截断的。每个截断字符串的长度等于前一个字符串中的元音字母数：*loremipsum*包含四个元音字母，因此生成器返回的第二个值将是*dolorsit*的前四个字母；*dolo*只有两个元音字母，所以*ametfoobar*将被截断为前两个字母*am*。生成器然后停止并引发StopIteration。我们的生成器因此返回：
+在这个例子中，我们编写了一个名为 shorten()的函数，它接受一个字符串列表，并返回一个由这些相同字符串组成的列表，只不过是被截断的。每个截断字符串的长度等于前一个字符串中的元音字母数：*loremipsum*包含四个元音字母，因此生成器返回的第二个值将是*dolorsit*的前四个字母；*dolo*只有两个元音字母，所以*ametfoobar*将被截断为前两个字母*am*。生成器然后停止并引发 StopIteration。我们的生成器因此返回：
 
 ['loremipsum', 'dolo', 'am']
 
@@ -202,7 +202,7 @@ PEP 289 引入了生成器表达式，使得可以使用类似于列表推导式
 
 #### ***检查生成器***
 
-要确定一个函数是否被视为生成器，可以使用 inspect.isgeneratorfunction()。在 [列出 8-3](ch08.xhtml#ch8list3) 中，我们创建了一个简单的生成器并检查它。
+要确定一个函数是否被视为生成器，可以使用 inspect.isgeneratorfunction()。在 列出 8-3 中，我们创建了一个简单的生成器并检查它。
 
 >>> import inspect
 
@@ -222,7 +222,7 @@ False
 
 *列出 8-3：检查一个函数是否是生成器*
 
-导入 inspect 包以使用 isgeneratorfunction()，然后传入要检查的函数名称。阅读 inspect.isgeneratorfunction() 的源代码，可以帮助我们了解 Python 如何标记函数为生成器（见 [列出 8-4](ch08.xhtml#ch8list4)）。
+导入 inspect 包以使用 isgeneratorfunction()，然后传入要检查的函数名称。阅读 inspect.isgeneratorfunction() 的源代码，可以帮助我们了解 Python 如何标记函数为生成器（见 列出 8-4）。
 
 def isgeneratorfunction(object):
 
@@ -284,7 +284,7 @@ StopIteration
 
 ### **列表推导式**
 
-列表推导式，简称*listcomp*，允许你在声明列表时直接定义其内容。要将列表转换为列表推导式，你必须像平常一样将其包裹在方括号中，但还需包含一个表达式，该表达式会生成列表中的项，并且需要一个for循环来遍历它们。
+列表推导式，简称*listcomp*，允许你在声明列表时直接定义其内容。要将列表转换为列表推导式，你必须像平常一样将其包裹在方括号中，但还需包含一个表达式，该表达式会生成列表中的项，并且需要一个 for 循环来遍历它们。
 
 以下示例在不使用列表推导式的情况下创建一个列表：
 
@@ -308,9 +308,9 @@ StopIteration
 
 [1, 2, 3]
 
-使用列表推导式有两个优势：使用列表推导式编写的代码通常更简短，因此Python需要执行的操作也更少。与其反复创建列表并调用append，不如让Python一次性创建出项的列表并将它们移动到一个新的列表中。
+使用列表推导式有两个优势：使用列表推导式编写的代码通常更简短，因此 Python 需要执行的操作也更少。与其反复创建列表并调用 append，不如让 Python 一次性创建出项的列表并将它们移动到一个新的列表中。
 
-你可以将多个for语句组合在一起，并使用if语句过滤掉某些项。这里我们创建了一个单词列表，并使用列表推导式将每个项首字母大写，拆分多个单词的项为单个单词，并删除多余的*or*：
+你可以将多个 for 语句组合在一起，并使用 if 语句过滤掉某些项。这里我们创建了一个单词列表，并使用列表推导式将每个项首字母大写，拆分多个单词的项为单个单词，并删除多余的*or*：
 
 x = [word.capitalize()]
 
@@ -324,9 +324,9 @@ if not word.startswith("or")]
 
 ['Hello', 'World?', 'World!', 'Not']
 
-这段代码有两个for循环：第一个遍历文本行，第二个遍历每行中的单词。最后的if语句会过滤掉以*or*开头的单词，从最终列表中排除它们。
+这段代码有两个 for 循环：第一个遍历文本行，第二个遍历每行中的单词。最后的 if 语句会过滤掉以*or*开头的单词，从最终列表中排除它们。
 
-使用列表推导式而不是for循环是一种快速定义列表的简洁方法。由于我们仍在讨论函数式编程，值得注意的是，通过列表推导式构建的列表不应依赖于修改程序的状态：在构建列表时不应修改任何变量。这通常使得列表比没有使用列表推导式的列表更加简洁和易读。
+使用列表推导式而不是 for 循环是一种快速定义列表的简洁方法。由于我们仍在讨论函数式编程，值得注意的是，通过列表推导式构建的列表不应依赖于修改程序的状态：在构建列表时不应修改任何变量。这通常使得列表比没有使用列表推导式的列表更加简洁和易读。
 
 请注意，也有类似的语法可以以相同的方式构建字典或集合，如下所示：
 
@@ -340,11 +340,11 @@ set(['WORLD', 'HELLO'])
 
 ### **函数式编程中的函数**
 
-在使用函数式编程操作数据时，你可能会反复遇到相同的一组问题。为了帮助你高效地处理这种情况，Python包含了许多函数式编程的内置函数。本节将快速概述一些这些内置函数，它们可以帮助你构建完全函数化的程序。一旦你了解了这些函数的作用，我鼓励你进一步研究，并尝试在自己的代码中使用这些函数。
+在使用函数式编程操作数据时，你可能会反复遇到相同的一组问题。为了帮助你高效地处理这种情况，Python 包含了许多函数式编程的内置函数。本节将快速概述一些这些内置函数，它们可以帮助你构建完全函数化的程序。一旦你了解了这些函数的作用，我鼓励你进一步研究，并尝试在自己的代码中使用这些函数。
 
-#### ***使用map()函数对项进行操作***
+#### ***使用 map()函数对项进行操作***
 
-map()函数的形式为map(function, iterable)，并将function应用于iterable中的每一项，返回一个列表（Python 2）或一个可迭代的map对象（Python 3），如[Listing 8-5](ch08.xhtml#ch8list5)所示。
+map()函数的形式为 map(function, iterable)，并将 function 应用于 iterable 中的每一项，返回一个列表（Python 2）或一个可迭代的 map 对象（Python 3），如 Listing 8-5 所示。
 
 >>> map(lambda x: x + "bzz!", ["我认为", "我很好"])
 
@@ -352,11 +352,11 @@ map()函数的形式为map(function, iterable)，并将function应用于iterable
 
 >>> list(map(lambda x: x + "bzz!", ["我认为", "我很好"]))
 
-['我认为bzz!', "我很好bzz!"]
+['我认为 bzz!', "我很好 bzz!"]
 
-*Listing 8-5: 在Python 3中使用map()*
+*Listing 8-5: 在 Python 3 中使用 map()*
 
-你可以通过列表推导式写出一个等效的map()，像这样：
+你可以通过列表推导式写出一个等效的 map()，像这样：
 
 >>> (x + "bzz!" for x in ["我认为", "我很好"])
 
@@ -364,11 +364,11 @@ map()函数的形式为map(function, iterable)，并将function应用于iterable
 
 >>> [x + "bzz!" for x in ["我认为", "我很好"]]
 
-['我认为bzz!', "我很好bzz!"]
+['我认为 bzz!', "我很好 bzz!"]
 
-#### ***使用filter()过滤列表***
+#### ***使用 filter()过滤列表***
 
-filter()函数的形式为filter(function或None, iterable)，并根据function返回的结果过滤iterable中的项目。它将在Python 2中返回一个列表，或在Python 3中返回一个可迭代的filter对象：
+filter()函数的形式为 filter(function 或 None, iterable)，并根据 function 返回的结果过滤 iterable 中的项目。它将在 Python 2 中返回一个列表，或在 Python 3 中返回一个可迭代的 filter 对象：
 
 >>> filter(lambda x: x.startswith("我 "), ["我认为", "我很好"])
 
@@ -378,7 +378,7 @@ filter()函数的形式为filter(function或None, iterable)，并根据function�
 
 ['我认为']
 
-你也可以通过列表推导式写出一个等效的filter()，像这样：
+你也可以通过列表推导式写出一个等效的 filter()，像这样：
 
 >>> (x for x in ["我认为", "我很好"] if x.startswith("我 "))
 
@@ -388,9 +388,9 @@ filter()函数的形式为filter(function或None, iterable)，并根据function�
 
 ['我认为']
 
-#### ***使用enumerate()获取索引***
+#### ***使用 enumerate()获取索引***
 
-enumerate()函数的形式为enumerate(iterable[, start])，返回一个可迭代的对象，提供一个元组序列，每个元组包含一个整数索引（如果提供了start，则从start开始）和对应的项。这个函数在你需要编写引用数组索引的代码时非常有用。例如，代替写出以下代码：
+enumerate()函数的形式为 enumerate(iterable[, start])，返回一个可迭代的对象，提供一个元组序列，每个元组包含一个整数索引（如果提供了 start，则从 start 开始）和对应的项。这个函数在你需要编写引用数组索引的代码时非常有用。例如，代替写出以下代码：
 
 i = 0
 
@@ -398,15 +398,15 @@ while i < len(mylist): print("项目 %d: %s" % (i, mylist[i]))
 
 i += 1
 
-你可以用enumerate()更高效地完成相同的事情，如下所示：
+你可以用 enumerate()更高效地完成相同的事情，如下所示：
 
 for i, item in enumerate(mylist):
 
 print("项目 %d: %s" % (i, item))
 
-#### ***使用sorted()排序列表***
+#### ***使用 sorted()排序列表***
 
-sorted()函数的形式为sorted(iterable, key=None, reverse=False)，并返回iterable的排序版本。key参数允许你提供一个返回用于排序的值的函数，如下所示：
+sorted()函数的形式为 sorted(iterable, key=None, reverse=False)，并返回 iterable 的排序版本。key 参数允许你提供一个返回用于排序的值的函数，如下所示：
 
 >>> sorted([("a", 2), ("c", 1), ("d", 4)])
 
@@ -416,9 +416,9 @@ sorted()函数的形式为sorted(iterable, key=None, reverse=False)，并返回i
 
 [('c', 1), ('a', 2), ('d', 4)]
 
-#### ***使用any()和all()找到满足条件的项***
+#### ***使用 any()和 all()找到满足条件的项***
 
-any(iterable)和all(iterable)函数返回一个布尔值，取决于iterable返回的值。这些简单的函数等价于以下完整的Python代码：
+any(iterable)和 all(iterable)函数返回一个布尔值，取决于 iterable 返回的值。这些简单的函数等价于以下完整的 Python 代码：
 
 def all(iterable):
 
@@ -518,9 +518,9 @@ list(filter(lambda x: x > 0, [-1, 0, 1, 2]))[0]
 
 next(filter(lambda x: x > 0, [-1, 0, 1, 2]))
 
-注意，如果没有项目满足条件，这可能会引发IndexError，从而导致list(filter())返回一个空列表。
+注意，如果没有项目满足条件，这可能会引发 IndexError，从而导致 list(filter())返回一个空列表。
 
-对于简单的情况，你可以依靠next()来防止IndexError的发生，像这样：
+对于简单的情况，你可以依靠 next()来防止 IndexError 的发生，像这样：
 
 >>> a = range(10)
 
@@ -528,7 +528,7 @@ next(filter(lambda x: x > 0, [-1, 0, 1, 2]))
 
 4
 
-[示例 8-6](ch08.xhtml#ch8list6)将引发StopIteration错误，如果条件永远无法满足。这个问题也可以通过在next()中添加第二个参数来解决，像这样：
+示例 8-6 将引发 StopIteration 错误，如果条件永远无法满足。这个问题也可以通过在 next()中添加第二个参数来解决，像这样：
 
 >>> a = range(10)
 
@@ -538,11 +538,11 @@ next(filter(lambda x: x > 0, [-1, 0, 1, 2]))
 
 *示例 8-6：在条件不满足时返回默认值*
 
-当条件无法满足时，这将返回默认值，而不是错误。幸运的是，Python提供了一个包来处理这些问题。
+当条件无法满足时，这将返回默认值，而不是错误。幸运的是，Python 提供了一个包来处理这些问题。
 
-##### **使用first()查找项目**
+##### **使用 first()查找项目**
 
-与其在所有程序中都写出[示例 8-6](ch08.xhtml#ch8list6)中的函数，不如首先包含这个小的Python包。[示例 8-7](ch08.xhtml#ch8list7)展示了这个包如何让你找到符合条件的可迭代对象中的第一个元素。
+与其在所有程序中都写出示例 8-6 中的函数，不如首先包含这个小的 Python 包。示例 8-7 展示了这个包如何让你找到符合条件的可迭代对象中的第一个元素。
 
 >>> from first import first
 
@@ -562,9 +562,9 @@ next(filter(lambda x: x > 0, [-1, 0, 1, 2]))
 
 你可以看到，first()函数返回列表中第一个有效的非空项目。
 
-##### **使用lambda()与functools**
+##### **使用 lambda()与 functools**
 
-你会注意到，我们在本章的很多示例中都使用了lambda()。lambda()函数是Python为了方便函数式编程而加入的，用于像map()和filter()这样的函数，否则每次想要检查不同的条件时都需要编写一个全新的函数。[示例 8-8](ch08.xhtml#ch8list8)等同于[示例 8-7](ch08.xhtml#ch8list7)，但没有使用lambda()。
+你会注意到，我们在本章的很多示例中都使用了 lambda()。lambda()函数是 Python 为了方便函数式编程而加入的，用于像 map()和 filter()这样的函数，否则每次想要检查不同的条件时都需要编写一个全新的函数。示例 8-8 等同于示例 8-7，但没有使用 lambda()。
 
 import operator
 
@@ -576,11 +576,11 @@ return number > 0
 
 first([-1, 0, 1, 2], key=greater_than_zero)
 
-*示例 8-8：在不使用lambda()的情况下找到第一个满足条件的项目*
+*示例 8-8：在不使用 lambda()的情况下找到第一个满足条件的项目*
 
-这段代码与[示例 8-7](ch08.xhtml#ch8list7)中的代码完全相同，返回满足条件的列表中第一个非空值，但它要繁琐得多：如果我们想要获取一个长度超过42项的序列中的第一个数字，我们就需要通过def定义一个合适的函数，而不是像调用first()时那样在线定义它。
+这段代码与示例 8-7 中的代码完全相同，返回满足条件的列表中第一个非空值，但它要繁琐得多：如果我们想要获取一个长度超过 42 项的序列中的第一个数字，我们就需要通过 def 定义一个合适的函数，而不是像调用 first()时那样在线定义它。
 
-尽管lambda在帮助我们避免类似问题时很有用，但它仍然存在一些问题。first模块包含一个key参数，可以用来提供一个接收每个项目并返回布尔值的函数，指示该项目是否满足条件。然而，我们无法传递key函数，因为它需要的代码超过了一行：lambda语句不能写在多于一行的地方。这是lambda的一个重大限制。
+尽管 lambda 在帮助我们避免类似问题时很有用，但它仍然存在一些问题。first 模块包含一个 key 参数，可以用来提供一个接收每个项目并返回布尔值的函数，指示该项目是否满足条件。然而，我们无法传递 key 函数，因为它需要的代码超过了一行：lambda 语句不能写在多于一行的地方。这是 lambda 的一个重大限制。
 
 相反，我们将不得不回到繁琐的模式，为每个需要的键编写新的函数定义。但真的是这样吗？
 
@@ -596,7 +596,7 @@ return number > min
 
 ➋ first([-1, 0, 1, 2], key=partial(greater_than, min=42))
 
-在这里，我们创建了一个新的 greater_than() 函数，它的行为与[示例 8-8](ch08.xhtml#ch8list8)中的 greater_than_zero() 函数相同，但这个版本允许我们指定我们希望与之比较的值，而以前是硬编码的。在这里，我们将 functools.partial() 传递给我们的函数和我们想要的 min 值 ➊，然后我们得到一个新函数，它的 min 值设置为 42，正如我们希望的那样 ➋。换句话说，我们可以编写一个函数并使用 functools.partial() 来定制我们新函数的行为，以适应任何特定情况。
+在这里，我们创建了一个新的 greater_than() 函数，它的行为与示例 8-8 中的 greater_than_zero() 函数相同，但这个版本允许我们指定我们希望与之比较的值，而以前是硬编码的。在这里，我们将 functools.partial() 传递给我们的函数和我们想要的 min 值 ➊，然后我们得到一个新函数，它的 min 值设置为 42，正如我们希望的那样 ➋。换句话说，我们可以编写一个函数并使用 functools.partial() 来定制我们新函数的行为，以适应任何特定情况。
 
 即使是这个版本也可以进一步简化。在这个例子中，我们只是在比较两个数字，结果发现 operator 模块有内置的函数正是用于做这个的：
 
@@ -608,7 +608,7 @@ return number > min
 
 first([-1, 0, 1, 2], key=partial(operator.le, 0))
 
-这是一个很好的例子，展示了 functools.partial() 如何与位置参数配合使用。在这个例子中，函数 operator.le(a, b) 接受两个数字并返回一个布尔值，告诉我们第一个数字是否小于或等于第二个数字，它被传递给 functools.partial()。我们传递给 functools.partial() 的 0 被赋值给 a，传递给 functools.partial() 返回的函数的参数则赋值给 b。所以这个例子与[示例 8-8](ch08.xhtml#ch8list8)的实现方式相同，只不过没有使用 lambda 或定义额外的函数。
+这是一个很好的例子，展示了 functools.partial() 如何与位置参数配合使用。在这个例子中，函数 operator.le(a, b) 接受两个数字并返回一个布尔值，告诉我们第一个数字是否小于或等于第二个数字，它被传递给 functools.partial()。我们传递给 functools.partial() 的 0 被赋值给 a，传递给 functools.partial() 返回的函数的参数则赋值给 b。所以这个例子与示例 8-8 的实现方式相同，只不过没有使用 lambda 或定义额外的函数。
 
 **注意**
 
@@ -622,27 +622,27 @@ first([-1, 0, 1, 2], key=partial(operator.le, 0))
 
 +   chain(*iterables)依次迭代多个可迭代对象，而不构建所有项目的中间列表。
 
-+   combinations(iterable, r)从给定的可迭代对象生成长度为r的所有组合。
++   combinations(iterable, r)从给定的可迭代对象生成长度为 r 的所有组合。
 
-+   compress(data, selectors)将从selectors中应用布尔掩码到data，并仅返回data中相应selectors元素为True的值。
++   compress(data, selectors)将从 selectors 中应用布尔掩码到 data，并仅返回 data 中相应 selectors 元素为 True 的值。
 
-+   count(start, step)生成一个从start开始并且每次调用增加step的无限序列值。
++   count(start, step)生成一个从 start 开始并且每次调用增加 step 的无限序列值。
 
 +   cycle(iterable)在可迭代对象中重复循环值。
 
-+   repeat(elem[, n])重复元素n次。
++   repeat(elem[, n])重复元素 n 次。
 
-+   dropwhile(predicate, iterable)会从开始处过滤可迭代对象的元素，直到predicate为False。
++   dropwhile(predicate, iterable)会从开始处过滤可迭代对象的元素，直到 predicate 为 False。
 
-+   groupby(iterable, keyfunc)创建一个迭代器，根据keyfunc()函数返回的结果对项目进行分组。
++   groupby(iterable, keyfunc)创建一个迭代器，根据 keyfunc()函数返回的结果对项目进行分组。
 
-+   permutations(iterable[, r])返回可迭代对象中项目的连续r长度排列。
++   permutations(iterable[, r])返回可迭代对象中项目的连续 r 长度排列。
 
-+   product(*iterables)返回iterables的笛卡尔积的可迭代对象，而不使用嵌套的for循环。
++   product(*iterables)返回 iterables 的笛卡尔积的可迭代对象，而不使用嵌套的 for 循环。
 
-+   takewhile(predicate, iterable)返回从开始处的可迭代对象的元素，直到predicate为False。
++   takewhile(predicate, iterable)返回从开始处的可迭代对象的元素，直到 predicate 为 False。
 
-这些函数与操作符模块一起使用特别有用。当结合使用时，itertools和operator可以处理程序员通常依赖lambda处理的大多数情况。以下是使用operator.itemgetter()而不是编写lambda x: x['foo']的示例：
+这些函数与操作符模块一起使用特别有用。当结合使用时，itertools 和 operator 可以处理程序员通常依赖 lambda 处理的大多数情况。以下是使用 operator.itemgetter()而不是编写 lambda x: x['foo']的示例：
 
 >>> import itertools
 
@@ -660,10 +660,10 @@ first([-1, 0, 1, 2], key=partial(operator.le, 0))
 
 [('bar', [{'foo': 'bar'}, {'x': 42, 'foo': 'bar'}]), ('baz', [{'y': 43, 'foo': 'baz'}])]
 
-在这种情况下，我们也可以写lambda x: x['foo']，但使用操作符可以避免完全使用lambda。
+在这种情况下，我们也可以写 lambda x: x['foo']，但使用操作符可以避免完全使用 lambda。
 
 ### **总结**
 
-虽然Python经常被宣传为面向对象的，但它也可以以非常函数式的方式使用。它的许多内置概念，如生成器和列表推导式，是函数式的，并且不与面向对象的方法冲突。它们还限制了程序对全局状态的依赖，为了你自己的好处。
+虽然 Python 经常被宣传为面向对象的，但它也可以以非常函数式的方式使用。它的许多内置概念，如生成器和列表推导式，是函数式的，并且不与面向对象的方法冲突。它们还限制了程序对全局状态的依赖，为了你自己的好处。
 
-在Python中使用函数式编程作为一种范式可以帮助你使程序更可重用、更易于测试和调试，支持“不重复自己”（DRY）的信条。在这种精神下，标准Python模块itertools和operator是改进你的函数式代码可读性的好工具。
+在 Python 中使用函数式编程作为一种范式可以帮助你使程序更可重用、更易于测试和调试，支持“不重复自己”（DRY）的信条。在这种精神下，标准 Python 模块 itertools 和 operator 是改进你的函数式代码可读性的好工具。

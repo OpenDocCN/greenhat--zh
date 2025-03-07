@@ -2,17 +2,17 @@
 
 安装与故障排除
 
-![](Images/chapterart.png)
+![](img/chapterart.png)
 
 有许多版本的 Python 可供选择，并且每个操作系统上都有多种安装方式。如果第一章中的方法不起作用，或者你想安装与当前安装版本不同的 Python 版本，本附录中的说明可以帮助你。
 
-## Windows上的Python
+## Windows 上的 Python
 
-第一章中的说明向你展示了如何使用[https://python.org](https://python.org)的官方安装程序来安装 Python。如果你在使用安装程序后无法运行 Python，本节中的故障排除说明将帮助你让 Python 正常运行。
+第一章中的说明向你展示了如何使用[`python.org`](https://python.org)的官方安装程序来安装 Python。如果你在使用安装程序后无法运行 Python，本节中的故障排除说明将帮助你让 Python 正常运行。
 
 ### 使用 py 代替 python
 
-如果你运行了最近的 Python 安装程序，然后在终端中输入 `python` 命令，你应该会看到终端会话的 Python 提示符（`>>>`）。如果 Windows 无法识别 `python` 命令，它会打开微软商店，因为它认为 Python 未安装，或者你会看到类似“未找到 Python”的消息。如果微软商店打开了，请关闭它；与其使用微软维护的版本，还是更好地使用来自[https://python.org](https://python.org)的官方 Python 安装程序。
+如果你运行了最近的 Python 安装程序，然后在终端中输入 `python` 命令，你应该会看到终端会话的 Python 提示符（`>>>`）。如果 Windows 无法识别 `python` 命令，它会打开微软商店，因为它认为 Python 未安装，或者你会看到类似“未找到 Python”的消息。如果微软商店打开了，请关闭它；与其使用微软维护的版本，还是更好地使用来自[`python.org`](https://python.org)的官方 Python 安装程序。
 
 最简单的解决方法是尝试使用`py`命令，而无需对系统进行任何更改。这是一个 Windows 工具，可以找到系统上安装的最新 Python 版本并运行该解释器。如果此命令有效且你希望使用它，只需在本书中看到`python`或`python3`命令时，使用`py`即可。
 
@@ -20,19 +20,19 @@
 
 `python`命令无法正常工作最常见的原因是人们在运行安装程序时忘记选择“Add Python to PATH”选项；这是一个容易犯的错误。`PATH`变量是一个系统设置，告诉 Python 去哪里查找常用的程序。在这种情况下，Windows 不知道如何找到 Python 解释器。
 
-这种情况下最简单的解决方法是重新运行安装程序。如果从[https://python.org](https://python.org)可以获取更新的安装程序，请下载新版本并运行，确保勾选**Add Python to PATH**选项。
+这种情况下最简单的解决方法是重新运行安装程序。如果从[`python.org`](https://python.org)可以获取更新的安装程序，请下载新版本并运行，确保勾选**Add Python to PATH**选项。
 
 如果你已经有了最新的安装程序，请再次运行并选择**Modify**选项。你将看到一个可选功能的列表；在这个界面上保持默认选项。然后点击**Next**并勾选**Add Python to Environment Variables**框。最后点击**Install**。安装程序会识别到 Python 已经安装，并将 Python 解释器的位置添加到 `PATH` 变量中。确保关闭所有打开的终端，因为它们仍然会使用旧的 `PATH` 变量。打开一个新的终端窗口并再次输入 `python` 命令；你应该会看到 Python 提示符（`>>>`）。
 
-## macOS上的Python
+## macOS 上的 Python
 
-第1章中的安装说明使用了[https://python.org](https://python.org)的官方 Python 安装程序。该官方安装程序多年来一直运行良好，但有一些情况可能会让你偏离正轨。如果有什么不按预期工作，本节将帮助你解决问题。
+第一章中的安装说明使用了[`python.org`](https://python.org)的官方 Python 安装程序。该官方安装程序多年来一直运行良好，但有一些情况可能会让你偏离正轨。如果有什么不按预期工作，本节将帮助你解决问题。
 
 ### 意外安装了 Apple 版本的 Python
 
-如果你运行`python3`命令时，系统中尚未安装 Python，你很可能会看到需要安装*命令行开发者工具*的消息。此时，最好的做法是关闭显示该消息的弹窗，下载 Python 安装程序，来自[https://python.org](https://python.org)，并运行安装程序。
+如果你运行`python3`命令时，系统中尚未安装 Python，你很可能会看到需要安装*命令行开发者工具*的消息。此时，最好的做法是关闭显示该消息的弹窗，下载 Python 安装程序，来自[`python.org`](https://python.org)，并运行安装程序。
 
-如果你选择在此时安装命令行开发者工具，macOS 会与开发者工具一起安装 Apple 的 Python 版本。唯一的问题是，Apple 的 Python 版本通常会比最新的官方版本稍微滞后。然而，你仍然可以从[https://python.org](https://python.org)下载并运行官方安装程序，`python3`就会指向更新的版本。不要担心开发者工具已安装；其中有一些有用的工具，包括附录 D 中讨论的 Git 版本控制系统。
+如果你选择在此时安装命令行开发者工具，macOS 会与开发者工具一起安装 Apple 的 Python 版本。唯一的问题是，Apple 的 Python 版本通常会比最新的官方版本稍微滞后。然而，你仍然可以从[`python.org`](https://python.org)下载并运行官方安装程序，`python3`就会指向更新的版本。不要担心开发者工具已安装；其中有一些有用的工具，包括附录 D 中讨论的 Git 版本控制系统。
 
 ### 旧版 macOS 上的 Python 2
 
@@ -81,9 +81,9 @@ $ **sudo apt install python3.11-dev python3.11-venv**
 
 这些包包括在安装和运行第三方包时所需的模块，例如书籍下半部分项目中使用的那些包。
 
-## 检查你正在使用的Python版本
+## 检查你正在使用的 Python 版本
 
-如果你在运行Python或安装额外包时遇到任何问题，知道自己正在使用哪个版本的Python会很有帮助。你可能安装了多个版本的Python，且不清楚当前使用的是哪个版本。
+如果你在运行 Python 或安装额外包时遇到任何问题，知道自己正在使用哪个版本的 Python 会很有帮助。你可能安装了多个版本的 Python，且不清楚当前使用的是哪个版本。
 
 在终端中执行以下命令：
 
@@ -96,9 +96,9 @@ Python 3.11.0
 
 ## Python 关键字和内置函数
 
-Python自带了一套关键字和内置函数。了解这些非常重要，因为在Python中命名时，你的名称不能与这些关键字相同，也不应与函数名相同，否则你将覆盖这些函数。
+Python 自带了一套关键字和内置函数。了解这些非常重要，因为在 Python 中命名时，你的名称不能与这些关键字相同，也不应与函数名相同，否则你将覆盖这些函数。
 
-在本节中，我们将列出Python的关键字和内置函数名称，以便你知道哪些名称需要避免使用。
+在本节中，我们将列出 Python 的关键字和内置函数名称，以便你知道哪些名称需要避免使用。
 
 ### Python 关键字
 

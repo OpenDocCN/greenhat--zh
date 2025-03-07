@@ -22,7 +22,7 @@ draw() 方法 5 绘制 self.textSurface 中包含的图像
 
 显示文本。
 
-**134** 第 6 章
+**134** 第六章
 
 • 每个 SimpleText 对象记住它绘制文本的窗口、文本放置的位置和文本颜色。因此，
 
@@ -162,17 +162,17 @@ pygame.display.update()
 
 clock.tick(FRAMES_PER_SECOND)
 
-*Listing 6-7: 一个示例主程序，展示Ball、SimpleText和SimpleButton* 在程序的顶部，我们导入Ball、SimpleText的代码，
+*Listing 6-7: 一个示例主程序，展示 Ball、SimpleText 和 SimpleButton* 在程序的顶部，我们导入 Ball、SimpleText 的代码，
 
-和SimpleButton类 1\. 在主循环开始之前，我们创建了一个实例
+和 SimpleButton 类 1\. 在主循环开始之前，我们创建了一个实例
 
-作为Ball 2的两个实例，SimpleText类的两个实例（oFrameCountLabel用于
+作为 Ball 2 的两个实例，SimpleText 类的两个实例（oFrameCountLabel 用于
 
-不变的消息标签和oFrameCountDisplay用于显示帧数的变化，
+不变的消息标签和 oFrameCountDisplay 用于显示帧数的变化，
 
-帧数显示（以及帧数的变化），还有一个SimpleButton类的实例，我们将其存储在
+帧数显示（以及帧数的变化），还有一个 SimpleButton 类的实例，我们将其存储在
 
-oRestartButton。我们还初始化了一个变量frameCounter为零，后续会使用
+oRestartButton。我们还初始化了一个变量 frameCounter 为零，后续会使用
 
 每次通过主循环时递增。
 
@@ -182,21 +182,21 @@ oRestartButton。我们还初始化了一个变量frameCounter为零，后续会
 
 我们告诉球更新其位置 4\. 我们递增帧计数器—
 
-然后调用文本字段的setValue()方法，显示新的计数
+然后调用文本字段的 setValue()方法，显示新的计数
 
 帧数 5\. 最后，我们告诉球绘制自己，并告诉文本字段绘制
 
-它们自己，并通过调用draw()方法，告诉重启按钮绘制自己
+它们自己，并通过调用 draw()方法，告诉重启按钮绘制自己
 
 每个对象的方法 6\。
 
-**136** 第6章
+**136** 第六章
 
-在SimpleText对象的实例化中，最后一个参数是文本颜色，我们指定这些对象应以白色渲染，因此
+在 SimpleText 对象的实例化中，最后一个参数是文本颜色，我们指定这些对象应以白色渲染，因此
 
 这样它们就能在黑色背景下显示出来。在下一章，我将展示
 
-如何扩展SimpleText类以包含更多属性，而不
+如何扩展 SimpleText 类以包含更多属性，而不
 
 不会使类的接口变得复杂。我们将构建一个功能更全的文本
 
@@ -206,23 +206,23 @@ oRestartButton。我们还初始化了一个变量frameCounter为零，后续会
 
 **接口与实现**
 
-SimpleButton和SimpleText示例引出了一个重要的话题
+SimpleButton 和 SimpleText 示例引出了一个重要的话题
 
-接口与实现。如第4章中提到的，[接口](index_split_001.html#p86)指的是某个东西如何被使用，而实现则指的是其内部工作原理。
+接口与实现。如第四章中提到的，接口指的是某个东西如何被使用，而实现则指的是其内部工作原理。
 
 内部是如何运作的（即某些功能的实现）。
 
-在OOP环境中，接口是类中一组方法的集合，
+在 OOP 环境中，接口是类中一组方法的集合，
 
 它们相关的参数——也称为*应用程序编程接口*
 
 *(API)*。实现则是类中所有方法的实际代码。
 
-一个外部包，如pygame，通常会附带文档
+一个外部包，如 pygame，通常会附带文档
 
-API文档解释了可以调用的函数以及每次调用时你需要传递的参数。
+API 文档解释了可以调用的函数以及每次调用时你需要传递的参数。
 
-你需要在每次调用时传递的参数。完整的pygame API
+你需要在每次调用时传递的参数。完整的 pygame API
 
 文档可以在 [*https://www.pygame.org/docs/*](https://www.pygame.org/docs/) 找到。
 
@@ -250,7 +250,7 @@ blit() 做它应该做的事情；你只需要知道 *它* 的调用是做什么
 
 因为它们是以通用的方式编写的，因此可以轻松重用。我会讲解
 
-更多关于接口与实现的内容[参见第8章，w](#p192)，我们将在那时探讨封装。
+更多关于接口与实现的内容参见第八章，w，我们将在那时探讨封装。
 
 **回调函数**
 
@@ -274,7 +274,7 @@ print('按钮被点击了')
 
 当某个特定的动作、事件或条件发生时，一个对象的函数或方法会被调用。
 
-一个容易理解这个概念的方法是思考一下1984年上映的热门电影
+一个容易理解这个概念的方法是思考一下 1984 年上映的热门电影
 
 *幽灵捕手*。电影的标语是“你会打电话给谁？” 在
 
@@ -322,7 +322,7 @@ oButton = tkinter.Button(text='点击我', command=myFunction)
 
 （这个调用使用了关键字参数，我们将在后续详细讨论）
 
-在[第7章](#p172)，tkinter按钮将该函数记住作为回调函数，当用户点击该按钮时，它会调用该函数。
+在第七章，tkinter 按钮将该函数记住作为回调函数，当用户点击该按钮时，它会调用该函数。
 
 myFunction().
 
@@ -342,7 +342,7 @@ myFunction().
 
 这样，程序可以继续运行，用户不会被锁定
 
-**138** 第6章
+**138** 第六章
 
 从中解脱出来。这通常涉及多个 Python 线程，超出了本书的范围，但使用回调的技术是一般的方式
 
@@ -372,7 +372,7 @@ SimpleButton 类，每个类以不同的方式处理按钮点击。
 
 **文件：PygameDemo9_SimpleButtonWithCallback/Main_SimpleButtonCallback.py**
 
-# pygame 演示 9 - 3个按钮测试与回调函数
+# pygame 演示 9 - 3 个按钮测试与回调函数
 
 # 1 - 导入包
 
@@ -398,7 +398,7 @@ FRAMES_PER_SECOND = 30
 
 def myCallBackFunction(): 1
 
-print('用户按下了按钮B，调用了我的回调函数')
+print('用户按下了按钮 B，调用了我的回调函数')
 
 # 定义一个类，并为其方法指定一个“回调”函数
 
@@ -408,7 +408,7 @@ class CallBackTest(): 2
 
 def myMethod(self):
 
-print('用户按下了按钮C，调用了 CallBackTest 对象的 myMethod')
+print('用户按下了按钮 C，调用了 CallBackTest 对象的 myMethod')
 
 # 3 - 初始化世界
 
@@ -562,9 +562,9 @@ oCallBackTest 对象的 myMethod() 方法将被调用，并且
 
 然后将我们的示范程序的主要代码从之前的
 
-本章介绍了如何调用类的方法，以告诉Ball对象*做什么*，而不必担心*如何*实现结果。所有相关代码都在一个单独的类中，我们可以轻松地创建对象列表，并根据需要实例化和管理多个对象。
+本章介绍了如何调用类的方法，以告诉 Ball 对象*做什么*，而不必担心*如何*实现结果。所有相关代码都在一个单独的类中，我们可以轻松地创建对象列表，并根据需要实例化和管理多个对象。
 
-然后我们构建了一个SimpleButton类和一个SimpleText类，这些类隐藏了
+然后我们构建了一个 SimpleButton 类和一个 SimpleText 类，这些类隐藏了
 
 复杂性隐藏在其实现内部，并创建高可复用的代码。在
 
@@ -578,17 +578,17 @@ oCallBackTest 对象的 myMethod() 方法将被调用，并且
 
 事件发生或动作完成时。
 
-面向对象的Pygame **141**
+面向对象的 Pygame **141**
 
 **7**
 
 **P Y G A M E G U I W I D G E T S**
 
-Pygame允许程序员以
+Pygame 允许程序员以
 
-基于文本的Python语言及其应用
+基于文本的 Python 语言及其应用
 
-构建基于GUI的程序。Windows，
+构建基于 GUI 的程序。Windows，
 
 指针设备、点击、拖动等操作，
 
@@ -600,7 +600,7 @@ Pygame允许程序员以
 
 界面元素，因此我们需要自己构建它们。
 
-我们将使用pygwidgets，这是一个GUI小部件库。
+我们将使用 pygwidgets，这是一个 GUI 小部件库。
 
 本章解释了如何构建标准小部件，例如图像、按钮、
 
@@ -608,11 +608,11 @@ Pygame允许程序员以
 
 它们中。将每个元素构建为一个类，使程序员能够融入
 
-在创建GUI时，可以为每个元素创建多个实例。在我们继续之前，
+在创建 GUI 时，可以为每个元素创建多个实例。在我们继续之前，
 
-在开始构建这些GUI小部件之前，我需要讨论一个
+在开始构建这些 GUI 小部件之前，我需要讨论一个
 
-另一个Python特性：在调用函数或方法时传递数据。
+另一个 Python 特性：在调用函数或方法时传递数据。
 
 **将参数传递给函数或方法**
 
@@ -624,13 +624,13 @@ Pygame允许程序员以
 
 传递给第二个参数的值，依此类推。
 
-图7-1，复制自第3章，显示了当你调用一个对象的方法时，同样的规则适用。我们可以看到，第一个参数，总是self，被设置为调用中的对象。
+图 7-1，复制自第三章，显示了当你调用一个对象的方法时，同样的规则适用。我们可以看到，第一个参数，总是 self，被设置为调用中的对象。
 
 def someMethod(self, *<任何其他参数>* ):
 
 oSomeObject.someMethod( *<任何其他参数>* )
 
-*图7-1：传递到方法中的参数如何与其参数匹配*
+*图 7-1：传递到方法中的参数如何与其参数匹配*
 
 然而，Python（和一些其他语言）允许你为一些
 
@@ -640,9 +640,9 @@ oSomeObject.someMethod( *<任何其他参数>* )
 
 通过一个现实世界的类比来解释。
 
-如果你在Burger King餐厅点一份汉堡，你的汉堡会
+如果你在 Burger King 餐厅点一份汉堡，你的汉堡会
 
-配有番茄酱、芥末和泡菜。但Burger King以
+配有番茄酱、芥末和泡菜。但 Burger King 以
 
 这种方式说：“你可以按自己的方式来。”如果你想要其他组合的
 
@@ -684,7 +684,7 @@ TypeError：orderBurgers() 缺少 3 个必需的位置参数：'ketchup'，
 
 如果没有指定任何值，它们将被赋予默认值。
 
-**144** 第7章
+**144** 第七章
 
 ***位置和关键字参数***
 
@@ -744,11 +744,11 @@ orderBurgers(2, mustard=False, pickles=False)
 
 默认设置为 False。由于我们没有为番茄酱指定值，它会被赋予
 
-默认为True。
+默认为 True。
 
 你也可以按位置指定所有参数来进行调用，包括-
 
-将它们写为关键字参数。Python会使用参数的顺序
+将它们写为关键字参数。Python 会使用参数的顺序
 
 给每个参数分配正确值时，你的参数是：
 
@@ -828,17 +828,17 @@ cone，没有洒糖。调用者可以通过不同的方式覆盖这些默认值-
 
 样式默认为“regular”，但可以是“deepdish”。作为第三个参数，
 
-**146** 第7章
+**146** 第七章
 
 调用者可以选择性地传递一个想要的配料。如果调用者想要配料，我们必须额外收费。
 
-在列表7-1中，我们将为大小使用一个位置参数和关键字参数-
+在列表 7-1 中，我们将为大小使用一个位置参数和关键字参数-
 
 对样式和配料使用关键字参数。样式的默认值是字符串
 
 由于配料是可选的，我们将使用特殊的 Python
 
-None值作为默认值，但调用者可以传递他们想要的配料
+None 值作为默认值，但调用者可以传递他们想要的配料
 
 选择。
 
@@ -984,7 +984,7 @@ pygwidgets 包包含以下类：
 
 带有自定义艺术作品的按钮
 
-**148** 第7章
+**148** 第七章
 
 **TextCheckBox**
 
@@ -1058,7 +1058,7 @@ pygwidgets 的最新文档可以在 [*https://pygwidgets*](https://pygwidgets.re
 
 ***总体设计方法***
 
-如第5章所示，在每个 pygame 程序中你首先要做的事情之一就是定义应用程序的窗口。以下一行创建了
+如第五章所示，在每个 pygame 程序中你首先要做的事情之一就是定义应用程序的窗口。以下一行创建了
 
 创建应用程序窗口并将其引用保存在名为 window 的变量中：
 
@@ -1092,7 +1092,7 @@ oWidget = pygwidgets. *<SomeWidgetClass>* (window, loc, *<其他需要的参数>
 
 获取的事件是一个元组：(x, y)。
 
-第2步是通过调用 handleEvent() 处理任何可能影响小部件的事件
+第 2 步是通过调用 handleEvent() 处理任何可能影响小部件的事件
 
 对象的 handleEvent() 方法位于事件循环中。如果任何事件（如鼠标
 
@@ -1116,17 +1116,17 @@ sys.exit()
 
 # 在此处添加代码
 
-第3步是在 while 循环的底部添加一行，调用
+第 3 步是在 while 循环的底部添加一行，调用
 
 小部件的 draw() 方法，以使其在窗口中显示：
 
 oWidget.draw()
 
-**第150章 第七章**
+**第一百五十章 第七章**
 
 由于我们指定了要绘制的窗口、位置以及任何
 
-在第1步中影响小部件外观的详细信息，我们没有传递任何
+在第 1 步中影响小部件外观的详细信息，我们没有传递任何
 
 在调用 draw() 时，您可以处理绘制过程中的任何问题。
 
@@ -1170,39 +1170,39 @@ oImage.setLoc((newX, newY))
 
 **精灵模块**
 
-Pygame有一个内置模块可以在窗口中显示图像，称为*精灵*。
+Pygame 有一个内置模块可以在窗口中显示图像，称为*精灵*。
 
-*模块*。这种图像被称为*精灵*。精灵模块提供了一个Sprite类来处理单个精灵和一个Group类来处理多个精灵。
+*模块*。这种图像被称为*精灵*。精灵模块提供了一个 Sprite 类来处理单个精灵和一个 Group 类来处理多个精灵。
 
-Sprite对象。一起，这些类提供了出色的功能，如果
+Sprite 对象。一起，这些类提供了出色的功能，如果
 
-如果您打算进行大量的pygame编程，可能值得您的时间来深入了解它们。不过，为了说明底层的面向对象编程概念，
+如果您打算进行大量的 pygame 编程，可能值得您的时间来深入了解它们。不过，为了说明底层的面向对象编程概念，
 
-是时候深入了解它们了。然而，为了说明底层的OOP概念，
+是时候深入了解它们了。然而，为了说明底层的 OOP 概念，
 
 概念上，我选择不使用这些类。相反，我将继续使用生成类。
 
-一般GUI元素，以便它们可以在任何环境和语言中使用。
+一般 GUI 元素，以便它们可以在任何环境和语言中使用。
 
 如果您想了解更多关于精灵模块的信息，请参阅教程 [*https://*](https://www.pygame.org/docs/tut/SpriteIntro.html)
 
 [*www.pygame.org/docs/tut/SpriteIntro.html*](https://www.pygame.org/docs/tut/SpriteIntro.html)
 
-Pygame GUI小部件 **151**
+Pygame GUI 小部件 **151**
 
 ***添加按钮、复选框和单选按钮***
 
-当您在pygwidgets中实例化按钮、复选框或单选按钮小部件时，
+当您在 pygwidgets 中实例化按钮、复选框或单选按钮小部件时，
 
 您有两个选项：实例化一个文本版本，该版本绘制自己的艺术图像，或者
 
 添加一个基于您传递字符串的文本标签，或者实例化一个自定义版本
 
-版本，您提供艺术作品的位置。表7-1显示了不同的按钮类。
+版本，您提供艺术作品的位置。表 7-1 显示了不同的按钮类。
 
 可用的。
 
-**表7-1：** pygwidgets中的文本和自定义按钮类。
+**表 7-1：** pygwidgets 中的文本和自定义按钮类。
 
 **文本版本（在飞行中构建艺术作品）**
 
@@ -1236,15 +1236,15 @@ CustomRadioButton
 
 文本或自定义按钮类，所有剩余方法对这一对
 
-这些类是相同的。为了明确这一点，我们来看看TextButton
+这些类是相同的。为了明确这一点，我们来看看 TextButton
 
-和CustomButton类。
+和 CustomButton 类。
 
 **TextButtons**
 
-这是TextButton类的__init__()方法的实际定义。
+这是 TextButton 类的 __init__()方法的实际定义。
 
-在pygwidgets中：
+在 pygwidgets 中：
 
 def __init__(self, window, loc, text,
 
@@ -1276,23 +1276,23 @@ nickname=None):
 
 通常会参考其文档。如前所述，您可以找到
 
-pygwidgets的完整文档可以在[*https://pygwidgets.readthedocs.io/*](https://pygwidgets.readthedocs.io/en/latest/)查看。
+pygwidgets 的完整文档可以在[*https://pygwidgets.readthedocs.io/*](https://pygwidgets.readthedocs.io/en/latest/)查看。
 
 [*en/latest/*](https://pygwidgets.readthedocs.io/en/latest/).
 
-您也可以通过调用内置的help()函数来查看类的文档。
+您也可以通过调用内置的 help()函数来查看类的文档。
 
-在Python shell中可以这样调用函数：
+在 Python shell 中可以这样调用函数：
 
 >>> help(pygwidgets.TextButton)
 
-**152** 第7章
+**152** 第七章
 
-![图片 24](index-182_1.png)
+![图片 24](img/index-182_1.png)
 
-![图片 25](index-182_2.png)
+![图片 25](img/index-182_2.png)
 
-当您创建一个TextButton的实例时，您只需要传递
+当您创建一个 TextButton 的实例时，您只需要传递
 
 在窗口中，窗口中的位置，以及要显示的文本。
 
@@ -1430,7 +1430,7 @@ oButton.draw() # 在 while 循环的底部，告诉它绘制
 
 ***文本输出和输入***
 
-正如我们在[第六章，h](index_split_002.html#p150)中所见，处理文本输入和输出在 pygame 中是棘手的，但在这里我将介绍用于文本显示字段和输入文本的新类
+正如我们在第六章，h 中所见，处理文本输入和输出在 pygame 中是棘手的，但在这里我将介绍用于文本显示字段和输入文本的新类
 
 字段。这两个类都有最小的必需（位置）参数，
 
@@ -1442,7 +1442,7 @@ oButton.draw() # 在 while 循环的底部，告诉它绘制
 
 pygwidgets 包含一个 DisplayText 类，用于显示文本，这是一个
 
-更完整版本的 SimpleText 类来自[第六章](index_split_002.html#p150)。当你**154** 第七章
+更完整版本的 SimpleText 类来自第六章。当你**154** 第七章
 
 实例化一个 DisplayText 字段时，唯一必需的参数是窗口和位置。第一个关键字参数是 value，它可以通过字符串指定作为显示在字段中的起始文本。这通常是
 
@@ -1626,55 +1626,55 @@ imageDict = {'front':'images/front.png', 'left':'images/left.png'，
 
 循环底部的`draw()`方法始终显示当前的图像。
 
-Dragger类显示一张单独的图像，但允许用户拖动该图像
+Dragger 类显示一张单独的图像，但允许用户拖动该图像
 
-在窗口中任何位置显示图像。你必须调用其handleEvent()方法
+在窗口中任何位置显示图像。你必须调用其 handleEvent()方法
 
-事件循环。当用户完成拖动时，handleEvent()返回True，
+事件循环。当用户完成拖动时，handleEvent()返回 True，
 
-你可以调用Dragger对象的getMouseUpLoc()方法来获取鼠标释放的位置
+你可以调用 Dragger 对象的 getMouseUpLoc()方法来获取鼠标释放的位置
 
 用户释放鼠标按钮时的位置。
 
-Animation和SpriteSheetAnimation类处理构建和
+Animation 和 SpriteSheetAnimation 类处理构建和
 
 显示动画。两者都需要一组图像进行迭代。
 
-Animation类从单独的文件中获取图像，而
+Animation 类从单独的文件中获取图像，而
 
-SpriteSheetAnimation类需要一张内部均匀间隔的图像
+SpriteSheetAnimation 类需要一张内部均匀间隔的图像
 
-图像。我们将在[第14章](index_split_005.html#p324)中更详细地探讨这些类。
+图像。我们将在第十四章中更详细地探讨这些类。
 
-***pygwidgets示例程序***
+***pygwidgets 示例程序***
 
-图7-4显示了一个示例程序的截图，演示了这些
+图 7-4 显示了一个示例程序的截图，演示了这些
 
-从许多pygwidgets类实例化的对象，包括Image，
+从许多 pygwidgets 类实例化的对象，包括 Image，
 
-DisplayText, InputText, TextButton, CustomButton, TextRadioButton, CustomRadioButton, TextCheckBox, CustomCheckBox, ImageCollection和Dragger。
+DisplayText, InputText, TextButton, CustomButton, TextRadioButton, CustomRadioButton, TextCheckBox, CustomCheckBox, ImageCollection 和 Dragger。
 
 该示例程序的源代码可以在*pygwidgets_test*文件夹中找到
 
-我GitHub仓库中的文件夹，[*https://github.com/IrvKalb/pygwidgets/*.](https://github.com/IrvKalb/pygwidgets/)
+我 GitHub 仓库中的文件夹，[*https://github.com/IrvKalb/pygwidgets/*.](https://github.com/IrvKalb/pygwidgets/)
 
-Pygame GUI小部件 **157**
+Pygame GUI 小部件 **157**
 
-![图像26](index-187_1.png)
+![图像 26](img/index-187_1.png)
 
-*图7-4：演示实例化对象的程序窗口*
+*图 7-4：演示实例化对象的程序窗口*
 
-*来自各种pygwidgets类*
+*来自各种 pygwidgets 类*
 
-**一致性API的重要性**
+**一致性 API 的重要性**
 
-关于为一组类构建API的最后一点：尽可能地
+关于为一组类构建 API 的最后一点：尽可能地
 
 在方法的参数中构建一致性是一个非常好的主意
 
 不同但类似的类。作为一个很好的例子，前两个参数
 
-pygwidgets中每个类的__init__()方法中都有window和loc两个参数，
+pygwidgets 中每个类的 __init__()方法中都有 window 和 loc 两个参数，
 
 这种顺序。如果这些在某些调用中顺序不同，使用参数
 
@@ -1684,7 +1684,7 @@ pygwidgets中每个类的__init__()方法中都有window和loc两个参数，
 
 使用相同的方法名是个好主意。例如，许多类
 
-pygwidgets中的类都有一个名为setValue()的方法和另一个名为getValue()的方法。
+pygwidgets 中的类都有一个名为 setValue()的方法和另一个名为 getValue()的方法。
 
 我将在下一节中详细讨论为什么这种一致性如此重要
 
@@ -1692,7 +1692,7 @@ pygwidgets中的类都有一个名为setValue()的方法和另一个名为getVal
 
 **总结**
 
-本章介绍了面向对象的pygwidgets
+本章介绍了面向对象的 pygwidgets
 
 图形用户界面小部件包。我们首先讨论了默认
 
@@ -1702,15 +1702,15 @@ pygwidgets中的类都有一个名为setValue()的方法和另一个名为getVal
 
 在调用中指定。
 
-**第158章 第7章**
+**第一百五十八章 第七章**
 
-然后我向你介绍了pygwidgets模块，它包含多个预构建的GUI小部件类，并展示了如何使用其中的几个
+然后我向你介绍了 pygwidgets 模块，它包含多个预构建的 GUI 小部件类，并展示了如何使用其中的几个
 
 这些。最后，我展示了一个示例程序，提供了大部分的示例
 
 这些小部件。
 
-编写像pygwidgets中的类有两个主要优点。
+编写像 pygwidgets 中的类有两个主要优点。
 
 首先，类可以在方法中隐藏复杂性。一旦你有了类
 
@@ -1764,13 +1764,13 @@ Python。为了使编程语言能够调用
 
 它就像 PIE 一样简单！）
 
-[第8章 e](#p192)解释了封装：隐藏细节并将所有内容保持在一个地方。
+第八章 e 解释了封装：隐藏细节并将所有内容保持在一个地方。
 
-[第9章 d](#p212)讨论了多态：多个类可以拥有相同名称的方法。
+第九章 d 讨论了多态：多个类可以拥有相同名称的方法。
 
-[第10章 c](index_split_004.html#p240)介绍了继承：在已有代码的基础上构建。
+第十章 c 介绍了继承：在已有代码的基础上构建。
 
-最后，[第11章 g](index_split_004.html#p270)详细讨论了若干主题（大多数涉及内存管理），这些内容在逻辑上不适合前面
+最后，第十一章 g 详细讨论了若干主题（大多数涉及内存管理），这些内容在逻辑上不适合前面
 
 这三章虽然重要，但也有用且对面向对象编程非常重要。
 
@@ -1802,11 +1802,11 @@ Python。为了使编程语言能够调用
 
 封装：使用直接访问与使用 getter 和 setter。我将展示如何
 
-Python允许你将实例变量标记为私有，表示
+Python 允许你将实例变量标记为私有，表示
 
 它不应该被类外的代码访问，我会触及到
 
-Python属性装饰器。最后，我将讨论抽象的概念
+Python 属性装饰器。最后，我将讨论抽象的概念
 
 类的设计。
 
@@ -1820,7 +1820,7 @@ Python属性装饰器。最后，我将讨论抽象的概念
 
 它的代码体现的动作。考虑内置的 len() 函数
 
-Python标准库，用于查找字符串中的字符数
+Python 标准库，用于查找字符串中的字符数
 
 或列表中的元素。你传入一个字符串或列表，它会返回计数。
 
@@ -1888,7 +1888,7 @@ return average
 
 在类中），你需要关心不同方法的
 
-**164** 第8章
+**164** 第八章
 
 类共享实例变量。你考虑算法的效率。你思考接口应该是什么样子：应该提供哪些方法，每个方法的参数是什么，应该
 
@@ -2036,7 +2036,7 @@ Python 允许你编写这样的代码，直接访问对象中的数据
 
 实例变量将破坏任何使用原始名称的客户端代码
 
-**第166章 第8节**
+**第一百六十六章 第八部分**
 
 直接地。这可能发生在类的开发者决定变量名称的初始选择不理想时，原因可能包括
 
@@ -2044,9 +2044,9 @@ Python 允许你编写这样的代码，直接访问对象中的数据
 
 • 名称没有清晰地描述它所表示的数据。
 
-• 变量是布尔值，他们想交换True和False
+• 变量是布尔值，他们想交换 True 和 False
 
-通过重命名变量来表示（例如，将closed更改为open，将allowed更改为disallowed）。
+通过重命名变量来表示（例如，将 closed 更改为 open，将 allowed 更改为 disallowed）。
 
 将“不允许”更改为“活动”变为“禁用”。
 
@@ -2058,7 +2058,7 @@ Python 允许你编写这样的代码，直接访问对象中的数据
 
 在这些情况下，如果开发者更改了实例的名称
 
-类中的变量从self. *<originalName>* 更改为self. *<newName>*，那么任何直接使用原始名称的客户端软件将会出错。
+类中的变量从 self. *<originalName>* 更改为 self. *<newName>*，那么任何直接使用原始名称的客户端软件将会出错。
 
 **将实例变量转变为计算**
 
@@ -2070,13 +2070,13 @@ Python 允许你编写这样的代码，直接访问对象中的数据
 
 但是功能发生了变化，所以你需要一个算法来计算
 
-不如改为使用一个值。以我们在第4章中的Account类为例。为了使我们的银行账户更具现实感，我们可能希望添加一个利率。
+不如改为使用一个值。以我们在第四章中的 Account 类为例。为了使我们的银行账户更具现实感，我们可能希望添加一个利率。
 
 你可能认为这是一个简单的增加实例变量的问题，用来表示
 
-利率命名为self.interestRate。然后，使用直接访问
+利率命名为 self.interestRate。然后，使用直接访问
 
-这种方法下，客户端软件可以通过以下方式访问Account对象的该值：
+这种方法下，客户端软件可以通过以下方式访问 Account 对象的该值：
 
 oAccount.interestRate
 
@@ -2088,9 +2088,9 @@ oAccount.interestRate
 
 def calculateInterestRate(self):
 
-# 假设self.balance在另一个方法中已经被设置
+# 假设 self.balance 在另一个方法中已经被设置
 
-如果self.balance < 1000：
+如果 self.balance < 1000：
 
 self.interestRate = 1.0
 
@@ -2102,21 +2102,21 @@ self.interestRate = 1.5
 
 self.interestRate = 2.0
 
-与其只依赖self.interestRate中的单一利率值，
+与其只依赖 self.interestRate 中的单一利率值，
 
 calculateInterestRate()方法根据
 
 账户余额。
 
-任何直接访问oAccount.interestRate的客户端软件和
+任何直接访问 oAccount.interestRate 的客户端软件和
 
 使用实例变量的值可能会得到一个过时的值，
 
-取决于上次调用calculateInterestRate()的时间。任何
+取决于上次调用 calculateInterestRate()的时间。任何
 
-封装**第167章**
+封装**第一百六十七章**
 
-设置新interestRate的客户端软件可能会发现，新值被某些其他调用calculateInterestRate()的代码神秘地更改了
+设置新 interestRate 的客户端软件可能会发现，新值被某些其他调用 calculateInterestRate()的代码神秘地更改了
 
 或者当银行账户所有者进行存款或取款时。
 
@@ -2194,7 +2194,7 @@ print()
 
 报告俱乐部成员 3。（我们可以轻松地添加更多方法来
 
-**168** 第 8 章
+**168** 第八章
 
 删除成员、修改名称等，但这两个方法足够展示这个观点。
 
@@ -2250,7 +2250,7 @@ oProgrammingClub.addMember('Iwanna Join')
 
 抱歉，但我们无法将 "Iwanna Join" 加入编程俱乐部。
 
-这个俱乐部已经有最多5名成员。
+这个俱乐部已经有最多 5 名成员。
 
 addMember()的代码做了所有必要的验证，确保
 
@@ -2258,13 +2258,13 @@ addMember()的代码做了所有必要的验证，确保
 
 然而，直接访问的情况下，客户端可以改变基础的本质。
 
-Club类的一个示例。例如，客户端可以恶意或意外地
+Club 类的一个示例。例如，客户端可以恶意或意外地
 
 更改最大成员数：
 
 oProgrammingClub.maxMembers = 300
 
-此外，假设你知道Club类表示俱乐部成员，
+此外，假设你知道 Club 类表示俱乐部成员，
 
 作为列表，你知道表示成员的实例变量的名称。
 
@@ -2280,15 +2280,15 @@ oProgrammingClub.memberList.append('Iwanna Join')
 
 使用直接访问的客户端代码甚至可能会在
 
-Club对象。例如，实例变量self.maxMembers旨在
+Club 对象。例如，实例变量 self.maxMembers 旨在
 
 是整数。使用直接访问，客户端代码可能会将其值更改为一个
 
-字符串。任何后续调用addMember()的操作都会在第一行崩溃。
+字符串。任何后续调用 addMember()的操作都会在第一行崩溃。
 
 方法，尝试比较成员列表的长度
 
-超过最大成员数，因为Python无法比较
+超过最大成员数，因为 Python 无法比较
 
 比较一个整数和字符串。
 
@@ -2298,7 +2298,7 @@ Club对象。例如，实例变量self.maxMembers旨在
 
 对象的。
 
-***严格解释与Getter和Setter***
+***严格解释与 Getter 和 Setter***
 
 严格的封装方法要求客户端代码*永远*不直接访问实例变量。如果类希望允许客户端软件访问
 
@@ -2314,19 +2314,19 @@ Club对象。例如，实例变量self.maxMembers旨在
 
 一个将数据分配到从类实例化的对象中的方法。
 
-Getter和setter方法的设计旨在允许客户端软件的编写者
+Getter 和 setter 方法的设计旨在允许客户端软件的编写者
 
 获取数据和设置数据时，软件无需显式访问对象内部数据。
 
 没有了解类的实现细节的情况下，造成错误。
 
-不需要知道或使用任何实例变量的名称。Person类代码
+不需要知道或使用任何实例变量的名称。Person 类代码
 
-在清单8-1中，Person类具有实例变量self.salary。在清单8-4中，我们添加了一个
+在清单 8-1 中，Person 类具有实例变量 self.salary。在清单 8-4 中，我们添加了一个
 
-向Person类添加getter和setter，以允许调用者获取和设置该
+向 Person 类添加 getter 和 setter，以允许调用者获取和设置该
 
-工资，而不提供直接访问Person的self.salary实例
+工资，而不提供直接访问 Person 的 self.salary 实例
 
 变量。
 
@@ -2344,7 +2344,7 @@ self.salary = salary
 
 1 def getSalary(self):
 
-**170** 第8章
+**170** 第八章
 
 return self.salary
 
@@ -2490,7 +2490,7 @@ def _dontCallMeFromClientSoftware(self):
 
 可能会导致意外错误。  
 
-**172** 第8章  
+**172** 第八章  
 
 ***更明确的私有化***  
 
@@ -2572,13 +2572,13 @@ Python 提供了通过 *名称重整* 实现这个功能。幕后
 
 本书的范围之外。不过，有一组内建装饰器可以
 
-提供了直接访问和使用getter、setter之间的折中。
+提供了直接访问和使用 getter、setter 之间的折中。
 
 类中的成员。
 
 装饰器是以@符号开头的行，后面跟着
 
-通过装饰器名称，并且直接放置在方法的def语句之前。
+通过装饰器名称，并且直接放置在方法的 def 语句之前。
 
 方法。它应用装饰器给方法增加行为：
 
@@ -2588,7 +2588,7 @@ def *<someMethod>* (self, *<parameters>* )
 
 我们将使用两个内建装饰器，并将它们应用到一个类中的两个方法。
 
-class实现一个*property*。
+class 实现一个*property*。
 
 **property**
 
@@ -2600,17 +2600,17 @@ class实现一个*property*。
 
 做着相同的事情，但背后发生的事情却大不相同。
 
-在编写使用属性装饰器的类时，开发者编写一个getter方法，
+在编写使用属性装饰器的类时，开发者编写一个 getter 方法，
 
-一个getter方法和一个setter方法，并为每个方法添加一个独特的内建装饰器。
+一个 getter 方法和一个 setter 方法，并为每个方法添加一个独特的内建装饰器。
 
-第一个方法是getter方法，并且之前带有内建的@property装饰器。
+第一个方法是 getter 方法，并且之前带有内建的@property 装饰器。
 
 装饰器。方法的名称定义了一个由
 
-客户端代码。第二个方法是setter方法，并且之前带有@ *<name*
+客户端代码。第二个方法是 setter 方法，并且之前带有@ *<name*
 
-*property>* .setter装饰器。以下是一个最小的示例类：
+*property>* .setter 装饰器。以下是一个最小的示例类：
 
 class Example():
 
@@ -2620,29 +2620,29 @@ self._x = startingValue
 
 @property
 
-def x(self): # 这是带有装饰器的getter方法
+def x(self): # 这是带有装饰器的 getter 方法
 
 return self._x
 
 @x.setter
 
-def x(self, value): # 这是带有装饰器的setter方法
+def x(self, value): # 这是带有装饰器的 setter 方法
 
 self._x = value
 
-在Example类中，x是属性的名称。标准
+在 Example 类中，x 是属性的名称。标准
 
 `__init__()` 方法，异常之处在于我们有两个方法，它们都
 
-它们有相同的名称：属性的名称。第一个方法是一个getter方法。
+它们有相同的名称：属性的名称。第一个方法是一个 getter 方法。
 
-一个getter方法，第二个是setter方法。setter方法是可选的，如果没有提供
+一个 getter 方法，第二个是 setter 方法。setter 方法是可选的，如果没有提供
 
-如果只存在getter方法，那么这个属性将是只读的。
+如果只存在 getter 方法，那么这个属性将是只读的。
 
-**174** 第8章
+**174** 第八章
 
-给定Example类，以下是一些客户端代码示例：
+给定 Example 类，以下是一些客户端代码示例：
 
 oExample = Example(10)
 
@@ -2650,11 +2650,11 @@ print(oExample.x)
 
 oExample.x = 20
 
-在这段代码中，我们创建了一个Example类的实例，调用了
+在这段代码中，我们创建了一个 Example 类的实例，调用了
 
 print()并执行一个简单的赋值。从客户端的角度来看，
 
-这段代码具有很高的可读性。当我们写oExample.x时，看起来像是我们正在
+这段代码具有很高的可读性。当我们写 oExample.x 时，看起来像是我们正在
 
 使用直接访问实例变量。然而，当客户端代码
 
@@ -2662,19 +2662,19 @@ print()并执行一个简单的赋值。从客户端的角度来看，
 
 作为函数或方法调用中的参数，或者作为赋值语句的一部分，
 
-Python将其转换为对对象的getter方法的调用。当一个
+Python 将其转换为对对象的 getter 方法的调用。当一个
 
-对象的dot属性出现在赋值语句的左侧，
+对象的 dot 属性出现在赋值语句的左侧，
 
-Python调用setter方法。getter和setter方法会影响
+Python 调用 setter 方法。getter 和 setter 方法会影响
 
 实际的实例变量，self._x。
 
 这里是一个更实际的示例，应该有助于理解。
 
-清单8-6展示了一个Student类，其中包含一个属性grade，正确地使用了装饰器。
+清单 8-6 展示了一个 Student 类，其中包含一个属性 grade，正确地使用了装饰器。
 
-装饰过的getter和setter方法，以及一个私有实例变量__grade。
+装饰过的 getter 和 setter 方法，以及一个私有实例变量 __grade。
 
 **文件：PropertyDecorator/Student.py**
 
@@ -2804,7 +2804,7 @@ print(oStudent2.grade)
 
 代码最终会打印出新的成绩值 4\。
 
-**176** 第8章
+**176** 第八章
 
 当我们运行测试代码时，得到的输出与预期一致：
 
@@ -2972,7 +2972,7 @@ XTRA
 
 另一个数据库 XTRA，XTRA2，来实现这个目的。XTRA2 在
 
-**178** 第 8 章
+**178** 第八章
 
 以类似的方式工作，但在初始化和 SQL 查询构建方式上有一些微妙的差异，需要做一些小的修改。
 
@@ -2994,17 +2994,17 @@ XTRA
 
 无数的返工和测试时间。
 
-作为这个故事的延续，虽然XTRA2表现良好，但该公司
+作为这个故事的延续，虽然 XTRA2 表现良好，但该公司
 
 最终破产了，我不得不经历同样的过程
 
 再次，由于封装，只有数据库的代码
 
-类被修改以与XTRA3\一起工作。
+类被修改以与 XTRA3\一起工作。
 
 **抽象**
 
-抽象是另一个与封装密切相关的OOP概念；许多
+抽象是另一个与封装密切相关的 OOP 概念；许多
 
 开发人员认为它是面向对象编程（OOP）的第四条原则。
 
@@ -3038,9 +3038,9 @@ XTRA
 
 在编程中，*栈*是一种按*后进先出*（*LIFO*）顺序记住数据的机制。可以把它想象成一堆盘子，干净的盘子被放在最上面，用户需要盘子时从最上面拿取。栈
 
-有两个标准操作：push将项目添加到栈顶，和
+有两个标准操作：push 将项目添加到栈顶，和
 
-pop从栈中移除最上面的项目。
+pop 从栈中移除最上面的项目。
 
 每当你的程序进行任何导航时，栈特别有用
 
@@ -3068,11 +3068,11 @@ pop从栈中移除最上面的项目。
 
 oStack = Stack()
 
-客户端可以通过像这样调用push()方法来添加信息：
+客户端可以通过像这样调用 push()方法来添加信息：
 
 oStack.push( *<someData>* )
 
-它将通过调用pop()方法来检索最新的数据
+它将通过调用 pop()方法来检索最新的数据
 
 如下所示：
 
@@ -3122,7 +3122,7 @@ self.dataList.append(item)
 
 返回元素
 
-**180** 第8章
+**180** 第八章
 
 4 def peek(self):
 
@@ -3222,9 +3222,9 @@ Stack 类通过一个列表实例变量来跟踪所有的数据
 
 面向对象编程的一个关键概念是对象拥有它们的数据，这就是
 
-我建议你提供getter和setter方法，如果你希望客户端
+我建议你提供 getter 和 setter 方法，如果你希望客户端
 
-外部代码访问实例变量中的数据。Python并不
+外部代码访问实例变量中的数据。Python 并不
 
 允许通过点符号直接访问实例变量，但我强烈
 
@@ -3236,17 +3236,17 @@ Stack 类通过一个列表实例变量来跟踪所有的数据
 
 私有化，使用前导下划线或双下划线，具体取决于
 
-根据所需的私有化级别进行限制。作为折衷，Python还允许
+根据所需的私有化级别进行限制。作为折衷，Python 还允许
 
-使用@property装饰器。这使得客户端代码看起来像是在
+使用@property 装饰器。这使得客户端代码看起来像是在
 
 能够直接访问实例变量，而在幕后，Python
 
-将此类引用转化为对装饰过的getter和setter方法的调用
+将此类引用转化为对装饰过的 getter 和 setter 方法的调用
 
 在类中。
 
-pygwidgets包提供了许多封装的良好示例。
+pygwidgets 包提供了许多封装的良好示例。
 
 作为客户端程序员，你从外部看到一个类，并与
 
@@ -3256,11 +3256,11 @@ pygwidgets包提供了许多封装的良好示例。
 
 从客户端角度考虑类的接口。然而，在
 
-在Python中，你通常可以查看源代码，这样你可以查看
+在 Python 中，你通常可以查看源代码，这样你可以查看
 
 如果愿意，可以提供实现。
 
-**182** 第8章
+**182** 第八章
 
 **9**
 
@@ -3300,7 +3300,7 @@ pygwidgets包提供了许多封装的良好示例。
 
 使用运算符的多态性使相同的运算符根据它们所处理的数据类型执行不同的操作。最后，
 
-我将向你展示如何使用print()函数来获取有价值的调试
+我将向你展示如何使用 print()函数来获取有价值的调试
 
 从对象中获取信息。
 
@@ -3334,11 +3334,11 @@ pygwidgets包提供了许多封装的良好示例。
 
 灯泡有的是旧式的白炽灯泡，有的是荧光灯泡，有的是
 
-更新的LED灯泡。当你把所有的开关都打开时，你实际上是在发送
+更新的 LED 灯泡。当你把所有的开关都打开时，你实际上是在发送
 
 向所有灯泡发送“打开”的消息。导致灯泡发光的底层机制
 
-白炽灯、荧光灯和LED灯泡发光的方式有很大不同，
+白炽灯、荧光灯和 LED 灯泡发光的方式有很大不同，
 
 但每种方式都能实现用户的目标。
 
@@ -3374,7 +3374,7 @@ def __init__(self, name):
 
 self.name = name
 
-**184** 第9章
+**184** 第九章
 
 1 def speak(self):
 
@@ -3426,19 +3426,19 @@ oBird = Bird('大鸟')
 
 实现。
 
-为了便于处理，我们将所有宠物对象放入一个列表4中。
+为了便于处理，我们将所有宠物对象放入一个列表 4 中。
 
 为了让它们都发声，我们循环遍历所有对象并发送
 
 通过调用每个类中具有相同名称的方法来传递相同的消息
 
-对象5，用户无需担心对象的类型。
+对象 5，用户无需担心对象的类型。
 
-**使用Pygame形状的示例**
+**使用 Pygame 形状的示例**
 
-接下来，我们将查看使用pygame的多态性演示。在
+接下来，我们将查看使用 pygame 的多态性演示。在
 
-[第5章 w](index_split_002.html#p118)我们使用pygame绘制了矩形、圆形、多边形、椭圆形和直线等基本形状。在这里，我们将构建一个演示
+第五章 w 我们使用 pygame 绘制了矩形、圆形、多边形、椭圆形和直线等基本形状。在这里，我们将构建一个演示
 
 程序将随机创建并绘制不同的形状到窗口中。
 
@@ -3448,15 +3448,15 @@ oBird = Bird('大鸟')
 
 随机创建，每次程序运行时，形状的大小、位置、数量，
 
-和形状的不同。图9-1展示了一些示例
+和形状的不同。图 9-1 展示了一些示例
 
 演示程序的输出。
 
 多态性 **185**
 
-![图片 27](index-215_1.png)
+![图片 27](img/index-215_1.png)
 
-*图9-1：基于pygame的使用多态性绘制不同形状的示例* 我们将实现一个程序，每种不同的形状（方形、圆形和三角形）都有一个类。这里需要注意的是
+*图 9-1：基于 pygame 的使用多态性绘制不同形状的示例* 我们将实现一个程序，每种不同的形状（方形、圆形和三角形）都有一个类。这里需要注意的是
 
 所有三个形状类都包含具有相同名称的方法：__init__()，
 
@@ -3468,7 +3468,7 @@ draw(), getType(), getArea(), 和 clickedInside()，这些方法执行相同的�
 
 ***方形形状类***
 
-我将从最简单的形状开始。列表9-2展示了方形的代码
+我将从最简单的形状开始。列表 9-2 展示了方形的代码
 
 类。
 
@@ -3476,9 +3476,9 @@ draw(), getType(), getArea(), 和 clickedInside()，这些方法执行相同的�
 
 # 方形类
 
-导入pygame
+导入 pygame
 
-导入random
+导入 random
 
 # 设置颜色
 
@@ -3490,7 +3490,7 @@ draw(), getType(), getArea(), 和 clickedInside()，这些方法执行相同的�
 
 class Square():
 
-**186** 第9章
+**186** 第九章
 
 1 def __init__(self, window, maxWidth, maxHeight):
 
@@ -3514,17 +3514,17 @@ self.shapeType = 'Square'
 
 clicked = self.rect.collidepoint(mousePoint)
 
-返回clicked
+返回 clicked
 
 3 def getType(self):
 
-返回self.shapeType
+返回 self.shapeType
 
 4 def getArea(self):
 
 theArea = self.widthAndHeight * self.widthAndHeight
 
-返回theArea
+返回 theArea
 
 5 def draw(self):
 
@@ -3534,19 +3534,19 @@ pygame.draw.rect(self.window, self.color,
 
 self.widthAndHeight))
 
-*列表9-2：方形类*
+*列表 9-2：方形类*
 
-在__init__()方法1中，我们设置了多个实例变量来
+在 __init__()方法 1 中，我们设置了多个实例变量来
 
 在类的方法中使用。这让我们能够保持方法代码的
 
-非常简单。由于__init__()方法保存了方形的矩形，
+非常简单。由于 __init__()方法保存了方形的矩形，
 
-clickedInside()方法2仅检查鼠标点击的位置是否
+clickedInside()方法 2 仅检查鼠标点击的位置是否
 
-在该矩形内部，返回True或False。
+在该矩形内部，返回 True 或 False。
 
-getType()方法3仅返回被点击形状的类型和面积信息。由于形状是随机创建的，
+getType()方法 3 仅返回被点击形状的类型和面积信息。由于形状是随机创建的，
 
 clicked 是一个正方形。getArea() 方法 4 将宽度与
 
@@ -3648,7 +3648,7 @@ self.radius, 0)
 
 *列表 9-3：Circle 类*
 
-**188** 第9章
+**188** 第九章
 
 **文件：Shapes/Triangle.py**
 
@@ -3748,31 +3748,31 @@ pygame.draw.polygon(self.window, self.color,
 
 clickedInside()方法的代码。clickedInside()
 
-正方形类的method非常简单：检查鼠标
+正方形类的 method 非常简单：检查鼠标
 
 点击发生在正方形的矩形内部。计算细节
 
-圆形和三角形类中clickedInside()的计算并不完全相同，
+圆形和三角形类中 clickedInside()的计算并不完全相同，
 
 特别重要的是，它们显然在进行不同的计算。每个形状的
 
-圆形类的clickedInside()方法 1 仅在用户
+圆形类的 clickedInside()方法 1 仅在用户
 
 点击形状的彩色像素。也就是说，它检测的是点击是否位于
 
 圆的边界矩形内，但点击也必须在
 
-圆的半径才会被算作一次点击。圆形类的clickedInside()方法
+圆的半径才会被算作一次点击。圆形类的 clickedInside()方法
 
 三角形类 4 必须判断用户是否点击了位于内部的像素
 
 矩形的彩色三角形部分内。所有三个方法中的方法
 
-这些类接受鼠标点击作为参数，并返回True或False
+这些类接受鼠标点击作为参数，并返回 True 或 False
 
 结果。
 
-这些类的getArea() 2 5和draw() 3 6方法具有名称
+这些类的 getArea() 2 5 和 draw() 3 6 方法具有名称
 
 与正方形类的方法相同，但它们做的是不同的工作
 

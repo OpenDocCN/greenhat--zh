@@ -82,7 +82,7 @@ from SimpleAnimation import *
 
 SCREEN_WIDTH = 640
 
-**298** 第14章
+**298** 第十四章
 
 SCREEN_HEIGHT = 480
 
@@ -172,7 +172,7 @@ clock.tick(FRAMES_PER_SECOND) # 让 pygame 等待
 
 动画 **299**
 
-![Image 38](index-329_1.png)
+![Image 38](img/index-329_1.png)
 
 所有的动画图像都在文件夹 *images/* 中
 
@@ -218,9 +218,9 @@ oDinosaurAnimation 方法来启动动画。
 
 图像的数量。最后，加载单个文件比加载由多个文件组成的动画要快。
 
-图14-1 显示了一个精灵表的示例。
+图 14-1 显示了一个精灵表的示例。
 
-*图14-1: 由多个小图像组成的精灵表*
+*图 14-1: 由多个小图像组成的精灵表*
 
 *18 张较小的图像*
 
@@ -234,7 +234,7 @@ oDinosaurAnimation 方法来启动动画。
 
 我们在 SimpleAnimation 类中使用的技术相同。
 
-**300** 第14章
+**300** 第十四章
 
 **创建类**
 
@@ -404,7 +404,7 @@ __init__() 方法使用计数器来计算子图像的数量，
 
 SimpleAnimation 类：play()、update() 和 draw()。
 
-**302** 第14章
+**302** 第十四章
 
 **示例主程序**
 
@@ -534,15 +534,15 @@ SimpleAnimation 和 SimpleSpriteSheetAnimation 中的 __init__() 方法
 
 类将拥有自己的 __init__() 方法，其中包括任何公共代码
 
-来自两个原始类的__init__()方法，它将包含
+来自两个原始类的 __init__()方法，它将包含
 
-play()、update()和draw()方法。
+play()、update()和 draw()方法。
 
 每个原始类将继承自新的基类，并实现
 
-它自己的__init__()方法，使用适当的参数。每个类都将执行
+它自己的 __init__()方法，使用适当的参数。每个类都将执行
 
-它自己的工作是创建self.imagesList，接着在其他三个
+它自己的工作是创建 self.imagesList，接着在其他三个
 
 新基类中的方法。
 
@@ -550,15 +550,15 @@ play()、update()和draw()方法。
 
 我将展示这个合并结果，在“专业级”动画中
 
-SpriteSheetAnimation类使用，它们是pygwidgets包的一部分。
+SpriteSheetAnimation 类使用，它们是 pygwidgets 包的一部分。
 
-**pygwidgets中的动画类**
+**pygwidgets 中的动画类**
 
-pygwidgets模块包含以下三个动画类：
+pygwidgets 模块包含以下三个动画类：
 
 **PygAnimation** 一个抽象基类，供动画类和
 
-SpriteSheetAnimation类
+SpriteSheetAnimation 类
 
 **Animation** 一个基于图像的动画类（单独的图像文件）
 
@@ -566,15 +566,15 @@ SpriteSheetAnimation类
 
 单个大图像）
 
-**304** 第14章
+**304** 第十四章
 
-我们将逐个查看每个类。动画类和SpriteSheetAnimation类使用相同的基本概念，但也提供更多选项。
+我们将逐个查看每个类。动画类和 SpriteSheetAnimation 类使用相同的基本概念，但也提供更多选项。
 
 通过初始化参数提供。
 
 ***动画类***
 
-你可以使用pygwidget的Animation类创建一个由许多不同图像组成的动画。
+你可以使用 pygwidget 的 Animation 类创建一个由许多不同图像组成的动画。
 
 相关图像文件。以下是接口：
 
@@ -612,21 +612,21 @@ loop=False, nickname=None, callBack=None, nIterations=1):
 
 **autoStart**
 
-如果你希望动画立即开始，设置为True；默认为False。
+如果你希望动画立即开始，设置为 True；默认为 False。
 
 **loop**
 
-如果你希望动画持续循环，设置为True；默认为False。
+如果你希望动画持续循环，设置为 True；默认为 False。
 
 **showFirstImageAtEnd**
 
-当动画结束时，重新显示第一张图片；默认为True。
+当动画结束时，重新显示第一张图片；默认为 True。
 
 **nickname**
 
 分配给此动画的内部名称，用作参数。
 
-当指定callBack时。
+当指定 callBack 时。
 
 **callBack**
 
@@ -634,15 +634,15 @@ loop=False, nickname=None, callBack=None, nIterations=1):
 
 **nIterations**
 
-动画循环的次数；默认为1。
+动画循环的次数；默认为 1。
 
-与SimpleAnimation不同，后者对所有图像使用相同的持续时间，
+与 SimpleAnimation 不同，后者对所有图像使用相同的持续时间，
 
-Animation类允许你为*每个*图像指定持续时间，从而允许动画**305**
+Animation 类允许你为*每个*图像指定持续时间，从而允许动画**305**
 
-在显示图像的时序方面提供更大的灵活性。你还可以在绘制每个图像时指定x、y偏移量，但通常来说，这
+在显示图像的时序方面提供更大的灵活性。你还可以在绘制每个图像时指定 x、y 偏移量，但通常来说，这
 
-不需要。这里是一些示例代码，创建一个Animation对象
+不需要。这里是一些示例代码，创建一个 Animation 对象
 
 显示一个奔跑的霸王龙：
 
@@ -672,7 +672,7 @@ oDinosaurAnimation = pygwidgets.Animation(window, (22, 145),
 
 TRexAnimationList, 回调函数=myFunction, 昵称='Dinosaur')
 
-这将创建一个动画对象，显示10张不同的图像。该
+这将创建一个动画对象，显示 10 张不同的图像。该
 
 前九张图像每张显示十分之一秒，但最后一张图像
 
@@ -684,9 +684,9 @@ myFunction() 将会以参数'Dinosaur'被调用。
 
 ***SpriteSheetAnimation 类***
 
-对于SpriteSheetAnimation，您需要传入单个精灵图集文件的路径。
+对于 SpriteSheetAnimation，您需要传入单个精灵图集文件的路径。
 
-这是SpriteSheetAnimation将大型动画分解为多个子动画的顺序
+这是 SpriteSheetAnimation 将大型动画分解为多个子动画的顺序
 
 对于较小的图像，您必须指定所有子图像的宽度和高度。对于
 
@@ -722,23 +722,23 @@ autoStart=False, loop=False, nickname=None,
 
 每个子图像应在动画期间显示，或指定一个持续时间列表，每个子图像对应一个
 
-子图像（长度必须是nImages）
+子图像（长度必须是 nImages）
 
-**306** 第14章
+**306** 第十四章
 
 以下是可选参数：
 
 **自动开始**
 
-如果您希望动画立即开始，可以设置为True；默认为False。
+如果您希望动画立即开始，可以设置为 True；默认为 False。
 
 **循环**
 
-如果您希望动画循环播放，可以设置为True；默认为False。
+如果您希望动画循环播放，可以设置为 True；默认为 False。
 
 **结束时显示第一张图像**
 
-当动画结束时，重新显示第一张图像；默认为True。
+当动画结束时，重新显示第一张图像；默认为 True。
 
 **昵称**
 
@@ -752,9 +752,9 @@ autoStart=False, loop=False, nickname=None,
 
 **迭代次数**
 
-循环播放的次数；默认为1\。
+循环播放的次数；默认为 1\。
 
-下面是创建SpriteSheetAnimation对象的一个典型语句：
+下面是创建 SpriteSheetAnimation 对象的一个典型语句：
 
 oEffectAnimation = pygwidgets.SpriteSheetAnimation(window, (400, 150),
 
@@ -762,11 +762,11 @@ oEffectAnimation = pygwidgets.SpriteSheetAnimation(window, (400, 150),
 
 autoStart=True, loop=True)
 
-这将使用在给定路径中找到的单个图像文件创建一个SpriteSheetAnimation对象。
+这将使用在给定路径中找到的单个图像文件创建一个 SpriteSheetAnimation 对象。
 
-在给定路径下的原始图像包含35个子图像。每个较小的
+在给定路径下的原始图像包含 35 个子图像。每个较小的
 
-图像大小为192×192像素，每个子图像将显示十分之一秒，
+图像大小为 192×192 像素，每个子图像将显示十分之一秒，
 
 每张图像显示的时间为一秒。动画将自动开始并持续循环。
 
@@ -874,15 +874,15 @@ Animation 和 SpriteSheetAnimation 类的方法仅初始化
 
 可见或不可见。
 
-**308** 第14章
+**308** 第十四章
 
-![图片 39](index-338_1.png)
+![图片 39](img/index-338_1.png)
 
-*图14-2：使用Animation和*类的一个示例动画程序。
+*图 14-2：使用 Animation 和*类的一个示例动画程序。
 
-*SpriteSheetAnimation类*
+*SpriteSheetAnimation 类*
 
-第二个（T-rex）Animation对象没有设置为自动启动（autoStart），因此只有
+第二个（T-rex）Animation 对象没有设置为自动启动（autoStart），因此只有
 
 看看动画的第一张图像。如果点击这张图像，动画-
 
@@ -890,15 +890,15 @@ Animation 和 SpriteSheetAnimation 类的方法仅初始化
 
 停止。
 
-右上角是一个烟花SpriteSheetAnimation对象，来自
+右上角是一个烟花 SpriteSheetAnimation 对象，来自
 
-来自一个包含35个子图像的单一图像。此动画设置为循环，
+来自一个包含 35 个子图像的单一图像。此动画设置为循环，
 
 因此你会看到它持续运行。
 
-右下角是一个由单一图像组成的行走SpriteSheetAnimation。
+右下角是一个由单一图像组成的行走 SpriteSheetAnimation。
 
-带有36个子图像。当你点击开始（Start）时，动画会播放完所有
+带有 36 个子图像。当你点击开始（Start）时，动画会播放完所有
 
 只显示一次图像。
 
@@ -906,19 +906,19 @@ Animation 和 SpriteSheetAnimation 类的方法仅初始化
 
 *Main_AnimationExample.py*文件与本书的其余资源一起提供。
 
-程序实例化了两个Animation对象（小恐龙和
+程序实例化了两个 Animation 对象（小恐龙和
 
-T-rex）和两个SpriteSheetAnimation对象（烟花和行走-
+T-rex）和两个 SpriteSheetAnimation 对象（烟花和行走-
 
 当点击小恐龙下方的按钮时，我们调用
 
 合适的恐龙动画对象方法。点击小
 
-恐龙或T-rex的点击会调用该动画的start()方法。
+恐龙或 T-rex 的点击会调用该动画的 start()方法。
 
 程序显示多个动画可以同时运行
 
-时间。这是因为主循环调用了update()和draw()方法-
+时间。这是因为主循环调用了 update()和 draw()方法-
 
 每一帧中的*每个*动画都遵循主循环中的方法，每个动画
 
@@ -932,7 +932,7 @@ Animation **309**
 
 在本章中，我们探索了动画类中所需的机制。
 
-通过构建我们自己的SimpleAnimation和SimpleSpriteSheetAnimation类。
+通过构建我们自己的 SimpleAnimation 和 SimpleSpriteSheetAnimation 类。
 
 前者由多个图像组成，而后者使用单一的
 
@@ -944,13 +944,13 @@ Animation **309**
 
 通过构建一个公共抽象基类来组织类。
 
-然后我介绍了Animation类和SpriteSheetAnimation类
+然后我介绍了 Animation 类和 SpriteSheetAnimation 类
 
-在pygwidgets中。我解释了这两个类只实现了它们自己的
+在 pygwidgets 中。我解释了这两个类只实现了它们自己的
 
 __init__()方法的不同版本，继承它们的其他方法来自
 
-通用基类PygAnimation。我最后展示了一个示范
+通用基类 PygAnimation。我最后展示了一个示范
 
 提供示例动画和精灵图集动画的程序。
 
@@ -990,7 +990,7 @@ __init__()方法的不同版本，继承它们的其他方法来自
 
 在本书的开头，我们开发了一个软件模拟器
 
-开关。在第1章，我们首先使用过程代码实现了一个灯光开关，然后我们用类重新编写了它。在这两种情况下，位置
+开关。在第一章，我们首先使用过程代码实现了一个灯光开关，然后我们用类重新编写了它。在这两种情况下，位置
 
 （或开关的状态）由一个布尔变量表示；True
 
@@ -1034,7 +1034,7 @@ __init__()方法的不同版本，继承它们的其他方法来自
 
 移动到一个新状态，通常基于用户的特定输入。
 
-在第7章，我讨论了 pygwidgets 包中的 GUI 按钮类。当滚动并点击按钮时，用户会看到三种不同的图像——上升、悬停和按下——这些图像对应于按钮的不同状态。
+在第七章，我讨论了 pygwidgets 包中的 GUI 按钮类。当滚动并点击按钮时，用户会看到三种不同的图像——上升、悬停和按下——这些图像对应于按钮的不同状态。
 
 按钮。图像切换是在 handleEvent() 方法中完成的（该方法
 
@@ -1054,13 +1054,13 @@ handleEvent() 方法被构建为一个状态机。状态被保持在
 
 移动到“down”状态（内部称为*armed*状态）。当用户释放鼠标按钮（点击“up”）时，我们再次显示“over”图像，并
 
-代码将过渡回“over”状态（并且handleEvent()返回True以
+代码将过渡回“over”状态（并且 handleEvent()返回 True 以
 
 表示点击已发生）。如果用户随后将光标移出
 
 按钮时，我们再次显示“up”图像并过渡回“up”状态。
 
-**312** 第15章
+**312** 第十五章
 
 接下来，我将向你展示如何使用状态机来表示用户在一个较大程序中可能遇到的不同场景。作为一种通用
 
@@ -1080,7 +1080,7 @@ state = STATE_SPLASH # 初始化为起始状态
 
 为了在不同的状态下执行不同的操作，在程序中
 
-程序的主循环中使用了if/elif/elif/.../else结构进行分支
+程序的主循环中使用了 if/elif/elif/.../else 结构进行分支
 
 根据状态变量的当前值：
 
@@ -1088,11 +1088,11 @@ while True:
 
 if state == STATE_SPLASH:
 
-# 在此处执行你想在Splash状态中做的任何事情
+# 在此处执行你想在 Splash 状态中做的任何事情
 
 elif state == STATE_PLAY:
 
-# 在此处执行你想在Play状态中做的任何事情
+# 在此处执行你想在 Play 状态中做的任何事情
 
 elif state == STATE_END:
 
@@ -1102,7 +1102,7 @@ elif state == STATE_END:
 
 raise ValueError('状态值未知：' + state)
 
-由于状态初始设置为STATE_SPLASH，只有第一个分支会执行
+由于状态初始设置为 STATE_SPLASH，只有第一个分支会执行
 
 语句将运行。
 
@@ -1110,7 +1110,7 @@ raise ValueError('状态值未知：' + state)
 
 通常由某个事件触发，程序通过为状态变量赋值来改变其状态
 
-不同的值给状态变量。例如，起始的Splash场景
+不同的值给状态变量。例如，起始的 Splash 场景
 
 可能只会显示一个带有开始按钮的游戏介绍。当用户
 
@@ -1120,7 +1120,7 @@ raise ValueError('状态值未知：' + state)
 
 state = STATE_PLAY
 
-一旦执行该行，只有第一个elif中的代码会执行，并完全
+一旦执行该行，只有第一个 elif 中的代码会执行，并完全
 
 会执行不同的代码——即显示并响应“Play”状态的代码。
 
@@ -1132,9 +1132,9 @@ state = STATE_PLAY
 
 state = STATE_END
 
-从那时起，每次程序执行while循环时，
+从那时起，每次程序执行 while 循环时，
 
-第二个elif分支的代码将执行。
+第二个 elif 分支的代码将执行。
 
 总结来说，状态机有一组状态，一个变量用于保持
 
@@ -1144,7 +1144,7 @@ state = STATE_END
 
 场景 **313**
 
-![Image 40](index-343_1.png)
+![Image 40](img/index-343_1.png)
 
 用来跟踪状态的变量，程序只能处于一个状态
 
@@ -1184,11 +1184,11 @@ state = STATE_END
 
 Splash 场景等待用户点击“开始”按钮。
 
-**314** 第 15 章
+**314** 第十五章
 
-![图片 41](index-344_1.png)
+![图片 41](img/index-344_1.png)
 
-![图片 42](index-344_2.png)
+![图片 42](img/index-344_2.png)
 
 *图 15-2：石头、纸、剪刀游戏场景*
 
@@ -1274,7 +1274,7 @@ STATE_SHOW_RESULTS = 'ShowResults'
 
 --- snip ---
 
-**316** 第 15 章
+**316** 第十五章
 
 # 5 - 初始化变量
 
@@ -1446,7 +1446,7 @@ elif state == STATE_PLAYER_CHOICE: 7
 
 rockButton.draw()
 
-**318** 第15章
+**318** 第十五章
 
 paperButton.draw()
 
@@ -1538,7 +1538,7 @@ computerScoreCounter.draw()
 
 场景 **319**
 
-![图片 43](index-349_1.png)
+![图片 43](img/index-349_1.png)
 
 使用场景管理器可能有点棘手，但最终的程序
 
@@ -1598,13 +1598,13 @@ SceneMgr 类的代码和 Scene 基类的代码位于
 
 从场景 A，你可以进入场景 B 或场景 C。
 
-**320** 第 15 章
+**320** 第十五章
 
-![图片 44](index-350_1.png)
+![图片 44](img/index-350_1.png)
 
-![图片 45](index-350_2.png)
+![图片 45](img/index-350_2.png)
 
-![图片 46](index-350_3.png)
+![图片 46](img/index-350_3.png)
 
 *图 15-6：用户在场景 B 中看到的内容*
 
@@ -1686,11 +1686,11 @@ SceneMgr 类的代码和 Scene 基类的代码位于
 
 1 导入 pyghelpers
 
-来自SceneA的导入*
+来自 SceneA 的导入*
 
-来自SceneB的导入*
+来自 SceneB 的导入*
 
-来自SceneC的导入*
+来自 SceneC 的导入*
 
 # 2 - 定义常量
 
@@ -1700,7 +1700,7 @@ WINDOW_HEIGHT = 180
 
 FRAMES_PER_SECOND = 30
 
-**322** 第15章
+**322** 第十五章
 
 # 3 - 初始化世界
 
@@ -1720,7 +1720,7 @@ SceneB(window)，
 
 SceneC(window)]
 
-# 创建场景管理器，传入场景列表和FPS
+# 创建场景管理器，传入场景列表和 FPS
 
 4 oSceneMgr = pyghelpers.SceneMgr(scenesList, FRAMES_PER_SECOND)
 
@@ -1728,23 +1728,23 @@ SceneC(window)]
 
 5 oSceneMgr.run()
 
-*列表15-2：使用场景管理器的示例主程序*
+*列表 15-2：使用场景管理器的示例主程序*
 
 主程序的代码相对简短。我们首先导入
 
-使用pyghelpers导入所有场景（在本例中为Scene A、Scene B和
+使用 pyghelpers 导入所有场景（在本例中为 Scene A、Scene B 和
 
-Scene C) 1。然后我们定义更多常量，初始化pygame，并
+Scene C) 1。然后我们定义更多常量，初始化 pygame，并
 
-创建窗口2。接下来，我们创建每个场景的实例并存储。
+创建窗口 2。接下来，我们创建每个场景的实例并存储。
 
-所有场景列表3。此行执行后，我们有了一个初始化
+所有场景列表 3。此行执行后，我们有了一个初始化
 
 每个场景的对象。
 
-然后，我们实例化场景管理器对象（oSceneMgr）4来自于
+然后，我们实例化场景管理器对象（oSceneMgr）4 来自于
 
-SceneMgr类。当我们创建这个对象时，我们需要传入两个值：
+SceneMgr 类。当我们创建这个对象时，我们需要传入两个值：
 
 • 场景列表，场景管理器可以知道所有的场景。
 
@@ -1754,15 +1754,15 @@ SceneMgr类。当我们创建这个对象时，我们需要传入两个值：
 
 • 程序应保持的每秒帧数（帧率）。
 
-最后，我们通过调用其run()方法告诉场景管理器开始运行
+最后，我们通过调用其 run()方法告诉场景管理器开始运行
 
-方法5。场景管理器始终将一个场景作为当前场景进行维护，
+方法 5。场景管理器始终将一个场景作为当前场景进行维护，
 
 租赁场景——即用户看到并与之交互的场景。
 
 请注意，使用这种方法时，主程序实现了初始化
 
-典型pygame程序的初始化，但*不*构建主循环。
+典型 pygame 程序的初始化，但*不*构建主循环。
 
 相反，主循环是由场景管理器本身构建的。
 
@@ -1788,13 +1788,13 @@ SceneMgr类。当我们创建这个对象时，我们需要传入两个值：
 
 **每个场景中需要实现的方法**
 
-每个场景都作为继承自Scene基类的类来实现。
+每个场景都作为继承自 Scene 基类的类来实现。
 
 类定义在*pyghelpers.py*文件中。因此，每个场景必须导入
 
-pyghelpers。至少，场景需要包含一个__init__()方法
+pyghelpers。至少，场景需要包含一个 __init__()方法
 
-并且必须重写getSceneKey()、handleInputs()和draw()方法
+并且必须重写 getSceneKey()、handleInputs()和 draw()方法
 
 来自基类。
 
@@ -1812,7 +1812,7 @@ SCENE_B = 'scene B'
 
 SCENE_C = 'scene C'
 
-在初始化过程中，场景管理器调用getSceneKey()
+在初始化过程中，场景管理器调用 getSceneKey()
 
 每个场景的方法，它简单地返回其唯一的场景键。该
 
@@ -1820,7 +1820,7 @@ SCENE_C = 'scene C'
 
 对象。当程序中的任何场景想要切换到不同的
 
-场景时，它会调用self.goToScene()（在下面的章节中描述），然后
+场景时，它会调用 self.goToScene()（在下面的章节中描述），然后
 
 传入目标场景的场景键。场景管理器使用这个键
 
@@ -1828,7 +1828,7 @@ SCENE_C = 'scene C'
 
 场景对象作为当前场景并调用它的方法。
 
-每个场景必须包含自己版本的handleInputs()来处理任何
+每个场景必须包含自己版本的 handleInputs()来处理任何
 
 事件通常会在主循环中处理，并且每个场景有自己的版本。
 
@@ -1844,13 +1844,13 @@ draw()的作用是绘制场景想要在窗口中绘制的任何内容。如果�
 
 **def __init__(self, window):**
 
-每个场景应该以其自己的__init__()方法开始。窗口
+每个场景应该以其自己的 __init__()方法开始。窗口
 
 参数是程序绘制的窗口。你应该
 
 通过此语句开始你的方法，以保存窗口参数供
 
-用于draw()方法：
+用于 draw()方法：
 
 self.window = window
 
@@ -1866,7 +1866,7 @@ self.window = window
 
 方法必须返回与此场景关联的唯一场景键。
 
-**324** 第15章
+**324** 第十五章
 
 **def handleInputs(self, events, keyPressedList):**
 
@@ -1876,23 +1876,23 @@ self.window = window
 
 参数是自上次帧以来发生的事件列表，
 
-keyPressedList是一个布尔值列表，表示键盘上所有键的状态。
+keyPressedList 是一个布尔值列表，表示键盘上所有键的状态。
 
-键（True表示按下）。要找出某个特定键是处于按下还是松开状态，
+键（True 表示按下）。要找出某个特定键是处于按下还是松开状态，
 
 你应该使用常量，而不是整数索引。常量
 
-代表所有键的键盘在pygame文档中都可以找到。
+代表所有键的键盘在 pygame 文档中都可以找到。
 
 实现文档[( *https://www.pygame.org/docs/ref/key.html*).](https://www.pygame.org/docs/ref/key.html)
 
-你对这个方法的实现应该包含一个for循环，该循环
+你对这个方法的实现应该包含一个 for 循环，该循环
 
 遍历传入的事件列表中的所有事件。如果你愿意，它可以
 
 还可以包含实现处理事件的连续模式的代码。
 
-键盘，如第5章所述[i](index_split_002.html#p118)
+键盘，如第五章所述 i
 
 **def draw(self):**
 
@@ -1934,7 +1934,7 @@ keyPressedList是一个布尔值列表，表示键盘上所有键的状态。
 
 您将在原始 12 步模板的第 8 步中执行的操作
 
-[第 5 章](index_split_002.html#p118)中介绍过。例如，您可能希望这个方法来移动屏幕上的图像，检查碰撞等等。
+第五章中介绍过。例如，您可能希望这个方法来移动屏幕上的图像，检查碰撞等等。
 
 **def leave(self):**
 
@@ -2010,7 +2010,7 @@ self.quit()  # 退出程序
 
 当前场景。
 
-**326** 第15章
+**326** 第十五章
 
 **文件：SceneDemo/SceneA.py**
 
@@ -2160,7 +2160,7 @@ self.window = window
 
 self.RPSTuple = (ROCK, PAPER, SCISSORS)
 
-**328** 第 15 章
+**328** 第十五章
 
 --- snip ---
 
@@ -2332,7 +2332,7 @@ self.window, (384, 315), '得分:',
 
 fontSize=50, textColor=WHITE)
 
-**330** 第15章
+**330** 第十五章
 
 # 声音
 
@@ -2498,7 +2498,7 @@ draw() 方法 6 会绘制当前场景中的所有内容。
 
 方法使用 self.*<method>* ()。
 
-**332** 第15章
+**332** 第十五章
 
 ***从目标场景请求信息***
 
@@ -2522,19 +2522,19 @@ someData = self.request( *SOME_SCENE_KEY*, *SOME_INFO_CONSTANT*)
 
 这实际上表示，“向*SOME_SCENE_KEY*场景发出请求，要求
 
-以*SOME_INFO_CONSTANT*标识的信息。”返回的数据并分配给someData变量。
+以*SOME_INFO_CONSTANT*标识的信息。”返回的数据并分配给 someData 变量。
 
 场景管理器充当中介：它接收到调用并将其转换为
 
-request()方法并将其转换为对目标场景中respond()的调用。为了使
+request()方法并将其转换为对目标场景中 respond()的调用。为了使
 
-如果目标场景能够提供信息，则必须实现一个respond()方法。
+如果目标场景能够提供信息，则必须实现一个 respond()方法。
 
 该场景类中的方法应像这样开始：
 
 def respond(self, requestID):
 
-respond()方法的典型代码检查requestID的值。
+respond()方法的典型代码检查 requestID 的值。
 
 参数并返回适当的数据。返回的数据可以是格式化的。
 
@@ -2544,15 +2544,15 @@ respond()方法的典型代码检查requestID的值。
 
 要将信息发送到目标场景，当前场景需要调用
 
-继承的send()方法，如下所示：
+继承的 send()方法，如下所示：
 
 self.send(targetSceneKey, sendID, info)
 
 此调用允许当前场景将信息发送到目标场景，
 
-通过其场景键(targetSceneKey)标识。sendID唯一标识
+通过其场景键(targetSceneKey)标识。sendID 唯一标识
 
-你正在发送的信息。info参数是你
+你正在发送的信息。info 参数是你
 
 想要发送到目标场景的信息。
 
@@ -2562,21 +2562,21 @@ self.send( *SOME_SCENE_KEY*, *SOME_INFO_CONSTANT*, data)
 
 这实际上表示，“将信息发送到*SOME_SCENE_KEY*场景。该信息
 
-信息由*SOME_INFO_CONSTANT*标识，信息存储在变量data的值中。”
+信息由*SOME_INFO_CONSTANT*标识，信息存储在变量 data 的值中。”
 
-场景管理器接收到send()调用并将其转换为调用
+场景管理器接收到 send()调用并将其转换为调用
 
 收到的信息。为了允许场景将信息发送到
 
 场景 **333**
 
-如果是另一个场景，你必须在目标场景类中实现一个receive()方法，如下所示：
+如果是另一个场景，你必须在目标场景类中实现一个 receive()方法，如下所示：
 
 def receive(self, receiveID, info):
 
-如果需要，receive()方法可以包含if/elif/else结构。
+如果需要，receive()方法可以包含 if/elif/else 结构。
 
-以处理receiveID的不同值。传输的信息可以是
+以处理 receiveID 的不同值。传输的信息可以是
 
 信息可以以当前场景和目标场景一致的任何格式进行格式化。
 
@@ -2584,15 +2584,15 @@ def receive(self, receiveID, info):
 
 作为额外的便利，场景可以将信息发送到所有其他场景。
 
-使用单一方法sendAll()发送信息到所有场景：
+使用单一方法 sendAll()发送信息到所有场景：
 
 self.sendAll(sendID, info)
 
 此调用允许当前场景将信息发送到所有其他场景。
 
-场景。sendID唯一标识你正在发送的信息。该
+场景。sendID 唯一标识你正在发送的信息。该
 
-info参数是你想发送到所有场景的信息。
+info 参数是你想发送到所有场景的信息。
 
 一个典型的调用看起来像这样：
 
@@ -2600,7 +2600,7 @@ self.sendAll( *SOME_INFO_CONSTANT*, data)
 
 这实际上表示，“将信息发送到所有场景。信息
 
-由*SOME_INFO_CONSTANT*标识，信息存储在变量data的值中。”
+由*SOME_INFO_CONSTANT*标识，信息存储在变量 data 的值中。”
 
 为了使其工作，所有除当前场景外的场景必须实现
 
@@ -2642,7 +2642,7 @@ OOP 的一个重要教训是，客户端代码的开发者不需要了解
 
 直接跳到总结部分。如果你感兴趣，本节将详细讲解
 
-**334** 第15章
+**334** 第十五章
 
 实现细节，顺便你会学到一种有趣的技术，可以实现对象之间的双向通信。
 
@@ -2658,7 +2658,7 @@ oSceneMgr = SceneMgr(scenesList, FRAMES_PER_SECOND)
 
 oSceneMgr.run()
 
-清单15-6包含SceneMgr类的__init__()方法的代码
+清单 15-6 包含 SceneMgr 类的 __init__()方法的代码
 
 类。
 
@@ -2692,7 +2692,7 @@ self.framesPerSecond = fps
 
 oScene._setRefToSceneMgr(self)
 
-*清单15-6：SceneMgr类的__init__()方法*
+*清单 15-6：SceneMgr 类的 __init__()方法*
 
 __init__() 方法通过一个字典 1 跟踪所有场景。它
 
@@ -2796,7 +2796,7 @@ clock.tick(self.framesPerSecond)
 
 *列表 15-7：SceneMgr 类的 run() 方法*
 
-**336** 第 15 章
+**336** 第十五章
 
 run() 方法是场景管理器工作原理的关键。记住，所有场景必须是多态的——至少每个场景必须实现
 
@@ -2836,13 +2836,13 @@ run() 方法是场景管理器工作原理的关键。记住，所有场景必�
 
 在循环的底部（与标准的主循环完全相同）：
 
-场景管理器更新窗口6并等待适当的时间。
+场景管理器更新窗口 6 并等待适当的时间。
 
 适当的时间。
 
 ***主要方法***
 
-SceneMgr类的其余方法实现了导航和
+SceneMgr 类的其余方法实现了导航和
 
 场景之间的通信：
 
@@ -2876,7 +2876,7 @@ self.goToScene( *某场景键*)
 
 场景 **337**
 
-当场景发起此调用时，该调用会进入继承的Scene基类中的goToScene()方法。继承方法的代码由以下内容组成
+当场景发起此调用时，该调用会进入继承的 Scene 基类中的 goToScene()方法。继承方法的代码由以下内容组成
 
 一行代码：
 
@@ -2886,13 +2886,13 @@ def goToScene(self, nextSceneKey, data=None):
 
 self.oSceneMgr._goToScene(nextSceneKey, data)
 
-这会调用场景管理器中的私有方法_goToScene()。
+这会调用场景管理器中的私有方法 _goToScene()。
 
 管理器。在场景管理器的方法中，我们需要给当前
 
 给场景提供机会进行必要的清理工作，然后转移到
 
-将控制权交给新场景。以下是场景管理器中_goToScene()方法的代码
+将控制权交给新场景。以下是场景管理器中 _goToScene()方法的代码
 
 场景管理器：
 
@@ -2900,17 +2900,17 @@ def _goToScene(self, nextSceneKey, dataForNextScene):
 
 --- 截取部分 ---
 
-如果nextSceneKey为None：# 表示退出
+如果 nextSceneKey 为 None：# 表示退出
 
 pygame.quit()
 
 sys.exit()
 
-# 调用旧场景的leave方法，以便它进行清理。
+# 调用旧场景的 leave 方法，以便它进行清理。
 
 # 设置新场景（基于场景键）并
 
-# 调用新场景的enter方法。
+# 调用新场景的 enter 方法。
 
 1 self.oCurrentScene.leave()
 
@@ -2920,7 +2920,7 @@ pygame.key.set_repeat(0) # 关闭字符重复
 
 2 self.oCurrentScene = self.scenesDict[nextSceneKey]
 
-除了KeyError：
+除了 KeyError：
 
 raise KeyError("尝试跳转到场景 '" + nextSceneKey +
 
@@ -2930,23 +2930,23 @@ raise KeyError("尝试跳转到场景 '" + nextSceneKey +
 
 _goToScene()方法执行一系列步骤以实现场景过渡
 
-从当前场景切换到目标场景。首先，它在当前场景中调用leave()，
+从当前场景切换到目标场景。首先，它在当前场景中调用 leave()，
 
-当前场景1，以便当前场景进行必要的清理。然后，
+当前场景 1，以便当前场景进行必要的清理。然后，
 
 使用传入的目标场景键，找到目标场景的对象
 
-场景2，并将其设置为当前场景。最后，它调用新场景的enter()方法。
+场景 2，并将其设置为当前场景。最后，它调用新场景的 enter()方法。
 
-当前场景3，允许新当前场景进行必要的设置。
+当前场景 3，允许新当前场景进行必要的设置。
 
-从此时起，场景管理器的run()方法开始循环
+从此时起，场景管理器的 run()方法开始循环
 
-调用当前场景的handleInputs()、update()和draw()方法。
+调用当前场景的 handleInputs()、update()和 draw()方法。
 
 这些方法将在当前场景中被调用，直到程序执行完毕
 
-发起另一次对self.goToScene()的调用，以切换到另一个场景或
+发起另一次对 self.goToScene()的调用，以切换到另一个场景或
 
 用户退出程序时。
 
@@ -2956,23 +2956,23 @@ _goToScene()方法执行一系列步骤以实现场景过渡
 
 从另一个场景请求信息，一个场景只需要发出一个调用
 
-到self.request()，该方法位于Scene基类中，如下所示：
+到 self.request()，该方法位于 Scene 基类中，如下所示：
 
 dataRequested = self.request( *某场景键*, *某数据标识符*)
 
-**338** 第15章
+**338** 第十五章
 
-目标场景必须有一个respond()方法。该方法需要像这样定义：
+目标场景必须有一个 respond()方法。该方法需要像这样定义：
 
 def respond(self, requestID):
 
-它使用requestID的值来唯一标识要检索的数据
+它使用 requestID 的值来唯一标识要检索的数据
 
 并返回该数据。同样，请求场景和目标场景
 
 必须对任何标识符的值达成一致。完整的过程如下所示
 
-图15-10\。
+图 15-10\。
 
 **场景管理器**
 
@@ -3018,7 +3018,7 @@ self.request()
 
 **场景**
 
-*图15-10：一个场景向另一个场景请求信息的通信路径*
+*图 15-10：一个场景向另一个场景请求信息的通信路径*
 
 *另一个场景*
 
@@ -3030,19 +3030,19 @@ self.request()
 
 工作原理：
 
-1. 当前场景调用self.request()，该方法位于
+1. 当前场景调用 self.request()，该方法位于
 
-继承的Scene基类。
+继承的 Scene 基类。
 
 2. 
 
-Scene基类在其
+Scene 基类在其
 
-实例变量self.oSceneMgr，允许其方法调用
+实例变量 self.oSceneMgr，允许其方法调用
 
 场景管理器中。self.request()方法调用场景
 
-管理器的_request_respond()方法来请求场景的
+管理器的 _request_respond()方法来请求场景的
 
 目标场景。
 
@@ -3050,7 +3050,7 @@ Scene基类在其
 
 对象，并且它使用传入的参数来找到该对象
 
-目标场景中调用respond()方法（你必须编写该方法）
+目标场景中调用 respond()方法（你必须编写该方法）
 
 与目标场景相关的方法。然后它在
 
@@ -3064,13 +3064,13 @@ respond()方法（你必须编写）来返回数据
 
 场景**339**
 
-5. 场景管理器将数据返回给当前场景继承的Scene基类中的request()方法。
+5. 场景管理器将数据返回给当前场景继承的 Scene 基类中的 request()方法。
 
-6. 最后，Scene基类中的request()方法将数据返回给
+6. 最后，Scene 基类中的 request()方法将数据返回给
 
 原始调用者。
 
-相同的机制用于实现send()和sendAll()。该
+相同的机制用于实现 send()和 sendAll()。该
 
 唯一的区别是，当向一个场景或所有场景发送消息时，
 
@@ -3112,7 +3112,7 @@ respond()方法（你必须编写）来返回数据
 
 使用继承的基类方法和实例变量。
 
-**340** 第 15 章
+**340** 第十五章
 
 **16**
 
@@ -3212,21 +3212,21 @@ returnedValue = pyghelpers.textYesNoDialog(window,
 
 '你想要薯条吗？'
 
-这个调用显示了图16-1中的对话框。
+这个调用显示了图 16-1 中的对话框。
 
-**342** 第16章
+**342** 第十六章
 
-![Image 47](index-372_1.png)
+![Image 47](img/index-372_1.png)
 
-![Image 48](index-372_2.png)
+![Image 48](img/index-372_2.png)
 
-*图16-1：一个典型的textYesNoDialog对话框*
+*图 16-1：一个典型的 textYesNoDialog 对话框*
 
-Yes和No按钮是pygwidgets中TextButton类的实例。
+Yes 和 No 按钮是 pygwidgets 中 TextButton 类的实例。
 
 主程序在对话框显示时会停止。当用户点击
 
-按钮，函数返回True表示“是”，返回False表示“否”。你的代码应该
+按钮，函数返回 True 表示“是”，返回 False 表示“否”。你的代码应该
 
 根据返回的布尔值进行相应操作；然后
 
@@ -3234,7 +3234,7 @@ Yes和No按钮是pygwidgets中TextButton类的实例。
 
 你也可以使用此函数来创建一个简单的只有
 
-一个按钮。如果传入的noButtonText值为None，则该按钮不会
+一个按钮。如果传入的 noButtonText 值为 None，则该按钮不会
 
 只显示一个按钮。你可以像这样调用以显示一个按钮：
 
@@ -3242,15 +3242,15 @@ Yes和No按钮是pygwidgets中TextButton类的实例。
 
 '这是一个警告！', '确定', None)
 
-图16-2显示了最终的警告对话框。
+图 16-2 显示了最终的警告对话框。
 
-*图16-2：作为警告对话框使用的textYesNoDialog*
+*图 16-2：作为警告对话框使用的 textYesNoDialog*
 
 **自定义版本**
 
-设置自定义的Yes/No对话框更复杂，但可以提供更多
+设置自定义的 Yes/No 对话框更复杂，但可以提供更多
 
-更多控制的警告对话框。以下是customYesNoDialog()函数的接口：
+更多控制的警告对话框。以下是 customYesNoDialog()函数的接口：
 
 customYesNoDialog(theWindow, oDialogImage, oPromptText, oYesButton,
 
@@ -3258,31 +3258,31 @@ oNoButton)
 
 在你调用此函数之前，你需要为
 
-对话框的背景、提示文本以及Yes和No按钮。你
+对话框的背景、提示文本以及 Yes 和 No 按钮。你
 
-通常会使用Image、DisplayText和CustomButton（或TextButton）对象
+通常会使用 Image、DisplayText 和 CustomButton（或 TextButton）对象
 
-这些对象是通过pygwidgets类创建的，专门用于这个目的。customYesNoDialog()
+这些对象是通过 pygwidgets 类创建的，专门用于这个目的。customYesNoDialog()
 
-代码通过调用handleEvent()方法展示了多态性
+代码通过调用 handleEvent()方法展示了多态性
 
-按钮，因此无论你使用CustomButtons还是TextButtons，都没有关系，
+按钮，因此无论你使用 CustomButtons 还是 TextButtons，都没有关系，
 
-通过调用所有构成对话框的对象的draw()方法来绘制它们。因为
+通过调用所有构成对话框的对象的 draw()方法来绘制它们。因为
 
 你创建了所有这些对象后，可以自定义它们中的任何一个或所有对象的外观。
 
-你需要为任何Image和CustomButton提供自己的图像
+你需要为任何 Image 和 CustomButton 提供自己的图像
 
 对象并习惯性地将它们放置在项目的*images*文件夹中。
 
 完整游戏：Dodger **343**
 
-在实现自定义的Yes/No对话框时，通常你会编写一个像showCustomYesNoDialog()这样的中介函数，如清单16-1所示。
+在实现自定义的 Yes/No 对话框时，通常你会编写一个像 showCustomYesNoDialog()这样的中介函数，如清单 16-1 所示。
 
-然后，在你希望显示对话框的代码位置，代替直接调用customYesNoDialog()，你应该调用中介
+然后，在你希望显示对话框的代码位置，代替直接调用 customYesNoDialog()，你应该调用中介
 
-与直接调用customYesNoDialog()相比，你应该调用中介
+与直接调用 customYesNoDialog()相比，你应该调用中介
 
 函数，它同时实例化小部件并实际调用它们。
 
@@ -3366,9 +3366,9 @@ returnedValue = showCustomYesNoDialog(window，
 
 你可以设计任何你喜欢的布局。
 
-**344** 第16章
+**344** 第十六章
 
-![Image 49](index-374_1.png)
+![Image 49](img/index-374_1.png)
 
 *图 16-3：一个典型的 customYesNoDialog 对话框*
 
@@ -3434,11 +3434,11 @@ else:
 
 完整游戏：Dodger **345**
 
-![图像 50](index-375_1.png)
+![图像 50](img/index-375_1.png)
 
-这将显示图16-4中的对话框。
+这将显示图 16-4 中的对话框。
 
-*图16-4：一个典型的 textAnswerDialog 对话框*
+*图 16-4：一个典型的 textAnswerDialog 对话框*
 
 **自定义版本**
 
@@ -3448,7 +3448,7 @@ else:
 
 代码调用中间函数，后者再调用 customAnswerDialog()。
 
-列表16-2显示了一个典型的中间函数的代码。
+列表 16-2 显示了一个典型的中间函数的代码。
 
 def showCustomAnswerDialog(theWindow, theText):
 
@@ -3496,15 +3496,15 @@ oYesButton, oNoButton)
 
 return response
 
-*列表16-2：创建自定义 Answer 对话框的中间函数*
+*列表 16-2：创建自定义 Answer 对话框的中间函数*
 
 你可以自定义整个对话框的外观：背景
 
 图像、字体、大小和显示与输入文本框的布局
 
-**346** 第16章
+**346** 第十六章
 
-![图像 51](index-376_1.png)
+![图像 51](img/index-376_1.png)
 
 和这两个按钮。要显示自定义对话框，主代码会调用
 
@@ -3516,9 +3516,9 @@ userAnswer = showCustomAnswerDialog(window,
 
 该调用显示一个自定义的 Answer 对话框，如图所示
 
-图16-5\。
+图 16-5\。
 
-*图16-5：一个典型的 customAnswerDialog 对话框*
+*图 16-5：一个典型的 customAnswerDialog 对话框*
 
 如果用户点击 OK，函数返回用户输入的文本。如果用户
 
@@ -3552,7 +3552,7 @@ userAnswer = showCustomAnswerDialog(window,
 
 少数绿色好人会随机出现并水平移动，
 
-用户触摸任何好人会获得25分。
+用户触摸任何好人会获得 25 分。
 
 游戏有三个场景：一个开始或 Splash 场景，包含说明，
 
@@ -3562,13 +3562,13 @@ userAnswer = showCustomAnswerDialog(window,
 
 有输入名字和得分的选项，可以将其记录到高分表中。
 
-图16-6展示了三个场景。
+图 16-6 展示了三个场景。
 
 完整游戏：Dodger **347**
 
-![图52](index-377_1.png)
+![图 52](img/index-377_1.png)
 
-*图16-6：从左到右是 Splash、Play 和 High Score 场景*
+*图 16-6：从左到右是 Splash、Play 和 High Score 场景*
 
 ***实现***
 
@@ -3618,7 +3618,7 @@ SCENE_PLAY = 'scene play'
 
 SCENE_HIGH_SCORES = 'scene high scores'
 
-**348** 第16章
+**348** 第十六章
 
 这些常量的值是唯一的字符串，用于标识不同的场景。
 
@@ -3654,11 +3654,11 @@ run() 方法将控制权交给列表中的第一个场景。在这个游戏中�
 
 如前一章所讨论的，每个场景类都继承自这个类。
 
-场景基类。除了提供自己的__init__()方法外，每个
+场景基类。除了提供自己的 __init__()方法外，每个
 
-这些类中的每个都需要重写getSceneKey()、handleInputs()和
+这些类中的每个都需要重写 getSceneKey()、handleInputs()和
 
-基类中的draw()方法。
+基类中的 draw()方法。
 
 **文件：Dodger/SceneSplash.py**
 
@@ -3672,7 +3672,7 @@ run() 方法将控制权交给列表中的第一个场景。在这个游戏中�
 
 __init__()方法创建背景图像对象。
 
-图像和三个CustomButton对象供用户选择。
+图像和三个 CustomButton 对象供用户选择。
 
 getSceneKey()方法必须在所有场景中实现；它只是
 
@@ -3680,17 +3680,17 @@ getSceneKey()方法必须在所有场景中实现；它只是
 
 handleInputs()方法检查用户是否点击了任何按钮。
 
-一堆代码。如果用户点击开始，我们会调用继承的self.goToScene()方法。
+一堆代码。如果用户点击开始，我们会调用继承的 self.goToScene()方法。
 
 请求场景管理器将控制权转交给游戏场景。同样，
 
 点击“前往高分榜”按钮会把用户带到高分榜页面。
 
-场景。如果用户点击退出，我们会调用场景继承的self.quit()方法，
+场景。如果用户点击退出，我们会调用场景继承的 self.quit()方法，
 
 方法，退出程序。
 
-在draw()方法中，程序绘制背景并显示三个
+在 draw()方法中，程序绘制背景并显示三个
 
 按钮。
 
@@ -3710,21 +3710,21 @@ handleInputs()方法检查用户是否点击了任何按钮。
 
 游戏场景的代码相当多，因此我会将其分成
 
-较小的部分（Listings 16-3至16-7）来解释这些方法。
+较小的部分（Listings 16-3 至 16-7）来解释这些方法。
 
-该场景遵循第15章中建立的设计规则，通过实现__init__()、handleInputs()、update()和draw()方法来执行。
+该场景遵循第十五章中建立的设计规则，通过实现 __init__()、handleInputs()、update()和 draw()方法来执行。
 
-一个enter()方法，用来处理场景成为当前场景时应该做的事情。
+一个 enter()方法，用来处理场景成为当前场景时应该做的事情。
 
-当前活动场景和leave()方法用于处理用户
+当前活动场景和 leave()方法用于处理用户
 
-用户离开时的行为。最后，它有一个reset()方法，用于在重新开始前重置状态。
+用户离开时的行为。最后，它有一个 reset()方法，用于在重新开始前重置状态。
 
-启动新一轮游戏。Listing 16-3展示了初始化代码。
+启动新一轮游戏。Listing 16-3 展示了初始化代码。
 
 # 游戏场景 - 主要的游戏进行场景
 
---- 省略导入部分以及showCustomYesNoDialog ---
+--- 省略导入部分以及 showCustomYesNoDialog ---
 
 BOTTOM_RECT = (0, GAME_HEIGHT + 1, WINDOW_WIDTH,
 
@@ -3786,7 +3786,7 @@ disabled='images/startNewDisabled.png',
 
 enterToActivate=True)
 
-**350** 第16章
+**350** 第十六章
 
 self.soundCheckBox = pygwidgets.TextCheckBox(self.window,
 

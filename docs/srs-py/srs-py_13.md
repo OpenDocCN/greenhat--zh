@@ -2,7 +2,7 @@
 
 **少写代码，多做事情**
 
-![image](../images/common01.jpg)
+![image](img/common01.jpg)
 
 在最后一章，我总结了我用来编写更好代码的一些 Python 高级特性。这些不仅限于 Python 标准库。我们将讨论如何使你的代码兼容 Python 2 和 3，如何创建类似 Lisp 的方法调度器，如何使用上下文管理器，以及如何使用 attr 模块为类创建模板。
 
@@ -14,7 +14,7 @@
 
 six 模块提供了有用的 six.PY3 变量，它是一个布尔值，表示你是否在运行 Python 3。这是任何同时支持 Python 2 和 Python 3 版本的代码库中的核心变量。然而，要小心不要滥用它；如果在代码库中到处使用 if six.PY3，会让其他人很难阅读和理解你的代码。
 
-当我们在 “[生成器](ch08.xhtml#lev1sec42)” 中讨论生成器时，曾提到过 Python 3 有一个很好的特性：在许多内置函数（如 map() 或 filter()）中，返回的是可迭代对象，而不是列表。因此，Python 3 摒弃了像 dict.iteritems() 这样的方法（它是 Python 2 中 dict.items() 的可迭代版本），转而让 dict.items() 返回一个迭代器而不是列表。这种方法和返回类型的变化可能会破坏你的 Python 2 代码。
+当我们在 “生成器” 中讨论生成器时，曾提到过 Python 3 有一个很好的特性：在许多内置函数（如 map() 或 filter()）中，返回的是可迭代对象，而不是列表。因此，Python 3 摒弃了像 dict.iteritems() 这样的方法（它是 Python 2 中 dict.items() 的可迭代版本），转而让 dict.items() 返回一个迭代器而不是列表。这种方法和返回类型的变化可能会破坏你的 Python 2 代码。
 
 six 模块提供了 six.iteritems() 来解决这种情况，可以用来替代 Python 2 特有的代码，例如：
 
@@ -48,7 +48,7 @@ six 模块再次提供了函数和常量，例如 six.u 和 six.string_types，�
 
 在 Python 标准库中，一些模块在 Python 2 和 3 之间发生了移动或重命名。six 模块提供了一个名为 six.moves 的模块，能够透明地处理这些变化。
 
-例如，Python 2 中的 ConfigParser 模块在 Python 3 中被重命名为 configparser。 [列表 13-1](ch13.xhtml#ch13list1) 显示了如何使用 six.moves 将代码移植并使其兼容两个主要的 Python 版本：
+例如，Python 2 中的 ConfigParser 模块在 Python 3 中被重命名为 configparser。 列表 13-1 显示了如何使用 six.moves 将代码移植并使其兼容两个主要的 Python 版本：
 
 from six.moves.configparser import ConfigParser
 
@@ -96,7 +96,7 @@ conf = ConfigParser()
 
 (:documentation "使用乐器和配件播放声音。"))  
 
-这只定义了一个通用方法，该方法没有附加到任何类，因此目前无法调用。在此阶段，我们仅仅告诉对象系统该方法是通用的，可能会使用名为 instrument 和 accessory 的两个参数进行调用。在[示例 13-2](ch13.xhtml#ch13list2)中，我们将实现该方法的不同版本，模拟演奏我们的军鼓。  
+这只定义了一个通用方法，该方法没有附加到任何类，因此目前无法调用。在此阶段，我们仅仅告诉对象系统该方法是通用的，可能会使用名为 instrument 和 accessory 的两个参数进行调用。在示例 13-2 中，我们将实现该方法的不同版本，模拟演奏我们的军鼓。  
 
 (defmethod play ((instrument snare-drum) (accessory stick))  
 
@@ -128,7 +128,7 @@ conf = ConfigParser()
 
 如你所见，调用哪个函数取决于参数的类——对象系统会根据我们传入的参数类型为我们“分发”函数调用到正确的函数。如果我们用一个没有定义方法的对象调用 play()，将会抛出错误。  
 
-在[示例 13-3](ch13.xhtml#ch13list3)中，play() 方法与一个 cymbal 和一个 stick 实例一起调用；然而，play() 方法从未为这些参数定义，因此会引发错误。  
+在示例 13-3 中，play() 方法与一个 cymbal 和一个 stick 实例一起调用；然而，play() 方法从未为这些参数定义，因此会引发错误。  
 
 * (play (make-instance 'cymbal) (make-instance 'stick))  
 
@@ -158,13 +158,13 @@ conf = ConfigParser()
 
 *Listing 13-3: 调用一个没有可用签名的方法*
 
-CLOS提供了更多的功能，比如方法继承或基于对象的调度，而不是使用类。如果你对CLOS提供的众多功能真的感兴趣，建议阅读Jeff Dalton的《CLOS简明指南》（*[http://www.aiai.ed.ac.uk/~jeff/clos-guide.html](http://www.aiai.ed.ac.uk/~jeff/clos-guide.html)*)，作为入门资料。
+CLOS 提供了更多的功能，比如方法继承或基于对象的调度，而不是使用类。如果你对 CLOS 提供的众多功能真的感兴趣，建议阅读 Jeff Dalton 的《CLOS 简明指南》（*[`www.aiai.ed.ac.uk/~jeff/clos-guide.html`](http://www.aiai.ed.ac.uk/~jeff/clos-guide.html)*)，作为入门资料。
 
-#### ***使用Python的通用方法***
+#### ***使用 Python 的通用方法***
 
-Python通过singledispatch()函数实现了这个工作流的简化版本，该函数自Python 3.4以来作为functools模块的一部分提供。在2.6到3.3版本中，singledispatch()函数通过Python包索引提供；对于那些急于尝试的人，只需运行pip install singledispatch。
+Python 通过 singledispatch()函数实现了这个工作流的简化版本，该函数自 Python 3.4 以来作为 functools 模块的一部分提供。在 2.6 到 3.3 版本中，singledispatch()函数通过 Python 包索引提供；对于那些急于尝试的人，只需运行 pip install singledispatch。
 
-[Listing 13-4](ch13.xhtml#ch13list4)显示了我们在[Listing 13-2](ch13.xhtml#ch13list2)中构建的Lisp程序的粗略等效版本。
+Listing 13-4 显示了我们在 Listing 13-2 中构建的 Lisp 程序的粗略等效版本。
 
 import functools
 
@@ -206,11 +206,11 @@ return "FRCCCHHT!"
 
 raise NotImplementedError("无法播放这些")
 
-*Listing 13-4: 使用singledispatch调度方法调用*
+*Listing 13-4: 使用 singledispatch 调度方法调用*
 
-该列表定义了我们的四个类和一个基本的play()函数，抛出NotImplementedError，表明默认情况下我们不知道该怎么做。
+该列表定义了我们的四个类和一个基本的 play()函数，抛出 NotImplementedError，表明默认情况下我们不知道该怎么做。
 
-然后，我们为特定的乐器编写了一个play()函数的专门版本，这里是SnareDrum ➊。该函数检查传入的配件类型，并返回适当的声音，或者如果配件无法识别，则再次抛出NotImplementedError。
+然后，我们为特定的乐器编写了一个 play()函数的专门版本，这里是 SnareDrum ➊。该函数检查传入的配件类型，并返回适当的声音，或者如果配件无法识别，则再次抛出 NotImplementedError。
 
 如果我们运行该程序，它的运行方式如下：
 
@@ -232,7 +232,7 @@ NotImplementedError: 无法播放这些
 
 NotImplementedError: 无法播放这些
 
-singledispatch模块检查传入的第一个参数的类，并调用相应版本的play()函数。对于对象类，始终运行第一个定义的版本。因此，如果我们的乐器是一个未注册的类的实例，那么将调用这个基本函数。
+singledispatch 模块检查传入的第一个参数的类，并调用相应版本的 play()函数。对于对象类，始终运行第一个定义的版本。因此，如果我们的乐器是一个未注册的类的实例，那么将调用这个基本函数。
 
 正如我们在 Lisp 版本的代码中看到的，CLOS 提供了一个多重调度器，可以根据方法原型中*任何一个参数*的类型进行调度，而不仅仅是第一个参数。Python 的调度器被命名为 `singledispatch` 是有原因的：它只知道如何根据第一个参数进行调度。
 
@@ -254,7 +254,7 @@ line = f.readline()
 
 open() 返回的对象有两个方法：一个叫 `__enter__`，另一个叫 `__exit__`。这两个方法分别在 with 块的开始和结束时被调用。
 
-[Listing 13-5](ch13.xhtml#ch13list5) 中展示了一个简单的上下文对象实现。
+Listing 13-5 中展示了一个简单的上下文对象实现。
 
 class MyContext(object):
 
@@ -282,7 +282,7 @@ open() 函数很好地说明了这一模式：打开文件并内部分配文件�
 
 手动实现这个协议可能很繁琐，因此 contextlib 标准库提供了 contextmanager 装饰器，使得实现变得更加简便。contextmanager 装饰器应该用于生成器函数。__enter__ 和 __exit__ 方法会根据包装生成器 yield 语句的代码动态实现。
 
-在 [示例 13-6](ch13.xhtml#ch13list6) 中，MyContext 被定义为一个上下文管理器。
+在 示例 13-6 中，MyContext 被定义为一个上下文管理器。
 
 import contextlib
 
@@ -312,7 +312,7 @@ hello world
 
 这里需要处理几个问题。首先，我们的生成器中可能会 yield 一些内容，这些内容可以在 with 代码块中使用。
 
-[示例 13-7](ch13.xhtml#ch13list7) 展示了如何将一个值返回给调用者。关键字 as 用于将这个值存储在一个变量中。
+示例 13-7 展示了如何将一个值返回给调用者。关键字 as 用于将这个值存储在一个变量中。
 
 import contextlib
 
@@ -332,7 +332,7 @@ print(value)
 
 *示例 13-7：定义一个返回值的上下文管理器*
 
-[示例 13-7](ch13.xhtml#ch13list7) 展示了如何将一个值返回给调用者。关键字 as 用于将这个值存储在一个变量中。执行时，代码输出如下内容：
+示例 13-7 展示了如何将一个值返回给调用者。关键字 as 用于将这个值存储在一个变量中。执行时，代码输出如下内容：
 
 做一些事情
 
@@ -340,7 +340,7 @@ print(value)
 
 做其他事情
 
-在使用上下文管理器时，你可能需要处理在 with 代码块中可能引发的异常。这可以通过将 yield 语句包裹在 try...except 块中来实现，如 [示例 13-8](ch13.xhtml#ch13list8) 所示。
+在使用上下文管理器时，你可能需要处理在 with 代码块中可能引发的异常。这可以通过将 yield 语句包裹在 try...except 块中来实现，如 示例 13-8 所示。
 
 import contextlib
 
@@ -370,7 +370,7 @@ print(value)
 
 这里，在 with 代码块的开始处引发了一个 ValueError ➊；Python 会将这个错误传播回上下文管理器，yield 语句看起来像是引发了这个异常。我们将 yield 语句包裹在 try 和 finally 中，以确保最终的 print() 被执行。
 
-执行时，[示例 13-8](ch13.xhtml#ch13list8) 输出如下内容：
+执行时，示例 13-8 输出如下内容：
 
 做一些事情
 
@@ -386,7 +386,7 @@ ValueError: 让我们试试看
 
 正如你所看到的，错误被传递回上下文管理器，程序恢复并完成执行，因为它通过 try...finally 块忽略了异常。
 
-在某些情况下，同时使用多个上下文管理器是有用的，例如，当同时打开两个文件来复制它们的内容时，如[示例 13-9](ch13.xhtml#ch13list9)所示。
+在某些情况下，同时使用多个上下文管理器是有用的，例如，当同时打开两个文件来复制它们的内容时，如示例 13-9 所示。
 
 使用`with open("file1", "r") as source:`：
 
@@ -396,7 +396,7 @@ destination.write(source.read())
 
 *示例 13-9：同时打开两个文件以复制内容*
 
-话虽如此，由于with语句支持多个参数，实际上使用一个单独的with语句会更高效，如[示例 13-10](ch13.xhtml#ch13list10)所示。
+话虽如此，由于 with 语句支持多个参数，实际上使用一个单独的 with 语句会更高效，如示例 13-10 所示。
 
 使用`with open("file1", "r") as source, open("file2", "w") as destination:`：
 
@@ -404,11 +404,11 @@ destination.write(source.read())
 
 *示例 13-10：仅使用一个 with 语句同时打开两个文件*
 
-上下文管理器是非常强大的设计模式，它有助于确保无论发生什么异常，你的代码流始终正确。它们能在许多场合提供一致且清晰的编程接口，这些场合中代码应当被其他代码所包装，并且使用contextlib.contextmanager。
+上下文管理器是非常强大的设计模式，它有助于确保无论发生什么异常，你的代码流始终正确。它们能在许多场合提供一致且清晰的编程接口，这些场合中代码应当被其他代码所包装，并且使用 contextlib.contextmanager。
 
 ### **使用 attr 减少模板代码**
 
-编写 Python 类可能会很繁琐。你经常会发现自己只是在重复一些固定的模式，因为没有其他选项。最常见的例子之一，如[示例 13-11](ch13.xhtml#ch13list11)所示，就是在初始化一个对象时，通过构造函数传入几个属性。
+编写 Python 类可能会很繁琐。你经常会发现自己只是在重复一些固定的模式，因为没有其他选项。最常见的例子之一，如示例 13-11 所示，就是在初始化一个对象时，通过构造函数传入几个属性。
 
 class Car(object):
 
@@ -422,13 +422,13 @@ self.speed = speed
 
 这个过程始终是一样的：你将传递给`__init__`函数的参数值复制到对象中存储的几个属性中。有时你还需要检查传入的值，计算默认值，等等。
 
-显然，如果要打印你的对象时正确显示，你还需要实现一个__repr__方法。如果你的某些类足够简单，可能可以将它们转换为字典进行序列化。当涉及到比较和哈希性（能够在对象上使用哈希并将其存储在集合中）时，事情变得更加复杂。
+显然，如果要打印你的对象时正确显示，你还需要实现一个 __repr__ 方法。如果你的某些类足够简单，可能可以将它们转换为字典进行序列化。当涉及到比较和哈希性（能够在对象上使用哈希并将其存储在集合中）时，事情变得更加复杂。
 
 实际上，大多数 Python 程序员都不会这么做，因为编写所有这些检查和方法的负担太重，特别是在你并不总是确定是否需要它们的情况下。例如，你可能会发现，__repr__ 在你的程序中只在调试或追踪时才有用，并且只会打印对象一次，并没有其他时间需要使用它。
 
 attr 库通过为你的所有类提供通用的模板并为你生成大量代码，旨在提供一个简单的解决方案。你可以使用命令`pip install attr`安装 attr。准备好享受吧！
 
-安装完成后，`attr.s` 装饰器是你进入 attr 神奇世界的入口。将它应用在类声明之上，然后使用 `attr.ib()` 函数在你的类中声明属性。[清单 13-12](ch13.xhtml#ch13list12) 展示了如何使用 attr 重写[清单 13-11](ch13.xhtml#ch13list11)。
+安装完成后，`attr.s` 装饰器是你进入 attr 神奇世界的入口。将它应用在类声明之上，然后使用 `attr.ib()` 函数在你的类中声明属性。清单 13-12 展示了如何使用 attr 重写清单 13-11。
 
 import attr
 
@@ -454,7 +454,7 @@ Car(color='blue', speed=0)
 
 你还可以通过使用验证器和转换器关键字参数来为你的属性添加更多验证。
 
-[清单 13-13](ch13.xhtml#ch13list13) 展示了如何使用 `attr.ib()` 函数声明带有某些约束的属性。
+清单 13-13 展示了如何使用 `attr.ib()` 函数声明带有某些约束的属性。
 
 import attr
 
@@ -476,13 +476,13 @@ raise ValueError("值不能为负")
 
 *清单 13-13: 使用 attr.ib() 和其转换器参数*
 
-转换器参数负责管理传递给构造函数的值的转换。`validator()` 函数可以作为参数传递给 `attr.ib()`，也可以用作装饰器，如[清单 13-13](ch13.xhtml#ch13list13)所示。
+转换器参数负责管理传递给构造函数的值的转换。`validator()` 函数可以作为参数传递给 `attr.ib()`，也可以用作装饰器，如清单 13-13 所示。
 
 attr 模块提供了一些自己的验证器（例如，`attr.validators.instance_of()` 用于检查属性类型），所以在自己编写验证器之前，最好先检查这些内置的。
 
 attr 模块还提供了一些调整，使你的对象可以哈希，从而可以在集合或字典键中使用：只需将 frozen=True 传递给 `attr.s()`，使类实例不可变。
 
-[清单 13-14](ch13.xhtml#ch13list14) 展示了使用 frozen 参数如何改变类的行为。
+清单 13-14 展示了使用 frozen 参数如何改变类的行为。
 
 >>> import attr
 
@@ -504,7 +504,7 @@ attr.exceptions.FrozenInstanceError
 
 *清单 13-14: 使用 frozen=True*
 
-[清单 13-14](ch13.xhtml#ch13list14) 展示了使用 frozen 参数如何改变 Car 类的行为：它可以被哈希，因此可以存储在集合中，但对象不再可修改。
+清单 13-14 展示了使用 frozen 参数如何改变 Car 类的行为：它可以被哈希，因此可以存储在集合中，但对象不再可修改。
 
 总结来说，attr 提供了大量有用的方法实现，帮助你省去了自己编写的麻烦。在构建类和建模软件时，我强烈推荐利用 attr 提高效率。
 

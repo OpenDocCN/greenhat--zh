@@ -8,7 +8,7 @@
 
 所有列表都是列表类的实例，该类具有许多方法，包括
 
-例如myList.append()、myList.count()、myList.index()等等。
+例如 myList.append()、myList.count()、myList.index()等等。
 
 当你编写一个类时，你实际上是在定义一个新的数据类型。你的代码
 
@@ -16,7 +16,7 @@
 
 它可以执行的操作。在创建类的实例并将其分配给
 
-一个变量，你可以使用type()内建函数来确定该变量的类
+一个变量，你可以使用 type()内建函数来确定该变量的类
 
 像使用内建数据类型一样，用它创建一个对象。这里我们实例化了一个
 
@@ -30,7 +30,7 @@ LightSwitch 对象并输出其数据类型：
 
 **32** 第二章
 
-就像Python的内建数据类型一样，我们可以用变量oLightSwitch来调用oLightSwitch类中可用的方法。
+就像 Python 的内建数据类型一样，我们可以用变量 oLightSwitch 来调用 oLightSwitch 类中可用的方法。
 
 ***对象的定义***
 
@@ -64,23 +64,23 @@ LightSwitch 对象并输出其数据类型：
 
 这个滑块可以在一系列亮度值中移动。为了让
 
-为了简化事情，我们的调光数字滑块有11个位置，从0
+为了简化事情，我们的调光数字滑块有 11 个位置，从 0
 
-（完全关闭）到10（完全开启）。要调高或调低亮度，
+（完全关闭）到 10（完全开启）。要调高或调低亮度，
 
 要将灯泡的亮度调至最大限度，你必须将滑块调至
 
 所有可能的设置。
 
-这个DimmerSwitch类比我们的LightSwitch类具有更多功能。
+这个 DimmerSwitch 类比我们的 LightSwitch 类具有更多功能。
 
 并且需要记住更多的数据：
 
 • 开关状态（开或关）
 
-• 亮度级别（0到10）
+• 亮度级别（0 到 10）
 
-以下是DimmerSwitch对象可以执行的行为：
+以下是 DimmerSwitch 对象可以执行的行为：
 
 • 打开
 
@@ -98,7 +98,7 @@ DimmerSwitch 类使用前面展示的标准模板
 
 __init__()，然后定义了一些额外的方法，每个方法对应
 
-所列的行为。这个类的完整代码在列表2-5中给出。
+所列的行为。这个类的完整代码在列表 2-5 中给出。
 
 用面向对象编程建模物理对象 **33**
 
@@ -144,7 +144,7 @@ print('亮度为：', self.brightness)
 
 *列表 2-5：稍微复杂一些的 DimmerSwitch 类*
 
-在这个__init__()方法中，我们有两个实例变量：家庭-
+在这个 __init__()方法中，我们有两个实例变量：家庭-
 
 变量实例维护它们在方法调用之间的值
 
@@ -176,9 +176,9 @@ show()方法在开发和调试过程中使用，直接
 
 oDimmer = DimmerSwitch()
 
-# Turn 开关开启，并提升级别5次
+# Turn 开关开启，并提升级别 5 次
 
-**第2章 第34页**
+**第二章 第 34 页**
 
 oDimmer.turnOn()
 
@@ -194,7 +194,7 @@ oDimmer.raiseLevel()
 
 oDimmer.show()
 
-# 降低级别2次，并关闭开关
+# 降低级别 2 次，并关闭开关
 
 oDimmer.lowerLevel()
 
@@ -204,7 +204,7 @@ oDimmer.turnOff()
 
 oDimmer.show()
 
-# 打开开关，并提升级别3次
+# 打开开关，并提升级别 3 次
 
 oDimmer.turnOn()
 
@@ -244,7 +244,7 @@ oDimmer.show()
 
 实例变量在方法调用之间保持它们的值
 
-对象，所以 self.brightness 实例变量每次增加1
+对象，所以 self.brightness 实例变量每次增加 1
 
 oDimmer.raiseLevel()
 
@@ -512,7 +512,7 @@ showInfo() 方法 6 输出基于实例变量的电视当前状态（开/关，�
 
 音量设置和静音设置）。
 
-**38** 第2章
+**38** 第二章
 
 在示例 2-8 中，我们将创建一个电视对象并调用该对象的方法。
 
@@ -670,7 +670,7 @@ def setchannel(self, newchannel):
 
 self.channelIndex = self.channelList.index(newChannel)
 
-**40** 第 2 章
+**40** 第二章
 
 但我们是这样调用 setChannel() 的：
 
@@ -888,9 +888,9 @@ self.location = location
 
 实例变量具有对象作用域，它们可以在类中的其他方法中使用
 
-这个类。Python的约定是实例变量的名称
+这个类。Python 的约定是实例变量的名称
 
-应该与参数名相同，但前面加上self和一个
+应该与参数名相同，但前面加上 self 和一个
 
 句点：
 
@@ -898,15 +898,15 @@ def __init__(self, someVariableName):
 
 self.someVariableName = someVariableName
 
-在电视类中，def语句之后的一行告诉Python去获取
+在电视类中，def 语句之后的一行告诉 Python 去获取
 
 将品牌参数的值分配给名为
 
 self.brand。下一行做的事情与位置参数相同
 
-以及实例变量self.location。完成这些赋值后，我们可以使用
+以及实例变量 self.location。完成这些赋值后，我们可以使用
 
-self.brand和self.location可以在其他方法中使用。
+self.brand 和 self.location 可以在其他方法中使用。
 
 用面向对象编程建模物理对象 **43**
 
@@ -918,23 +918,23 @@ oTV1 = TV('Samsung', '家庭房')
 
 oTV2 = TV('Sony', 'Bedroom')
 
-执行第一行时，Python首先为一个TV对象分配空间
+执行第一行时，Python 首先为一个 TV 对象分配空间
 
 对象。然后，它按照前一节中讨论的方式重新排列参数
 
-然后调用电视类的__init__()方法，并传入三个参数：
+然后调用电视类的 __init__()方法，并传入三个参数：
 
-新分配的oTV1对象，品牌和位置。
+新分配的 oTV1 对象，品牌和位置。
 
-当初始化oTV1对象时，self.brand被设置为字符串'Samsung'
+当初始化 oTV1 对象时，self.brand 被设置为字符串'Samsung'
 
-并且self.location被设置为字符串'家庭房'。初始化oTV2时，
+并且 self.location 被设置为字符串'家庭房'。初始化 oTV2 时，
 
-它的self.brand被设置为字符串'Sony'，并且self.location被设置为
+它的 self.brand 被设置为字符串'Sony'，并且 self.location 被设置为
 
 字符串'Bedroom'。
 
-我们可以修改showInfo()方法，报告电视的名称和位置
+我们可以修改 showInfo()方法，报告电视的名称和位置
 
 电视的状态。
 
@@ -948,7 +948,7 @@ print('电视状态:', self.brand)
 
 print(' 位置:', self.location)
 
-如果self.isOn:
+如果 self.isOn:
 
 ...
 
@@ -976,13 +976,13 @@ print(' 位置:', self.location)
 
 我们在之前的例子中做了相同的方法调用
 
-列表2-9。不同之处在于，现在每个TV对象都用一个
+列表 2-9。不同之处在于，现在每个 TV 对象都用一个
 
 品牌和位置，现在你可以看到这些信息已经打印出来
 
-对每次调用修改后的showInfo()方法的响应。
+对每次调用修改后的 showInfo()方法的响应。
 
-**44** 第2章
+**44** 第二章
 
 **使用中的类**
 
@@ -992,11 +992,11 @@ print(' 位置:', self.location)
 
 这里有一些我们可能会使用的例子：
 
-• 假设我们想要建模一个学生的课程。我们可以有一个Student
+• 假设我们想要建模一个学生的课程。我们可以有一个 Student
 
 类中有实例变量，用于存储名称、电子邮件地址、当前成绩等
 
-依此类推。我们从这个类创建的每个Student对象都会有自己的
+依此类推。我们从这个类创建的每个 Student 对象都会有自己的
 
 这些实例变量的集合，并且给实例变量赋值的值-
 
@@ -1034,7 +1034,7 @@ print(' 位置:', self.location)
 
 **面向对象编程作为解决方案**
 
-在第1章的结尾，我提到了程序性编码固有的三个问题。希望在处理完这些示例后，
+在第一章的结尾，我提到了程序性编码固有的三个问题。希望在处理完这些示例后，
 
 在本章中，你可以看到面向对象编程如何解决所有这些问题。
 
@@ -1102,7 +1102,7 @@ print(' 位置:', self.location)
 
 并不代表物理对象的对象。
 
-**46** 第2章
+**46** 第二章
 
 **3**
 
@@ -1146,7 +1146,7 @@ print(' 位置:', self.location)
 
 在接下来的例子中，我们将继续使用 DimmerSwitch 类
 
-[第2章（](index_split_000.html#p50)清单 2-5）。DimmerSwitch 类已经有了两个实例变量：self.isOn 和 self.brightness。我们唯一要修改的是
+第二章（清单 2-5）。DimmerSwitch 类已经有了两个实例变量：self.isOn 和 self.brightness。我们唯一要修改的是
 
 添加一个 self.label 实例变量，以便我们创建的每个对象都能被标识
 
@@ -1220,7 +1220,7 @@ oDimmer3.show()
 
 亮度是：0
 
-**48** 第3章
+**48** 第三章
 
 这正是你所期望的。每个 DimmerSwitch 对象都独立于其他 DimmerSwitch 对象，每个对象都包含和
 
@@ -1424,7 +1424,7 @@ print()
 
 所有类及其方法的位置。
 
-Python Tutor 网站（[http://PythonTutor.com](http://PythonTutor.com)）提供了一些有用的工具，可以帮助你通过逐行调试代码来可视化小程序的执行。图 3-2 是来自该网站的截图
+Python Tutor 网站（[`PythonTutor.com`](http://PythonTutor.com)）提供了一些有用的工具，可以帮助你通过逐行调试代码来可视化小程序的执行。图 3-2 是来自该网站的截图
 
 通过可视化工具运行 DimmerSwitch 类和测试代码，
 
@@ -1440,11 +1440,11 @@ DimmerSwitch 类及其所有方法。虽然类可以包含
 
 它保持了面向对象编程程序的紧凑性。当你实例化一个对象时，
 
-**50** 第 3 章
+**50** 第三章
 
-![图片 14](index-80_1.png)
+![图片 14](img/index-80_1.png)
 
-![图片 15](index-80_2.png)
+![图片 15](img/index-80_2.png)
 
 Python 为每个对象分配足够的内存来表示它自己的变量集。
 
@@ -1518,7 +1518,7 @@ def someMethod(self, *<其他参数>* ):
 
 oSomeObject.someMethod( *<其他参数>* )
 
-**52** 第 3 章
+**52** 第三章
 
 如我们所知，Python 会重新排列方法调用中的参数，使得对象作为第一个参数传递。该值将在
 
@@ -1576,49 +1576,49 @@ oDimmer2 = DimmerSwitch('Dimmer2')
 
 oDimmer1.raiseLevel()
 
-# 告诉oDimmer2提高其级别
+# 告诉 oDimmer2 提高其级别
 
 oDimmer2.raiseLevel()
 
-*列表3-3：对不同的DimmerSwitch对象调用相同的方法*
+*列表 3-3：对不同的 DimmerSwitch 对象调用相同的方法*
 
 对象的思维模型与“self”的意义 **53**
 
-![Image 16](index-83_1.png)
+![Image 16](img/index-83_1.png)
 
-在这个列表中，我们首先实例化了两个DimmerSwitch对象。然后我们有
+在这个列表中，我们首先实例化了两个 DimmerSwitch 对象。然后我们有
 
-两次调用raiseLevel()方法：首先我们用oDimmer1调用它，然后我们
+两次调用 raiseLevel()方法：首先我们用 oDimmer1 调用它，然后我们
 
-使用oDimmer2调用相同的方法。
+使用 oDimmer2 调用相同的方法。
 
-图3-5展示了运行列表3-3中测试代码的结果
+图 3-5 展示了运行列表 3-3 中测试代码的结果
 
-在Python Tutor中，执行在首次调用时停止
+在 Python Tutor 中，执行在首次调用时停止
 
 raiseLevel()。
 
-*图3-5：列表3-3中的程序在调用oDimmer1.raiseLevel()时停止* 请注意，self和oDimmer1指向同一个对象。当
+*图 3-5：列表 3-3 中的程序在调用 oDimmer1.raiseLevel()时停止* 请注意，self 和 oDimmer1 指向同一个对象。当
 
-当方法执行并使用任何self.< *instanceVariable*>时，它将使用oDimmer1的实例变量。因此，当这个方法运行时，self.brightness指
+当方法执行并使用任何 self.< *instanceVariable*>时，它将使用 oDimmer1 的实例变量。因此，当这个方法运行时，self.brightness 指
 
-指向oDimmer1中的亮度实例变量。 
+指向 oDimmer1 中的亮度实例变量。 
 
-如果我们继续执行列表3-3中的测试代码，我们将进入第二个
+如果我们继续执行列表 3-3 中的测试代码，我们将进入第二个
 
-第二次调用raiseLevel()时，使用oDimmer2。在图3-6中，我已经停止了执行
+第二次调用 raiseLevel()时，使用 oDimmer2。在图 3-6 中，我已经停止了执行
 
 在这个方法调用中。
 
-请注意，这次self指向的是与oDimmer2相同的对象。现在，
+请注意，这次 self 指向的是与 oDimmer2 相同的对象。现在，
 
-self.brightness指的是oDimmer2的亮度实例变量。
+self.brightness 指的是 oDimmer2 的亮度实例变量。
 
-无论我们使用什么对象，或调用哪个方法，self的值
+无论我们使用什么对象，或调用哪个方法，self 的值
 
-该对象被分配给被调用方法中的变量self。你应该
+该对象被分配给被调用方法中的变量 self。你应该
 
-将self视为当前对象——方法正在操作的对象
+将 self 视为当前对象——方法正在操作的对象
 
 被调用时。每当方法执行时，它会使用实例的变量集
 
@@ -1626,9 +1626,9 @@ self.brightness指的是oDimmer2的亮度实例变量。
 
 **54** 第三章
 
-![Image 17](index-84_1.png)
+![Image 17](img/index-84_1.png)
 
-*图3-6：列表3-3中的程序在调用oDimmer2.raiseLevel()时停止* **总结**
+*图 3-6：列表 3-3 中的程序在调用 oDimmer2.raiseLevel()时停止* **总结**
 
 在这一章中，我展示了两种不同的思维方式来理解对象。
 
@@ -1650,7 +1650,7 @@ self.brightness指的是oDimmer2的亮度实例变量。
 
 主要收获是，从类中创建新对象是空间高效的。
 
-当你创建一个新对象的实例时，Python会为其分配内存
+当你创建一个新对象的实例时，Python 会为其分配内存
 
 代表类中定义的实例变量。没有实例变量的重复。
 
@@ -1658,7 +1658,7 @@ self.brightness指的是oDimmer2的亮度实例变量。
 
 方法如何与多个对象一起工作的关键在于第一个
 
-所有方法的参数self，总是设置为在调用时使用的对象
+所有方法的参数 self，总是设置为在调用时使用的对象
 
 该方法。采用这种方法，每个方法使用实例变量
 
@@ -1678,7 +1678,7 @@ self.brightness指的是oDimmer2的亮度实例变量。
 
 一个银行账户的面向对象实现
 
-来自[第1章 T](index_split_000.html#p32)的示例，面向对象方法允许
+来自第一章 T 的示例，面向对象方法允许
 
 数据和代码将与账户保持在同一
 
@@ -1708,13 +1708,13 @@ self.brightness指的是oDimmer2的亮度实例变量。
 
 然后，你应该能够实例化任意数量的账户对象。像
 
-来自第1章的初始类，这个简化版的账户类只使用整数来表示余额，并且将密码以明文形式保存。虽然你
+来自第一章的初始类，这个简化版的账户类只使用整数来表示余额，并且将密码以明文形式保存。虽然你
 
 在真实的银行应用中，你不会使用这样的简化方法，但它们
 
 这将帮助我们集中处理面向对象的方面。
 
-账户类的新代码展示在Listing 4-1中。
+账户类的新代码展示在 Listing 4-1 中。
 
 **文件：Account.py**
 
@@ -1738,7 +1738,7 @@ print('抱歉，密码错误')
 
 return None
 
-如果存款金额小于0：
+如果存款金额小于 0：
 
 print('您不能存入负数金额')
 
@@ -1756,7 +1756,7 @@ print('此账户的密码不正确')
 
 return None
 
-如果要提取的金额小于0：
+如果要提取的金额小于 0：
 
 print('您不能提取负数金额')
 
@@ -1772,7 +1772,7 @@ self.balance = self.balance - amountToWithdraw
 
 return self.balance
 
-**58** 第4章
+**58** 第四章
 
 4 def getBalance(self, password):
 
@@ -1800,7 +1800,7 @@ print()
 
 **注意**
 
-*Listing 4-1中的错误处理非常简单。如果我们发现错误条件，我们* *打印一条错误信息并返回一个特殊的None值。稍后的章节中，我将* *展示一种更好的错误处理方式。*
+*Listing 4-1 中的错误处理非常简单。如果我们发现错误条件，我们* *打印一条错误信息并返回一个特殊的 None 值。稍后的章节中，我将* *展示一种更好的错误处理方式。*
 
 请注意，这些方法如何操作和记住数据。数据是
 
@@ -1812,7 +1812,7 @@ print()
 
 跨不同方法调用传递的参数，这些是局部变量
 
-首先是__init__()方法1，带有三个参数。当
+首先是 __init__()方法 1，带有三个参数。当
 
 从这个类创建对象时，需要三个数据：名称，
 
@@ -1822,45 +1822,45 @@ oAccount = Account('Joe Schmoe', 1000, 'magic')
 
 当我们实例化对象时，三个参数的值是
 
-传入__init__()方法，这会将这些值分配给
+传入 __init__()方法，这会将这些值分配给
 
-同样命名的实例变量：self.name、self.balance和self.password。
+同样命名的实例变量：self.name、self.balance 和 self.password。
 
 我们将在其他方法中访问这些实例变量。
 
-deposit()方法2允许用户向账户存款。
+deposit()方法 2 允许用户向账户存款。
 
-在实例化一个Account对象并将其保存在oAccount中后，我们可以调用
+在实例化一个 Account 对象并将其保存在 oAccount 中后，我们可以调用
 
-以这种方式调用deposit()方法：
+以这种方式调用 deposit()方法：
 
 newBalance = oAccount.deposit(500, 'magic')
 
-这个调用表示存入$500并提供密码“magic”。该
+这个调用表示存入$500 并提供密码“magic”。该
 
 方法对存款请求执行两次有效性检查。第一次
 
 通过测试提供的密码来确保密码正确
 
-通过对创建Account对象时设置的密码进行调用，这是一个
+通过对创建 Account 对象时设置的密码进行调用，这是一个
 
 是如何检查实例变量中保存的原始密码的一个好例子
 
-使用了self.password。第二次有效性检查确保我们没有存入
+使用了 self.password。第二次有效性检查确保我们没有存入
 
 输入负数金额（这实际上是取款）时。
 
-如果这两个测试中的任何一个失败，现在我们返回特殊值None
+如果这两个测试中的任何一个失败，现在我们返回特殊值 None
 
 显示一些错误发生的情况。如果两个测试都通过，我们增加
 
-实例变量self.balance，通过存款金额来更新余额。因为
+实例变量 self.balance，通过存款金额来更新余额。因为
 
 管理多个对象 **59**
 
-余额存储在self.balance中，它被记住并可供未来的调用使用。最后，我们返回新的余额。
+余额存储在 self.balance 中，它被记住并可供未来的调用使用。最后，我们返回新的余额。
 
-withdraw()方法3的工作方式非常相似，也会是
+withdraw()方法 3 的工作方式非常相似，也会是
 
 像这样调用：
 
@@ -1868,17 +1868,17 @@ oAccount.withdraw(250, 'magic')
 
 withdraw()方法检查我们是否提供了正确的密码
 
-通过验证它与实例变量self.password进行比较。它还会检查
+通过验证它与实例变量 self.password 进行比较。它还会检查
 
 我们没有要求提取负数金额或超出账户余额的金额。
 
-账户，使用实例变量self.balance。一旦这些测试通过，
+账户，使用实例变量 self.balance。一旦这些测试通过，
 
-方法通过提取的金额来减少self.balance。它返回
+方法通过提取的金额来减少 self.balance。它返回
 
 结果余额。
 
-要检查余额4时，我们只需要提供正确的密码
+要检查余额 4 时，我们只需要提供正确的密码
 
 对账户进行操作：
 
@@ -1886,15 +1886,15 @@ currentBalance = oAccount.getBalance('magic')
 
 如果提供的密码与实例变量中保存的密码匹配
 
-self.password时，方法返回self.balance中的值。
+self.password 时，方法返回 self.balance 中的值。
 
-最后，为了调试，我们添加了一个show()方法5来显示
+最后，为了调试，我们添加了一个 show()方法 5 来显示
 
-当前保存的self.name、self.balance和self.password的值
+当前保存的 self.name、self.balance 和 self.password 的值
 
 账户。
 
-Account类是我们第一个表示某个事物的示例，
+Account 类是我们第一个表示某个事物的示例，
 
 它不是一个物理对象。银行账户不是你可以看到的东西，
 
@@ -1932,7 +1932,7 @@ Account类是我们第一个表示某个事物的示例，
 
 其他类文件如 *main.py* 或 *Main_<SomeName>.py*。然后我们必须确保 *Account.py* 和主程序文件在同一个文件夹中。  
 
-**60** 第 4 章  
+**60** 第四章  
 
 在主程序的开头，我们通过一个 import 语句导入 Account 代码（注意我们省略了 **.py* 文件扩展名）：from Account import *  
 
@@ -1982,7 +1982,7 @@ Python 会优化编译步骤，而你无需进行任何操作。
 
 你正在使用的 Python 版本）。*.pyc* 扩展名表示 *Python 编译文件*。只有当类文件的源代码发生变化时，Python 才会重新编译该类文件。如果
 
-由于*Account.py*的源文件没有变化，Python知道它不需要
+由于*Account.py*的源文件没有变化，Python 知道它不需要
 
 无需重新编译它，可以更高效地使用*.pyc*版本的
 
@@ -1990,7 +1990,7 @@ Python 会优化编译步骤，而你无需进行任何操作。
 
 **创建一些测试代码**
 
-我们将通过四个主程序来测试我们的新类。第一个将创建Account
+我们将通过四个主程序来测试我们的新类。第一个将创建 Account
 
 使用单独命名的变量来存储对象。第二个将对象存储在一个
 
@@ -1998,7 +1998,7 @@ Python 会优化编译步骤，而你无需进行任何操作。
 
 最终，第四个版本将拆分功能，使我们有一个主程序-
 
-程序响应用户并管理不同账户的Bank对象
+程序响应用户并管理不同账户的 Bank 对象
 
 账户。
 
@@ -2022,9 +2022,9 @@ Python 会优化编译步骤，而你无需进行任何操作。
 
 # 使用账户测试程序
 
-# 版本1，使用每个Account对象的显式变量
+# 版本 1，使用每个 Account 对象的显式变量
 
-# 导入所有来自Account类文件的代码
+# 导入所有来自 Account 类文件的代码
 
 从 Account 导入 *
 
@@ -2032,11 +2032,11 @@ Python 会优化编译步骤，而你无需进行任何操作。
 
 1 oJoesAccount = Account('Joe', 100, 'JoesPassword')
 
-print("为Joe创建了一个账户")
+print("为 Joe 创建了一个账户")
 
 2 oMarysAccount = Account('Mary', 12345, 'MarysPassword')
 
-print("为Mary创建了一个账户")
+print("为 Mary 创建了一个账户")
 
 3 oJoesAccount.show()
 
@@ -2060,21 +2060,21 @@ oJoesAccount.show()
 
 oMarysAccount.show()
 
-*列表 4-2：用于测试Account类的主程序*
+*列表 4-2：用于测试 Account 类的主程序*
 
-我们为Joe创建了一个账户1，为Mary创建了一个账户2，我们
+我们为 Joe 创建了一个账户 1，为 Mary 创建了一个账户 2，我们
 
-存储结果到两个Account对象中。然后我们调用show()方法
+存储结果到两个 Account 对象中。然后我们调用 show()方法
 
-显示账户以证明它们已经正确创建3。Joe存款-
+显示账户以证明它们已经正确创建 3。Joe 存款-
 
-它的$50。Mary进行了一次$345的取款操作，然后存入$1004。如果我们
+它的$50。Mary 进行了一次$345 的取款操作，然后存入$1004。如果我们
 
 现在运行程序，这将是我们的输出：
 
-为Joe创建了一个账户
+为 Joe 创建了一个账户
 
-为Mary创建了一个账户
+为 Mary 创建了一个账户
 
 姓名：Joe
 
@@ -2084,7 +2084,7 @@ oMarysAccount.show()
 
 姓名：Mary
 
-**62** 第4章
+**62** 第四章
 
 余额：12345
 
@@ -2128,7 +2128,7 @@ oNewAccount = Account(userName, userBalance, userPassword) 2
 
 oNewAccount.show() 3
 
-# 让我们将100存入新账户
+# 让我们将 100 存入新账户
 
 oNewAccount.deposit(100, userPassword) 4
 
@@ -2136,7 +2136,7 @@ usersBalance = oNewAccount.getBalance(userPassword)
 
 print()
 
-print('存入100后，用户余额为：', usersBalance)
+print('存入 100 后，用户余额为：', usersBalance)
 
 # 显示新账户
 
@@ -2148,13 +2148,13 @@ oNewAccount.show()
 
 密码 1。它使用这些值创建一个新账户，并将新创建的账户存储
 
-在变量oNewAccount中创建的对象 2。然后我们调用show()方法
+在变量 oNewAccount 中创建的对象 2。然后我们调用 show()方法
 
-对新对象进行操作 3。我们将$100存入账户并获取新的
+对新对象进行操作 3。我们将$100 存入账户并获取新的
 
-通过调用getBalance()方法获取余额 4。当我们运行完整的程序时，
+通过调用 getBalance()方法获取余额 4。当我们运行完整的程序时，
 
-程序运行时，我们将从清单4-2获得输出，以及以下输出：
+程序运行时，我们将从清单 4-2 获得输出，以及以下输出：
 
 新用户账户的名称是什么？Irv
 
@@ -2168,7 +2168,7 @@ oNewAccount.show()
 
 密码：IrvsPassword
 
-存入100后，用户余额为：877
+存入 100 后，用户余额为：877
 
 管理多个对象 **63**
 
@@ -2178,13 +2178,13 @@ oNewAccount.show()
 
 密码：IrvsPassword
 
-这里需要注意的关键点是，每个Account对象都会维护它自己的
+这里需要注意的关键点是，每个 Account 对象都会维护它自己的
 
-每个对象（oJoesAccount、oMarysAccount等）都有自己的实例变量集。
+每个对象（oJoesAccount、oMarysAccount 等）都有自己的实例变量集。
 
 oNewAccount) 是一个全局变量，包含三个实例
 
-变量。如果我们扩展Account类的定义以包含
+变量。如果我们扩展 Account 类的定义以包含
 
 信息，比如地址、电话号码和出生日期，每个
 
@@ -2200,27 +2200,27 @@ oNewAccount) 是一个全局变量，包含三个实例
 
 需要任意数量的数据时，列表是典型的解决方案。
 
-在这个版本的测试代码中，我们将从一个空的Account列表开始
+在这个版本的测试代码中，我们将从一个空的 Account 列表开始
 
-每当用户开设账户时，我们都会实例化一个Account
+每当用户开设账户时，我们都会实例化一个 Account
 
 对象，并将生成的对象追加到我们的列表中。账户号码
 
-对于任何给定的账户，账户在列表中的索引将从0开始
+对于任何给定的账户，账户在列表中的索引将从 0 开始
 
-从0开始。我们首先为Joe和Mary创建一个测试账户，
+从 0 开始。我们首先为 Joe 和 Mary 创建一个测试账户，
 
-如清单4-4所示。
+如清单 4-4 所示。
 
 **文件：BankOOP2_ListOfAccountObjects/Main_Bank_Version2.py**
 
 # 使用账户的测试程序
 
-# 版本2，使用账户列表
+# 版本 2，使用账户列表
 
-# 从Account类文件中导入所有代码
+# 从 Account 类文件中导入所有代码
 
-从Account导入*
+从 Account 导入*
 
 # 从一个空的账户列表开始
 
@@ -2232,13 +2232,13 @@ oAccount = Account('Joe', 100, 'JoesPassword') 2
 
 accountsList.append(oAccount)
 
-print("Joe的账户号码是0")
+print("Joe 的账户号码是 0")
 
 oAccount = Account('Mary', 12345, 'MarysPassword') 3
 
 accountsList.append(oAccount)
 
-print("玛丽的账户号码是1")
+print("玛丽的账户号码是 1")
 
 accountsList[0].show() 4
 
@@ -2254,7 +2254,7 @@ accountsList[0].deposit(50, 'JoesPassword') 5
 
 accountsList[1].withdraw(345, 'MarysPassword') 6
 
-**64** 第4章
+**64** 第四章
 
 accountsList[1].deposit(100, 'MarysPassword') 7
 
@@ -2282,11 +2282,11 @@ accountsList.append(oAccount) # 将其附加到账户列表中
 
 # 显示新创建的用户账户
 
-print('创建了新账户，账户号码是2')
+print('创建了新账户，账户号码是 2')
 
 accountsList[2].show()
 
-# 让我们向新账户存入100
+# 让我们向新账户存入 100
 
 accountsList[2].deposit(100, userPassword)
 
@@ -2294,37 +2294,37 @@ usersBalance = accountsList[2].getBalance(userPassword)
 
 print()
 
-print('存入100后，用户的余额为：', usersBalance)
+print('存入 100 后，用户的余额为：', usersBalance)
 
 # 显示新账户
 
 accountsList[2].show()
 
-*清单4-4：修改后的测试代码，将对象存储在列表中*
+*清单 4-4：修改后的测试代码，将对象存储在列表中*
 
-我们从创建一个空的账户列表开始1。我们创建一个账户
+我们从创建一个空的账户列表开始 1。我们创建一个账户
 
-对乔来说，将返回的值存储到变量oAccount中，并立即
+对乔来说，将返回的值存储到变量 oAccount 中，并立即
 
-将该对象附加到我们的账户列表中2。由于这是第一个账户
+将该对象附加到我们的账户列表中 2。由于这是第一个账户
 
-的账户号码是0。就像在真实银行中一样，每次乔
+的账户号码是 0。就像在真实银行中一样，每次乔
 
 任何时候他想对账户进行交易，他都会提供他的账户号码-
 
-号码。我们使用他的账户号码来显示他账户的余额4，并进行
+号码。我们使用他的账户号码来显示他账户的余额 4，并进行
 
-存款5，然后再次显示余额8。我们还为
+存款 5，然后再次显示余额 8。我们还为
 
-玛丽的账户号码是1 3，并对她的账户进行一些测试操作
+玛丽的账户号码是 1 3，并对她的账户进行一些测试操作
 
-账户在6和7处。
+账户在 6 和 7 处。
 
-结果与清单4-3中的测试代码相同。然而，
+结果与清单 4-3 中的测试代码相同。然而，
 
 这里有一个非常重要的区别：这两个测试程序之间的差异：
 
-现在只有一个全局变量accountsList。每个账户都有一个
+现在只有一个全局变量 accountsList。每个账户都有一个
 
 唯一账户号码，我们用来访问特定的账户。我们在列表中有
 
@@ -2332,49 +2332,49 @@ accountsList[2].show()
 
 另一个重要的注意事项是，我们做了一些相当重大的
 
-对主程序进行了更改，但我们没有触动Account类中的任何内容
+对主程序进行了更改，但我们没有触动 Account 类中的任何内容
 
-class文件。面向对象编程通常允许你在不同级别上隐藏细节。如果我们假设
+class 文件。面向对象编程通常允许你在不同级别上隐藏细节。如果我们假设
 
 负责处理与个人账户相关的细节
 
 账户，我们可以集中精力改进主代码。
 
-还要注意，我们正在使用变量oAccount作为*临时*变量。
+还要注意，我们正在使用变量 oAccount 作为*临时*变量。
 
-也就是说，每当我们创建一个新的Account对象时，我们都会分配结果
+也就是说，每当我们创建一个新的 Account 对象时，我们都会分配结果
 
-将其赋值给变量oAccount。就在那之后，我们将oAccount附加到
+将其赋值给变量 oAccount。就在那之后，我们将 oAccount 附加到
 
 管理多个对象 **65**
 
-账户列表。我们在调用任何特定Account对象的方法时从不使用变量oAccount。这样，我们可以重用变量oAccount来
+账户列表。我们在调用任何特定 Account 对象的方法时从不使用变量 oAccount。这样，我们可以重用变量 oAccount 来
 
 获取下一个创建的账户的值。
 
 ***具有唯一标识符的多个对象***
 
-Account对象必须是唯一可识别的，以便每个用户可以进行
+Account 对象必须是唯一可识别的，以便每个用户可以进行
 
 存款和取款，并获取他们特定账户的余额。
 
 使用列表来存储我们的银行账户是可行的，但有一个严重的缺陷。想象一下
 
-我们有五个账户，编号为0、1、2、3和4。如果拥有
+我们有五个账户，编号为 0、1、2、3 和 4。如果拥有
 
-如果账户2决定关闭他们的账户，我们很可能会使用标准的pop()
+如果账户 2 决定关闭他们的账户，我们很可能会使用标准的 pop()
 
-对列表进行操作以删除账户2。这将引发连锁反应：
+对列表进行操作以删除账户 2。这将引发连锁反应：
 
-曾在位置3的账户现在处于位置2，而
+曾在位置 3 的账户现在处于位置 2，而
 
-曾在位置4的账户现在处于位置3。然而，这些账户的用户
+曾在位置 4 的账户现在处于位置 3。然而，这些账户的用户
 
-他们仍然保留原始账户号码3和4。因此，客户
+他们仍然保留原始账户号码 3 和 4。因此，客户
 
-拥有账户3的人现在将获得上一个账户的信息
+拥有账户 3 的人现在将获得上一个账户的信息
 
-4，并且账户号码4现在是一个无效的索引。
+4，并且账户号码 4 现在是一个无效的索引。
 
 为了处理大量具有唯一标识符的对象，我们通常
 
@@ -2382,15 +2382,15 @@ Account对象必须是唯一可识别的，以便每个用户可以进行
 
 而不改变与之相关的账户号码。我们构建每个
 
-以账户号码作为键，Account对象作为值的键/值对
+以账户号码作为键，Account 对象作为值的键/值对
 
 值。这样，如果我们需要删除某个账户，其他账户不会
 
 受影响。账户的字典将如下所示：
 
-{0 : *<account 0的对象>* , 1 : *<account 1的对象>* , ... }
+{0 : *<account 0 的对象>* , 1 : *<account 1 的对象>* , ... }
 
-然后我们可以轻松获取相关的Account对象并调用方法
+然后我们可以轻松获取相关的 Account 对象并调用方法
 
 如下所示：
 
@@ -2398,31 +2398,31 @@ oAccount = accountsDict[accountNumber]
 
 oAccount.someMethodCall()
 
-或者，我们可以直接使用accountNumber来调用
+或者，我们可以直接使用 accountNumber 来调用
 
-单个Account的调用方法：
+单个 Account 的调用方法：
 
 accountsDict[accountNumber].someMethodCall()
 
-列表4-5展示了使用账户对象字典的测试代码。
+列表 4-5 展示了使用账户对象字典的测试代码。
 
 同样，尽管我们对测试代码进行了许多更改，但我们并没有改变
 
-在Account类中增加一行代码。在我们的测试代码中，而不是使用
+在 Account 类中增加一行代码。在我们的测试代码中，而不是使用
 
-硬编码的账户号码，我们增加了一个计数器nextAccountNumber，我们将
+硬编码的账户号码，我们增加了一个计数器 nextAccountNumber，我们将
 
-在创建新Account后递增。
+在创建新 Account 后递增。
 
 **文件：BankOOP3_DictionaryOfAccountObjects/Main_Bank_Version3.py**
 
 # 使用账户的测试程序
 
-# 版本3，使用账户字典
+# 版本 3，使用账户字典
 
-# 导入所有来自Account类文件的代码
+# 导入所有来自 Account 类文件的代码
 
-从Account导入*
+从 Account 导入*
 
 **66** 第四章
 
@@ -2500,7 +2500,7 @@ nextAccountNumber = nextAccountNumber + 1
 
 accountsDict[newAccountNumber].show()
 
-# 让我们将100存入新账户
+# 让我们将 100 存入新账户
 
 accountsDict[newAccountNumber].deposit(100, userPassword)
 
@@ -2508,27 +2508,27 @@ usersBalance = accountsDict[newAccountNumber].getBalance(userPassword)
 
 print()
 
-print('存入100后，用户的余额为:', usersBalance)
+print('存入 100 后，用户的余额为:', usersBalance)
 
 # 显示新账户
 
 accountsDict[newAccountNumber].show()
 
-*列表4-5：修改后的测试代码，将账户号码和对象存储在字典中* 管理多个对象 **67**
+*列表 4-5：修改后的测试代码，将账户号码和对象存储在字典中* 管理多个对象 **67**
 
 运行此代码将产生与之前示例几乎相同的结果。我们从一个空的账户字典开始，1，并初始化
 
-初始化我们的nextAccountNumber变量为0 2\。每次我们实例化一个新
+初始化我们的 nextAccountNumber 变量为 0 2\。每次我们实例化一个新
 
 账户时，我们使用当前的账户号码作为键，向账户字典中添加一个新条目
 
-使用nextAccountNumber的租用值作为键，Account对象作为值3\。
+使用 nextAccountNumber 的租用值作为键，Account 对象作为值 3\。
 
-我们对每个客户都这么做，如你所见，针对Mary 5\。每次我们
+我们对每个客户都这么做，如你所见，针对 Mary 5\。每次我们
 
-创建一个新账户时，我们增加nextAccountNumber，为下一个账户做准备
+创建一个新账户时，我们增加 nextAccountNumber，为下一个账户做准备
 
-账户4\。使用账户号码作为字典中的键，如果一个客户
+账户 4\。使用账户号码作为字典中的键，如果一个客户
 
 如果一个客户关闭了他们的账户，我们可以将该键和值从字典中删除
 
@@ -2536,7 +2536,7 @@ ary，且不会影响其他账户。
 
 ***构建互动菜单***
 
-在我们的Account类正确工作的基础上，我们将使主代码互动
+在我们的 Account 类正确工作的基础上，我们将使主代码互动
 
 通过询问用户他们想进行的操作，使程序更加互动：获取
 
@@ -2546,15 +2546,15 @@ ary，且不会影响其他账户。
 
 从他们的账户号码开始，并调用相应的账户方法
 
-用户的Account对象。
+用户的 Account 对象。
 
-作为快捷方式，我们将再次预填充两个账户，一个是Joe的，另一个是
+作为快捷方式，我们将再次预填充两个账户，一个是 Joe 的，另一个是
 
-另一个是Mary的。列表4-6展示了我们扩展的主要代码，它使用字典
+另一个是 Mary 的。列表 4-6 展示了我们扩展的主要代码，它使用字典
 
 我省略了创建字典来跟踪所有账户的代码。 
 
-针对Joe和Mary的账户，并将它们添加到账户字典中
+针对 Joe 和 Mary 的账户，并将它们添加到账户字典中
 
 为简洁起见，如同 Listing 4-5 中一样\。
 
@@ -2596,7 +2596,7 @@ action = action.lower()
 
 action = action[0]  # 只取第一个字母
 
-**68** 第4章
+**68** 第四章
 
 print()
 
@@ -2776,7 +2776,7 @@ Bank 对象将收集它需要的信息（账户号、密码、
 
 存款或取款金额），从其账户字典中查找
 
-**70** 第 4 章
+**70** 第四章
 
 匹配用户账户，并调用该用户账户的相应方法。
 
@@ -2824,11 +2824,11 @@ Account 对象本身
 
 对象。实际上，主代码根本不知道 Account 对象的存在。
 
-相反，每个Account对象不清楚（也不关心）其
+相反，每个 Account 对象不清楚（也不关心）其
 
-程序的顶层用户界面是。Bank对象接收来自
+程序的顶层用户界面是。Bank 对象接收来自
 
-来自主代码并与相应的Account对象进行通信。
+来自主代码并与相应的 Account 对象进行通信。
 
 这种方法的主要优点是我们将一个
 
@@ -2842,7 +2842,7 @@ Account 对象本身
 
 不会意外影响全局数据。
 
-在计算机文献中，图4-1所示的构造通常
+在计算机文献中，图 4-1 所示的构造通常
 
 被称为*组合*或*对象组合*。
 
@@ -2868,21 +2868,21 @@ Account 对象本身
 
 我们将有三个独立的文件。主代码位于它自己的文件中。
 
-它导入了我们新*Bank.py*文件的代码，该文件包含Bank类
+它导入了我们新*Bank.py*文件的代码，该文件包含 Bank 类
 
-(Listing 4-7)。Bank类导入了*Account.py*文件的代码，并
+(Listing 4-7)。Bank 类导入了*Account.py*文件的代码，并
 
-使用它来根据需要实例化Account对象。
+使用它来根据需要实例化 Account 对象。
 
 ***构建对象管理器对象***
 
-Listing 4-7 显示了新Bank类的代码，它是一个对象管理器
+Listing 4-7 显示了新 Bank 类的代码，它是一个对象管理器
 
 对象。
 
 **文件：BankOOP5_SeparateBankClass/Bank.py**
 
-# 管理一个Account对象字典的银行
+# 管理一个 Account 对象字典的银行
 
 from Account import *
 
@@ -2940,7 +2940,7 @@ oAccount = self.accountsDict[userAccountNumber]
 
 theBalance = oAccount.getBalance(userPassword)
 
-如果theBalance不为None：
+如果 theBalance 不为 None：
 
 print('您账户中有', theBalance, '正在退还给您。')
 
@@ -2950,7 +2950,7 @@ del self.accountsDict[userAccountNumber]
 
 print('您的账户现已关闭。')
 
-**72** 第4章
+**72** 第四章
 
 def balance(self):
 
@@ -2966,7 +2966,7 @@ oAccount = self.accountsDict[userAccountNumber]
 
 theBalance = oAccount.getBalance(userAccountPassword)
 
-如果theBalance不为None：
+如果 theBalance 不为 None：
 
 print('您的余额是：', theBalance)
 
@@ -2988,7 +2988,7 @@ oAccount = self.accountsDict[accountNum]
 
 theBalance = oAccount.deposit(depositAmount, userAccountPassword)
 
-如果theBalance不为None：
+如果 theBalance 不为 None：
 
 print('您的新余额是：', theBalance)
 
@@ -3022,29 +3022,29 @@ oAccount = self.accountsDict[userAccountNumber]
 
 theBalance = oAccount.withdraw(userAmount, userAccountPassword)
 
-如果theBalance不为None：
+如果 theBalance 不为 None：
 
 print('已提取：', userAmount)
 
 print('您的新余额是：', theBalance)
 
-*列表 4-7：具有不同银行操作方法的Bank类* 我将重点介绍Bank类中需要注意的最重要的内容。
+*列表 4-7：具有不同银行操作方法的 Bank 类* 我将重点介绍 Bank 类中需要注意的最重要的内容。
 
-首先，在__init__()方法中，Bank初始化了两个变量：self.accountsDict
+首先，在 __init__()方法中，Bank 初始化了两个变量：self.accountsDict
 
-和self.nextAccountNumber 1\. 前缀self.指定这些为实例变量，
+和 self.nextAccountNumber 1\. 前缀 self.指定这些为实例变量，
 
-实例变量，这意味着Bank类可以在其任何方法中引用这些变量。
+实例变量，这意味着 Bank 类可以在其任何方法中引用这些变量。
 
 其次，有两个方法用于创建账户：createAccount()
 
-和openAccount()。createAccount()方法实例化一个新账户 2
+和 openAccount()。createAccount()方法实例化一个新账户 2
 
 使用用户的姓名、初始金额和传入的密码
 
 新账户。openAccount()方法会向用户询问问题以获取
 
-这三条信息3并调用createAccount()方法
+这三条信息 3 并调用 createAccount()方法
 
 在同一个类内部。
 
@@ -3056,9 +3056,9 @@ print('您的新余额是：', theBalance)
 
 在类外部；它只知道第一个参数是该对象，
 
-它应该运行的地方。因此，方法的调用必须以self.开头，
+它应该运行的地方。因此，方法的调用必须以 self.开头，
 
-因为self总是指当前对象。通常，要在
+因为 self 总是指当前对象。通常，要在
 
 在同一类中的一个方法调用另一个方法时，我们需要写：
 
@@ -3068,13 +3068,13 @@ def myMethod(self, *<其他可选参数>* ):
 
 self.methodInSameClass( *<任何必要的参数>* )
 
-在收集用户信息以调用openAccount()后，我们已经
+在收集用户信息以调用 openAccount()后，我们已经
 
-这一行4：
+这一行 4：
 
 userAccountNumber = self.createAccount(userName, userStartingAmount, userPassword)
 
-在这里，openAccount()调用来自同一类的createAccount()来创建—
+在这里，openAccount()调用来自同一类的 createAccount()来创建—
 
 创建账户。createAccount()方法运行，实例化一个账户对象
 
@@ -3082,7 +3082,7 @@ userAccountNumber = self.createAccount(userName, userStartingAmount, userPasswor
 
 将账户号码返回给用户。
 
-最后，新的方法closeAccount()允许用户关闭一个账户
+最后，新的方法 closeAccount()允许用户关闭一个账户
 
 已存在账户 5\. 这是我们将提供的额外功能
 
@@ -3098,11 +3098,11 @@ userAccountNumber = self.createAccount(userName, userStartingAmount, userPasswor
 
 创建并对银行对象进行调用的主代码如下所示：
 
-清单4-8\。
+清单 4-8\。
 
 **文件：BankOOP5_SeparateBankClass/Main_Bank_Version5.py**
 
-# Main程序控制一个由账户组成的银行
+# Main 程序控制一个由账户组成的银行
 
 # 引入银行类的所有代码
 
@@ -3118,17 +3118,17 @@ oBank = Bank()
 
 joesAccountNumber = oBank.createAccount('Joe', 100, 'JoesPassword')
 
-print("Joe的账户号码是:", joesAccountNumber)
+print("Joe 的账户号码是:", joesAccountNumber)
 
 marysAccountNumber = oBank.createAccount('Mary', 12345, 'MarysPassword')
 
-print("Mary的账户号码是:", marysAccountNumber)
+print("Mary 的账户号码是:", marysAccountNumber)
 
 while True:
 
 print()
 
-**第74章**
+**第七十四章**
 
 print('要查询账户余额，请按 b')
 
@@ -3188,9 +3188,9 @@ print('抱歉，那不是一个有效的操作。请再试一次。')
 
 print('完成')
 
-*清单4-8：创建一个银行对象并对其进行调用的主代码*
+*清单 4-8：创建一个银行对象并对其进行调用的主代码*
 
-注意如何在清单4-8中，代码呈现了顶级菜单系统。
+注意如何在清单 4-8 中，代码呈现了顶级菜单系统。
 
 系统询问用户一个操作 1，然后调用相应的方法
 
@@ -3288,39 +3288,39 @@ except ValueError: # 如果在尝试转换时抛出异常
 
 print('抱歉，那不是一个有效的数字')
 
-**76** 第4章
+**76** 第四章
 
-对Python标准库的调用可能会生成标准异常，例如TypeError、ValueError、NameError、ZeroDivisionError等。在这种
+对 Python 标准库的调用可能会生成标准异常，例如 TypeError、ValueError、NameError、ZeroDivisionError 等。在这种
 
 例如，如果用户输入字母或浮动点数，内建的
 
-int()函数会引发ValueError异常，控制权会转移到
+int()函数会引发 ValueError 异常，控制权会转移到
 
-在except块中执行代码。
+在 except 块中执行代码。
 
-***raise语句和自定义异常***
+***raise 语句和自定义异常***
 
-如果您的代码检测到运行时错误条件，您可以使用raise语句
+如果您的代码检测到运行时错误条件，您可以使用 raise 语句
 
-用来表示异常的raise语句有多种形式，
+用来表示异常的 raise 语句有多种形式，
 
 但是标准方法是使用以下语法：
 
-raise *<ExceptionName>* (' *<任何描述错误的字符串>* ') 对于*<ExceptionName>*，您有三个选择。首先，如果有一个标准异常匹配您检测到的错误（例如TypeError，
+raise *<ExceptionName>* (' *<任何描述错误的字符串>* ') 对于*<ExceptionName>*，您有三个选择。首先，如果有一个标准异常匹配您检测到的错误（例如 TypeError，
 
-ValueError、NameError、ZeroDivisionError等，如果存在，使用它也可以。您
+ValueError、NameError、ZeroDivisionError 等，如果存在，使用它也可以。您
 
 也可以添加您自己的描述字符串：
 
 raise ValueError('您需要指定一个整数')
 
-其次，您可以使用通用的Exception异常：
+其次，您可以使用通用的 Exception 异常：
 
 raise Exception('金额不能是浮动点数')
 
 然而，通常不推荐这样做，因为标准做法
 
-是编写except语句来按名称查找异常，这样做
+是编写 except 语句来按名称查找异常，这样做
 
 不提供特定名称。
 
@@ -3328,7 +3328,7 @@ raise Exception('金额不能是浮动点数')
 
 异常。这很容易做到，但涉及到一种叫做继承的技术
 
-（我们将在第10章中详细讨论）(index_split_004.html#p240)。以下是创建自定义异常所需的一切：
+（我们将在第十章中详细讨论）(index_split_004.html#p240)。以下是创建自定义异常所需的一切：
 
 # 定义一个自定义异常
 
@@ -3350,17 +3350,17 @@ pass
 
 错误，但允许程序继续运行。
 
-在典型情况下，raise语句会导致当前函数或
+在典型情况下，raise 语句会导致当前函数或
 
 方法退出并将控制权转移回调用者。如果调用者包含
 
-如果存在一个except子句捕获异常，则执行将在该
+如果存在一个 except 子句捕获异常，则执行将在该
 
-except子句。否则，该函数或方法会退出。这个过程是
+except 子句。否则，该函数或方法会退出。这个过程是
 
 管理多个对象 **77**
 
-直到某个except子句捕获该异常为止。控制权会回传到调用序列中，如果没有except子句捕获该异常，
+直到某个 except 子句捕获该异常为止。控制权会回传到调用序列中，如果没有 except 子句捕获该异常，
 
 异常时，程序退出并显示错误。
 
@@ -3368,13 +3368,13 @@ except子句。否则，该函数或方法会退出。这个过程是
 
 我们现在可以重写程序的所有三个层次（主程序、银行和账户）
 
-是通过raise语句来表示错误，并使用try/except
+是通过 raise 语句来表示错误，并使用 try/except
 
 块。
 
 ***使用异常的账户类***
 
-示例4-9是重写的Account类的新版本，采用了异常处理
+示例 4-9 是重写的 Account 类的新版本，采用了异常处理
 
 并进行了优化，确保没有重复的代码。我们首先定义一个自定义的
 
@@ -3506,13 +3506,13 @@ checkPasswordMatch() 方法 5 由 Bank 类中的方法调用
 
 在调用这些方法之前，密码必须先进行验证。还有一个附加检查
 
-在withdraw()中检查，以确保用户不会试图提取超过账户余额的金额
+在 withdraw()中检查，以确保用户不会试图提取超过账户余额的金额
 
-比账户中的金额还要多；如果是，我们抛出AbortTransaction异常并附带
+比账户中的金额还要多；如果是，我们抛出 AbortTransaction 异常并附带
 
 适当的描述。
 
-因为该类中没有代码来处理AbortTransaction异常，
+因为该类中没有代码来处理 AbortTransaction 异常，
 
 例外，如果抛出任何异常，控制会返回给调用者。如果调用者
 
@@ -3524,15 +3524,15 @@ checkPasswordMatch() 方法 5 由 Bank 类中的方法调用
 
 ***优化的银行类***
 
-完整的银行类代码可供下载。在清单4-10中，我展示了
+完整的银行类代码可供下载。在清单 4-10 中，我展示了
 
-一些示范方法，演示了使用try/except技巧并调用
+一些示范方法，演示了使用 try/except 技巧并调用
 
-之前更新过的Account类中的方法。
+之前更新过的 Account 类中的方法。
 
 管理多个对象 **79**
 
-**文件：BankOOP6_UsingExceptions/Bank.py（已修改以与前面的Account.py一起使用）**
+**文件：BankOOP6_UsingExceptions/Bank.py（已修改以与前面的 Account.py 一起使用）**
 
 # 管理一个账户对象字典的银行
 
@@ -3564,7 +3564,7 @@ except ValueError:
 
 raise AbortTransaction('账户号码必须是整数')
 
-如果账户号码不在self.accountsDict中：
+如果账户号码不在 self.accountsDict 中：
 
 raise AbortTransaction('账户 ' + str(账户号码) + ' 不存在')
 
@@ -3620,7 +3620,7 @@ print('电话：', self.phone)
 
 print('我们当前有', len(self.accountsDict), '个账户开启。')
 
-**80** 第4章
+**80** 第四章
 
 # 银行管理员专用方法
 
@@ -3640,51 +3640,51 @@ oAccount.show()
 
 print()
 
-*清单4-10：修改后的银行类*
+*清单 4-10：修改后的银行类*
 
-银行类从__init__()方法1开始，该方法保存所有相关的
+银行类从 __init__()方法 1 开始，该方法保存所有相关的
 
 信息存储在实例变量中。
 
-新的askForValidAccountNumber()2方法从其他方法中调用，
+新的 askForValidAccountNumber()2 方法从其他方法中调用，
 
 其他方法要求用户输入账户号码，并尝试
 
-验证给定的号码。首先，它有一个try/except块3，以确保
+验证给定的号码。首先，它有一个 try/except 块 3，以确保
 
-该号码是整数。如果不是，except块将错误检测为
+该号码是整数。如果不是，except 块将错误检测为
 
-ValueError异常，但通过抛出自定义对象来更清楚地报告错误
+ValueError 异常，但通过抛出自定义对象来更清楚地报告错误
 
-AbortTransaction异常带有描述性消息。接下来，它检查
+AbortTransaction 异常带有描述性消息。接下来，它检查
 
 确保给定的账户号码是银行已知的号码。如果
 
-否则，它还会抛出一个AbortTransaction异常，但会给出不同的错误
+否则，它还会抛出一个 AbortTransaction 异常，但会给出不同的错误
 
 消息字符串。
 
-新的getUsersAccount()方法4首先调用先前的askForValid
+新的 getUsersAccount()方法 4 首先调用先前的 askForValid
 
 AccountNumber()，然后使用账户号码查找相应的账户
 
-请注意，此方法中没有try/except。如果发生异常
+请注意，此方法中没有 try/except。如果发生异常
 
-如果在askForValidAccountNumber()中（或在更低级别）抛出异常，该方法将
+如果在 askForValidAccountNumber()中（或在更低级别）抛出异常，该方法将
 
 立即返回其调用者。
 
 deposit() 5 和 withdraw() 6 方法在
 
-同样，如果它们调用getUsersAccount()时抛出异常，
+同样，如果它们调用 getUsersAccount()时抛出异常，
 
 该方法将退出并将异常传递到调用者。如果所有
 
-测试通过后，deposit()和withdraw()方法调用类似名称的方法
+测试通过后，deposit()和 withdraw()方法调用类似名称的方法
 
-在指定的Account对象中执行实际交易的ods。
+在指定的 Account 对象中执行实际交易的 ods。
 
-getInfo() 7方法报告有关银行的信息（营业时间，
+getInfo() 7 方法报告有关银行的信息（营业时间，
 
 地址、电话）并且不访问任何单独的账户。
 
@@ -3700,9 +3700,9 @@ getInfo() 7方法报告有关银行的信息（营业时间，
 
 from Bank import *
 
-# 创建一个Bank类的实例
+# 创建一个 Bank 类的实例
 
-1 oBank = Bank('9到5', '123 主街，任意城，美国', '(650) 555-1212')
+1 oBank = Bank('9 到 5', '123 主街，任意城，美国', '(650) 555-1212')
 
 # 主代码
 
@@ -3782,12 +3782,12 @@ print('完成')
 
 *列表 4-11：处理错误的主代码（使用 try/except）*
 
-主代码通过创建一个单一的Bank对象1开始。然后，在一个循环中，
+主代码通过创建一个单一的 Bank 对象 1 开始。然后，在一个循环中，
 
 它向用户展示一个顶层菜单，并询问他们希望进行的操作
 
 它会为每个命令调用适当的方法。
 
-这个列表中的重要内容是我们已经为所有调用oBank对象3的方法添加了一个try块。
+这个列表中的重要内容是我们已经为所有调用 oBank 对象 3 的方法添加了一个 try 块。
 
 这样，如果有任何问题，

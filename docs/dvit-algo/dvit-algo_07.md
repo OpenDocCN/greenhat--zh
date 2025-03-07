@@ -2,7 +2,7 @@
 
 语言
 
-![](Images/circleart.png)
+![](img/circleart.png)
 
 在本章中，我们将进入人类语言的复杂世界。我们将首先讨论语言与数学之间的差异，这些差异使得语言算法变得困难。接下来，我们将构建一个空格插入算法，它能够处理任何语言的文本，并在缺少空格的地方插入空格。之后，我们将构建一个短语补全算法，能够模仿作家的风格，并找到短语中最合适的下一个单词。
 
@@ -10,11 +10,11 @@
 
 ## 为什么语言算法如此困难
 
-将算法思维应用到语言上，至少可以追溯到笛卡尔，他注意到，尽管数字是无限的，但任何具备基本算术知识的人都知道如何创建或解释一个他们从未遇到过的数字。例如，也许你从未遇到过数字14,326——从未数过那么高的数，没看过涉及这么多美元的财务报告，也没在键盘上敲过正好那几个键。但我敢肯定，你可以轻松理解这个数字有多大，哪些数字比它大，哪些比它小，以及如何在方程中操作它。
+将算法思维应用到语言上，至少可以追溯到笛卡尔，他注意到，尽管数字是无限的，但任何具备基本算术知识的人都知道如何创建或解释一个他们从未遇到过的数字。例如，也许你从未遇到过数字 14,326——从未数过那么高的数，没看过涉及这么多美元的财务报告，也没在键盘上敲过正好那几个键。但我敢肯定，你可以轻松理解这个数字有多大，哪些数字比它大，哪些比它小，以及如何在方程中操作它。
 
-使我们轻松理解前所未见的数字的算法，实际上只是将10个数字（0–9）按顺序记住，并结合使用位置系统。我们知道14,326比14,325大一个单位，因为数字6紧跟在数字5后面，它们在各自的数字中占据相同的位置，其他所有位置的数字都是一样的。知道这些数字和位置系统让我们能立刻了解14,326与14,325的相似之处，以及它们都大于12且小于1,000,000。我们还可以一眼看出，14,326在某些方面与4,326相似，但在大小上有很大的区别。
+使我们轻松理解前所未见的数字的算法，实际上只是将 10 个数字（0–9）按顺序记住，并结合使用位置系统。我们知道 14,326 比 14,325 大一个单位，因为数字 6 紧跟在数字 5 后面，它们在各自的数字中占据相同的位置，其他所有位置的数字都是一样的。知道这些数字和位置系统让我们能立刻了解 14,326 与 14,325 的相似之处，以及它们都大于 12 且小于 1,000,000。我们还可以一眼看出，14,326 在某些方面与 4,326 相似，但在大小上有很大的区别。
 
-语言则不同。如果你正在学习英语，当你第一次看到单词*stage*时，你不能仅凭它与*stale*、*stake*、*state*、*stave*、*stade* 或 *sage* 的相似性来推断其含义，尽管这些词与*stage*的区别就像14,326与14,325的区别一样。你也不能仅凭单词的音节数和字符数来推测细菌比麋鹿要大。即使是那些看似可靠的语言规则，比如在英语中通过加*s*来构成复数，当我们推测“princes”比“princess”少一些某物时，也会把我们引入歧途。
+语言则不同。如果你正在学习英语，当你第一次看到单词*stage*时，你不能仅凭它与*stale*、*stake*、*state*、*stave*、*stade* 或 *sage* 的相似性来推断其含义，尽管这些词与*stage*的区别就像 14,326 与 14,325 的区别一样。你也不能仅凭单词的音节数和字符数来推测细菌比麋鹿要大。即使是那些看似可靠的语言规则，比如在英语中通过加*s*来构成复数，当我们推测“princes”比“princess”少一些某物时，也会把我们引入歧途。
 
 为了使用算法处理语言，我们必须让语言变得更简单，这样我们迄今为止探索的简短数学算法就可以可靠地与之配合使用，或者让我们的算法更智能，这样它们就能够处理人类语言自然发展所带来的混乱复杂性。我们将选择后者。
 
@@ -22,7 +22,7 @@
 
 假设你是一个大型老公司中的首席算法官，该公司拥有一个满是手写纸质记录的仓库。首席记录数字化官员一直在进行一个长期项目，将这些纸质记录扫描成图像文件，然后使用文本识别技术将图像转换为可以轻松存储在公司数据库中的文本。然而，部分手写记录非常难以辨认，而文本识别技术也不完美，因此从纸质记录中提取的最终数字文本有时会出现错误。你只收到了数字化后的文本，要求你找到一种方法来纠正这些错误，而不参考纸质原件。
 
-假设你将第一个数字化的句子读取到Python中，并发现它是G. K. Chesterton的名言：“唯一完全神圣的事情，唯一在地球上看到的上帝乐园的片刻，是与一场失败的战斗作斗争——而且没有失去它。”你将这段不完全数字化的文本存储在一个叫做`text`的变量中：
+假设你将第一个数字化的句子读取到 Python 中，并发现它是 G. K. Chesterton 的名言：“唯一完全神圣的事情，唯一在地球上看到的上帝乐园的片刻，是与一场失败的战斗作斗争——而且没有失去它。”你将这段不完全数字化的文本存储在一个叫做`text`的变量中：
 
 ```py
 text = "The oneperfectly divine thing, the oneglimpse of God's paradisegiven on earth, is to fight a losingbattle - and notlose it."
@@ -58,7 +58,7 @@ has_n = [word for word in word_list if 'n' in word]
 
 在本章后面，你将看到更复杂的列表推导式，包括一些包含嵌套循环的例子。然而，它们都遵循相同的基本模式：一个`for`循环指定迭代，附加的`if`语句描述我们想要选择的最终列表输出的逻辑。
 
-我们将使用Python的`re`模块来访问文本处理工具。`re`模块的一个有用函数是`finditer()`，它可以在我们的文本中搜索，找到`word_list`中任何单词的位置。我们可以像下面这样在列表推导式中使用`finditer()`：
+我们将使用 Python 的`re`模块来访问文本处理工具。`re`模块的一个有用函数是`finditer()`，它可以在我们的文本中搜索，找到`word_list`中任何单词的位置。我们可以像下面这样在列表推导式中使用`finditer()`：
 
 ```py
 import re
@@ -75,9 +75,9 @@ locs = list(set([(m.start(),m.end()) for word in word_list for m in re.finditer(
 [(17, 23), (7, 16), (0, 3), (35, 38), (4, 7)]
 ```
 
-在Python中，像这样的有序对被称为*元组*，这些元组显示了`word_list`中每个单词在文本中的位置。例如，当我们运行`text[17:23]`（使用前面列表中第三个元组的数字时），我们发现它是`divine`。这里，`d`是我们文本中的第17个字符，`i`是第18个字符，依此类推，直到`e`，`divine`的最后一个字母，是我们文本中的第22个字符，因此元组以23结尾。你可以检查其他元组，它们也指示了`word_list`中单词的位置。
+在 Python 中，像这样的有序对被称为*元组*，这些元组显示了`word_list`中每个单词在文本中的位置。例如，当我们运行`text[17:23]`（使用前面列表中第三个元组的数字时），我们发现它是`divine`。这里，`d`是我们文本中的第 17 个字符，`i`是第 18 个字符，依此类推，直到`e`，`divine`的最后一个字母，是我们文本中的第 22 个字符，因此元组以 23 结尾。你可以检查其他元组，它们也指示了`word_list`中单词的位置。
 
-注意，`text[4:7]`是`one`，而`text[7:16]`是`perfectly`。单词`one`的结尾与单词`perfectly`的开头相接，没有任何间隔的空格。如果我们没有通过阅读文本立即注意到这一点，我们可以通过查看`locs`变量中的元组(4, 7)和(7, 16)来捕捉到这一点：由于7是(4, 7)的第二个元素，同时也是(7, 16)的第一个元素，我们知道一个单词的结尾恰好与另一个单词的开头相同。为了找到需要插入空格的位置，我们将寻找这样的情况：一个有效单词的结尾恰好与另一个有效单词的开头重合。
+注意，`text[4:7]`是`one`，而`text[7:16]`是`perfectly`。单词`one`的结尾与单词`perfectly`的开头相接，没有任何间隔的空格。如果我们没有通过阅读文本立即注意到这一点，我们可以通过查看`locs`变量中的元组(4, 7)和(7, 16)来捕捉到这一点：由于 7 是(4, 7)的第二个元素，同时也是(7, 16)的第一个元素，我们知道一个单词的结尾恰好与另一个单词的开头相同。为了找到需要插入空格的位置，我们将寻找这样的情况：一个有效单词的结尾恰好与另一个有效单词的开头重合。
 
 ### 处理复合词
 
@@ -96,7 +96,7 @@ spacestarts.append(len(text))
 spacestarts.sort()
 ```
 
-列表 `spacestarts` 记录了文本中空格的位置。我们通过使用列表推导式和 `re.finditer()` 工具获得这些位置。在这种情况下，`re.finditer()` 查找文本中每个空格的位置并将其存储在一个列表中，每个元素被称为 `m`。对于每个 `m` 元素，也就是空格，我们通过使用 `start()` 函数获取空格的起始位置。我们正在寻找那些空格之间的潜在单词。我们还需要另一个列表，记录空格后紧跟的字符位置，这些将是每个潜在单词第一个字符的位置。我们将这个列表称为 `spacestarts_affine`，因为从技术角度来说，这个新列表是 `spacestarts` 列表的仿射变换。*仿射* 通常用于指代线性变换，比如在每个位置上加1，我们将在这里这么做。我们还将对这个列表进行排序：
+列表 `spacestarts` 记录了文本中空格的位置。我们通过使用列表推导式和 `re.finditer()` 工具获得这些位置。在这种情况下，`re.finditer()` 查找文本中每个空格的位置并将其存储在一个列表中，每个元素被称为 `m`。对于每个 `m` 元素，也就是空格，我们通过使用 `start()` 函数获取空格的起始位置。我们正在寻找那些空格之间的潜在单词。我们还需要另一个列表，记录空格后紧跟的字符位置，这些将是每个潜在单词第一个字符的位置。我们将这个列表称为 `spacestarts_affine`，因为从技术角度来说，这个新列表是 `spacestarts` 列表的仿射变换。*仿射* 通常用于指代线性变换，比如在每个位置上加 1，我们将在这里这么做。我们还将对这个列表进行排序：
 
 ```py
 spacestarts_affine = [ss+1 for ss in spacestarts]
@@ -127,7 +127,7 @@ between_spaces_notvalid = [loc for loc in between_spaces if \text[loc[0]:loc[1]]
 
 ### 使用导入的语料库来检查有效单词
 
-幸运的是，有一些现成的Python模块可以让我们只用几行代码就能导入完整的语料库。首先，我们需要下载语料库：
+幸运的是，有一些现成的 Python 模块可以让我们只用几行代码就能导入完整的语料库。首先，我们需要下载语料库：
 
 ```py
 import nltk
@@ -142,7 +142,7 @@ wordlist = set(brown.words())
 word_list = list(wordlist)
 ```
 
-我们已经导入了语料库，并将其中的单词集合转换成了一个Python列表。然而，在使用这个新的`word_list`之前，我们应该进行一些清理，去除它认为是单词但实际上是标点符号的部分：
+我们已经导入了语料库，并将其中的单词集合转换成了一个 Python 列表。然而，在使用这个新的`word_list`之前，我们应该进行一些清理，去除它认为是单词但实际上是标点符号的部分：
 
 ```py
 word_list = [word.replace('*','') for word in word_list]
@@ -238,7 +238,7 @@ textnew = textnew.replace(text[loc[0]:loc[1]],text[loc[0]:pivot]+' '+text[pivot:
 The one perfectly divine thing, the oneglimpse of God's paradisegiven on earth, is to fight a losingbattle - and notlose it.
 ```
 
-我们可以将所有这些功能结合成一个漂亮的函数，如[Listing 8-1](#listing8-1)所示。这个函数将使用一个`for`循环，在每一对有效单词组合成无效单词的地方插入空格。
+我们可以将所有这些功能结合成一个漂亮的函数，如 Listing 8-1 所示。这个函数将使用一个`for`循环，在每一对有效单词组合成无效单词的地方插入空格。
 
 ```py
 def insertspaces(text,word_list):
@@ -266,7 +266,7 @@ def insertspaces(text,word_list):
     return(textnew)
 ```
 
-[Listing 8-1:](#listinganchor8-1) 一个插入空格的函数，结合了本章中大部分代码
+Listing 8-1: 一个插入空格的函数，结合了本章中大部分代码
 
 然后我们可以定义任何文本并调用我们的函数，如下所示：
 
@@ -287,11 +287,11 @@ The one perfectly divine thing, the one glimpse of God's paradise given on earth
 
 假设你正在为一个初创公司提供算法咨询服务，该公司正在构建搜索引擎并计划添加一些新功能。他们想要添加短语补全功能，以便能够为用户提供搜索建议。例如，当用户输入`peanut``butter and`时，搜索建议功能可能会建议添加单词`jelly`。当用户输入`squash`时，搜索引擎可能会同时建议`court`和`soup`。
 
-构建这个功能很简单。我们将从一个语料库开始，就像我们在空间检查器中做的那样。在这种情况下，我们不仅关注语料库中的单个单词，还关注单词是如何组合在一起的，因此我们将从语料库中编译n-gram列表。*n-gram*仅仅是指一组*连续出现的n*个单词。例如，句子“Reality is not always probable, or likely”由七个单词组成，这是伟大的Jorge Luis Borges曾经说过的话。1-gram是单个单词，所以这个句子的1-grams是*reality*、*is*、*not*、*always*、*probable*、*or*和*likely*。2-gram是每一对连续的两个单词，包括*reality**is*、*is not*、*not always*、*always probable*，等等。3-gram是*reality is not*、*is not always*，依此类推。
+构建这个功能很简单。我们将从一个语料库开始，就像我们在空间检查器中做的那样。在这种情况下，我们不仅关注语料库中的单个单词，还关注单词是如何组合在一起的，因此我们将从语料库中编译 n-gram 列表。*n-gram*仅仅是指一组*连续出现的 n*个单词。例如，句子“Reality is not always probable, or likely”由七个单词组成，这是伟大的 Jorge Luis Borges 曾经说过的话。1-gram 是单个单词，所以这个句子的 1-grams 是*reality*、*is*、*not*、*always*、*probable*、*or*和*likely*。2-gram 是每一对连续的两个单词，包括*reality**is*、*is not*、*not always*、*always probable*，等等。3-gram 是*reality is not*、*is not always*，依此类推。
 
-### 分词和获取n-gram
+### 分词和获取 n-gram
 
-我们将使用一个名为`nltk`的Python模块来简化n-gram的收集。我们首先对文本进行分词。*分词*仅仅是指将一个字符串拆分成其组成的单词，忽略标点符号。例如：
+我们将使用一个名为`nltk`的 Python 模块来简化 n-gram 的收集。我们首先对文本进行分词。*分词*仅仅是指将一个字符串拆分成其组成的单词，忽略标点符号。例如：
 
 ```py
 from nltk.tokenize import sent_tokenize, word_tokenize
@@ -305,7 +305,7 @@ print(word_tokenize(text))
 ['Time', 'forks', 'perpetually', 'toward', 'innumerable', 'futures']
 ```
 
-我们可以对文本进行分词并获得n-gram，如下所示：
+我们可以对文本进行分词并获得 n-gram，如下所示：
 
 ```py
 import nltk
@@ -317,15 +317,15 @@ fourgrams = ngrams(token,4)
 fivegrams = ngrams(token,5)
 ```
 
-或者，我们可以将所有的n-gram放入一个名为`grams`的列表中：
+或者，我们可以将所有的 n-gram 放入一个名为`grams`的列表中：
 
 ```py
 grams = [ngrams(token,2),ngrams(token,3),ngrams(token,4),ngrams(token,5)]
 ```
 
-在这种情况下，我们已经获得了一个短句文本的分词和n-grams列表。然而，为了拥有一个通用的短语补全工具，我们需要一个相当大的语料库。我们用于空间插入的`brown`语料库不适用，因为它只包含单个单词，因此我们无法获取它的n-grams。
+在这种情况下，我们已经获得了一个短句文本的分词和 n-grams 列表。然而，为了拥有一个通用的短语补全工具，我们需要一个相当大的语料库。我们用于空间插入的`brown`语料库不适用，因为它只包含单个单词，因此我们无法获取它的 n-grams。
 
-我们可以使用的一个语料库是由Google的Peter Norvig提供的在线文学文本合集，网址为[http://norvig.com/big.txt](http://norvig.com/big.txt)。在本章的示例中，我下载了莎士比亚全集的文件，它可以在* [http://www.gutenberg.org/files/100/100-0.txt](http://www.gutenberg.org/files/100/100-0.txt)*免费获取，然后删除了Project Gutenberg的页眉文本。你也可以使用马克·吐温的全集，网址为* [http://www.gutenberg.org/cache/epub/3200/pg3200.txt](http://www.gutenberg.org/cache/epub/3200/pg3200.txt)*。你可以通过以下方式将语料库读取到Python中：
+我们可以使用的一个语料库是由 Google 的 Peter Norvig 提供的在线文学文本合集，网址为[`norvig.com/big.txt`](http://norvig.com/big.txt)。在本章的示例中，我下载了莎士比亚全集的文件，它可以在* [`www.gutenberg.org/files/100/100-0.txt`](http://www.gutenberg.org/files/100/100-0.txt)*免费获取，然后删除了 Project Gutenberg 的页眉文本。你也可以使用马克·吐温的全集，网址为* [`www.gutenberg.org/cache/epub/3200/pg3200.txt`](http://www.gutenberg.org/cache/epub/3200/pg3200.txt)*。你可以通过以下方式将语料库读取到 Python 中：
 
 ```py
 import requests
@@ -334,7 +334,7 @@ file = file.text
 text = file.replace('\n', '')
 ```
 
-在这里，我们使用`requests`模块直接从托管网站读取包含莎士比亚全集的文本文件，然后将其读取到名为`text`的Python变量中。
+在这里，我们使用`requests`模块直接从托管网站读取包含莎士比亚全集的文本文件，然后将其读取到名为`text`的 Python 变量中。
 
 在读取所选语料库后，重新运行创建`grams`变量的代码。以下是新定义的`text`变量的代码：
 
@@ -349,11 +349,11 @@ grams = [ngrams(token,2),ngrams(token,3),ngrams(token,4),ngrams(token,5)]
 
 ### 我们的策略
 
-我们生成搜索建议的策略很简单。当用户输入搜索内容时，我们检查搜索中包含多少个单词。换句话说，用户输入一个n-gram，我们确定*n*的值。当用户搜索n-gram时，我们帮助他们扩展搜索，因此我们将建议一个*n* + 1-gram。我们将在语料库中搜索并找到所有首个*n*元素与我们的n-gram匹配的*n* + 1-grams。例如，用户可能搜索`crane`（起重机），一个1-gram，而我们的语料库可能包含2-gram `crane feather`（起重机羽毛）、`crane operator`（起重机操作员）和`crane neck`（起重机颈部）。每一个都是我们可以提供的潜在搜索建议。
+我们生成搜索建议的策略很简单。当用户输入搜索内容时，我们检查搜索中包含多少个单词。换句话说，用户输入一个 n-gram，我们确定*n*的值。当用户搜索 n-gram 时，我们帮助他们扩展搜索，因此我们将建议一个*n* + 1-gram。我们将在语料库中搜索并找到所有首个*n*元素与我们的 n-gram 匹配的*n* + 1-grams。例如，用户可能搜索`crane`（起重机），一个 1-gram，而我们的语料库可能包含 2-gram `crane feather`（起重机羽毛）、`crane operator`（起重机操作员）和`crane neck`（起重机颈部）。每一个都是我们可以提供的潜在搜索建议。
 
-我们可以在此停止，提供每个首个*n*元素与用户输入的*n* + 1-gram匹配的所有*n* + 1-gram。然而，并不是所有的建议都是同等优秀的。例如，如果我们为一个搜索工业建筑设备手册的定制引擎工作，那么`crane operator`（起重机操作员）可能比`crane feather`（起重机羽毛）更相关、更有用。确定哪个*n* + 1-gram是最佳建议的最简单方法是提供在我们的语料库中出现频率最高的那个。
+我们可以在此停止，提供每个首个*n*元素与用户输入的*n* + 1-gram 匹配的所有*n* + 1-gram。然而，并不是所有的建议都是同等优秀的。例如，如果我们为一个搜索工业建筑设备手册的定制引擎工作，那么`crane operator`（起重机操作员）可能比`crane feather`（起重机羽毛）更相关、更有用。确定哪个*n* + 1-gram 是最佳建议的最简单方法是提供在我们的语料库中出现频率最高的那个。
 
-因此，我们的完整算法是：用户搜索一个n-gram，我们找到所有首个*n*元素与用户的n-gram匹配的*n* + 1-grams，并推荐在语料库中最常出现的匹配*n* + 1-gram。
+因此，我们的完整算法是：用户搜索一个 n-gram，我们找到所有首个*n*元素与用户的 n-gram 匹配的*n* + 1-grams，并推荐在语料库中最常出现的匹配*n* + 1-gram。
 
 ### 查找候选*n* + 1-grams
 
@@ -366,14 +366,14 @@ split_term = tuple(search_term.split(' '))
 search_term_length = len(search_term.split(' '))
 ```
 
-现在我们知道搜索词的长度，知道了*n*的值——它是3。记住，我们将返回最频繁的*n* + 1-gram（即4-gram）给用户。所以我们需要考虑不同*n* + 1-gram的频率差异。我们将使用一个名为`Counter()`的函数，它会计算每个*n* + 1-gram在我们语料库中出现的次数。
+现在我们知道搜索词的长度，知道了*n*的值——它是 3。记住，我们将返回最频繁的*n* + 1-gram（即 4-gram）给用户。所以我们需要考虑不同*n* + 1-gram 的频率差异。我们将使用一个名为`Counter()`的函数，它会计算每个*n* + 1-gram 在我们语料库中出现的次数。
 
 ```py
 from collections import Counter
 counted_grams = Counter(grams[search_term_length - 1])
 ```
 
-这一行仅从我们的`grams`变量中选择了*n* + 1-gram。应用`Counter()`函数会创建一个元组列表。每个元组的第一个元素是*n* + 1-gram，第二个元素是该*n* + 1-gram在我们语料库中的出现频率。例如，我们可以打印`counted_grams`的第一个元素：
+这一行仅从我们的`grams`变量中选择了*n* + 1-gram。应用`Counter()`函数会创建一个元组列表。每个元组的第一个元素是*n* + 1-gram，第二个元素是该*n* + 1-gram 在我们语料库中的出现频率。例如，我们可以打印`counted_grams`的第一个元素：
 
 ```py
 print(list(counted_grams.items())[0])
@@ -385,17 +385,17 @@ print(list(counted_grams.items())[0])
 (('From', 'fairest', 'creatures', 'we'), 1)
 ```
 
-这个n-gram是莎士比亚《第一首十四行诗》的开头。看看我们在莎士比亚作品中随机找到的一些有趣的4-grams非常有趣。例如，如果你运行`print(list(counted_grams)[10])`，你可以看到莎士比亚作品中的第十个4-gram是“rose might never die”。如果你运行`print(list(counted_grams)[240000])`，你可以看到第240,000个n-gram是“I shall command all”。第323,002个是“far more glorious star”，第328,004个是“crack my arms asunder”。但我们要做的是短语补全，而不仅仅是*n* + 1-gram浏览。我们需要找到一个*n* + 1-grams的子集，其前*n*个元素与我们的搜索词匹配。我们可以通过以下方式来做到这一点：
+这个 n-gram 是莎士比亚《第一首十四行诗》的开头。看看我们在莎士比亚作品中随机找到的一些有趣的 4-grams 非常有趣。例如，如果你运行`print(list(counted_grams)[10])`，你可以看到莎士比亚作品中的第十个 4-gram 是“rose might never die”。如果你运行`print(list(counted_grams)[240000])`，你可以看到第 240,000 个 n-gram 是“I shall command all”。第 323,002 个是“far more glorious star”，第 328,004 个是“crack my arms asunder”。但我们要做的是短语补全，而不仅仅是*n* + 1-gram 浏览。我们需要找到一个*n* + 1-grams 的子集，其前*n*个元素与我们的搜索词匹配。我们可以通过以下方式来做到这一点：
 
 ```py
 matching_terms = [element for element in list(counted_grams.items()) if \element[0][:-1] == tuple(split_term)]
 ```
 
-这个列表推导式会遍历每个*n* + 1-gram，并在此过程中调用每个元素。对于每个元素，它检查`element[0][:-1]==tuple(split_term)`。这个等式的左边，`element[0][:-1]`，简单地获取每个*n* + 1-gram的前*n*个元素：`[:-1]`是一个方便的方式来忽略列表的最后一个元素。等式的右边，`tuple(split_term)`，是我们要搜索的n-gram（“life is a”）。所以我们在检查那些前*n*个元素与我们感兴趣的n-gram相同的*n* + 1-grams。所有匹配的词汇都存储在我们的最终输出中，名为`matching_terms`。
+这个列表推导式会遍历每个*n* + 1-gram，并在此过程中调用每个元素。对于每个元素，它检查`element[0][:-1]==tuple(split_term)`。这个等式的左边，`element[0][:-1]`，简单地获取每个*n* + 1-gram 的前*n*个元素：`[:-1]`是一个方便的方式来忽略列表的最后一个元素。等式的右边，`tuple(split_term)`，是我们要搜索的 n-gram（“life is a”）。所以我们在检查那些前*n*个元素与我们感兴趣的 n-gram 相同的*n* + 1-grams。所有匹配的词汇都存储在我们的最终输出中，名为`matching_terms`。
 
 ### 基于频率选择短语
 
-我们的`matching_terms`列表包含完成任务所需的所有内容；它由那些前*n*个元素与搜索词匹配的*n* + 1-grams组成，并包括它们在我们语料库中的频率。只要匹配的词汇列表中至少有一个元素，我们就可以找到在语料库中出现最频繁的元素，并将其建议给用户作为完整的短语。以下代码片段可以完成这个任务：
+我们的`matching_terms`列表包含完成任务所需的所有内容；它由那些前*n*个元素与搜索词匹配的*n* + 1-grams 组成，并包括它们在我们语料库中的频率。只要匹配的词汇列表中至少有一个元素，我们就可以找到在语料库中出现最频繁的元素，并将其建议给用户作为完整的短语。以下代码片段可以完成这个任务：
 
 ```py
 if(len(matching_terms)>0):
@@ -405,9 +405,9 @@ if(len(matching_terms)>0):
     combined_term = ' '.join(highest_frequency_term)
 ```
 
-在这个代码片段中，我们首先定义了`frequencies`，它是一个包含我们语料库中每个与搜索词匹配的*n* + 1-gram频率的列表。接着，我们使用了`numpy`模块的`max()`函数来找到这些频率中的最大值。然后，我们使用了另一个列表推导式来获取语料库中出现频率最高的第一个*n* + 1-gram，最后我们创建了一个`combined_term`，它是一个将搜索词中所有单词连接在一起的字符串，单词之间用空格分隔。
+在这个代码片段中，我们首先定义了`frequencies`，它是一个包含我们语料库中每个与搜索词匹配的*n* + 1-gram 频率的列表。接着，我们使用了`numpy`模块的`max()`函数来找到这些频率中的最大值。然后，我们使用了另一个列表推导式来获取语料库中出现频率最高的第一个*n* + 1-gram，最后我们创建了一个`combined_term`，它是一个将搜索词中所有单词连接在一起的字符串，单词之间用空格分隔。
 
-最后，我们可以将所有代码整合成一个函数，如[列表 8-2](#listing8-2)所示。
+最后，我们可以将所有代码整合成一个函数，如列表 8-2 所示。
 
 ```py
 def search_suggestion(search_term, text):
@@ -430,9 +430,9 @@ def search_suggestion(search_term, text):
     return(combined_term)
 ```
 
-[列表 8-2:](#listinganchor8-2) 一个通过输入一个n-gram并返回最可能的以该n-gram开头的n + 1-gram的搜索建议函数
+列表 8-2: 一个通过输入一个 n-gram 并返回最可能的以该 n-gram 开头的 n + 1-gram 的搜索建议函数
 
-当我们调用我们的函数时，我们传入一个n-gram作为参数，函数将返回一个*n* + 1-gram。我们按如下方式调用它：
+当我们调用我们的函数时，我们传入一个 n-gram 作为参数，函数将返回一个*n* + 1-gram。我们按如下方式调用它：
 
 ```py
 file = requests.get('http://www.bradfordtuckfield.com/shakespeare.txt')
@@ -441,7 +441,7 @@ text = file.replace('\n', '')
 print(search_suggestion('life is a', text))
 ```
 
-你会看到，建议是`life is a tedious`，这是莎士比亚最常用的以`life is a`开头的4-gram（与其他两个4-gram并列）。莎士比亚只在一次使用了这个4-gram，出现在《辛白林》中，当伊莫金说：“我看到一个人的生命是乏味的。”在《李尔王》中，埃德加对格洛斯特说：“你的生命是一个奇迹”（或者根据不同版本是“你的生命是奇迹”），所以这个4-gram也可以作为我们短语的有效补全。
+你会看到，建议是`life is a tedious`，这是莎士比亚最常用的以`life is a`开头的 4-gram（与其他两个 4-gram 并列）。莎士比亚只在一次使用了这个 4-gram，出现在《辛白林》中，当伊莫金说：“我看到一个人的生命是乏味的。”在《李尔王》中，埃德加对格洛斯特说：“你的生命是一个奇迹”（或者根据不同版本是“你的生命是奇迹”），所以这个 4-gram 也可以作为我们短语的有效补全。
 
 我们可以尝试使用不同的语料库，看看结果有何不同。让我们使用马克·吐温的全集语料库：
 

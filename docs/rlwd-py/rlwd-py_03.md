@@ -2,9 +2,9 @@
 
 使用自然语言处理总结演讲
 
-![Image](../images/common.jpg)
+![Image](img/common.jpg)
 
-“四面水域皆是水，却无一滴可饮。”这句来自《古舟子之歌》的名句总结了数字信息的现状。根据国际数据公司（IDC）的预测，到2025年，我们将每年生成 175 万亿千兆字节的数字数据。但大部分数据——多达 95%——将是*非结构化*的，这意味着它并未被组织成有用的数据库。即使现在，癌症的治愈方法可能就在我们手边，却几乎无法触及。
+“四面水域皆是水，却无一滴可饮。”这句来自《古舟子之歌》的名句总结了数字信息的现状。根据国际数据公司（IDC）的预测，到 2025 年，我们将每年生成 175 万亿千兆字节的数字数据。但大部分数据——多达 95%——将是*非结构化*的，这意味着它并未被组织成有用的数据库。即使现在，癌症的治愈方法可能就在我们手边，却几乎无法触及。
 
 为了让信息更容易被发现和消费，我们需要通过提取和重新包装关键点来减少数据量，形成易于理解的摘要。由于数据量庞大，人工处理几乎不可能。幸运的是，自然语言处理（NLP）可以帮助计算机理解单词和上下文。例如，NLP 应用程序可以总结新闻源、分析法律合同、研究专利、研究金融市场、捕捉企业知识并生成学习指南。
 
@@ -18,25 +18,25 @@
 
 抽象依赖于对文档更深层次的理解，以捕捉意图并生成更具人类化的改写。这包括创造全新的句子。与基于提取的方法相比，抽象方法的结果往往更加连贯且语法正确，但也有其代价。抽象算法需要先进且复杂的深度学习方法和精密的语言建模。
 
-在这个项目中，你将对马丁·路德·金（Dr. Martin Luther King Jr.）1963年8月28日在林肯纪念堂发表的“我有一个梦想”演讲使用提取式技术。与林肯100年前的“葛底斯堡演说”一样，这也是在完美的时刻发表的完美演讲。金博士巧妙地运用了重复手法，这使得这篇演讲特别适合使用提取技术，通过关联单词频率与重要性来提取关键信息。
+在这个项目中，你将对马丁·路德·金（Dr. Martin Luther King Jr.）1963 年 8 月 28 日在林肯纪念堂发表的“我有一个梦想”演讲使用提取式技术。与林肯 100 年前的“葛底斯堡演说”一样，这也是在完美的时刻发表的完美演讲。金博士巧妙地运用了重复手法，这使得这篇演讲特别适合使用提取技术，通过关联单词频率与重要性来提取关键信息。
 
 目标
 
-编写一个Python程序，使用自然语言处理（NLP）文本提取功能总结演讲内容。
+编写一个 Python 程序，使用自然语言处理（NLP）文本提取功能总结演讲内容。
 
 #### ***策略***
 
-自然语言工具包（NLTK）包含了你需要用来总结马丁·路德·金（Dr. King）演讲的功能。如果你跳过了[第2章](ch02.xhtml)，请查看[第29页](ch02.xhtml#page_29)获取安装说明。
+自然语言工具包（NLTK）包含了你需要用来总结马丁·路德·金（Dr. King）演讲的功能。如果你跳过了第二章，请查看第 29 页获取安装说明。
 
 为了总结演讲内容，你需要一个数字化副本。在之前的章节中，你手动从互联网上下载了需要的文件。这一次，你将使用一种更高效的技术——*网络爬取*，它可以让你编程方式从网站中提取并保存大量数据。
 
-一旦你将演讲加载为字符串，你可以使用NLTK来分割并统计每个单词。接着，你将通过将每个句子中的单词计数求和，来“评分”每个句子。你可以根据句子的得分来打印排名最高的句子，基于你希望在总结中包含多少句子。
+一旦你将演讲加载为字符串，你可以使用 NLTK 来分割并统计每个单词。接着，你将通过将每个句子中的单词计数求和，来“评分”每个句子。你可以根据句子的得分来打印排名最高的句子，基于你希望在总结中包含多少句子。
 
 #### ***网络爬取***
 
-网络爬取是指使用程序下载和处理内容。这是一个非常常见的任务，现成的爬虫程序可以自由获取。你将使用requests库来下载文件和网页，并使用Beautiful Soup（bs4）包来解析HTML。HTML是*超文本标记语言*（Hypertext Markup Language）的缩写，是用于创建网页的标准格式。
+网络爬取是指使用程序下载和处理内容。这是一个非常常见的任务，现成的爬虫程序可以自由获取。你将使用 requests 库来下载文件和网页，并使用 Beautiful Soup（bs4）包来解析 HTML。HTML 是*超文本标记语言*（Hypertext Markup Language）的缩写，是用于创建网页的标准格式。
 
-要安装这两个模块，请在终端窗口或Windows PowerShell中使用pip（有关使用和安装pip的说明，请参见[第8页](ch01.xhtml#page_8)的[第1章](ch01.xhtml)）。
+要安装这两个模块，请在终端窗口或 Windows PowerShell 中使用 pip（有关使用和安装 pip 的说明，请参见第 8 页的第一章）。
 
 ```py
 pip install requests 
@@ -52,7 +52,7 @@ pip install beautifulsoup4
 >>>
 ```
 
-要了解更多关于requests的信息，请访问*[https://pypi.org/project/requests/](https://pypi.org/project/requests/)*。有关Beautiful Soup的更多信息，请查看*[https://www.crummy.com/software/BeautifulSoup/](https://www.crummy.com/software/BeautifulSoup/)*。
+要了解更多关于 requests 的信息，请访问*[`pypi.org/project/requests/`](https://pypi.org/project/requests/)*。有关 Beautiful Soup 的更多信息，请查看*[`www.crummy.com/software/BeautifulSoup/`](https://www.crummy.com/software/BeautifulSoup/)*。
 
 #### ***“我有一个梦想”代码***
 
@@ -72,11 +72,11 @@ pip install beautifulsoup4
 
 1.  显示排名最高的句子
 
-如果你已经下载了书中的文件，请在*Chapter_3*文件夹中找到该程序。否则，访问*[https://nostarch.com/real-world-python/](https://nostarch.com/real-world-python/)*并从书籍的GitHub页面下载。
+如果你已经下载了书中的文件，请在*Chapter_3*文件夹中找到该程序。否则，访问*[`nostarch.com/real-world-python/`](https://nostarch.com/real-world-python/)*并从书籍的 GitHub 页面下载。
 
-##### **导入模块并定义main()函数**
+##### **导入模块并定义 main()函数**
 
-[清单 3-1](ch03.xhtml#ch03list1) 导入模块并定义了 main() 函数的第一部分，该部分用于抓取网页并将演讲内容作为字符串赋值给变量。
+清单 3-1 导入模块并定义了 main() 函数的第一部分，该部分用于抓取网页并将演讲内容作为字符串赋值给变量。
 
 ```py
 dream_summary.py, part 1
@@ -134,24 +134,24 @@ of our nation. </p>
 
 因为这些标签不是原始文本的一部分，所以在进行任何自然语言处理之前应该删除它们。为了移除这些标签，调用 bs4.BeautifulSoup() 方法，并将包含 HTML 的字符串传递给它 ➋。请注意，我已经明确指定了 html.parser。即使没有这个指定，程序仍然可以运行，但会在终端中发出警告。
 
-soup变量现在引用一个BeautifulSoup对象，这意味着你可以使用该对象的find_all()方法来定位HTML文档中的演讲内容。在此案例中，通过列表推导和find_all()来获取仅包含段落元素的列表，以查找段落标签（<p>）之间的文本。
+soup 变量现在引用一个 BeautifulSoup 对象，这意味着你可以使用该对象的 find_all()方法来定位 HTML 文档中的演讲内容。在此案例中，通过列表推导和 find_all()来获取仅包含段落元素的列表，以查找段落标签（<p>）之间的文本。
 
-最后，将演讲内容转化为连续的字符串。使用join()方法将p_elems列表转化为字符串。设置“连接符”字符为空格，用''表示。
+最后，将演讲内容转化为连续的字符串。使用 join()方法将 p_elems 列表转化为字符串。设置“连接符”字符为空格，用''表示。
 
-请注意，在Python中，通常有不止一种方式可以完成任务。列表中的最后两行也可以按以下方式编写：
+请注意，在 Python 中，通常有不止一种方式可以完成任务。列表中的最后两行也可以按以下方式编写：
 
 ```py
     p_elems = soup.select('p')
     speech = ''.join(p_elems)
 ```
 
-select()方法总体上比find_all()方法功能更有限，但在这种情况下，它的作用与find_all()相同，而且更简洁。在前面的代码中，select()方法查找<p>标签，结果在与演讲内容字符串连接时转换为文本。
+select()方法总体上比 find_all()方法功能更有限，但在这种情况下，它的作用与 find_all()相同，而且更简洁。在前面的代码中，select()方法查找<p>标签，结果在与演讲内容字符串连接时转换为文本。
 
-##### **完成main()函数**
+##### **完成 main()函数**
 
 接下来，你将准备演讲内容，修正拼写错误并去除标点符号、特殊字符和空格。然后，你将调用三个函数，分别去除停用词、计算词频并根据词频对句子进行评分。最后，你将对句子进行排序，并在命令行显示得分最高的句子。
 
-[列表 3-2](ch03.xhtml#ch03list2)完成了执行这些任务的main()函数定义。
+列表 3-2 完成了执行这些任务的 main()函数定义。
 
 ```py
 dream_summary.py, part 2
@@ -179,27 +179,27 @@ dream_summary.py, part 2
        print(i[0])
 ```
 
-列表 3-2：完成main()函数
+列表 3-2：完成 main()函数
 
-原始文档包含一个拼写错误（*mowing* 应为 *knowing*），因此首先使用string.replace()方法修正这个错误。接着，继续使用正则表达式清理演讲内容。许多非专业程序员对这个模块的复杂语法感到厌烦，但它是一个强大且有用的工具，每个人都应该了解基本的正则表达式语法。
+原始文档包含一个拼写错误（*mowing* 应为 *knowing*），因此首先使用 string.replace()方法修正这个错误。接着，继续使用正则表达式清理演讲内容。许多非专业程序员对这个模块的复杂语法感到厌烦，但它是一个强大且有用的工具，每个人都应该了解基本的正则表达式语法。
 
-使用re.sub()函数去除多余的空格，该函数将子字符串替换为新的字符。使用简写字符类代码\s+来识别连续的空白符并将其替换为一个空格，表示为' '。最后，将字符串（speech）传递给re.sub()方法。
+使用 re.sub()函数去除多余的空格，该函数将子字符串替换为新的字符。使用简写字符类代码\s+来识别连续的空白符并将其替换为一个空格，表示为' '。最后，将字符串（speech）传递给 re.sub()方法。
 
 接下来，使用[^a-zA-Z]模式删除任何*不是*字母的字符。开头的脱字符指示正则表达式“匹配任何不在括号中的字符”。因此，数字、标点符号等将被空格替换。
 
-删除标点符号等字符会留下额外的空格。为了去除这些空格，再次调用re.sub()方法。
+删除标点符号等字符会留下额外的空格。为了去除这些空格，再次调用 re.sub()方法。
 
-接下来，要求用户输入要包括在摘要中的句子数量以及每个句子的最大字数。使用while循环和Python内置的isdigit()函数确保用户输入一个整数➊。
+接下来，要求用户输入要包括在摘要中的句子数量以及每个句子的最大字数。使用 while 循环和 Python 内置的 isdigit()函数确保用户输入一个整数➊。
 
 **注意**
 
-*根据美国新闻研究所的研究，理解力最佳的句子长度为不超过15个单词。同样，《牛津简明英语指南》建议，整篇文档中的句子平均长度应为15到20个单词。*
+*根据美国新闻研究所的研究，理解力最佳的句子长度为不超过 15 个单词。同样，《牛津简明英语指南》建议，整篇文档中的句子平均长度应为 15 到 20 个单词。*
 
-继续清理文本，调用remove_stop_words()函数。然后调用get_word_freq()和score_sentences()函数，分别计算剩余单词的频率并为句子打分。你将在完成main()函数后定义这些函数。
+继续清理文本，调用 remove_stop_words()函数。然后调用 get_word_freq()和 score_sentences()函数，分别计算剩余单词的频率并为句子打分。你将在完成 main()函数后定义这些函数。
 
-要对句子进行排名，调用集合模块的Counter()方法 ➋。将sent_scores变量传入该方法。
+要对句子进行排名，调用集合模块的 Counter()方法 ➋。将 sent_scores 变量传入该方法。
 
-要生成摘要，使用Counter对象的most_common()方法。将用户输入的num_sents变量传递给该方法。结果摘要变量将包含一个元组列表。每个元组中的第一个元素是句子，第二个元素是其排名。
+要生成摘要，使用 Counter 对象的 most_common()方法。将用户输入的 num_sents 变量传递给该方法。结果摘要变量将包含一个元组列表。每个元组中的第一个元素是句子，第二个元素是其排名。
 
 ```py
 [('From every mountainside, let freedom ring.', 4.625), --snip-- ]
@@ -209,9 +209,9 @@ dream_summary.py, part 2
 
 ##### **去除停用词**
 
-记住在[第2章](ch02.xhtml)中提到的，停用词是像*if*、*but*、*for*和*so*这样的短小功能词。由于它们不包含重要的上下文信息，因此不应使用它们来排名句子。
+记住在第二章中提到的，停用词是像*if*、*but*、*for*和*so*这样的短小功能词。由于它们不包含重要的上下文信息，因此不应使用它们来排名句子。
 
-[示例 3-3](ch03.xhtml#ch03list3)定义了一个名为remove_stop_words()的函数，用来从语音中移除停用词。
+示例 3-3 定义了一个名为 remove_stop_words()的函数，用来从语音中移除停用词。
 
 ```py
 dream_summary.py, part 3
@@ -227,11 +227,11 @@ def remove_stop_words(speech_edit):
 
 示例 3-3：定义一个函数来移除语音中的停用词
 
-定义函数时，接收speech_edit作为参数，该参数是编辑后的语音字符串。然后，创建一个包含NLTK中的英语停用词的集合。使用集合而不是列表，因为集合的查找速度更快。
+定义函数时，接收 speech_edit 作为参数，该参数是编辑后的语音字符串。然后，创建一个包含 NLTK 中的英语停用词的集合。使用集合而不是列表，因为集合的查找速度更快。
 
-为了保存去除停用词后的编辑语音，分配一个空字符串给该变量。speech_edit变量目前是一个字符串，其中每个元素都是一个字母。
+为了保存去除停用词后的编辑语音，分配一个空字符串给该变量。speech_edit 变量目前是一个字符串，其中每个元素都是一个字母。
 
-为了处理单词，调用NLTK的word_tokenize()方法。注意，你可以在循环遍历单词时执行此操作。将每个单词转换为小写，并检查它是否在stop_words集合中。如果它不是停用词，就将其与一个空格一起拼接到新字符串中。函数返回该字符串并结束。
+为了处理单词，调用 NLTK 的 word_tokenize()方法。注意，你可以在循环遍历单词时执行此操作。将每个单词转换为小写，并检查它是否在 stop_words 集合中。如果它不是停用词，就将其与一个空格一起拼接到新字符串中。函数返回该字符串并结束。
 
 在这个程序中，字母的大小写处理非常重要。你希望摘要能同时打印出大写和小写字母，但在进行自然语言处理时，必须将所有字母转换为小写，以避免错误计数。为了理解原因，请看下面这段代码示例，它统计了一个包含大小写混合的字符串（s）中的单词：
 
@@ -250,7 +250,7 @@ FreqDist({'one': 3})
 
 ##### **计算单词出现频率**
 
-为了统计每个单词在语音中的出现次数，你需要创建一个名为get_word_freq()的函数，该函数返回一个字典，字典的键是单词，值是对应的出现次数。[示例 3-4](ch03.xhtml#ch03list4)定义了这个函数。
+为了统计每个单词在语音中的出现次数，你需要创建一个名为 get_word_freq()的函数，该函数返回一个字典，字典的键是单词，值是对应的出现次数。示例 3-4 定义了这个函数。
 
 ```py
 dream_summary.py, part 4 
@@ -266,7 +266,7 @@ get_word_freq() 函数以编辑过的没有停用词的语音字符串作为参�
 
 ##### **评分句子**
 
-[列表 3-5](ch03.xhtml#ch03list5) 定义了一个函数，该函数根据句子中单词的频率分布对句子进行评分。它返回一个字典，每个句子作为键，其得分作为值。
+列表 3-5 定义了一个函数，该函数根据句子中单词的频率分布对句子进行评分。它返回一个字典，每个句子作为键，其得分作为值。
 
 ```py
 dream_summary.py, part 5
@@ -380,9 +380,9 @@ manacles of segregation and the chains of discrimination.
 
 #### ***安装 gensim***
 
-gensim 模块可以在所有主要操作系统上运行，但依赖于 NumPy 和 SciPy。如果你没有安装它们，请返回到 [第 1 章](ch01.xhtml)，并按照“安装 Python 库”中的说明操作，[第 6 页](ch01.xhtml#page_6)。
+gensim 模块可以在所有主要操作系统上运行，但依赖于 NumPy 和 SciPy。如果你没有安装它们，请返回到 第一章，并按照“安装 Python 库”中的说明操作，第 6 页。
 
-在 Windows 上安装 gensim，使用 pip install -U gensim。在终端中安装，使用 pip install --upgrade gensim。对于 conda 环境，使用 conda install -c conda-forge gensim。有关 gensim 的更多信息，请访问 *[https://radimrehurek.com/gensim/](https://radimrehurek.com/gensim/)*。
+在 Windows 上安装 gensim，使用 pip install -U gensim。在终端中安装，使用 pip install --upgrade gensim。对于 conda 环境，使用 conda install -c conda-forge gensim。有关 gensim 的更多信息，请访问 *[`radimrehurek.com/gensim/`](https://radimrehurek.com/gensim/)*。
 
 #### ***整理床铺代码***
 
@@ -390,7 +390,7 @@ gensim 模块可以在所有主要操作系统上运行，但依赖于 NumPy 和
 
 ##### **导入模块、抓取网页并准备演讲字符串**
 
-[清单 3-6](ch03.xhtml#ch03list6)重复了在*dream_summary.py*中用于准备演讲的代码。要重新查看详细的代码解释，请参阅[第 54 页](ch03.xhtml#page_54)。
+清单 3-6 重复了在*dream_summary.py*中用于准备演讲的代码。要重新查看详细的代码解释，请参阅第 54 页。
 
 ```py
 bed_summary.py, part 1
@@ -415,7 +415,7 @@ bed_summary.py, part 1
 
 ##### **总结演讲内容**
 
-[清单 3-7](ch03.xhtml#ch03list7)通过总结演讲并打印结果完成了程序。
+清单 3-7 通过总结演讲并打印结果完成了程序。
 
 ```py
 bed_summary.py, part 2
@@ -428,7 +428,7 @@ print(' '.join(sents))
 
 清单 3-7：运行 gensim，删除重复行并打印摘要
 
-首先打印摘要的标题。然后，调用 gensim 的 summarize() 函数来总结 225 个字的演讲。根据平均每句15个字的假设，这个字数将产生约15个句子的摘要。除了字数，您还可以传递一个比例给 summarize()，例如 ratio=0.01。这将生成一个长度为完整文档1%的摘要。
+首先打印摘要的标题。然后，调用 gensim 的 summarize() 函数来总结 225 个字的演讲。根据平均每句 15 个字的假设，这个字数将产生约 15 个句子的摘要。除了字数，您还可以传递一个比例给 summarize()，例如 ratio=0.01。这将生成一个长度为完整文档 1%的摘要。
 
 理想情况下，您可以一步完成演讲的总结和打印摘要。
 
@@ -487,7 +487,7 @@ unending calisthenics, days without sleep and always being cold, wet and
 miserable.
 ```
 
-如果你花时间阅读全文，你可能会得出结论，gensim生成了一个公平的摘要。尽管这两个结果不同，但两者都提取了演讲的要点，包括提到如何整理床铺。考虑到文档的大小，我觉得这很令人印象深刻。
+如果你花时间阅读全文，你可能会得出结论，gensim 生成了一个公平的摘要。尽管这两个结果不同，但两者都提取了演讲的要点，包括提到如何整理床铺。考虑到文档的大小，我觉得这很令人印象深刻。
 
 接下来，我们将看看使用关键词和词云总结文本的另一种方法。
 
@@ -495,25 +495,25 @@ miserable.
 
 *词云*是用于显示网站上关键词元数据的文本数据的视觉表示。在词云中，字体大小或颜色显示每个标签或单词的重要性。
 
-词云对于突出文档中的关键词非常有用。例如，为每位美国总统的国情咨文生成词云可以快速概述该年国家面临的问题。在比尔·克林顿的首年，重点放在了像医疗保健、就业和税收等和平时期的关切事项上（[图 3-1](ch03.xhtml#ch03fig1)）。
+词云对于突出文档中的关键词非常有用。例如，为每位美国总统的国情咨文生成词云可以快速概述该年国家面临的问题。在比尔·克林顿的首年，重点放在了像医疗保健、就业和税收等和平时期的关切事项上（图 3-1）。
 
-![图像](../images/fig03_01.jpg)
+![图像](img/fig03_01.jpg)
 
-图 3-1：由比尔·克林顿1993年国情咨文制作的词云
+图 3-1：由比尔·克林顿 1993 年国情咨文制作的词云
 
-不到10年后，乔治·W·布什的词云显示出对安全问题的关注（[图 3-2](ch03.xhtml#ch03fig2)）。
+不到 10 年后，乔治·W·布什的词云显示出对安全问题的关注（图 3-2）。
 
-![图像](../images/fig03_02.jpg)
+![图像](img/fig03_02.jpg)
 
 图 3-2：由乔治·W·布什在 2002 年的国情咨文中演讲的词云。
 
 词云的另一个用途是从客户反馈中提取关键词。如果像*差*、*慢*和*贵*这样的词占主导地位，那么你就有问题了！作家还可以使用词云来比较书中的章节或剧本中的场景。如果作者在动作场景和浪漫插曲中使用了非常相似的语言，就需要进行一些编辑。如果你是文案写手，词云可以帮助你检查关键词密度，以优化搜索引擎优化（SEO）。
 
-生成词云的方法有很多，包括一些免费的在线网站，如 *[https://www.wordclouds.com/](https://www.wordclouds.com/)* 和 *[https://www.jasondavies.com/wordcloud/](https://www.jasondavies.com/wordcloud/)*。但是，如果你想完全自定义你的词云，或者将生成器嵌入到另一个程序中，就需要自己动手。在本项目中，你将使用词云为学校戏剧制作一张宣传单，基于《福尔摩斯探案集》中的故事 *《巴斯克维尔的猎犬》*。
+生成词云的方法有很多，包括一些免费的在线网站，如 *[`www.wordclouds.com/`](https://www.wordclouds.com/)* 和 *[`www.jasondavies.com/wordcloud/`](https://www.jasondavies.com/wordcloud/)*。但是，如果你想完全自定义你的词云，或者将生成器嵌入到另一个程序中，就需要自己动手。在本项目中，你将使用词云为学校戏剧制作一张宣传单，基于《福尔摩斯探案集》中的故事 *《巴斯克维尔的猎犬》*。
 
-你将不再使用[图 3-1](ch03.xhtml#ch03fig1)和[3-2](ch03.xhtml#ch03fig2)中显示的基本矩形，而是将单词嵌入到福尔摩斯头部的轮廓中（见[图 3-3](ch03.xhtml#ch03fig3)）。
+你将不再使用图 3-1 和 3-2 中显示的基本矩形，而是将单词嵌入到福尔摩斯头部的轮廓中（见图 3-3）。
 
-![Image](../images/fig03_03.jpg)
+![Image](img/fig03_03.jpg)
 
 图 3-3：福尔摩斯的剪影
 
@@ -537,7 +537,7 @@ pip install wordcloud
 conda install -c conda-forge wordcloud
 ```
 
-你可以在这里找到 wordcloud 的网页：*[http://amueller.github.io/word_cloud/](http://amueller.github.io/word_cloud/)*。
+你可以在这里找到 wordcloud 的网页：*[`amueller.github.io/word_cloud/`](http://amueller.github.io/word_cloud/)*。
 
 你还需要使用 Python Imaging Library (PIL) 来处理图像。可以再次使用 pip 安装它。
 
@@ -551,17 +551,17 @@ pip install pillow
 conda install -c anaconda pillow
 ```
 
-如果你在想，pillow 是 PIL 的继任项目，PIL 在 2011 年已停止更新。要了解更多信息，请访问 *[https://pillow.readthedocs.io/en/stable/](https://pillow.readthedocs.io/en/stable/)*。
+如果你在想，pillow 是 PIL 的继任项目，PIL 在 2011 年已停止更新。要了解更多信息，请访问 *[`pillow.readthedocs.io/en/stable/`](https://pillow.readthedocs.io/en/stable/)*。
 
 #### ***词云代码***
 
-要生成定形的词云，你需要一个图像文件和一个文本文件。图 3-3 中显示的图像来自 Getty Images 的 iStock（*[https://www.istockphoto.com/vector/detective-hat-gm698950970-129478957/](https://www.istockphoto.com/vector/detective-hat-gm698950970-129478957/)*）。这是大约 500×600 像素的“低”分辨率图像。
+要生成定形的词云，你需要一个图像文件和一个文本文件。图 3-3 中显示的图像来自 Getty Images 的 iStock（*[`www.istockphoto.com/vector/detective-hat-gm698950970-129478957/`](https://www.istockphoto.com/vector/detective-hat-gm698950970-129478957/)*）。这是大约 500×600 像素的“低”分辨率图像。
 
 本书的下载文件中提供了一个相似但不受版权保护的图像（*holmes.png*）。你可以在 *Chapter_3* 文件夹中找到文本文件（*hound.txt*）、图像文件（*holmes.png*）和代码（*wc_hound.py*）。
 
 ##### **导入模块、文本文件、图像文件和停用词**
 
-[示例 3-8](ch03.xhtml#ch03list8) 导入模块，加载小说，加载福尔摩斯的轮廓图像，并创建一组你想从词云中排除的停用词。
+示例 3-8 导入模块，加载小说，加载福尔摩斯的轮廓图像，并创建一组你想从词云中排除的停用词。
 
 ```py
 wc_hound.py, part 1
@@ -587,11 +587,11 @@ wc_hound.py, part 1
 
 示例 3-8：导入模块并加载文本、图像和停用词
 
-首先导入 NumPy 和 PIL。PIL 将打开图像，NumPy 将其转换为蒙版。你在[第 1 章](ch01.xhtml)中开始使用 NumPy；如果你跳过了该部分，请参阅[第 1 章](ch01.xhtml#page_6)的“安装 Python 库”部分。请注意，Pillow 模块继续使用 PIL 的缩写，以保证向后兼容。
+首先导入 NumPy 和 PIL。PIL 将打开图像，NumPy 将其转换为蒙版。你在第一章中开始使用 NumPy；如果你跳过了该部分，请参阅第一章的“安装 Python 库”部分。请注意，Pillow 模块继续使用 PIL 的缩写，以保证向后兼容。
 
-你将需要 matplotlib，它在[第 1 章](ch01.xhtml)的“安装 Python 库”部分中已经下载，用于显示词云。wordcloud 模块自带一套停用词列表，因此需要同时导入 STOPWORDS 和词云功能。
+你将需要 matplotlib，它在第一章的“安装 Python 库”部分中已经下载，用于显示词云。wordcloud 模块自带一套停用词列表，因此需要同时导入 STOPWORDS 和词云功能。
 
-接下来，加载小说的文本文件并将其存储在名为 text ➊ 的变量中。如[第 2 章](ch02.xhtml)中[示例 2-2](ch02.xhtml#ch02list2)的讨论所述，在加载文本时，你可能会遇到 UnicodeDecodeError 错误。
+接下来，加载小说的文本文件并将其存储在名为 text ➊ 的变量中。如第二章中示例 2-2 的讨论所述，在加载文本时，你可能会遇到 UnicodeDecodeError 错误。
 
 ```py
 UnicodeDecodeError: 'ascii' codec can't decode byte 0x93 in position 365:
@@ -614,7 +614,7 @@ ordinal not in range(128)
 
 ##### **生成词云**
 
-[示例 3-9](ch03.xhtml#ch03list9) 生成词云并使用轮廓图像作为 *蒙版*，即用来隐藏另一图像部分的图像。wordcloud 使用的处理过程足够复杂，可以将词语适应于蒙版中，而不仅仅是将它们截断在边缘。此外，有多个参数可以更改蒙版中单词的外观。
+示例 3-9 生成词云并使用轮廓图像作为 *蒙版*，即用来隐藏另一图像部分的图像。wordcloud 使用的处理过程足够复杂，可以将词语适应于蒙版中，而不仅仅是将它们截断在边缘。此外，有多个参数可以更改蒙版中单词的外观。
 
 ```py
 wc_hound.py, part 2
@@ -634,7 +634,7 @@ colors = wc.to_array()
 
 示例 3-9：生成词云
 
-给变量命名为 wc 并调用 WordCloud()。有很多参数，因此我将每个参数单独放在一行以便清晰。有关所有可用参数的列表和描述，请访问 *[https://amueller.github.io/word_cloud/generated/wordcloud.WordCloud.html](https://amueller.github.io/word_cloud/generated/wordcloud.WordCloud.html)*。
+给变量命名为 wc 并调用 WordCloud()。有很多参数，因此我将每个参数单独放在一行以便清晰。有关所有可用参数的列表和描述，请访问 *[`amueller.github.io/word_cloud/generated/wordcloud.WordCloud.html`](https://amueller.github.io/word_cloud/generated/wordcloud.WordCloud.html)*。
 
 首先传入你想要使用的最大单词数。你设置的数字将显示文本中最常见的 *n* 个单词。选择显示更多单词将更容易定义掩码的边缘并使其可识别。不幸的是，设置的最大数字过高也会导致许多微小的、难以辨认的单词。对于这个项目，从 500 开始。
 
@@ -648,19 +648,19 @@ colors = wc.to_array()
 
 `random_state` 参数固定种子值，以便结果可重复，前提是没有更改其他参数。这意味着单词的排列将始终相同。只接受整数。
 
-现在，将 contour_width 设置为 2。任何大于零的值都会在掩码周围创建一个轮廓。在这种情况下，由于图像的分辨率，轮廓是波浪形的（[图 3-4](ch03.xhtml#ch03fig4)）。
+现在，将 contour_width 设置为 2。任何大于零的值都会在掩码周围创建一个轮廓。在这种情况下，由于图像的分辨率，轮廓是波浪形的（图 3-4）。
 
-使用 contour_color 参数将轮廓颜色设置为棕色。通过将 colormap 设置为 copper，继续使用棕色调的色盘。在 matplotlib 中，*colormap* 是一个字典，它将数字映射到颜色。copper 色盘生成的文本颜色范围从浅肤色到黑色。你可以在 *[https://matplotlib.org/gallery/color/colormap_reference.html](https://matplotlib.org/gallery/color/colormap_reference.html)* 查看它的色谱以及许多其他颜色选项。如果你没有指定 colormap，程序将使用默认颜色。
+使用 contour_color 参数将轮廓颜色设置为棕色。通过将 colormap 设置为 copper，继续使用棕色调的色盘。在 matplotlib 中，*colormap* 是一个字典，它将数字映射到颜色。copper 色盘生成的文本颜色范围从浅肤色到黑色。你可以在 *[`matplotlib.org/gallery/color/colormap_reference.html`](https://matplotlib.org/gallery/color/colormap_reference.html)* 查看它的色谱以及许多其他颜色选项。如果你没有指定 colormap，程序将使用默认颜色。
 
 使用点符号调用 `generate()` 方法来构建词云。将文本字符串作为参数传递给它。通过命名一个 colors 变量并在 wc 对象上调用 `to_array()` 方法来结束这个列表。该方法将词云图像转换为 NumPy 数组，以便与 matplotlib 一起使用。
 
-![Image](../images/fig03_04.jpg)
+![Image](img/fig03_04.jpg)
 
 图 3-4：带有轮廓的掩码词云示例（左）与不带轮廓的示例（右）
 
 ##### **绘制词云**
 
-[列表 3-10](ch03.xhtml#ch03list10) 为词云添加标题，并使用 matplotlib 显示它。它还将词云图像保存为文件。
+列表 3-10 为词云添加标题，并使用 matplotlib 显示它。它还将词云图像保存为文件。
 
 ```py
 wc_hound.py, part 3
@@ -679,61 +679,61 @@ plt.show()
 
 列表 3-10：绘制和保存词云
 
-从初始化matplotlib图形开始。然后调用title()方法，传递学校的名称、字体大小和颜色。
+从初始化 matplotlib 图形开始。然后调用 title()方法，传递学校的名称、字体大小和颜色。
 
-您希望剧本的名称比其他标题更大更粗。由于无法在matplotlib中改变字符串的文本样式，请使用text()方法定义一个新标题。传递给它(*x*, *y*)坐标（基于图形轴）、文本字符串和文本样式细节。通过反复试验坐标来优化文本位置。如果您使用的是Holmes的iStock图片，您可能需要将*x*坐标从-10更改为其他值，以达到最佳的平衡效果，尤其是在不对称的轮廓下。
+您希望剧本的名称比其他标题更大更粗。由于无法在 matplotlib 中改变字符串的文本样式，请使用 text()方法定义一个新标题。传递给它(*x*, *y*)坐标（基于图形轴）、文本字符串和文本样式细节。通过反复试验坐标来优化文本位置。如果您使用的是 Holmes 的 iStock 图片，您可能需要将*x*坐标从-10 更改为其他值，以达到最佳的平衡效果，尤其是在不对称的轮廓下。
 
-完成标题时，将剧本的时间和地点放在图形的底部。您可以再次使用text()方法，但我们来看看另一种方法——pyplot的suptitle()方法。这个名字代表“超级标题”。传递给它文本、(*x*, *y*)图形坐标和样式细节。
+完成标题时，将剧本的时间和地点放在图形的底部。您可以再次使用 text()方法，但我们来看看另一种方法——pyplot 的 suptitle()方法。这个名字代表“超级标题”。传递给它文本、(*x*, *y*)图形坐标和样式细节。
 
-要显示词云，请调用imshow()——用于图像显示——并传递之前创建的颜色数组。指定bilinear进行颜色插值。
+要显示词云，请调用 imshow()——用于图像显示——并传递之前创建的颜色数组。指定 bilinear 进行颜色插值。
 
-通过调用show()关闭图形坐标轴并显示词云。如果您想保存图形，可以取消注释savefig()方法。请注意，matplotlib可以读取文件名中的扩展名，并以正确的格式保存图形。按原样，保存命令将在您手动关闭图形后才会执行。
+通过调用 show()关闭图形坐标轴并显示词云。如果您想保存图形，可以取消注释 savefig()方法。请注意，matplotlib 可以读取文件名中的扩展名，并以正确的格式保存图形。按原样，保存命令将在您手动关闭图形后才会执行。
 
 #### ***微调词云***
 
-[列表 3-10](ch03.xhtml#ch03list10)将生成[图 3-5](ch03.xhtml#ch03fig5)中的词云。由于算法是随机的，您可能会得到不同的单词排列。
+列表 3-10 将生成图 3-5 中的词云。由于算法是随机的，您可能会得到不同的单词排列。
 
-![Image](../images/fig03_05.jpg)
+![Image](img/fig03_05.jpg)
 
-图 3-5：由wc_hound.py代码生成的传单
+图 3-5：由 wc_hound.py 代码生成的传单
 
 您可以通过在初始化图形时添加一个参数来更改显示的大小。示例如下：plt.figure(figsize=(50, 60))。
 
-还有许多其他方法可以更改结果。例如，将margin参数设置为10会生成一个更稀疏的词云（[图 3-6](ch03.xhtml#ch03fig6)）。
+还有许多其他方法可以更改结果。例如，将 margin 参数设置为 10 会生成一个更稀疏的词云（图 3-6）。
 
-![Image](../images/fig03_06.jpg)
+![Image](img/fig03_06.jpg)
 
-图 3-6：使用margin=10生成的词云
+图 3-6：使用 margin=10 生成的词云
 
-更改`random_state`参数也会重新排列遮罩中的单词（[图 3-7](ch03.xhtml#ch03fig7)）。
+更改`random_state`参数也会重新排列遮罩中的单词（图 3-7）。
 
-![Image](../images/fig03_07.jpg)
+![Image](img/fig03_07.jpg)
 
-图 3-7：使用margin=10和random_state=6生成的词云
+图 3-7：使用 margin=10 和 random_state=6 生成的词云
 
-调整max_words和relative_scaling参数也会改变词云的外观。根据您的细致程度，这一切可能是福是祸！
+调整 max_words 和 relative_scaling 参数也会改变词云的外观。根据您的细致程度，这一切可能是福是祸！
 
 ### **总结**
 
-在本章中，您使用了基于提取的摘要技术，生成了马丁·路德·金“我有一个梦想”演讲的概要。然后，您使用了一个免费的现成模块gensim，以更少的代码总结了麦克雷文海军上将的“整理床铺”演讲。最后，您使用wordcloud模块创建了一个有趣的单词设计。
+在本章中，您使用了基于提取的摘要技术，生成了马丁·路德·金“我有一个梦想”演讲的概要。然后，您使用了一个免费的现成模块 gensim，以更少的代码总结了麦克雷文海军上将的“整理床铺”演讲。最后，您使用 wordcloud 模块创建了一个有趣的单词设计。
 
 ### **进一步阅读**
 
-*用Python自动化枯燥的事情：完全初学者的实用编程*（No Starch Press，2015年），由阿尔·斯威加特编写，涵盖了第[7章](ch07.xhtml)中的正则表达式和第[11章](ch11.xhtml)中的网页抓取，包括使用requests和Beautiful Soup模块。
+*用 Python 自动化枯燥的事情：完全初学者的实用编程*（No Starch Press，2015 年），由阿尔·斯威加特编写，涵盖了第七章中的正则表达式和第十一章中的网页抓取，包括使用 requests 和 Beautiful Soup 模块。
 
-*整理床铺：那些能改变你生活的小事*……*也许还能改变世界*，第二版（大中央出版社，2017年），威廉·H·麦克雷文著，是一本基于这位海军上将于德克萨斯大学的毕业典礼演讲的自助书籍。你可以在 *[https://www.youtube.com/](https://www.youtube.com/)* 上找到这篇演讲的实际视频。
+*整理床铺：那些能改变你生活的小事*……*也许还能改变世界*，第二版（大中央出版社，2017 年），威廉·H·麦克雷文著，是一本基于这位海军上将于德克萨斯大学的毕业典礼演讲的自助书籍。你可以在 *[`www.youtube.com/`](https://www.youtube.com/)* 上找到这篇演讲的实际视频。
 
 ### **挑战项目：游戏之夜**
 
-使用wordcloud为游戏之夜发明一个新游戏。总结维基百科或IMDb的电影简介，看看你的朋友们能否猜出电影名称。[图 3-8](ch03.xhtml#ch03fig8)展示了一些示例。
+使用 wordcloud 为游戏之夜发明一个新游戏。总结维基百科或 IMDb 的电影简介，看看你的朋友们能否猜出电影名称。图 3-8 展示了一些示例。
 
-![图片](../images/fig03_08.jpg)
+![图片](img/fig03_08.jpg)
 
-图 3-8：2010年发布的两部电影的词云：如何训练你的龙和波斯王子
+图 3-8：2010 年发布的两部电影的词云：如何训练你的龙和波斯王子
 
-如果你不喜欢电影，可以选择其他内容。替代品包括著名小说、*星际迷航*剧集以及歌词（见[图 3-9](ch03.xhtml#ch03fig9)）。
+如果你不喜欢电影，可以选择其他内容。替代品包括著名小说、*星际迷航*剧集以及歌词（见图 3-9）。
 
-![图片](../images/fig03_09.jpg)
+![图片](img/fig03_09.jpg)
 
 图 3-9：从歌曲歌词中制作的词云（唐纳德·费根的“I.G.Y.”）
 
@@ -741,7 +741,7 @@ plt.show()
 
 ### **挑战项目：总结摘要**
 
-使用项目3中的程序对之前总结过的文本进行测试，比如维基百科页面。仅五个句子就能提供一个关于gensim的良好概述。
+使用项目 3 中的程序对之前总结过的文本进行测试，比如维基百科页面。仅五个句子就能提供一个关于 gensim 的良好概述。
 
 ```py
 Enter max words per sentence for summary: 30
@@ -761,11 +761,11 @@ incremental online algorithms, which differentiates it from most other machine
 learning software packages that target only in-memory processing.
 ```
 
-接下来，尝试在那些没人愿意阅读的无聊服务协议上使用项目4中的gensim版本。一个微软协议的示例可在 *[https://www.microsoft.com/en-us/servicesagreement/default.aspx](https://www.microsoft.com/en-us/servicesagreement/default.aspx)* 获取。当然，要评估结果，你必须阅读完整的协议，而几乎没有人愿意这么做！享受这个进退两难的困境吧！
+接下来，尝试在那些没人愿意阅读的无聊服务协议上使用项目 4 中的 gensim 版本。一个微软协议的示例可在 *[`www.microsoft.com/en-us/servicesagreement/default.aspx`](https://www.microsoft.com/en-us/servicesagreement/default.aspx)* 获取。当然，要评估结果，你必须阅读完整的协议，而几乎没有人愿意这么做！享受这个进退两难的困境吧！
 
 ### **挑战项目：总结一部小说**
 
-编写一个程序，通过章节总结《巴斯克维尔的猎犬》。每个章节的总结保持简短，大约75个单词。
+编写一个程序，通过章节总结《巴斯克维尔的猎犬》。每个章节的总结保持简短，大约 75 个单词。
 
 若要获取带章节标题的小说副本，可以通过以下代码从古腾堡计划网站抓取文本：url = 'http://www.gutenberg.org/files/2852/2852-h/2852-h.htm'。
 
@@ -778,7 +778,7 @@ chapters = chapter_elems[2:]
 
 你还需要从每个章节中选择段落元素（p_elems），使用与 *dream_summary.py* 中相同的方法。
 
-以下代码片段展示了使用每章75个单词的结果：
+以下代码片段展示了使用每章 75 个单词的结果：
 
 ```py
 --snip--
@@ -830,4 +830,4 @@ thing which was hunting him down.
 
 你迄今为止编写的文本摘要程序是严格按照句子的*重要性顺序*打印句子的。这意味着演讲（或任何文本）中的最后一句话可能会成为摘要中的第一句。摘要的目标是找到重要的句子，但你完全可以改变它们的展示方式。
 
-编写一个文本摘要程序，显示最重要的句子，并保持它们原始的*出现顺序*。将结果与第3个项目中的程序生成的结果进行比较。这样做会对摘要产生明显的改进吗？
+编写一个文本摘要程序，显示最重要的句子，并保持它们原始的*出现顺序*。将结果与第 3 个项目中的程序生成的结果进行比较。这样做会对摘要产生明显的改进吗？

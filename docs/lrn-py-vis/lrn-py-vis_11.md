@@ -2,7 +2,7 @@
 
 鼠标和键盘交互
 
-![](image_fi/book_art/chapterart.png)
+![](img/chapterart.png)
 
 在本章中，你将学习如何编程互动草图，响应鼠标和键盘输入。你可以以有趣且实用的方式结合这些输入设备。例如，许多电脑游戏使用组合键来控制玩家移动，鼠标用于瞄准。在这里，你将编程草图，使用鼠标进行绘画并从工具调色板中选择项目。你还将添加快捷键，通过键盘激活工具。
 
@@ -16,13 +16,13 @@
 
 ### 鼠标变量
 
-Processing的`mouseX`和`mouseY`变量存储了你鼠标指针在显示窗口中的水平和垂直位置。Processing还提供了系统变量`pmouseX`和`pmouseY`，它们包含了上一帧的鼠标坐标。还有一个`mousePressed`变量，它在鼠标按钮被按下时会被设置为`True`。
+Processing 的`mouseX`和`mouseY`变量存储了你鼠标指针在显示窗口中的水平和垂直位置。Processing 还提供了系统变量`pmouseX`和`pmouseY`，它们包含了上一帧的鼠标坐标。还有一个`mousePressed`变量，它在鼠标按钮被按下时会被设置为`True`。
 
-本章的第一个任务专注于Processing的鼠标变量，用于监控鼠标指针的位置并检测鼠标按钮是否被按下。你将编程一个简单的草图来制作*划痕艺术*。一张划痕艺术纸上覆盖着彩虹色的混合色彩，接着涂上一层黑色（[图11-1](#figure11-1)）。"刮痕者"使用塑料或木制触控笔在黑色表面上刻划线条，揭示下面的颜色。
+本章的第一个任务专注于 Processing 的鼠标变量，用于监控鼠标指针的位置并检测鼠标按钮是否被按下。你将编程一个简单的草图来制作*划痕艺术*。一张划痕艺术纸上覆盖着彩虹色的混合色彩，接着涂上一层黑色（图 11-1）。"刮痕者"使用塑料或木制触控笔在黑色表面上刻划线条，揭示下面的颜色。
 
-![f11001](image_fi/500969c11/f11001.png)
+![f11001](img/f11001.png)
 
-图11-1：构成划痕艺术纸张的一层层材料（左），用触控笔涂鸦（右）
+图 11-1：构成划痕艺术纸张的一层层材料（左），用触控笔涂鸦（右）
 
 你可以购买现成的划痕纸，或者自己制作，但像素是便宜且可重复使用的！
 
@@ -32,9 +32,9 @@ Processing的`mouseX`和`mouseY`变量存储了你鼠标指针在显示窗口中
 def setup(): size(800, 400) frameRate(20) background('#000000') stroke('#FFFFFF')def draw(): circle(mouseX, mouseY, 15)
 ```
 
-每一帧，Processing 都会根据 `mouseX` 和 `mouseY` 值绘制一个新圆。每帧都会获取这些坐标，并且帧率相对较低（20 fps）。`draw()` 块中没有 `background()` 函数，因此每个绘制的圆形都会持续存在，直到你关闭显示窗口。如果你慢慢移动鼠标，圆形会形成一条实心的白线；而当你快速移动鼠标时，线条中会留下一些明显的间隙（[图 11-2](#figure11-2)）。显示窗口的左上角总是会有一个圆形，因为鼠标的第一个 x-y 坐标对等于 (0, 0)。
+每一帧，Processing 都会根据 `mouseX` 和 `mouseY` 值绘制一个新圆。每帧都会获取这些坐标，并且帧率相对较低（20 fps）。`draw()` 块中没有 `background()` 函数，因此每个绘制的圆形都会持续存在，直到你关闭显示窗口。如果你慢慢移动鼠标，圆形会形成一条实心的白线；而当你快速移动鼠标时，线条中会留下一些明显的间隙（图 11-2）。显示窗口的左上角总是会有一个圆形，因为鼠标的第一个 x-y 坐标对等于 (0, 0)。
 
-![f11002](image_fi/500969c11/f11002.png)
+![f11002](img/f11002.png)
 
 图 11-2：你移动鼠标的速度越快，线条中的间隙就越大。
 
@@ -46,9 +46,9 @@ def setup(): size(800, 400) frameRate(20) background('#000000') stroke('#FFFFFF'
 
 `strokeWeight()` 的参数 `15` 与之前的圆形直径相匹配。`line()` 函数绘制从当前帧到前一帧的鼠标坐标之间的线条。
 
-运行草图。第一个 `line()` 函数将从左上角 (0, 0) 延伸到鼠标指针首次进入显示窗口的位置。在 [图 11-3](#figure11-3) 中，我的鼠标从左边缘进入显示窗口（我正从左向右画波浪）。
+运行草图。第一个 `line()` 函数将从左上角 (0, 0) 延伸到鼠标指针首次进入显示窗口的位置。在 图 11-3 中，我的鼠标从左边缘进入显示窗口（我正从左向右画波浪）。
 
-![f11003](image_fi/500969c11/f11003.png)
+![f11003](img/f11003.png)
 
 图 11-3：使用 `line()` 函数绘制每一帧的连续线条
 
@@ -70,9 +70,9 @@ def setup(): size(800, 400) frameRate(20) background('#000000') stroke('#FFFFFF'
 
 在这个例子中，你将颜色模式设置为 `HSB`（色相、饱和度、亮度）。`h` 变量分配一个 0 到 360 之间的色相值；`s` 变量分配一个 0 到 100 之间的饱和度值。`h` 和 `s` 的值基于鼠标指针相对于显示窗口宽度和高度的位置。颜色的亮度值始终为 100%。
 
-运行草图，测试完成的涂鸦艺术程序（[图 11-4](#figure11-4)）。
+运行草图，测试完成的涂鸦艺术程序（图 11-4）。
 
-![f11004](image_fi/500969c11/f11004.png)
+![f11004](img/f11004.png)
 
 图 11-4：在涂鸦艺术程序中涂鸦
 
@@ -100,15 +100,15 @@ def draw(): background('#FF0000') # red def mousePressed(): background('#0000FF'
 
 在下一个练习中，你将编写一个基础的绘画应用程序，其中包括一个用于选择颜色样本和其他选项的工具面板。你将使用 `mousePressed()`、`mouseReleased()` 和 `mouseWheel()` 函数。
 
-在 [图 11-5](#figure11-5) 中，右侧的大块深蓝色区域是你的绘图画布；工具面板位于左边缘。按住左键可以进行绘制。
+在 图 11-5 中，右侧的大块深蓝色区域是你的绘图画布；工具面板位于左边缘。按住左键可以进行绘制。
 
-![f11005](image_fi/500969c11/f11005.png)
+![f11005](img/f11005.png)
 
 图 11-5：带有（画得很糟的）Python 标志的绘画应用
 
 首先，创建一个新的草图并将其保存为 *paint_app*。你将使用由 Marc André “Mieps” Misman 创建的 Ernest 字体来标记工具面板中的按钮。你可以从本书的 GitHub 页面下载这个字体：
 
-1.  打开你的浏览器，访问 [https://github.com/tabreturn/processing.py-book/](https://github.com/tabreturn/processing.py-book/)。
+1.  打开你的浏览器，访问 [`github.com/tabreturn/processing.py-book/`](https://github.com/tabreturn/processing.py-book/)。
 
 1.  导航到 *chapter-11-mouse_and_keyboard_interaction*。
 
@@ -134,7 +134,7 @@ palette = 60
 
 你将通过使用鼠标事件来控制`draw()`函数的行为。当按下左键时，`draw()`函数将进入循环；一旦释放左键，循环停止，这是一种方便的方式来控制绘图应用的工作方式。当然，`draw()`函数默认是循环的，因此你需要使用`loop()`和`noLoop()`函数来控制这种行为。
 
-`noLoop()`函数停止Processing持续执行`draw()`块中的代码。`loop()`函数重新激活标准的`draw()`函数行为，如果你只需要执行一次`draw()`代码，可以使用`redraw()`函数。
+`noLoop()`函数停止 Processing 持续执行`draw()`块中的代码。`loop()`函数重新激活标准的`draw()`函数行为，如果你只需要执行一次`draw()`代码，可以使用`redraw()`函数。
 
 首先，在`setup()`块中添加一个`noLoop()`函数，然后在`draw()`函数中打印帧计数：
 
@@ -150,11 +150,11 @@ def setup(): . . . noLoop(). . .def draw(): print(frameCount)
 . . .def draw(): print(frameCount) global painting, paintmode 1 if paintmode == 'free': 2 if painting: stroke(brushcolor) strokeCap(brushshape) strokeWeight(brushsize) 3 line(mouseX, mouseY, pmouseX, pmouseY) 4 elif frameCount > 1: painting = True5 def mousePressed(): # start painting if mouseButton == LEFT: loop()6 def mouseReleased(): # stop painting if mouseButton == LEFT: global painting painting = False noLoop()
 ```
 
-在模拟过程中，仔细阅读这段代码，关注`painting`变量为`True`或`False`时的情况，以及`draw()`函数何时会持续运行。草图开始时，`painting`变量被设置为`False`；此时`draw()`函数并没有进入循环。当你按下左键5时，`loop()`函数指示Processing重新开始循环`draw()`函数；当你释放按钮6时，`noLoop()`函数再次停止绘制行为。`paintmode`变量默认设置为`free` 1，因此Python会检查你当前是否在绘画2。你稍后会添加其他绘画模式。如果`painting`等于`True`，Processing会在当前帧的鼠标坐标和上一帧的坐标之间绘制一条线3；如果不是，它会检查帧计数是否已经超过`1` 4，才会将`painting`变量设置为`True`。`if` 2和`elif` 4步骤是必要的，以避免在停止和继续绘画（释放左键、移动鼠标，然后再次按下按钮）时绘制直线，而`frameCount > 1`则阻止Processing在从左上角到第一次开始绘画的地方绘制一条线。在[图11-6](#figure11-6)中，左侧截图展示了如果省略这些语句时发生的情况。
+在模拟过程中，仔细阅读这段代码，关注`painting`变量为`True`或`False`时的情况，以及`draw()`函数何时会持续运行。草图开始时，`painting`变量被设置为`False`；此时`draw()`函数并没有进入循环。当你按下左键 5 时，`loop()`函数指示 Processing 重新开始循环`draw()`函数；当你释放按钮 6 时，`noLoop()`函数再次停止绘制行为。`paintmode`变量默认设置为`free` 1，因此 Python 会检查你当前是否在绘画 2。你稍后会添加其他绘画模式。如果`painting`等于`True`，Processing 会在当前帧的鼠标坐标和上一帧的坐标之间绘制一条线 3；如果不是，它会检查帧计数是否已经超过`1` 4，才会将`painting`变量设置为`True`。`if` 2 和`elif` 4 步骤是必要的，以避免在停止和继续绘画（释放左键、移动鼠标，然后再次按下按钮）时绘制直线，而`frameCount > 1`则阻止 Processing 在从左上角到第一次开始绘画的地方绘制一条线。在图 11-6 中，左侧截图展示了如果省略这些语句时发生的情况。
 
-![f11006](image_fi/500969c11/f11006.png)
+![f11006](img/f11006.png)
 
-图11-6：Processing在停止和开始绘画的点之间绘制直线（左），以及你版本的程序（右）
+图 11-6：Processing 在停止和开始绘画的点之间绘制直线（左），以及你版本的程序（右）
 
 运行草图，绘制几个圆圈以测试代码是否正常工作。观察控制台并注意，帧计数只有在你按住左键时才会增加。
 
@@ -176,9 +176,9 @@ def setup(): . . . noLoop(). . .def draw(): print(frameCount)
 
 `if` 语句测试鼠标左键单击，并检查鼠标指针是否位于颜色选色板的某个位置。`get()` 函数返回鼠标指针下方像素的颜色，并将其赋值给 `brushcolor` 变量。你添加一行 `global` 代码来覆盖全局作用域中的 `brushcolor` 变量，该变量在 `draw()` 函数中用于应用画笔颜色的描边。
 
-运行草图。你现在可以选择颜色进行绘画（[图 11-7](#figure11-7)）。
+运行草图。你现在可以选择颜色进行绘画（图 11-7）。
 
-![f11007](image_fi/500969c11/f11007.png)
+![f11007](img/f11007.png)
 
 图 11-7：点击工具面板中的选色板以更改画笔颜色。
 
@@ -212,15 +212,15 @@ def setup(): . . . noLoop(). . .def draw(): print(frameCount)
 
 你不希望在调整画笔大小时进行绘画，因此 `paintmode` 被切换为 `select` 2。`e.count` 用来从事件变量中获取负/正滚动值，并将其添加到 `brushsize` 3。然而，必须包括检查（`if` 语句）以确保新画笔大小保持在合理范围内（介于 `3` 4 和 `45` 5 之间）。最后，`redraw()` 函数只运行一次 `draw()` 函数，以更新画笔预览并将 `paintmode` 切换回 `free` 1。
 
-运行草图以确认你可以使用滚轮调整画笔大小，这会更新调色板中的画笔预览图（[图 11-8](#figure11-8)）。
+运行草图以确认你可以使用滚轮调整画笔大小，这会更新调色板中的画笔预览图（图 11-8）。
 
-![f11008](image_fi/500969c11/f11008.png)
+![f11008](img/f11008.png)
 
 图 11-8：使用不同大小的画笔进行绘画
 
-但是，有一个问题。当使用大画笔选择颜色样本时，颜料块可能会扩展到深蓝色的画布区域（[图 11-9](#figure11-9)）。
+但是，有一个问题。当使用大画笔选择颜色样本时，颜料块可能会扩展到深蓝色的画布区域（图 11-9）。
 
-![f11009](image_fi/500969c11/f11009.png)
+![f11009](img/f11009.png)
 
 图 11-9：使用大画笔选择颜色样本
 
@@ -252,15 +252,15 @@ def setup(): . . . noLoop(). . .def draw(): print(frameCount)
 . . .def keyPressed(): print(key)
 ```
 
-运行草图并按下不同的键。数字、字母和符号会如你所预期地显示在控制台中——当你按下数字1键时，显示`1`，按下Q键时，显示`q`，依此类推。如果开启了大写锁定，显示的将是大写字母。
+运行草图并按下不同的键。数字、字母和符号会如你所预期地显示在控制台中——当你按下数字 1 键时，显示`1`，按下 Q 键时，显示`q`，依此类推。如果开启了大写锁定，显示的将是大写字母。
 
-要选择不同的颜色样本，将`print()`函数替换为使用数字键1到6的代码：
+要选择不同的颜色样本，将`print()`函数替换为使用数字键 1 到 6 的代码：
 
 ```py
 . . .def keyPressed(): global brushcolor, paintmode paintmode = 'select'  # color swatch shortcuts if str(key).isdigit(): k = int(key) - 1 if k < len(swatches): brushcolor = swatches[k] redraw()
 ```
 
-Python的`isdigit()`方法如果字符串中的所有字符都是数字，则返回`True`。这只适用于字符/字符串，并且能够很好地处理大部分`key`值，对于任何字母和符号返回`False`。然而，Processing使用数字代码（换句话说，整数，而非字符串）表示特殊键（箭头键和修饰键）。因此，你需要使用`str(key)`将任何数字代码转换为字符串，以防止某些按键导致应用崩溃。如果`key`值是数字，Python会减去1并将其赋值给变量`k`。因为`swatches`列表是从0开始索引的，颜色1等于`swatches[0]`，依此类推。最终的`if`语句验证索引值（`k`）是否小于样本列表的长度——换句话说，是一个介于0到5之间的数字。`redraw()`函数会更新画笔预览。
+Python 的`isdigit()`方法如果字符串中的所有字符都是数字，则返回`True`。这只适用于字符/字符串，并且能够很好地处理大部分`key`值，对于任何字母和符号返回`False`。然而，Processing 使用数字代码（换句话说，整数，而非字符串）表示特殊键（箭头键和修饰键）。因此，你需要使用`str(key)`将任何数字代码转换为字符串，以防止某些按键导致应用崩溃。如果`key`值是数字，Python 会减去 1 并将其赋值给变量`k`。因为`swatches`列表是从 0 开始索引的，颜色 1 等于`swatches[0]`，依此类推。最终的`if`语句验证索引值（`k`）是否小于样本列表的长度——换句话说，是一个介于 0 到 5 之间的数字。`redraw()`函数会更新画笔预览。
 
 画图应用程序可以用不同的颜色进行绘画，且笔触的厚度各不相同。尝试向你的画图应用添加其他功能。
 
@@ -274,11 +274,11 @@ Python的`isdigit()`方法如果字符串中的所有字符都是数字，则返
 . . .def draw(): . . . # clear button fill('#FFFFFF') text('CLEAR', 10, height-12)
 ```
 
-这将在显示窗口的左下角绘制`CLEAR`，使用Ernest字体（见[图11-10](#figure11-10)）。
+这将在显示窗口的左下角绘制`CLEAR`，使用 Ernest 字体（见图 11-10）。
 
-![f11010](image_fi/500969c11/f11010.png)
+![f11010](img/f11010.png)
 
-图11-10：清除按钮
+图 11-10：清除按钮
 
 你可以使用`mouseClicked()`函数在鼠标按键点击的瞬间执行代码，就在松开按钮的时刻。像其他鼠标事件一样，这段代码只会执行一次，直到你重复该操作。将一个`mouseClicked()`函数添加到你的代码中：
 
@@ -288,7 +288,7 @@ Python的`isdigit()`方法如果字符串中的所有字符都是数字，则返
 
 如果你在显示窗口的任何位置点击，这段代码将在整个画图应用程序上绘制一个圆圈。现在，将`circle()`这一行替换为只响应清除按钮上的点击，而不响应该区域外的点击的代码。此外，这段代码还必须在画布区域上绘制一个深蓝色的正方形。
 
-一旦你正确实现了清除按钮，尝试添加一个保存（为图片）按钮、橡皮擦、更多颜色样本，甚至可以加入一个颜色混合器。如果你需要帮助，可以在[https://github.com/tabreturn/processing.py-book/tree/master/chapter-11-mouse_and_keyboard_interaction/paint_app/](https://github.com/tabreturn/processing.py-book/tree/master/chapter-11-mouse_and_keyboard_interaction/paint_app/)找到解决方案。
+一旦你正确实现了清除按钮，尝试添加一个保存（为图片）按钮、橡皮擦、更多颜色样本，甚至可以加入一个颜色混合器。如果你需要帮助，可以在[`github.com/tabreturn/processing.py-book/tree/master/chapter-11-mouse_and_keyboard_interaction/paint_app/`](https://github.com/tabreturn/processing.py-book/tree/master/chapter-11-mouse_and_keyboard_interaction/paint_app/)找到解决方案。
 
 ## 总结
 

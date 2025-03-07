@@ -2,7 +2,7 @@
 
 设置环境**
 
-![image](Images/common.jpg)
+![image](img/common.jpg)
 
 虽然本书没有传统的数学练习，但如果我们想掌握这些概念，还是需要进行一定的练习。我们有很多机会来进行这些练习，但我们将使用代码，而非纸笔。
 
@@ -56,7 +56,7 @@ $ sudo pip3 install matplotlib
 
 $ sudo pip3 install scikit-learn
 
-通过启动Python 3并导入每个模块：numpy、scipy和sklearn来测试安装情况。然后打印 __version__ 字符串，以确保它符合或超过上述版本要求。例如，参见以下代码。
+通过启动 Python 3 并导入每个模块：numpy、scipy 和 sklearn 来测试安装情况。然后打印 __version__ 字符串，以确保它符合或超过上述版本要求。例如，参见以下代码。
 
 >>> import numpy; numpy.__version__
 
@@ -76,7 +76,7 @@ $ sudo pip3 install scikit-learn
 
 #### macOS
 
-要在Macintosh上安装Python 3.*x*，请访问 *[https://www.python.org/](https://www.python.org/)*，在 **Downloads** 下选择 **Mac OS X**，然后选择最新的稳定版Python 3发布版本。撰写本文时，最新版本是3.9.2。下载完成后，运行安装程序以安装Python 3.9.2。
+要在 Macintosh 上安装 Python 3.*x*，请访问 *[`www.python.org/`](https://www.python.org/)*，在 **Downloads** 下选择 **Mac OS X**，然后选择最新的稳定版 Python 3 发布版本。撰写本文时，最新版本是 3.9.2。下载完成后，运行安装程序以安装 Python 3.9.2。
 
 安装完成后，打开终端窗口并通过以下命令验证安装：
 
@@ -84,7 +84,7 @@ $ python3 --version
 
 Python 3.9.2
 
-假设Python 3正确安装，现在我们可以使用终端窗口和pip3安装库，安装程序为我们配置了这些工具：
+假设 Python 3 正确安装，现在我们可以使用终端窗口和 pip3 安装库，安装程序为我们配置了这些工具：
 
 $ pip3 install numpy --user
 
@@ -94,23 +94,23 @@ $ pip3 install matplotlib --user
 
 $ pip3 install scikit-learn --user
 
-最后，我们可以在Python 3中检查库的版本。打开终端并输入 **python3** 以启动Python控制台，然后导入numpy、scipy、matplotlib和sklearn，打印版本信息，正如我们上面所做的，确认它们符合或超过最低版本要求。
+最后，我们可以在 Python 3 中检查库的版本。打开终端并输入 **python3** 以启动 Python 控制台，然后导入 numpy、scipy、matplotlib 和 sklearn，打印版本信息，正如我们上面所做的，确认它们符合或超过最低版本要求。
 
 #### Windows
 
-在Windows 10上安装Python 3和工具包，请按照以下步骤操作：
+在 Windows 10 上安装 Python 3 和工具包，请按照以下步骤操作：
 
-1.  访问 *[https://www.python.org/](https://www.python.org/)*，点击 **Downloads** 和 **Windows**。
+1.  访问 *[`www.python.org/`](https://www.python.org/)*，点击 **Downloads** 和 **Windows**。
 
-1.  在页面底部，选择x86-64可执行安装程序。
+1.  在页面底部，选择 x86-64 可执行安装程序。
 
 1.  运行安装程序，选择默认选项。
 
 1.  选择 **Install for All Users** 和 **Add Python to the Windows PATH**。这一点很重要。
 
-当安装程序完成时，Python将可从命令提示符使用，因为我们告诉安装程序将Python添加到PATH环境变量中。因此，打开命令提示符（WINDOWS-R，cmd），输入python。如果一切顺利，你将看到Python启动消息，并进入 >>> 交互式提示符。撰写本文时，安装的版本是3.8.2。请注意，要在Windows退出Python，使用CTRL-Z，而不是CTRL-D。
+当安装程序完成时，Python 将可从命令提示符使用，因为我们告诉安装程序将 Python 添加到 PATH 环境变量中。因此，打开命令提示符（WINDOWS-R，cmd），输入 python。如果一切顺利，你将看到 Python 启动消息，并进入 >>> 交互式提示符。撰写本文时，安装的版本是 3.8.2。请注意，要在 Windows 退出 Python，使用 CTRL-Z，而不是 CTRL-D。
 
-Python安装程序还帮我们安装了pip。我们可以直接在Windows命令提示符下使用它来安装所需的库。在命令提示符下，输入以下行来安装NumPy、SciPy、Matplotlib和sklearn库：
+Python 安装程序还帮我们安装了 pip。我们可以直接在 Windows 命令提示符下使用它来安装所需的库。在命令提示符下，输入以下行来安装 NumPy、SciPy、Matplotlib 和 sklearn 库：
 
 > pip install numpy
 > 
@@ -120,15 +120,15 @@ Python安装程序还帮我们安装了pip。我们可以直接在Windows命令�
 > 
 > pip install sklearn
 
-对我来说，这安装了NumPy 1.18.1、SciPy 1.4.1、Matplotlib 3.2.1和sklearn 0.22.2，满足上述最低版本要求，所以一切正常。
+对我来说，这安装了 NumPy 1.18.1、SciPy 1.4.1、Matplotlib 3.2.1 和 sklearn 0.22.2，满足上述最低版本要求，所以一切正常。
 
-为了测试，请从命令提示符启动Python，并导入numpy、scipy、matplotlib和sklearn。这三个模块都应该能顺利加载而不报错。要编写Python代码，可以安装任何你喜欢的编辑器，或者简单使用记事本。
+为了测试，请从命令提示符启动 Python，并导入 numpy、scipy、matplotlib 和 sklearn。这三个模块都应该能顺利加载而不报错。要编写 Python 代码，可以安装任何你喜欢的编辑器，或者简单使用记事本。
 
 在安装好工具包并准备就绪后，让我们快速了解每个库，至少让我们对它们稍微熟悉一些。全书中我们会看到相关的例子，但我建议你查看推荐的文档。值得一读。
 
 ### NumPy
 
-我们在上一节中安装了 NumPy。现在我将介绍一些基本的 NumPy 概念和操作。完整的教程可以在 *[https://docs.scipy.org/doc/numpy/user/quickstart.html](https://docs.scipy.org/doc/numpy/user/quickstart.html)* 上找到。
+我们在上一节中安装了 NumPy。现在我将介绍一些基本的 NumPy 概念和操作。完整的教程可以在 *[`docs.scipy.org/doc/numpy/user/quickstart.html`](https://docs.scipy.org/doc/numpy/user/quickstart.html)* 上找到。
 
 启动 Python。然后在提示符下尝试以下操作：
 
@@ -178,18 +178,18 @@ dtype('int64')
 
 #### 数据类型
 
-Python 数值数据类型有两种类型：任意大小的整数（尝试 2**1000）或浮点数。然而，NumPy 允许创建多种类型的数组。NumPy 底层是用 C 实现的，因此它支持 C 支持的相同数据类型。前面的例子展示了 np.array 函数接受了给定的列表，并且由于列表的每个元素都是整数，因此创建了一个每个元素都是带符号 64 位整数的数组。[表 1-1](ch01.xhtml#ch01tab01)列出了 NumPy 支持的数据类型；我们可以让 NumPy 为我们选择数据类型，或者我们可以明确指定数据类型。
+Python 数值数据类型有两种类型：任意大小的整数（尝试 2**1000）或浮点数。然而，NumPy 允许创建多种类型的数组。NumPy 底层是用 C 实现的，因此它支持 C 支持的相同数据类型。前面的例子展示了 np.array 函数接受了给定的列表，并且由于列表的每个元素都是整数，因此创建了一个每个元素都是带符号 64 位整数的数组。表 1-1 列出了 NumPy 支持的数据类型；我们可以让 NumPy 为我们选择数据类型，或者我们可以明确指定数据类型。
 
 **表 1-1:** NumPy 数据类型名称、C 语言等效类型及其范围
 
 | **NumPy 名称** | **等效 C 类型** | **范围** |
 | --- | --- | --- |
-| float64 | 双精度浮点数 | ±[2.225 × 10^(–308), 1.798 × 10^(308)] |
-| float32 | 浮点数 | ±[1.175 × 10^(–38), 3.403 × 10^(38)] |
-| int64 | 长整型 | [–2^(63), 2^(63)–1] |
-| uint64 | 无符号长整型 | [0, 2^(64)–1] |
-| int32 | long | [–2^(31), 2^(31)–1] |
-| uint32 | 无符号长整型 | [0, 2^(32)–1] |
+| float64 | 双精度浮点数 | ±[2.225 × 10^(–308), 1.798 × 10³⁰⁸] |
+| float32 | 浮点数 | ±[1.175 × 10^(–38), 3.403 × 10³⁸] |
+| int64 | 长整型 | [–2⁶³, 2⁶³–1] |
+| uint64 | 无符号长整型 | [0, 2⁶⁴–1] |
+| int32 | long | [–2³¹, 2³¹–1] |
+| uint32 | 无符号长整型 | [0, 2³²–1] |
 | uint8 | 无符号字符 | [0, 255 = 2²–1] |
 
 让我们看一些具有特定数据类型的数组示例：
@@ -218,13 +218,13 @@ dtype('float64')
 
 array([111, 222,  77, 188], dtype=uint8)
 
-数组a的示例使用了整数类型，而数组b的示例使用了浮点类型。注意，第一个b的例子默认使用了64位浮点数。NumPy这样做是因为输入列表中的一个元素是浮动数（4.0）。
+数组 a 的示例使用了整数类型，而数组 b 的示例使用了浮点类型。注意，第一个 b 的例子默认使用了 64 位浮点数。NumPy 这样做是因为输入列表中的一个元素是浮动数（4.0）。
 
-最后一个定义数组c的例子看起来像是一个 bug。但实际上不是。NumPy不会警告我们如果请求的数据类型无法容纳给定的值。在这里，我们有一个8位整数，它只能容纳范围在[0, 255]内的值。前两个值，111和222，符合要求，但后两个值，333和444，太大了。NumPy悄悄地只保留了这些值的最低8位，分别对应77和188。教训是，NumPy期望你知道自己在数据类型方面在做什么。通常这不是问题，但值得注意。
+最后一个定义数组 c 的例子看起来像是一个 bug。但实际上不是。NumPy 不会警告我们如果请求的数据类型无法容纳给定的值。在这里，我们有一个 8 位整数，它只能容纳范围在[0, 255]内的值。前两个值，111 和 222，符合要求，但后两个值，333 和 444，太大了。NumPy 悄悄地只保留了这些值的最低 8 位，分别对应 77 和 188。教训是，NumPy 期望你知道自己在数据类型方面在做什么。通常这不是问题，但值得注意。
 
 #### 二维数组
 
-如果一个列表变成了一个1D向量，我们可能会怀疑一个由列表组成的列表会变成一个2D数组。我们猜对了：
+如果一个列表变成了一个 1D 向量，我们可能会怀疑一个由列表组成的列表会变成一个 2D 数组。我们猜对了：
 
 >>> d = np.array([[1,2,3],[4,5,6],[7,8,9]])
 
@@ -244,11 +244,11 @@ array([[1, 2, 3],
 
 [7, 8, 9]])
 
-我们看到三个子列表组成的列表被映射到一个3×3的数组（一个矩阵）。NumPy数组的下标是从零开始的，因此上面引用的d[1,2]返回的是6。
+我们看到三个子列表组成的列表被映射到一个 3×3 的数组（一个矩阵）。NumPy 数组的下标是从零开始的，因此上面引用的 d[1,2]返回的是 6。
 
 #### 零与一
 
-有两个特别有用的NumPy函数，分别是np.zeros和np.ones。两者都可以根据给定的形状定义数组。第一个将数组元素初始化为零，而第二个将它们初始化为一。这是从头创建NumPy数组的主要方法：
+有两个特别有用的 NumPy 函数，分别是 np.zeros 和 np.ones。两者都可以根据给定的形状定义数组。第一个将数组元素初始化为零，而第二个将它们初始化为一。这是从头创建 NumPy 数组的主要方法：
 
 >>> a = np.zeros((3,4), dtype="uint32")
 
@@ -274,11 +274,11 @@ array([[11.],
 
 [11.]])
 
-第一个参数是一个元组，表示每个维度的大小。如果我们传入一个标量，结果数组就是一个1D向量。让我们看看b的定义。在这里，我们将3×1的数组与一个标量（11）相乘。这导致数组中的每个元素，初始值为1.0，都被乘以11。
+第一个参数是一个元组，表示每个维度的大小。如果我们传入一个标量，结果数组就是一个 1D 向量。让我们看看 b 的定义。在这里，我们将 3×1 的数组与一个标量（11）相乘。这导致数组中的每个元素，初始值为 1.0，都被乘以 11。
 
 #### 高级索引
 
-我们在上面的例子中看到的是简单的数组索引，其中我们使用单一的值进行索引。NumPy支持更复杂的数组索引。我们常用的一种类型是单个索引返回一个完整的子数组。以下是一个例子：
+我们在上面的例子中看到的是简单的数组索引，其中我们使用单一的值进行索引。NumPy 支持更复杂的数组索引。我们常用的一种类型是单个索引返回一个完整的子数组。以下是一个例子：
 
 >>> a = np.arange(12).reshape((3,4))
 
@@ -470,7 +470,7 @@ array([[4, 2, 1, 3],
 
 ### SciPy
 
-SciPy 为 Python 添加了大量功能。它在底层使用 NumPy，因此两者通常一起安装。这里有一个完整的教程：[https://docs.scipy.org/doc/scipy/reference/tutorial/index.html](https://docs.scipy.org/doc/scipy/reference/tutorial/index.html)*。
+SciPy 为 Python 添加了大量功能。它在底层使用 NumPy，因此两者通常一起安装。这里有一个完整的教程：[`docs.scipy.org/doc/scipy/reference/tutorial/index.html`](https://docs.scipy.org/doc/scipy/reference/tutorial/index.html)*。
 
 在本书中，我们将重点介绍 scipy.stats 模块中的函数。启动 Python 并尝试以下操作：
 
@@ -524,9 +524,9 @@ ttest_ind 函数的输出列出了 *p*-值（pvalue）。正如我们预期的�
 
 >>> plt.show()
 
-这个例子加载了 NumPy，Matplotlib 与它配合使用效果最佳，并生成一个包含 100 个随机值（范围为 [0, 1)）的向量 x，这是 np.random.random 的输出。然后我们使用 plt.plot 绘制这个向量，并用 plt.show 显示它。Matplotlib 的输出是交互式的。可以在图表上进行操作，熟悉如何使用绘图窗口。例如，[图 1-1](ch01.xhtml#ch01fig01) 显示了在 Linux 上绘图窗口的样子。由于绘图是随机的，你将看到一组不同的值，但窗口上的控件将保持不变。
+这个例子加载了 NumPy，Matplotlib 与它配合使用效果最佳，并生成一个包含 100 个随机值（范围为 0, 1)）的向量 x，这是 np.random.random 的输出。然后我们使用 plt.plot 绘制这个向量，并用 plt.show 显示它。Matplotlib 的输出是交互式的。可以在图表上进行操作，熟悉如何使用绘图窗口。例如，[图 1-1 显示了在 Linux 上绘图窗口的样子。由于绘图是随机的，你将看到一组不同的值，但窗口上的控件将保持不变。
 
-![image](Images/01fig01.jpg)
+![image](img/01fig01.jpg)
 
 *图 1-1：一个示例的 Matplotlib 绘图窗口*
 

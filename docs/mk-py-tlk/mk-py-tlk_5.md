@@ -2,7 +2,7 @@
 
 安装播放音频文件的模块
 
-![](Images/chapterart.png)
+![](img/chapterart.png)
 
 在本附录中，我将讨论在 Python 中播放音频文件的各种模块。虽然无法考虑到所有硬件和操作系统组合的差异，但我已经在多种硬件和软件平台上测试了本书中的指示。在此过程中，我遇到了各种问题，我希望帮助你避免这些问题。
 
@@ -60,7 +60,7 @@
 
 ## 安装 pygame 模块
 
-由于软件不断更新，安装说明可能会有所变化。如果你遇到问题，建议参考 Pygame 官方网站 [https://www.pygame.org/wiki/GettingStarted/](https://www.pygame.org/wiki/GettingStarted/) 以获取最新的安装说明。
+由于软件不断更新，安装说明可能会有所变化。如果你遇到问题，建议参考 Pygame 官方网站 [`www.pygame.org/wiki/GettingStarted/`](https://www.pygame.org/wiki/GettingStarted/) 以获取最新的安装说明。
 
 ### Windows
 
@@ -94,7 +94,7 @@
 
 ## 安装 vlc 模块
 
-对于 *vlc* 模块，无论你使用哪种操作系统，都需要在计算机上安装 VLC 媒体播放器。请访问 VLC 网站 [https://www.videolan.org/index.html](https://www.videolan.org/index.html) 下载并安装该软件。
+对于 *vlc* 模块，无论你使用哪种操作系统，都需要在计算机上安装 VLC 媒体播放器。请访问 VLC 网站 [`www.videolan.org/index.html`](https://www.videolan.org/index.html) 下载并安装该软件。
 
 在 Linux 中，你可以通过在终端执行此命令来安装该应用：
 

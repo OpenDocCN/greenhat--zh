@@ -2,7 +2,7 @@
 
 部署你自己的聊天机器人**
 
-![Image](../Images/comm1.jpg)
+![Image](img/comm1.jpg)
 
 在之前的章节中，你通过手动将文本分配给文档对象来硬编码所有输入到你的 NLP 脚本中。但当你为类似接受订单这样的任务构建聊天机器人时，事情会变得更复杂。你将需要将应用部署到*机器人频道*，例如 Telegram，它促进了机器人与用户之间的通信。
 
@@ -14,9 +14,9 @@
 
 一个典型的聊天机器人应用由多个层次组成。在你完成了处理用户输入的逻辑后，你需要一个允许创建程序账户的消息应用。用户不会直接与机器上的机器人实现交互；相反，他们会通过消息应用与机器人聊天。除了消息应用之外，你的聊天机器人可能还需要一些额外的服务，例如数据库或其他存储。
 
-[图 11-1](../Text/ch11.xhtml#ch11fig01)中的示意图展示了典型聊天机器人应用如何结合这些层次。
+图 11-1 中的示意图展示了典型聊天机器人应用如何结合这些层次。
 
-![image](../Images/fig11-1.jpg)
+![image](img/fig11-1.jpg)
 
 *图 11-1：用户与集成到消息应用中的机器人之间的典型交互*
 
@@ -38,15 +38,15 @@ Telegram 是一个基于云的消息应用，是全球最顶尖的消息应用�
 
 在您可以在 Telegram 中创建机器人之前，您必须先注册一个 Telegram 账户。为此，您需要一部运行 iOS 或 Android 系统的智能手机或平板电脑。PC 版本的 Telegram 不支持此操作。不过，一旦您创建了 Telegram 账户，就可以在 PC 上使用它。
 
-您可以在 *[https://telegramguide.com/create-a-telegram-account/](https://telegramguide.com/create-a-telegram-account/)* 找到指导您创建 Telegram 账户的步骤。一旦您拥有了 Telegram 账户，就可以创建一个机器人。您可以通过智能手机或 PC 来完成此操作，具体步骤如下所示：
+您可以在 *[`telegramguide.com/create-a-telegram-account/`](https://telegramguide.com/create-a-telegram-account/)* 找到指导您创建 Telegram 账户的步骤。一旦您拥有了 Telegram 账户，就可以创建一个机器人。您可以通过智能手机或 PC 来完成此操作，具体步骤如下所示：
 
-1.  在 Telegram 应用中，搜索 @BotFather 或打开 URL *[https://telegram.me/botfather/](https://telegram.me/botfather/)*。BotFather 是一个 Telegram 机器人，用于管理您账户中的所有其他机器人。
+1.  在 Telegram 应用中，搜索 @BotFather 或打开 URL *[`telegram.me/botfather/`](https://telegram.me/botfather/)*。BotFather 是一个 Telegram 机器人，用于管理您账户中的所有其他机器人。
 
 1.  在 BotFather 页面，点击**开始**按钮，查看您可以使用的命令列表，以设置您的 Telegram 机器人。
 
-1.  要创建一个新机器人，在**写消息**框中输入 /newbot 命令。系统将提示您为机器人设置一个名称和用户名。然后，您将获得新机器人的授权令牌。[图 11-2](../Text/ch11.xhtml#ch11fig02)展示了在智能手机上进行此过程的截图。
+1.  要创建一个新机器人，在**写消息**框中输入 /newbot 命令。系统将提示您为机器人设置一个名称和用户名。然后，您将获得新机器人的授权令牌。图 11-2 展示了在智能手机上进行此过程的截图。
 
-![image](../Images/fig11-2.jpg)
+![image](img/fig11-2.jpg)
 
 *图 11-2：在 Telegram 中使用智能手机创建新机器人*
 
@@ -166,13 +166,13 @@ updater.idle()
 
 现在，您大致了解了如何将一个使用 spaCy 的聊天机器人集成到 Telegram 中，让我们创建一个更有趣的机器人。例如，您可以增强上一节中机器人的功能，使其从用户的消息中提取意图，而不仅仅是打印一个“请求正在处理中”的消息。为此，您可以重复使用前几章中的一个脚本。
 
-返回到脚本 “[使用预定义列表识别同义词](../Text/ch08.xhtml#lev110)” 中，位于[第117页](../Text/ch08.xhtml#page_117)的[第8章](../Text/ch08.xhtml#ch08)，该脚本使用同义词列表从提交的语句中提取意图。将此脚本中的代码放入一个单独的函数中，比如 `extract_intent()`，该函数应该接受一个参数——用户消息的文本作为一个 Doc 对象（确保排除脚本开头的硬编码语句以及打印意图的代码行）。此外，您创建的函数必须返回一个被识别的意图作为字符串。在您创建的脚本中，将新函数放置在回调函数之上，并修改回调函数，使其如下所示：
+返回到脚本 “使用预定义列表识别同义词” 中，位于第 117 页的第八章，该脚本使用同义词列表从提交的语句中提取意图。将此脚本中的代码放入一个单独的函数中，比如 `extract_intent()`，该函数应该接受一个参数——用户消息的文本作为一个 Doc 对象（确保排除脚本开头的硬编码语句以及打印意图的代码行）。此外，您创建的函数必须返回一个被识别的意图作为字符串。在您创建的脚本中，将新函数放置在回调函数之上，并修改回调函数，使其如下所示：
 
 ...
 
 def extract_intent(doc):
 
-#将来自[第8章](../Text/ch08.xhtml#ch08)的代码放在这里
+#将来自第八章的代码放在这里
 
 def utterance(update, context):
 
@@ -182,7 +182,7 @@ nlp = spacy.load('en')
 
 doc = nlp(msg)
 
-对于文档中的每个token：
+对于文档中的每个 token：
 
 如果 token.dep_ == 'dobj':
 
@@ -212,7 +212,7 @@ update.message.reply_text('请重新表述您的请求。尽量具体一些。')
 
 我们在发言回调函数中调用新创建的 extract_intent() 函数，以获取用户的意图 ➊。然后根据获得的意图采取相应的行动。在这个例子中，我们简单地发送一个相关的消息给用户 ➋。
 
-尽管我们可以将[第8章](../Text/ch08.xhtml#ch08)中的代码直接放入回调函数中，但这样做会降低代码的整体可读性，因此被认为是一个不好的实践。
+尽管我们可以将第八章中的代码直接放入回调函数中，但这样做会降低代码的整体可读性，因此被认为是一个不好的实践。
 
 #### ***保持当前聊天的状态***
 
@@ -224,7 +224,7 @@ update.message.reply_text('请重新表述您的请求。尽量具体一些。')
 
 为了帮助你简化这种实现，python-telegram-bot 库包括了 ConversationHandler 对象；它允许你通过将入口点和对话的状态与处理程序关联来定义这些入口点和状态。
 
-入口点——例如，像/start这样的Telegram命令——会附加到一个处理程序上，触发聊天的开始。处理程序的回调必须返回对话的初始状态；这个操作决定了后续用户消息使用哪个处理程序。为了改变对话的状态，处理程序的回调会在回复用户后返回一个新的状态。
+入口点——例如，像/start 这样的 Telegram 命令——会附加到一个处理程序上，触发聊天的开始。处理程序的回调必须返回对话的初始状态；这个操作决定了后续用户消息使用哪个处理程序。为了改变对话的状态，处理程序的回调会在回复用户后返回一个新的状态。
 
 以下代码展示了如何使用 ConversationHandler 在聊天机器人和用户之间改变对话状态：
 
@@ -330,7 +330,7 @@ def extract_intent(doc):
 
 return intent
 
-extract_intent() 函数从用户提交的语句中提取意图。我们将在下一个定义的 intent_ext() 回调函数中调用这个函数。extract_intent() 函数的代码在此未提供，但你可以参考早些时候在 “[扩展聊天机器人](../Text/ch11.xhtml#lev152)” 一节中的代码，见 [第161页](../Text/ch11.xhtml#page_161)。
+extract_intent() 函数从用户提交的语句中提取意图。我们将在下一个定义的 intent_ext() 回调函数中调用这个函数。extract_intent() 函数的代码在此未提供，但你可以参考早些时候在 “扩展聊天机器人” 一节中的代码，见 第 161 页。
 
 def details_to_str(user_data):
 
@@ -342,7 +342,7 @@ details.append('{} - {}'.format(key, value))
 
 return "\n".join(details).join(['\n', '\n'])
 
-details_to_str()函数仅仅是将user_data字典的内容转换为字符串。user_data字典包含了聊天机器人从对话中提取的信息，例如用户想要的披萨种类和数量。机器人将在最终发送给用户的消息中包含这些信息。
+details_to_str()函数仅仅是将 user_data 字典的内容转换为字符串。user_data 字典包含了聊天机器人从对话中提取的信息，例如用户想要的披萨种类和数量。机器人将在最终发送给用户的消息中包含这些信息。
 
 到目前为止，我们已经定义了将被调用的辅助函数——这些函数将直接或间接地从机器人的回调函数中被调用。现在让我们定义回调函数。
 
@@ -352,7 +352,7 @@ update.message.reply_text('嗨！这是一个披萨订购应用。你想点点�
 
 return 'ORDERING'
 
-start()函数是/start Telegram命令的回调函数。换句话说，聊天机器人在开始聊天时会调用此函数。该函数返回ORDERING状态，这意味着接收到的下一条消息将由附加到ORDERING状态处理器的回调函数（在本示例中是intent_ext()函数）处理。
+start()函数是/start Telegram 命令的回调函数。换句话说，聊天机器人在开始聊天时会调用此函数。该函数返回 ORDERING 状态，这意味着接收到的下一条消息将由附加到 ORDERING 状态处理器的回调函数（在本示例中是 intent_ext()函数）处理。
 
 def intent_ext(update, context):
 
@@ -388,7 +388,7 @@ return
 
 update.message.reply_text('请重新表述您的请求。尽量具体一些！')
 
-为了简化，intent_ext()函数在这里仅能识别一个意图：orderPizza。如果它检测到该意图，则返回ADD_INFO状态。否则，它返回ORDERING状态，这将导致intent_ext()函数再次被调用以处理下一个用户消息。ADD_INFO状态的处理器可以如下实现：
+为了简化，intent_ext()函数在这里仅能识别一个意图：orderPizza。如果它检测到该意图，则返回 ADD_INFO 状态。否则，它返回 ORDERING 状态，这将导致 intent_ext()函数再次被调用以处理下一个用户消息。ADD_INFO 状态的处理器可以如下实现：
 
 def add_info(update, context):
 
@@ -424,7 +424,7 @@ update.message.reply_text("无法提取必要的信息。请再试一次。")
 
 return 'ADD_INFO'
 
-add_info()函数是ADD_INFO状态处理器的回调函数。在这个实现中，它期望用户在点披萨时会指定他们想要的披萨类型，然后将状态切换到ConversationHandler.END，即最后一个状态，具体如下：
+add_info()函数是 ADD_INFO 状态处理器的回调函数。在这个实现中，它期望用户在点披萨时会指定他们想要的披萨类型，然后将状态切换到 ConversationHandler.END，即最后一个状态，具体如下：
 
 def cancel(update, context):
 
@@ -432,7 +432,7 @@ update.message.reply_text("祝你有个愉快的一天！")
 
 return ConversationHandler.END
 
-这里使用的cancel()函数仅仅是向用户发送一条告别消息，并将状态切换到ConversationHandler.END。
+这里使用的 cancel()函数仅仅是向用户发送一条告别消息，并将状态切换到 ConversationHandler.END。
 
 最后，main() 函数应如下所示：
 
@@ -480,9 +480,9 @@ main()
 
 像往常一样，机器人脚本的 main() 函数负责协调机器人的执行过程。
 
-你可以通过计算机上的 Telegram 网页应用或智能手机上的 Telegram 应用来测试该脚本。[图 11-3](../Text/ch11.xhtml#ch11fig03) 显示了运行脚本时，Telegram 网页应用的屏幕截图。
+你可以通过计算机上的 Telegram 网页应用或智能手机上的 Telegram 应用来测试该脚本。图 11-3 显示了运行脚本时，Telegram 网页应用的屏幕截图。
 
-![image](../Images/fig11-3.jpg)
+![image](img/fig11-3.jpg)
 
 *图 11-3：使用 Telegram 网页应用测试你的机器人*
 

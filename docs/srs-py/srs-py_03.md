@@ -2,7 +2,7 @@
 
 **文档与良好的 API 实践**
 
-![image](../images/common01.jpg)
+![image](img/common01.jpg)
 
 在本章中，我们将讨论文档编写；特别是如何使用 *Sphinx* 自动化处理文档编写过程中较为繁琐和棘手的部分。虽然你仍然需要自己编写文档，但 Sphinx 会简化你的任务。由于使用 Python 库提供功能很常见，我们还将探讨如何管理和记录公共 API 的变更。由于 API 必须随着功能的变化而发展，从一开始就把一切都构建得完美是罕见的，但我会展示一些方法，帮助你确保你的 API 尽可能用户友好。
 
@@ -16,7 +16,7 @@
 
 有时，文档编写过程与开发过程完全分开，意味着文档是由那些没有编写实际代码的人来写的。此外，以这种方式生成的任何文档都很可能是过时的：无论谁来处理，手动编写文档几乎不可能跟得上开发的步伐。
 
-归根结底，代码和文档之间的隔阂越大，后者保持更新的难度就越大。那么，为什么要将它们分开呢？不仅可以将文档直接放在代码中，而且将文档转换为易于阅读的HTML和PDF文件也很简单。
+归根结底，代码和文档之间的隔阂越大，后者保持更新的难度就越大。那么，为什么要将它们分开呢？不仅可以将文档直接放在代码中，而且将文档转换为易于阅读的 HTML 和 PDF 文件也很简单。
 
 Python 文档的最常见格式是 *reStructuredText*，简称 *reST*。它是一种轻量级标记语言（类似于 Markdown），对于人类和计算机来说，都同样易于阅读和编写。Sphinx 是最常用的处理这种格式的工具；Sphinx 可以读取 reST 格式的内容，并以多种其他格式输出文档。
 
@@ -40,17 +40,17 @@ Python 文档的最常见格式是 *reStructuredText*，简称 *reST*。它是�
 
 **注意**
 
-*如果你使用 GitHub，你还可以添加一个 CONTRIBUTING.rst 文件，当有人提交拉取请求时，它会显示出来。该文件应提供一个检查清单，供用户在提交请求之前遵循，包括诸如代码是否遵循 PEP 8 规范、是否运行单元测试等提醒。Read the Docs ([http://readthedocs.org/](http://readthedocs.org/)) 允许你自动构建并发布在线文档。注册和配置项目非常简单。然后 Read the Docs 会搜索你的 Sphinx 配置文件，构建文档并让用户访问。它是代码托管网站的一个绝佳伴侣。*
+*如果你使用 GitHub，你还可以添加一个 CONTRIBUTING.rst 文件，当有人提交拉取请求时，它会显示出来。该文件应提供一个检查清单，供用户在提交请求之前遵循，包括诸如代码是否遵循 PEP 8 规范、是否运行单元测试等提醒。Read the Docs ([`readthedocs.org/`](http://readthedocs.org/)) 允许你自动构建并发布在线文档。注册和配置项目非常简单。然后 Read the Docs 会搜索你的 Sphinx 配置文件，构建文档并让用户访问。它是代码托管网站的一个绝佳伴侣。*
 
 #### ***开始使用 Sphinx 和 reST***
 
-你可以从 *[http://www.sphinx-doc.org/](http://www.sphinx-doc.org/)* 获取 Sphinx。网站上有安装说明，但最简单的方法是使用 `pip install sphinx` 安装。
+你可以从 *[`www.sphinx-doc.org/`](http://www.sphinx-doc.org/)* 获取 Sphinx。网站上有安装说明，但最简单的方法是使用 `pip install sphinx` 安装。
 
 一旦安装了 Sphinx，在你项目的顶层目录下运行 sphinx-quickstart。这将创建 Sphinx 期望找到的目录结构，并在 *doc/source* 文件夹中创建两个文件：*conf.py*，它包含 Sphinx 的配置设置（这是 Sphinx 工作所必需的），以及 *index.rst*，它作为文档的首页。运行快速启动命令后，系统会引导你完成一系列步骤，用以指定命名约定、版本约定以及其他有用工具和标准的选项。
 
 *conf.py* 文件包含了一些已文档化的变量，如项目名称、作者以及用于 HTML 输出的主题。你可以根据需要随时编辑此文件。
 
-一旦你构建了结构并设置了默认值，就可以通过调用 sphinx-build 并将源目录和输出目录作为参数，来构建 HTML 格式的文档，如 [示例 3-1](ch03.xhtml#ch3list1) 所示。命令 sphinx-build 会读取源目录中的 *conf.py* 文件，并解析该目录下的所有 *.rst* 文件。然后它会在输出目录中以 HTML 格式渲染这些文件。
+一旦你构建了结构并设置了默认值，就可以通过调用 sphinx-build 并将源目录和输出目录作为参数，来构建 HTML 格式的文档，如 示例 3-1 所示。命令 sphinx-build 会读取源目录中的 *conf.py* 文件，并解析该目录下的所有 *.rst* 文件。然后它会在输出目录中以 HTML 格式渲染这些文件。
 
 $ sphinx-build doc/source doc/build
 
@@ -86,9 +86,9 @@ import pkg_resources
 
 **注意**
 
-*如果你使用 setuptools 或 pbr（见 [第 5 章](ch05.xhtml#ch05)）进行打包，Sphinx 扩展了它们以支持命令 setup.py build_sphinx，这将自动运行 sphinx-build。Sphinx 的 pbr 集成提供了一些更合理的默认设置，例如将文档输出到 /doc 子目录中。*
+*如果你使用 setuptools 或 pbr（见 第五章）进行打包，Sphinx 扩展了它们以支持命令 setup.py build_sphinx，这将自动运行 sphinx-build。Sphinx 的 pbr 集成提供了一些更合理的默认设置，例如将文档输出到 /doc 子目录中。*
 
-你的文档从 *index.rst* 文件开始，但不一定就此结束：reST 支持包含指令，可以从其他 reST 文件中包含 reST 文件，所以你可以将文档分成多个文件，没有任何障碍。刚开始时不用过于担心语法和语义；reST 提供了许多格式化的可能性，但你以后有足够的时间深入了解参考资料。完整的参考资料 (*[http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html](http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html)*) 解释了如何创建标题、项目符号列表、表格等。
+你的文档从 *index.rst* 文件开始，但不一定就此结束：reST 支持包含指令，可以从其他 reST 文件中包含 reST 文件，所以你可以将文档分成多个文件，没有任何障碍。刚开始时不用过于担心语法和语义；reST 提供了许多格式化的可能性，但你以后有足够的时间深入了解参考资料。完整的参考资料 (*[`docutils.sourceforge.net/docs/ref/rst/restructuredtext.html`](http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html)*) 解释了如何创建标题、项目符号列表、表格等。
 
 #### ***Sphinx 模块***
 
@@ -96,7 +96,7 @@ Sphinx 是高度可扩展的：其基本功能仅支持手动文档化，但它�
 
 扩展 = ['sphinx.ext.autodoc']
 
-请注意，autodoc *不会* 自动识别并包含你的模块。你需要显式指明希望文档化的模块，方法是将类似 [列表 3-2](ch03.xhtml#ch3list2) 的内容添加到你的 *.rst* 文件中。
+请注意，autodoc *不会* 自动识别并包含你的模块。你需要显式指明希望文档化的模块，方法是将类似 列表 3-2 的内容添加到你的 *.rst* 文件中。
 
 .. automodule:: foobar
 
@@ -108,7 +108,7 @@ Sphinx 是高度可扩展的：其基本功能仅支持手动文档化，但它�
 
 *列表 3-2：指定模块供 autodoc 文档化*
 
-在 [列表 3-2](ch03.xhtml#ch3list2) 中，我们发出了三个请求，所有这些请求都是可选的：打印所有已记录的成员 ➊，打印所有未记录的成员 ➋，以及显示继承关系 ➌。还请注意以下几点：
+在 列表 3-2 中，我们发出了三个请求，所有这些请求都是可选的：打印所有已记录的成员 ➊，打印所有未记录的成员 ➋，以及显示继承关系 ➌。还请注意以下几点：
 
 +   如果你不包含任何指令，Sphinx 将不会生成任何输出。
 
@@ -154,17 +154,17 @@ foobar
 
 在文档中包含此类示例可以帮助用户理解你的 API。然而，随着 API 的发展，很容易拖延并最终忘记更新示例。幸运的是，doctest 可以确保这种情况不会发生。如果你的文档包括逐步教程，doctest 会通过测试它能检查的每一行来帮助你在开发过程中保持文档的最新。
 
-你还可以使用doctest进行*文档驱动开发（DDD）*：先编写文档和示例，然后编写代码以匹配文档。利用此功能非常简单，只需使用特殊的doctest构建器运行sphinx-build，例如：
+你还可以使用 doctest 进行*文档驱动开发（DDD）*：先编写文档和示例，然后编写代码以匹配文档。利用此功能非常简单，只需使用特殊的 doctest 构建器运行 sphinx-build，例如：
 
 $ sphinx-build -b doctest doc/source doc/build
 
-运行Sphinx v1.2b1
+运行 Sphinx v1.2b1
 
 正在加载腌制的环境... 完成
 
-正在构建[doctest]：1个过期源文件的目标
+正在构建[doctest]：1 个过期源文件的目标
 
-更新环境：0新增，0更改，0移除
+更新环境：0 新增，0 更改，0 移除
 
 正在寻找过时的文件... 未找到
 
@@ -174,21 +174,21 @@ $ sphinx-build -b doctest doc/source doc/build
 
 ---------------
 
-1个项目通过了所有测试：
+1 个项目通过了所有测试：
 
-默认情况下的1个测试
+默认情况下的 1 个测试
 
-1个测试在1个项目中通过。
+1 个测试在 1 个项目中通过。
 
-1个通过，0个失败。
+1 个通过，0 个失败。
 
 测试通过。
 
-Doctest总结
+Doctest 总结
 
 ===============
 
-1个测试
+1 个测试
 
 测试中没有失败
 
@@ -198,37 +198,37 @@ Doctest总结
 
 构建成功。
 
-使用doctest构建器时，Sphinx会读取常规的*.rst*文件，并执行其中包含的代码示例。
+使用 doctest 构建器时，Sphinx 会读取常规的*.rst*文件，并执行其中包含的代码示例。
 
-Sphinx还提供了许多其他功能，既有开箱即用的，也有通过扩展模块提供的，包括这些：
+Sphinx 还提供了许多其他功能，既有开箱即用的，也有通过扩展模块提供的，包括这些：
 
 +   项目间链接
 
-+   HTML主题
++   HTML 主题
 
 +   图表和公式
 
-+   输出到Texinfo和EPUB格式
++   输出到 Texinfo 和 EPUB 格式
 
 +   链接到外部文档
 
-你可能不需要立即使用所有这些功能，但如果将来需要的话，提前了解这些功能是很有帮助的。再次查看完整的Sphinx文档以了解更多。
+你可能不需要立即使用所有这些功能，但如果将来需要的话，提前了解这些功能是很有帮助的。再次查看完整的 Sphinx 文档以了解更多。
 
-#### ***编写Sphinx扩展***
+#### ***编写 Sphinx 扩展***
 
 有时候现成的解决方案不足以应对某些情况，你需要创建自定义工具来解决问题。
 
-假设你正在编写一个HTTP REST API。Sphinx只会记录你的API的Python部分，这迫使你手动编写REST API文档，并且会遇到所有相关的问题。Web Services Made Easy (WSME)的创建者（本章末尾的访谈中提到）提出了一个解决方案：一个名为sphinxcontrib-pecanwsme的Sphinx扩展，它分析文档字符串和实际Python代码，自动生成REST API文档。
+假设你正在编写一个 HTTP REST API。Sphinx 只会记录你的 API 的 Python 部分，这迫使你手动编写 REST API 文档，并且会遇到所有相关的问题。Web Services Made Easy (WSME)的创建者（本章末尾的访谈中提到）提出了一个解决方案：一个名为 sphinxcontrib-pecanwsme 的 Sphinx 扩展，它分析文档字符串和实际 Python 代码，自动生成 REST API 文档。
 
 **注意**
 
-*对于其他HTTP框架，如Flask、Bottle和Tornado，你可以使用sphinxcontrib.httpdomain。*
+*对于其他 HTTP 框架，如 Flask、Bottle 和 Tornado，你可以使用 sphinxcontrib.httpdomain。*
 
-我的观点是，每当你知道可以从代码中提取信息来生成文档时，就应该这样做，并且应当自动化这个过程。这比尝试维护手写的文档要好，特别是当你可以利用像Read the Docs这样的自动发布工具时。
+我的观点是，每当你知道可以从代码中提取信息来生成文档时，就应该这样做，并且应当自动化这个过程。这比尝试维护手写的文档要好，特别是当你可以利用像 Read the Docs 这样的自动发布工具时。
 
-我们将以 sphinxcontrib-pecanwsme 扩展为例，介绍如何编写自己的 Sphinx 扩展。第一步是编写一个模块——最好作为 sphinxcontrib 的子模块，只要你的模块足够通用——并为其选择一个名称。Sphinx 要求此模块必须有一个名为 setup(app) 的预定义函数，该函数包含你用来将代码连接到 Sphinx 事件和指令的方法。完整的方法列表可以在 Sphinx 扩展 API 中找到，地址是 *[http://www.sphinx-doc.org/en/master/extdev/appapi.html](http://www.sphinx-doc.org/en/master/extdev/appapi.html)*。
+我们将以 sphinxcontrib-pecanwsme 扩展为例，介绍如何编写自己的 Sphinx 扩展。第一步是编写一个模块——最好作为 sphinxcontrib 的子模块，只要你的模块足够通用——并为其选择一个名称。Sphinx 要求此模块必须有一个名为 setup(app) 的预定义函数，该函数包含你用来将代码连接到 Sphinx 事件和指令的方法。完整的方法列表可以在 Sphinx 扩展 API 中找到，地址是 *[`www.sphinx-doc.org/en/master/extdev/appapi.html`](http://www.sphinx-doc.org/en/master/extdev/appapi.html)*。
 
-例如，sphinxcontrib-pecanwsme 扩展包含一个名为 rest-controller 的指令，通过使用 setup(app) 函数添加。此添加的指令需要一个完全限定的控制器类名来生成文档，如 [列表 3-3](ch03.xhtml#ch3list3) 所示。
+例如，sphinxcontrib-pecanwsme 扩展包含一个名为 rest-controller 的指令，通过使用 setup(app) 函数添加。此添加的指令需要一个完全限定的控制器类名来生成文档，如 列表 3-3 所示。
 
 def setup(app):
 
@@ -236,9 +236,9 @@ app.add_directive('rest-controller', RESTControllerDirective)
 
 *列表 3-3：来自 sphinxcontrib.pecanwsme.rest.setup 的代码，添加了 rest-controller 指令*
 
-[列表 3-3](ch03.xhtml#ch3list3) 中的 add_directive 方法注册了 rest-controller 指令，并将其处理委托给 RESTControllerDirective 类。此 RESTControllerDirective 类公开了某些属性，用于指示指令如何处理内容，是否有参数等。该类还实现了一个 run() 方法，实际上从代码中提取文档并将解析后的数据返回给 Sphinx。
+列表 3-3 中的 add_directive 方法注册了 rest-controller 指令，并将其处理委托给 RESTControllerDirective 类。此 RESTControllerDirective 类公开了某些属性，用于指示指令如何处理内容，是否有参数等。该类还实现了一个 run() 方法，实际上从代码中提取文档并将解析后的数据返回给 Sphinx。
 
-在 *[https://bitbucket.org/birkenfeld/sphinx-contrib/src/](https://bitbucket.org/birkenfeld/sphinx-contrib/src/)* 上的代码库中，有许多小模块可以帮助你开发自己的扩展。
+在 *[`bitbucket.org/birkenfeld/sphinx-contrib/src/`](https://bitbucket.org/birkenfeld/sphinx-contrib/src/)* 上的代码库中，有许多小模块可以帮助你开发自己的扩展。
 
 **注意**
 
@@ -262,7 +262,7 @@ app.add_directive('rest-controller', RESTControllerDirective)
 
 当正确构建时，API 的版本号可以为用户提供大量信息。Python 没有特别的系统或约定来标识 API 版本，但我们可以从 Unix 平台中获取灵感，Unix 平台使用复杂的管理系统为库提供精细的版本标识符。
 
-通常，版本号应反映出会影响用户的 API 变化。例如，当 API 进行重大更改时，主版本号可能会从 1 更改为 2。如果只添加了少量新的 API 调用，次版本号可能会从 2.2 更改为 2.3。如果更改仅涉及修复漏洞，版本号可能会从 2.2.0 升级到 2.2.1。Python 的 requests 库是如何使用版本号的一个很好的例子 (*[https://pypi.python.org/pypi/requests/](https://pypi.python.org/pypi/requests/)*)，该库基于每个新版本中的更改数量以及这些更改对消费程序的影响来递增其 API 版本号。
+通常，版本号应反映出会影响用户的 API 变化。例如，当 API 进行重大更改时，主版本号可能会从 1 更改为 2。如果只添加了少量新的 API 调用，次版本号可能会从 2.2 更改为 2.3。如果更改仅涉及修复漏洞，版本号可能会从 2.2.0 升级到 2.2.1。Python 的 requests 库是如何使用版本号的一个很好的例子 (*[`pypi.python.org/pypi/requests/`](https://pypi.python.org/pypi/requests/)*)，该库基于每个新版本中的更改数量以及这些更改对消费程序的影响来递增其 API 版本号。
 
 版本号提示开发者应该查看库的两个版本之间的变化，但仅凭版本号并不足以完全指导开发者：你必须提供详细的文档来描述这些变化。
 
@@ -278,7 +278,7 @@ app.add_directive('rest-controller', RESTControllerDirective)
 
 你还应该确保不要立刻删除旧的接口。我建议在遇到麻烦之前继续保留旧接口。如果你已经标记为废弃，用户就会知道不要使用它。
 
-[Listing 3-4](ch03.xhtml#ch3list4) 是一个很好的 API 变更文档示例，展示了一个可以转向任意方向的汽车对象的代码。由于某种原因，开发者决定撤回 `turn_left` 方法，而是提供一个通用的 `turn` 方法，能够接受方向作为参数。
+Listing 3-4 是一个很好的 API 变更文档示例，展示了一个可以转向任意方向的汽车对象的代码。由于某种原因，开发者决定撤回 `turn_left` 方法，而是提供一个通用的 `turn` 方法，能够接受方向作为参数。
 
 class Car(object):
 
@@ -314,9 +314,9 @@ pass
 
 使用这种废弃方法并通过 Sphinx 使其可见，可以清晰地告诉用户该函数不应使用，并直接提供新的函数，同时解释如何迁移旧代码。
 
-[图 3-1](ch03.xhtml#ch3fig1) 显示了 Sphinx 文档，解释了一些废弃函数。
+图 3-1 显示了 Sphinx 文档，解释了一些废弃函数。
 
-![image](../images/f03-01.jpg)
+![image](img/f03-01.jpg)
 
 *图 3-1：某些废弃函数的说明*
 
@@ -330,7 +330,7 @@ pass
 
 *对于从事 C 开发的人来说，这是 GCC 扩展 __attribute__ ((deprecated)) 的一个便捷对应物。*
 
-回到 [Listing 3-4](ch03.xhtml#ch3list4) 中的汽车对象示例，我们可以用这个方法在用户尝试调用废弃函数时发出警告，如 [Listing 3-5](ch03.xhtml#ch3list5) 所示。
+回到 Listing 3-4 中的汽车对象示例，我们可以用这个方法在用户尝试调用废弃函数时发出警告，如 Listing 3-5 所示。
 
 import warnings
 
@@ -376,7 +376,7 @@ __main__:8: 弃用警告：turn_left 已弃用；请改用 turn
 
 Python 2.7 及以后的版本默认不会打印 warnings 模块发出的任何警告，因为警告被过滤了。要查看这些警告，您需要将 -W 选项传递给 Python 可执行文件。选项 -W all 会将所有警告打印到标准错误输出。有关 -W 可能的值，请参阅 Python 手册页。
 
-在运行测试套件时，开发者可以使用 -W 错误选项运行 Python，这将在每次调用过时的函数时抛出错误。使用您的库的开发者可以轻松找到代码需要修复的地方。[示例 3-6](ch03.xhtml#ch3list6) 展示了在使用 -W 错误选项调用 Python 时，Python 如何将警告转化为致命异常。
+在运行测试套件时，开发者可以使用 -W 错误选项运行 Python，这将在每次调用过时的函数时抛出错误。使用您的库的开发者可以轻松找到代码需要修复的地方。示例 3-6 展示了在使用 -W 错误选项调用 Python 时，Python 如何将警告转化为致命异常。
 
 >>> import warnings
 
@@ -392,7 +392,7 @@ Python 2.7 及以后的版本默认不会打印 warnings 模块发出的任何�
 
 警告通常在运行时被忽略，且使用 -W 错误选项运行生产系统通常不是一个好主意。另一方面，使用 -W 错误选项运行 Python 应用程序的测试套件，反而可以是一个捕获警告并及早修复它们的好方法。
 
-然而，手动编写所有这些警告、文档字符串更新等会变得繁琐，因此创建了 debtcollector 库来帮助自动化其中的一些工作。debtcollector 库提供了一些装饰器，您可以将其与函数一起使用，确保正确的警告被发出，并且文档字符串得到正确更新。[示例 3-7](ch03.xhtml#ch3list7) 展示了如何通过一个简单的装饰器，指示一个函数已经被移动到其他地方。
+然而，手动编写所有这些警告、文档字符串更新等会变得繁琐，因此创建了 debtcollector 库来帮助自动化其中的一些工作。debtcollector 库提供了一些装饰器，您可以将其与函数一起使用，确保正确的警告被发出，并且文档字符串得到正确更新。示例 3-7 展示了如何通过一个简单的装饰器，指示一个函数已经被移动到其他地方。
 
 from debtcollector import moves
 
@@ -472,7 +472,7 @@ Python 没有内建的方式来定义哪些部分是公开的，哪些是私有�
 
 +   **尽早文档化，并将文档构建纳入持续集成。** 使用 Read the Docs 工具来创建和托管文档，对于开源软件来说，没有理由不构建和发布文档。
 
-+   **使用文档字符串来记录您 API 中的类和函数。** 如果您遵循 PEP 257 (*[https://www.python.org/dev/peps/pep-0257/](https://www.python.org/dev/peps/pep-0257/)*) 的指南，开发者就不需要阅读您的源代码来理解您的 API 功能。通过文档字符串生成 HTML 文档——而且不要仅限于 API 参考文档。
++   **使用文档字符串来记录您 API 中的类和函数。** 如果您遵循 PEP 257 (*[`www.python.org/dev/peps/pep-0257/`](https://www.python.org/dev/peps/pep-0257/)*) 的指南，开发者就不需要阅读您的源代码来理解您的 API 功能。通过文档字符串生成 HTML 文档——而且不要仅限于 API 参考文档。
 
 +   **始终提供实际的示例。** 至少提供一个“启动指南”，向新手展示如何构建一个可运行的示例。文档的第一页应提供一个快速概述，展示您 API 的基本和典型用例。
 

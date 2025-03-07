@@ -1,4 +1,4 @@
-# [第一部分](nsp-venkitachalam503045-0008.xhtml#rpt01)
+# 第一部分
 
 # 热身
 

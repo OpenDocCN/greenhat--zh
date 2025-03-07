@@ -62,7 +62,7 @@ Play 场景中，__init__() 方法创建了所有按钮和文本显示
 
 窗口底部的字段 1，然后加载声音。非常重要-
 
-同时，我们使用组合，详见第 4 章和第 10 章，来创建
+同时，我们使用组合，详见第四章和第十章，来创建
 
 玩家对象 (oPlayer)，一个坏蛋管理器对象 (oBaddieMgr)，和一个好蛋
 
@@ -74,7 +74,7 @@ __init__() 方法在程序启动时运行，但实际上并不
 
 启动游戏。而不是这样，它实现了一个状态机（如章节中所讨论）
 
-[第 15 章](index_split_006.html#p340) 在等待状态 3 中开始。游戏的一轮开始时，用户按下新游戏按钮。
+第十五章 在等待状态 3 中开始。游戏的一轮开始时，用户按下新游戏按钮。
 
 完整游戏：Dodger **351**
 
@@ -162,7 +162,7 @@ pygame.mouse.set_visible(False)
 
 清单 16-5 中的代码处理用户输入。
 
-**352** 第 16 章
+**352** 第十六章
 
 1 定义 handleInputs(self, eventsList, keyPressedList):
 
@@ -340,7 +340,7 @@ Goodies。该方法返回 Player 获得的 Goodies 数量。
 
 列表 16-7 中的代码绘制了游戏角色。
 
-**354** 第 16 章
+**354** 第十六章
 
 1 def draw(self):
 
@@ -510,7 +510,7 @@ collide() 方法 5 检查玩家与 Baddie 是否发生碰撞
 
 相交。
 
-**356** 第16章
+**356** 第十六章
 
 BaddieMgr 类，如列表 16-9 所示，创建并管理一个 Baddie 对象列表；这是一个典型的对象管理器对象的例子。
 
@@ -616,7 +616,7 @@ update() 方法 3 是 Baddie 管理的实际发生地
 
 不会被告知更新自身。虽然当时我没有深入讲解，但我们
 
-我们在第 11 章的气球游戏中遇到过类似问题，当时我们需要去除那些漂浮到窗口顶部的气球。
+我们在第十一章的气球游戏中遇到过类似问题，当时我们需要去除那些漂浮到窗口顶部的气球。
 
 在这里我使用了一个解决方案，使用 reversed() 函数对列表进行反转
 
@@ -628,17 +628,17 @@ update() 方法 3 是 Baddie 管理的实际发生地
 
 *复制* 列表；然后，如果我们找到符合删除条件的元素（例如一个掉出了窗口底部的 Baddie），我们
 
-从*原始*列表中移除该元素（即特定的Baddie）。通过这种方法，我们遍历的是一个不同于删除元素的列表。
+从*原始*列表中移除该元素（即特定的 Baddie）。通过这种方法，我们遍历的是一个不同于删除元素的列表。
 
 我们正在移除元素。
 
-当我们遍历Baddies时，调用每个Baddie的update()方法，
+当我们遍历 Baddies 时，调用每个 Baddie 的 update()方法，
 
-每个Baddie的update()方法返回一个布尔值：False表示它仍在向下移动
+每个 Baddie 的 update()方法返回一个布尔值：False 表示它仍在向下移动
 
-窗口，或者True表示它已经掉出底部。我们统计
+窗口，或者 True 表示它已经掉出底部。我们统计
 
-Baddies掉出屏幕底部的数量，并从
+Baddies 掉出屏幕底部的数量，并从
 
 列表。在方法结束时，我们将计数返回给主代码，以便它
 
@@ -646,53 +646,53 @@ Baddies掉出屏幕底部的数量，并从
 
 每帧我们还会检查是否到了创建新
 
-Baddie 6。当我们遍历常量ADD_NEW_BADDIE_RATE指定的帧数时，
+Baddie 6。当我们遍历常量 ADD_NEW_BADDIE_RATE 指定的帧数时，
 
-帧数达到一定数量时，我们创建一个新的Baddie对象并将其添加到Baddies列表中。
+帧数达到一定数量时，我们创建一个新的 Baddie 对象并将其添加到 Baddies 列表中。
 
-draw()方法7遍历Baddie列表并调用
+draw()方法 7 遍历 Baddie 列表并调用
 
-draw()方法用于让每个Baddie在适当的位置绘制自己。
+draw()方法用于让每个 Baddie 在适当的位置绘制自己。
 
-最后，hasPlayerHitBaddie()方法8会检查Player是否与
+最后，hasPlayerHitBaddie()方法 8 会检查 Player 是否与
 
-矩形与任何Baddie发生碰撞时，代码遍历Baddie列表。
+矩形与任何 Baddie 发生碰撞时，代码遍历 Baddie 列表。
 
-Baddies并调用每个Baddie的collide()方法。如果发生了碰撞，
+Baddies 并调用每个 Baddie 的 collide()方法。如果发生了碰撞，
 
-与任何Baddie发生碰撞（重叠）时，我们将碰撞信息报告回主代码，
+与任何 Baddie 发生碰撞（重叠）时，我们将碰撞信息报告回主代码，
 
 这将结束游戏。
 
 **文件：Dodger/Goodies.py**
 
-GoodieMgr和Goodie类与BaddieMgr和Baddie类非常相似。
+GoodieMgr 和 Goodie 类与 BaddieMgr 和 Baddie 类非常相似。
 
-类。Goodie管理器是一个对象管理器对象，负责维护一个
+类。Goodie 管理器是一个对象管理器对象，负责维护一个
 
-Goodie列表的不同之处在于它会随机
+Goodie 列表的不同之处在于它会随机
 
-随机地将一个Goodie放置在窗口的左边缘（在这种情况下它
+随机地将一个 Goodie 放置在窗口的左边缘（在这种情况下它
 
-向右移动）或者右边缘（因此它向左移动）。它还会创建新的Goodie
+向右移动）或者右边缘（因此它向左移动）。它还会创建新的 Goodie
 
-在经过随机的帧数后，当Player与
+在经过随机的帧数后，当 Player 与
 
-如果Player与Goodie碰撞，用户会得到25分奖励。Goodie的update()方法
+如果 Player 与 Goodie 碰撞，用户会得到 25 分奖励。Goodie 的 update()方法
 
-Goodie管理器使用前面章节描述的技术：它
+Goodie 管理器使用前面章节描述的技术：它
 
-它会复制Goodies列表并遍历副本。
+它会复制 Goodies 列表并遍历副本。
 
-**358** 第16章
+**358** 第十六章
 
 **文件：Dodger/Player.py**
 
-Player类，如示例16-10所示，管理Player图标并跟踪
+Player 类，如示例 16-10 所示，管理 Player 图标并跟踪
 
 它应该出现在游戏窗口中的位置。
 
-# Player类
+# Player 类
 
 --- 截取导入部分 ---
 
@@ -712,9 +712,9 @@ self.maxX = WINDOW_WIDTH - playerRect.width
 
 self.maxY = GAME_HEIGHT - playerRect.height
 
-# 每帧，将Player图标移动到鼠标位置
+# 每帧，将 Player 图标移动到鼠标位置
 
-# 限制x和y坐标在游戏窗口的区域内
+# 限制 x 和 y 坐标在游戏窗口的区域内
 
 2 def update(self, x, y):
 
@@ -742,13 +742,13 @@ return self.image.getRect()
 
 self.image.draw()
 
-*示例16-10：Player类*
+*示例 16-10：Player 类*
 
-__init__()方法1加载Player图标图像并设置
+__init__()方法 1 加载 Player 图标图像并设置
 
 用于后续的多个实例变量。
 
-update()方法2在每帧中由Play场景调用。
+update()方法 2 在每帧中由 Play 场景调用。
 
 基本思路是将玩家图标显示在鼠标位置，这是通过传递来实现的
 
@@ -776,9 +776,9 @@ update()方法2在每帧中由Play场景调用。
 
 **文件：Dodger/SceneHighScores.py**
 
-高分场景显示前10名的高分（以及
+高分场景显示前 10 名的高分（以及
 
-玩家）在表格中。它还允许排名前10的用户
+玩家）在表格中。它还允许排名前 10 的用户
 
 用户可以选择将他们的名字和分数输入到表格中。场景实例化
 
@@ -864,7 +864,7 @@ down='images/resetDown.png',
 
 over='images/resetOver.png',
 
-**第 360 章**
+**第三百六十章**
 
 disabled='images/resetDisabled.png') 2 self.showHighScores()
 
@@ -950,7 +950,7 @@ self.showHighScores()
 
 完整游戏：Dodger **361**
 
-![Image 53](index-391_1.png)
+![Image 53](img/index-391_1.png)
 
 将分数添加到列表中。然后我们调用一个中间函数，showCustom。
 
@@ -998,7 +998,7 @@ elif self.resetScoresButton.handleEvent(event):
 
 confirmed = showCustomResetDialog(self.window, 3
 
-'你确定要\n重置高分吗？')
+'你确定要\n 重置高分吗？')
 
 如果确认：
 
@@ -1020,7 +1020,7 @@ self.resetScoresButton.draw()
 
 self.backButton.draw()
 
-**362** 第16章
+**362** 第十六章
 
 def respond(self, requestID): 5
 
@@ -1034,11 +1034,11 @@ highestScore, lowestScore = self.oHighScoresData.getHighestAndLowest()
 
 return {'highest':highestScore, 'lowest':lowestScore}
 
-*第16-13号：SceneHighScores 类中的 showHighScores()、handleInputs()、draw() 和 respond() 方法*
+*第 16-13 号：SceneHighScores 类中的 showHighScores()、handleInputs()、draw() 和 respond() 方法*
 
 showHighScores() 方法 1 首先通过询问 HighScoresData
 
-对象包含两个列表：前10名的姓名和分数。它接收这些列表，并
+对象包含两个列表：前 10 名的姓名和分数。它接收这些列表，并
 
 返回并将它们发送到两个显示字段进行展示。如果你传递一个列表
 
@@ -1082,11 +1082,11 @@ draw() 方法 4 绘制窗口中的所有元素。
 
 始终保持顺序，从最高分到最低分。例如，
 
-代表前10名高分的文件可能是这样的：
+代表前 10 名高分的文件可能是这样的：
 
 [['Moe', 987], ['Larry', 812], ... ['Curly', 597]]
 
-第16-14号列展示了 HighScoresData 类的代码。
+第 16-14 号列展示了 HighScoresData 类的代码。
 
 # HighScoresData 类
 
@@ -1200,7 +1200,7 @@ a def getHighestAndLowest(self):
 
 # 元素 0 是最高项，元素 -1 是最低项
 
-**364** 第16章
+**364** 第十六章
 
 highestEntry = self.scoresList[0]
 
@@ -1254,31 +1254,31 @@ addHighScores() 方法 6 负责添加新的高分
 
 姓名和分数。由于该操作会扩展列表，我们会移除
 
-最后一个元素仅保留前10名。我们还检查新分数
+最后一个元素仅保留前 10 名。我们还检查新分数
 
-应该被插入到列表中。最后，我们调用saveScores()保存
+应该被插入到列表中。最后，我们调用 saveScores()保存
 
 将分数保存到数据文件。
 
-saveScores()方法7将分数数据保存为JSON格式的
+saveScores()方法 7 将分数数据保存为 JSON 格式的
 
 文件。它从各个地方调用。
 
-调用resetScores()方法8，当用户表示他们希望
+调用 resetScores()方法 8，当用户表示他们希望
 
 重置所有姓名和分数为起始点（所有姓名为空白，分数为零）。
 
-所有分数设置为零）。我们调用saveScores()来重写数据文件。
+所有分数设置为零）。我们调用 saveScores()来重写数据文件。
 
-getScoresAndNames()方法9由高分场景调用
+getScoresAndNames()方法 9 由高分场景调用
 
-获取前10名的分数和姓名。我们遍历高分榜的列表列表。
+获取前 10 名的分数和姓名。我们遍历高分榜的列表列表。
 
 分数数据创建一个分数列表和一个姓名列表；这两个列表都是
 
 返回。
 
-最后，getHighestAndLowest()方法a由高分场景调用
+最后，getHighestAndLowest()方法 a 由高分场景调用
 
 场景以获取表中的最高分和最低分。它使用这些结果
 
@@ -1320,9 +1320,9 @@ getScoresAndNames()方法9由高分场景调用
 
 只会影响游戏场景和反派管理器的代码。
 
-或者你可能希望追踪更多的高分——比如20名，而不是
+或者你可能希望追踪更多的高分——比如 20 名，而不是
 
-10名的一个更改可以在高分场景中进行，而不会
+10 名的一个更改可以在高分场景中进行，而不会
 
 影响游戏或开场画面。
 
@@ -1334,11 +1334,11 @@ getScoresAndNames()方法9由高分场景调用
 
 一个完整的面向对象游戏程序，Dodger。
 
-我们使用pygwidgets模块处理所有按钮、文本显示和
+我们使用 pygwidgets 模块处理所有按钮、文本显示和
 
-输入文本框。我们使用了pyghelpers模块来处理所有对话框。该
+输入文本框。我们使用了 pyghelpers 模块来处理所有对话框。该
 
-SceneMgr使我们能够将游戏拆分为更小、更易管理
+SceneMgr 使我们能够将游戏拆分为更小、更易管理
 
 片段（场景对象）并在场景之间导航。
 
@@ -1352,19 +1352,19 @@ SceneMgr使我们能够将游戏拆分为更小、更易管理
 
 **多态** 每个场景实现相同的方法。
 
-**继承** 每个场景都继承自Scene基类。
+**继承** 每个场景都继承自 Scene 基类。
 
 **对象管理器对象** 游戏场景使用组合来创建一个
 
-Baddie管理对象self.oBaddieMgr和Goodie管理对象，
+Baddie 管理对象 self.oBaddieMgr 和 Goodie 管理对象，
 
 self.oGoodieMgr，每个管理其对象列表。
 
-**共享常量** 我们为Goodies和Baddies使用独立模块，
+**共享常量** 我们为 Goodies 和 Baddies 使用独立模块，
 
 一个*Constants.py*文件使我们可以轻松地在各模块之间共享常量。
 
-**366** 第16章
+**366** 第十六章
 
 **17**
 
@@ -1402,9 +1402,9 @@ self.oGoodieMgr，每个管理其对象列表。
 
 用户。该模式将功能分为三部分：模型、
 
-![图 54](index-397_1.png)
+![图 54](img/index-397_1.png)
 
-![图 55](index-397_2.png)
+![图 55](img/index-397_2.png)
 
 视图和控制器。每个部分都有明确的责任，
 
@@ -1424,19 +1424,19 @@ self.oGoodieMgr，每个管理其对象列表。
 
 ***文件显示示例***
 
-作为MVC模式的一个好例子，考虑文件显示的方式
+作为 MVC 模式的一个好例子，考虑文件显示的方式
 
-在macOS Finder或Windows文件资源管理器中。例如，我们有一个包含四个文件和一个子文件夹的文件夹。最终用户可以选择以
+在 macOS Finder 或 Windows 文件资源管理器中。例如，我们有一个包含四个文件和一个子文件夹的文件夹。最终用户可以选择以
 
 包含四个文件和一个子文件夹。最终用户可以选择以图标形式显示这些
 
-项目以列表形式显示，如图 17-1所示\。
+项目以列表形式显示，如图 17-1 所示\。
 
 *图 17-1：文件夹中的文件以列表形式显示*
 
 或者，用户可以选择将相同的项目以图标的形式显示，如
 
-如图 17-2所示\。
+如图 17-2 所示\。
 
 *图 17-2：文件夹中的文件以图标形式显示*
 
@@ -1454,17 +1454,17 @@ self.oGoodieMgr，每个管理其对象列表。
 
 ***统计显示示例***
 
-作为MVC模式的更广泛示例，我们考虑一个程序
+作为 MVC 模式的更广泛示例，我们考虑一个程序
 
 该程序模拟多次掷骰并显示结果。在
 
-**368** 第17章
+**368** 第十七章
 
-![Image 56](index-398_1.png)
+![Image 56](img/index-398_1.png)
 
 每次掷骰时，我们将两个骰子的值相加，因此总和—我们称之为
 
-一个*结果*—必须在2到12之间。数据包括掷骰2,500次的计数。
+一个*结果*—必须在 2 到 12 之间。数据包括掷骰 2,500 次的计数。
 
 每个结果出现的次数和输入框中指定的掷骰次数的百分比。
 
@@ -1476,19 +1476,19 @@ self.oGoodieMgr，每个管理其对象列表。
 
 由于该程序只是为了展示
 
-演示MVC模式的工作示例，我们将生成输出
+演示 MVC 模式的工作示例，我们将生成输出
 
-使用pygame和pygwidgets。对于更专业的图表和
+使用 pygame 和 pygwidgets。对于更专业的图表和
 
-如果您感兴趣，我建议您了解Python的数据可视化库
+如果您感兴趣，我建议您了解 Python 的数据可视化库
 
-例如Matplotlib、Seaborn、Plotly、Bokeh等，都是为此类任务设计的
+例如 Matplotlib、Seaborn、Plotly、Bokeh 等，都是为此类任务设计的
 
 目的而言。
 
-图17-3显示了条形图形式的数据。
+图 17-3 显示了条形图形式的数据。
 
-*图17-3：掷骰数据（条形图形式）*
+*图 17-3：掷骰数据（条形图形式）*
 
 每个条形图下方是结果，显示该结果出现的次数
 
@@ -1502,23 +1502,23 @@ self.oGoodieMgr，每个管理其对象列表。
 
 按钮展示相同数据的不同视图。如果用户选择饼图
 
-如果用户选择饼图单选按钮，数据将如图17-4所示。
+如果用户选择饼图单选按钮，数据将如图 17-4 所示。
 
 设计模式与总结 **369**
 
-![Image 57](index-399_1.png)
+![Image 57](img/index-399_1.png)
 
-![Image 58](index-399_2.png)
+![Image 58](img/index-399_2.png)
 
-*图17-4：掷骰数据（饼图形式）*
+*图 17-4：掷骰数据（饼图形式）*
 
 如果用户选择文本单选按钮，数据将以文本方式显示，如下所示
 
-图17-5\。
+图 17-5\。
 
-*图17-5：掷骰数据（文本形式）*
+*图 17-5：掷骰数据（文本形式）*
 
-**370** 第17章
+**370** 第十七章
 
 用户可以更改“掷骰次数”字段中的值，按需掷骰多次。此程序中的数据基于统计数据
 
@@ -1528,7 +1528,7 @@ self.oGoodieMgr，每个管理其对象列表。
 
 我不会在这里展示完整的程序清单，而是聚焦于几个
 
-关键代码行展示了MVC模式中的设置和控制流程
+关键代码行展示了 MVC 模式中的设置和控制流程
 
 模式。完整的程序可与书籍的其他资源一起下载。
 
@@ -1536,23 +1536,23 @@ self.oGoodieMgr，每个管理其对象列表。
 
 以下文件：
 
-***Main_MVC.py***主Python文件
+***Main_MVC.py***主 Python 文件
 
-***Controller.py***包含Controller类
+***Controller.py***包含 Controller 类
 
-***Model.py***包含Model类
+***Model.py***包含 Model 类
 
-***BarView.py***包含显示条形图的BarView类
+***BarView.py***包含显示条形图的 BarView 类
 
-***Bin.py***包含绘制条形图单个条形的Bin类
+***Bin.py***包含绘制条形图单个条形的 Bin 类
 
-***PieView.py***包含显示饼图的PieView类
+***PieView.py***包含显示饼图的 PieView 类
 
-***TextView.py***包含显示文本视图的TextView类
+***TextView.py***包含显示文本视图的 TextView 类
 
 ***Constants.py*** 包含多个模块共享的常量 主程序实例化一个控制器对象并运行主程序
 
-循环。主循环中的代码将所有事件（除了pygame.QUIT事件）
+循环。主循环中的代码将所有事件（除了 pygame.QUIT 事件）
 
 事件）传递给控制器进行处理。
 
@@ -1564,7 +1564,7 @@ self.oGoodieMgr，每个管理其对象列表。
 
 视图对象：BarView、PieView 和 TextView。以下是启动代码
 
-控制器类的__init__()方法：
+控制器类的 __init__()方法：
 
 # 实例化模型
 
@@ -1582,7 +1582,7 @@ self.oTextView = TextView(self.window, self.oModel)
 
 模型对象，这样每个视图对象就可以直接从
 
-模型。MVC模式的不同实现可能会以不同的方式处理
+模型。MVC 模式的不同实现可能会以不同的方式处理
 
 这三者之间的通信方式可能不同；例如，一个
 
@@ -1602,7 +1602,7 @@ self.oTextView = TextView(self.window, self.oModel)
 
 设计模式与总结 **371**
 
-控制器对象保持一个当前的视图对象，决定当前显示的是哪个视图。我们默认将其设置为BarView对象
+控制器对象保持一个当前的视图对象，决定当前显示的是哪个视图。我们默认将其设置为 BarView 对象
 
 （条形图）：
 
@@ -1612,7 +1612,7 @@ self.oView = self.oBarView
 
 将对象传递给新选择的视图，并告知新的视图对象更新
 
-通过调用其update()方法来更新自身：
+通过调用其 update()方法来更新自身：
 
 if self.oBarButton.handleEvent(event):
 
@@ -1642,7 +1642,7 @@ self.oModel.generateRolls(nRounds)
 
 所有视图都是多态的，因此在每一帧中，控制器对象
 
-调用当前视图对象的draw()方法：
+调用当前视图对象的 draw()方法：
 
 self.oView.draw() # 告诉当前视图绘制自身
 
@@ -1682,7 +1682,7 @@ self.oView.draw() # 告诉当前视图绘制自身
 
 从同一个模型中获取信息。为了支持这一点，在示例程序中
 
-**第 372 章**
+**第三百七十二章**
 
 我已包括一些额外的 getter 方法（getNumberOfRounds(), getRolls(), 和 getPercents()），程序员在构建时可以使用它们
 
@@ -1838,7 +1838,7 @@ OOP 为你提供了一种全新的编程思维方式，提供了一种简单
 
 你自己的。
 
-**374** 第17章
+**374** 第十七章
 
 更重要的是，我希望你能认识到面向对象编程是一种通用方法，可以应用于广泛的领域
 
@@ -3540,7 +3540,7 @@ Timer 类，287–290
 
 索引 **385**
 
-![图片 59](index-416_1.png)
+![图片 59](img/index-416_1.png)
 
 从未有过，世界如此依赖互联网
 
@@ -3564,17 +3564,17 @@ Timer 类，287–290
 
 了解更多并加入 EFF，网址：EFF.ORG/NO-STARCH-PRESS
 
-![图片 60](index-417_1.jpg)
+![图片 60](img/index-417_1.jpg)
 
-![图片 61](index-417_2.png)
+![图片 61](img/index-417_2.png)
 
-![图片 62](index-417_3.jpg)
+![图片 62](img/index-417_3.jpg)
 
-![图片 63](index-417_4.jpg)
+![图片 63](img/index-417_4.jpg)
 
-![图片 64](index-417_5.png)
+![图片 64](img/index-417_5.png)
 
-![图片 65](index-417_6.jpg)
+![图片 65](img/index-417_6.jpg)
 
 **资源**
 
@@ -3664,25 +3664,25 @@ sales@nostarch.com
 
 www.nostarch.com
 
-![图片 66](index-418_1.png)
+![图片 66](img/index-418_1.png)
 
-![图片 67](index-418_2.png)
+![图片 67](img/index-418_2.png)
 
-![图片 68](index-418_3.png)
+![图片 68](img/index-418_3.png)
 
-![图片 69](index-418_4.png)
+![图片 69](img/index-418_4.png)
 
-![图片 70](index-418_5.png)
+![图片 70](img/index-418_5.png)
 
-![图片 71](index-418_6.png)
+![图片 71](img/index-418_6.png)
 
-![图片 72](index-418_7.png)
+![图片 72](img/index-418_7.png)
 
-![图片 73](index-418_8.png)
+![图片 73](img/index-418_8.png)
 
-![图片 74](index-418_9.png)
+![图片 74](img/index-418_9.png)
 
-![图片 75](index-418_10.png)
+![图片 75](img/index-418_10.png)
 
 **构建与**
 
@@ -3806,262 +3806,262 @@ www.nostarch.com
 
 # 文档大纲
 
-+   [致谢](index_split_000.html#p20)
++   致谢
 
-+   [简介](index_split_000.html#p22)
++   简介
 
-+   [第一部分：介绍面向对象编程](index_split_000.html#p30)
++   第一部分：介绍面向对象编程
 
-    +   [第1章：过程式 Python 示例](index_split_000.html#p32)
+    +   第一章：过程式 Python 示例
 
-        +   [高低牌游戏](index_split_000.html#p33)
+        +   高低牌游戏
 
-        +   [银行账户模拟](index_split_000.html#p36)
+        +   银行账户模拟
 
-        +   [过程式实现中的常见问题](index_split_000.html#p47)
+        +   过程式实现中的常见问题
 
-        +   [面向对象解决方案——首次了解类](index_split_000.html#p48)
+        +   面向对象解决方案——首次了解类
 
-        +   [总结](index_split_000.html#p49)
+        +   总结
 
-    +   [第2章：使用面向对象编程建模物理对象](index_split_000.html#p50)
+    +   第二章：使用面向对象编程建模物理对象
 
-        +   [构建物理对象的软件模型](index_split_000.html#p51)
+        +   构建物理对象的软件模型
 
-        +   [类与对象简介](index_split_000.html#p52)
+        +   类与对象简介
 
-        +   [类、对象与实例化](index_split_000.html#p54)
+        +   类、对象与实例化
 
-        +   [构建稍微复杂一些的类](index_split_001.html#p62)
+        +   构建稍微复杂一些的类
 
-        +   [将更复杂的物理对象表示为类](index_split_001.html#p64)
+        +   将更复杂的物理对象表示为类
 
-        +   [类的应用](index_split_001.html#p74)
+        +   类的应用
 
-        +   [OOP 作为解决方案](index_split_001.html#p74)
+        +   OOP 作为解决方案
 
-        +   [总结](index_split_001.html#p75)
+        +   总结
 
-    +   [第3章：对象的心理模型与“self”的意义](index_split_001.html#p76)
+    +   第三章：对象的心理模型与“self”的意义
 
-        +   [重新审视DimmerSwitch类](index_split_001.html#p77)
+        +   重新审视 DimmerSwitch 类
 
-        +   [高级思维模型#1](index_split_001.html#p78)
+        +   高级思维模型#1
 
-        +   [更深层的思维模型#2](index_split_001.html#p78)
+        +   更深层的思维模型#2
 
-        +   [“self”是什么意思？](index_split_001.html#p81)
+        +   “self”是什么意思？
 
-        +   [总结](index_split_001.html#p84)
+        +   总结
 
-    +   [第4章：管理多个对象](index_split_001.html#p86)
+    +   第四章：管理多个对象
 
-        +   [银行账户类](index_split_001.html#p87)
+        +   银行账户类
 
-        +   [导入类代码](index_split_001.html#p89)
+        +   导入类代码
 
-        +   [创建一些测试代码](index_split_001.html#p90)
+        +   创建一些测试代码
 
-        +   [创建一个对象管理器对象](index_split_001.html#p99)
+        +   创建一个对象管理器对象
 
-        +   [通过异常处理更好的错误管理](index_split_001.html#p105)
+        +   通过异常处理更好的错误管理
 
-        +   [在我们的银行程序中使用异常](index_split_001.html#p107)
+        +   在我们的银行程序中使用异常
 
-        +   [在一系列对象上调用相同的方法](index_split_002.html#p112)
+        +   在一系列对象上调用相同的方法
 
-        +   [接口与实现](index_split_002.html#p113)
+        +   接口与实现
 
-        +   [总结](index_split_002.html#p114)
+        +   总结
 
-+   [第二部分：使用Pygame的图形用户界面](index_split_002.html#p116)
++   第二部分：使用 Pygame 的图形用户界面
 
-    +   [第5章：Pygame介绍](index_split_002.html#p118)
+    +   第五章：Pygame 介绍
 
-        +   [安装Pygame](index_split_002.html#p119)
+        +   安装 Pygame
 
-        +   [窗口详情](index_split_002.html#p120)
+        +   窗口详情
 
-        +   [事件驱动的程序](index_split_002.html#p124)
+        +   事件驱动的程序
 
-        +   [使用Pygame](index_split_002.html#p125)
+        +   使用 Pygame
 
-        +   [播放声音](index_split_002.html#p143)
+        +   播放声音
 
-        +   [绘制形状](index_split_002.html#p145)
+        +   绘制形状
 
-        +   [总结](index_split_002.html#p149)
+        +   总结
 
-    +   [第6章：面向对象的Pygame](index_split_002.html#p150)
+    +   第六章：面向对象的 Pygame
 
-        +   [使用OOP Pygame构建屏幕保护程序球](index_split_002.html#p150)
+        +   使用 OOP Pygame 构建屏幕保护程序球
 
-        +   [构建可重用的面向对象按钮](index_split_002.html#p156)
+        +   构建可重用的面向对象按钮
 
-        +   [构建可重用的面向对象文本显示](index_split_002.html#p162)
+        +   构建可重用的面向对象文本显示
 
-        +   [带有SimpleText和SimpleButton的Demo球](index_split_003.html#p164)
+        +   带有 SimpleText 和 SimpleButton 的 Demo 球
 
-        +   [接口与实现](index_split_003.html#p166)
+        +   接口与实现
 
-        +   [回调函数](index_split_003.html#p166)
+        +   回调函数
 
-        +   [总结](index_split_003.html#p170)
+        +   总结
 
-    +   [第7章：Pygame GUI小部件](index_split_003.html#p172)
+    +   第七章：Pygame GUI 小部件
 
-        +   [将参数传递给函数或方法](index_split_003.html#p173)
+        +   将参数传递给函数或方法
 
-        +   [pygwidgets包](index_split_003.html#p177)
+        +   pygwidgets 包
 
-        +   [一致的API的重要性](index_split_003.html#p187)
+        +   一致的 API 的重要性
 
-        +   [总结](index_split_003.html#p187)
+        +   总结
 
-+   [第三部分：封装、多态和继承](index_split_003.html#p190)
++   第三部分：封装、多态和继承
 
-    +   [第8章：封装](index_split_003.html#p192)
+    +   第八章：封装
 
-        +   [使用函数的封装](index_split_003.html#p193)
+        +   使用函数的封装
 
-        +   [使用对象的封装](index_split_003.html#p193)
+        +   使用对象的封装
 
-        +   [封装的解释](index_split_003.html#p194)
+        +   封装的解释
 
-        +   [让实例变量更私有](index_split_003.html#p201)
+        +   让实例变量更私有
 
-        +   [装饰器和@property](index_split_003.html#p203)
+        +   装饰器和@property
 
-        +   [pygwidgets类中的封装](index_split_003.html#p206)
+        +   pygwidgets 类中的封装
 
-        +   [来自现实世界的故事](index_split_003.html#p207)
+        +   来自现实世界的故事
 
-        +   [抽象](index_split_003.html#p208)
+        +   抽象
 
-        +   [总结](index_split_003.html#p211)
+        +   总结
 
-    +   [第9章：多态](index_split_003.html#p212)
+    +   第九章：多态
 
-        +   [向现实世界的对象发送消息](index_split_003.html#p213)
+        +   向现实世界的对象发送消息
 
-        +   [编程中多态的经典示例](index_split_003.html#p213)
+        +   编程中多态的经典示例
 
-        +   [使用Pygame形状的示例](index_split_003.html#p214)
+        +   使用 Pygame 形状的示例
 
-        +   [pygwidgets 展示多态性](index_split_004.html#p221)
+        +   pygwidgets 展示多态性
 
-        +   [运算符的多态性](index_split_004.html#p222)
+        +   运算符的多态性
 
-        +   [创建对象值的字符串表示](index_split_004.html#p232)
+        +   创建对象值的字符串表示
 
-        +   [具有魔法方法的分数类](index_split_004.html#p234)
+        +   具有魔法方法的分数类
 
-        +   [总结](index_split_004.html#p237)
+        +   总结
 
-    +   [第10章：继承](index_split_004.html#p240)
+    +   第十章：继承
 
-        +   [面向对象编程中的继承](index_split_004.html#p241)
+        +   面向对象编程中的继承
 
-        +   [实现继承](index_split_004.html#p242)
+        +   实现继承
 
-        +   [员工与经理示例](index_split_004.html#p243)
+        +   员工与经理示例
 
-        +   [客户端对子类的视图](index_split_004.html#p247)
+        +   客户端对子类的视图
 
-        +   [继承的现实世界示例](index_split_004.html#p248)
+        +   继承的现实世界示例
 
-        +   [多个类继承自同一基类](index_split_004.html#p256)
+        +   多个类继承自同一基类
 
-        +   [抽象类与方法](index_split_004.html#p260)
+        +   抽象类与方法
 
-        +   [pygwidgets 如何使用继承](index_split_004.html#p263)
+        +   pygwidgets 如何使用继承
 
-        +   [类层次结构](index_split_004.html#p265)
+        +   类层次结构
 
-        +   [使用继承编程的困难](index_split_004.html#p267)
+        +   使用继承编程的困难
 
-        +   [总结](index_split_004.html#p268)
+        +   总结
 
-    +   [第11章：管理对象占用的内存](index_split_004.html#p270)
+    +   第十一章：管理对象占用的内存
 
-        +   [对象生命周期](index_split_005.html#p271)
+        +   对象生命周期
 
-        +   [类变量](index_split_005.html#p277)
+        +   类变量
 
-        +   [综合应用：气球示例程序](index_split_005.html#p280)
+        +   综合应用：气球示例程序
 
-        +   [内存管理：槽](index_split_005.html#p290)
+        +   内存管理：槽
 
-        +   [总结](index_split_005.html#p292)
+        +   总结
 
-+   [第四部分：在游戏开发中使用OOP](index_split_005.html#p294)
++   第四部分：在游戏开发中使用 OOP
 
-    +   [第12章：卡牌游戏](index_split_005.html#p296)
+    +   第十二章：卡牌游戏
 
-        +   [卡牌类](index_split_005.html#p297)
+        +   卡牌类
 
-        +   [牌组类](index_split_005.html#p299)
+        +   牌组类
 
-        +   [更高或更低游戏](index_split_005.html#p301)
+        +   更高或更低游戏
 
-        +   [使用 __name__ 进行测试](index_split_005.html#p305)
+        +   使用 __name__ 进行测试
 
-        +   [其他卡牌游戏](index_split_005.html#p307)
+        +   其他卡牌游戏
 
-        +   [总结](index_split_005.html#p308)
+        +   总结
 
-    +   [第13章：定时器](index_split_005.html#p310)
+    +   第十三章：定时器
 
-        +   [定时器演示程序](index_split_005.html#p311)
+        +   定时器演示程序
 
-        +   [实现定时器的三种方法](index_split_005.html#p312)
+        +   实现定时器的三种方法
 
-        +   [安装 pyghelpers](index_split_005.html#p316)
+        +   安装 pyghelpers
 
-        +   [定时器类](index_split_005.html#p316)
+        +   定时器类
 
-        +   [显示时间](index_split_005.html#p319)
+        +   显示时间
 
-        +   [总结](index_split_005.html#p323)
+        +   总结
 
-    +   [第14章：动画](index_split_005.html#p324)
+    +   第十四章：动画
 
-        +   [构建动画类](index_split_005.html#p325)
+        +   构建动画类
 
-        +   [pygwidgets中的动画类](index_split_006.html#p333)
+        +   pygwidgets 中的动画类
 
-        +   [总结](index_split_006.html#p339)
+        +   总结
 
-    +   [第15章：场景](index_split_006.html#p340)
+    +   第十五章：场景
 
-        +   [状态机方法](index_split_006.html#p341)
+        +   状态机方法
 
-        +   [使用状态机的 pygame 示例](index_split_006.html#p343)
+        +   使用状态机的 pygame 示例
 
-        +   [用于管理多个场景的场景管理器](index_split_006.html#p348)
+        +   用于管理多个场景的场景管理器
 
-        +   [使用场景管理器的演示程序](index_split_006.html#p349)
+        +   使用场景管理器的演示程序
 
-        +   [使用场景的石头、剪子、布游戏](index_split_006.html#p357)
+        +   使用场景的石头、剪子、布游戏
 
-        +   [场景之间的通信](index_split_006.html#p361)
+        +   场景之间的通信
 
-        +   [场景管理器的实现](index_split_006.html#p363)
+        +   场景管理器的实现
 
-        +   [总结](index_split_006.html#p369)
+        +   总结
 
-    +   [第16章：完整游戏：躲避者](index_split_006.html#p370)
+    +   第十六章：完整游戏：躲避者
 
-        +   [模态对话框](index_split_006.html#p371)
+        +   模态对话框
 
-        +   [构建完整游戏：躲避者](index_split_006.html#p376)
+        +   构建完整游戏：躲避者
 
-        +   [总结](index_split_007.html#p395)
+        +   总结
 
-    +   [第17章：设计模式与总结](index_split_007.html#p396)
+    +   第十七章：设计模式与总结
 
-        +   [模型视图控制器](index_split_007.html#p396)
+        +   模型视图控制器
 
-        +   [总结](index_split_007.html#p403)
+        +   总结
 
-+   [索引](index_split_007.html#p406)
++   索引

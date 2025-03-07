@@ -2,11 +2,11 @@
 
 实践项目解决方案**
 
-![图像](../images/common.jpg)
+![图像](img/common.jpg)
 
-本附录包含每章实践项目的解决方案。数字版本可以在本书网站上获取，网址为 *[https://nostarch.com/real-world-python/](https://nostarch.com/real-world-python/)*。
+本附录包含每章实践项目的解决方案。数字版本可以在本书网站上获取，网址为 *[`nostarch.com/real-world-python/`](https://nostarch.com/real-world-python/)*。
 
-### **[第二章](ch02.xhtml)：使用风格学归属作者**
+### **第二章：使用风格学归属作者**
 
 #### ***使用色散追踪猎犬***
 
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     main()
 ```
 
-### **[第四章](ch04.xhtml)：使用书籍密码发送超级机密消息**
+### **第四章：使用书籍密码发送超级机密消息**
 
 #### ***绘制字符图***
 
@@ -296,7 +296,7 @@ if __name__ == '__main__':
     main()
 ```
 
-### **[第五章](ch05.xhtml)：寻找冥王星**
+### **第五章：寻找冥王星**
 
 #### ***绘制轨道路径***
 
@@ -469,7 +469,7 @@ img2_resize = cv.resize(img2, (x, y))
 cv.imshow('Change', img2_resize)
 ```
 
-### **[第六章](ch06.xhtml)：通过阿波罗8号赢得登月竞赛**
+### **第六章：通过阿波罗 8 号赢得登月竞赛**
 
 #### ***模拟搜索模式***
 
@@ -593,7 +593,7 @@ class Body(Turtle):
         for body in self.gravsys.bodies:
             if body != self:
                 r = body.pos() - self.pos()
-                a += (G * body.mass / abs(r)**3) * r  # units dist/time^2
+                a += (G * body.mass / abs(r)**3) * r  # units dist/time²
         return a
     def step(self):
         """Calculate position, orientation, and velocity of a body."""
@@ -706,7 +706,7 @@ class Body(Turtle):
         for body in self.gravsys.bodies:
             if body != self:
                 r = body.pos() - self.pos()
-                a += (G * body.mass / abs(r)**3) * r  # units dist/time^2
+                a += (G * body.mass / abs(r)**3) * r  # units dist/time²
         return a
 
     def step(self):
@@ -759,7 +759,7 @@ if __name__=='__main__':
     main()
 ```
 
-### **[第七章](ch07.xhtml)：选择火星着陆地点**
+### **第七章：选择火星着陆地点**
 
 #### ***确认绘图已成为图像的一部分***
 
@@ -839,7 +839,7 @@ plt.text(100, 280, 'Olympus Mons', fontsize=8)
 plt.show()
 ```
 
-#### ***绘制3D图***
+#### ***绘制 3D 图***
 
 ```py
 practice_3d_plotting.py
@@ -1069,7 +1069,7 @@ if __name__ == '__main__':
     main()
 ```
 
-### **[第八章](ch08.xhtml)：探测遥远的外行星**
+### **第八章：探测遥远的外行星**
 
 #### ***探测外星巨型结构***
 
@@ -1428,11 +1428,11 @@ if __name__ == '__main__':
     main()
 ```
 
-[图A-1](app01.xhtml#app01fig1)总结了 *practice_planet_moon.py* 程序的输出结果。
+图 A-1 总结了 *practice_planet_moon.py* 程序的输出结果。
 
-![图像](../images/f0310-01.jpg)
+![图像](img/f0310-01.jpg)
 
-图A-1：行星和月球的光曲线，其中月球从行星后面经过
+图 A-1：行星和月球的光曲线，其中月球从行星后面经过
 
 #### ***测量外行星的一天长度***
 
@@ -1482,7 +1482,7 @@ print(f"peaks = {peaks}")
 print("Period = {}".format(mean(np.diff(peaks[0]))))
 ```
 
-### **[第九章](ch09.xhtml)：识别朋友或敌人**
+### **第九章：识别朋友或敌人**
 
 #### ***模糊面部***
 
@@ -1512,7 +1512,7 @@ cap.release()
 cv.destroyAllWindows()
 ```
 
-### **[第十章](ch10.xhtml)：通过人脸识别限制访问**
+### **第十章：通过人脸识别限制访问**
 
 #### ***挑战项目：添加密码和视频捕捉功能***
 

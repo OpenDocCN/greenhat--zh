@@ -1,66 +1,66 @@
-# [11](nsp-venkitachalam503045-0008.xhtml#rch11)
+# 11
 
 # 体积渲染
 
-![](images/nsp-venkitachalam503045-circle-image.jpg)
+![](img/nsp-venkitachalam503045-circle-image.jpg)
 
-磁共振成像（MRI）和计算机断层扫描（CT）是创建*体积数据*的诊断过程，体积数据由一组显示通过3D体积的横截面的2D图像组成。*体积渲染*是一种计算机图形技术，用于从这种体积数据中构建3D图像。尽管体积渲染通常用于分析医学扫描，但它也可以用于创建学术领域（如地质学、考古学和分子生物学）的3D科学可视化。
+磁共振成像（MRI）和计算机断层扫描（CT）是创建*体积数据*的诊断过程，体积数据由一组显示通过 3D 体积的横截面的 2D 图像组成。*体积渲染*是一种计算机图形技术，用于从这种体积数据中构建 3D 图像。尽管体积渲染通常用于分析医学扫描，但它也可以用于创建学术领域（如地质学、考古学和分子生物学）的 3D 科学可视化。
 
-通过MRI和CT扫描捕获的数据通常呈现为*N*[x]×*N*[y]×*N*[z]的3D网格形式。换句话说，有*N*[z]个2D“切片”，每个切片是一个大小为*N*[x]×*N*[y]的图像。体积渲染算法用于以某种透明度显示收集的切片数据，且使用各种技术来突出显示渲染体积中感兴趣的部分。
+通过 MRI 和 CT 扫描捕获的数据通常呈现为*N*[x]×*N*[y]×*N*[z]的 3D 网格形式。换句话说，有*N*[z]个 2D“切片”，每个切片是一个大小为*N*[x]×*N*[y]的图像。体积渲染算法用于以某种透明度显示收集的切片数据，且使用各种技术来突出显示渲染体积中感兴趣的部分。
 
-在这个项目中，你将研究一种叫做*体积光线投射*的体积渲染方法，它充分利用图形处理单元（GPU）通过OpenGL着色语言（GLSL）着色器进行计算。你的代码将在每个屏幕像素上执行，并利用GPU，GPU旨在高效地进行并行计算。你将使用一个包含来自3D数据集切片的2D图像的文件夹，利用体积光线投射算法构建体积渲染图像。你还将实现一种方法，以显示数据在x、y和z方向上的2D切片，让用户可以通过箭头键滚动浏览切片。键盘命令将让用户在3D渲染和2D切片之间切换。
+在这个项目中，你将研究一种叫做*体积光线投射*的体积渲染方法，它充分利用图形处理单元（GPU）通过 OpenGL 着色语言（GLSL）着色器进行计算。你的代码将在每个屏幕像素上执行，并利用 GPU，GPU 旨在高效地进行并行计算。你将使用一个包含来自 3D 数据集切片的 2D 图像的文件夹，利用体积光线投射算法构建体积渲染图像。你还将实现一种方法，以显示数据在 x、y 和 z 方向上的 2D 切片，让用户可以通过箭头键滚动浏览切片。键盘命令将让用户在 3D 渲染和 2D 切片之间切换。
 
 这是本项目涵盖的一些主题：
 
-+   • 使用GLSL进行GPU计算
++   • 使用 GLSL 进行 GPU 计算
 
 +   • 创建顶点和片段着色器
 
-+   • 表示3D体积数据并使用体积光线投射算法
++   • 表示 3D 体积数据并使用体积光线投射算法
 
-+   • 使用`numpy`数组进行3D变换矩阵
++   • 使用`numpy`数组进行 3D 变换矩阵
 
-## [工作原理](nsp-venkitachalam503045-0008.xhtml#rah1301)
+## 工作原理
 
-渲染3D数据集有多种方法。在这个项目中，你将使用体积光线投射方法，这是一种基于*图像*的渲染技术，用于从2D切片逐像素生成最终图像。相比之下，典型的3D渲染方法是*基于对象*的：它们从3D对象表示开始，然后应用变换生成投影2D图像中的像素。
+渲染 3D 数据集有多种方法。在这个项目中，你将使用体积光线投射方法，这是一种基于*图像*的渲染技术，用于从 2D 切片逐像素生成最终图像。相比之下，典型的 3D 渲染方法是*基于对象*的：它们从 3D 对象表示开始，然后应用变换生成投影 2D 图像中的像素。
 
-在本项目中使用的体积光线投射方法中，对于输出图像中的每个像素，一束光线被射入离散的3D体积数据集，该数据集通常表示为一个长方体。当光线穿过体积时，数据会在规则的间隔处进行采样，并将这些样本合成，或*合成*，以计算最终图像的颜色值或强度。（你可以将这个过程想象成将一堆透明片叠加在一起，然后对着强光看，看到所有纸片混合后的效果。）
+在本项目中使用的体积光线投射方法中，对于输出图像中的每个像素，一束光线被射入离散的 3D 体积数据集，该数据集通常表示为一个长方体。当光线穿过体积时，数据会在规则的间隔处进行采样，并将这些样本合成，或*合成*，以计算最终图像的颜色值或强度。（你可以将这个过程想象成将一堆透明片叠加在一起，然后对着强光看，看到所有纸片混合后的效果。）
 
-尽管体积光线投射渲染实现通常使用一些技术，如应用梯度以改善最终渲染效果、过滤以隔离3D特征、以及使用空间优化技术以提高速度，但在这个项目中，你将只实现基本的光线投射算法，并通过X射线投射合成最终图像。（我的实现主要基于Kruger和Westermann在2003年发表的这方面的开创性论文。[1](nsp-venkitachalam503045-0025.xhtml#fn4)）
+尽管体积光线投射渲染实现通常使用一些技术，如应用梯度以改善最终渲染效果、过滤以隔离 3D 特征、以及使用空间优化技术以提高速度，但在这个项目中，你将只实现基本的光线投射算法，并通过 X 射线投射合成最终图像。（我的实现主要基于 Kruger 和 Westermann 在 2003 年发表的这方面的开创性论文。1）
 
-### [数据格式](nsp-venkitachalam503045-0008.xhtml#rbh1301)
+### 数据格式
 
-在本项目中，你将使用来自斯坦福体积数据档案的3D医学扫描数据。[2](nsp-venkitachalam503045-0025.xhtml#fn5) 该档案提供了一些出色的3D医学数据集（包括CT和MRI），每个数据集包含表示体积的每个2D横截面的TIFF图像。你将把这些图像文件夹读入OpenGL 3D纹理；这就像是将一组2D图像叠加在一起形成一个长方体，正如[图 11-1](nsp-venkitachalam503045-0025.xhtml#fig11-1)所示。
+在本项目中，你将使用来自斯坦福体积数据档案的 3D 医学扫描数据。2 该档案提供了一些出色的 3D 医学数据集（包括 CT 和 MRI），每个数据集包含表示体积的每个 2D 横截面的 TIFF 图像。你将把这些图像文件夹读入 OpenGL 3D 纹理；这就像是将一组 2D 图像叠加在一起形成一个长方体，正如图 11-1 所示。
 
-![](images/nsp-venkitachalam503045-f11001.jpg)
+![](img/nsp-venkitachalam503045-f11001.jpg)
 
-图 11-1：从2D切片构建3D体积数据
+图 11-1：从 2D 切片构建 3D 体积数据
 
-回想一下[第9章](nsp-venkitachalam503045-0023.xhtml#ch09)中的内容，在OpenGL中，2D纹理使用2D坐标（*s*，*t*）进行寻址。类似地，3D纹理使用类似（*s*，*t*，*p*）的3D纹理坐标进行寻址。正如你将看到的，将体积数据存储为3D纹理，可以快速访问数据，并为你的光线投射方案提供所需的插值值。
+回想一下第九章中的内容，在 OpenGL 中，2D 纹理使用 2D 坐标（*s*，*t*）进行寻址。类似地，3D 纹理使用类似（*s*，*t*，*p*）的 3D 纹理坐标进行寻址。正如你将看到的，将体积数据存储为 3D 纹理，可以快速访问数据，并为你的光线投射方案提供所需的插值值。
 
-### [光线生成](nsp-venkitachalam503045-0008.xhtml#rbh1302)
+### 光线生成
 
-本项目的目标是生成3D体积数据的透视投影，如[图 11-2](nsp-venkitachalam503045-0025.xhtml#fig11-2)所示。该图展示了OpenGL视锥体，如[第9章](nsp-venkitachalam503045-0023.xhtml#ch09)中所讨论的内容。具体来说，图中展示了一束来自眼睛的光线如何穿过近平面进入视锥体，通过包含体积数据的立方体体积，最后从远平面出口。
+本项目的目标是生成 3D 体积数据的透视投影，如图 11-2 所示。该图展示了 OpenGL 视锥体，如第九章中所讨论的内容。具体来说，图中展示了一束来自眼睛的光线如何穿过近平面进入视锥体，通过包含体积数据的立方体体积，最后从远平面出口。
 
-![](images/nsp-venkitachalam503045-f11002.jpg)
+![](img/nsp-venkitachalam503045-f11002.jpg)
 
 图 11-2：3D 体积数据的透视投影
 
-要实现光线投射，你需要生成射入体积的光线。对于输出窗口中每个像素，如[图 11-2](nsp-venkitachalam503045-0025.xhtml#fig11-2)所示，你需要生成一个向量 *R*，这个向量进入你认为是单位立方体的体积（我将其称为*颜色立方体*），该立方体的坐标范围是（0，0，0）到（1，1，1）。你将这个立方体内的每个点着色，RGB 值等于该点在立方体内的 3D 坐标。原点的颜色为（0，0，0），即黑色；（1，0，0）角为红色；而立方体中与原点对角线相对的点则为（1，1，1），即白色。[图 11-3](nsp-venkitachalam503045-0025.xhtml#fig11-3) 显示了这个立方体。
+要实现光线投射，你需要生成射入体积的光线。对于输出窗口中每个像素，如图 11-2 所示，你需要生成一个向量 *R*，这个向量进入你认为是单位立方体的体积（我将其称为*颜色立方体*），该立方体的坐标范围是（0，0，0）到（1，1，1）。你将这个立方体内的每个点着色，RGB 值等于该点在立方体内的 3D 坐标。原点的颜色为（0，0，0），即黑色；（1，0，0）角为红色；而立方体中与原点对角线相对的点则为（1，1，1），即白色。图 11-3 显示了这个立方体。
 
-![](images/nsp-venkitachalam503045-f11003.jpg)
+![](img/nsp-venkitachalam503045-f11003.jpg)
 
 图 11-3：一个颜色立方体
 
 注意：在 OpenGL 中，颜色可以表示为一组 8 位无符号值（*r*，*g*，*b*），其中 *r*，*g* 和 *b* 的取值范围为 [0, 255]。也可以表示为一组三个 32 位浮点值（*r*，*g*，*b*），其中 *r*，*g* 和 *b* 的取值范围为 [0.0, 1.0]。这两种表示是等效的。例如，前者的红色（255, 0, 0）与后者的（1.0, 0.0, 0.0）是相同的。
 
-要绘制立方体，首先使用 OpenGL 原语 `GL_TRIANGLES` 绘制它的六个面。然后为每个顶点着色，并利用 OpenGL 在光栅化多边形时提供的插值来处理每个顶点之间的颜色。例如，[图 11-4(a)](nsp-venkitachalam503045-0025.xhtml#fig11-4) 显示了立方体的三个前面。立方体的背面则在[图 11-4(b)](nsp-venkitachalam503045-0025.xhtml#fig11-4)中绘制，通过设置 OpenGL 剔除前面。
+要绘制立方体，首先使用 OpenGL 原语 `GL_TRIANGLES` 绘制它的六个面。然后为每个顶点着色，并利用 OpenGL 在光栅化多边形时提供的插值来处理每个顶点之间的颜色。例如，图 11-4(a) 显示了立方体的三个前面。立方体的背面则在图 11-4(b)中绘制，通过设置 OpenGL 剔除前面。
 
-![](images/nsp-venkitachalam503045-f11004.jpg)
+![](img/nsp-venkitachalam503045-f11004.jpg)
 
 图 11-4：用于计算光线的颜色立方体
 
-如果你通过从[图 11-4(a)](nsp-venkitachalam503045-0025.xhtml#fig11-4)中减去[图 11-4(b)](nsp-venkitachalam503045-0025.xhtml#fig11-4)中的颜色，即将 (*r*, *g*, *b*)[front] 从 (*r*, *g*, *b*)[back] 中减去，你实际上是在计算一组从立方体前面到背面的向量，因为该立方体上每个颜色的 (*r*, *g*, *b*) 值实际上等于该颜色位置的 3D 坐标。[图 11-4(c)](nsp-venkitachalam503045-0025.xhtml#fig11-4) 显示了结果。（为便于说明，负值已被转为正值，因为负数不能直接显示为颜色。）读取像素的颜色值 (*r*, *g*, *b*)，如[图 11-4(c)](nsp-venkitachalam503045-0025.xhtml#fig11-4)所示，将得到光线通过该点进入体积的 (*r*[x], *r*[y], *r*[z]) 坐标。
+如果你通过从图 11-4(a)中减去图 11-4(b)中的颜色，即将 (*r*, *g*, *b*)[front] 从 (*r*, *g*, *b*)[back] 中减去，你实际上是在计算一组从立方体前面到背面的向量，因为该立方体上每个颜色的 (*r*, *g*, *b*) 值实际上等于该颜色位置的 3D 坐标。图 11-4(c) 显示了结果。（为便于说明，负值已被转为正值，因为负数不能直接显示为颜色。）读取像素的颜色值 (*r*, *g*, *b*)，如图 11-4(c)所示，将得到光线通过该点进入体积的 (*r*[x], *r*[y], *r*[z]) 坐标。
 
 一旦你获得了投射光线，就可以将它们渲染成图像或 2D 纹理，供以后与 OpenGL 的帧缓冲对象（FBO）功能一起使用。在生成该纹理之后，你可以在实现光线投射算法的着色器中访问它。
 
@@ -72,15 +72,15 @@
 
 除了 3D 渲染，你还会通过从 3D 数据中提取与 x、y 或 z 轴垂直的 2D 截面，并将其作为纹理应用于一个四边形，来显示数据的 2D 切片。因为你将体积存储为 3D 纹理，所以可以通过指定纹理坐标（*s*、*t*、*p*）轻松获得所需的数据。OpenGL 的内置纹理插值可以让你在 3D 纹理的任意位置获取纹理值。
 
-### [OpenGL 窗口](nsp-venkitachalam503045-0008.xhtml#rbh1303)
+### OpenGL 窗口
 
 如同你在其他 OpenGL 项目中一样，本项目使用 GLFW 库来显示 OpenGL 窗口。你将使用处理程序来绘制、调整窗口大小以及处理键盘事件。你将使用键盘事件在体积渲染和切片渲染之间切换，并通过旋转和切割来操作 3D 数据。
 
-## [要求](nsp-venkitachalam503045-0008.xhtml#rah1302)
+## 要求
 
 你将使用 `PyOpenGL`，这是一个流行的 OpenGL Python 绑定库，用于渲染。你还将使用 Python Imaging Library (PIL) 来加载体积数据集中的 2D 图像，并使用 `numpy` 数组来表示 3D 坐标和变换矩阵。
 
-## [代码](nsp-venkitachalam503045-0008.xhtml#rah1303)
+## 代码
 
 首先，你将从图像文件中读取体积数据，并生成一个 3D 纹理。接下来，你将使用一个色彩立方体技术来生成从眼睛出发、指向体积的光线，这是实现体积光线投射算法的关键概念。你将研究如何定义立方体的几何体，以及如何绘制该立方体的前后面。然后，你将探索体积光线投射算法及其相关的顶点和片段着色器。最后，你将学习如何实现体积数据的 2D 切片。
 
@@ -100,11 +100,11 @@ volreader.py 包含读取体积数据并加载到 OpenGL 3D 纹理中的实用�
 
 volrender.py 包含创建 GLFW 窗口和渲染器的主要方法
 
-我们将在本章中覆盖除了两个文件之外的所有文件。*makedata.py* 文件与本章的其他项目文件一起存放在 [https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender) 中。*glutils.py* 文件可以从 [https://github.com/mkvenkit/pp2e/tree/main/common](https://github.com/mkvenkit/pp2e/tree/main/common) 下载。
+我们将在本章中覆盖除了两个文件之外的所有文件。*makedata.py* 文件与本章的其他项目文件一起存放在 [`github.com/mkvenkit/pp2e/tree/main/volrender`](https://github.com/mkvenkit/pp2e/tree/main/volrender) 中。*glutils.py* 文件可以从 [`github.com/mkvenkit/pp2e/tree/main/common`](https://github.com/mkvenkit/pp2e/tree/main/common) 下载。
 
-### [生成 3D 纹理](nsp-venkitachalam503045-0008.xhtml#rbh1304)
+### 生成 3D 纹理
 
-第一步是从包含图像的文件夹中读取体积数据，如下所示的代码所示。要查看完整的 *volreader.py* 代码，请跳到 [“完整的 3D 纹理代码”](nsp-venkitachalam503045-0025.xhtml#ah1307) 在 [第 241 页](nsp-venkitachalam503045-0025.xhtml#p241)。你也可以在 [https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender) 找到 *volreader.py* 文件。请注意，这个文件中的 `loadTexture()` 函数用于打开图像文件，读取内容，并创建一个 OpenGL 纹理对象，随后用于渲染。
+第一步是从包含图像的文件夹中读取体积数据，如下所示的代码所示。要查看完整的 *volreader.py* 代码，请跳到 “完整的 3D 纹理代码” 在 第 241 页。你也可以在 [`github.com/mkvenkit/pp2e/tree/main/volrender`](https://github.com/mkvenkit/pp2e/tree/main/volrender) 找到 *volreader.py* 文件。请注意，这个文件中的 `loadTexture()` 函数用于打开图像文件，读取内容，并创建一个 OpenGL 纹理对象，随后用于渲染。
 
 def loadVolume(dirName):
 
@@ -208,9 +208,9 @@ GL_RED, GL_UNSIGNED_BYTE, data)
 
 在这里，你创建了一个 OpenGL 纹理❶并设置了过滤和解包的参数。然后将 3D 数据数组加载到 OpenGL 纹理中❷。此处使用的格式是`GL_RED`，数据格式是`GL_UNSIGNED_BYTE`，因为每个像素只有一个 8 位值。最后，你返回 OpenGL 纹理 ID 和 3D 纹理的尺寸❸。
 
-### [生成光线](nsp-venkitachalam503045-0008.xhtml#rbh1305)
+### 生成光线
 
-生成光线的代码封装在一个名为`RayCube`的类中。这个类负责绘制颜色立方体，并具有将立方体背面绘制到 FBO 或纹理以及将立方体前面绘制到屏幕上的方法。要查看完整的*raycube.py*代码，请跳到 [“完整的光线生成代码”](nsp-venkitachalam503045-0025.xhtml#ah1308) 页面 242 处。你也可以在 [https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender) 找到*raycube.py*文件。
+生成光线的代码封装在一个名为`RayCube`的类中。这个类负责绘制颜色立方体，并具有将立方体背面绘制到 FBO 或纹理以及将立方体前面绘制到屏幕上的方法。要查看完整的*raycube.py*代码，请跳到 “完整的光线生成代码” 页面 242 处。你也可以在 [`github.com/mkvenkit/pp2e/tree/main/volrender`](https://github.com/mkvenkit/pp2e/tree/main/volrender) 找到*raycube.py*文件。
 
 首先，让我们定义这个类使用的着色器。着色器将作为`RayCube`类构造函数的一部分进行编译：
 
@@ -352,11 +352,11 @@ def __init__(self, width, height):
 
 ], numpy.int16)
 
-你将立方体的几何形状❶和颜色❷定义为`numpy`数组。注意，这两个定义中的值是相同的。正如我们之前讨论的，颜色立方体中每个像素的颜色对应于该像素的3D坐标。颜色立方体有六个面，每个面可以绘制为两个三角形，总共有6×6，即36个顶点。但与其指定所有36个顶点，不如只指定立方体的八个角❶，然后使用`indices`数组❸定义由这些角形成的三角形，如[图11-5](nsp-venkitachalam503045-0025.xhtml#fig11-5)所示。例如，前两组三个索引（4, 5, 7）和（7, 5, 6）定义了立方体顶面上的三角形。
+你将立方体的几何形状❶和颜色❷定义为`numpy`数组。注意，这两个定义中的值是相同的。正如我们之前讨论的，颜色立方体中每个像素的颜色对应于该像素的 3D 坐标。颜色立方体有六个面，每个面可以绘制为两个三角形，总共有 6×6，即 36 个顶点。但与其指定所有 36 个顶点，不如只指定立方体的八个角❶，然后使用`indices`数组❸定义由这些角形成的三角形，如图 11-5 所示。例如，前两组三个索引（4, 5, 7）和（7, 5, 6）定义了立方体顶面上的三角形。
 
-![](images/nsp-venkitachalam503045-f11005.jpg)
+![](img/nsp-venkitachalam503045-f11005.jpg)
 
-图11-5：通过索引，一个立方体可以表示为一组三角形，每个面由两个三角形组成。
+图 11-5：通过索引，一个立方体可以表示为一组三角形，每个面由两个三角形组成。
 
 接下来，仍然在`RayCube`类的构造函数中，你需要将顶点信息放入缓冲区：
 
@@ -610,9 +610,9 @@ self.initFBO()
 
 `reshape()` 方法在 OpenGL 窗口大小调整时调用。它检查新的窗口尺寸，然后清除并重新创建 FBO。
 
-### [实现光线投射算法](nsp-venkitachalam503045-0008.xhtml#rbh1306)
+### 实现光线投射算法
 
-接下来，你将在`RayCastRender`类中实现光线投射算法。该算法的核心发生在该类使用的片段着色器中，片段着色器也使用`RayCube`类帮助生成光线。要查看完整的*raycast.py*代码，请跳到[“完整的体积光线投射代码”](nsp-venkitachalam503045-0025.xhtml#ah1309)，该内容位于[第248页](nsp-venkitachalam503045-0025.xhtml#p248)。你还可以在[https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender)找到该文件。
+接下来，你将在`RayCastRender`类中实现光线投射算法。该算法的核心发生在该类使用的片段着色器中，片段着色器也使用`RayCube`类帮助生成光线。要查看完整的*raycast.py*代码，请跳到“完整的体积光线投射代码”，该内容位于第 248 页。你还可以在[`github.com/mkvenkit/pp2e/tree/main/volrender`](https://github.com/mkvenkit/pp2e/tree/main/volrender)找到该文件。
 
 在`RayCastRender`构造函数中，首先创建一个`RayCube`对象并加载着色器：
 
@@ -620,9 +620,9 @@ class RayCastRender:
 
 def __init__(self, width, height, volume):
 
-"""RayCastRender构造函数"""
+"""RayCastRender 构造函数"""
 
-# 创建RayCube对象
+# 创建 RayCube 对象
 
 ❶ self.raycube = raycube.RayCube(width, height)
 
@@ -646,9 +646,9 @@ self.aspect = width/float(height)
 
 ❹ self.camera = Camera()
 
-构造函数创建了一个`RayCube`类型的对象❶，用于生成光线。你加载了用于光线投射的着色器❷，然后设置了传入构造函数的OpenGL 3D纹理和尺寸❸，这些是作为元组`volume`传入的。接下来，你创建了一个`Camera`对象❹，你将用它来设置OpenGL的透视变换进行3D渲染。
+构造函数创建了一个`RayCube`类型的对象❶，用于生成光线。你加载了用于光线投射的着色器❷，然后设置了传入构造函数的 OpenGL 3D 纹理和尺寸❸，这些是作为元组`volume`传入的。接下来，你创建了一个`Camera`对象❹，你将用它来设置 OpenGL 的透视变换进行 3D 渲染。
 
-注释：`Camera`类也在*raycast.py*中声明，它基本上与[第10章](nsp-venkitachalam503045-0024.xhtml#ch10)中使用的类相同。你将在[第248页](nsp-venkitachalam503045-0025.xhtml#p248)的完整代码列表中看到它。
+注释：`Camera`类也在*raycast.py*中声明，它基本上与第十章中使用的类相同。你将在第 248 页的完整代码列表中看到它。
 
 这里是`RayCastRender`的渲染方法：
 
@@ -680,7 +680,7 @@ glUniform2f(glGetUniformLocation(self.program, b"uWinDims"),
 
 float(self.width), float(self.height))
 
-# 绑定到纹理单元0，表示立方体的背面
+# 绑定到纹理单元 0，表示立方体的背面
 
 ❺ glActiveTexture(GL_TEXTURE0)
 
@@ -688,7 +688,7 @@ glBindTexture(GL_TEXTURE_2D, texture)
 
 glUniform1i(glGetUniformLocation(self.program, b"texBackFaces"), 0)
 
-# 纹理单元1：3D体积纹理
+# 纹理单元 1：3D 体积纹理
 
 ❻ glActiveTexture(GL_TEXTURE1)
 
@@ -700,9 +700,9 @@ glUniform1i(glGetUniformLocation(self.program, b"texVolume"), 1)
 
 ❼ self.raycube.renderFrontFace(pMatrix, mvMatrix, self.program)
 
-首先，你使用`glutils.perspective()`工具方法为渲染设置透视投影矩阵 ❶。然后，你将当前相机参数传入`glutils.lookAt()`方法 ❷。接下来，使用`RayCube`中的`renderBackFace()`方法绘制颜色立方体的背面到纹理中，完成渲染的第一遍 ❸。（这个方法还会返回生成的纹理ID。）
+首先，你使用`glutils.perspective()`工具方法为渲染设置透视投影矩阵 ❶。然后，你将当前相机参数传入`glutils.lookAt()`方法 ❷。接下来，使用`RayCube`中的`renderBackFace()`方法绘制颜色立方体的背面到纹理中，完成渲染的第一遍 ❸。（这个方法还会返回生成的纹理 ID。）
 
-你通过启用射线投射算法的着色器继续。然后，你为着色器程序设置纹理。在❸处返回的纹理被设置为纹理单元0 ❺，从你读取的体积数据中创建的3D纹理被设置为纹理单元1 ❻。最后，你使用`RayCube`中的`renderFrontFace()`方法渲染立方体的前面 ❼。当执行这段代码时，`RayCastRender`的着色器将在顶点和片段上进行操作。
+你通过启用射线投射算法的着色器继续。然后，你为着色器程序设置纹理。在❸处返回的纹理被设置为纹理单元 0 ❺，从你读取的体积数据中创建的 3D 纹理被设置为纹理单元 1 ❻。最后，你使用`RayCube`中的`renderFrontFace()`方法渲染立方体的前面 ❼。当执行这段代码时，`RayCastRender`的着色器将在顶点和片段上进行操作。
 
 #### 顶点着色器
 
@@ -738,7 +738,7 @@ void main()
 
 """
 
-首先，你设置位置和颜色的输入变量 ❶。布局使用与`RayCube`顶点着色器中定义的相同索引，因为`RayCastRender`使用的是该类中定义的VBO来绘制几何图形，着色器中的位置必须匹配。然后，你定义输入变换矩阵 ❷，并设置一个颜色值作为着色器的输出 ❸。常规的变换会计算出内建的`gl_Position`输出 ❹，然后将输出设置为当前立方体顶点的颜色 ❺。后者将在顶点之间进行插值，从而在片段着色器中得到正确的颜色。
+首先，你设置位置和颜色的输入变量 ❶。布局使用与`RayCube`顶点着色器中定义的相同索引，因为`RayCastRender`使用的是该类中定义的 VBO 来绘制几何图形，着色器中的位置必须匹配。然后，你定义输入变换矩阵 ❷，并设置一个颜色值作为着色器的输出 ❸。常规的变换会计算出内建的`gl_Position`输出 ❹，然后将输出设置为当前立方体顶点的颜色 ❺。后者将在顶点之间进行插值，从而在片段着色器中得到正确的颜色。
 
 #### 片段着色器
 
@@ -794,7 +794,7 @@ float len = length(dir.xyz);
 
 float stepSize = 0.01;
 
-// X射线投影
+// X 射线投影
 
 vec4 dst = vec4(0.0);
 
@@ -822,7 +822,7 @@ src.rgb *= src.a;
 
 ❾ dst = (1.0 - dst.a)*src + dst;
 
-// 当alpha超过阈值时退出循环
+// 当 alpha 超过阈值时退出循环
 
 ❿ if(dst.a >= 0.95)
 
@@ -838,17 +838,17 @@ fragColor = dst;
 
 """
 
-片段着色器的输入是立方体的顶点颜色。片段着色器还可以访问由渲染颜色立方体生成的2D纹理、包含体积数据的3D纹理，以及OpenGL窗口的维度。
+片段着色器的输入是立方体的顶点颜色。片段着色器还可以访问由渲染颜色立方体生成的 2D 纹理、包含体积数据的 3D 纹理，以及 OpenGL 窗口的维度。
 
-当片段着色器执行时，你传入了立方体的前面面，因此通过查找传入的颜色值❶，你可以得到射线进入此立方体的起点。（回想一下在[“射线生成”](nsp-venkitachalam503045-0025.xhtml#bh1302)中关于立方体中颜色与射线方向之间关系的讨论，参见[第217页](nsp-venkitachalam503045-0025.xhtml#p217)。）
+当片段着色器执行时，你传入了立方体的前面面，因此通过查找传入的颜色值❶，你可以得到射线进入此立方体的起点。（回想一下在“射线生成”中关于立方体中颜色与射线方向之间关系的讨论，参见第 217 页。）
 
 你计算传入片段在屏幕上的纹理坐标❷。这里，通过将片段在窗口坐标中的位置除以窗口的维度，将位置映射到范围[0, 1]。射线的终点通过使用该纹理坐标查找立方体的背面颜色来获得❸。
 
-接下来你计算射线方向❹，然后计算该射线的归一化方向和长度，这将在射线投射计算中很有用。然后，你使用射线的起点和方向循环遍历体积，直到射线达到终点❺。在这个循环中，你计算射线在数据体积中的当前位置❻，并查找该点的数值❼。接着，你在❽和❾处执行混合方程，从而得到X射线效果。你将`dst`值与当前的强度值（这个强度值使用alpha值进行衰减）相结合，过程沿着射线继续。alpha值会不断增加，直到达到最大阈值0.95❿，此时退出循环。最终结果是在每个像素处产生的通过体积的平均不透明度，从而形成“透视”或X射线效果。（尝试改变阈值和alpha衰减，以产生不同的效果。）
+接下来你计算射线方向❹，然后计算该射线的归一化方向和长度，这将在射线投射计算中很有用。然后，你使用射线的起点和方向循环遍历体积，直到射线达到终点❺。在这个循环中，你计算射线在数据体积中的当前位置❻，并查找该点的数值❼。接着，你在❽和❾处执行混合方程，从而得到 X 射线效果。你将`dst`值与当前的强度值（这个强度值使用 alpha 值进行衰减）相结合，过程沿着射线继续。alpha 值会不断增加，直到达到最大阈值 0.95❿，此时退出循环。最终结果是在每个像素处产生的通过体积的平均不透明度，从而形成“透视”或 X 射线效果。（尝试改变阈值和 alpha 衰减，以产生不同的效果。）
 
-### [显示2D切片](nsp-venkitachalam503045-0008.xhtml#rbh1307)
+### 显示 2D 切片
 
-除了显示体积数据的3D视图外，你还想在屏幕上显示数据在x、y和z方向上的2D切片。实现这个功能的代码封装在一个名为`SliceRender`的类中，该类创建2D体积切片。要查看完整的*slicerender.py*代码，请跳转到[“完整的2D切片代码”](nsp-venkitachalam503045-0025.xhtml#ah1310)，位于[第251页](nsp-venkitachalam503045-0025.xhtml#p251)。你还可以在[https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender)找到*slicerender.py*文件。
+除了显示体积数据的 3D 视图外，你还想在屏幕上显示数据在 x、y 和 z 方向上的 2D 切片。实现这个功能的代码封装在一个名为`SliceRender`的类中，该类创建 2D 体积切片。要查看完整的*slicerender.py*代码，请跳转到“完整的 2D 切片代码”，位于第 251 页。你还可以在[`github.com/mkvenkit/pp2e/tree/main/volrender`](https://github.com/mkvenkit/pp2e/tree/main/volrender)找到*slicerender.py*文件。
 
 这是`SliceRender`类构造函数中的初始化代码，用于设置切片的几何形状：
 
@@ -898,7 +898,7 @@ glVertexAttribPointer(self.vertIndex, 3, GL_FLOAT, GL_FALSE, 0, None)
 
 glBindVertexArray(0)
 
-这段代码设置了一个 VAO 来管理 VBO，类似于早期的示例。你定义了 XY 平面上正方形的几何形状❶。（顶点顺序是`GL_TRIANGLE_STRIP`，在[第9章](nsp-venkitachalam503045-0023.xhtml#ch09)中介绍。）无论你展示的是与 *x*、*y* 还是 *z* 垂直的切片，你都将使用相同的几何形状。唯一不同的是，你选择显示的 3D 纹理中的数据平面。我们将在查看顶点着色器时回到这个思路。
+这段代码设置了一个 VAO 来管理 VBO，类似于早期的示例。你定义了 XY 平面上正方形的几何形状❶。（顶点顺序是`GL_TRIANGLE_STRIP`，在第九章中介绍。）无论你展示的是与 *x*、*y* 还是 *z* 垂直的切片，你都将使用相同的几何形状。唯一不同的是，你选择显示的 3D 纹理中的数据平面。我们将在查看顶点着色器时回到这个思路。
 
 这是一个渲染 2D 切片的方法：
 
@@ -962,13 +962,13 @@ glBindVertexArray(self.vao)
 
 glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
 
-# 解绑VAO
+# 解绑 VAO
 
 glBindVertexArray(0)
 
 每个 2D 切片是一个正方形，你通过使用 OpenGL 三角带原语来构建它。此代码展示了三角带的渲染设置。请注意，在❶处，你实现了正交投影，使用了`glutils.ortho()`方法。你设置了一个投影，在表示切片的单位正方形周围增加了一个 0.1 的缓冲区。
 
-当你使用 OpenGL 绘制图形时，默认视图（未应用任何变换）将视点放置在 (0, 0, 0)，并沿 z 轴查看，y 轴朝上。对几何体应用平移（−0.5, −0.5, −1.0）后，几何体将位于 z 轴的中心 ❷。你设置当前的切片分数 ❸（例如，100个切片中的第10个切片的分数是0.1），设置切片模式 ❹（以查看 x、y 或 z 方向的切片，分别用整数 0、1 和 2 表示），并将这两个值传递给着色器。
+当你使用 OpenGL 绘制图形时，默认视图（未应用任何变换）将视点放置在 (0, 0, 0)，并沿 z 轴查看，y 轴朝上。对几何体应用平移（−0.5, −0.5, −1.0）后，几何体将位于 z 轴的中心 ❷。你设置当前的切片分数 ❸（例如，100 个切片中的第 10 个切片的分数是 0.1），设置切片模式 ❹（以查看 x、y 或 z 方向的切片，分别用整数 0、1 和 2 表示），并将这两个值传递给着色器。
 
 #### 顶点着色器
 
@@ -1102,13 +1102,13 @@ elif key == 'r':
 
 self.currSliceIndex = (self.currSliceIndex - 1) % self.currSliceMax
 
-当键盘上的X、Y或Z键被按下时，`SliceRender`会切换到*x*、*y*或*z*切片模式。例如，按下*x*切片时 ❶，你会设置适当的模式，将当前切片索引设置为数据的中间位置，并更新最大切片数。
+当键盘上的 X、Y 或 Z 键被按下时，`SliceRender`会切换到*x*、*y*或*z*切片模式。例如，按下*x*切片时 ❶，你会设置适当的模式，将当前切片索引设置为数据的中间位置，并更新最大切片数。
 
-当键盘上的左箭头或右箭头键被按下时，你可以翻阅切片。例如，当按下左箭头键时，切片索引会递增 ❷。模运算符（`%`）确保当超出最大值时，索引会“回绕”到0。
+当键盘上的左箭头或右箭头键被按下时，你可以翻阅切片。例如，当按下左箭头键时，切片索引会递增 ❷。模运算符（`%`）确保当超出最大值时，索引会“回绕”到 0。
 
-### [将代码合并](nsp-venkitachalam503045-0008.xhtml#rbh1308)
+### 将代码合并
 
-让我们快速看看项目中的主文件，*volrender.py*。这个文件使用了一个`RenderWin`类，用于创建和管理GLFW OpenGL窗口。 (我不会详细讲解这个类，因为它与[第9章](nsp-venkitachalam503045-0023.xhtml#ch09)和[第10章](nsp-venkitachalam503045-0024.xhtml#ch10)中使用的类相似。) 要查看完整的*volrender.py*代码，可以跳转到[“完整的主文件代码”](nsp-venkitachalam503045-0025.xhtml#ah1311)，见[第254页](nsp-venkitachalam503045-0025.xhtml#p254)。你也可以在[https://github.com/mkvenkit/pp2e/tree/main/volrender](https://github.com/mkvenkit/pp2e/tree/main/volrender)找到*volrender.py*文件。
+让我们快速看看项目中的主文件，*volrender.py*。这个文件使用了一个`RenderWin`类，用于创建和管理 GLFW OpenGL 窗口。 (我不会详细讲解这个类，因为它与第九章和第十章中使用的类相似。) 要查看完整的*volrender.py*代码，可以跳转到“完整的主文件代码”，见第 254 页。你也可以在[`github.com/mkvenkit/pp2e/tree/main/volrender`](https://github.com/mkvenkit/pp2e/tree/main/volrender)找到*volrender.py*文件。
 
 在这个类的初始化代码中，你创建了渲染器，代码如下：
 
@@ -1126,11 +1126,11 @@ def __init__(self, imageDir):
 
 ❷ self.renderer = RayCastRender(self.width, self.height, self.volume)
 
-在这里，你通过`loadVolume()`函数将3D数据读取到OpenGL纹理中，我们之前讨论过这个函数 ❶。然后，你创建一个类型为`RayCastRender`的对象来显示数据 ❷。
+在这里，你通过`loadVolume()`函数将 3D 数据读取到 OpenGL 纹理中，我们之前讨论过这个函数 ❶。然后，你创建一个类型为`RayCastRender`的对象来显示数据 ❷。
 
 #### 键盘按键处理器
 
-`RenderWindow`类需要一个独立的键盘处理方法，用于切换体积渲染和切片渲染，并关闭窗口。这个方法还会将按键事件传递给`RayCastRender`和`SliceRender`类的键盘处理器，用于旋转相机或在2D切片中导航。
+`RenderWindow`类需要一个独立的键盘处理方法，用于切换体积渲染和切片渲染，并关闭窗口。这个方法还会将按键事件传递给`RayCastRender`和`SliceRender`类的键盘处理器，用于旋转相机或在 2D 切片中导航。
 
 def onKeyboard(self, win, key, scancode, action, mods):
 
@@ -1186,41 +1186,41 @@ except:
 
 pass
 
-按 ESC 键退出程序。你设置了其他按键，无论是按下键还是长按，都能生效❶。如果按下 V 键，你可以在体积渲染和切片渲染之间切换❷，并使用 Python 的 `isinstance()` 方法来识别当前类类型。为了处理其他按键事件（如 X、Y、Z 键，或左右箭头），你使用一个字典❸并将按键事件传递给当前渲染器的 `keyPressed()` 处理方法。我们在 [“2D 切片用户界面”](nsp-venkitachalam503045-0025.xhtml#ch1313) 第 237 页中查看了切片渲染器的 `keyPressed()` 方法。
+按 ESC 键退出程序。你设置了其他按键，无论是按下键还是长按，都能生效❶。如果按下 V 键，你可以在体积渲染和切片渲染之间切换❷，并使用 Python 的 `isinstance()` 方法来识别当前类类型。为了处理其他按键事件（如 X、Y、Z 键，或左右箭头），你使用一个字典❸并将按键事件传递给当前渲染器的 `keyPressed()` 处理方法。我们在 “2D 切片用户界面” 第 237 页中查看了切片渲染器的 `keyPressed()` 方法。
 
 注意：我选择不直接传递 `glfw.KEY` 值，而是使用字典将其转换为字符值，因为减少源文件中的依赖是一个好习惯。目前，项目中唯一依赖 GLFW 的文件是 *volrender.py*。如果你将 GLFW 特定类型传递到其他代码中，它们也需要导入并依赖 GLFW 库。如果你切换到其他 OpenGL 窗口工具包，代码会变得凌乱。
 
-## [运行程序](nsp-venkitachalam503045-0008.xhtml#rah1304)
+## 运行程序
 
 这是使用斯坦福体积数据存档中的数据运行程序的一个示例：
 
 $ `python volrender.py --dir mrbrain-8bit/`
 
-你应该看到类似于[图 11-6](nsp-venkitachalam503045-0025.xhtml#fig11-6)的内容。
+你应该看到类似于图 11-6 的内容。
 
-![](images/nsp-venkitachalam503045-f11006.jpg)
+![](img/nsp-venkitachalam503045-f11006.jpg)
 
 图 11-6：*volrender.py* 的一个示例运行。左侧是体积渲染图像，右侧是 2D 切片图像。
 
 在应用程序运行时，使用 V 键在体积渲染和切片渲染之间切换。在切片模式下，使用 X、Y 和 Z 键来更改切片轴，使用箭头键来更改切片位置。
 
-## [总结](nsp-venkitachalam503045-0008.xhtml#rah1305)
+## 总结
 
 在本章中，你实现了使用 Python 和 OpenGL 的体积光线投射算法。你学习了如何使用 GLSL 着色器高效地实现该算法，以及如何从体积数据中创建 2D 切片。
 
-## [实验！](nsp-venkitachalam503045-0008.xhtml#rah1306)
+## 实验！
 
 以下是几种你可以继续修改体积光线投射程序的方法：
 
-1.  1\. 当前，在光线投射模式下，很难看到体积数据“立方体”的边界。实现一个类`WireFrame`，在该立方体周围绘制一个框。将x、y和z轴分别标记为红色、绿色和蓝色，并为每个轴指定自己的着色器。你将从`RayCastRender`类中使用`WireFrame`。
+1.  1\. 当前，在光线投射模式下，很难看到体积数据“立方体”的边界。实现一个类`WireFrame`，在该立方体周围绘制一个框。将 x、y 和 z 轴分别标记为红色、绿色和蓝色，并为每个轴指定自己的着色器。你将从`RayCastRender`类中使用`WireFrame`。
 
-1.  2\. 实现数据缩放。在当前的实现中，你绘制了一个体积的立方体和一个二维切片的正方形，这假设你的数据集是对称的（即每个方向上的切片数相同），但大多数实际数据的切片数量是不同的。特别是医学数据，通常在z方向上有较少的切片，例如256×256×99。为了正确显示这些数据，你需要在计算中引入缩放因子。一个方法是将缩放因子应用于立方体顶点（3D体积）和正方形顶点（2D切片）。用户可以通过命令行参数输入缩放参数。
+1.  2\. 实现数据缩放。在当前的实现中，你绘制了一个体积的立方体和一个二维切片的正方形，这假设你的数据集是对称的（即每个方向上的切片数相同），但大多数实际数据的切片数量是不同的。特别是医学数据，通常在 z 方向上有较少的切片，例如 256×256×99。为了正确显示这些数据，你需要在计算中引入缩放因子。一个方法是将缩放因子应用于立方体顶点（3D 体积）和正方形顶点（2D 切片）。用户可以通过命令行参数输入缩放参数。
 
-1.  3\. 我们的体积光线投射实现使用X射线投射来计算像素的最终颜色或强度。另一种常见的方法是使用*最大强度投影 (MIP)* 在每个像素处设置最大强度。在你的代码中实现这一点。（提示：在`RayCastRender`的片段着色器中，修改通过光线进行步进的代码，检查并设置光线沿途的最大值，而不是混合值。）
+1.  3\. 我们的体积光线投射实现使用 X 射线投射来计算像素的最终颜色或强度。另一种常见的方法是使用*最大强度投影 (MIP)* 在每个像素处设置最大强度。在你的代码中实现这一点。（提示：在`RayCastRender`的片段着色器中，修改通过光线进行步进的代码，检查并设置光线沿途的最大值，而不是混合值。）
 
-1.  4\. 当前，你实现的唯一UI是围绕x、y和z轴的旋转。实现一个缩放功能，使得按下I/O键可以放大或缩小体积渲染图像。你可以通过在`glutils.lookAt()`方法中设置适当的相机参数来实现这一点，但有一个注意事项：如果你将视图移入数据立方体内部，光线投射将失败，因为OpenGL会裁剪立方体的前面面；光线投射所需的计算需要前后面都被正确渲染。相反，通过调整`glutils.projecton()`方法中的视野范围来进行缩放。
+1.  4\. 当前，你实现的唯一 UI 是围绕 x、y 和 z 轴的旋转。实现一个缩放功能，使得按下 I/O 键可以放大或缩小体积渲染图像。你可以通过在`glutils.lookAt()`方法中设置适当的相机参数来实现这一点，但有一个注意事项：如果你将视图移入数据立方体内部，光线投射将失败，因为 OpenGL 会裁剪立方体的前面面；光线投射所需的计算需要前后面都被正确渲染。相反，通过调整`glutils.projecton()`方法中的视野范围来进行缩放。
 
-## [完整的3D纹理代码](nsp-venkitachalam503045-0008.xhtml#rah1307)
+## 完整的 3D 纹理代码
 
 这里是完整的*volreader.py*代码列表。
 
@@ -1238,7 +1238,7 @@ from scipy import misc
 
 def loadVolume(dirName):
 
-"""从目录读取体积数据作为3D纹理"""
+"""从目录读取体积数据作为 3D 纹理"""
 
 # 列出目录中的图像
 
@@ -1302,7 +1302,7 @@ data = np.concatenate(imgDataList)
 
 print('体积数据尺寸: %d %d %d' % (width, height, depth))
 
-# 加载数据到3D纹理
+# 加载数据到 3D 纹理
 
 texture = glGenTextures(1)
 
@@ -1358,7 +1358,7 @@ glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.size[0], img.size[1],
 
 return texture
 
-## [完整的光线生成代码](nsp-venkitachalam503045-0008.xhtml#rah1308)
+## 完整的光线生成代码
 
 这是`RayCube`类的完整代码。
 
@@ -1730,7 +1730,7 @@ glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.width, self.height,
 
 0, GL_RGBA, GL_UNSIGNED_BYTE, None)
 
-# 绑定纹理到FBO
+# 绑定纹理到 FBO
 
 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 
@@ -1744,7 +1744,7 @@ glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
 
 self.width, self.height)
 
-# 绑定深度缓冲区到FBO
+# 绑定深度缓冲区到 FBO
 
 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
 
@@ -1778,9 +1778,9 @@ return
 
 def clearFBO(self):
 
-"""清除旧的FBO"""
+"""清除旧的 FBO"""
 
-# 删除FBO
+# 删除 FBO
 
 if glIsFramebuffer(self.fboHandle):
 
@@ -1794,7 +1794,7 @@ glDeleteTextures(int(self.texHandle))
 
 def close(self):
 
-"""调用此方法释放OpenGL资源"""
+"""调用此方法释放 OpenGL 资源"""
 
 glBindTexture(GL_TEXTURE_2D, 0)
 
@@ -1802,7 +1802,7 @@ glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 glBindRenderbuffer(GL_RENDERBUFFER, 0)
 
-# 删除FBO
+# 删除 FBO
 
 if glIsFramebuffer(self.fboHandle):
 
@@ -1836,7 +1836,7 @@ glDeleteBuffers(1, &_colorBuffer)
 
 """
 
-## [完整的体积光线投射代码](nsp-venkitachalam503045-0008.xhtml#rah1309)
+## 完整的体积光线投射代码
 
 这是完整的*raycast.py*代码列表。
 
@@ -1932,7 +1932,7 @@ float len = length(dir.xyz);
 
 float stepSize = 0.01;
 
-// X射线投影
+// X 射线投影
 
 vec4 dst = vec4(0.0);
 
@@ -2118,7 +2118,7 @@ def close(self):
 
 self.raycube.close()
 
-## [完整的 2D 切片代码](nsp-venkitachalam503045-0008.xhtml#rah1310)
+## 完整的 2D 切片代码
 
 这里是完整的 2D 切片代码列表。
 
@@ -2406,7 +2406,7 @@ def close(self):
 
 pass
 
-## [完整的主文件代码](nsp-venkitachalam503045-0008.xhtml#rah1311)
+## 完整的主文件代码
 
 这里是主文件的完整代码列表。
 
@@ -2614,6 +2614,6 @@ if __name__ == '__main__':
 
 main()
 
-[1](nsp-venkitachalam503045-0025.xhtml#fn4r) J. Kruger 和 R. Westermann, “基于GPU的体积渲染加速技术，”IEEE Visualization，2003年。
+1 J. Kruger 和 R. Westermann, “基于 GPU 的体积渲染加速技术，”IEEE Visualization，2003 年。
 
-[2](nsp-venkitachalam503045-0025.xhtml#fn5r) [https://graphics.stanford.edu/data/voldata/](https://graphics.stanford.edu/data/voldata/)
+2 [`graphics.stanford.edu/data/voldata/`](https://graphics.stanford.edu/data/voldata/)

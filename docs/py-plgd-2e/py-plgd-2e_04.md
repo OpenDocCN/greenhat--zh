@@ -1,4 +1,4 @@
-# [第二部分](nsp-venkitachalam503045-0008.xhtml#rpt02)
+# 第二部分
 
 # 模拟生命
 

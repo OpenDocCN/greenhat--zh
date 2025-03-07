@@ -2,11 +2,11 @@
 
 章节末尾练习的建议答案
 
-![](Images/chapterart.png)
+![](img/chapterart.png)
 
-本附录提供了本书所有章节末尾练习的建议答案。如果在任何章节问题上遇到困难，您可以在这里查看答案并继续学习。虽然大多数章节都有章节末尾的练习，8、16和17章没有，但它们有很多“动手做”的问题，帮助您进行练习。
+本附录提供了本书所有章节末尾练习的建议答案。如果在任何章节问题上遇到困难，您可以在这里查看答案并继续学习。虽然大多数章节都有章节末尾的练习，8、16 和 17 章没有，但它们有很多“动手做”的问题，帮助您进行练习。
 
-## 第1章
+## 第一章
 
 1.  添加这一行代码：
 
@@ -32,7 +32,7 @@
     print(55 * 234)
     ```
 
-## 第2章
+## 第二章
 
 1.  以下是输出：
 
@@ -101,7 +101,7 @@
 
 1.  以下是答案：
 
-1.  `global`：不行，因为它是Python的关键字
+1.  `global`：不行，因为它是 Python 的关键字
 
 1.  `2print`：不行，因为变量不能以数字开头
 
@@ -109,7 +109,7 @@
 
 1.  `_squ`：是的
 
-1.  `list`：不行，因为`list()`是Python内建函数
+1.  `list`：不行，因为`list()`是 Python 内建函数
 
 1.  这是输出：
 
@@ -166,7 +166,7 @@
 
 1.  请参见书籍资源中的新脚本*import_local_module1.py*。
 
-1.  分数的范围和平均值分别是29和82.625。您可以使用以下代码行来获取答案：
+1.  分数的范围和平均值分别是 29 和 82.625。您可以使用以下代码行来获取答案：
 
     ```py
     midterm = [95, 78, 77, 86, 90, 88, 81, 66]
@@ -222,7 +222,7 @@
     print(newdict)
     ```
 
-## 第3章
+## 第三章
 
 1.  更改
 
@@ -277,7 +277,7 @@
 
     确保将脚本*mysr.py*与*voice_open_file.py*放在同一文件夹中。
 
-## 第4章
+## 第四章
 
 1.  请参见此处的*pyttsx3_adjust1.py*：
 
@@ -314,7 +314,7 @@
     print_say(f'The area of the triangle is {area}.')
     ```
 
-## 第5章
+## 第五章
 
 1.  更改
 
@@ -407,7 +407,7 @@
     and "`wav`" in file.name 
     ```
 
-## 第6章
+## 第六章
 
 1.  请参见此处的*parse_local2.py*：
 
@@ -486,7 +486,7 @@
                     break
     ```
 
-## 第7章
+## 第七章
 
 1.  以下是脚本：
 
@@ -511,7 +511,7 @@
     elif "`quit the script`" in voice_input:
     ```
 
-## 第9章
+## 第九章
 
 1.  变更如下：
 
@@ -598,7 +598,7 @@
         pass
     ```
 
-## 第10章
+## 第十章
 
 1.  更改
 
@@ -663,7 +663,7 @@
         win = True
     ```
 
-## 第11章
+## 第十一章
 
 1.  更改
 
@@ -707,9 +707,9 @@
     'column ':'',
     ```
 
-1.  请参见[https://nostarch.com/make-python-talk/](https://nostarch.com/make-python-talk/)中的*conn_hs_2player.py*。
+1.  请参见[`nostarch.com/make-python-talk/`](https://nostarch.com/make-python-talk/)中的*conn_hs_2player.py*。
 
-## 第12章
+## 第十二章
 
 1.  更改
 
@@ -739,7 +739,7 @@
     ['H', 'i', ' ', 'P', 'y', 't', 'h', 'o', 'n'] 
     ```
 
-## 第13章
+## 第十三章
 
 1.  更改
 
@@ -770,7 +770,7 @@
         return 4
     ```
 
-    完整的脚本在[https://nostarch.com/make-python-talk/](https://nostarch.com/make-python-talk/)中的*conn_think1_second.py*里。
+    完整的脚本在[`nostarch.com/make-python-talk/`](https://nostarch.com/make-python-talk/)中的*conn_think1_second.py*里。
 
 1.  请参见书籍资源网站中的*ttt_think1.py*。
 
@@ -790,9 +790,9 @@
 
 1.  请参阅书籍资源网站上的*outcome_ttt_think.py*和*outcome_ttt_ml.py*。
 
-1.  黄色玩家赢得了第10局比赛。四个棋盘上的棋子水平连接（在第2、3、4和5列）。
+1.  黄色玩家赢得了第 10 局比赛。四个棋盘上的棋子水平连接（在第 2、3、4 和 5 列）。
 
-## 第14章
+## 第十四章
 
 1.  更改
 
@@ -844,7 +844,7 @@
     plt.setp(fig.get_xticklabels(), rotation = `15`)
     ```
 
-## 第15章
+## 第十五章
 
 1.  更改
 

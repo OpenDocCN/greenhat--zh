@@ -2,17 +2,17 @@
 
 **模块、库和框架**
 
-![image](../images/common01.jpg)
+![image](img/common01.jpg)
 
 模块是使 Python 可扩展性得以实现的关键部分。没有它们，Python 就只会是一个围绕着单体解释器构建的语言；它也无法在一个巨大的生态系统中蓬勃发展，无法让开发者通过组合扩展迅速且简便地构建应用程序。在这一章中，我将向你介绍一些使 Python 模块如此出色的特性，包括你需要了解的内置模块和外部管理的框架。
 
 ### **导入系统**
 
-要在你的程序中使用模块和库，必须使用 import 关键字导入它们。举个例子，[示例 2-1](ch02.xhtml#ch2list1) 导入了至关重要的 Python 之禅指导原则。
+要在你的程序中使用模块和库，必须使用 import 关键字导入它们。举个例子，示例 2-1 导入了至关重要的 Python 之禅指导原则。
 
 >>> import this
 
-《Python之禅》，Tim Peters 编写
+《Python 之禅》，Tim Peters 编写
 
 美丽优于丑陋。
 
@@ -52,7 +52,7 @@
 
 命名空间是一个极棒的想法——我们应该多做一些！
 
-*示例 2-1：Python之禅*
+*示例 2-1：Python 之禅*
 
 导入系统相当复杂，我假设你已经掌握了基础知识，因此在这里我将向你展示该系统的一些内部机制，包括 sys 模块如何工作、如何更改或添加导入路径，以及如何使用自定义导入器。
 
@@ -142,17 +142,17 @@ True
 
 #### ***自定义导入器***
 
-你还可以使用自定义导入器扩展导入机制。这正是Lisp-Python方言Hy所使用的技术，它教Python如何导入标准的*.py*或*.pyc*文件以外的文件。（Hy是一个基于Python的Lisp实现，稍后将在“[Hy简介](ch09.xhtml#lev1sec48)”部分中讨论，参见[第145页](ch09.xhtml#page_145)。）
+你还可以使用自定义导入器扩展导入机制。这正是 Lisp-Python 方言 Hy 所使用的技术，它教 Python 如何导入标准的*.py*或*.pyc*文件以外的文件。（Hy 是一个基于 Python 的 Lisp 实现，稍后将在“Hy 简介”部分中讨论，参见第 145 页。）
 
-*导入钩子机制*，也就是这种技术，是由PEP 302定义的。它允许你扩展标准的导入机制，从而修改Python导入模块的方式，并构建你自己的导入系统。例如，你可以编写一个扩展，从网络上的数据库导入模块，或者在导入任何模块之前做一些完整性检查。
+*导入钩子机制*，也就是这种技术，是由 PEP 302 定义的。它允许你扩展标准的导入机制，从而修改 Python 导入模块的方式，并构建你自己的导入系统。例如，你可以编写一个扩展，从网络上的数据库导入模块，或者在导入任何模块之前做一些完整性检查。
 
-Python提供了两种不同但相关的方式来扩展导入系统：用于sys.meta_path的元路径查找器和用于sys.path_hooks的路径条目查找器。
+Python 提供了两种不同但相关的方式来扩展导入系统：用于 sys.meta_path 的元路径查找器和用于 sys.path_hooks 的路径条目查找器。
 
 #### ***元路径查找器***
 
-*元路径查找器*是一个对象，它允许你加载自定义对象以及标准的*.py*文件。一个元路径查找器对象必须暴露一个find_module(fullname, path=None)方法，该方法返回一个加载器对象。加载器对象还必须拥有一个load_module(fullname)方法，负责从源文件加载模块。
+*元路径查找器*是一个对象，它允许你加载自定义对象以及标准的*.py*文件。一个元路径查找器对象必须暴露一个 find_module(fullname, path=None)方法，该方法返回一个加载器对象。加载器对象还必须拥有一个 load_module(fullname)方法，负责从源文件加载模块。
 
-举个例子，[示例 2-2](ch02.xhtml#ch2list2)展示了Hy如何使用自定义元路径查找器，使Python能够导入以*.hy*结尾的源文件，而不是*.py*文件。
+举个例子，示例 2-2 展示了 Hy 如何使用自定义元路径查找器，使 Python 能够导入以*.hy*结尾的源文件，而不是*.py*文件。
 
 class MetaImporter(object):
 
@@ -162,31 +162,31 @@ fls = ["%s/__init__.hy", "%s.hy"]
 
 dirpath = "/".join(fullname.split("."))
 
-对于sys.path中的每个pth：
+对于 sys.path 中的每个 pth：
 
 pth = os.path.abspath(pth)
 
-对于fp中的每个文件：
+对于 fp 中的每个文件：
 
 composed_path = fp % ("%s/%s" % (pth, dirpath))
 
-如果os.path.exists(composed_path):
+如果 os.path.exists(composed_path):
 
-返回composed_path
+返回 composed_path
 
 def find_module(self, fullname, path=None):
 
 path = self.find_on_path(fullname)
 
-如果path存在：
+如果 path 存在：
 
-返回MetaLoader(path)
+返回 MetaLoader(path)
 
 sys.meta_path.append(MetaImporter())
 
-*示例 2-2: 一个Hy模块导入器*
+*示例 2-2: 一个 Hy 模块导入器*
 
-一旦Python确定路径有效且指向一个模块，就会返回一个MetaLoader对象，如[示例 2-3](ch02.xhtml#ch2list3)所示。
+一旦 Python 确定路径有效且指向一个模块，就会返回一个 MetaLoader 对象，如示例 2-3 所示。
 
 class MetaLoader(object):
 
@@ -198,23 +198,23 @@ def is_package(self, fullname):
 
 dirpath = "/".join(fullname.split("."))
 
-对于sys.path中的每个pth：
+对于 sys.path 中的每个 pth：
 
 pth = os.path.abspath(pth)
 
 composed_path = "%s/%s/__init__.hy" % (pth, dirpath)
 
-如果os.path.exists(composed_path):
+如果 os.path.exists(composed_path):
 
-返回True
+返回 True
 
-返回False
+返回 False
 
 def load_module(self, fullname):
 
-如果fullname在sys.modules中：返回sys.modules[fullname]
+如果 fullname 在 sys.modules 中：返回 sys.modules[fullname]
 
-如果self.path为空：
+如果 self.path 为空：
 
 返回
 
@@ -242,9 +242,9 @@ mod.__package__ = fullname.rpartition('.')[0]
 
 sys.modules[fullname] = mod
 
-返回mod
+返回 mod
 
-*示例 2-3: 一个Hy模块加载器对象*
+*示例 2-3: 一个 Hy 模块加载器对象*
 
 在 ➊ 处，import_file_to_module 读取一个 *.hy* 源文件，将其编译为 Python 代码，并返回一个 Python 模块对象。
 
@@ -264,7 +264,7 @@ Python 自带一个庞大的标准库，里面包含了几乎任何你能想到�
 
 +   argparse 提供用于解析命令行参数的函数。
 
-+   bisect 提供排序列表的二分查找算法（参见 [第 10 章](ch10.xhtml#ch10)）。
++   bisect 提供排序列表的二分查找算法（参见 第十章）。
 
 +   calendar 提供多个与日期相关的函数。
 
@@ -292,7 +292,7 @@ Python 自带一个庞大的标准库，里面包含了几乎任何你能想到�
 
 +   multiprocessing 允许你从应用程序中运行多个子进程，同时提供一个 API，使它们看起来像线程。
 
-+   operator 提供实现基本 Python 运算符的函数，你可以使用这些函数，而无需编写自己的 lambda 表达式（参见 [第 10 章](ch10.xhtml#ch10)）。
++   operator 提供实现基本 Python 运算符的函数，你可以使用这些函数，而无需编写自己的 lambda 表达式（参见 第十章）。
 
 +   os 提供对基本操作系统功能的访问。
 
@@ -354,11 +354,11 @@ Python 标准库是安全且已有充分文档记录的领域：它的模块都�
 
 无论外部库有多么有用，都要小心不要让它深度嵌入到你的源代码中。否则，如果发生错误并且你需要更换库，可能需要重写程序的大部分代码。更好的方法是编写你自己的 API——一个封装外部库的包装器，将它们隔离在源代码之外。你的程序无需知道它正在使用哪些外部库，只需知道你的 API 提供了哪些功能。如果你需要使用不同的库，只需更改你的包装器。只要新库提供相同的功能，你就不需要修改其余的代码库。可能会有例外情况，但应该不多；大多数库设计是为了解决一个特定范围的问题，因此可以轻松隔离。
 
-在[第 5 章](ch05.xhtml#ch05)中，我们还将探讨如何使用入口点构建驱动系统，从而允许你将项目的某些部分视为可以随时切换的模块。
+在第五章中，我们还将探讨如何使用入口点构建驱动系统，从而允许你将项目的某些部分视为可以随时切换的模块。
 
 ### **包安装：从 pip 获得更多功能**
 
-pip 项目提供了一种非常简单的方法来处理包和外部库的安装。它在积极开发中，得到良好维护，并且从 Python 3.4 版本开始包含在内。它可以从 *Python 包索引（PyPI）*、tar 包或 Wheel 存档中安装或卸载包（我们将在[第 5 章](ch05.xhtml#ch05)中讨论这些内容）。
+pip 项目提供了一种非常简单的方法来处理包和外部库的安装。它在积极开发中，得到良好维护，并且从 Python 3.4 版本开始包含在内。它可以从 *Python 包索引（PyPI）*、tar 包或 Wheel 存档中安装或卸载包（我们将在第五章中讨论这些内容）。
 
 它的使用方法很简单：
 
@@ -472,7 +472,7 @@ Python 提供了各种框架，适用于各种 Python 应用程序：如果你�
 
 框架和外部库的主要区别在于，应用程序是通过在框架之上构建来使用框架的：你的代码会扩展框架，而不是框架扩展你的代码。与库不同，库基本上是你可以引入的附加功能，用来为你的代码增加额外的功能，而框架则构成了你代码的*底盘*：你所做的每件事都在某种程度上依赖于这个底盘。这可能是把双刃剑。使用框架有很多优点，比如快速原型设计和开发，但也有一些值得注意的缺点，比如被框架束缚。你需要在决定是否使用框架时考虑到这些因素。
 
-选择适合 Python 应用程序的框架时需要检查的推荐事项，基本与“[外部库安全检查表](ch02.xhtml#lev2sec9)”中描述的相同，见[第 23 页](ch02.xhtml#page_23)—这也是合乎逻辑的，因为框架通常作为 Python 库的集合发布。有时框架还包含用于创建、运行和部署应用程序的工具，但这并不改变你应该应用的标准。我们已经确定，替换一个外部库在你已经写了依赖它的代码后会很麻烦，但替换框架则更加糟糕，通常需要从头开始完全重写程序。
+选择适合 Python 应用程序的框架时需要检查的推荐事项，基本与“外部库安全检查表”中描述的相同，见第 23 页—这也是合乎逻辑的，因为框架通常作为 Python 库的集合发布。有时框架还包含用于创建、运行和部署应用程序的工具，但这并不改变你应该应用的标准。我们已经确定，替换一个外部库在你已经写了依赖它的代码后会很麻烦，但替换框架则更加糟糕，通常需要从头开始完全重写程序。
 
 举个例子，前面提到的 Twisted 框架至今还没有完全支持 Python 3：如果你几年前使用 Twisted 编写了一个程序，并且希望将其更新为支持 Python 3，你会遇到麻烦。要么你必须重写整个程序，换用另一个框架，要么你得等到有人最终为 Twisted 提供完全的 Python 3 支持。
 
@@ -480,7 +480,7 @@ Python 提供了各种框架，适用于各种 Python 应用程序：如果你�
 
 ### **Doug Hellmann，Python 核心开发者，谈 Python 库**
 
-Doug Hellmann 是 DreamHost 的高级开发者，也是 OpenStack 项目的贡献者之一。他创建了网站 Python Module of the Week (*[http://www.pymotw.com/](http://www.pymotw.com/)*), 并且写了一本名为 *《Python 标准库示例》* 的优秀书籍。他也是 Python 核心开发者。我向 Doug 提出了关于标准库以及围绕它设计库和应用程序的一些问题。
+Doug Hellmann 是 DreamHost 的高级开发者，也是 OpenStack 项目的贡献者之一。他创建了网站 Python Module of the Week (*[`www.pymotw.com/`](http://www.pymotw.com/)*), 并且写了一本名为 *《Python 标准库示例》* 的优秀书籍。他也是 Python 核心开发者。我向 Doug 提出了关于标准库以及围绕它设计库和应用程序的一些问题。
 
 **当你从零开始编写一个 Python 应用程序时，你的第一步是什么？**
 
@@ -498,13 +498,13 @@ Doug Hellmann 是 DreamHost 的高级开发者，也是 OpenStack 项目的贡�
 
 **将模块加入 Python 标准库的流程是什么？**
 
-提交模块到标准库的完整过程和指南可以在 Python 开发者指南中的 *[https://docs.python.org/devguide/stdlibchanges.html](https://docs.python.org/devguide/stdlibchanges.html)* 找到。
+提交模块到标准库的完整过程和指南可以在 Python 开发者指南中的 *[`docs.python.org/devguide/stdlibchanges.html`](https://docs.python.org/devguide/stdlibchanges.html)* 找到。
 
 在模块被添加之前，提交者需要证明它是稳定的且广泛有用的。该模块应该提供一些功能，这些功能要么是自己实现起来很难做到正确，要么是如此有用，以至于许多开发者已经创建了自己的变体。API 应该清晰，且任何模块的依赖应该仅限于标准库内部。
 
 第一步是通过 *python-ideas* 邮件列表将引入模块到标准库的想法提交给社区，非正式地评估兴趣的程度。如果反馈是积极的，下一步是创建一个 Python 增强提案（PEP），其中应包括添加该模块的动机和过渡的实现细节。
 
-由于包管理和发现工具变得如此可靠，特别是 pip 和 PyPI，可能更实际的做法是将一个新的库保持在 Python 标准库之外。单独发布允许更频繁地更新新功能和修复bug，这对于处理新技术或 API 的库尤其重要。
+由于包管理和发现工具变得如此可靠，特别是 pip 和 PyPI，可能更实际的做法是将一个新的库保持在 Python 标准库之外。单独发布允许更频繁地更新新功能和修复 bug，这对于处理新技术或 API 的库尤其重要。
 
 **你希望人们更多了解标准库中的三个最重要模块是什么？**
 

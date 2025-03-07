@@ -1,10 +1,10 @@
 ## 实践项目解决方案
 
-![image](../images/common01.jpg)
+![image](img/common01.jpg)
 
-本附录提供了每一章实践项目的解决方案。数字版本可在本书网站上获得，网址为*[https://www.nostarch.com/impracticalpython/](https://www.nostarch.com/impracticalpython/)*。
+本附录提供了每一章实践项目的解决方案。数字版本可在本书网站上获得，网址为*[`www.nostarch.com/impracticalpython/`](https://www.nostarch.com/impracticalpython/)*。
 
-### **第1章：傻名字生成器**
+### **第一章：傻名字生成器**
 
 #### ***猪拉丁语***
 
@@ -32,7 +32,7 @@ print()
 
 print("{}".format(pig_Latin), file=sys.stderr)
 
-try_again = input("\n\n再试一次吗？（按回车键，或者按n停止）\n ")
+try_again = input("\n\n 再试一次吗？（按回车键，或者按 n 停止）\n ")
 
 if try_again.lower() == "n":
 
@@ -50,7 +50,7 @@ import pprint
 
 from collections import defaultdict
 
-# 注意：文本应该是简短的短语，以便条形图适应IDLE窗口
+# 注意：文本应该是简短的短语，以便条形图适应 IDLE 窗口
 
 text = '就像中世纪游戏角落里的城堡一样，我预见到可怕的 \
 
@@ -58,7 +58,7 @@ trouble and I stay here just the same.'
 
 ALPHABET = 'abcdefghijklmnopqrstuvwxyz'
 
-# defaultdict模块让你动态生成字典键！
+# defaultdict 模块让你动态生成字典键！
 
 mapped = defaultdict(list)
 
@@ -70,9 +70,9 @@ if character in ALPHABET:
 
 mapped[character].append(character)
 
-# pprint可以让你打印堆叠输出
+# pprint 可以让你打印堆叠输出
 
-print("\n如果文本换行，请可能需要拉伸控制台窗口。\n")
+print("\n 如果文本换行，请可能需要拉伸控制台窗口。\n")
 
 print("text = ", end='')
 
@@ -80,7 +80,7 @@ print("{}\n".format(text), file=sys.stderr)
 
 pprint.pprint(mapped, width=110)
 
-### **第2章：寻找回文拼写**
+### **第二章：寻找回文拼写**
 
 #### ***字典清理***
 
@@ -110,7 +110,7 @@ continue
 
 print("{}".format(word_list_clean))
 
-### **第3章：解决字谜**
+### **第三章：解决字谜**
 
 #### ***查找字母对***
 
@@ -118,7 +118,7 @@ print("{}".format(word_list_clean))
 
 """生成伏地魔的字母对，并查找它们在字典中的频率。
 
-需要load_dictionary.py模块来加载英文词典文件。
+需要 load_dictionary.py 模块来加载英文词典文件。
 
 """
 
@@ -150,7 +150,7 @@ digrams.add(perm[i] + perm[i + 1])
 
 print(*sorted(digrams), sep='\n')
 
-print("\n字母对数量 = {}\n".format(len(digrams)))
+print("\n 字母对数量 = {}\n".format(len(digrams)))
 
 # 使用正则表达式查找单词中重复的字母对
 
@@ -174,7 +174,7 @@ for k in sorted(mapped):
 
 print("{} {}".format(k, mapped[k]))
 
-### **第4章：解码美国内战密码**
+### **第四章：解码美国内战密码**
 
 #### ***破解林肯密码***
 
@@ -189,13 +189,13 @@ print("{} {}".format(k, mapped[k]))
 
 *identify_cipher_type_practice.py*
 
-"""加载密文并使用ETAOIN出现的分数来分类密码类型。"""
+"""加载密文并使用 ETAOIN 出现的分数来分类密码类型。"""
 
 import sys
 
 from collections import Counter
 
-# 设置英语中最常见字母的6个字母的任意截止分数
+# 设置英语中最常见字母的 6 个字母的任意截止分数
 
 # 密文中包含目标分数或更高的部分 = 换位密码
 
@@ -227,9 +227,9 @@ sys.exit(1)
 
 six_most_frequent = Counter(ciphertext.lower()).most_common(6)
 
-print("\n英语中最常用的六个字母 = ETAOIN")
+print("\n 英语中最常用的六个字母 = ETAOIN")
 
-print('\n密文中最常见的六个字母 =')
+print('\n 密文中最常见的六个字母 =')
 
 print(*six_most_frequent, sep='\n')
 
@@ -249,7 +249,7 @@ count += 1
 
 if count/len(TARGET) >= CUTOFF:
 
-print("\n此密文很可能是由换位密码加密生成的")
+print("\n 此密文很可能是由换位密码加密生成的")
 
 else:
 
@@ -329,7 +329,7 @@ print("columns = {}".format(columns))
 
 # 构建列号组合的列表列表
 
-# itertools product计算输入可迭代对象的笛卡尔积
+# itertools product 计算输入可迭代对象的笛卡尔积
 
 def perms(columns):
 
@@ -347,7 +347,7 @@ return results
 
 col_combos = perms(columns)
 
-print(*col_combos, sep="\n")  # 如果num_cols > 4，请注释掉此行！
+print(*col_combos, sep="\n")  # 如果 num_cols > 4，请注释掉此行！
 
 print("没有负数的列数的阶乘 = {}"
 
@@ -357,7 +357,7 @@ print("列组合的数量 = {}".format(len(col_combos)))
 
 #### ***路线置换密码：暴力破解攻击***
 
-这个实践项目使用了两个程序。第二个程序，*perms.py*，作为第一个程序*route_cipher_hacker.py*的模块。它是基于之前描述的程序*permutations_practice.py*构建的，该程序在[第371页](appendix.xhtml#page_371)的“[自动化可能的密钥](appendix.xhtml#lev408)”中进行了介绍。
+这个实践项目使用了两个程序。第二个程序，*perms.py*，作为第一个程序*route_cipher_hacker.py*的模块。它是基于之前描述的程序*permutations_practice.py*构建的，该程序在第 371 页的“自动化可能的密钥”中进行了介绍。
 
 ##### ***route_cipher_hacker.py***
 
@@ -371,13 +371,13 @@ print("列组合的数量 = {}".format(len(col_combos)))
 
 基于输入的列数和行数自动生成可能的密钥。
 
-Key表示读取列的顺序和遍历的方向。
+Key 表示读取列的顺序和遍历的方向。
 
 负的列号意味着从底部开始，向上读取。
 
 正的列号意味着从顶部开始，向下读取。
 
-下面的示例适用于4x4矩阵，密钥为-1 2 -3 4。
+下面的示例适用于 4x4 矩阵，密钥为-1 2 -3 4。
 
 注意，“0”不允许使用。
 
@@ -465,7 +465,7 @@ if len_cipher % i == 0:
 
 factors.append(i)
 
-print("\n密码长度 = {}".format(len_cipher))
+print("\n 密码长度 = {}".format(len_cipher))
 
 print("可接受的列/行值包括：{}".format(factors))
 
@@ -473,7 +473,7 @@ print()
 
 if ROWS * COLS != len_cipher:
 
-print("\n错误 - 输入的列和行不是长度的因数 "
+print("\n 错误 - 输入的列和行不是长度的因数 "
 
 "密码的终止程序。", file=sys.stderr)
 
@@ -521,11 +521,11 @@ word = str(matrix_col.pop())
 
 plaintext += word + ' '
 
-print("\n使用密钥 = {}".format(key))
+print("\n 使用密钥 = {}".format(key))
 
 print("翻译结果 = {}".format(plaintext))
 
-print("\n密钥数量 = {}".format(len(col_combos)))
+print("\n 密钥数量 = {}".format(len(col_combos)))
 
 if __name__ == '__main__':
 
@@ -557,7 +557,7 @@ from itertools import permutations, product
 
 # 构建列号组合的列表列表
 
-# itertools的product计算输入迭代对象的笛卡尔积
+# itertools 的 product 计算输入迭代对象的笛卡尔积
 
 def perms(num_cols):
 
@@ -667,7 +667,7 @@ return f.read().strip()
 
 # 加载并处理消息：
 
-filename = input("\n请输入要翻译的消息的完整文件名：")
+filename = input("\n 请输入要翻译的消息的完整文件名：")
 
 try:
 
@@ -681,7 +681,7 @@ sys.exit(1)
 
 # 检查加载的消息和行数
 
-print("\n原始消息 = {}\n".format(loaded_message))
+print("\n 原始消息 = {}\n".format(loaded_message))
 
 # 将消息转换为列表并获取长度
 
@@ -701,7 +701,7 @@ print()
 
 for i in range(1, increment + 1):
 
-print("\n使用增量字母 {} 的单词 {}".format(i, i))
+print("\n 使用增量字母 {} 的单词 {}".format(i, i))
 
 print()
 
@@ -723,7 +723,7 @@ else:
 
 print("间隔不起作用", file=sys.stderr)
 
-### **第6章：用隐形墨水写作**
+### **第六章：用隐形墨水写作**
 
 #### ***检查空白行的数量***
 
@@ -785,7 +785,7 @@ num_real = len(real)
 
 diff = num_real - num_blanks
 
-print("\n假消息中的空白行数 = {}".format(num_blanks))
+print("\n 假消息中的空白行数 = {}".format(num_blanks))
 
 print("实际消息中的行数 = {}\n".format(num_real))
 
@@ -813,7 +813,7 @@ subtitle.alignment = 1
 
 doc.add_heading('', 1)
 
-doc.add_paragraph('2015年12月17日')
+doc.add_paragraph('2015 年 12 月 17 日')
 
 doc.add_paragraph('')
 
@@ -861,7 +861,7 @@ doc.save('ciphertext_message_letterhead.docx')
 
 print("完成"))
 
-### **第8章：为俳句诗歌计数音节**
+### **第八章：为俳句诗歌计数音节**
 
 #### ***音节计数器与字典文件***
 
@@ -893,7 +893,7 @@ word_list = load('2of4brif.txt')
 
 except IOError as e:
 
-print("{}\n打开文件时出错。程序终止.".format(e),
+print("{}\n 打开文件时出错。程序终止.".format(e),
 
 file=sys.stderr)
 
@@ -919,7 +919,7 @@ print(word, end='')
 
 print(" 未找到", file=sys.stderr)
 
-### **第10章：我们孤单吗？探索费米悖论**
+### **第十章：我们孤单吗？探索费米悖论**
 
 #### ***遥远的银河***
 
@@ -1309,17 +1309,17 @@ return civ_locs
 
 def round_civ_locs(civ_locs):
 
-"""四舍五入xyz位置并返回四舍五入后的地点列表。"""
+"""四舍五入 xyz 位置并返回四舍五入后的地点列表。"""
 
 # 将半径转换为立方体维度：
 
 detect_distance = round((4 / 3 * math.pi * DETECTION_RADIUS**3)**(1/3))
 
-print("\n检测半径 = {} 光年".format(DETECTION_RADIUS))
+print("\n 检测半径 = {} 光年".format(DETECTION_RADIUS))
 
 print("立方体检测距离 = {} 光年".format(detect_distance))
 
-# 将文明xyz四舍五入到检测距离
+# 将文明 xyz 四舍五入到检测距离
 
 civ_locs_rounded = []
 
@@ -1359,17 +1359,17 @@ civ_locs_rounded = round_civ_locs(civ_locs)
 
 overlap_rollup, detection_prob = calc_prob_of_detection(civ_locs_rounded)
 
-print("四舍五入前的civ_locs长度 = {}".format(len(civ_locs)))
+print("四舍五入前的 civ_locs 长度 = {}".format(len(civ_locs)))
 
-print("四舍五入后civ_locs_rounded的长度 = {}".format(len(civ_locs_rounded)))
+print("四舍五入后 civ_locs_rounded 的长度 = {}".format(len(civ_locs_rounded)))
 
 print("overlap_rollup = {}\n".format(overlap_rollup))
 
 print("检测概率 = {0:.3f}".format(detection_prob))
 
-# QC步骤：检查四舍五入
+# QC 步骤：检查四舍五入
 
-print("\n前三个位置的四舍五入前后：\n")
+print("\n 前三个位置的四舍五入前后：\n")
 
 for i in range(3):
 
@@ -1381,13 +1381,13 @@ if __name__ == '__main__':
 
 main()
 
-### **第11章：蒙提·霍尔问题**
+### **第十一章：蒙提·霍尔问题**
 
 #### ***生日悖论***
 
 *birthday_paradox_practice.py*
 
-"""计算每x个人有相同生日的概率。"""
+"""计算每 x 个人有相同生日的概率。"""
 
 import random
 
@@ -1395,7 +1395,7 @@ max_people = 50
 
 num_runs = 2000
 
-print("\n至少有2人生日相同的概率：\n")
+print("\n 至少有 2 人生日相同的概率：\n")
 
 for people in range(2, max_people + 1):
 
@@ -1423,13 +1423,13 @@ print("人数 = {} 概率 = {:.4f}".format(people, prob))
 
 print("""
 
-根据生日悖论，如果房间里有23个人，
+根据生日悖论，如果房间里有 23 个人，
 
-有50%的机会这2个人会有相同的生日。
+有 50%的机会这 2 个人会有相同的生日。
 
 """)
 
-### **第13章：模拟外星火山**
+### **第十三章：模拟外星火山**
 
 #### ***走向远方***
 
@@ -1443,7 +1443,7 @@ import random
 
 import pygame as pg
 
-pg.init()  # 初始化pygame
+pg.init()  # 初始化 pygame
 
 # define color table
 
@@ -1589,7 +1589,7 @@ if __name__ == "__main__":
 
 main()
 
-### **第16章：使用本福特定律寻找欺诈**
+### **第十六章：使用本福特定律寻找欺诈**
 
 #### ***击败本福特***
 
@@ -1597,7 +1597,7 @@ main()
 
 """操作投票计数，使最终结果符合本福特定律。"""
 
-# 下面的示例是针对特朗普与希拉里，2016年伊利诺伊州总统选举
+# 下面的示例是针对特朗普与希拉里，2016 年伊利诺伊州总统选举
 
 def load_data(filename):
 
@@ -1671,11 +1671,11 @@ t_votes = load_data('Trump_votes_Illinois.txt')
 
 total_votes = sum(c_votes + j_votes + s_votes + t_votes)
 
-# 假设特朗普以49%的选票获得多数
+# 假设特朗普以 49%的选票获得多数
 
 t_target = round(total_votes * 0.49)
 
-print("\n特朗普胜利目标 = {:,} 票".format(t_target))
+print("\n 特朗普胜利目标 = {:,} 票".format(t_target))
 
 # 计算特朗普胜利所需的额外选票
 
@@ -1731,7 +1731,7 @@ print("旧特朗普: {:,} \t 新特朗普: {:,} \t 旧克林顿: {:,}  " \
 
 sum(c_votes), sum(new_c_votes)))
 
-# 写出文本文件，作为benford.py程序的输入
+# 写出文本文件，作为 benford.py 程序的输入
 
 # 本程序将检查伪造选票与本福特定律的一致性
 

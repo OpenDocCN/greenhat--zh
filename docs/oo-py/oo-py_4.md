@@ -18,7 +18,7 @@ Python 和面向对象编程（OOP）的概念，例如
 
 **对象生命周期**
 
-在第2章中，我定义了一个对象为“数据，加上对数据的操作代码，随着时间推移。”我已经讲了很多关于数据（实例变量）和
+在第二章中，我定义了一个对象为“数据，加上对数据的操作代码，随着时间推移。”我已经讲了很多关于数据（实例变量）和
 
 操作该数据的代码（方法），但我还没有详细解释过
 
@@ -66,7 +66,7 @@ Python 有多种不同的实现方式。以下是
 
 引用计数的讨论适用于由
 
-Python 软件基金会——从[*python.org*](python.org)下载的版本
+Python 软件基金会——从*python.org*下载的版本
 
 通常被称为*CPython*。Python 的其他实现可能
 
@@ -90,9 +90,9 @@ Python 如何管理内存的基本了解会对你有帮助
 
 展示这个如何在清单 11-1 中工作\。
 
-**242** 第11章
+**242** 第十一章
 
-![Image 30](index-272_1.png)
+![Image 30](img/index-272_1.png)
 
 **文件：ReferenceCount.py**
 
@@ -142,7 +142,7 @@ oSquare1 并不会创建一个新的 Square 对象！图 11-2 显示了
 
 管理对象使用的内存 **243**
 
-![图片 31](index-273_1.png)
+![图片 31](img/index-273_1.png)
 
 *图 11-2：两个变量引用相同的对象*
 
@@ -192,7 +192,7 @@ print('引用计数为', sys.getrefcount(oSquare1))
 
 getrefcount()。”
 
-**244** 第 11 章
+**244** 第十一章
 
 **增加引用计数**
 
@@ -318,7 +318,7 @@ oSquare1 = None
 
 等等。
 
-当对象被删除时，Python会检查它的实例变量
+当对象被删除时，Python 会检查它的实例变量
 
 变量引用其他对象。如果是这样，这些对象的引用计数
 
@@ -326,11 +326,11 @@ oSquare1 = None
 
 当计数为零时，该对象也会被删除。此类型的链式或
 
-*级联*删除可以深入多层，直到需要为止。示例11-2
+*级联*删除可以深入多层，直到需要为止。示例 11-2
 
 提供了一个示例。
 
-**第246页** 第11章
+**第 246 页** 第十一章
 
 **文件：DeleteExample_Teacher_Student.py**
 
@@ -346,7 +346,7 @@ print('创建学生对象', self.name)
 
 1 def __del__(self):
 
-print('在学生的__del__方法中:', self.name)
+print('在学生的 __del__ 方法中:', self.name)
 
 # 教师类
 
@@ -364,7 +364,7 @@ self.oStudent3 = 学生('Chris')
 
 3 def __del__(self):
 
-print('在教师的__del__方法中')
+print('在教师的 __del__ 方法中')
 
 # 实例化教师对象（创建学生对象）
 
@@ -374,13 +374,13 @@ print('在教师的__del__方法中')
 
 5 del oTeacher
 
-*示例11-2：展示__del__()方法的类*
+*示例 11-2：展示 __del__()方法的类*
 
 这里我们有两个类，学生和教师。主要代码实例化—
 
-创建了一个教师对象4，其__init__()方法创建了三个实例
+创建了一个教师对象 4，其 __init__()方法创建了三个实例
 
-学生类2中的对象，每个分别是Joe、Sue和Chris。因此，在
+学生类 2 中的对象，每个分别是 Joe、Sue 和 Chris。因此，在
 
 启动时，教师对象有三个实例变量，它们是学生
 
@@ -394,43 +394,43 @@ print('在教师的__del__方法中')
 
 正在创建学生对象 Chris
 
-接下来，主要代码使用del语句删除教师
+接下来，主要代码使用 del 语句删除教师
 
-对象5。由于我们在教师类3中编写了__del__()方法，
+对象 5。由于我们在教师类 3 中编写了 __del__()方法，
 
-教师*对象*的__del__()方法被调用——为了演示目的，
+教师*对象*的 __del__()方法被调用——为了演示目的，
 
 仅打印一条消息。
 
-当教师对象被删除时，Python会看到它包含三个
+当教师对象被删除时，Python 会看到它包含三个
 
-其他对象（这三个学生对象）。因此，Python降低了引用
+其他对象（这三个学生对象）。因此，Python 降低了引用
 
-将这些对象的计数从1递减到0\。
+将这些对象的计数从 1 递减到 0\。
 
-一旦发生这种情况，学生对象的__del__()方法就会被调用。
+一旦发生这种情况，学生对象的 __del__()方法就会被调用。
 
-被调用1，并且每个输出一条消息。所有三个对象使用的内存：
+被调用 1，并且每个输出一条消息。所有三个对象使用的内存：
 
 管理对象使用的内存 **247**
 
 然后，学生对象会被标记为垃圾。程序结束时的输出是：
 
-在教师的__del__方法中
+在教师的 __del__ 方法中
 
-在学生的__del__方法中：Joe
+在学生的 __del__ 方法中：Joe
 
-在学生的__del__方法中：Sue
+在学生的 __del__ 方法中：Sue
 
-在学生的__del__方法中：Chris
+在学生的 __del__ 方法中：Chris
 
-因为Python会跟踪所有对象的引用计数，你
+因为 Python 会跟踪所有对象的引用计数，你
 
-在Python中，你几乎不需要担心内存管理
+在 Python 中，你几乎不需要担心内存管理
 
-你通常不需要包括__del__()方法。然而，你可能会考虑
+你通常不需要包括 __del__()方法。然而，你可能会考虑
 
-使用del语句显式告诉Python删除使用该语句的对象。
+使用 del 语句显式告诉 Python 删除使用该语句的对象。
 
 如果你不再使用它们，可能会占用大量内存。对于
 
@@ -484,13 +484,13 @@ print('在教师的__del__方法中')
 
 你通过赋值语句创建类变量，这在约定上
 
-这一部分代码放在类声明和第一个def语句之间，如下所示：
+这一部分代码放在类声明和第一个 def 语句之间，如下所示：
 
 class MyDemoClass():
 
 myClassVariable = 0 # 创建一个类变量并将其赋值为 0
 
-**248** 第11章
+**248** 第十一章
 
 def __init__(self, *<otherParameters>* ):
 
@@ -644,9 +644,9 @@ howManyObjects() 方法报告当前计数 3。
 
 有 3 个 Sample 对象
 
-**250** 第 11 章
+**250** 第十一章
 
-![图像 32](index-280_1.png)
+![图像 32](img/index-280_1.png)
 
 **将一切整合在一起：气球示例程序**
 
@@ -678,7 +678,7 @@ howManyObjects() 方法报告当前计数 3。
 
 管理对象使用的内存 **251**
 
-![图片 33](index-281_1.png)
+![图片 33](img/index-281_1.png)
 
 图 11-4 显示了游戏的项目文件夹。
 
@@ -714,7 +714,7 @@ howManyObjects() 方法报告当前计数 3。
 
 气球管理器（oBalloonMgr）对象来自 BalloonMgr 类。气球
 
-**252** 第 11 章
+**252** 第十一章
 
 然后气球管理器实例化若干气球，每个气球从 BalloonSmall、BalloonMedium 和 BalloonLarge 类中随机选择，并保持这个
 
@@ -776,7 +776,7 @@ BALLOON_MOVING = '气球移动中' # 气球正在移动
 
 其他两个常量在每个气球对象中作为状态指示符使用。
 
-tors随着气球向上移动窗口。我在讨论
+tors 随着气球向上移动窗口。我在讨论
 
 游戏过程中，你会看到气球管理器（oBalloonMgr）向每个
 
@@ -796,9 +796,9 @@ tors随着气球向上移动窗口。我在讨论
 
 ***主程序代码***
 
-我们示例程序的主代码，如第11-5行所示，遵循了
+我们示例程序的主代码，如第 11-5 行所示，遵循了
 
-我在本书中使用的12步模板。它显示了用户的分数，
+我在本书中使用的 12 步模板。它显示了用户的分数，
 
 游戏状态，并在窗口底部有一个开始按钮，它
 
@@ -882,7 +882,7 @@ nPointsEarned = 0
 
 for event in pygame.event.get():
 
-**254** 第11章
+**254** 第十一章
 
 if event.type == pygame.QUIT:
 
@@ -1058,7 +1058,7 @@ oBalloon = randomBalloonClass(self.window, self.maxWidth,
 
 self.maxHeight, balloonNum)
 
-**256** 第11章
+**256** 第十一章
 
 self.balloonList.append(oBalloon)
 
@@ -1072,9 +1072,9 @@ for oBalloon in reversed(self.balloonList):
 
 wasHit, nPoints = oBalloon.clickedInside(event.pos)
 
-如果wasHit:
+如果 wasHit:
 
-如果nPoints > 0: # 移除这个气球
+如果 nPoints > 0: # 移除这个气球
 
 self.balloonList.remove(oBalloon)
 
@@ -1090,7 +1090,7 @@ for oBalloon in self.balloonList:
 
 status = oBalloon.update()
 
-如果status == BALLOON_MISSED:
+如果 status == BALLOON_MISSED:
 
 # 气球从顶部飞出时，移除它
 
@@ -1120,9 +1120,9 @@ oBalloon.draw()
 
 当实例化时，气球管理器会被告知窗口的宽度和高度
 
-窗口1，并将此信息保存在实例变量中。
+窗口 1，并将此信息保存在实例变量中。
 
-start()方法2背后的概念非常重要。它的目的是
+start()方法 2 背后的概念非常重要。它的目的是
 
 目的是初始化一轮游戏所需的任何实例变量，
 
@@ -1134,17 +1134,17 @@ start()重置已爆气球和漏气球的计数——
 
 随机从三种不同的尺寸中选择，使用三种不同的类）
 
-并将它们存储在一个列表中3。当该方法创建一个气球对象时，
+并将它们存储在一个列表中 3。当该方法创建一个气球对象时，
 
 它传递窗口以及窗口的宽度和高度。（为了未来
 
 扩展，每个气球对象都被赋予一个唯一的编号。）
 
-每次通过主循环时，主代码都会调用handleEvent()
+每次通过主循环时，主代码都会调用 handleEvent()
 
-气球管理器的方法4。在这里，我们检查用户是否已点击
+气球管理器的方法 4。在这里，我们检查用户是否已点击
 
-在任何气球上。如果检测到的事件是MOUSEDOWNEVENT，代码将循环
+在任何气球上。如果检测到的事件是 MOUSEDOWNEVENT，代码将循环
 
 遍历所有气球对象，询问每个气球点击是否发生在内部
 
@@ -1154,15 +1154,15 @@ start()重置已爆气球和漏气球的计数——
 
 所以，这是用户应该因打爆它而获得的积分。（代码是这样设置的，方便未来扩展，正如文末的说明所提到的那样）
 
-部分。）然后，气球管理器使用remove()方法将其消除
+部分。）然后，气球管理器使用 remove()方法将其消除
 
 从列表中移除该气球，增加已爆炸气球的数量，并
 
 更新分数。
 
-在主循环的每次迭代中，主代码还会调用update()
+在主循环的每次迭代中，主代码还会调用 update()
 
-气球管理器的方法5，将此调用传递给所有
+气球管理器的方法 5，将此调用传递给所有
 
 气球，告诉它们更新自己。每个气球向上移动
 
@@ -1174,47 +1174,47 @@ dow (BALLOON_MISSED)。如果气球被漏掉，气球管理器将移除
 
 从列表中移除该气球并增加漏气球的数量。
 
-气球管理器提供了三个getter方法，允许
+气球管理器提供了三个 getter 方法，允许
 
-主代码获取分数6、被打爆的气球数量7，以及
+主代码获取分数 6、被打爆的气球数量 7，以及
 
-漏掉气球的数量8\。
+漏掉气球的数量 8\。
 
 每次通过主循环时，主代码都会调用气球
 
-管理器的draw()方法9. 气球管理器没有任何东西
+管理器的 draw()方法 9. 气球管理器没有任何东西
 
-由自身绘制，但会遍历所有Balloon对象并调用draw()
+由自身绘制，但会遍历所有 Balloon 对象并调用 draw()
 
-每个的method。（注意这里的多态性。气球管理器有
+每个的 method。（注意这里的多态性。气球管理器有
 
-每个气球对象都有一个draw()方法。)
+每个气球对象都有一个 draw()方法。)
 
 **注意**
 
-*作为挑战，尝试扩展此游戏，添加一种新的气球类型（子类），如* *MegaBalloon。不同之处在于，MegaBalloon需要三次点击才能爆炸。游戏的* *艺术作品包含在下载文件中。*
+*作为挑战，尝试扩展此游戏，添加一种新的气球类型（子类），如* *MegaBalloon。不同之处在于，MegaBalloon 需要三次点击才能爆炸。游戏的* *艺术作品包含在下载文件中。*
 
 ***气球类和对象***
 
 最后，我们有了气球类。为了强化继承的概念
 
-来自第10章的内容，[Balloon.py](index_split_004.html#p240)模块包括一个抽象基类Balloon和三个子类：BalloonSmall、BalloonMedium和
+来自第十章的内容，Balloon.py 模块包括一个抽象基类 Balloon 和三个子类：BalloonSmall、BalloonMedium 和
 
-BalloonLarge。气球管理器从这些子类实例化Balloon对象
+BalloonLarge。气球管理器从这些子类实例化 Balloon 对象
 
-子类。每个子类仅包含一个__init__()方法，定义
+子类。每个子类仅包含一个 __init__()方法，定义
 
-重写并调用抽象方法__init__()在Balloon
+重写并调用抽象方法 __init__()在 Balloon
 
 class。每个气球图像将从某个随机位置开始（位于
 
 窗口的底部）并且会在每一帧中向上移动几个像素。
 
-列表11-7展示了Balloon类及其子类的代码。
+列表 11-7 展示了 Balloon 类及其子类的代码。
 
 **文件：BalloonGame/Balloon.py**
 
-# Balloon基类和3个子类
+# Balloon 基类和 3 个子类
 
 import pygame
 
@@ -1228,7 +1228,7 @@ from BalloonConstants import *
 
 from abc import ABC, abstractmethod
 
-**258** 第11章
+**258** 第十一章
 
 1 class Balloon(ABC):
 
@@ -1284,7 +1284,7 @@ if myRect.collidepoint(mousePoint):
 
 Balloon.popSound.play()
 
-return True, self.nPoints  # True表示已被点击
+return True, self.nPoints  # True 表示已被点击
 
 否则：
 
@@ -1292,7 +1292,7 @@ return False, 0  # 没有碰撞，没有得分
 
 4 def update(self):
 
-self.y = self.y - self.speedY  # 按照速度更新y位置
+self.y = self.y - self.speedY  # 按照速度更新 y 位置
 
 self.balloonImage.setLoc((self.x, self.y))
 
@@ -1416,7 +1416,7 @@ BalloonLarge 9 类。每个类都会创建一个 pygwidgets 图像对象。
 
 当该气球对象被删除时，会调用 `__del__()` 方法。此方法用于演示。
 
-**260** 第 11 章
+**260** 第十一章
 
 目前仅用于打印显示气球的大小和 ID 号码的消息。
 
@@ -1534,13 +1534,13 @@ self.y = y
 
 为了应对这种潜在的浪费，Python 给我们提供了不同的方法，
 
-被称为*槽（slots）*，用于表示实例变量。这个想法是你可以提前告诉Python所有实例变量的名称，然后Python
+被称为*槽（slots）*，用于表示实例变量。这个想法是你可以提前告诉 Python 所有实例变量的名称，然后 Python
 
 将使用一种数据结构，仅为这些
 
 实例变量。要使用槽（slots），你需要包含特殊的类变量。
 
-可以使用__slots__来定义一个变量列表：
+可以使用 __slots__ 来定义一个变量列表：
 
 __slots__ = [ *<instanceVar1>* , *<instanceVar2>* , ... *<instanceVarN>* ]
 
@@ -1562,9 +1562,9 @@ print(x, y)
 
 这两个类将以相同的方式工作，但从
 
-PointWithSlots将占用显著更少的内存。为了演示
+PointWithSlots 将占用显著更少的内存。为了演示
 
-为了演示区别，我们将在两个__init__()方法的末尾添加这一行
+为了演示区别，我们将在两个 __init__()方法的末尾添加这一行
 
 类：
 
@@ -1574,13 +1574,13 @@ self.color = 'black'
 
 现在，当我们尝试从这两个类实例化一个对象时，
 
-Point类没有问题可以添加另一个实例变量，但
+Point 类没有问题可以添加另一个实例变量，但
 
-PointWithSlots类会因以下错误而失败：
+PointWithSlots 类会因以下错误而失败：
 
 AttributeError: 'PointWithSlots'对象没有属性'color'
 
-**262** 第11章
+**262** 第十一章
 
 使用槽（slots）在牺牲动态实例变量的情况下，具有非常高的内存效率。如果你处理的是大量的
 
@@ -1598,9 +1598,9 @@ AttributeError: 'PointWithSlots'对象没有属性'color'
 
 对象生命周期和垃圾回收。当引用计数为零时，
 
-当引用计数为零时，该对象可以被垃圾回收。如果类有__del__()
+当引用计数为零时，该对象可以被垃圾回收。如果类有 __del__()
 
-方法，那么从该类创建的任何对象都可以使用__del__()
+方法，那么从该类创建的任何对象都可以使用 __del__()
 
 方法来处理它们可能想要进行的任何清理工作。
 
@@ -1644,29 +1644,29 @@ AttributeError: 'PointWithSlots'对象没有属性'color'
 
 在本书的这一部分，我们将构建一些示例
 
-使用pygwidgets构建游戏。我还会介绍pyghelpers
+使用 pygwidgets 构建游戏。我还会介绍 pyghelpers
 
 模块，包括许多类和函数。
 
 可以在构建游戏程序时非常有用的类和函数。
 
-[第12章 re](#p296)回顾了第1章中的高低游戏。我们将构建一个带有图形用户界面的游戏版本，并介绍可以在任何卡牌游戏程序中重用的Deck和Card类。
+第十二章 re 回顾了第一章中的高低游戏。我们将构建一个带有图形用户界面的游戏版本，并介绍可以在任何卡牌游戏程序中重用的 Deck 和 Card 类。
 
-[第13章 f](#p310)聚焦于定时器。我们将构建多个不同的定时器类，允许你的程序在运行的同时并发地检查时间限制。
+第十三章 f 聚焦于定时器。我们将构建多个不同的定时器类，允许你的程序在运行的同时并发地检查时间限制。
 
-[第14章 d](#p324)讨论了不同的动画类，可以用来显示图像序列。这将使你能够轻松构建更具艺术感的游戏。
+第十四章 d 讨论了不同的动画类，可以用来显示图像序列。这将使你能够轻松构建更具艺术感的游戏。
 
 和程序。
 
-[第15章 i](index_split_006.html#p340)介绍了一种构建可以包含多个场景的方法，比如开始场景、游戏场景和游戏结束场景。我将
+第十五章 i 介绍了一种构建可以包含多个场景的方法，比如开始场景、游戏场景和游戏结束场景。我将
 
-显示一个SceneMgr类，用于管理程序中的任意数量的场景。
+显示一个 SceneMgr 类，用于管理程序中的任意数量的场景。
 
 构建的场景，并将使用它来构建一个石头、剪刀、布游戏。
 
-[第16章 d](index_split_006.html#p370)演示了如何显示并响应不同类型的对话框。然后你将使用所学内容来构建一个完全功能的动画游戏。
+第十六章 d 演示了如何显示并响应不同类型的对话框。然后你将使用所学内容来构建一个完全功能的动画游戏。
 
-[第17章 i](index_split_007.html#p396)介绍了设计模式的概念，以模型-视图-控制器模式为例。然后简要总结
+第十七章 i 介绍了设计模式的概念，以模型-视图-控制器模式为例。然后简要总结
 
 本书的内容。
 
@@ -1676,15 +1676,15 @@ AttributeError: 'PointWithSlots'对象没有属性'color'
 
 在本书的剩余章节中，
 
-我们将使用pygame和pygwidgets构建一些演示程序。
+我们将使用 pygame 和 pygwidgets 构建一些演示程序。
 
-pygame和pygwidgets。每个程序将
+pygame 和 pygwidgets。每个程序将
 
 展示一个或多个可重用的类，并展示
 
 如何在示例项目中使用这些类。
 
-[第1章，我](index_split_000.html#p32)介绍了一个基于文本的高低游戏。在这一章中，我们将创建游戏的GUI版本，如图12-1所示。
+第一章，我介绍了一个基于文本的高低游戏。在这一章中，我们将创建游戏的 GUI 版本，如图 12-1 所示。
 
 快速回顾游戏规则：我们从七张牌开始，牌面朝下
 
@@ -1694,23 +1694,23 @@ pygame和pygwidgets。每个程序将
 
 高低游戏结束时，用户可以点击“新游戏”按钮来
 
-开始新一轮游戏。玩家从100分开始，答对得15分，答错扣10分。
+开始新一轮游戏。玩家从 100 分开始，答对得 15 分，答错扣 10 分。
 
-玩家答对得15分，答错扣10分。
+玩家答对得 15 分，答错扣 10 分。
 
-![图片 34](index-297_1.png)
+![图片 34](img/index-297_1.png)
 
-*图12-1：高低游戏的用户界面*
+*图 12-1：高低游戏的用户界面*
 
-**Card类**
+**Card 类**
 
 在原始的基于文本的游戏版本中，处理牌堆的代码
 
 这副扑克牌无法在其他项目中轻松重用。为了解决这个问题，
 
-为了解决这个问题，我们将在这里创建一个高度可重用的Deck类，用于管理来自一副扑克牌的牌。
+为了解决这个问题，我们将在这里创建一个高度可重用的 Deck 类，用于管理来自一副扑克牌的牌。
 
-Card类。
+Card 类。
 
 为了在 pygame 中表示一张牌，我们需要存储以下数据：
 
@@ -1722,7 +1722,7 @@ Card类。
 
 • 值（1, 2, 3, … 12, 13）
 
-• 名称（使用牌面和花色来构建：例如，梅花7）
+• 名称（使用牌面和花色来构建：例如，梅花 7）
 
 • 卡片的背面图像（所有卡片对象共享的单一图像）
 
@@ -1744,7 +1744,7 @@ Card类。
 
 • 绘制自身（显示的图片或隐藏的图片）
 
-**268** 第12章
+**268** 第十二章
 
 尽管以下卡片行为在“高低游戏”中没有使用，但我们也将它们添加到这里，以备在其他游戏中需要时使用：
 
@@ -1846,55 +1846,55 @@ Card 类假设所有 52 张卡片的图像文件，以及一张
 
 rank、value 和 suit 作为实例变量。然后构建文件的路径
 
-在*images*文件夹中，包含该特定卡片3的图像。对于
+在*images*文件夹中，包含该特定卡片 3 的图像。对于
 
-例如，如果等级是ace且花色是黑桃，我们构建一个路径，存放在*images/*
+例如，如果等级是 ace 且花色是黑桃，我们构建一个路径，存放在*images/*
 
-*Ace of Spades.png*。我们使用一个ImageCollection对象来记住这些路径
+*Ace of Spades.png*。我们使用一个 ImageCollection 对象来记住这些路径
 
-用于正面和背面图像4；我们会使用'back'来表示我们希望
+用于正面和背面图像 4；我们会使用'back'来表示我们希望
 
 显示卡片的背面作为起始图像。
 
-conceal()方法5告诉ImageCollection将卡片背面设置为
+conceal()方法 5 告诉 ImageCollection 将卡片背面设置为
 
-作为当前图像。reveal()方法6告诉ImageCollection设置
+作为当前图像。reveal()方法 6 告诉 ImageCollection 设置
 
 将卡片的正面作为当前图像。
 
-getName()、getValue()、getSuit()和getRank()方法7是getter
+getName()、getValue()、getSuit()和 getRank()方法 7 是 getter
 
 允许调用者获取卡片的名称、值、花色和等级的方法
 
 给定的卡片。
 
-setLoc()方法为卡片8设置新位置，getLoc()
+setLoc()方法为卡片 8 设置新位置，getLoc()
 
-检索当前的位置9。位置保存在ImageCollection中。
+检索当前的位置 9。位置保存在 ImageCollection 中。
 
 最后，draw()在窗口中绘制卡片的图像。更具体地说
 
-更具体地说，它告诉ImageCollection在当前指示的位置绘制图像
+更具体地说，它告诉 ImageCollection 在当前指示的位置绘制图像
 
 记住的位置。
 
-**Deck类**
+**Deck 类**
 
-Deck对象是对象管理器对象的经典示例。它的工作是
+Deck 对象是对象管理器对象的经典示例。它的工作是
 
-创建并管理52张卡片对象。清单12-2包含我们的代码
+创建并管理 52 张卡片对象。清单 12-2 包含我们的代码
 
-Deck类。
+Deck 类。
 
 **文件：HigerOrLower/Deck.py**
 
-# Deck类
+# Deck 类
 
 import random
 
 from Card import *
 
-**270** 第12章
+**270** 第十二章
 
 class Deck():
 
@@ -1910,7 +1910,7 @@ STANDARD_DICT = {'Ace':1, '2':2, '3':3, '4':4, '5':5,
 
 2 def __init__(self, window, rankValueDict=STANDARD_DICT):
 
-# rankValueDict默认为STANDARD_DICT，但你可以调用它
+# rankValueDict 默认为 STANDARD_DICT，但你可以调用它
 
 # 使用一个不同的字典，例如，适用于二十一点的特殊字典
 
@@ -1918,9 +1918,9 @@ self.startingDeckList = []
 
 self.playingDeckList = []
 
-对于每个花色，在Deck.SUIT_TUPLE中：
+对于每个花色，在 Deck.SUIT_TUPLE 中：
 
-3 对于rank, value在rankValueDict.items()中：
+3 对于 rank, value 在 rankValueDict.items()中：
 
 oCard = Card(window, rank, suit, value)
 
@@ -1934,7 +1934,7 @@ self.shuffle()
 
 self.playingDeckList = self.startingDeckList.copy()
 
-对于self.playingDeckList中的每个oCard：
+对于 self.playingDeckList 中的每个 oCard：
 
 oCard.conceal()
 
@@ -1942,7 +1942,7 @@ random.shuffle(self.playingDeckList)
 
 5 def getCard(self):
 
-如果self.playingDeckList的长度为0：
+如果 self.playingDeckList 的长度为 0：
 
 raise IndexError('没有更多的卡片')
 
@@ -1958,37 +1958,37 @@ return oCard
 
 self.deckList.insert(0, oCard)
 
-*清单12-2：一个管理52张卡片对象的Deck类*
+*清单 12-2：一个管理 52 张卡片对象的 Deck 类*
 
-我们通过创建一些类变量1来开始Deck类，这些变量将
+我们通过创建一些类变量 1 来开始 Deck 类，这些变量将
 
-使用来创建52张具有正确花色和值的卡片。只有四种
+使用来创建 52 张具有正确花色和值的卡片。只有四种
 
 方法。
 
-对__init__()方法2，我们传递了一个窗口的引用和一个
+对 __init__()方法 2，我们传递了一个窗口的引用和一个
 
 可选的字典，将卡片的等级映射到它们的值。如果没有传递
 
 在这里，我们使用一个字典来表示标准的牌组值。我们构建一副牌
 
-52张卡片，保存在self.startingDeckList中，通过遍历所有花色，
+52 张卡片，保存在 self.startingDeckList 中，通过遍历所有花色，
 
-然后遍历所有卡片的等级和值。在内层的for循环3中，
+然后遍历所有卡片的等级和值。在内层的 for 循环 3 中，
 
-我们使用字典的items()方法调用，它允许我们轻松
+我们使用字典的 items()方法调用，它允许我们轻松
 
 通常可以在一个语句中轻松获取键和值（在这里是等级和值）。
 
-每次进入内循环时，我们实例化一个Card对象，并传入
+每次进入内循环时，我们实例化一个 Card 对象，并传入
 
-新卡片的等级、花色和数值。我们将每个Card对象附加到
+新卡片的等级、花色和数值。我们将每个 Card 对象附加到
 
-列表self.startingDeckList来创建一副完整的卡组。
+列表 self.startingDeckList 来创建一副完整的卡组。
 
 卡牌游戏 **271**
 
-最后一步是调用shuffle()方法4来随机化
+最后一步是调用 shuffle()方法 4 来随机化
 
 卡组。这个方法的目的似乎很明显：洗牌。
 
@@ -1996,31 +1996,31 @@ self.deckList.insert(0, oCard)
 
 self.startingDeckList，并且这项工作应该只做一次。所以，当
 
-每次洗牌时，我们不会重新创建所有的Card对象，而是
+每次洗牌时，我们不会重新创建所有的 Card 对象，而是
 
-创建初始卡组列表的副本，保存在self.playingDeckList中，并
+创建初始卡组列表的副本，保存在 self.playingDeckList 中，并
 
 洗牌。复制的是将被用作游戏中操作的卡组。
 
-运行时。通过这种方法，我们可以从self.playingDeckList中移除卡片
+运行时。通过这种方法，我们可以从 self.playingDeckList 中移除卡片
 
 然后不必担心稍后将它们重新添加回卡组或重新加载-
 
-交换卡片。两个列表self.startingDeckList和self.playingDeckList共享
+交换卡片。两个列表 self.startingDeckList 和 self.playingDeckList 共享
 
-引用相同的52个Card对象。
+引用相同的 52 个 Card 对象。
 
-注意，当我们在游戏的后续运行中调用shuffle()时，一些
+注意，当我们在游戏的后续运行中调用 shuffle()时，一些
 
-Card对象的状态可能是“已揭示”状态。所以，在继续之前，我们
+Card 对象的状态可能是“已揭示”状态。所以，在继续之前，我们
 
-遍历整个卡组并在每张卡片上调用conceal()方法，
+遍历整个卡组并在每张卡片上调用 conceal()方法，
 
 使所有的卡片初始时都显示为面朝下。shuffle()方法通过
 
-通过使用random.shuffle()随机化卡组，洗牌操作完成。
+通过使用 random.shuffle()随机化卡组，洗牌操作完成。
 
-getCard()方法5从卡组中获取一张卡片。它首先检查
+getCard()方法 5 从卡组中获取一张卡片。它首先检查
 
 以查看卡组是否为空，如果是，则引发异常。否则，既然
 
@@ -2028,21 +2028,21 @@ getCard()方法5从卡组中获取一张卡片。它首先检查
 
 返回卡片给调用者。
 
-Deck和Card一起提供了一个高度可复用的类组合。
+Deck 和 Card 一起提供了一个高度可复用的类组合。
 
 可用于大多数卡牌游戏的卡片。高低游戏仅使用
 
 每回合抽取八张卡片，并在每轮开始时洗牌整副卡组。
 
-游戏。因此，在这个游戏中，Deck对象不可能会用尽
+游戏。因此，在这个游戏中，Deck 对象不可能会用尽
 
 卡片。对于一款需要知道卡组是否用尽的卡牌游戏，
 
-卡片时，你可以在调用getCard()时构建一个try块，并使用except
+卡片时，你可以在调用 getCard()时构建一个 try 块，并使用 except
 
-使用try-except语句来捕获异常。如何处理异常由你决定。
+使用 try-except 语句来捕获异常。如何处理异常由你决定。
 
-尽管在这个游戏中没有使用，returnCardToDeck()方法6允许
+尽管在这个游戏中没有使用，returnCardToDeck()方法 6 允许
 
 让你将卡片放回卡组。
 
@@ -2050,17 +2050,17 @@ Deck和Card一起提供了一个高度可复用的类组合。
 
 实际游戏的代码相当简单：主代码实现了
 
-主循环，而Game对象包含游戏逻辑本身。
+主循环，而 Game 对象包含游戏逻辑本身。
 
 ***主程序***
 
-列表12-3是设置游戏世界并包含主要程序的代码。
+列表 12-3 是设置游戏世界并包含主要程序的代码。
 
-主循环。它还创建了一个Game对象来运行游戏。
+主循环。它还创建了一个 Game 对象来运行游戏。
 
 **文件：HigherOrLower/Main_HigherOrLower.py**
 
-# 高低游戏 - pygame版本
+# 高低游戏 - pygame 版本
 
 # 主程序
 
@@ -2070,7 +2070,7 @@ Deck和Card一起提供了一个高度可复用的类组合。
 
 1 background = pygwidgets.Image(window, (0, 0),
 
-**272** 第12章
+**272** 第十二章
 
 'images/background.png')
 
@@ -2112,7 +2112,7 @@ pygame.quit()
 
 sys.exit()
 
-3 如果newGameButton.handleEvent(event):
+3 如果 newGameButton.handleEvent(event):
 
 oGame.reset()
 
@@ -2120,21 +2120,21 @@ lowerButton.enable()
 
 higherButton.enable()
 
-如果higherButton.handleEvent(event):
+如果 higherButton.handleEvent(event):
 
 gameOver = oGame.hitHigherOrLower(HIGHER)
 
-如果gameOver:
+如果 gameOver:
 
 higherButton.disable()
 
 lowerButton.disable()
 
-如果lowerButton.handleEvent(event):
+如果 lowerButton.handleEvent(event):
 
 gameOver = oGame.hitHigherOrLower(LOWER)
 
-如果gameOver:
+如果 gameOver:
 
 higherButton.disable()
 
@@ -2176,29 +2176,29 @@ clock.tick(FRAMES_PER_SECOND)
 
 主程序加载背景图像并构建四个按钮-
 
-如果为1，则实例化Game对象2\。
+如果为 1，则实例化 Game 对象 2\。
 
-在主循环中，我们监听按钮的按下事件3，且
+在主循环中，我们监听按钮的按下事件 3，且
 
-当其中一个被触发时，我们调用Game对象中的相应方法。
+当其中一个被触发时，我们调用 Game 对象中的相应方法。
 
-在循环底部，我们绘制窗口元素4，从
+在循环底部，我们绘制窗口元素 4，从
 
 带有背景。最重要的是，我们调用了`draw()`方法
 
-Game对象5\。正如你所见，Game对象将此消息传递给每个
+Game 对象 5\。正如你所见，Game 对象将此消息传递给每个
 
-Card对象的最终绘制。最后，我们绘制所有四个按钮。
+Card 对象的最终绘制。最后，我们绘制所有四个按钮。
 
 ***游戏对象***
 
-Game对象处理实际游戏逻辑。列表12-4包含了
+Game 对象处理实际游戏逻辑。列表 12-4 包含了
 
-Game类的代码。
+Game 类的代码。
 
 **文件：HigherOrLower/Game.py**
 
-# Game类
+# Game 类
 
 import pygwidgets
 
@@ -2246,7 +2246,7 @@ fontSize=36, textColor=WHITE)
 
 self.loserSound = pygame.mixer.Sound("sounds/loser.wav")
 
-**274** 第12章
+**274** 第十二章
 
 self.winnerSound = pygame.mixer.Sound("sounds/ding.wav") self.cardShuffleSound = pygame.mixer.Sound("sounds/cardShuffle.wav")
 
@@ -2380,7 +2380,7 @@ self.messageText.draw()
 
 在 __init__() 方法 1 中，我们初始化了多个实例变量
 
-这只需要设置一次。我们创建Deck对象并设置起始
+这只需要设置一次。我们创建 Deck 对象并设置起始
 
 分数，并创建了一个 DisplayText 对象，用于显示分数和结果
 
@@ -2420,7 +2420,7 @@ draw() 方法 4 遍历当前游戏中的所有卡片，
 
 包含一个类（或多个类）的模块，你可以添加一些测试代码，
 
-**276** 第12章
+**276** 第十二章
 
 仅在模块作为主程序运行时执行，而在模块被其他模块导入时不会运行，
 
@@ -2472,7 +2472,7 @@ print('姓名: ', oCard.getName(), ' 值:', oCard.getValue())
 
 这段代码检查 *Deck.py* 文件是否作为主程序运行。在
 
-typical情况下，Deck 类由其他模块导入，
+typical 情况下，Deck 类由其他模块导入，
 
 __name__ 的值将是 'Deck'，所以这段代码什么也不做。但如果我们运行
 
@@ -2480,7 +2480,7 @@ __name__ 的值将是 'Deck'，所以这段代码什么也不做。但如果我�
 
 将 __name__ 的值设置为 '__main__'，然后这段测试代码运行。
 
-在测试代码中，我们构建了一个最小化的pygame程序，创建了
+在测试代码中，我们构建了一个最小化的 pygame 程序，创建了
 
 Deck 类的实例，然后打印出所有 52 张卡片的名称和值
 
@@ -2584,7 +2584,7 @@ shuffle() 和 getCard() 方法无需任何更改即可使用。在实现中
 
 一个值为 1 或 11。但正如我们所说的那样，这是留给读者的练习！
 
-**278** 第 12 章
+**278** 第十二章
 
 ***具有不寻常扑克牌的游戏***
 
@@ -2614,7 +2614,7 @@ shuffle() 和 getCard() 方法可以从 Deck 类继承。
 
 在本章中，我们构建了一个“高低牌”游戏的图形界面版本
 
-来自 [第 1 章](index_split_000.html#p32) 使用高度可重用的 Deck 和 Card 类。主程序实例化一个 Game 对象，它创建一个 Deck 对象，后者实例化 52 张 Card
+来自 第一章 使用高度可重用的 Deck 和 Card 类。主程序实例化一个 Game 对象，它创建一个 Deck 对象，后者实例化 52 张 Card
 
 对象，每张卡片都会在结果牌组中有一个。每个 Card 对象负责
 
@@ -2676,9 +2676,9 @@ time.sleep(2.5)
 
 在睡眠期间，程序将变得无响应。
 
-![图 35](index-311_1.png)
+![图 35](img/index-311_1.png)
 
-![图 36](index-311_2.png)
+![图 36](img/index-311_2.png)
 
 相反，主循环需要继续以任意帧速率运行
 
@@ -2724,7 +2724,7 @@ time.sleep(2.5)
 
 shell 窗口，无论计时器是否正在运行。
 
-**282** 第 13 章
+**282** 第十三章
 
 **实现计时器的三种方法**
 
@@ -2840,21 +2840,21 @@ set_timer(eventid, milliseconds, once) -> None
 
 每个事件类型都可以附加一个单独的计时器。最好是
 
-使用pygame.USEREVENT和pygame.NUMEVENTS之间的值。
+使用 pygame.USEREVENT 和 pygame.NUMEVENTS 之间的值。
 
-要禁用某个事件的计时器，可以将毫秒参数设置为0\。
+要禁用某个事件的计时器，可以将毫秒参数设置为 0\。
 
-如果once参数为True，则只发送一次计时器。
+如果 once 参数为 True，则只发送一次计时器。
 
-每种事件类型在pygame中都有一个唯一的标识符。从
+每种事件类型在 pygame 中都有一个唯一的标识符。从
 
-pygame 2.0开始，现在可以调用pygame.event.custom_type()来获取一个
+pygame 2.0 开始，现在可以调用 pygame.event.custom_type()来获取一个
 
 自定义事件的标识符。
 
 **文件：InLineTimerExamples /TimerEvent.py**
 
-TIMER_EVENT_ID = pygame.event.custom_type()  # pygame 2.0中的新功能
+TIMER_EVENT_ID = pygame.event.custom_type()  # pygame 2.0 中的新功能
 
 TIMER_LENGTH = 2.5  # 秒
 
@@ -2868,7 +2868,7 @@ int(TIMER_LENGTH * 1000), True)
 
 --- 截取 禁用按钮，显示消息 ---
 
-计算得到的值是2500毫秒。True表示计时器
+计算得到的值是 2500 毫秒。True 表示计时器
 
 应该只运行一次（只生成一个事件）。现在我们需要在
 
@@ -2878,13 +2878,13 @@ if event.type == TIMER_EVENT_ID:
 
 --- 截取 启用按钮，隐藏消息 ---
 
-**284** 第13章
+**284** 第十三章
 
-由于我们在调用设置计时器时指定了True，因此该事件仅会发出一次。如果我们希望每2500毫秒重复事件，可以设置
+由于我们在调用设置计时器时指定了 True，因此该事件仅会发出一次。如果我们希望每 2500 毫秒重复事件，可以设置
 
-原始调用中的最后一个参数为False（或保持默认值为False）。
+原始调用中的最后一个参数为 False（或保持默认值为 False）。
 
-要结束重复的计时器事件，我们需要调用set_timer()并传递
+要结束重复的计时器事件，我们需要调用 set_timer()并传递
 
 0（零）作为第二个参数。
 
@@ -2898,9 +2898,9 @@ if event.type == TIMER_EVENT_ID:
 
 本例中的代码运行在主循环中；稍后，我们会提取与计时器相关的
 
-代码并构建一个可重用的Timer类。
+代码并构建一个可重用的 Timer 类。
 
-Python标准库中的time模块具有这个功能：
+Python 标准库中的 time 模块具有这个功能：
 
 time.time()
 
@@ -2908,9 +2908,9 @@ time.time()
 
 点数。返回的值是已经过去的秒数
 
-自“纪元时间”以来已经过去，该时间定义为1970年1月1日00:00:00 UTC\。
+自“纪元时间”以来已经过去，该时间定义为 1970 年 1 月 1 日 00:00:00 UTC\。
 
-清单13-1中的代码通过记住时间来创建计时器
+清单 13-1 中的代码通过记住时间来创建计时器
 
 当用户点击开始时。计时器运行时，我们每帧检查一次
 
@@ -2958,17 +2958,17 @@ timerRunning = True
 
 计时器 **285**
 
-如果clickMeButton.handleEvent(event):
+如果 clickMeButton.handleEvent(event):
 
 print('点击了其他按钮')
 
 # 8 - 执行任何“每帧”操作
 
-2 如果timerRunning：# 如果计时器正在运行
+2 如果 timerRunning：# 如果计时器正在运行
 
 elapsed = time.time() - timeStarted
 
-3 如果elapsed >= TIMER_LENGTH：# 这里为True意味着计时器已结束
+3 如果 elapsed >= TIMER_LENGTH：# 这里为 True 意味着计时器已结束
 
 startButton.enable()
 
@@ -2998,7 +2998,7 @@ pygame.display.update()
 
 # 12 - 稍微放慢速度
 
-clock.tick(FRAMES_PER_SECOND) # 使pygame等待
+clock.tick(FRAMES_PER_SECOND) # 使 pygame 等待
 
 *示例 13-1：一个内建于主循环中的计时器*
 
@@ -3010,27 +3010,27 @@ clock.tick(FRAMES_PER_SECOND) # 使pygame等待
 
 **timeStarted** 用户按下“开始”按钮时的时间
 
-当用户点击“开始”时，timerRunning设置为True 1\。我们初始化
+当用户点击“开始”时，timerRunning 设置为 True 1\。我们初始化
 
-变量startTime设置为当前时间。然后禁用“开始”按钮并
+变量 startTime 设置为当前时间。然后禁用“开始”按钮并
 
 显示按钮下方的消息。
 
-每次进入循环时，如果计时器正在运行2，我们会减去
+每次进入循环时，如果计时器正在运行 2，我们会减去
 
 从当前时间计算已过去的时间
 
-因为计时器已经开始。当经过的时间大于或等于TIMER_LENGTH时，
+因为计时器已经开始。当经过的时间大于或等于 TIMER_LENGTH 时，
 
-当经过的时间大于或等于TIMER_LENGTH时，我们可以执行任何操作
+当经过的时间大于或等于 TIMER_LENGTH 时，我们可以执行任何操作
 
 时间到时可以发生。在这个示例程序中，我们启用了“开始”按钮，
 
 关闭底部消息，打印简短的文本输出，并重置
 
-timerRunning变量设置为False 3\。
+timerRunning 变量设置为 False 3\。
 
-示例 13-1中的代码工作正常... 对于一个单独的计时器。然而，这
+示例 13-1 中的代码工作正常... 对于一个单独的计时器。然而，这
 
 这是一本关于面向对象编程的书，因此我们希望它具有可扩展性。
 
@@ -3040,15 +3040,15 @@ timerRunning变量设置为False 3\。
 
 将代码拆分为方法。这样，我们可以定义并使用任意数量
 
-**286** 第13章
+**286** 第十三章
 
-程序中的计时器类，以及用于在pygame程序中显示计时的其他类，都可以在名为pyghelpers的模块中找到。
+程序中的计时器类，以及用于在 pygame 程序中显示计时的其他类，都可以在名为 pyghelpers 的模块中找到。
 
 pyghelpers。
 
-**安装pyghelpers**
+**安装 pyghelpers**
 
-要安装pyghelpers，打开命令行并输入以下两个
+要安装 pyghelpers，打开命令行并输入以下两个
 
 命令：
 
@@ -3056,11 +3056,11 @@ pyghelpers。
 
 **python3 -m pip install -U pyghelpers --user**
 
-这些命令从PyPI下载并安装pyghelpers到一个
+这些命令从 PyPI 下载并安装 pyghelpers 到一个
 
-目录，以便所有Python程序都可以访问。一旦安装完成，你可以
+目录，以便所有 Python 程序都可以访问。一旦安装完成，你可以
 
-使用pyghelpers时，请在程序开头包括以下语句
+使用 pyghelpers 时，请在程序开头包括以下语句
 
 程序：
 
@@ -3068,19 +3068,19 @@ import pyghelpers
 
 然后你可以实例化模块中的类并调用
 
-这些对象的方法。pyghelpers的最新文档
+这些对象的方法。pyghelpers 的最新文档
 
-pyghelpers的最新文档可以在[*https://pyghelpers.readthedocs.io/en/latest/*](https://pyghelpers.readthedocs.io/en/latest/) 查阅，源代码可以通过我的GitHub仓库在[*https://github.com/IrvKalb/pyghelpers/*](https://github.com/IrvKalb/pyghelpers) 获取。
+pyghelpers 的最新文档可以在[*https://pyghelpers.readthedocs.io/en/latest/*](https://pyghelpers.readthedocs.io/en/latest/) 查阅，源代码可以通过我的 GitHub 仓库在[*https://github.com/IrvKalb/pyghelpers/*](https://github.com/IrvKalb/pyghelpers) 获取。
 
 **计时器类**
 
-列表13-2包含了一个非常简单的定时器类的代码。此代码是
+列表 13-2 包含了一个非常简单的定时器类的代码。此代码是
 
-内置在pyghelpers包中的Timer类（我已经省略了一些文档内容）
+内置在 pyghelpers 包中的 Timer 类（我已经省略了一些文档内容）
 
 文档为了简洁省略此部分）。
 
-**文件：（作为pyghelpers模块的一部分可用）**
+**文件：（作为 pyghelpers 模块的一部分可用）**
 
 # 定时器类
 
@@ -3106,7 +3106,7 @@ self.running = False
 
 --- 截断 ---
 
-如果newTimeInSeconds不为None：
+如果 newTimeInSeconds 不为 None：
 
 self.timeInSeconds = newTimeInSeconds
 
@@ -3118,13 +3118,13 @@ self.startTime = time.time()
 
 --- 截断 ---
 
-如果self.running不为True：
+如果 self.running 不为 True：
 
 return False
 
 self.savedSecondsElapsed = time.time() - self.startTime
 
-如果self.savedSecondsElapsed < self.timeInSeconds：
+如果 self.savedSecondsElapsed < self.timeInSeconds：
 
 return False  # 正在运行但未达到限制
 
@@ -3132,17 +3132,17 @@ return False  # 正在运行但未达到限制
 
 self.running = False
 
-如果self.callBack不为None：
+如果 self.callBack 不为 None：
 
 self.callBack(self.nickname)
 
-return True  # 这里的True表示定时器已结束
+return True  # 这里的 True 表示定时器已结束
 
 4 def getTime(self):
 
 --- 截断 ---
 
-如果self.running：
+如果 self.running：
 
 self.savedSecondsElapsed = time.time() - self.startTime
 
@@ -3152,15 +3152,15 @@ return self.savedSecondsElapsed
 
 """停止定时器"""
 
-self.getTime()  # 记住最终的self.savedSecondsElapsed
+self.getTime()  # 记住最终的 self.savedSecondsElapsed
 
 self.running = False
 
-*列表13-2：一个简单的定时器类*
+*列表 13-2：一个简单的定时器类*
 
-创建定时器对象时，唯一必需的参数是您希望定时器运行的秒数1。您可以选择提供一个
+创建定时器对象时，唯一必需的参数是您希望定时器运行的秒数 1。您可以选择提供一个
 
-您希望定时器运行的秒数1。您可以选择提供一个
+您希望定时器运行的秒数 1。您可以选择提供一个
 
 定时器的昵称和一个回调函数或方法，当定时器结束时调用
 
@@ -3168,31 +3168,31 @@ self.running = False
 
 当回调发生时
 
-你调用start()方法2来启动定时器。定时器
+你调用 start()方法 2 来启动定时器。定时器
 
-对象在实例变量self.startTime中记住开始时间。
+对象在实例变量 self.startTime 中记住开始时间。
 
-每次通过主循环时，必须调用update()方法3
+每次通过主循环时，必须调用 update()方法 3
 
 循环。如果定时器正在运行并且经过了适当的时间
 
-elapsed，此方法返回True。在其他任何调用中，此方法返回
+elapsed，此方法返回 True。在其他任何调用中，此方法返回
 
 错误。
 
-如果定时器正在运行，调用getTime() 4将返回已过去的时间
+如果定时器正在运行，调用 getTime() 4 将返回已过去的时间
 
-elapsed对于该定时器。您可以调用stop()方法5来立即
+elapsed 对于该定时器。您可以调用 stop()方法 5 来立即
 
 停止定时器。
 
 现在我们可以重写定时器演示程序，如下所示
 
-图13-1展示了如何使用pyghelpers包中的Timer类。列表13-3
+图 13-1 展示了如何使用 pyghelpers 包中的 Timer 类。列表 13-3
 
 显示了我们如何在代码中使用定时器对象。
 
-**288** 第13章
+**288** 第十三章
 
 **文件：TimerObjectExamples/SimpleTimerExample.py**
 
@@ -3210,13 +3210,13 @@ while True:
 
 for event in pygame.event.get():
 
-如果事件类型是pygame.QUIT：
+如果事件类型是 pygame.QUIT：
 
 pygame.quit()
 
 sys.exit()
 
-如果startButton.handleEvent(event)：
+如果 startButton.handleEvent(event)：
 
 2 oTimer.start()  # 启动定时器
 
@@ -3226,13 +3226,13 @@ timerMessage.show()
 
 print('启动定时器')
 
-如果clickMeButton.handleEvent(event)：
+如果 clickMeButton.handleEvent(event)：
 
 print('另一个按钮被点击')
 
 # 8 - 执行任何“每帧”操作
 
-3 if oTimer.update():  # 这里的True表示定时器已结束
+3 if oTimer.update():  # 这里的 True 表示定时器已结束
 
 startButton.enable()
 
@@ -3272,7 +3272,7 @@ Timer 对象 1\。当用户点击开始时，我们调用 oTimer.start() 2 来�
 
 Timers **289**
 
-![Image 37](index-319_1.png)
+![Image 37](img/index-319_1.png)
 
 每次循环中，我们调用 Timer 对象的 update() 方法
 
@@ -3332,7 +3332,7 @@ pyghelpers 包包含两个类，允许程序员
 
 在给定时间内倒计时至零。我已经构建了一个
 
-**290** 第 13 章
+**290** 第十三章
 
 每个游戏的计时。第一个版本让用户看到他们解谜所花的时间。第二个版本中，用户被赋予一定的
 
@@ -3488,65 +3488,65 @@ ods 每次调用此类的 getTime() 方法来计算
 
 将时间转换为整数秒数，getTimeInHHMMSS()
 
-将时间格式化为*小时:分钟:秒*的字符串格式。这些方法的输出用于发送到DisplayText对象（定义
+将时间格式化为*小时:分钟:秒*的字符串格式。这些方法的输出用于发送到 DisplayText 对象（定义
 
-在pygwidgets包中）将显示在窗口中。
+在 pygwidgets 包中）将显示在窗口中。
 
-可以调用stop()方法停止计时器（例如，
+可以调用 stop()方法停止计时器（例如，
 
 当用户完成拼图时）。
 
-**292** 第13章
+**292** 第十三章
 
 本版本滑动拼图游戏的主文件与本书的其他资源一起提供，路径为*SliderPuzzles/Main_SliderPuzzleCountUp.py*。
 
-它在主循环开始之前实例化一个CountUpTimer对象并保存
+它在主循环开始之前实例化一个 CountUpTimer 对象并保存
 
-它存储在变量oCountUpTimer中。然后，它立即调用start()方法。
+它存储在变量 oCountUpTimer 中。然后，它立即调用 start()方法。
 
-它还创建一个DisplayText字段来显示时间。每次通过主循环时，
+它还创建一个 DisplayText 字段来显示时间。每次通过主循环时，
 
-主循环中，主代码调用getTimeInHHMMSS()方法并显示
+主循环中，主代码调用 getTimeInHHMMSS()方法并显示
 
 导致字段中的结果：
 
 timeToShow = oCountUpTimer.getTimeInHHMMSS() # 请求计时器对象的经过时间 oTimerDisplay.setValue('Time: ' + timeToShow) # 将其放入文本字段
 
-变量oTimerDisplay是一个pygwidgets.DisplayText的实例
+变量 oTimerDisplay 是一个 pygwidgets.DisplayText 的实例
 
-类。DisplayText类的setValue()方法经过优化，可以检查
+类。DisplayText 类的 setValue()方法经过优化，可以检查
 
 用来检查新显示的文本是否与之前的文本相同。
 
 因此，尽管我们要求字段显示时间的量
 
-每秒更新30次，但直到时间
+每秒更新 30 次，但直到时间
 
 每秒一次地进行变化。
 
 游戏代码检查是否已解决拼图，当拼图
 
-被解决时，调用stop()方法冻结时间。如果用户点击
+被解决时，调用 stop()方法冻结时间。如果用户点击
 
-重启按钮以开始新游戏时，游戏调用start()来重启
+重启按钮以开始新游戏时，游戏调用 start()来重启
 
 计时器对象。
 
 ***倒计时器***
 
-CountDownTimer类有一些微妙的区别。它不是计时上升
+CountDownTimer 类有一些微妙的区别。它不是计时上升
 
-从零开始，你可以通过提供一个起始秒数来初始化CountDownTimer
+从零开始，你可以通过提供一个起始秒数来初始化 CountDownTimer
 
 秒，并从该值开始倒计时。创建一个
 
-CountDownTimer如下所示：
+CountDownTimer 如下所示：
 
 CountDownTimer(nStartingSeconds, stopAtZero=True, nickname=None,
 
 callBack=None):
 
-还有第二个可选参数stopAtZero，默认为True—
+还有第二个可选参数 stopAtZero，默认为 True—
 
 该方法假设你希望计时器在达到零时停止。你可以
 
@@ -3556,19 +3556,19 @@ callBack=None):
 
 回调被触发时。
 
-客户端调用start()方法开始倒计时。
+客户端调用 start()方法开始倒计时。
 
 从客户端的角度来看，getTime()、getTimeInSeconds(),
 
-getTimeInHHMMSS()和stop()方法与它们的计时器对象相似
+getTimeInHHMMSS()和 stop()方法与它们的计时器对象相似
 
-在CountUpTimer类中的相关部分。
+在 CountUpTimer 类中的相关部分。
 
-CountDownTimer有一个名为ended()的额外方法。应用程序
+CountDownTimer 有一个名为 ended()的额外方法。应用程序
 
-应用程序需要在其主循环中每次调用ended()方法。它
+应用程序需要在其主循环中每次调用 ended()方法。它
 
-当计时器仍在运行时返回False，计时器结束时返回True。
+当计时器仍在运行时返回 False，计时器结束时返回 True。
 
 （即，达到零时）。
 
@@ -3608,7 +3608,7 @@ CountDownTimer有一个名为ended()的额外方法。应用程序
 
 处理程序中需要向用户显示计时器的时间。
 
-**294** 第13章
+**294** 第十三章
 
 **14**
 
@@ -3674,7 +3674,7 @@ CountDownTimer有一个名为ended()的额外方法。应用程序
 
 **创建类**
 
-Listing 14-1包含了SimpleAnimation类的代码，它处理…
+Listing 14-1 包含了 SimpleAnimation 类的代码，它处理…
 
 由单独的图像文件组成的动画。为了保持清晰的组织结构，
 
@@ -3716,7 +3716,7 @@ self.durationPerImage = durationPerImage
 
 self.nImages = len(self.imagesList)
 
-**296** 第14章
+**296** 第十四章
 
 self.index = 0
 
@@ -3760,7 +3760,7 @@ self.index = 0 # 重置到起始位置
 
 def draw(self): 5
 
-# 假设self.index已在之前的update()方法中设置。
+# 假设 self.index 已在之前的 update()方法中设置。
 
 # 它被用作图像列表的索引，以找到当前的图像。
 
@@ -3770,7 +3770,7 @@ self.window.blit(theImage, self.loc) # 显示图像
 
 *Listing 14-1: SimpleAnimation 类*
 
-当客户端实例化一个SimpleAnimation对象时，必须传入这些
+当客户端实例化一个 SimpleAnimation 对象时，必须传入这些
 
 以下内容：
 
@@ -3784,23 +3784,23 @@ self.window.blit(theImage, self.loc) # 显示图像
 
 **durationPerImage** 每张图像显示的时间（秒）。
 
-在__init__()方法1中，我们将这些参数变量保存为相似命名的实例变量。该方法遍历路径列表，
+在 __init__()方法 1 中，我们将这些参数变量保存为相似命名的实例变量。该方法遍历路径列表，
 
 类似命名的实例变量。该方法遍历路径列表，
 
 加载每张图像，并将结果图像保存到列表中。列表是一个完美的…
 
-表示有序图像集合的方式。该类将使用self.index
+表示有序图像集合的方式。该类将使用 self.index
 
 用于跟踪当前图像的变量。
 
 文件中的图像格式与屏幕上显示的图像格式不同。
 
-在屏幕上显示时。调用convert_alpha() 2方法会从…
+在屏幕上显示时。调用 convert_alpha() 2 方法会从…
 
 文件格式转换为屏幕格式，以优化显示时的性能。
 
-在窗口中绘制图像。实际的绘制操作将在后续的draw()方法中完成。
+在窗口中绘制图像。实际的绘制操作将在后续的 draw()方法中完成。
 
 动画 **297**
 

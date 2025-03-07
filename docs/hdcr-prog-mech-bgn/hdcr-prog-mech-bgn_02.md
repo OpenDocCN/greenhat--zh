@@ -2,7 +2,7 @@
 
 简短的 Python 入门
 
-![Image](../images/common01.jpg)
+![Image](img/common01.jpg)
 
 在本章中，我们将查看一些我们将在全书中使用的 Python 特性。这不是 Python 的介绍；我假设你已经具备了基本的语言理解。如果你没有基础，有很多优秀的书籍和在线教程可以帮助你入门。
 
@@ -83,25 +83,25 @@ geom2d
 
 |- vector.py
 
-第一个模块名为*point.py*，它定义了几何原始类型 Point，第二个模块*vector.py*定义了另一个几何原始类型 Vector。[图 1-1](ch01.xhtml#ch1fig1)展示了这两个模块。每个模块分为两个部分：一部分是灰色的，表示该模块从其他地方导入的代码；另一部分是白色的，表示模块本身定义的代码。
+第一个模块名为*point.py*，它定义了几何原始类型 Point，第二个模块*vector.py*定义了另一个几何原始类型 Vector。图 1-1 展示了这两个模块。每个模块分为两个部分：一部分是灰色的，表示该模块从其他地方导入的代码；另一部分是白色的，表示模块本身定义的代码。
 
-![Image](../images/01fig01.jpg)
+![Image](img/01fig01.jpg)
 
 *图 1-1：两个 Python 模块*
 
-现在，假设我们需要我们的*point.py*模块实现一些使用 Vector 的功能（比如，按给定的向量移动一个点）。我们可以通过 Python 的 import 命令访问 *vector.py* 中的 Vector 代码。[图 1-2](ch01.xhtml#ch1fig2)展示了这一过程，它将 Vector 代码引入到*point.py*模块的“导入”部分，使其在整个模块中都可以使用。
+现在，假设我们需要我们的*point.py*模块实现一些使用 Vector 的功能（比如，按给定的向量移动一个点）。我们可以通过 Python 的 import 命令访问 *vector.py* 中的 Vector 代码。图 1-2 展示了这一过程，它将 Vector 代码引入到*point.py*模块的“导入”部分，使其在整个模块中都可以使用。
 
-![Image](../images/01fig02.jpg)
+![Image](img/01fig02.jpg)
 
 *图 1-2：从 vector.py 导入 Vector 类*
 
-在[图 1-2](ch01.xhtml#ch1fig2)中，我们使用了以下 Python 命令：
+在图 1-2 中，我们使用了以下 Python 命令：
 
 ```py
     from vector import Vector
 ```
 
-这个命令仅从*vector.py*中引入了Vector类。我们并没有引入*vector.py*中定义的其他任何内容。
+这个命令仅从*vector.py*中引入了 Vector 类。我们并没有引入*vector.py*中定义的其他任何内容。
 
 正如你将在下一部分看到的那样，导入模块有几种方式。
 
@@ -129,9 +129,9 @@ Mechanics
 
 |    |- vector.py
 
-在这个例子中，我们将使用*geom2d*和*eqs*两个包，每个包内都有两个文件或模块。每个模块定义一个类，类的名称与模块名称相同，只是首字母大写。例如，*point.py*模块定义了Point类，*vector.py*定义了Vector类，*matrix.py*定义了Matrix类。[图 1-3](ch01.xhtml#ch1fig3)展示了这个包的结构。
+在这个例子中，我们将使用*geom2d*和*eqs*两个包，每个包内都有两个文件或模块。每个模块定义一个类，类的名称与模块名称相同，只是首字母大写。例如，*point.py*模块定义了 Point 类，*vector.py*定义了 Vector 类，*matrix.py*定义了 Matrix 类。图 1-3 展示了这个包的结构。
 
-![Image](../images/01fig03.jpg)
+![Image](img/01fig03.jpg)
 
 *图 1-3：来自我们力学项目的两个包及其部分模块*
 
@@ -219,7 +219,7 @@ import geom.point as pt
 from geom import point as pt
 ```
 
-无论哪种方式，我们都可以像这样使用pt：
+无论哪种方式，我们都可以像这样使用 pt：
 
 ```py
 p = pt.Point(1, 2)
@@ -255,7 +255,7 @@ from ..geom.point import Point
 p = Point(1, 2)
 ```
 
-在这种情况下，路径..geom.point的意思是：从当前目录移动到父目录，然后寻找*point.py*模块。
+在这种情况下，路径..geom.point 的意思是：从当前目录移动到父目录，然后寻找*point.py*模块。
 
 ### **使用文档字符串文档化代码**
 
@@ -363,7 +363,7 @@ True
 False
 ```
 
-我们可以使用add方法向集合中添加新元素：
+我们可以使用 add 方法向集合中添加新元素：
 
 ```py
 >>> s1.add(4)
@@ -377,7 +377,7 @@ False
 # the set is still {1, 2, 3, 4}
 ```
 
-我们可以使用remove方法从集合中移除一个元素：
+我们可以使用 remove 方法从集合中移除一个元素：
 
 ```py
 >>> s1.add(3)
@@ -416,7 +416,7 @@ False
 
 #### ***元组***
 
-*元组*是不可变且有序的元素序列。*不可变*意味着，一旦创建，元组无法以任何方式更改。元组中的元素是通过它们所占的索引来引用的，索引从零开始。在Python中，计数总是从零开始。
+*元组*是不可变且有序的元素序列。*不可变*意味着，一旦创建，元组无法以任何方式更改。元组中的元素是通过它们所占的索引来引用的，索引从零开始。在 Python 中，计数总是从零开始。
 
 当我们在代码中传递有序数据的集合时，元组是一个不错的选择，因为它们不会被任何方式改变。例如，在如下代码中：
 
@@ -425,14 +425,14 @@ False
 >>> some_function(names)
 ```
 
-你可以确信，`names`元组不会被某个函数（如some_function）以任何方式修改。相反，如果你决定使用一个集合，比如：
+你可以确信，`names`元组不会被某个函数（如 some_function）以任何方式修改。相反，如果你决定使用一个集合，比如：
 
 ```py
 >>> names = set('Anne', 'Emma')
 >>> some_function(names)
 ```
 
-什么也不会阻止some_function向传入的`names`集合中添加或移除元素，因此你需要检查函数的代码，了解代码是否会改变这些元素。
+什么也不会阻止 some_function 向传入的`names`集合中添加或移除元素，因此你需要检查函数的代码，了解代码是否会改变这些元素。
 
 **注意**
 
@@ -450,20 +450,20 @@ False
 >>> name = ('Angel',)
 ```
 
-还可以通过tuple函数创建元组，传入一个包含元素的列表：
+还可以通过 tuple 函数创建元组，传入一个包含元素的列表：
 
 ```py
 >>> me = tuple(['Angel', 31])
 ```
 
-我们可以使用len全局函数获取元组中元素的数量：
+我们可以使用 len 全局函数获取元组中元素的数量：
 
 ```py
 >>> len(count)
 2
 ```
 
-我们还可以使用元组的count方法计算某个值在元组中出现的次数：
+我们还可以使用元组的 count 方法计算某个值在元组中出现的次数：
 
 ```py
 >>> me.count('Angel')
@@ -476,7 +476,7 @@ False
 3
 ```
 
-我们可以使用index方法获取某个项第一次出现的索引：
+我们可以使用 index 方法获取某个项第一次出现的索引：
 
 ```py
 >>> family = ('Angel', 'Alvaro', 'Mery', 'Paul', 'Isabel', 'Alvaro')
@@ -484,9 +484,9 @@ False
 1
 ```
 
-在这个例子中，我们要查找字符串'Alvaro'的索引，它出现了两次：分别在索引1和索引5。index方法返回第一次出现的索引，在这个例子中是1。
+在这个例子中，我们要查找字符串'Alvaro'的索引，它出现了两次：分别在索引 1 和索引 5。index 方法返回第一次出现的索引，在这个例子中是 1。
 
-可以使用in运算符检查某个元素是否存在于元组中：
+可以使用 in 运算符检查某个元素是否存在于元组中：
 
 ```py
 >>> 'Isabel' in family
@@ -506,7 +506,7 @@ False
 ('we', 'found', 'love', 'in', 'a', 'hopeless', 'place', 'we', 'found', ...
 ```
 
-我们可以使用for循环遍历元组的值：
+我们可以使用 for 循环遍历元组的值：
 
 ```py
 >>> for city in ('San Francisco', 'Barcelona', 'Pamplona'):
@@ -517,7 +517,7 @@ Barcelona is a beautiful city
 Pamplona is a beautiful city
 ```
 
-使用Python的内建enumerate函数，我们可以遍历元组中的项及其索引：
+使用 Python 的内建 enumerate 函数，我们可以遍历元组中的项及其索引：
 
 ```py
 >>> cities = ('Pamplona', 'San Francisco', 'Barcelona')
@@ -628,9 +628,9 @@ d
 
 *不要忘记，Python 中的切片总是包括起始索引的元素，并且排除结束索引的元素。*
 
-[图 1-4](ch01.xhtml#ch1fig4) 展示了这一过程。
+图 1-4 展示了这一过程。
 
-![图片](../images/01fig04.jpg)
+![图片](img/01fig04.jpg)
 
 *图 1-4：切片一个列表*
 
@@ -666,11 +666,11 @@ list b: [55, 2, 3, 4]
 # list b is [3, 4]
 ```
 
-在这里，我们正在创建一个新列表，从倒数第二个位置开始，一直到列表的最后一个元素。[图 1-5](ch01.xhtml#ch1fig5)展示了这一点。
+在这里，我们正在创建一个新列表，从倒数第二个位置开始，一直到列表的最后一个元素。图 1-5 展示了这一点。
 
 切片列表是 Python 中的一项多功能操作。
 
-![Image](../images/01fig05.jpg)
+![Image](img/01fig05.jpg)
 
 *图 1-5：使用负索引切片列表*
 

@@ -2,7 +2,7 @@
 
 并非所有的蛇都会滑行
 
-![Image](Images/common.jpg)
+![Image](img/common.jpg)
 
 计算机程序是一组指令，使计算机执行某种操作。它不是计算机的物理部件——例如电线、微芯片、卡片、硬盘等——而是在这些硬件上运行的隐形内容。我通常将计算机程序简称为*程序*，它是一组指令，告诉硬件该做什么。*软件*是计算机程序的集合。
 
@@ -20,19 +20,19 @@
 
 **注意**
 
-*蒙提·派森飞行马戏团*是一个1970年代首次播出的另类英国喜剧节目，今天在某些观众群体中依然非常受欢迎。节目包含了像“傻乎乎的走路部”、 “打鱼舞蹈”和“奶酪店”（它根本不卖奶酪）这样的滑稽小品。
+*蒙提·派森飞行马戏团*是一个 1970 年代首次播出的另类英国喜剧节目，今天在某些观众群体中依然非常受欢迎。节目包含了像“傻乎乎的走路部”、 “打鱼舞蹈”和“奶酪店”（它根本不卖奶酪）这样的滑稽小品。
 
-Python 编程语言有许多特性，使其对初学者极为有用。最重要的是，你可以快速编写简单而高效的程序。Python不像其他编程语言那样使用许多复杂的符号，这使得它更容易阅读，也对初学者更友好。（这并不是说 Python 不使用符号——只是它不像许多其他语言那样频繁使用符号。）
+Python 编程语言有许多特性，使其对初学者极为有用。最重要的是，你可以快速编写简单而高效的程序。Python 不像其他编程语言那样使用许多复杂的符号，这使得它更容易阅读，也对初学者更友好。（这并不是说 Python 不使用符号——只是它不像许多其他语言那样频繁使用符号。）
 
 ### 安装 Python
 
-安装 Python 是相当简单的。这里，我们将介绍在 Windows、macOS、Ubuntu 和 Raspberry Pi 上安装 Python 的步骤。在安装 Python 时，你还将安装 IDLE 程序，它是 **I**ntegrated **D**eve**L**opment **E**nvironment（集成开发环境），让你能够编写 Python 程序。如果你的电脑已经安装了 Python，可以跳到 [第10页](ch01.xhtml#ch01lev1sec3)的“安装 Python 后”部分继续。
+安装 Python 是相当简单的。这里，我们将介绍在 Windows、macOS、Ubuntu 和 Raspberry Pi 上安装 Python 的步骤。在安装 Python 时，你还将安装 IDLE 程序，它是 **I**ntegrated **D**eve**L**opment **E**nvironment（集成开发环境），让你能够编写 Python 程序。如果你的电脑已经安装了 Python，可以跳到 第 10 页的“安装 Python 后”部分继续。
 
 #### 在 Windows 上安装 Python
 
-要在 Microsoft Windows 11 上安装 Python，请下载一个版本为 3.10 或更高的 Windows 版 Python，下载地址是 *[http://www.python.org/downloads/](http://www.python.org/downloads/)*。你下载的具体版本不重要，只要它至少是 3.10 版本。然而，如果你使用的是旧版 Windows（如 Windows 7），最新版本的 Python 将无法使用——在这种情况下，你需要安装 Python 3.8。有关哪个版本的 Python 可以与您的 Windows 版本兼容，请参见 Windows 下载页面 (*[https://www.python.org/downloads/windows/](https://www.python.org/downloads/windows/))*。
+要在 Microsoft Windows 11 上安装 Python，请下载一个版本为 3.10 或更高的 Windows 版 Python，下载地址是 *[`www.python.org/downloads/`](http://www.python.org/downloads/)*。你下载的具体版本不重要，只要它至少是 3.10 版本。然而，如果你使用的是旧版 Windows（如 Windows 7），最新版本的 Python 将无法使用——在这种情况下，你需要安装 Python 3.8。有关哪个版本的 Python 可以与您的 Windows 版本兼容，请参见 Windows 下载页面 (*[`www.python.org/downloads/windows/`](https://www.python.org/downloads/windows/))*。
 
-![Image](Images/01fig01.jpg)
+![Image](img/01fig01.jpg)
 
 *图 1-1：Windows 的 Python 下载*
 
@@ -44,33 +44,33 @@ Python 编程语言有许多特性，使其对初学者极为有用。最重要�
 
 1.  安装完成后点击 **关闭**，然后你应该能在 Windows 开始菜单中看到多个 Python 3.1*x* 的图标：
 
-![Image](Images/01fig02.jpg)
+![Image](img/01fig02.jpg)
 
 *图 1-2：你的开始菜单可能会因使用的 Python 版本不同而有所不同。*
 
-现在跳到 [第10页](ch01.xhtml#ch01lev1sec3)的“安装 Python 后”部分，开始使用 Python。
+现在跳到 第 10 页的“安装 Python 后”部分，开始使用 Python。
 
 #### 在 macOS 上安装 Python
 
 如果你使用的是 Mac，应该会预装一个版本的 Python，但可能是较旧版本的语言。为了确保你使用的是足够新的版本，点击右上角的聚光灯图标（放大镜），在出现的对话框中输入 **terminal**。当终端打开后，输入 **python3 --version**（注意是两个短横线，后面跟着 *version*）并按下 ENTER 键。
 
-如果你看到“命令未找到”或者版本低于 3.10，请在浏览器中访问以下 URL 以下载适用于 macOS 的最新安装程序： *[http://www.python.org/downloads/](http://www.python.org/downloads/)*。
+如果你看到“命令未找到”或者版本低于 3.10，请在浏览器中访问以下 URL 以下载适用于 macOS 的最新安装程序： *[`www.python.org/downloads/`](http://www.python.org/downloads/)*。
 
-![Image](Images/01fig03.jpg)
+![Image](img/01fig03.jpg)
 
 *图 1-3：macOS 的 Python 下载*
 
-下载完成后，双击该文件（它应该叫做类似于 *python-3.10.0-macosx11.pkg* 的名字）。同意许可协议并按照屏幕上的提示安装软件。安装Python之前，系统会提示你输入Mac的管理员密码。如果你没有密码，向你的父母或计算机所有者询问。
+下载完成后，双击该文件（它应该叫做类似于 *python-3.10.0-macosx11.pkg* 的名字）。同意许可协议并按照屏幕上的提示安装软件。安装 Python 之前，系统会提示你输入 Mac 的管理员密码。如果你没有密码，向你的父母或计算机所有者询问。
 
-![Image](Images/01fig04.jpg)
+![Image](img/01fig04.jpg)
 
-*图1-4：Mac Finder中的Python*
+*图 1-4：Mac Finder 中的 Python*
 
-跳转到 [第10页](ch01.xhtml#ch01lev1sec3)的“安装Python后”部分，开始使用Python。
+跳转到 第 10 页的“安装 Python 后”部分，开始使用 Python。
 
-#### 在Ubuntu上安装Python
+#### 在 Ubuntu 上安装 Python
 
-Python在Ubuntu Linux上预装，但可能不是最新版本。按照这些说明操作，获取最新版本的Python（请注意，接下来的命令中可能需要更改版本号，以反映最新版本）。
+Python 在 Ubuntu Linux 上预装，但可能不是最新版本。按照这些说明操作，获取最新版本的 Python（请注意，接下来的命令中可能需要更改版本号，以反映最新版本）。
 
 1.  点击显示应用程序图标（通常位于屏幕左下角，形状是九个点）。
 
@@ -85,15 +85,15 @@ Python在Ubuntu Linux上预装，但可能不是最新版本。按照这些说�
 
     输入第一个命令后，系统可能会提示你输入计算机的管理员密码（如果没有管理员密码，你可能需要向父母或老师请求输入）。
 
-![Image](Images/01fig05.jpg)
+![Image](img/01fig05.jpg)
 
-*图1-5：Ubuntu终端中的Python安装；根据你下载的版本，输出可能略有不同*
+*图 1-5：Ubuntu 终端中的 Python 安装；根据你下载的版本，输出可能略有不同*
 
-跳转到 [第10页](ch01.xhtml#ch01lev1sec3)的“安装Python后”部分，开始使用Python。
+跳转到 第 10 页的“安装 Python 后”部分，开始使用 Python。
 
-#### 在树莓派上安装Python（树莓派操作系统或Raspbian）
+#### 在树莓派上安装 Python（树莓派操作系统或 Raspbian）
 
-树莓派的操作系统预装了Python 3，但在写这篇文章时，版本是3.7。安装更高版本比其他操作系统稍微复杂一些——你需要自己下载并构建Python安装。听起来可能有点吓人，但其实并不复杂。只需依次输入以下命令，并等待每个命令完成（请注意，如果你下载的Python版本高于3.10，可能需要更改版本号）：
+树莓派的操作系统预装了 Python 3，但在写这篇文章时，版本是 3.7。安装更高版本比其他操作系统稍微复杂一些——你需要自己下载并构建 Python 安装。听起来可能有点吓人，但其实并不复杂。只需依次输入以下命令，并等待每个命令完成（请注意，如果你下载的 Python 版本高于 3.10，可能需要更改版本号）：
 
 ```py
 sudo apt update
@@ -106,19 +106,19 @@ make -j 4
 sudo make altinstall
 ```
 
-倒数第二步将花费最长的时间，因为它正在构建所有的代码，这些代码将被加入到Python应用程序中。
+倒数第二步将花费最长的时间，因为它正在构建所有的代码，这些代码将被加入到 Python 应用程序中。
 
-![Image](Images/01fig06.jpg)
+![Image](img/01fig06.jpg)
 
-*图1-6：树莓派终端中的Python安装；根据你下载的Python版本，输出可能会略有不同。*
+*图 1-6：树莓派终端中的 Python 安装；根据你下载的 Python 版本，输出可能会略有不同。*
 
-安装完Python后，你需要将一个名为IDLE的程序添加到菜单中（这会使后续操作更方便）：
+安装完 Python 后，你需要将一个名为 IDLE 的程序添加到菜单中（这会使后续操作更方便）：
 
 1.  点击屏幕左上角的树莓派图标，然后点击**首选项**和**主菜单编辑器**。
 
 1.  在弹出的窗口中，点击**编程**，然后点击**新建项目**按钮。
 
-1.  在[图1-7](ch01.xhtml#ch01fig07)所示的启动器属性对话框中，输入名称为**idle3.10**，并将此作为命令输入，必要时更改版本号：
+1.  在图 1-7 所示的启动器属性对话框中，输入名称为**idle3.10**，并将此作为命令输入，必要时更改版本号：
 
     ```py
     /usr/local/opt/python-3.10.0/bin/idle3.10
@@ -126,7 +126,7 @@ sudo make altinstall
 
 1.  点击 **确定**，然后在主编辑窗口中再次点击 **确定** 来完成。然后你就可以继续进行下一部分了。
 
-![Image](Images/01fig07.jpg)
+![Image](img/01fig07.jpg)
 
 *图 1-7：树莓派上的启动器设置*
 
@@ -144,7 +144,7 @@ sudo make altinstall
 
 当你打开 IDLE 时，应该会看到如下窗口：
 
-![Image](Images/01fig08.jpg)
+![Image](img/01fig08.jpg)
 
 *图 1-8：Windows 中的 IDLE Shell*
 
@@ -168,7 +168,7 @@ Hello World
 
 恭喜你！你刚刚创建了第一个 Python 程序。单词 print 是一种 Python 命令，叫做 *函数*，它会把括号内的内容打印到屏幕上。从本质上讲，你已经给计算机下达了一个指令，显示出 “Hello World” —— 这个指令既是你理解的，也是计算机能够执行的。
 
-![Image](Images/f0011-01.jpg)
+![Image](img/f0011-01.jpg)
 
 ### 保存你的 Python 程序
 
@@ -184,7 +184,7 @@ Hello World
 
 如果一切顺利，你保存的程序应该会运行，像这样：
 
-![Image](Images/01fig09.jpg)
+![Image](img/01fig09.jpg)
 
 *图 1-9：IDLE 中的 Hello World*
 
@@ -194,7 +194,7 @@ Hello World
 
 你看到的是 Python 命令行控制台（类似于 shell）启动，打印 Hello World，然后退出。如果你拥有超能力般的视力，能在窗口关闭前看到它，这就是你会看到的内容：
 
-![Image](Images/01fig10.jpg)
+![Image](img/01fig10.jpg)
 
 *图 1-10：控制台中的 Hello World*
 

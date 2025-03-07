@@ -36,7 +36,7 @@ N_SHAPES = 10
 
 pygame.init()
 
-**190** 第9章
+**190** 第九章
 
 window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), 0, 32) clock = pygame.time.Clock()
 
@@ -104,7 +104,7 @@ clock.tick(FRAMES_PER_SECOND)
 
 *列表 9-5：从三个类中创建随机形状的主程序*
 
-就像我们在 [第4章，w](index_split_001.html#p86) 中看到的，当我们需要管理大量对象时，通常的做法是构建一个对象列表。所以，在
+就像我们在 第四章，w 中看到的，当我们需要管理大量对象时，通常的做法是构建一个对象列表。所以，在
 
 主循环开始时，程序首先通过随机
 
@@ -136,13 +136,13 @@ clickedInside() 方法对于不同的类可以是不同的。
 
 入口形状：
 
-点击了一个圆形，面积为5026.544
+点击了一个圆形，面积为 5026.544
 
-点击了一个正方形，面积为1600
+点击了一个正方形，面积为 1600
 
-点击了一个三角形，面积为1982.5
+点击了一个三角形，面积为 1982.5
 
-点击了一个正方形，面积为1600
+点击了一个正方形，面积为 1600
 
 点击了一个面积为 100 的正方形
 
@@ -176,7 +176,7 @@ ods。（clickedInside() 方法的代码可能在数学上复杂）
 
 • 多态性扩展了抽象概念的讨论
 
-[第 8 章 t](index_split_003.html#p192) 到一组类。如果多个类的接口方法相同，客户端程序员可以忽略
+第八章 t 到一组类。如果多个类的接口方法相同，客户端程序员可以忽略
 
 所有类中这些方法的实现。
 
@@ -194,7 +194,7 @@ pygwidgets 中的所有类都设计为使用多态性，它们
 
 都实现了两个共同的方法。第一个是 handleEvent() 方法
 
-我们首先在第 6 章中使用了 i[n Chapter 6, w](index_split_002.html#p150)，它接受一个事件对象作为参数。
+我们首先在第六章中使用了 in Chapter 6, w，它接受一个事件对象作为参数。
 
 每个类都必须在该方法中包含自己的代码来处理任何事件
 
@@ -204,7 +204,7 @@ pygame 可能生成的事件。每次通过主循环时，客户端程序
 
 是通过 pygwidgets 实例化的。
 
-**192** 第 9 章
+**192** 第九章
 
 第二个是 draw() 方法，它将图像绘制到窗口。使用 pygwidgets 的程序中的典型绘制部分可能如下所示：
 
@@ -252,13 +252,13 @@ statusButton.draw()
 
 要在 InputText 小部件中获取值，可以调用 getValue() 获取方法。例如，单选按钮
 
-单选按钮和复选框控件也有一个getValue()方法，用于获取它们的当前值
+单选按钮和复选框控件也有一个 getValue()方法，用于获取它们的当前值
 
-ues。要将新文本放入DisplayText控件中，你需要调用setValue()方法
+ues。要将新文本放入 DisplayText 控件中，你需要调用 setValue()方法
 
 方法，传入新文本。单选按钮和复选框控件可以
 
-可以通过调用它们的setValue()方法来设置值。
+可以通过调用它们的 setValue()方法来设置值。
 
 多态使得客户端程序员能舒适地使用
 
@@ -268,21 +268,21 @@ handleEvent() 和 draw()，这使得它们很容易预测如何使用一个
 
 新的类属于同一集合。
 
-截至目前，pygwidgets包没有提供水平或垂直Slider类控件
+截至目前，pygwidgets 包没有提供水平或垂直 Slider 类控件
 
-水平或垂直的Slider类控件允许用户从一系列数字中轻松选择
+水平或垂直的 Slider 类控件允许用户从一系列数字中轻松选择
 
-数字范围。如果我将这些控件加起来，它们肯定会包含以下内容：一个handleEvent()方法，用于处理所有用户交互
+数字范围。如果我将这些控件加起来，它们肯定会包含以下内容：一个 handleEvent()方法，用于处理所有用户交互
 
-包含以下内容：一个handleEvent()方法，用于处理所有用户交互
+包含以下内容：一个 handleEvent()方法，用于处理所有用户交互
 
-发生；有一个getValue()和一个setValue()方法用于获取和设置当前值
+发生；有一个 getValue()和一个 setValue()方法用于获取和设置当前值
 
-Slider的值；以及一个draw()方法。
+Slider 的值；以及一个 draw()方法。
 
 **运算符的多态性**
 
-Python还通过运算符展示了多态。考虑以下示例
+Python 还通过运算符展示了多态。考虑以下示例
 
 示例使用 + 运算符：
 
@@ -334,7 +334,7 @@ JoeSchmoe
 
 ***魔法方法***
 
-Python保留了带有两个下划线的特殊方法名称，
+Python 保留了带有两个下划线的特殊方法名称，
 
 一个名称和两个下划线是为了某个特定的目的：
 
@@ -342,15 +342,15 @@ __ *<someName>* __()
 
 这些方法官方称为*特殊方法*，但通常被称为
 
-被Python程序员称为*魔法方法*。其中许多方法
+被 Python 程序员称为*魔法方法*。其中许多方法
 
-已经定义好了，比如__init__()，它在你实例化时会被调用
+已经定义好了，比如 __init__()，它在你实例化时会被调用
 
 从类中创建对象，但所有其他类似的名称都是可以使用的
 
-这些方法被称为“魔法”方法，因为Python
+这些方法被称为“魔法”方法，因为 Python
 
-Python在后台调用这些方法，每当它检测到一个运算符或特殊情况时
+Python 在后台调用这些方法，每当它检测到一个运算符或特殊情况时
 
 函数调用，或其他某些特殊情况。它们并不打算
 
@@ -360,13 +360,13 @@ Python在后台调用这些方法，每当它检测到一个运算符或特殊�
 
 *由于这些魔法方法的名称很难发音——例如，*__init__()读作“下划线下划线 init 下划线下划线”——Python* *程序员通常将它们称为* dunder *方法（即双下划线的缩写）。这个方法将被称为“dunder init”。*
 
-**第194章 第9节**
+**第一百九十四章 第九部分**
 
 继续之前的示例，我们来看这个如何与 + 操作符一起工作。内建数据类型（整数、浮点数、字符串、布尔值等
 
 等等）实际上在 Python 中是作为类实现的。我们可以看到这
 
-通过使用内置的isinstance()函数来测试，该函数接受一个对象并
+通过使用内置的 isinstance()函数来测试，该函数接受一个对象并
 
 一个类，并且如果对象是从该类实例化的，返回 True，否则返回 False
 
@@ -380,11 +380,11 @@ print(isinstance('some string', str))
 
 包括基本数学操作符的 ones。当 Python 检测到 + 
 
-与整数的操作符时，它会调用名为__add__()的魔法方法
+与整数的操作符时，它会调用名为 __add__()的魔法方法
 
 内建整数类，它执行整数加法。当 Python 看到
 
-与字符串使用相同的操作符时，它会调用__add__()方法。
+与字符串使用相同的操作符时，它会调用 __add__()方法。
 
 字符串类，执行字符串连接操作。
 
@@ -392,7 +392,7 @@ print(isinstance('some string', str))
 
 当处理从你类实例化的对象时，它将调用操作符
 
-如果你的类中有__add__()方法，则会调用它。因此，当类
+如果你的类中有 __add__()方法，则会调用它。因此，当类
 
 作为开发者，你可以编写代码，为这个操作符发明新的意义。
 
@@ -418,7 +418,7 @@ print(isinstance('some string', str))
 
 比较两个对象的 self.heightAndWidth 实例变量和
 
-你可以编写自己的equals()方法，然后客户端软件可以像这样调用它：
+你可以编写自己的 equals()方法，然后客户端软件可以像这样调用它：
 
 客户端软件可以像这样调用它：
 
@@ -434,9 +434,9 @@ print(isinstance('some string', str))
 
 第一个对象的方法。在这种情况下，Python 会尝试调用一个魔法
 
-在 Square 类中有一个名为__eq__()的方法。表 9-1 展示了魔法方法—
+在 Square 类中有一个名为 __eq__()的方法。表 9-1 展示了魔法方法—
 
-所有比较操作符的ods。
+所有比较操作符的 ods。
 
 多态 **195**
 
@@ -542,7 +542,7 @@ def __eq__(self, oOtherSquare):
 
 运算符。
 
-**第196页 第9章**
+**第 196 页 第九章**
 
 **文件：MagicMethods/Rectangle/Rectangle.py**
 
@@ -626,67 +626,67 @@ clicked = self.rect.collidepoint(mousePoint)
 
 # 使用 > 运算符比较两个矩形对象
 
-定义__gt__(self, oOtherRectangle): 3
+定义 __gt__(self, oOtherRectangle): 3
 
-如果oOtherRectangle不是一个矩形（Rectangle）实例：
+如果 oOtherRectangle 不是一个矩形（Rectangle）实例：
 
-引发TypeError('第二个对象不是矩形')
+引发 TypeError('第二个对象不是矩形')
 
 多态 **197**
 
-如果self.area > oOtherRectangle.area：
+如果 self.area > oOtherRectangle.area：
 
-返回True
+返回 True
 
 否则：
 
-返回False
+返回 False
 
-定义getArea(self)方法：
+定义 getArea(self)方法：
 
-返回self.area
+返回 self.area
 
-定义draw(self)方法：
+定义 draw(self)方法：
 
-pygame.draw.rect(self.window, self.color, (self.x, self.y, self.width, self.height)) *列表 9-6：Rectangle类*
+pygame.draw.rect(self.window, self.color, (self.x, self.y, self.width, self.height)) *列表 9-6：Rectangle 类*
 
-方法__eq__() 1，__lt__() 2，和__gt__() 3允许客户端代码
+方法 __eq__() 1，__lt__() 2，和 __gt__() 3 允许客户端代码
 
 使用标准比较运算符比较矩形对象。要比较—
 
 如果要比较两个矩形是否相等，您应该写：
 
-如果oRectangle1 == oRectangle2:
+如果 oRectangle1 == oRectangle2:
 
-当这行代码执行时，第一个对象的__eq__()方法会被调用，
+当这行代码执行时，第一个对象的 __eq__()方法会被调用，
 
 并且第二个对象作为第二个参数传递。该函数
 
-返回True或False。同样，要进行小于比较，您应该
+返回 True 或 False。同样，要进行小于比较，您应该
 
 写一行像这样的代码：
 
-如果oRectangle1 < oRectangle2:
+如果 oRectangle1 < oRectangle2:
 
 __lt__()方法接着检查第一个矩形的面积
 
 比第二个矩形的面积要小。如果客户端代码使用了>
 
-使用>操作符比较两个矩形时，将调用__gt__()方法。
+使用>操作符比较两个矩形时，将调用 __gt__()方法。
 
 ***使用魔法方法的主程序***
 
-列表 9-7展示了测试魔法方法的主程序代码。
+列表 9-7 展示了测试魔法方法的主程序代码。
 
 **文件：MagicMethods/Rectangle/Main_RectangleExample.py**
 
-导入pygame
+导入 pygame
 
-导入sys
+导入 sys
 
-从pygame.locals导入所有内容
+从 pygame.locals 导入所有内容
 
-从Rectangle导入所有内容
+从 Rectangle 导入所有内容
 
 # 设置常量
 
@@ -708,13 +708,13 @@ SECOND_RECTANGLE = 'second'
 
 pygame.init()
 
-**198** 第9章
+**198** 第九章
 
 window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), 0, 32) clock = pygame.time.Clock()
 
 rectanglesList = []
 
-对于i在范围(0, N_RECTANGLES)内：
+对于 i 在范围(0, N_RECTANGLES)内：
 
 oRectangle = Rectangle(window)
 
@@ -726,39 +726,39 @@ whichRectangle = FIRST_RECTANGLE
 
 一直循环：
 
-对于pygame.event.get()中的每个事件：
+对于 pygame.event.get()中的每个事件：
 
-如果事件类型是QUIT：
+如果事件类型是 QUIT：
 
 pygame.quit()
 
 sys.exit()
 
-如果事件类型是MOUSEBUTTONDOWN：
+如果事件类型是 MOUSEBUTTONDOWN：
 
 遍历矩形列表中的每个矩形：
 
-如果oRectangle.clickedInside(event.pos):
+如果 oRectangle.clickedInside(event.pos):
 
 print('点击了', whichRectangle, '矩形。')
 
-如果whichRectangle == FIRST_RECTANGLE:
+如果 whichRectangle == FIRST_RECTANGLE:
 
 oFirstRectangle = oRectangle 1
 
 whichRectangle = SECOND_RECTANGLE
 
-如果whichRectangle == SECOND_RECTANGLE:
+如果 whichRectangle == SECOND_RECTANGLE:
 
 oSecondRectangle2 = oRectangle 2
 
 # 用户选择了两个矩形，我们来比较一下
 
-如果oFirstRectangle == oSecondRectangle: 3
+如果 oFirstRectangle == oSecondRectangle: 3
 
 print('矩形大小相同。')
 
-如果oFirstRectangle < oSecondRectangle: 4
+如果 oFirstRectangle < oSecondRectangle: 4
 
 print('第一个矩形小于第二个矩形。')
 
@@ -906,7 +906,7 @@ def __add__(self, oOther):
 
 # 尝试添加两个这些对象。
 
-**200** 第9章
+**200** 第九章
 
 所有魔术或双下划线方法的完整列表可以在官方文档中找到，链接如下：[*https://docs.python.org/3/reference/datamodel.html*](https://docs.python.org/3/reference/datamodel.html)。
 
@@ -1078,7 +1078,7 @@ def __gt__(self, oOther): # 调用 > 运算符
 
 如果 abs(self) > abs(oOther): # 调用 __abs__ 方法
 
-**202** 第 9 章
+**202** 第九章
 
 返回 True
 
@@ -1114,17 +1114,17 @@ oNewVector = oVector1 + oVector2 # 使用 + 运算符加法两个向量
 
 **创建对象值的字符串表示**
 
-调试的一种标准方法是添加print()调用，输出
+调试的一种标准方法是添加 print()调用，输出
 
 变量在程序某些位置的值：
 
 print('我的变量是', myVariable)
 
-然而，如果你尝试使用print()帮助你调试一个
+然而，如果你尝试使用 print()帮助你调试一个
 
 对象的结果并不特别有用。例如，在这里我们创建
 
-创建一个Vector对象并打印它：
+创建一个 Vector 对象并打印它：
 
 oVector = Vector(3, 4)
 
@@ -1132,9 +1132,9 @@ print('我的向量是', oVector)
 
 这就是输出的内容：
 
-<Vector对象位于0x10361b518>
+<Vector 对象位于 0x10361b518>
 
-这告诉我们我们已经实例化了一个来自Vector类的对象
+这告诉我们我们已经实例化了一个来自 Vector 类的对象
 
 并显示该对象的内存地址。然而，在大多数情况下，我们
 
@@ -1150,7 +1150,7 @@ print('我的向量是', oVector)
 
 一个对象的字符串表示，便于人类阅读。如果客户端代码调用
 
-str()内置函数并传入一个对象时，Python会调用该
+str()内置函数并传入一个对象时，Python 会调用该
 
 如果该类中存在魔法方法 __str__()，则使用该方法。
 
@@ -1158,19 +1158,19 @@ str()内置函数并传入一个对象时，Python会调用该
 
 • __repr__() 方法用于创建一个明确的、可能是机器可读的对象字符串表示。如果客户端代码
 
-调用repr()内置函数并传入一个对象时，
+调用 repr()内置函数并传入一个对象时，
 
-Python会尝试调用该类中的魔法方法__repr__()，
+Python 会尝试调用该类中的魔法方法 __repr__()，
 
 如果存在的话。
 
-我将展示__str__()方法，因为它更常用于简单的
+我将展示 __str__()方法，因为它更常用于简单的
 
-调试。当你调用print()函数时，Python会调用内置的
+调试。当你调用 print()函数时，Python 会调用内置的
 
 str()函数将每个参数转换为字符串。对于任何参数
 
-对于没有__str__()方法的对象，这个函数会格式化一个字符串
+对于没有 __str__()方法的对象，这个函数会格式化一个字符串
 
 包含对象类型、"对象位于"字样和内存地址的字符串。
 
@@ -1178,7 +1178,7 @@ str()函数将每个参数转换为字符串。对于任何参数
 
 包含内存地址的字符串。
 
-你可以写自己的__str__()版本，让它生成
+你可以写自己的 __str__()版本，让它生成
 
 任何你想要的字符串来帮助调试你类的代码。一般的
 
@@ -1186,9 +1186,9 @@ str()函数将每个参数转换为字符串。对于任何参数
 
 你希望查看并将该字符串返回以供打印。例如，
 
-我们可以向来自示例9-8中的Vector类添加以下方法来获取
+我们可以向来自示例 9-8 中的 Vector 类添加以下方法来获取
 
-获取任何Vector对象的信息：
+获取任何 Vector 对象的信息：
 
 class Vector():
 
@@ -1198,15 +1198,15 @@ def __str__(self):
 
 return '这个向量的值是 (' + str(self.x) + ', ' + str(self.y) + ')'
 
-如果你实例化一个Vector对象，之后你可以调用print()函数并
+如果你实例化一个 Vector 对象，之后你可以调用 print()函数并
 
-传入一个Vector对象：
+传入一个 Vector 对象：
 
 oVector = Vector(10, 7)
 
 print(oVector)
 
-与其仅仅打印Vector对象的内存地址，你
+与其仅仅打印 Vector 对象的内存地址，你
 
 将得到一个格式良好的报告，显示两个实例变量的值
 
@@ -1230,7 +1230,7 @@ v2 = Vector(2, 2)
 
 v3 = Vector(3, 4)
 
-**204** 第9章
+**204** 第九章
 
 # 这些行打印布尔值或数值
 
@@ -1400,7 +1400,7 @@ oOtherFractionEquivalentNumerator =
 
 oOtherFraction.numerator * otherMultiplicationFactor
 
-**206** 第 9 章
+**206** 第九章
 
 newNumerator = equivalentNumerator + oOtherFractionEquivalentNumerator oAddedFraction = Fraction(newNumerator, newDenominator)
 
@@ -1498,7 +1498,7 @@ print('5/2 和 500/2 的和\n', oFraction5 + oFraction6)
 
 运行时，这段代码会输出：
 
-分数1
+分数 1
 
 分数：1/3
 
@@ -1540,7 +1540,7 @@ Fraction4
 
 **总结**
 
-本章讲解了OOP的关键概念——多态。正如
+本章讲解了 OOP 的关键概念——多态。正如
 
 简单来说，多态是指多个类可以实现方法
 
@@ -1566,17 +1566,17 @@ draw() 方法。每个版本的代码针对这些方法的实现是特定的
 
 客户端程序员。
 
-**208** 第9章
+**208** 第九章
 
 我还讨论了运算符中的多态性，解释了同一运算符如何针对不同类型执行不同的操作
 
-数据的使用。我展示了如何使用Python的魔术方法来实现这一点
+数据的使用。我展示了如何使用 Python 的魔术方法来实现这一点
 
 以及如何在自己的类中实现这些运算符的方法
 
 自己的类。为了演示算术和比较运算符的使用，
 
-魔术方法中，我展示了一个Vector类和一个Fraction类。我还展示了
+魔术方法中，我展示了一个 Vector 类和一个 Fraction 类。我还展示了
 
 你可以使用 __str__() 方法来帮助调试类的内容
 
@@ -1588,7 +1588,7 @@ draw() 方法。每个版本的代码针对这些方法的实现是特定的
 
 **继 承**
 
-OOP的第三个原则是*继承*，它
+OOP 的第三个原则是*继承*，它
 
 是推导新类的一种机制
 
@@ -1686,7 +1686,7 @@ OOP 中的继承是创建一个建立在（*扩展*）现有类基础上的类�
 
 *来自基类。*
 
-**212** 第10章
+**212** 第十章
 
 子类继承了基类中定义的所有方法和实例变量。
 
@@ -1830,7 +1830,7 @@ return self.name
 
 def getTitle(self):
 
-**214** 第 10 章
+**214** 第十章
 
 return self.title
 
@@ -1994,7 +1994,7 @@ Manager 类中的 payPerYear() 方法 *重写*了基类中的方法
 
 与基类中同名的方法相同。在子类中重写方法可以使
 
-**216** 第 10 章
+**216** 第十章
 
 子类用以区分基类。重写的方法必须与它重写的方法完全相同（尽管它
 
@@ -2026,7 +2026,7 @@ Employee 基类中。如果客户端在 Manager 实例上调用 getName()，那�
 
 如果给奖金：
 
-pay = pay + (.10 * self.salary) # 添加10%的奖金
+pay = pay + (.10 * self.salary) # 添加 10%的奖金
 
 6 print(self.name, '因为表现出色获得奖金')
 
@@ -2134,7 +2134,7 @@ ing 将方法集合看作墙上的一层层涂料。当客户端查看时，
 
 在员工类中，客户端看到的是该类中定义的所有方法
 
-（图10-3）。
+（图 10-3）。
 
 员工
 
@@ -2148,11 +2148,11 @@ getTitle()
 
 payPerYear()
 
-*图10-3：客户端在查看时会看到的内容*
+*图 10-3：客户端在查看时会看到的内容*
 
 *员工类的接口*
 
-**218** 第10章
+**218** 第十章
 
 当我们引入继承自 Employee 类的 Manager 类时，就像是在我们想要添加或修正的地方加上一层油漆
 
@@ -2324,7 +2324,7 @@ def handleEvent(self, event)：3
 
 如果 self.cursorPosition > 0：
 
-**220** 第10章
+**220** 第十章
 
 返回 False # 不能在第一个字符后放负号
 
@@ -2394,7 +2394,7 @@ __init__() 方法允许与 InputText 相同的参数
 
 关键代码在 handleEvent() 方法 3 中，它限制了
 
-允许的键限制为一个小子集：数字0到9，
+允许的键限制为一个小子集：数字 0 到 9，
 
 负号、小数点（小数点）、回车键和一些编辑键。当
 
@@ -2502,7 +2502,7 @@ oSomeDisplayText.setValue('1234.56')
 
 • 显示或隐藏两位小数（默认为显示）
 
-**222** 第10章
+**222** 第十章
 
 Listing 10-4 显示了我们新创建的 DisplayMoney 类的代码。
 
@@ -2542,11 +2542,11 @@ self.currencySymbolOnLeft = currencySymbolOnLeft
 
 self.showCents = showCents
 
-如果value为None：
+如果 value 为 None：
 
 value = 0.00
 
-# 调用我们基类的__init__方法
+# 调用我们基类的 __init__ 方法
 
 4 super().__init__(window, loc, value,
 
@@ -2556,13 +2556,13 @@ textColor, backgroundColor, justified)
 
 5 def setValue(self, money):
 
-如果money == '':
+如果 money == '':
 
 money = 0.00
 
 money = float(money)
 
-如果self.showCents：
+如果 self.showCents：
 
 money = '{:,.2f}'.format(money)
 
@@ -2570,7 +2570,7 @@ money = '{:,.2f}'.format(money)
 
 money = '{:,.0f}'.format(money)
 
-如果self.currencySymbolOnLeft:
+如果 self.currencySymbolOnLeft:
 
 theText = self.currencySymbol + money
 
@@ -2578,29 +2578,29 @@ theText = self.currencySymbol + money
 
 theText = money + self.currencySymbol
 
-# 调用我们基类的setValue方法
+# 调用我们基类的 setValue 方法
 
 6 super().setValue(theText)
 
-*清单10-4：DisplayMoney显示一个格式化为货币值的数字。*
+*清单 10-4：DisplayMoney 显示一个格式化为货币值的数字。*
 
 继承 **223**
 
-在类定义中，我们显式继承了pygwidgets.DisplayText 1。
+在类定义中，我们显式继承了 pygwidgets.DisplayText 1。
 
-DisplayMoney类仅包含两个方法：__init__()和setValue()。
+DisplayMoney 类仅包含两个方法：__init__()和 setValue()。
 
 这两个方法重写了基类中相同名称的方法
 
 类。
 
-客户端像这样实例化一个DisplayMoney对象：
+客户端像这样实例化一个 DisplayMoney 对象：
 
 oDisplayMoney = DisplayMoney(widow, (100, 100), 1234.56)
 
-通过这一行，DisplayMoney 2中的__init__()方法将运行并
+通过这一行，DisplayMoney 2 中的 __init__()方法将运行并
 
-覆盖基类中的__init__()方法。此方法做了一些
+覆盖基类中的 __init__()方法。此方法做了一些
 
 初始化，包括保存任何与货币相关的客户端偏好设置
 
@@ -2608,9 +2608,9 @@ symbol，显示符号的侧边，以及我们是否
 
 应该显示分币，所有的都在实例变量中 3。该方法以
 
-调用基类DisplayText 4的__init__()方法（它
+调用基类 DisplayText 4 的 __init__()方法（它
 
-通过调用super()来查找，并传递所需的数据
+通过调用 super()来查找，并传递所需的数据
 
 方法。
 
@@ -2618,35 +2618,35 @@ symbol，显示符号的侧边，以及我们是否
 
 oDisplayMoney.setValue(12233.44)
 
-setValue()方法 5 在DisplayMoney类中运行以创建一个版本
+setValue()方法 5 在 DisplayMoney 类中运行以创建一个版本
 
 格式化金额为货币值的版本。该方法
 
-最后通过调用DisplayText类中的继承setValue()方法 6 来结束
+最后通过调用 DisplayText 类中的继承 setValue()方法 6 来结束
 
 设置新文本以进行显示。
 
-当对DisplayMoney的实例调用任何其他方法时，
+当对 DisplayMoney 的实例调用任何其他方法时，
 
-DisplayText中的版本将运行。最重要的是，每次
+DisplayText 中的版本将运行。最重要的是，每次
 
-客户端代码应调用oDisplayMoney.draw()，这将
+客户端代码应调用 oDisplayMoney.draw()，这将
 
-绘制窗口中的字段。由于DisplayMoney没有*draw()*
+绘制窗口中的字段。由于 DisplayMoney 没有*draw()*
 
-方法，调用将转到DisplayText基类，后者确实有一个
+方法，调用将转到 DisplayText 基类，后者确实有一个
 
 draw()方法。
 
 ***示例用法***
 
-图10-5显示了一个示例程序的输出，该程序利用了
+图 10-5 显示了一个示例程序的输出，该程序利用了
 
-输入数字和DisplayMoney类的实例。用户通过循环输入数字
+输入数字和 DisplayMoney 类的实例。用户通过循环输入数字
 
-输入到InputNumber字段中。当用户按下OK或ENTER时，该值将
+输入到 InputNumber 字段中。当用户按下 OK 或 ENTER 时，该值将
 
-将在两个DisplayMoney字段中显示。第一个字段显示数字
+将在两个 DisplayMoney 字段中显示。第一个字段显示数字
 
 带有小数位的，第二个方法使用不同的初始设置四舍五入到最接近的美元
 
@@ -2654,15 +2654,15 @@ draw()方法。
 
 列表 10-5 包含主程序的完整代码。请注意
 
-代码创建了一个InputNumber对象和两个DisplayMoney对象
+代码创建了一个 InputNumber 对象和两个 DisplayMoney 对象
 
 objects.
 
-**224** 第10章
+**224** 第十章
 
-![图片 28](index-254_1.png)
+![图片 28](img/index-254_1.png)
 
-*图 10-5：一个客户端程序，用户在输入框中输入金额*，*然后金额显示在两个DisplayMoney框中*
+*图 10-5：一个客户端程序，用户在输入框中输入金额*，*然后金额显示在两个 DisplayMoney 框中*
 
 **文件：MoneyExamples/Main_MoneyExample.py**
 
@@ -2670,7 +2670,7 @@ objects.
 
 #
 
-# 演示重写继承的DisplayText和InputText方法
+# 演示重写继承的 DisplayText 和 InputText 方法
 
 # 1 - 导入包
 
@@ -2764,7 +2764,7 @@ while True:
 
 for event in pygame.event.get():
 
-# 如果事件是点击关闭框，退出pygame和程序
+# 如果事件是点击关闭框，退出 pygame 和程序
 
 if event.type == pygame.QUIT:
 
@@ -2772,7 +2772,7 @@ pygame.quit()
 
 sys.exit()
 
-# 按下Return/Enter或点击OK触发动作
+# 按下 Return/Enter 或点击 OK 触发动作
 
 if inputField.handleEvent(event) or okButton.handleEvent(event): 1
 
@@ -2808,7 +2808,7 @@ inputField.draw()
 
 okButton.draw()
 
-**226** 第10章
+**226** 第十章
 
 outputCaption1.draw()
 
@@ -2824,13 +2824,13 @@ pygame.display.update()
 
 # 12 - 稍微减慢速度
 
-clock.tick(FRAMES_PER_SECOND) # 使pygame等待
+clock.tick(FRAMES_PER_SECOND) # 使 pygame 等待
 
-*示例10-5：演示InputNumber和DisplayMoney类的主程序* 用户将数字输入到InputNumber字段中。用户输入时，
+*示例 10-5：演示 InputNumber 和 DisplayMoney 类的主程序* 用户将数字输入到 InputNumber 字段中。用户输入时，
 
 handleEvent()会过滤掉任何不适当的字符并忽略它们
 
-方法。当用户点击OK时，代码读取输入并将其传递给
+方法。当用户点击 OK 时，代码读取输入并将其传递给
 
 显示金额的两个字段。第一个显示美元和美分金额（保留两位小数），而第二个只显示美元数额。两个字段
 
@@ -2844,7 +2844,7 @@ handleEvent()会过滤掉任何不适当的字符并忽略它们
 
 构建一个非常通用的基类，然后构建任意数量的子类
 
-继承自它的类。图10-6 展示了这种关系。
+继承自它的类。图 10-6 展示了这种关系。
 
 基类
 
@@ -2858,7 +2858,7 @@ handleEvent()会过滤掉任何不适当的字符并忽略它们
 
 …
 
-*图10-6：三个或更多不同的子类继承自一个公共基类* 每个不同的子类可以是其变种（更具体的版本） 
+*图 10-6：三个或更多不同的子类继承自一个公共基类* 每个不同的子类可以是其变种（更具体的版本） 
 
 基本类的变种，每个子类可以重写任何方法
 
@@ -2866,9 +2866,9 @@ handleEvent()会过滤掉任何不适当的字符并忽略它们
 
 子类。
 
-让我们通过使用Shapes程序中的示例来演示
+让我们通过使用 Shapes 程序中的示例来演示
 
-[第9章 t](index_split_003.html#p212) 该程序创建并绘制了圆形、正方形和三角形。代码还允许用户点击窗口中的任何形状，以查看其面积。
+第九章 t 该程序创建并绘制了圆形、正方形和三角形。代码还允许用户点击窗口中的任何形状，以查看其面积。
 
 那个形状。
 
@@ -2884,7 +2884,7 @@ return self.shapeType
 
 继承 **227**
 
-此外，查看三个类的__init__()方法时，我们发现有一些共同的代码，用于记住窗口、选择一个
+此外，查看三个类的 __init__()方法时，我们发现有一些共同的代码，用于记住窗口、选择一个
 
 随机颜色，并选择一个随机位置：
 
@@ -2896,7 +2896,7 @@ self.x = random.randrange(1, maxWidth - 100)
 
 self.y = random.randrange(1, maxHeight - 100)
 
-最后，每个类将实例变量self.shapeType设置为一个合适的值
+最后，每个类将实例变量 self.shapeType 设置为一个合适的值
 
 合适的字符串。
 
@@ -2908,11 +2908,11 @@ self.y = random.randrange(1, maxHeight - 100)
 
 让我们提取三个类中的共同代码，并构建一个通用的
 
-一个名为Shape的通用基类，如示例 10-6 所示。
+一个名为 Shape 的通用基类，如示例 10-6 所示。
 
 **文件：InheritedShapes/ShapeBasic.py**
 
-# Shape类 - 基本
+# Shape 类 - 基本
 
 import random
 
@@ -2962,7 +2962,7 @@ class，传入一个字符串来标识其类型和窗口的大小。
 
 getType() 方法仅会出现在 Shape 类中，因此任何客户端调用
 
-**228** 第10章
+**228** 第十章
 
 对 getType() 的调用将由继承自 Shape 类的方法处理。
 
@@ -3124,7 +3124,7 @@ inRect = self.rect.collidepoint(mousePoint)
 
 xOffset = mousePoint[0] - self.x
 
-**230** 第 10 章
+**230** 第十章
 
 yOffset = mousePoint[1] – self.y
 
@@ -3160,7 +3160,7 @@ pygame.draw.polygon(self.window, self.color, (
 
 *列表 10-9：继承自 Shape 类的 Triangle 类*
 
-我们用于测试的主要代码（[第9章](index_split_003.html#p212)）完全不需要更改。作为这些新类的客户端，它实例化了 Square、Circle 和 Triangle 对象，而不必担心这些类的实现。它
+我们用于测试的主要代码（第九章）完全不需要更改。作为这些新类的客户端，它实例化了 Square、Circle 和 Triangle 对象，而不必担心这些类的实现。它
 
 不需要知道每个类都是从一个公共的 Shape 类继承的。
 
@@ -3274,7 +3274,7 @@ self.y = random.randrange(25, maxHeight - 100)
 
 return self.shapeType
 
-**232** 第 10 章
+**232** 第十章
 
 4 @abstractmethod
 
@@ -3404,7 +3404,7 @@ draw
 
 pygwidgets 模块使用继承来共享公共代码。例如，
 
-例如，考虑我们在[第 7 章：](index_split_003.html#p172)中讨论的两个按钮类：TextButton 和 CustomButton。TextButton 类需要一个字符串作为标签
+例如，考虑我们在第七章：中讨论的两个按钮类：TextButton 和 CustomButton。TextButton 类需要一个字符串作为标签
 
 在按钮上，而 CustomButton 类则要求你提供自己的
 
@@ -3424,9 +3424,9 @@ PygWidgetsButton 是一个抽象类。客户端代码不应
 
 信息。
 
-**234** 第 10 章
+**234** 第十章
 
-![图片 29](index-264_1.png)
+![图片 29](img/index-264_1.png)
 
 （抽象基类）
 
@@ -3570,7 +3570,7 @@ CustomButton 对象工作原理相同。它还使得修复错误更加容易—
 
 *图 10-9：类层次结构*
 
-**236** 第 10 章
+**236** 第十章
 
 在此图中，类 C 继承自类 B，类 B 继承自类 A。
 
@@ -3666,27 +3666,27 @@ CustomButton
 
 类一直向上层次结构。
 
-例如，设想一个层次结构，其中类D是类C的子类，
+例如，设想一个层次结构，其中类 D 是类 C 的子类，
 
-它是B的子类，B是A的子类。在类D中，你
+它是 B 的子类，B 是 A 的子类。在类 D 中，你
 
 你可能会遇到根据实例变量值分支的代码，
 
-变得可能，但该变量可能从未在类D的代码中设置过。像这样的情况
+变得可能，但该变量可能从未在类 D 的代码中设置过。像这样的情况
 
-为此，你必须查看类C代码中的实例变量。如果没有
+为此，你必须查看类 C 代码中的实例变量。如果没有
 
-如果在类B的代码中没有找到该实例变量，你必须继续查看类B中的代码，依此类推。
+如果在类 B 的代码中没有找到该实例变量，你必须继续查看类 B 中的代码，依此类推。
 
 在设计类层次结构时，也许避免这种
 
 问题是只调用继承自
 
-层次结构中的上一级代码。在我们的例子中，类D中的代码应该只
+层次结构中的上一级代码。在我们的例子中，类 D 中的代码应该只
 
-调用类C中的方法，而类C只应调用
+调用类 C 中的方法，而类 C 只应调用
 
-在类B中的方法等等。这是*法则*的简化版本。
+在类 B 中的方法等等。这是*法则*的简化版本。
 
 *德墨忒尔*。简单来说，你（指对象）应该只和你的
 
@@ -3696,7 +3696,7 @@ CustomButton
 
 网上有很多相关的参考资料。
 
-另一种方法，我们在[第4章](index_split_001.html#p86)首次讨论过， 是利用*组合*，其中一个对象实例化一个或多个其他
+另一种方法，我们在第四章首次讨论过， 是利用*组合*，其中一个对象实例化一个或多个其他
 
 对象。关键区别在于继承用来建模“是一个”的关系，
 
@@ -3704,13 +3704,13 @@ CustomButton
 
 如果我们想要一个旋转框小部件（一个可编辑的文本数字字段，
 
-向上和向下箭头），我们可以构建一个SpinBox类，实例化
+向上和向下箭头），我们可以构建一个 SpinBox 类，实例化
 
-一个DisplayNumber对象和两个CustomButton对象作为箭头。每个
+一个 DisplayNumber 对象和两个 CustomButton 对象作为箭头。每个
 
 这些对象已经知道如何处理其用户交互。
 
-**238** 第10章
+**238** 第十章
 
 **多重继承**
 
@@ -3718,11 +3718,11 @@ CustomButton
 
 其他一些编程语言）允许一个类继承多个
 
-只有一个类。这被称为*多重继承*。Python的语法对于继承多个类是相当直接的：
+只有一个类。这被称为*多重继承*。Python 的语法对于继承多个类是相当直接的：
 
 类 *SomeClass*( *<BaseClass1>* , *<BaseClass2>* , ...)：然而，需要注意的是，当你继承的基类包含相同
 
-几乎同名的方法和/或实例变量。Python确实有规则
+几乎同名的方法和/或实例变量。Python 确实有规则
 
 （称为*方法解析顺序*，或*MRO*）用来解决这些潜在问题。我认为这是一个高级话题，这里不做详细讨论，但如果
 

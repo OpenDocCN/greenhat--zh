@@ -6,23 +6,23 @@
 
 语音识别
 
-![](Images/chapterart.png)
+![](img/chapterart.png)
 
-在本章中，我们将通过语音与Python互动。我们将首先安装*SpeechRecognition*模块；安装过程可能会让人感到沮丧，因此需要特别注意。然后，你将创建一个脚本，让Python识别你的语音并打印出来，确保语音识别功能在你的计算机上能够顺利运行。
+在本章中，我们将通过语音与 Python 互动。我们将首先安装*SpeechRecognition*模块；安装过程可能会让人感到沮丧，因此需要特别注意。然后，你将创建一个脚本，让 Python 识别你的语音并打印出来，确保语音识别功能在你的计算机上能够顺利运行。
 
 你将使用语音控制完成几个任务，包括语音听写、打开网页浏览器、打开文件和播放计算机上的音乐。你会把所有与语音识别相关的代码放入一个自定义本地模块中，这样最终的脚本简洁易读。
 
-在开始之前，为本章创建文件夹*/mpt/ch03/*。本章所有脚本都可以在本书的资源页面找到，[https://www.nostarch.com/make-python-talk/](https://www.nostarch.com/make-python-talk/)。
+在开始之前，为本章创建文件夹*/mpt/ch03/*。本章所有脚本都可以在本书的资源页面找到，[`www.nostarch.com/make-python-talk/`](https://www.nostarch.com/make-python-talk/)。
 
-## 安装SpeechRecognition模块
+## 安装 SpeechRecognition 模块
 
-安装*SpeechRecognition*模块可能会有些棘手，甚至让人感到沮丧。别慌，我们会讨论如何在Windows、Mac和Linux上安装它。安装*SpeechRecognition*模块比大多数模块多了一步，因为它依赖于*Pyaudio*模块，我们需要手动安装它。*Pyaudio*模块提供了跨平台音频输入/输出库*Portaudio*的绑定。
+安装*SpeechRecognition*模块可能会有些棘手，甚至让人感到沮丧。别慌，我们会讨论如何在 Windows、Mac 和 Linux 上安装它。安装*SpeechRecognition*模块比大多数模块多了一步，因为它依赖于*Pyaudio*模块，我们需要手动安装它。*Pyaudio*模块提供了跨平台音频输入/输出库*Portaudio*的绑定。
 
-你也不能在Anaconda提示符中使用`pip install`安装*Pyaudio*模块。相反，你需要使用`conda install`来安装它。
+你也不能在 Anaconda 提示符中使用`pip install`安装*Pyaudio*模块。相反，你需要使用`conda install`来安装它。
 
-### 在Windows中
+### 在 Windows 中
 
-首先，你需要从第2章激活虚拟环境*chatting*。去你的Anaconda提示符，输入以下命令：
+首先，你需要从第二章激活虚拟环境*chatting*。去你的 Anaconda 提示符，输入以下命令：
 
 ```py
 **conda activate chatting**
@@ -34,17 +34,17 @@
 (chatting) c:\>
 ```
 
-请注意，提示符中的`(chatting)`表示你现在处于虚拟环境*chatting*中。如果命令没有成功，返回到第2章，查看如何创建和激活虚拟环境的完整说明。
+请注意，提示符中的`(chatting)`表示你现在处于虚拟环境*chatting*中。如果命令没有成功，返回到第二章，查看如何创建和激活虚拟环境的完整说明。
 
-接下来，在Anaconda提示符中输入以下命令：
+接下来，在 Anaconda 提示符中输入以下命令：
 
 ```py
 (chatting) c:\> **pip install SpeechRecognition** 
 ```
 
-如果你尝试导入并运行脚本，Spyder会告诉你需要*Pyaudio*模块才能使*SpeechRecognition*模块正常运行。
+如果你尝试导入并运行脚本，Spyder 会告诉你需要*Pyaudio*模块才能使*SpeechRecognition*模块正常运行。
 
-在虚拟环境*chatting*激活的情况下，在你的Anaconda提示符中运行以下命令：
+在虚拟环境*chatting*激活的情况下，在你的 Anaconda 提示符中运行以下命令：
 
 ```py
 (chatting) c:\> **conda install pyaudio** 
@@ -52,7 +52,7 @@
 
 请按照说明完成所有步骤。
 
-### 在Mac或Linux中
+### 在 Mac 或 Linux 中
 
 首先，激活虚拟环境*chatting*。打开终端，输入并执行以下命令：
 
@@ -66,7 +66,7 @@
 **pip install SpeechRecognition** 
 ```
 
-如果你现在尝试导入*SpeechRecognition*并运行脚本，Spyder会告诉你需要*Pyaudio*才能让*SpeechRecognition*正常工作。虚拟环境*chatting*激活后，在终端中运行以下命令：
+如果你现在尝试导入*SpeechRecognition*并运行脚本，Spyder 会告诉你需要*Pyaudio*才能让*SpeechRecognition*正常工作。虚拟环境*chatting*激活后，在终端中运行以下命令：
 
 ```py
 **conda install pyaudio** 
@@ -74,11 +74,11 @@
 
 请按照说明完成所有步骤。
 
-## 测试并微调SpeechRecognition
+## 测试并微调 SpeechRecognition
 
-接下来，我们将测试并微调*SpeechRecognition*模块，以便Python能够接受你的语音命令。
+接下来，我们将测试并微调*SpeechRecognition*模块，以便 Python 能够接受你的语音命令。
 
-### 导入SpeechRecognition
+### 导入 SpeechRecognition
 
 要在你的 Python 脚本中导入*SpeechRecognition*，请使用以下命令：
 
@@ -92,7 +92,7 @@
 
 ### 测试 SpeechRecognition
 
-接下来，我们来测试硬件和软件。将[Listing 3-1](#listing3-1)输入到你的 Spyder 编辑器中，并将其保存为*sr.py*，或者你也可以从书籍的资源中下载该文件。
+接下来，我们来测试硬件和软件。将 Listing 3-1 输入到你的 Spyder 编辑器中，并将其保存为*sr.py*，或者你也可以从书籍的资源中下载该文件。
 
 ```py
 import speech_recognition as sr
@@ -132,7 +132,7 @@ You just said **how are you**.
 
 如果不使用`try`和`except`，脚本会崩溃，你需要重新启动脚本。通过使用异常处理结构，脚本会继续运行而不会崩溃。我提到的这些错误并没有足够严重到需要处理，所以我们的脚本会允许这些错误通过。
 
-[列表 3-2](#listing3-2)，*stand_by.py*，使用了一个无限循环，首先进入待命状态，然后反复接收语音输入并打印出来。这样，我们就不必每次都重新运行脚本才能让脚本接收我们的语音输入。
+列表 3-2，*stand_by.py*，使用了一个无限循环，首先进入待命状态，然后反复接收语音输入并打印出来。这样，我们就不必每次都重新运行脚本才能让脚本接收我们的语音输入。
 
 ```py
 import speech_recognition as sr
@@ -190,26 +190,26 @@ Goodbye!
 
 ### 使用 webbrowser 模块
 
-*webbrowser*模块为你提供了使用计算机默认浏览器打开网站的工具。该模块属于Python标准库，因此无需安装。
+*webbrowser*模块为你提供了使用计算机默认浏览器打开网站的工具。该模块属于 Python 标准库，因此无需安装。
 
-要在你的计算机上测试*webbrowser*模块，请在Spyder编辑器中输入以下代码行并运行：
+要在你的计算机上测试*webbrowser*模块，请在 Spyder 编辑器中输入以下代码行并运行：
 
 ```py
 **import webbrowser**
 **webbrowser.open("http://"+"wsj.com")**
 ```
 
-我们在`open()`函数内部使用`"http://"+`，这样你只需要输入网站地址的主体部分，而不必输入完整的URL。这是为了为下一部分的语音激活做准备。如果使用*https://*代替*http://*或在完整URL中包含*www*，网页浏览器会自动纠正URL。
+我们在`open()`函数内部使用`"http://"+`，这样你只需要输入网站地址的主体部分，而不必输入完整的 URL。这是为了为下一部分的语音激活做准备。如果使用*https://*代替*http://*或在完整 URL 中包含*www*，网页浏览器会自动纠正 URL。
 
-一个新的网页浏览器窗口应该会在*华尔街日报*网站上打开。Microsoft Edge是我计算机上的默认浏览器，结果如[图 3-1](#figure3-1)所示。
+一个新的网页浏览器窗口应该会在*华尔街日报*网站上打开。Microsoft Edge 是我计算机上的默认浏览器，结果如图 3-1 所示。
 
-![f03001](Images/f03001.png)
+![f03001](img/f03001.png)
 
 图 3-1：使用`webbrowser.open("http://"+"wsj.com")`命令的结果
 
 ### 添加语音控制
 
-现在我们将添加语音识别功能。将[清单 3-3](#listing3-3)保存为*voice_browse.py*。
+现在我们将添加语音识别功能。将清单 3-3 保存为*voice_browse.py*。
 
 ```py
 import webbrowser
@@ -245,9 +245,9 @@ speech = sr.Recognizer()
 
 清单 3-3：*voice_browse.py*代码
 
-我们导入了该脚本所需的两个模块：*webbrowser*和*SpeechRecognition*。在1处，我们定义了`voice_to_text()`函数，该函数包含了*stand_by.py*中的大部分步骤：它以空字符串`voice_input`开始，将麦克风的音频转换为文本，并将其放入`voice_input`中。它还对`UnknownValueError`、`RequestError`和`WaitTimeoutError`进行异常处理。一旦调用，该函数将返回保存在`voice_input`中的值。
+我们导入了该脚本所需的两个模块：*webbrowser*和*SpeechRecognition*。在 1 处，我们定义了`voice_to_text()`函数，该函数包含了*stand_by.py*中的大部分步骤：它以空字符串`voice_input`开始，将麦克风的音频转换为文本，并将其放入`voice_input`中。它还对`UnknownValueError`、`RequestError`和`WaitTimeoutError`进行异常处理。一旦调用，该函数将返回保存在`voice_input`中的值。
 
-脚本启动一个无限循环，持续接收语音输入2。在每次迭代时，它会打印`Python is listening...`，以便你知道它已准备好。
+脚本启动一个无限循环，持续接收语音输入 2。在每次迭代时，它会打印`Python is listening...`，以便你知道它已准备好。
 
 我们调用`voice_to_text()`来捕获你的语音输入，并将转换后的文本保存在`inp`中。请注意，我故意为局部变量`voice_input`和全局变量`inp`使用不同的变量名，以避免混淆。
 
@@ -265,17 +265,17 @@ You just said **stop listening**.
 Goodbye!
 ```
 
-相关的网页浏览器弹出窗口如[图 3-2](#figure3-2)所示。
+相关的网页浏览器弹出窗口如图 3-2 所示。
 
-![f03002](Images/f03002.png)
+![f03002](img/f03002.png)
 
 图 3-2：*voice_browse.py*的一个示例输出
 
-你使用*browser*而不是*browse*来确保脚本能够理解你的命令：如果你对着麦克风说“Browse”，Python可能会将其转换为`brows`。你可能会遇到一些需要微调的情况。由于每个人的声音、麦克风和发音（口音、语调、重音等）不同，你的调整可能与我的不同。
+你使用*browser*而不是*browse*来确保脚本能够理解你的命令：如果你对着麦克风说“Browse”，Python 可能会将其转换为`brows`。你可能会遇到一些需要微调的情况。由于每个人的声音、麦克风和发音（口音、语调、重音等）不同，你的调整可能与我的不同。
 
-### 执行Google搜索
+### 执行 Google 搜索
 
-接下来，我们将修改*voice_browse.py*，使你能够通过语音激活Google搜索。你只需要修改*voice_browse.py*中的这一行代码：
+接下来，我们将修改*voice_browse.py*，使你能够通过语音激活 Google 搜索。你只需要修改*voice_browse.py*中的这一行代码：
 
 ```py
  webbrowser.open("http://"+inp)
@@ -289,27 +289,27 @@ Goodbye!
 
 然后将修改后的脚本保存为*voice_search.py*。（你也可以从本书的资源页面下载它。）
 
-这里我们利用了Google搜索时会将搜索词附加在*http://google.com/search?q=*后面，并作为地址栏中的URL。例如，当你在Google中搜索`how many liters are in a gallon`时，得到的结果与输入URL *http://google.com/search?q=how many liters are in a gallon*相同。
+这里我们利用了 Google 搜索时会将搜索词附加在*http://google.com/search?q=*后面，并作为地址栏中的 URL。例如，当你在 Google 中搜索`how many liters are in a gallon`时，得到的结果与输入 URL *http://google.com/search?q=how many liters are in a gallon*相同。
 
-在Spyder编辑器中运行*voice_search.py*。对着麦克风提问，比如“Browser yards in a mile”。脚本应打开默认浏览器，执行`yards in a mile`的Google搜索，并显示与[图3-3](#figure3-3)类似的结果。
+在 Spyder 编辑器中运行*voice_search.py*。对着麦克风提问，比如“Browser yards in a mile”。脚本应打开默认浏览器，执行`yards in a mile`的 Google 搜索，并显示与图 3-3 类似的结果。
 
-![f03003](Images/f03003.png)
+![f03003](img/f03003.png)
 
-图3-3：当你说“browser yards in a mile”时的结果
+图 3-3：当你说“browser yards in a mile”时的结果
 
-你还可以以任何使用Google的方式使用该脚本，例如作为语音控制的词典。如果你想知道单词*diligence*的准确定义，可以说：“Browser define diligence。”
+你还可以以任何使用 Google 的方式使用该脚本，例如作为语音控制的词典。如果你想知道单词*diligence*的准确定义，可以说：“Browser define diligence。”
 
 ## 打开文件
 
-利用Python脚本中的语音识别功能，你可以通过语音控制完成许多操作。我们将编写一个脚本来打开各种类型的文件，包括文本文件、PDF文件和音乐文件。
+利用 Python 脚本中的语音识别功能，你可以通过语音控制完成许多操作。我们将编写一个脚本来打开各种类型的文件，包括文本文件、PDF 文件和音乐文件。
 
-### 使用os和pathlib模块访问和打开文件
+### 使用 os 和 pathlib 模块访问和打开文件
 
-你可以使用*os*和*pathlib*模块访问计算机上的文件和文件夹。*os*模块用于访问操作系统的功能，比如*进入文件夹*、*打开文件*等等。然而，这些命令在不同操作系统上有所不同。例如，在Windows中打开文件的命令是`explorer`，在Mac中是`open`，在Linux中是`xdg-open`。
+你可以使用*os*和*pathlib*模块访问计算机上的文件和文件夹。*os*模块用于访问操作系统的功能，比如*进入文件夹*、*打开文件*等等。然而，这些命令在不同操作系统上有所不同。例如，在 Windows 中打开文件的命令是`explorer`，在 Mac 中是`open`，在 Linux 中是`xdg-open`。
 
-为了让你的脚本在跨平台上更具便携性，我们将使用*platform*模块，它允许脚本自动识别你的操作系统，并选择适合的命令。*pathlib*模块可以让你找到文件路径并指定文件或文件夹路径。幸运的是，*pathlib*是跨平台的，所以你不必担心正斜杠或反斜杠的问题。这三个模块——*os*、*pathlib*和*platform*——都在Python标准库中，因此无需额外安装。
+为了让你的脚本在跨平台上更具便携性，我们将使用*platform*模块，它允许脚本自动识别你的操作系统，并选择适合的命令。*pathlib*模块可以让你找到文件路径并指定文件或文件夹路径。幸运的是，*pathlib*是跨平台的，所以你不必担心正斜杠或反斜杠的问题。这三个模块——*os*、*pathlib*和*platform*——都在 Python 标准库中，因此无需额外安装。
 
-在你的章节文件夹中，创建一个名为*files*的子文件夹，并将一个名为*example.txt*的文件保存在其中。然后，在Spyder编辑器中输入[Listing 3-4](#listing3-4)，并将其保存为*os_platform.py*。
+在你的章节文件夹中，创建一个名为*files*的子文件夹，并将一个名为*example.txt*的文件保存在其中。然后，在 Spyder 编辑器中输入 Listing 3-4，并将其保存为*os_platform.py*。
 
 ```py
 import os
@@ -334,9 +334,9 @@ Listing 3-4：*os_platform.py*的代码
 
 然后，我们指定要打开的文件的路径和名称。在*pathlib*模块中，我们使用正斜杠表示子文件夹，无论你使用的是哪个操作系统。命令`/'files'`指示脚本进入子文件夹*files*，`/'example.txt'`则表示将*example.txt*文件定义为*myfile*。
 
-*os*模块中的`system()`方法在子shell中执行命令。`explorer`命令会在Windows中打开一个文件夹或文件。然而，如果你使用的是Mac，*os*模块中的`system()`方法会使用`open`命令，在Linux中，命令则是`xdg-open`。因此，脚本会在子文件夹*files*中打开文件*example.txt*。
+*os*模块中的`system()`方法在子 shell 中执行命令。`explorer`命令会在 Windows 中打开一个文件夹或文件。然而，如果你使用的是 Mac，*os*模块中的`system()`方法会使用`open`命令，在 Linux 中，命令则是`xdg-open`。因此，脚本会在子文件夹*files*中打开文件*example.txt*。
 
-例如，假设你使用的是Windows，并将脚本保存在章节文件夹*C:\chat\mpt\ch03*中。运行脚本后，你将在IPython控制台中看到以下输出：
+例如，假设你使用的是 Windows，并将脚本保存在章节文件夹*C:\chat\mpt\ch03*中。运行脚本后，你将在 IPython 控制台中看到以下输出：
 
 ```py
 C:\chat\mpt\ch03
@@ -347,9 +347,9 @@ C:\chat\mpt\ch03\files\example.txt
 
 ### 通过语音控制打开文件
 
-现在，我们将演示如何打开各种文件类型，如MP3、Microsoft Word、PowerPoint和Excel文件，以及PDF文件。在运行以下脚本之前，请在你刚刚创建的章节文件夹中的*files*子文件夹中保存一个MP3文件、一个Word文件、一个PowerPoint文件、一个Excel文件和一个PDF文件。将这五个文件分别命名为*presentation.mp3*、*lessons.docx*、*graduation.pptx*、*book.xlsx*和*desk.pdf*。文件最好不要太大。
+现在，我们将演示如何打开各种文件类型，如 MP3、Microsoft Word、PowerPoint 和 Excel 文件，以及 PDF 文件。在运行以下脚本之前，请在你刚刚创建的章节文件夹中的*files*子文件夹中保存一个 MP3 文件、一个 Word 文件、一个 PowerPoint 文件、一个 Excel 文件和一个 PDF 文件。将这五个文件分别命名为*presentation.mp3*、*lessons.docx*、*graduation.pptx*、*book.xlsx*和*desk.pdf*。文件最好不要太大。
 
-[列表 3-5](#listing3-5)显示了*voice_open_file.py*，该脚本也可以从书本的资源页面下载。
+列表 3-5 显示了*voice_open_file.py*，该脚本也可以从书本的资源页面下载。
 
 ```py
 import os
@@ -418,11 +418,11 @@ def open_file(filename):
 
 列表 3-5：*voice_open_file.py*的代码
 
-和*voice_browse.py*一样，我们定义了`voice_to_text()`来将你的语音命令转换为文本。我们还定义了`open_file()`来识别你的操作系统并使用正确的命令，`explorer`、`open`或`xdg-open`，在你的计算机上打开文件。请注意，虽然Windows操作系统使用反斜杠(`\`)进入子文件夹，但Mac和Linux使用正斜杠(`/`)来实现这一目的。
+和*voice_browse.py*一样，我们定义了`voice_to_text()`来将你的语音命令转换为文本。我们还定义了`open_file()`来识别你的操作系统并使用正确的命令，`explorer`、`open`或`xdg-open`，在你的计算机上打开文件。请注意，虽然 Windows 操作系统使用反斜杠(`\`)进入子文件夹，但 Mac 和 Linux 使用正斜杠(`/`)来实现这一目的。
 
 然后，脚本通过使用`while`循环进入待机模式。在循环内，麦克风首先检测到你的声音并将其转换为文本。由于我们在`voice_to_text()`后面使用了`lower()`方法，变量`inp`中的所有字母都会变为小写，以避免因大小写不匹配而出错。
 
-如果你说“停止监听”，脚本会打印`Goodbye!`并停止运行。如果语音命令中包含*open pdf*，第一个`elif`分支将被激活。然后，脚本将用空字符串替换`open pdf`，这样`inp`中就只剩下文件名。脚本会进入子文件夹并打开正确的PDF文件。例如，当你说“打开PDF桌面”时，文件*desk.pdf*将在你的计算机上打开。
+如果你说“停止监听”，脚本会打印`Goodbye!`并停止运行。如果语音命令中包含*open pdf*，第一个`elif`分支将被激活。然后，脚本将用空字符串替换`open pdf`，这样`inp`中就只剩下文件名。脚本会进入子文件夹并打开正确的 PDF 文件。例如，当你说“打开 PDF 桌面”时，文件*desk.pdf*将在你的计算机上打开。
 
 当你说“打开 Word 课件”时，第二个`elif`分支会被激活。对于 Excel 文件和 PowerPoint 文件，同样的原理适用。当你说“打开音频演示”时，音频文件*presentation.mp3*会在你的计算机上播放，使用默认的 MP3 播放器。
 
@@ -454,7 +454,7 @@ Goodbye!
 
 ### 创建本地模块 mysr
 
-在 Spyder 编辑器中输入[列表 3-6](#listing3-6)，并将其保存为*mysr.py*。或者，你可以从本书的资源页面下载它。
+在 Spyder 编辑器中输入列表 3-6，并将其保存为*mysr.py*。或者，你可以从本书的资源页面下载它。
 
 ```py
 # Get rid of ALSA lib error messages in Linux
@@ -523,7 +523,7 @@ ALSA lib pcm_dmix.c:1018:(snd_pcm_dmix_open) unable to open slave
 
 ### 导入 mysr
 
-让我们重新审视*stand_by.py*并修改它以使用*mysr*。将[列表 3-7](#listing3-7)保存为*stand_by1.py*。
+让我们重新审视*stand_by.py*并修改它以使用*mysr*。将列表 3-7 保存为*stand_by1.py*。
 
 ```py
 # Make sure you put mysr.py in the same folder as this script
@@ -562,33 +562,33 @@ while True:
 
 # 4
 
-让Python发声
+让 Python 发声
 
-![](Images/chapterart.png)
+![](img/chapterart.png)
 
-在本章中，你将学习如何让Python用人类的声音回应你。你将首先根据操作系统安装文本转语音模块，然后教Python大声朗读你在电脑上输入的内容。你还将添加你在第三章中学到的语音识别功能，让Python重复你自己的话。最后，你将构建一个实际的应用程序，使用语音输入让Python计算矩形的面积，并用人类的声音告诉你答案。
+在本章中，你将学习如何让 Python 用人类的声音回应你。你将首先根据操作系统安装文本转语音模块，然后教 Python 大声朗读你在电脑上输入的内容。你还将添加你在第三章中学到的语音识别功能，让 Python 重复你自己的话。最后，你将构建一个实际的应用程序，使用语音输入让 Python 计算矩形的面积，并用人类的声音告诉你答案。
 
 为了节省空间，你将所有与文本转语音相关的代码放入自制模块中。完成后，你可以将该模块导入到任何需要文本转语音功能的脚本中。
 
-你还将学习如何让Python大声朗读一篇长的文本文件，例如新闻文章。在开始之前，为本章设置文件夹*/mpt/ch04/*。像之前的章节一样，你可以从[https://www.nostarch.com/make-python-talk/](https://www.nostarch.com/make-python-talk/)下载所有脚本的代码。
+你还将学习如何让 Python 大声朗读一篇长的文本文件，例如新闻文章。在开始之前，为本章设置文件夹*/mpt/ch04/*。像之前的章节一样，你可以从[`www.nostarch.com/make-python-talk/`](https://www.nostarch.com/make-python-talk/)下载所有脚本的代码。
 
 ## 安装文本转语音模块
 
-Python有两个常用的文本转语音模块：*pyttsx3*和*gTTS*。如果你使用Windows，你将安装*pyttsx3*并在本书中始终使用它。在Windows操作系统中，*pyttsx3*模块是离线工作的，语音听起来像人类，并且可以调整语音属性——即语音输出的速度、音量和性别。
+Python 有两个常用的文本转语音模块：*pyttsx3*和*gTTS*。如果你使用 Windows，你将安装*pyttsx3*并在本书中始终使用它。在 Windows 操作系统中，*pyttsx3*模块是离线工作的，语音听起来像人类，并且可以调整语音属性——即语音输出的速度、音量和性别。
 
-然而，*pyttsx3*模块在Mac和Linux上的工作方式不同。语音听起来很机械，而且语音属性不容易调整。因此，如果你使用Mac或Linux，需安装*gTTS*。*gTTS*模块需要互联网连接，因为它使用了Google翻译的文本转语音API。此外，*gTTS*不会直接播放声音，而是将语音保存为音频文件或类似文件的对象。你需要使用自己的音频播放器来播放语音。*gTTS*生成的语音非常像人类的声音。
+然而，*pyttsx3*模块在 Mac 和 Linux 上的工作方式不同。语音听起来很机械，而且语音属性不容易调整。因此，如果你使用 Mac 或 Linux，需安装*gTTS*。*gTTS*模块需要互联网连接，因为它使用了 Google 翻译的文本转语音 API。此外，*gTTS*不会直接播放声音，而是将语音保存为音频文件或类似文件的对象。你需要使用自己的音频播放器来播放语音。*gTTS*生成的语音非常像人类的声音。
 
 在第二章中，你创建了一个名为*chatting*的虚拟环境，并在第三章中使用它进行语音识别。你将在同一个虚拟环境中安装*pyttsx3*或*gTTS*模块，这样你的脚本就既能进行语音识别，又能实现文本转语音功能。
 
 ### 设置
 
-如果你使用的是Windows，请前往“在Windows中安装*pyttsx3*”部分，并跳过“在Mac或Linux中安装*gTTS*”部分。否则，请跳过“在Windows中安装*pyttsx3*”部分，转到“在Mac或Linux中安装*gTTS*”部分。
+如果你使用的是 Windows，请前往“在 Windows 中安装*pyttsx3*”部分，并跳过“在 Mac 或 Linux 中安装*gTTS*”部分。否则，请跳过“在 Windows 中安装*pyttsx3*”部分，转到“在 Mac 或 Linux 中安装*gTTS*”部分。
 
-#### 在Windows中安装pyttsx3
+#### 在 Windows 中安装 pyttsx3
 
-*pyttsx3*模块不在Python标准库中，因此你需要通过pip安装它。
+*pyttsx3*模块不在 Python 标准库中，因此你需要通过 pip 安装它。
 
-如果你还没有设置*聊天*虚拟环境，请返回第2章并按照指示进行设置。然后在Anaconda提示符中通过执行以下命令激活*聊天*虚拟环境：
+如果你还没有设置*聊天*虚拟环境，请返回第二章并按照指示进行设置。然后在 Anaconda 提示符中通过执行以下命令激活*聊天*虚拟环境：
 
 ```py
 conda activate chatting
@@ -602,11 +602,11 @@ pip install pyttsx3
 
 按照屏幕上的指示完成安装。
 
-#### 在Mac或Linux中安装gTTS
+#### 在 Mac 或 Linux 中安装 gTTS
 
-*gTTS*模块不在Python标准库中，因此你需要通过pip安装它。
+*gTTS*模块不在 Python 标准库中，因此你需要通过 pip 安装它。
 
-如果你还没有设置*聊天*虚拟环境，请返回第2章并按照指示进行设置。然后在终端中通过执行以下命令激活*聊天*虚拟环境：
+如果你还没有设置*聊天*虚拟环境，请返回第二章并按照指示进行设置。然后在终端中通过执行以下命令激活*聊天*虚拟环境：
 
 ```py
 conda activate chatting
@@ -624,9 +624,9 @@ pip install gTTs
 
 在开始之前，你需要检查你的文本转语音模块是否正确安装并正常工作。根据你的操作系统，跳过不适用的部分。
 
-#### 在Windows中运行示例脚本
+#### 在 Windows 中运行示例脚本
 
-激活虚拟环境并打开Spyder后，将脚本*test_pyttsx3.py*复制到编辑器中，并将其保存在你的章节文件夹中。如果你愿意，也可以通过[https://www.nostarch.com/make-python-talk/](https://www.nostarch.com/make-python-talk/)从书籍资源下载该文件。
+激活虚拟环境并打开 Spyder 后，将脚本*test_pyttsx3.py*复制到编辑器中，并将其保存在你的章节文件夹中。如果你愿意，也可以通过[`www.nostarch.com/make-python-talk/`](https://www.nostarch.com/make-python-talk/)从书籍资源下载该文件。
 
 ```py
 import pyttsx3
@@ -637,21 +637,21 @@ engine.runAndWait()
 
 首先，将*pyttsx3*模块导入脚本。然后使用`init()`启动一个文本转语音引擎，并将其命名为`engine`。*pyttsx3*模块中的`say()`函数将文本转换为语音信号，并准备将其发送到扬声器。接下来，`runAndWait()`函数将实际的语音信号发送到扬声器，这样你就能听到声音。`runAndWait()`函数还会保持引擎运行，以便在脚本的后续部分需要将文本转换为语音时，无需重新启动引擎。
 
-为了理解每一行代码的功能，使用F9键逐行运行*test_pyttsx3.py*。
+为了理解每一行代码的功能，使用 F9 键逐行运行*test_pyttsx3.py*。
 
 如果模块正确安装，运行完整个脚本后，你应该听到一个声音说：“Hello, how are you？”如果没有，请重新检查指示并确保电脑扬声器工作正常且音量合适。本章稍后将讨论如何自定义与*pyttsx3*模块相关的语速、音量和语音性别。
 
-#### 在Mac或Linux中运行示例脚本
+#### 在 Mac 或 Linux 中运行示例脚本
 
-你将使用gtts-cli工具（*cli*代表*命令行*）将文本转换为语音，而不是先将文本转换为音频文件再播放。gtts-cli工具比另一种方法更快。一旦安装了*gTTS*模块，gtts-cli工具将在你的虚拟环境中的命令行中可用。gtts-cli工具将文本转换为类似文件的对象，你需要选择一个音频播放器来播放它。我发现mpg123播放器效果很好。
+你将使用 gtts-cli 工具（*cli*代表*命令行*）将文本转换为语音，而不是先将文本转换为音频文件再播放。gtts-cli 工具比另一种方法更快。一旦安装了*gTTS*模块，gtts-cli 工具将在你的虚拟环境中的命令行中可用。gtts-cli 工具将文本转换为类似文件的对象，你需要选择一个音频播放器来播放它。我发现 mpg123 播放器效果很好。
 
-首先，你需要在电脑上安装mpg123播放器。如果你使用的是Mac，请在终端运行以下命令：
+首先，你需要在电脑上安装 mpg123 播放器。如果你使用的是 Mac，请在终端运行以下命令：
 
 ```py
 brew install mpg123
 ```
 
-如果你使用的是Linux，请在终端运行以下两个命令：
+如果你使用的是 Linux，请在终端运行以下两个命令：
 
 ```py
 sudo apt-get update
@@ -668,9 +668,9 @@ gtts-cli --nocheck "hello, how are you?" | mpg123 -q -
 
 此命令中的`nocheck`选项是为了加速执行。`q`标志指示该模块即使在交互模式下也不显示版权和版本信息。确保你没有遗漏命令末尾的连字符。
 
-接下来，你将使用Python中的*os*模块在子shell中执行命令。
+接下来，你将使用 Python 中的*os*模块在子 shell 中执行命令。
 
-将*test_gtts.py*脚本复制到你的Spyder编辑器中，并保存在章节文件夹里。该脚本也可以通过[https://www.nostarch.com/make-python-talk/](https://www.nostarch.com/make-python-talk/)在本书的资源中获取。
+将*test_gtts.py*脚本复制到你的 Spyder 编辑器中，并保存在章节文件夹里。该脚本也可以通过[`www.nostarch.com/make-python-talk/`](https://www.nostarch.com/make-python-talk/)在本书的资源中获取。
 
 ```py
 import os
@@ -678,13 +678,13 @@ import os
 os.system('gtts-cli --nocheck "hello, how are you?" | mpg123 -q -')
 ```
 
-首先将*os*模块导入到脚本中。然后使用`system()`在子shell中执行命令，以达到与在终端中运行命令相同的效果。因此，gtts-cli工具被用来将文本转换为类似文件的对象。之后，mpg123播放器播放该声音对象，这样你就可以听到人声。
+首先将*os*模块导入到脚本中。然后使用`system()`在子 shell 中执行命令，以达到与在终端中运行命令相同的效果。因此，gtts-cli 工具被用来将文本转换为类似文件的对象。之后，mpg123 播放器播放该声音对象，这样你就可以听到人声。
 
 如果你做对了，你应该能听到一个声音说：“你好，你好吗？”
 
-#### 在Windows中将文本转换为语音
+#### 在 Windows 中将文本转换为语音
 
-现在让我们练习将输入的文本转换成Windows中的人声。在你的虚拟环境已激活并且Spyder已打开的情况下，将[Listing 4-1](#listing4-1)中显示的*tts_windows.py*脚本复制到编辑器中，保存并运行它。
+现在让我们练习将输入的文本转换成 Windows 中的人声。在你的虚拟环境已激活并且 Spyder 已打开的情况下，将 Listing 4-1 中显示的*tts_windows.py*脚本复制到编辑器中，保存并运行它。
 
 ```py
 import pyttsx3
@@ -704,9 +704,9 @@ engine = pyttsx3.init()
         continue
 ```
 
-Listing 4-1：在Windows中将文本转换为语音
+Listing 4-1：在 Windows 中将文本转换为语音
 
-在导入*pyttsx3*模块并初始化文本转语音引擎后，开始一个无限循环来接受用户的文本输入。在每次迭代中，脚本会在IPython控制台中请求文本输入。如果你想停止脚本，请输入`done`，然后脚本会用人声打印并说：“你刚刚输入了done；再见！”之后，循环停止，脚本退出运行。
+在导入*pyttsx3*模块并初始化文本转语音引擎后，开始一个无限循环来接受用户的文本输入。在每次迭代中，脚本会在 IPython 控制台中请求文本输入。如果你想停止脚本，请输入`done`，然后脚本会用人声打印并说：“你刚刚输入了 done；再见！”之后，循环停止，脚本退出运行。
 
 如果文本输入不是`done`，`else`分支会执行 2，脚本会用人类的声音大声说出你的文本输入。之后，脚本会进入下一次迭代，再次接受你的文本输入。
 
@@ -728,7 +728,7 @@ You just typed in done; goodbye!
 
 #### 在 Mac 或 Linux 上将文本转换为语音
 
-现在我们将练习将书面文本输入转换为人类声音，在 Mac 或 Linux 上。激活你的虚拟环境并打开 Spyder后，将脚本*tts_mac_linux.py*（[清单 4-2](#listing4-2)）复制到编辑器中，然后保存并运行。
+现在我们将练习将书面文本输入转换为人类声音，在 Mac 或 Linux 上。激活你的虚拟环境并打开 Spyder 后，将脚本*tts_mac_linux.py*（清单 4-2）复制到编辑器中，然后保存并运行。
 
 ```py
 import os
@@ -747,7 +747,7 @@ while True: 1
 
 清单 4-2：在 Mac 和 Linux 上将文本转换为语音
 
-在导入*os*模块后，你可以在子shell中运行命令，开始一个无限循环来接收用户的文本输入 1。在每次迭代中，脚本会在 IPython 控制台上请求文本输入。如果你想停止脚本，输入`done`，脚本会打印并用人类的声音说：“你刚输入了done；再见！”之后，循环停止，脚本退出运行。
+在导入*os*模块后，你可以在子 shell 中运行命令，开始一个无限循环来接收用户的文本输入 1。在每次迭代中，脚本会在 IPython 控制台上请求文本输入。如果你想停止脚本，输入`done`，脚本会打印并用人类的声音说：“你刚输入了 done；再见！”之后，循环停止，脚本退出运行。
 
 如果文本输入不是`done`，`else`分支会执行 2，脚本会用人类的声音大声说出你的文本输入。之后，脚本会进入下一次迭代，再次接受你的文本输入。
 
@@ -773,7 +773,7 @@ You just typed in done; goodbye!
 
 我们还将使脚本具有跨平台可移植性。如果你使用的是 Windows，脚本会自动选择*pyttsx3*模块；如果不是，则选择*gTTS*模块。
 
-开始一个新的脚本，命名为*repeat_me.py*，并输入[清单 4-3](#listing4-3)中的代码。确保将其保存在你的章节文件夹中。你还需要将第 3 章中的*mysr.py*文件复制到同一文件夹中，因为你将需要从该脚本中调用`voice_to_text()`。
+开始一个新的脚本，命名为*repeat_me.py*，并输入清单 4-3 中的代码。确保将其保存在你的章节文件夹中。你还需要将第三章中的*mysr.py*文件复制到同一文件夹中，因为你将需要从该脚本中调用`voice_to_text()`。
 
 ```py
 # Make sure you put mysr.py in the same folder as this script
@@ -810,11 +810,11 @@ while True:
 
 清单 4-3：大声重复
 
-首先，从*mysr*模块导入`voice_to_text()`函数，将语音命令转换为字符串变量。然后，导入*platform*模块，让脚本自动识别你的操作系统，并为你选择合适的命令 1。如果你使用的是 Windows，脚本会导入*pyttsx3*模块并启动文本转语音引擎。否则，脚本会导入*os*模块，以便你在子shell中使用gtts-cli工具。
+首先，从*mysr*模块导入`voice_to_text()`函数，将语音命令转换为字符串变量。然后，导入*platform*模块，让脚本自动识别你的操作系统，并为你选择合适的命令 1。如果你使用的是 Windows，脚本会导入*pyttsx3*模块并启动文本转语音引擎。否则，脚本会导入*os*模块，以便你在子 shell 中使用 gtts-cli 工具。
 
-然后，你开始一个无限循环以接收语音输入。脚本将你的语音命令转换为一个名为`inp` 2的字符串变量。如果你对着麦克风说“Stop listening”，脚本将大声说，“你刚才说的是停止监听；再见！”然后脚本停止。该脚本根据你的操作系统使用*pyttsx3*模块或gtts-cli工具。
+然后，你开始一个无限循环以接收语音输入。脚本将你的语音命令转换为一个名为`inp` 2 的字符串变量。如果你对着麦克风说“Stop listening”，脚本将大声说，“你刚才说的是停止监听；再见！”然后脚本停止。该脚本根据你的操作系统使用*pyttsx3*模块或 gtts-cli 工具。
 
-如果你对着麦克风说任何其他话，循环将继续运行。在每次迭代中，脚本将重复你所说的话3。
+如果你对着麦克风说任何其他话，循环将继续运行。在每次迭代中，脚本将重复你所说的话 3。
 
 以下是我依次对着麦克风说“Hello”、“How are you”和“Stop listening”后脚本的输出：
 
@@ -829,15 +829,15 @@ You just said **stop listening**; goodbye!
 
 ## 自定义语音
 
-在本节中，你将学习如何自定义你的文本到语音模块所产生的语音。你可以调整语速、音量以及在Windows中*pyttsx3*模块的语音身份。如果你使用的是Mac或Linux，唯一可以自定义的就是*pyttsx3*模块中语音的语速。
+在本节中，你将学习如何自定义你的文本到语音模块所产生的语音。你可以调整语速、音量以及在 Windows 中*pyttsx3*模块的语音身份。如果你使用的是 Mac 或 Linux，唯一可以自定义的就是*pyttsx3*模块中语音的语速。
 
 跳过任何不适用于你操作系统的以下小节。
 
-### 在Windows中检索*pyttsx3*模块的默认设置
+### 在 Windows 中检索*pyttsx3*模块的默认设置
 
 首先，你需要查看*pyttsx3*模块中语速、音量和语音身份的默认参数值。
 
-这个脚本将检索你的语音模块的默认设置。在Spyder中，输入[Listing 4-4](#listing4-4)中的代码并将其保存为*pyttsx3_property.py*，并保存在章节文件夹中。
+这个脚本将检索你的语音模块的默认设置。在 Spyder 中，输入 Listing 4-4 中的代码并将其保存为*pyttsx3_property.py*，并保存在章节文件夹中。
 
 ```py
 import pyttsx3
@@ -854,11 +854,11 @@ print("the default volume of the speech is", vol)
 
 Listing 4-4：检索默认设置
 
-在第1步，你使用`getProperty()`获取引擎中使用的语音的属性。然后，你遍历`voices`列表中的所有语音对象，并打印出每个语音对象。
+在第 1 步，你使用`getProperty()`获取引擎中使用的语音的属性。然后，你遍历`voices`列表中的所有语音对象，并打印出每个语音对象。
 
-你使用`getProperty()` 2获取语速的属性并打印出默认语速，然后对默认音量做同样的操作。
+你使用`getProperty()` 2 获取语速的属性并打印出默认语速，然后对默认音量做同样的操作。
 
-如果你在Windows中运行这个脚本，你将看到类似以下的语音脚本默认设置输出：
+如果你在 Windows 中运行这个脚本，你将看到类似以下的语音脚本默认设置输出：
 
 ```py
 <Voice id=HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_EN-US_DAVID_11.0
@@ -875,13 +875,13 @@ the default speed of the speech is 200
 the default volume of the speech is 1.0
 ```
 
-在这里，你可以看到*pyttsx3*模块中提供的两种语音。第一种语音，名为*David*，具有男性音调；第二种语音，名为*Zira*，具有女性音调。默认的语音是David——因此你在*test_pyttsx3.py*中听到的是男性声音。
+在这里，你可以看到*pyttsx3*模块中提供的两种语音。第一种语音，名为*David*，具有男性音调；第二种语音，名为*Zira*，具有女性音调。默认的语音是 David——因此你在*test_pyttsx3.py*中听到的是男性声音。
 
-默认的语速为每分钟200个单词。默认的音量设置为1。接下来你将学习如何在Windows中调整*pyttsx3*模块的语速、音量和身份。
+默认的语速为每分钟 200 个单词。默认的音量设置为 1。接下来你将学习如何在 Windows 中调整*pyttsx3*模块的语速、音量和身份。
 
-### 在Windows中调整*pyttsx3*模块的语音属性
+### 在 Windows 中调整*pyttsx3*模块的语音属性
 
-这个脚本将改变默认设置，以便你可以听到具有你偏好的语速、音量和身份的语音。将[Listing 4-5](#listing4-5)保存为*pyttsx3_adjust.py*。
+这个脚本将改变默认设置，以便你可以听到具有你偏好的语速、音量和身份的语音。将 Listing 4-5 保存为*pyttsx3_adjust.py*。
 
 ```py
 import pyttsx3
@@ -897,19 +897,19 @@ engine.runAndWait()
 
 Listing 4-5：调整一些设置
 
-选择第二个语音ID，它有一个女性声音。在1的位置，脚本会获取文本到语音引擎中可用的语音对象，并将它们保存在名为`voices`的列表中。通过提供索引`[1]`，选择列表`voices`中的第二个对象，它有一个女性的声音。`setProperty()`函数需要两个参数：要设置的属性和要设置的值。将值设置为`voices[voice_id].id`，以选择Windows中女性语音对象的`id`值，即*HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_EN-US_ZIRA_11.0*。如果你想切换到Windows中的男性语音，可以使用`voices[0].id`。
+选择第二个语音 ID，它有一个女性声音。在 1 的位置，脚本会获取文本到语音引擎中可用的语音对象，并将它们保存在名为`voices`的列表中。通过提供索引`[1]`，选择列表`voices`中的第二个对象，它有一个女性的声音。`setProperty()`函数需要两个参数：要设置的属性和要设置的值。将值设置为`voices[voice_id].id`，以选择 Windows 中女性语音对象的`id`值，即*HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_EN-US_ZIRA_11.0*。如果你想切换到 Windows 中的男性语音，可以使用`voices[0].id`。
 
-接下来，你将语音速度设置为每分钟150个单词。我们大多数人在日常对话中的语速约为每分钟125个单词。对于更快的语速，将`rate`设置为大于125的数值；对于更慢的语速，将其设置为小于125的数值。
+接下来，你将语音速度设置为每分钟 150 个单词。我们大多数人在日常对话中的语速约为每分钟 125 个单词。对于更快的语速，将`rate`设置为大于 125 的数值；对于更慢的语速，将其设置为小于 125 的数值。
 
-然后，音量设置为1.2，比分贝默认值1更大。你可以根据自己的喜好和扬声器，将其设置为大于或小于1的值。
+然后，音量设置为 1.2，比分贝默认值 1 更大。你可以根据自己的喜好和扬声器，将其设置为大于或小于 1 的值。
 
 最后，脚本使用调整后的属性将`'say()'`中的文本转换为语音。尝试多次运行这个脚本，使用不同的参数组合，直到找到最适合你的设置。你可以随时返回此脚本并进行调整。
 
-### 在Mac或Linux中自定义gTTS模块
+### 在 Mac 或 Linux 中自定义 gTTS 模块
 
-你可以根据*gTTS*文档自定义语音的速度，但不能自定义音量或ID；例如，参见[https://buildmedia.readthedocs.org/media/pdf/gtts/latest/gtts.pdf](https://buildmedia.readthedocs.org/media/pdf/gtts/latest/gtts.pdf)。然而，*gTTS*可以将文本转换为大多数世界主要语言的语音，包括西班牙语、法语、德语等，而*pyttsx3*模块无法做到这一点。你将在第16章中使用*gTTS*的这个功能来构建语音翻译器。
+你可以根据*gTTS*文档自定义语音的速度，但不能自定义音量或 ID；例如，参见[`buildmedia.readthedocs.org/media/pdf/gtts/latest/gtts.pdf`](https://buildmedia.readthedocs.org/media/pdf/gtts/latest/gtts.pdf)。然而，*gTTS*可以将文本转换为大多数世界主要语言的语音，包括西班牙语、法语、德语等，而*pyttsx3*模块无法做到这一点。你将在第十六章中使用*gTTS*的这个功能来构建语音翻译器。
 
-这个脚本会将默认的语速改为慢速模式，适用于*gTTS*模块。在Spyder中，输入以下代码并将其保存为* gtts_slow.py*，放入章节文件夹中：
+这个脚本会将默认的语速改为慢速模式，适用于*gTTS*模块。在 Spyder 中，输入以下代码并将其保存为* gtts_slow.py*，放入章节文件夹中：
 
 ```py
 import os
@@ -919,19 +919,19 @@ os.system('gtts-cli --nocheck --slow "hello, how are you?" | mpg123 -q -')
 
 这个脚本与之前创建的*test_gtts.py*脚本相同，不同之处在于它添加了`--slow`选项。这会使语音输出比正常速度更慢。
 
-如果你在Mac或Linux中运行这个脚本，你会听到计算机缓慢地说：“你好，你好吗？”
+如果你在 Mac 或 Linux 中运行这个脚本，你会听到计算机缓慢地说：“你好，你好吗？”
 
 由于默认的速度设置是`slow=False`，而这是我们更倾向的设置，因此我们不会自定义*gTTS*模块。
 
-## 构建本地mysay模块
+## 构建本地 mysay 模块
 
-在第3章中，你将所有与语音识别相关的命令放入一个名为*mysr*的本地模块。在这里你也会做同样的事，将所有与文本到语音相关的命令放入一个本地模块。
+在第三章中，你将所有与语音识别相关的命令放入一个名为*mysr*的本地模块。在这里你也会做同样的事，将所有与文本到语音相关的命令放入一个本地模块。
 
-### 创建mysay
+### 创建 mysay
 
-你将创建一个本地模块*mysay*，并将其保存在与使用文本转语音功能的脚本相同的文件夹中。这样，你可以节省主脚本的空间。该模块已调整了*pyttsx3_adjust.py*中设置的语音速度、音量和性别属性（如果你使用的是Windows）。如果你使用的是Mac或Linux，本地模块*mysay*将使用*gTTS*模块中的默认属性。你可以根据自己的偏好修改这些参数。
+你将创建一个本地模块*mysay*，并将其保存在与使用文本转语音功能的脚本相同的文件夹中。这样，你可以节省主脚本的空间。该模块已调整了*pyttsx3_adjust.py*中设置的语音速度、音量和性别属性（如果你使用的是 Windows）。如果你使用的是 Mac 或 Linux，本地模块*mysay*将使用*gTTS*模块中的默认属性。你可以根据自己的偏好修改这些参数。
 
-输入[列表 4-6](#listing4-6)中的代码，并将其保存为*mysay.py*，放入你的章节文件夹中。
+输入列表 4-6 中的代码，并将其保存为*mysay.py*，放入你的章节文件夹中。
 
 ```py
 # Import the platform module to identify your OS
@@ -968,11 +968,11 @@ import platform
 
 列表 4-6：构建模块
 
-你首先导入平台模块来识别你的操作系统。如果你使用的是Windows 1，*pyttsx3*模块会被导入。你在初始化文本转语音引擎时使用了异常处理2，以便如果遇到`ImportError`或`RuntimeError`，脚本会继续运行而不会崩溃。然后你定义了`print_say()`，该函数打印文本并将文本转换为语音。
+你首先导入平台模块来识别你的操作系统。如果你使用的是 Windows 1，*pyttsx3*模块会被导入。你在初始化文本转语音引擎时使用了异常处理 2，以便如果遇到`ImportError`或`RuntimeError`，脚本会继续运行而不会崩溃。然后你定义了`print_say()`，该函数打印文本并将文本转换为语音。
 
-如果你使用的是Mac或Linux 3，*os*模块被导入以使用gtts-cli工具在子进程中运行命令。然后，你定义了一个不同的`print_say()`函数，该函数打印文本并将文本转为语音。
+如果你使用的是 Mac 或 Linux 3，*os*模块被导入以使用 gtts-cli 工具在子进程中运行命令。然后，你定义了一个不同的`print_say()`函数，该函数打印文本并将文本转为语音。
 
-### 导入mysay
+### 导入 mysay
 
 准备好*mysay*后，你可以直接将该模块导入到你的脚本中，使用文本转语音功能。让我们重新审视脚本*repeat_me.py*并修改它，使用*mysay*模块。将以下内容保存为*repeat_me1.py*：
 
@@ -992,7 +992,7 @@ while True:
         continue
 ```
 
-你首先从*mysay*导入`print_say()`。你还从第3章创建的*mysr*模块导入`voice_to_text()`。你使用`voice_to_text()`将语音命令转换为变量`inp`。当你想要将文本转换为语音时，你使用`print_say()`。
+你首先从*mysay*导入`print_say()`。你还从第三章创建的*mysr*模块导入`voice_to_text()`。你使用`voice_to_text()`将语音命令转换为变量`inp`。当你想要将文本转换为语音时，你使用`print_say()`。
 
 运行脚本并对着麦克风说话进行测试。我依次对着脚本说了“Hello again”，“这个使用的是文本转语音模块”，以及“Stop listening”。以下是输出结果：
 
@@ -1009,7 +1009,7 @@ You just said **stop listening**; goodbye!
 
 你将使用文本转语音和语音解析技巧，构建一个可以通过语音命令控制的计算器。计算器会找到矩形的面积，并用人声告诉你面积。
 
-这个脚本接受你输入的矩形宽度和长度，并语音播报其面积。将[列表 4-7](#listing4-7)保存为*area_hs.py*，放入你的章节文件夹中。
+这个脚本接受你输入的矩形宽度和长度，并语音播报其面积。将列表 4-7 保存为*area_hs.py*，放入你的章节文件夹中。
 
 ```py
 # Put mysr.py and mysay.py in the same folder as this script
@@ -1034,7 +1034,7 @@ print_say(f'The area of the rectangle is {area}.')
 
 列表 4-7：计算矩形的面积
 
-你首先从本地模块导入文本转语音和语音识别函数。脚本会询问你矩形的长度1。对着麦克风说出一个数字，脚本将你的语音输入转换为文本并保存为变量`inp1`。然后脚本会询问你矩形的宽度。当你说出答案时，脚本会将你的语音输入保存在变量`inp2`中。
+你首先从本地模块导入文本转语音和语音识别函数。脚本会询问你矩形的长度 1。对着麦克风说出一个数字，脚本将你的语音输入转换为文本并保存为变量`inp1`。然后脚本会询问你矩形的宽度。当你说出答案时，脚本会将你的语音输入保存在变量`inp2`中。
 
 根据你的输入，脚本通过将语音输入转换为浮动变量并进行相乘来计算矩形的面积。
 
@@ -1048,15 +1048,15 @@ You just said **3.**
 The area of the rectangle is 15.0.
 ```
 
-当我告诉脚本矩形的长度为5，宽度为3时，脚本告诉我面积是15.0。
+当我告诉脚本矩形的长度为 5，宽度为 3 时，脚本告诉我面积是 15.0。
 
 如果你说的不是数字，脚本将无法工作。为了避免脚本意外将你的响应转换为字符串而不是数字类型，最安全的做法是包含小数点（例如，“五点零”）。
 
 ## 大声朗读文件
 
-在这一节中，你将学习如何将文件读取到脚本中，让Python能够大声朗读文本。
+在这一节中，你将学习如何将文件读取到脚本中，让 Python 能够大声朗读文本。
 
-[清单 4-8](#listing4-8)包含了你将使用的简短新闻文章。
+清单 4-8 包含了你将使用的简短新闻文章。
 
 ```py
 Storm Dorian likely to strengthen into hurricane
@@ -1084,7 +1084,7 @@ Lesser Antilles islands could get 6 inches, the NHC said.
 
 直接将这篇文章包含到脚本中显然不太方便，因此将其保存为名为*storm.txt*的文本文件（你可以通过本书的其他资源下载*storm.txt*）。你可以先在章节文件夹中创建一个名为*files*的子文件夹，然后将*storm.txt*保存在子文件夹中。
 
-将[清单 4-9](#listing4-9)保存为*newsfile.py*，让Python大声朗读新闻文章。
+将清单 4-9 保存为*newsfile.py*，让 Python 大声朗读新闻文章。
 
 ```py
 # Put mysay.py in the same folder as this script
@@ -1102,27 +1102,27 @@ print_say(content)
 
 清单 4-9：朗读文本文件
 
-你首先让脚本知道在哪里找到新闻文件1。你使用`open()`从子文件夹*files*访问*storm.txt*。然后，你使用`read()`将文件内容读取到一个名为`content`的字符串变量中。最后，脚本以人类的声音大声朗读文件内容。很简单！
+你首先让脚本知道在哪里找到新闻文件 1。你使用`open()`从子文件夹*files*访问*storm.txt*。然后，你使用`read()`将文件内容读取到一个名为`content`的字符串变量中。最后，脚本以人类的声音大声朗读文件内容。很简单！
 
-如果你将*storm.txt*保存在与前面脚本相同的文件夹中，那么无需指定文件路径。Python将在没有指定路径时自动查找脚本所在的文件夹。
+如果你将*storm.txt*保存在与前面脚本相同的文件夹中，那么无需指定文件路径。Python 将在没有指定路径时自动查找脚本所在的文件夹。
 
 ## 总结
 
-在这一章中，你学习了如何安装文本转语音模块让Python说话。你将关键的文本转语音功能移入了模块*mysay*，以便在脚本中导入。
+在这一章中，你学习了如何安装文本转语音模块让 Python 说话。你将关键的文本转语音功能移入了模块*mysay*，以便在脚本中导入。
 
-你还学习了如何让Python重复你说的话。你将新学到的技能应用到一个实际的应用中：使用语音输入要求Python计算矩形的面积，并以人类声音告诉你答案。
+你还学习了如何让 Python 重复你说的话。你将新学到的技能应用到一个实际的应用中：使用语音输入要求 Python 计算矩形的面积，并以人类声音告诉你答案。
 
-现在你已经知道如何让Python说话和听话了，在第五章中你将学习如何将这两项功能应用到多个有趣的实际应用中。
+现在你已经知道如何让 Python 说话和听话了，在第五章中你将学习如何将这两项功能应用到多个有趣的实际应用中。
 
 ## 章节末练习
 
-1.  如果你使用的是Windows系统，请在*pyttsx3_adjust.py*中按如下方式修改代码：
+1.  如果你使用的是 Windows 系统，请在*pyttsx3_adjust.py*中按如下方式修改代码：
 
     1.  该语音为男性声音。
 
-    1.  语速为每分钟160个单词。
+    1.  语速为每分钟 160 个单词。
 
-    1.  音量是0.8。
+    1.  音量是 0.8。
 
 1.  修改脚本*area_hs.py*，让它在你说出三角形的高度和底边长度时计算三角形的面积。
 
@@ -1130,7 +1130,7 @@ print_say(content)
 
 语音应用
 
-![](Images/chapterart.png)
+![](img/chapterart.png)
 
 现在你已经知道如何让 Python 说话和聆听，我们将创建几个利用这些技能的实际应用。但在此之前，你将创建一个本地包。由于你将在书中剩余的章节中使用 *mysr* 和 *mysay* 本地模块，你将创建一个 Python 包来包含所有本地模块。这样，你就不需要将这些模块复制粘贴到每一章节的文件夹中。这还可以帮助保持全书代码的一致性。在这个过程中，你将学习如何创建一个 Python 包以及它的工作原理。
 
@@ -1140,11 +1140,11 @@ print_say(content)
 
 最后，你将学习如何通过语音遍历文件夹中的文件，目标是构建你自己的 Alexa。你可以对脚本说：“Python，播放 Selena Gomez，”然后一首保存在你计算机中的 Selena Gomez 歌曲将开始播放。
 
-和往常一样，你可以从 [https://www.nostarch.com/make-python-talk/](https://www.nostarch.com/make-python-talk/) 下载所有脚本的代码。在开始之前，为本章节创建文件夹 */mpt/ch05/*。
+和往常一样，你可以从 [`www.nostarch.com/make-python-talk/`](https://www.nostarch.com/make-python-talk/) 下载所有脚本的代码。在开始之前，为本章节创建文件夹 */mpt/ch05/*。
 
 ## 创建你自己的本地 Python 包
 
-在第 3 章中，你创建了一个自定义的本地模块 *mysr* 来包含所有与语音识别相关的代码。每当你需要使用语音识别功能时，就从该模块导入 `voice_to_text()`。类似地，在第 4 章中，你创建了一个自定义的本地模块 *mysay* 来包含所有与语音合成相关的代码。每当你使用语音合成功能时，就从该模块导入 `print_say()`。
+在第三章中，你创建了一个自定义的本地模块 *mysr* 来包含所有与语音识别相关的代码。每当你需要使用语音识别功能时，就从该模块导入 `voice_to_text()`。类似地，在第四章中，你创建了一个自定义的本地模块 *mysay* 来包含所有与语音合成相关的代码。每当你使用语音合成功能时，就从该模块导入 `print_say()`。
 
 在本章以及本书的其他章节中，你将使用这两个自定义的本地模块。为了使这些模块正常工作，你需要将模块文件（即 *mysr.py* 和 *mysay.py*）放在与使用这些模块的脚本相同的目录中。这意味着你可能需要将这些文件复制粘贴到本书几乎每一章的目录中。你可能会想：有没有更高效的方法来实现这一点？
 
@@ -1168,9 +1168,9 @@ Python *模块*是一个具有*.py*扩展名的单个文件。与此不同，Pyt
 
 首先，你需要为包创建一个目录。
 
-在本书中，你为每一章使用一个单独的目录。例如，本章中的所有 Python 脚本和相关文件都放置在目录 */mpt/ch05/* 中。由于你正在创建一个将在本书所有章节中使用的包，你将创建一个与所有章节并列的目录。具体来说，你将使用目录 */mpt/mptpkg/*，其中 *mptpkg* 是包名。[图 5-1](#figure5-1) 解释了包相对于书籍章节的位置。
+在本书中，你为每一章使用一个单独的目录。例如，本章中的所有 Python 脚本和相关文件都放置在目录 */mpt/ch05/* 中。由于你正在创建一个将在本书所有章节中使用的包，你将创建一个与所有章节并列的目录。具体来说，你将使用目录 */mpt/mptpkg/*，其中 *mptpkg* 是包名。图 5-1 解释了包相对于书籍章节的位置。
 
-![f05001](Images/f05001.png)
+![f05001](img/f05001.png)
 
 图 5-1：*mptpkg* 包相对于章节文件夹的位置
 
@@ -1180,7 +1180,7 @@ Python *模块*是一个具有*.py*扩展名的单个文件。与此不同，Pyt
 
 接下来，你需要创建并放置包中所需的文件。
 
-首先，将你在第 3 章和第 4 章创建的两个模块 *mysr.py* 和 *mysay.py* 复制并粘贴到包目录 */mpt/mptpkg/* 中。不要对这两个文件进行任何更改。
+首先，将你在第三章和第四章创建的两个模块 *mysr.py* 和 *mysay.py* 复制并粘贴到包目录 */mpt/mptpkg/* 中。不要对这两个文件进行任何更改。
 
 然后将以下脚本 *__init__.py* 保存在包目录 */mpt/mptpkg/* 中（你也可以从本书资源中下载它）：
 
@@ -1230,7 +1230,7 @@ pip install -e C:\mpt
 pip install -e /home/mark/Desktop/mpt
 ```
 
-`-e`选项告诉Python以可编辑模式安装包，这样你就可以在需要时随时修改该包。
+`-e`选项告诉 Python 以可编辑模式安装包，这样你就可以在需要时随时修改该包。
 
 至此，本地包已安装在你的计算机上。
 
@@ -1238,9 +1238,9 @@ pip install -e /home/mark/Desktop/mpt
 
 现在你已经安装了自己制作的本地包，你将学习如何导入它。
 
-你将编写一个Python脚本来测试你刚刚创建的包。
+你将编写一个 Python 脚本来测试你刚刚创建的包。
 
-让我们回顾一下第4章中的脚本*repeat_me1.py*。在你的Spyder编辑器中输入以下代码行，并将其保存在第5章目录*/mpt/ch05/*下，命名为*repeat_me2.py*：
+让我们回顾一下第四章中的脚本*repeat_me1.py*。在你的 Spyder 编辑器中输入以下代码行，并将其保存在第五章目录*/mpt/ch05/*下，命名为*repeat_me2.py*：
 
 ```py
 # Import functions from the local package mptpkg
@@ -1275,21 +1275,21 @@ you just said **stop listening**; goodbye!
 
 如你所见，脚本正常工作，这意味着你已经成功从本地包中导入了函数。
 
-### 更多关于Python包的内容
+### 更多关于 Python 包的内容
 
-在继续之前，我想提到关于Python包的几点事项。
+在继续之前，我想提到关于 Python 包的几点事项。
 
 首先，你可以向你的包中添加更多模块。在本书的后续章节中，你将向现有的本地包*mptpkg*中添加更多模块。你将使用整个书籍中的唯一本地包。这将减少目录的数量并帮助组织文件。
 
-其次，如果你有一个有趣的包，想要与全世界分享，你可以很容易做到。你只需要添加一些额外的文件，比如许可证、README文件等。关于如何分发你的Python包的教程，请参阅例如Python Packaging Authority网站，[https://packaging.python.org/tutorials/packaging-projects/](https://packaging.python.org/tutorials/packaging-projects/)。
+其次，如果你有一个有趣的包，想要与全世界分享，你可以很容易做到。你只需要添加一些额外的文件，比如许可证、README 文件等。关于如何分发你的 Python 包的教程，请参阅例如 Python Packaging Authority 网站，[`packaging.python.org/tutorials/packaging-projects/`](https://packaging.python.org/tutorials/packaging-projects/)。
 
 ## 互动猜数字游戏
 
 *猜数字*是一个流行的游戏，其中一个玩家写下一个数字，要求另一个玩家在有限的尝试次数内猜出这个数字。每次猜测后，第一个玩家会告诉第二个玩家猜测是否正确，还是太高或太低。
 
-游戏的各种版本可以在网上和书籍中找到，我们将查看我们自己的版本，猜一个1到9之间的数字。启动一个新脚本并将其保存为*guess_hs.py*；*hs*代表*听和说*。
+游戏的各种版本可以在网上和书籍中找到，我们将查看我们自己的版本，猜一个 1 到 9 之间的数字。启动一个新脚本并将其保存为*guess_hs.py*；*hs*代表*听和说*。
 
-因为脚本相对较长，我将把它分成三部分并逐一解释。[列表5-1](#listing5-1)给出了第一部分。
+因为脚本相对较长，我将把它分成三部分并逐一解释。列表 5-1 给出了第一部分。
 
 ```py
 1 import time
@@ -1324,19 +1324,19 @@ print_say("Is it 5?")
 `--snip--`
 ```
 
-列表5-1：猜数字游戏的第一部分
+列表 5-1：猜数字游戏的第一部分
 
 我们通过导入所需的模块来开始脚本。首先，我们导入*time*模块，以便在脚本中暂停一段时间。我们还导入*sys*模块，以便在脚本结束时退出。
 
 如前一节所述，我们从本地包*mptpkg*中导入`voice_to_text()`和`print_say()`，用以将语音转换为文本并打印出来，以及通过语音播报文本信息。
 
-脚本接着会用语音和文本打印出游戏规则2。由于说明内容跨越多行，我们将它们放在三引号中，以使其更易读。
+脚本接着会用语音和文本打印出游戏规则 2。由于说明内容跨越多行，我们将它们放在三引号中，以使其更易读。
 
 脚本宣布你有五秒钟的时间写下一个数字，然后通过使用`sleep()`暂停五秒钟，给你时间写下数字。
 
-脚本然后开始猜测，它会用人声问数字是否是五。在第3步，我们开始一个无限循环来接受你的语音输入。当你对着麦克风说话时，计算机会将你的语音输入转换为一个名为`re1`的文本字符串变量。脚本会把你说的内容重复给你听。你的回应必须是以下三种之一：“太高”，“正确”或“太小”。如果不是，脚本会继续要求你回应，直到它匹配其中一个短语。这给了你一个机会，在脚本继续进行下一步之前，做出正确的回应。
+脚本然后开始猜测，它会用人声问数字是否是五。在第 3 步，我们开始一个无限循环来接受你的语音输入。当你对着麦克风说话时，计算机会将你的语音输入转换为一个名为`re1`的文本字符串变量。脚本会把你说的内容重复给你听。你的回应必须是以下三种之一：“太高”，“正确”或“太小”。如果不是，脚本会继续要求你回应，直到它匹配其中一个短语。这给了你一个机会，在脚本继续进行下一步之前，做出正确的回应。
 
-如果你的回应是“正确”，计算机会说：“耶，真幸运！”然后退出脚本。接下来我们进入“太高”回应的行为。[清单 5-2](#listing5-2)展示了*guess_hs.py*脚本的中间部分。
+如果你的回应是“正确”，计算机会说：“耶，真幸运！”然后退出脚本。接下来我们进入“太高”回应的行为。清单 5-2 展示了*guess_hs.py*脚本的中间部分。
 
 ```py
 `--snip--`
@@ -1387,7 +1387,7 @@ elif re1 == "too high":
 
 接下来，计算机会捕捉你对第三次猜测的回应。如果你的回应是“太小”，计算机会知道数字是二。如果你的回应是“正确”，计算机会说：“耶，真幸运！”然后退出。
 
-现在让我们来看一下*guess_hs.py*的最后一部分，它处理对第一个猜测的“太小”回应。[清单 5-3](#listing5-3)展示了代码。
+现在让我们来看一下*guess_hs.py*的最后一部分，它处理对第一个猜测的“太小”回应。清单 5-3 展示了代码。
 
 ```py
 `--snip--`
@@ -1436,9 +1436,9 @@ elif re1 == "too small":
 
 然后，计算机会捕捉到你对第三次猜测的回应。如果你的回答是“too small”，计算机将知道数字是九。如果你的回答是“that is right”，计算机将说：“耶，我真幸运！”然后退出脚本。
 
-如果你在一个安静的环境中有良好的互联网连接，你就可以和计算机进行接近完美的沟通。互联网连接非常重要，因为我们使用Google Web Speech API将语音输入转换为文本。*SpeechRecognition*模块有一个离线方法叫做`recognize_sphinx()`，但它会出很多错误，所以我们使用在线方法。
+如果你在一个安静的环境中有良好的互联网连接，你就可以和计算机进行接近完美的沟通。互联网连接非常重要，因为我们使用 Google Web Speech API 将语音输入转换为文本。*SpeechRecognition*模块有一个离线方法叫做`recognize_sphinx()`，但它会出很多错误，所以我们使用在线方法。
 
-这是脚本在我的数字是8时的输出（我的语音输入用**粗体**标注）：
+这是脚本在我的数字是 8 时的输出（我的语音输入用**粗体**标注）：
 
 ```py
 Please think of an integer,
@@ -1456,7 +1456,7 @@ You said **that is right**
 Yay, lucky me!
 ```
 
-脚本完美地理解了我说的每一个字。当然，这部分原因是因为我选择了某些词汇来避免歧义。在构建你自己的项目时，你将需要使用独特的语音命令，或者将这些词语放在特定的语境中，以便获得一致且正确的结果。由于每个语音命令通常很短，Python脚本可能会在理解你的语音输入的上下文并返回正确的单词时遇到困难。
+脚本完美地理解了我说的每一个字。当然，这部分原因是因为我选择了某些词汇来避免歧义。在构建你自己的项目时，你将需要使用独特的语音命令，或者将这些词语放在特定的语境中，以便获得一致且正确的结果。由于每个语音命令通常很短，Python 脚本可能会在理解你的语音输入的上下文并返回正确的单词时遇到困难。
 
 例如，如果你对着麦克风说“too large”，脚本可能会返回“two large”，这虽然是一个有意义的短语。因此，我们在*guess_hs.py*中使用“too high”而不是“too large”。
 
@@ -1464,7 +1464,7 @@ Yay, lucky me!
 
 ## 语音播报新闻
 
-在这个项目中，我们将抓取NPR新闻网站，以收集最新的新闻摘要，并让Python将其朗读出来。这个项目分为两个脚本：一个用于抓取和整理新闻，另一个用于处理语音识别和文本转语音功能。我们先从网页抓取开始。
+在这个项目中，我们将抓取 NPR 新闻网站，以收集最新的新闻摘要，并让 Python 将其朗读出来。这个项目分为两个脚本：一个用于抓取和整理新闻，另一个用于处理语音识别和文本转语音功能。我们先从网页抓取开始。
 
 ### 抓取新闻摘要
 
@@ -1472,17 +1472,17 @@ Yay, lucky me!
 
 不同的新闻网站内容排版方式不同，因此抓取的方法通常会有所不同。你可以参考第六章了解网页抓取的基础。如果你有兴趣抓取其他新闻网站，你需要根据该网站的特点调整此代码。我们首先来看一下这个网站和相应的源代码。
 
-我们感兴趣的新闻出现在NPR新闻网站的首页，见[图5-2](#figure5-2)。
+我们感兴趣的新闻出现在 NPR 新闻网站的首页，见图 5-2。
 
 这个页面的一个实用功能是简短的新闻摘要。正如你所看到的，首页列出了最新的新闻，每条新闻都有一个简短的摘要。
 
-你想要提取每篇新闻的标题和简短摘要并打印出来。为此，你需要在HTML程序中定位相应的标签。
+你想要提取每篇新闻的标题和简短摘要并打印出来。为此，你需要在 HTML 程序中定位相应的标签。
 
-![f05002](Images/f05002.png)
+![f05002](img/f05002.png)
 
-图5-2：NPR新闻首页的新闻摘要
+图 5-2：NPR 新闻首页的新闻摘要
 
-在网页上，按下键盘上的ctrl-U。网页的源代码应该会显示出来。你可以看到它有将近2000行长。要找到需要的标签，按下ctrl-F打开右上角的搜索框。由于第一篇新闻文章的标题是`Answering Your Coronavirus Questions`（回答您的冠状病毒问题），如[Figure 5-2](#figure5-2)所示，你应该输入`Answering Your Coronavirus Questions`并点击**Search**。然后跳转到相应的HTML代码，如[Listing 5-4](#listing5-4)所示。
+在网页上，按下键盘上的 ctrl-U。网页的源代码应该会显示出来。你可以看到它有将近 2000 行长。要找到需要的标签，按下 ctrl-F 打开右上角的搜索框。由于第一篇新闻文章的标题是`Answering Your Coronavirus Questions`（回答您的冠状病毒问题），如 Figure 5-2 所示，你应该输入`Answering Your Coronavirus Questions`并点击**Search**。然后跳转到相应的 HTML 代码，如 Listing 5-4 所示。
 
 ```py
 `--snip--`
@@ -1516,13 +1516,13 @@ look at how people are celebrating big life events.
 `--snip--`
 ```
 
-Listing 5-4: NPR新闻首页部分源代码
+Listing 5-4: NPR 新闻首页部分源代码
 
 请注意，所有的标题和摘要信息都被封装在一个父`<div>`标签中，该标签的`class`属性为`item-info`1。新闻标题的信息位于一个子`<h2>`标签中，该标签的`class`属性为`title`2。摘要的信息位于一个子`<p>`标签中，该标签的`class`属性为`teaser`3。
 
-我们将使用这些模式编写一个Python脚本来提取所需的信息。脚本*news.py*将抓取信息并以简洁的方式整理所有标题和摘要。我已经在需要详细解释的地方添加了注释。
+我们将使用这些模式编写一个 Python 脚本来提取所需的信息。脚本*news.py*将抓取信息并以简洁的方式整理所有标题和摘要。我已经在需要详细解释的地方添加了注释。
 
-脚本将编译新闻摘要并以文本形式打印出来。输入[Listing 5-5](#listing5-5)，并将其保存为*news.py*。
+脚本将编译新闻摘要并以文本形式打印出来。输入 Listing 5-5，并将其保存为*news.py*。
 
 ```py
 # Import needed modules
@@ -1554,15 +1554,15 @@ div_tags = soup.find_all('div',class_="item-info")
         break
 ```
 
-Listing 5-5: 抓取NPR新闻首页的Python代码
+Listing 5-5: 抓取 NPR 新闻首页的 Python 代码
 
-我们首先导入需要的模块*bs4*和*requests*（*bs4*是最新版本的Beautiful Soup库）。如果需要，按照第2章中的三步安装这些模块。
+我们首先导入需要的模块*bs4*和*requests*（*bs4*是最新版本的 Beautiful Soup 库）。如果需要，按照第二章中的三步安装这些模块。
 
-在第1步，我们获取NPR新闻首页的源代码，该代码是HTML格式的。然后，我们使用*bs4*模块解析HTML文件。因为我们需要的信息被封装在`class`属性为`item-info`的`<div>`标签中，所以我们找到所有这样的标签并将它们放入名为*div_tags*的列表中。为了区分不同的新闻摘要，我们创建了一个变量*news_index*来标记它们2。
+在第 1 步，我们获取 NPR 新闻首页的源代码，该代码是 HTML 格式的。然后，我们使用*bs4*模块解析 HTML 文件。因为我们需要的信息被封装在`class`属性为`item-info`的`<div>`标签中，所以我们找到所有这样的标签并将它们放入名为*div_tags*的列表中。为了区分不同的新闻摘要，我们创建了一个变量*news_index*来标记它们 2。
 
-然后我们进入每个收集到的单独`<div>`标签3。首先，我们打印出新闻摘要的索引以区分单独的新闻项目。其次，我们提取包含新闻标题的`<h2>`标签并打印出来。接着，我们提取包含新闻摘要的`<p>`标签并打印出来。最后，如果新闻索引超过10，我们就停止，以确保输出的新闻摘要数量不超过10条。
+然后我们进入每个收集到的单独`<div>`标签 3。首先，我们打印出新闻摘要的索引以区分单独的新闻项目。其次，我们提取包含新闻标题的`<h2>`标签并打印出来。接着，我们提取包含新闻摘要的`<p>`标签并打印出来。最后，如果新闻索引超过 10，我们就停止，以确保输出的新闻摘要数量不超过 10 条。
 
-如果运行*news.py*，输出将如下所示：[Listing 5-6](#listing5-6)。
+如果运行*news.py*，输出将如下所示：Listing 5-6。
 
 ```py
 News Summary 1
@@ -1588,13 +1588,13 @@ Vietnam War.
 `--snip--`
 ```
 
-Listing 5-6: 从NPR新闻首页抓取的新闻摘要
+Listing 5-6: 从 NPR 新闻首页抓取的新闻摘要
 
-现在我们让Python给我们读新闻。
+现在我们让 Python 给我们读新闻。
 
 ### 添加文本转语音功能
 
-下一步是让文本转语音模块将新闻摘要转换成语音。将[Listing 5-7](#listing5-7)添加到一个新文件中，并保存为*news_hs.py*。
+下一步是让文本转语音模块将新闻摘要转换成语音。将 Listing 5-7 添加到一个新文件中，并保存为*news_hs.py*。
 
 ```py
 # Import needed modules
@@ -1626,11 +1626,11 @@ else:
     sys.exit
 ```
 
-Listing 5-7: 语音激活新闻播报的Python代码
+Listing 5-7: 语音激活新闻播报的 Python 代码
 
 我们首先导入常用的模块，并从自制的*mptpkg*包中导入`voice_to_text()`和`print_say()`。
 
-接着，我们定义了一个名为`news_teaser()`的函数 1，它完成了*news.py*所做的所有工作。唯一的例外是，它不仅打印新闻索引、标题和摘要，还会同时朗读出来 2。接着，我们设置脚本询问：“你想听NPR新闻摘要吗？”`voice_to_text()`函数捕捉到你的语音响应，并将其转换成一个全小写字母的字符串变量。如果你说“是”，Python将开始播放新闻。如果你说的不是“是”，脚本将退出。
+接着，我们定义了一个名为`news_teaser()`的函数 1，它完成了*news.py*所做的所有工作。唯一的例外是，它不仅打印新闻索引、标题和摘要，还会同时朗读出来 2。接着，我们设置脚本询问：“你想听 NPR 新闻摘要吗？”`voice_to_text()`函数捕捉到你的语音响应，并将其转换成一个全小写字母的字符串变量。如果你说“是”，Python 将开始播放新闻。如果你说的不是“是”，脚本将退出。
 
 ## 语音控制维基百科
 
@@ -1638,7 +1638,7 @@ Listing 5-7: 语音激活新闻播报的Python代码
 
 ### 访问维基百科
 
-Python有一个*wikipedia*模块，可以帮助你深入了解你想了解的主题，因此我们不需要自己编写这部分代码。这个模块不在Python标准库或Anaconda导航器中。你需要使用pip进行安装。在Windows中打开Anaconda提示符，或者在Mac或Linux中打开终端，然后运行以下命令：
+Python 有一个*wikipedia*模块，可以帮助你深入了解你想了解的主题，因此我们不需要自己编写这部分代码。这个模块不在 Python 标准库或 Anaconda 导航器中。你需要使用 pip 进行安装。在 Windows 中打开 Anaconda 提示符，或者在 Mac 或 Linux 中打开终端，然后运行以下命令：
 
 ```py
 **pip install wikipedia**
@@ -1654,7 +1654,7 @@ answer = wikipedia.summary(my_query)
 print(answer)
 ```
 
-脚本运行后，在右下角的IPython控制台中，输入你想了解的主题。脚本会将你的查询保存为变量*my_query*。`summary()`函数将生成你的问题的摘要答案。最后，脚本会打印出来自维基百科的答案。
+脚本运行后，在右下角的 IPython 控制台中，输入你想了解的主题。脚本会将你的查询保存为变量*my_query*。`summary()`函数将生成你的问题的摘要答案。最后，脚本会打印出来自维基百科的答案。
 
 我输入了`U.S. China trade war`并得到了以下结果：
 
@@ -1664,11 +1664,11 @@ What do you want to know?
 China and the United States have been engaged in a trade war through increasing tariffs and other measures since 2018\. Hong Kong economics professor Lawrence J. Lau argues that a major cause is the growing battle between China and the U.S. for global economic and technological dominance. He argues, "It is also a reflection of the rise of populism, isolationism, nationalism and protectionism almost everywhere in the world, including in the US."
 ```
 
-这个答案相对较短。大多数维基百科的搜索结果会更长。如果你希望限制响应的长度，比如只显示前200个字符，你可以在`answer`后面输入`[0:200]`。
+这个答案相对较短。大多数维基百科的搜索结果会更长。如果你希望限制响应的长度，比如只显示前 200 个字符，你可以在`answer`后面输入`[0:200]`。
 
 ### 添加语音识别和语音合成
 
-现在我们将把语音识别和语音合成功能添加到脚本中。输入[Listing 5-8](#listing5-8)作为*wiki_hs.py*。
+现在我们将把语音识别和语音合成功能添加到脚本中。输入 Listing 5-8 作为*wiki_hs.py*。
 
 ```py
 import wikipedia
@@ -1688,9 +1688,9 @@ ans = wikipedia.summary(my_query)
 print_say(ans[0:200])
 ```
 
-Listing 5-8: 语音控制的会说话维基百科的Python代码
+Listing 5-8: 语音控制的会说话维基百科的 Python 代码
 
-一旦你启动脚本，系统会询问：“你想知道什么？” 1。2时，脚本调用`voice_to_text()`将你的语音输入转化为文本。然后，脚本从维基百科获取问题的答案，将其保存为字符串变量*ans*，并将其转化为人声朗读。
+一旦你启动脚本，系统会询问：“你想知道什么？” 1。2 时，脚本调用`voice_to_text()`将你的语音输入转化为文本。然后，脚本从维基百科获取问题的答案，将其保存为字符串变量*ans*，并将其转化为人声朗读。
 
 运行脚本后，如果你对着麦克风说“美国联邦储备银行”，你将得到类似以下的结果：
 
@@ -1703,7 +1703,7 @@ created on December 23,
 1913, with the enactment
 ```
 
-我已经在变量`ans`后面添加了`[0:200]`字符限制，所以结果只会打印和朗读前200个字符。
+我已经在变量`ans`后面添加了`[0:200]`字符限制，所以结果只会打印和朗读前 200 个字符。
 
 就这样，你拥有了自己的语音控制会说话的维基百科。尽管问吧！
 
@@ -1809,7 +1809,7 @@ and "mp3" in file.name:
 
 然后，我们遍历子文件夹*chat*中的所有文件。如果一个文件具有*mp3*扩展名，并且包含艺术家的名字（无论是名字还是姓氏），它将被添加到列表*mysongs*中。我们使用*random*模块中的`choice()`来随机选择列表*mysongs*中的一首歌，并通过`mixer.music.load()`加载它。接着，我们使用`mixer.music.play()`来播放它。
 
-结果是，一旦你对脚本说“播放Selena Gomez”，它会随机播放子文件夹*chat*中的两首歌曲之一，*SelenaGomezWolves.mp3*或*TheHeartWantsWhatItWantsSelenaGomez.mp3*。
+结果是，一旦你对脚本说“播放 Selena Gomez”，它会随机播放子文件夹*chat*中的两首歌曲之一，*SelenaGomezWolves.mp3*或*TheHeartWantsWhatItWantsSelenaGomez.mp3*。
 
 ### Python，播放一首乡村歌曲
 
@@ -1817,7 +1817,7 @@ and "mp3" in file.name:
 
 假设你已经按音乐类型整理了你的歌曲。你将所有古典音乐文件放在子文件夹*classic*中，将所有乡村音乐文件放在*country*文件夹中，依此类推。这些子文件夹都被放置在你刚刚创建的*chat*文件夹中。
 
-我们要编写一个脚本，这样当你说“Python，播放一首乡村歌曲”时，脚本会从*country*文件夹中随机选择一首歌并播放。输入[列表 5-10](#listing5-10)中的代码并将其保存为*play_genre.py*。
+我们要编写一个脚本，这样当你说“Python，播放一首乡村歌曲”时，脚本会从*country*文件夹中随机选择一首歌并播放。输入列表 5-10 中的代码并将其保存为*play_genre.py*。
 
 ```py
 # Import needed modules
@@ -1853,27 +1853,27 @@ while True:
         break
 ```
 
-列表 5-10：用于按音乐类型语音激活歌曲的Python代码
+列表 5-10：用于按音乐类型语音激活歌曲的 Python 代码
 
-Python检查语音命令中的*play a*和*song*，如果找到，就激活音乐模式。然后，脚本将`play a` 1 和 `song` 2 以及它们后面的空格替换为空字符串，只留下类型——此处为`country`——在语音命令中。这个类型会被用作脚本搜索的文件夹：在本例中为*./chat/country*。最后，脚本从该文件夹3中随机选择一首歌并播放。
+Python 检查语音命令中的*play a*和*song*，如果找到，就激活音乐模式。然后，脚本将`play a` 1 和 `song` 2 以及它们后面的空格替换为空字符串，只留下类型——此处为`country`——在语音命令中。这个类型会被用作脚本搜索的文件夹：在本例中为*./chat/country*。最后，脚本从该文件夹 3 中随机选择一首歌并播放。
 
 请注意，我们在脚本中使用`lower()`函数来处理`voice_to_text()`，这样语音命令就会变成全小写。这是因为脚本有时会将语音命令转换为`play A Country Song`。我们这样做是为了避免由于大小写不一致导致的匹配错误。另一方面，路径和文件名不区分大小写，因此即使路径或文件名中有大写字母，也不会出现匹配错误。
 
 ## 总结
 
-在这一章中，你首先学会了创建一个Python包来包含本地的文本到语音和语音识别模块。之后，你构建了几个能够理解语音命令、做出反应并发声的真实应用。
+在这一章中，你首先学会了创建一个 Python 包来包含本地的文本到语音和语音识别模块。之后，你构建了几个能够理解语音命令、做出反应并发声的真实应用。
 
-你创建了一个语音控制的、能说话的“猜数字”游戏。在这个游戏中，你从1到9之间选择一个数字，并与脚本互动让它进行猜测。然后，你学习了如何解析文本，从NPR网站提取新闻摘要，加入语音识别和文本转语音功能，制作一个语音控制的新闻广播。
+你创建了一个语音控制的、能说话的“猜数字”游戏。在这个游戏中，你从 1 到 9 之间选择一个数字，并与脚本互动让它进行猜测。然后，你学习了如何解析文本，从 NPR 网站提取新闻摘要，加入语音识别和文本转语音功能，制作一个语音控制的新闻广播。
 
 你学会了如何使用*wikipedia*模块来获取你查询的答案。
 
 你使用*os*模块遍历了计算机上的文件夹中的文件，然后创建了一个脚本，当你要求时，它会播放某个音乐类型或艺术家的歌曲。
 
-现在你已经知道如何让Python说话和倾听，你将在本书的其余部分中将这两个功能应用到许多其他有趣的情境中，这样你就可以仅通过语音与计算机互动。
+现在你已经知道如何让 Python 说话和倾听，你将在本书的其余部分中将这两个功能应用到许多其他有趣的情境中，这样你就可以仅通过语音与计算机互动。
 
 ## 章节结束练习
 
-1.  修改*guess_hs.py*，使得脚本的第三次猜测变为2而不是1。
+1.  修改*guess_hs.py*，使得脚本的第三次猜测变为 2 而不是 1。
 
 1.  修改 *wiki.py*，使其打印出来自 Wikipedia 结果的前 300 个字符。
 
@@ -1885,9 +1885,9 @@ Python检查语音命令中的*play a*和*song*，如果找到，就激活音乐
 
 Web 爬取播客、电台和视频
 
-![](Images/chapterart.png)
+![](img/chapterart.png)
 
-在本章中，你将基于第 5 章中的 Web 爬取基础知识，使用这些技能实现语音激活播客、直播电台和不同网站上的视频。
+在本章中，你将基于第五章中的 Web 爬取基础知识，使用这些技能实现语音激活播客、直播电台和不同网站上的视频。
 
 你还将学习超文本标记语言（HTML）是如何工作的，以及各种 HTML 标签如何构建网页。你将学习如何使用 Python 的 Beautiful Soup 库来解析 HTML 文件并提取信息。
 
@@ -1899,7 +1899,7 @@ Web 爬取播客、电台和视频
 
 +   播放在线视频，例如 NBC 的 *Nightly News with Lester Holt*。
 
-在开始之前，为本章设置文件夹 */mpt/ch06/*。如同往常，你可以从 [https://www.nostarch.com/make-python-talk/](https://www.nostarch.com/make-python-talk/) 下载所有脚本的代码。
+在开始之前，为本章设置文件夹 */mpt/ch06/*。如同往常，你可以从 [`www.nostarch.com/make-python-talk/`](https://www.nostarch.com/make-python-talk/) 下载所有脚本的代码。
 
 ## Web 爬取入门
 
@@ -1913,7 +1913,7 @@ Beautiful Soup 库旨在从网站中提取信息。在本书中，我们将经�
 
 #### HTML 标签的结构
 
-[表 6-1](#table6-1) 列出了常用的一些标签及其主要功能。
+表 6-1 列出了常用的一些标签及其主要功能。
 
 表 6-1：常用 HTML 标签
 
@@ -1931,17 +1931,17 @@ Beautiful Soup 库旨在从网站中提取信息。在本书中，我们将经�
 
 所有标签以`< >`开头，以`</ >`结尾，以便浏览器能够识别不同的标签。例如，段落标签以`<p>`开始，以`</p>`结束。
 
-让我们用`<a>`标签来说明HTML标签的组成部分。下面是使用`<a>`标签创建超链接的一个例子：
+让我们用`<a>`标签来说明 HTML 标签的组成部分。下面是使用`<a>`标签创建超链接的一个例子：
 
 ```py
 <a class="suprablue" href="http://libraries.uky.edu">Libraries</a>
 ```
 
-这个超链接在开口标签中有可选的属性：`<a class="suprablue" href="http://libraries.uky.edu">`。`class`属性告诉浏览器从层叠样式表（CSS）中使用哪种样式，`suprablue`类名是预定义的（你将在接下来的部分学习如何定义一个类）。`href`属性指定了超链接的目标地址，[http://libraries.uky.edu/](http://libraries.uky.edu/)。标签的内容将在页面上显示，位于开口和闭合标签之间：`Libraries`。
+这个超链接在开口标签中有可选的属性：`<a class="suprablue" href="http://libraries.uky.edu">`。`class`属性告诉浏览器从层叠样式表（CSS）中使用哪种样式，`suprablue`类名是预定义的（你将在接下来的部分学习如何定义一个类）。`href`属性指定了超链接的目标地址，[`libraries.uky.edu/`](http://libraries.uky.edu/)。标签的内容将在页面上显示，位于开口和闭合标签之间：`Libraries`。
 
-#### 从HTML标签到网页
+#### 从 HTML 标签到网页
 
-为了理解HTML如何使用标签构建网页，让我们看一个极为简化的例子。输入[清单6-1](#listing6-1)中的脚本，并将其保存为*UKYexample.html*到你的章节文件夹中，或者你也可以从书籍的资源页面下载该文件。所有HTML文件都需要以*.html*或*.htm*为扩展名。
+为了理解 HTML 如何使用标签构建网页，让我们看一个极为简化的例子。输入清单 6-1 中的脚本，并将其保存为*UKYexample.html*到你的章节文件夹中，或者你也可以从书籍的资源页面下载该文件。所有 HTML 文件都需要以*.html*或*.htm*为扩展名。
 
 ```py
  1 <html> 
@@ -1966,29 +1966,29 @@ Beautiful Soup 库旨在从网站中提取信息。在本书中，我们将经�
 </html>
 ```
 
-清单6-1：一个简单网页的HTML代码
+清单 6-1：一个简单网页的 HTML 代码
 
-在我解释代码之前，让我们先看一下实际网页的样子。进入你的章节文件夹，用你喜欢的浏览器打开*UKYexample.html*。我使用的是谷歌浏览器，网页显示效果如[图6-1](#figure6-1)所示。
+在我解释代码之前，让我们先看一下实际网页的样子。进入你的章节文件夹，用你喜欢的浏览器打开*UKYexample.html*。我使用的是谷歌浏览器，网页显示效果如图 6-1 所示。
 
-![f06001](Images/f06001.png)
+![f06001](img/f06001.png)
 
-图6-1：一个简单的网页
+图 6-1：一个简单的网页
 
-现在让我们将HTML代码链接到网页显示。
+现在让我们将 HTML 代码链接到网页显示。
 
-在1处，我们开始一个开口的`<html>`标签，用来包含脚本中的所有代码。接着，我们有一个嵌套在`<head>`标签中的`<title>`标签。`<head>`标签通常用于包含元数据，例如文档标题或CSS样式。`<title>`标签的内容是`Example: University of Kentucky`，这将设置网页标题，在浏览器标签的左上角显示，如[图6-1](#figure6-1)所示。
+在 1 处，我们开始一个开口的`<html>`标签，用来包含脚本中的所有代码。接着，我们有一个嵌套在`<head>`标签中的`<title>`标签。`<head>`标签通常用于包含元数据，例如文档标题或 CSS 样式。`<title>`标签的内容是`Example: University of Kentucky`，这将设置网页标题，在浏览器标签的左上角显示，如图 6-1 所示。
 
-`<style>`标签中的内容是用来定义两个类：`redtext`和`leftmargin`。第一个类告诉HTML将内容以红色显示，而第二个类则告诉HTML留出10像素的左边距。你可以在一个类中指定多种样式，如背景颜色、内边距或边距等。
+`<style>`标签中的内容是用来定义两个类：`redtext`和`leftmargin`。第一个类告诉 HTML 将内容以红色显示，而第二个类则告诉 HTML 留出 10 像素的左边距。你可以在一个类中指定多种样式，如背景颜色、内边距或边距等。
 
-在2处，我们开始了网页主体HTML部分，该部分将显示在页面上。在其中我们有三个嵌套的`<p>`标签。`<p>`标签定义了HTML文档中的一个独立段落；添加一个新的`<p>`标签将开始一个新段落。第一个`<p>`标签包含信息`以下是一些链接：`。
+在 2 处，我们开始了网页主体 HTML 部分，该部分将显示在页面上。在其中我们有三个嵌套的`<p>`标签。`<p>`标签定义了 HTML 文档中的一个独立段落；添加一个新的`<p>`标签将开始一个新段落。第一个`<p>`标签包含信息`以下是一些链接：`。
 
-然后，我们提供两个超链接，每个都位于嵌套在`<p>`标签中的`<a>`标签里。我们将每个`<a>`标签放在单独的`<p>`标签中，这样链接会作为两个不同的段落显示，而不是并排显示在同一行。如果点击第一个链接，它将带你到肯塔基大学图书馆。如果点击第二个链接，它会将你引导到肯塔基大学目录。第一个标签具有`redtext`的类属性，按之前在`<style>`标签中定义的方式将文本显示为红色。类似地，第二个标签具有`leftmargin`类属性，因此文本`University of Kentucky Library`前会有10像素的边距。
+然后，我们提供两个超链接，每个都位于嵌套在`<p>`标签中的`<a>`标签里。我们将每个`<a>`标签放在单独的`<p>`标签中，这样链接会作为两个不同的段落显示，而不是并排显示在同一行。如果点击第一个链接，它将带你到肯塔基大学图书馆。如果点击第二个链接，它会将你引导到肯塔基大学目录。第一个标签具有`redtext`的类属性，按之前在`<style>`标签中定义的方式将文本显示为红色。类似地，第二个标签具有`leftmargin`类属性，因此文本`University of Kentucky Library`前会有 10 像素的边距。
 
-### 使用Beautiful Soup提取信息
+### 使用 Beautiful Soup 提取信息
 
-现在你已经理解了几个基本的HTML标签是如何工作的，接下来你将使用Beautiful Soup库来解析HTML代码并提取你需要的信息。我将首先讨论如何解析本地保存的HTML文件。然后你将学习如何从实时网页中提取信息。
+现在你已经理解了几个基本的 HTML 标签是如何工作的，接下来你将使用 Beautiful Soup 库来解析 HTML 代码并提取你需要的信息。我将首先讨论如何解析本地保存的 HTML 文件。然后你将学习如何从实时网页中提取信息。
 
-让我们重新查看你在章节文件夹中保存的简单示例*UKYexample.html*。假设你想从网页中提取一些网址。你可以使用[列表6-2](#listing6-2)中的*parse_local.py*来完成此任务。
+让我们重新查看你在章节文件夹中保存的简单示例*UKYexample.html*。假设你想从网页中提取一些网址。你可以使用列表 6-2 中的*parse_local.py*来完成此任务。
 
 ```py
 # Import the Beautiful Soup library
@@ -2009,9 +2009,9 @@ print(atag['href'])
 print(atag.text)
 ```
 
-列表6-2：解析本地HTML文件
+列表 6-2：解析本地 HTML 文件
 
-首先，我们从*bs4*模块导入`BeautifulSoup()`，这是Beautiful Soup的最新版本。在步骤1中，我们通过使用Python内建的`open()`函数以文本文件的形式打开本地HTML文件。然后我们使用`findAll()`来定位HTML文件中的所有`<p>`标签，并将它们放入`ptags`列表中。
+首先，我们从*bs4*模块导入`BeautifulSoup()`，这是 Beautiful Soup 的最新版本。在步骤 1 中，我们通过使用 Python 内建的`open()`函数以文本文件的形式打开本地 HTML 文件。然后我们使用`findAll()`来定位 HTML 文件中的所有`<p>`标签，并将它们放入`ptags`列表中。
 
 列表`ptags`中有三个`<p>`标签：
 
@@ -2023,7 +2023,7 @@ University of Kentucky Libraries</a></p>,
 University of Kentucky Directory</a></p>]
 ```
 
-以第三个标签为例。在步骤2中，我们定位到嵌套在第三个`<p>`标签中的`<a>`标签。然后我们打印出该`<a>`标签的`href`属性：
+以第三个标签为例。在步骤 2 中，我们定位到嵌套在第三个`<p>`标签中的`<a>`标签。然后我们打印出该`<a>`标签的`href`属性：
 
 ```py
 https://directory.uky.edu/
@@ -2051,17 +2051,17 @@ University of Kentucky Directory
 
 ## 抓取实时网页
 
-现在让我们抓取一个实时网页。实时网页的HTML标记比我们简单的静态版本要复杂得多，可能有成千上万行，所以你需要学会快速定位你需要的代码行。
+现在让我们抓取一个实时网页。实时网页的 HTML 标记比我们简单的静态版本要复杂得多，可能有成千上万行，所以你需要学会快速定位你需要的代码行。
 
-假设你想从肯塔基大学图书馆网站提取联系信息。访问[http://libraries.uky.edu/](http://libraries.uky.edu/)。然后滚动到页面底部，你将看到不同区域的联系信息，如[图6-2](#figure6-2)所示。
+假设你想从肯塔基大学图书馆网站提取联系信息。访问[`libraries.uky.edu/`](http://libraries.uky.edu/)。然后滚动到页面底部，你将看到不同区域的联系信息，如图 6-2 所示。
 
-![f06002](Images/f06002.png)
+![f06002](img/f06002.png)
 
 图 6-2：你从一个实时网页中获取的信息
 
-你想要提取[图6-2](#figure6-2)中显示的三个部门的信息：流通部、参考部和馆际借阅部的部门名称、电话号码和电子邮件地址。首先，你需要在HTML文档中找到相应的标签。
+你想要提取图 6-2 中显示的三个部门的信息：流通部、参考部和馆际借阅部的部门名称、电话号码和电子邮件地址。首先，你需要在 HTML 文档中找到相应的标签。
 
-在网页上，按下键盘上的ctrl-U（或者右键点击并选择**查看**▶**源代码**）。网页的源代码应该会出现。你会看到它有超过2,000行长。为了定位你需要的标签，按ctrl-F在右上角打开搜索框。输入`Circulation`并点击**搜索**，这样就可以跳转到对应的HTML代码，如[清单6-3](#listing6-3)所示。
+在网页上，按下键盘上的 ctrl-U（或者右键点击并选择**查看**▶**源代码**）。网页的源代码应该会出现。你会看到它有超过 2,000 行长。为了定位你需要的标签，按 ctrl-F 在右上角打开搜索框。输入`Circulation`并点击**搜索**，这样就可以跳转到对应的 HTML 代码，如清单 6-3 所示。
 
 ```py
 `--snip--`
@@ -2106,13 +2106,13 @@ University of Kentucky Directory
 `--snip--`
 ```
 
-清单6-3：实时网页源代码的一部分
+清单 6-3：实时网页源代码的一部分
 
-注意，所有信息都被封装在一个`class`属性为`sf-middle`的父`<div>`标签中1。Circulation部门的信息（包括名称、电话号码和电子邮件地址）被存放在一个类属性为`dashing-li`的子`<div>`标签中2。其他两个区域的信息，Reference 3和Interlibrary Loan 4，则存放在父标签中的两个其他子`<div>`标签里。在每个子标签内，子标签分别包含以下几项信息：部门名称、电话号码和电子邮件地址。
+注意，所有信息都被封装在一个`class`属性为`sf-middle`的父`<div>`标签中 1。Circulation 部门的信息（包括名称、电话号码和电子邮件地址）被存放在一个类属性为`dashing-li`的子`<div>`标签中 2。其他两个区域的信息，Reference 3 和 Interlibrary Loan 4，则存放在父标签中的两个其他子`<div>`标签里。在每个子标签内，子标签分别包含以下几项信息：部门名称、电话号码和电子邮件地址。
 
-这些模式在编写Python脚本以提取所需信息时非常重要。接下来，我将解释如何利用这些模式从HTML文件中提取信息。
+这些模式在编写 Python 脚本以提取所需信息时非常重要。接下来，我将解释如何利用这些模式从 HTML 文件中提取信息。
 
-从书籍的资源页面下载*scrape_live_web.py*并保存在你的章节文件夹中。脚本的第一部分如[清单6-4](#listing6-4)所示，定位了每个区域的`<div>`标签。
+从书籍的资源页面下载*scrape_live_web.py*并保存在你的章节文件夹中。脚本的第一部分如清单 6-4 所示，定位了每个区域的`<div>`标签。
 
 ```py
 from bs4 import BeautifulSoup
@@ -2131,11 +2131,11 @@ print(contacts[0])
 `--snip--`
 ```
 
-清单6-4：爬取实时网页的Python代码
+清单 6-4：爬取实时网页的 Python 代码
 
-我们导入了*requests*模块来获取来自实时网页的源代码。网页地址保存在变量`url`中。在第1步，我们使用`get()`来获取HTML代码。然后，我们找到类值为`sf-middle`的`<div>`标签，并将其作为父标签。
+我们导入了*requests*模块来获取来自实时网页的源代码。网页地址保存在变量`url`中。在第 1 步，我们使用`get()`来获取 HTML 代码。然后，我们找到类值为`sf-middle`的`<div>`标签，并将其作为父标签。
 
-在第2步，我们定位到三个子`<div>`标签，它们的类值为`dashing-li`，并将它们放入列表`contacts`中，因为每个子`<div>`标签包含一个部门的所有联系信息。列表中的每个元素对应一个部门。例如，第一个元素包含了Circulation部门的所有信息，我们在[清单6-5](#listing6-5)中打印出来。
+在第 2 步，我们定位到三个子`<div>`标签，它们的类值为`dashing-li`，并将它们放入列表`contacts`中，因为每个子`<div>`标签包含一个部门的所有联系信息。列表中的每个元素对应一个部门。例如，第一个元素包含了 Circulation 部门的所有信息，我们在清单 6-5 中打印出来。
 
 ```py
 <div class="dashing-li">
@@ -2150,9 +2150,9 @@ href="mailto:lib.circdesk@email.uky.edu">lib.circdesk@email.uky.edu
 </div>
 ```
 
-清单6-5：Circulation部门的实时网页源代码
+清单 6-5：Circulation 部门的实时网页源代码
 
-*scrape_live_web.py*的第二部分将打印出每个区域的详细信息。如[清单6-6](#listing6-6)所示。
+*scrape_live_web.py*的第二部分将打印出每个区域的详细信息。如清单 6-6 所示。
 
 ```py
 `--snip--`
@@ -2167,7 +2167,7 @@ for contact in contacts:
         print(atag.text)
 ```
 
-清单6-6：打印出爬取信息的Python代码
+清单 6-6：打印出爬取信息的 Python 代码
 
 我们遍历列表`contacts`中的每个元素。为了打印出部门名称，我们找到带有`contact_area`类属性的`<span>`标签。该标签的内容就是部门名称。两个`<a>`标签包含每个部门的电话号码和电子邮件地址，我们也将它们打印出来。输出结果如下所示：
 
@@ -2185,29 +2185,29 @@ ILLBorrowing@uky.edu
 
 ## 语音激活的播客
 
-在这个项目中，我们的目标是编写一个脚本，使你可以说：“Python，告诉我最新的新闻。”脚本将播放来自NPR新闻播客的简报。你将首先学会如何提取与播客相关的MP3文件并播放它，然后你会将语音识别功能添加到脚本中，以便通过语音激活。由于新闻简报大约是五分钟长，你还将学会如何在新闻播放时通过语音控制停止播客。
+在这个项目中，我们的目标是编写一个脚本，使你可以说：“Python，告诉我最新的新闻。”脚本将播放来自 NPR 新闻播客的简报。你将首先学会如何提取与播客相关的 MP3 文件并播放它，然后你会将语音识别功能添加到脚本中，以便通过语音激活。由于新闻简报大约是五分钟长，你还将学会如何在新闻播放时通过语音控制停止播客。
 
 ### 提取并播放播客
 
-首先，找到一个你喜欢的新闻播报网站。为此，我们将使用*NPR News Now*，因为它是免费的并且每小时更新，全天候提供。网址是[https://www.npr.org/podcasts/500005/npr-news-now/](https://www.npr.org/podcasts/500005/npr-news-now/)。
+首先，找到一个你喜欢的新闻播报网站。为此，我们将使用*NPR News Now*，因为它是免费的并且每小时更新，全天候提供。网址是[`www.npr.org/podcasts/500005/npr-news-now/`](https://www.npr.org/podcasts/500005/npr-news-now/)。
 
-访问该网站，你应该能看到类似[图6-3](#figure6-3)的内容。
+访问该网站，你应该能看到类似图 6-3 的内容。
 
-![f06003](Images/f06003.png)
+![f06003](img/f06003.png)
 
-图6-3：*NPR News Now*首页
+图 6-3：*NPR News Now*首页
 
-如你所见，我的最新新闻简报是在2021年2月9日东部时间早上7点更新的。在其下方，你还可以看到早上6点、5点等时段的新闻简报。
+如你所见，我的最新新闻简报是在 2021 年 2 月 9 日东部时间早上 7 点更新的。在其下方，你还可以看到早上 6 点、5 点等时段的新闻简报。
 
-要定位包含新闻简报的MP3文件，右键单击页面上的任意位置，然后从弹出的菜单中选择**查看页面源代码**选项（或按ctrl-U）。你应该能看到源代码，如[图6-4](#figure6-4)所示。
+要定位包含新闻简报的 MP3 文件，右键单击页面上的任意位置，然后从弹出的菜单中选择**查看页面源代码**选项（或按 ctrl-U）。你应该能看到源代码，如图 6-4 所示。
 
-![f06004](Images/f06004.png)
+![f06004](img/f06004.png)
 
-图6-4：*NPR News Now*的源代码
+图 6-4：*NPR News Now*的源代码
 
-你会注意到MP3文件包含在`<a>`标签中。我们需要使用Beautiful Soup库提取所有包含MP3文件的`<a>`标签，然后从第一个标签中提取链接，这将包含最新的新闻简报。如果你愿意，还可以收听以前的新闻简报；例如，第二个和第三个标签包含了[图6-3](#figure6-3)中的早上6点和5点的新闻简报。
+你会注意到 MP3 文件包含在`<a>`标签中。我们需要使用 Beautiful Soup 库提取所有包含 MP3 文件的`<a>`标签，然后从第一个标签中提取链接，这将包含最新的新闻简报。如果你愿意，还可以收听以前的新闻简报；例如，第二个和第三个标签包含了图 6-3 中的早上 6 点和 5 点的新闻简报。
 
-接下来，我们需要提取链接，去除不需要的部分，并使用*webbrowser*模块打开MP3文件的URL，以便开始播放播客。在[清单6-7](#listing6-7)中，脚本*npr_news.py*展示了如何实现这一功能。
+接下来，我们需要提取链接，去除不需要的部分，并使用*webbrowser*模块打开 MP3 文件的 URL，以便开始播放播客。在清单 6-7 中，脚本*npr_news.py*展示了如何实现这一功能。
 
 ```py
 # Import needed modules
@@ -2234,9 +2234,9 @@ mymp3 = cast[0:pos]
 webbrowser.open(mymp3)
 ```
 
-清单6-7：播放在线播客的脚本
+清单 6-7：播放在线播客的脚本
 
-我们首先使用`get()`方法从*requests*模块获取*NPR News Now*网站的源代码，并将其保存在变量`response`中。在步骤1中，我们使用Beautiful Soup库解析文本，并选择`html.parser`选项来指定源代码是HTML格式的。我们在[图6-4](#figure6-4)中看到，MP3文件被保存在具有`class`属性为`audio-module-listen`的`<a>`标签中。因此，在步骤2中，我们使用Beautiful Soup中的`findAll()`方法获取所有这些标签，并将它们存入`casts`列表中。[清单6-8](#listing6-8)显示了`casts`的内容。
+我们首先使用`get()`方法从*requests*模块获取*NPR News Now*网站的源代码，并将其保存在变量`response`中。在步骤 1 中，我们使用 Beautiful Soup 库解析文本，并选择`html.parser`选项来指定源代码是 HTML 格式的。我们在图 6-4 中看到，MP3 文件被保存在具有`class`属性为`audio-module-listen`的`<a>`标签中。因此，在步骤 2 中，我们使用 Beautiful Soup 中的`findAll()`方法获取所有这些标签，并将它们存入`casts`列表中。清单 6-8 显示了`casts`的内容。
 
 ```py
 [<a class="audio-module-listen" 
@@ -2278,9 +2278,9 @@ awEpisodeId=965721223&amp;dl=1">
 </a>]
 ```
 
-清单6-8：所有具有`class`属性为`audio-module-listen`的`<a>`标签
+清单 6-8：所有具有`class`属性为`audio-module-listen`的`<a>`标签
 
-如你所见，多个`<a>`标签包含MP3文件。在步骤3中，我们提取列表中的第一个`<a>`标签，并获取该标签的`href`属性（指向MP3文件的链接），并将其保存在`cast`中。链接如下：
+如你所见，多个`<a>`标签包含 MP3 文件。在步骤 3 中，我们提取列表中的第一个`<a>`标签，并获取该标签的`href`属性（指向 MP3 文件的链接），并将其保存在`cast`中。链接如下：
 
 ```py
 https://play.podtrac.com/500005/edge1.pod.npr.org/anon.npr-
@@ -2295,15 +2295,15 @@ https://play.podtrac.com/500005/edge1.pod.npr.org/anon.npr-
 mp3/npr/newscasts/2021/02/09/newscast070736.mp3
 ```
 
-最后，我们提取在线MP3文件的链接，并使用*webbrowser*模块中的`open()`打开和播放MP3文件。
+最后，我们提取在线 MP3 文件的链接，并使用*webbrowser*模块中的`open()`打开和播放 MP3 文件。
 
-如果您运行脚本，您应该听到最新的NPR新闻简报在您的默认网络浏览器中播放。
+如果您运行脚本，您应该听到最新的 NPR 新闻简报在您的默认网络浏览器中播放。
 
 ### 语音激活播客
 
-接下来，我们将在脚本中添加语音识别，以便您可以语音激活播客。此外，由于播客大约有五分钟长，能够用语音停止它非常有用。为了实现这一点，我们需要安装*pygame*模块，因为它允许Python脚本在音频播放时停止音频文件。*webbrowser*模块没有这个功能。
+接下来，我们将在脚本中添加语音识别，以便您可以语音激活播客。此外，由于播客大约有五分钟长，能够用语音停止它非常有用。为了实现这一点，我们需要安装*pygame*模块，因为它允许 Python 脚本在音频播放时停止音频文件。*webbrowser*模块没有这个功能。
 
-在Windows中安装*pygame*非常简单。在Anaconda提示符下执行以下代码行，并确保虚拟环境已激活：
+在 Windows 中安装*pygame*非常简单。在 Anaconda 提示符下执行以下代码行，并确保虚拟环境已激活：
 
 ```py
 **pip install pygame**
@@ -2311,7 +2311,7 @@ mp3/npr/newscasts/2021/02/09/newscast070736.mp3
 
 然后按照说明操作。
 
-如果您使用的是Mac，最新版本的macOS需要安装Pygame 2\. 要安装它，请在终端中执行以下代码，并确保虚拟环境已激活：
+如果您使用的是 Mac，最新版本的 macOS 需要安装 Pygame 2\. 要安装它，请在终端中执行以下代码，并确保虚拟环境已激活：
 
 ```py
 **pip install pygame==2.0.0**
@@ -2319,7 +2319,7 @@ mp3/npr/newscasts/2021/02/09/newscast070736.mp3
 
 然后按照说明操作。
 
-如果您使用的是Linux，请在终端中执行以下三行代码，并确保虚拟环境已激活：
+如果您使用的是 Linux，请在终端中执行以下三行代码，并确保虚拟环境已激活：
 
 ```py
 **sudo apt-get install python3-pip python3-dev**
@@ -2327,9 +2327,9 @@ mp3/npr/newscasts/2021/02/09/newscast070736.mp3
 **pip install pygame**
 ```
 
-请参阅本书结尾的附录A以获取更多详细信息。如果安装不成功，可以使用*vlc*模块作为替代。
+请参阅本书结尾的附录 A 以获取更多详细信息。如果安装不成功，可以使用*vlc*模块作为替代。
 
-脚本*news_brief_hs.py*在[列表6-9](#listing6-9)中展示了如何使用语音控制激活*NPR News Now*播客并在需要时停止它。
+脚本*news_brief_hs.py*在列表 6-9 中展示了如何使用语音控制激活*NPR News Now*播客并在需要时停止它。
 
 ```py
 from io import BytesIO
@@ -2382,23 +2382,23 @@ from mptpkg import voice_to_text, print_say
         continue 
 ```
 
-列表6-9：用于语音激活*NPR News Now*的Python脚本
+列表 6-9：用于语音激活*NPR News Now*的 Python 脚本
 
 首先导入所需的模块。特别是，我们从*io*模块导入`BytesIO()`来创建一个临时文件，用于保存新闻简报的音频文件。这可以防止在重新运行脚本时发生覆盖文件的崩溃。
 
-我们定义`news_brief()` 1. 此函数完成了我们在*npr_news.py*中所做的事情，但有一些例外。我们下载MP3文件并将其保存到临时文件*voice*中。之后，我们使用*pygame*模块播放*NPR News Now*的最新新闻简报。
+我们定义`news_brief()` 1. 此函数完成了我们在*npr_news.py*中所做的事情，但有一些例外。我们下载 MP3 文件并将其保存到临时文件*voice*中。之后，我们使用*pygame*模块播放*NPR News Now*的最新新闻简报。
 
-在2处，我们启动一个无限循环。在每次迭代中，脚本会捕捉您的语音。当您的语音命令中包含*news*时 3，脚本将调用`news_brief()`并开始播放最新的NPR新闻简报。当新闻播放时，脚本会在后台持续监听您的语音命令。当您说“停止播放”时，无论何时在或之后，循环将中断并返回主菜单。如果要结束脚本，只需说“停止监听”。
+在 2 处，我们启动一个无限循环。在每次迭代中，脚本会捕捉您的语音。当您的语音命令中包含*news*时 3，脚本将调用`news_brief()`并开始播放最新的 NPR 新闻简报。当新闻播放时，脚本会在后台持续监听您的语音命令。当您说“停止播放”时，无论何时在或之后，循环将中断并返回主菜单。如果要结束脚本，只需说“停止监听”。
 
 ## 语音激活收音机播放器
 
 我们在这个项目中的目标是编写一个脚本，通过语音控制播放在线直播广播。当你说“Python，播放在线广播”时，脚本将访问该网站并点击播放按钮，使得直播广播在你的计算机上开始播放。
 
-我们将使用*selenium*模块来自动化从Python与网页浏览器的交互。接下来，我们将在脚本中添加语音控制，以实现语音激活。
+我们将使用*selenium*模块来自动化从 Python 与网页浏览器的交互。接下来，我们将在脚本中添加语音控制，以实现语音激活。
 
-### 安装selenium模块
+### 安装 selenium 模块
 
-*selenium*模块不在Python标准库中，因此我们首先需要安装它。打开Anaconda提示符（Windows）或终端（Mac或Linux），激活您的虚拟环境，并执行以下命令：
+*selenium*模块不在 Python 标准库中，因此我们首先需要安装它。打开 Anaconda 提示符（Windows）或终端（Mac 或 Linux），激活您的虚拟环境，并执行以下命令：
 
 ```py
 **conda install selenium** 
@@ -2408,39 +2408,39 @@ from mptpkg import voice_to_text, print_say
 
 ### 控制网页
 
-*selenium*模块允许您用Python自动化网页浏览器的交互。
+*selenium*模块允许您用 Python 自动化网页浏览器的交互。
 
-在线广播盒（*https://onlineradiobox.com/us/*）将作为我们的广播平台。您可以将其更改为任何您喜欢的在线广播电台，例如Magic 106.7或NPR在线电台。
+在线广播盒（*https://onlineradiobox.com/us/*）将作为我们的广播平台。您可以将其更改为任何您喜欢的在线广播电台，例如 Magic 106.7 或 NPR 在线电台。
 
-访问该网站，您应该看到类似于[图6-5](#figure6-5)所示的屏幕。
+访问该网站，您应该看到类似于图 6-5 所示的屏幕。
 
-![f06005](Images/f06005.png)
+![f06005](img/f06005.png)
 
-图6-5：在线广播盒的首页
+图 6-5：在线广播盒的首页
 
-当网页加载完成后，直播广播并未开始播放。您需要使用*selenium*与网页浏览器进行交互，点击播放按钮（如[图6-5](#figure6-5)中底部的白色三角形按钮）。
+当网页加载完成后，直播广播并未开始播放。您需要使用*selenium*与网页浏览器进行交互，点击播放按钮（如图 6-5 中底部的白色三角形按钮）。
 
-现在，您将学习如何定位网站上播放按钮的XPath。*XPath*是*可扩展标记语言（XML）路径*的缩写。它是通过使用XML路径表达式查找网页元素的语法。
+现在，您将学习如何定位网站上播放按钮的 XPath。*XPath*是*可扩展标记语言（XML）路径*的缩写。它是通过使用 XML 路径表达式查找网页元素的语法。
 
-以下是查找播放按钮XPath的步骤：
+以下是查找播放按钮 XPath 的步骤：
 
-1.  使用Chrome浏览器打开在线广播盒的网页，如[图6-5](#figure6-5)所示。
+1.  使用 Chrome 浏览器打开在线广播盒的网页，如图 6-5 所示。
 
-1.  将鼠标光标放在播放按钮上（不要点击）。然后右键单击，选择**检查**（Inspect）从弹出菜单中。源代码将在网页右侧显示，如[图6-6](#figure6-6)所示。
+1.  将鼠标光标放在播放按钮上（不要点击）。然后右键单击，选择**检查**（Inspect）从弹出菜单中。源代码将在网页右侧显示，如图 6-6 所示。
 
 1.  右键单击页面右侧高亮的代码行，并选择**复制**▶**XPath**。
 
-1.  将XPath粘贴到一个空文件中，以便以后使用。在本例中，播放按钮的XPath是`//*[@id="b_top_play"]`。
+1.  将 XPath 粘贴到一个空文件中，以便以后使用。在本例中，播放按钮的 XPath 是`//*[@id="b_top_play"]`。
 
-![f06006](Images/f06006.png)
+![f06006](img/f06006.png)
 
-图6-6：定位播放按钮的XPath
+图 6-6：定位播放按钮的 XPath
 
-接下来，您需要为特定的浏览器下载网页驱动。如果您想了解更多关于Selenium项目的信息，可以访问其官网。
+接下来，您需要为特定的浏览器下载网页驱动。如果您想了解更多关于 Selenium 项目的信息，可以访问其官网。
 
-按照[https://chromedriver.chromium.org/downloads/](https://chromedriver.chromium.org/downloads/)上的说明下载适合您操作系统的可执行文件。在Windows中，这个文件是*chromedriver_win32.zip*；解压ZIP文件并将可执行文件放在章节文件夹中。在Unix操作系统中，可执行文件叫做*chromedriver*，而在Windows中，它的文件名是*chromedriver.exe*。
+按照[`chromedriver.chromium.org/downloads/`](https://chromedriver.chromium.org/downloads/)上的说明下载适合您操作系统的可执行文件。在 Windows 中，这个文件是*chromedriver_win32.zip*；解压 ZIP 文件并将可执行文件放在章节文件夹中。在 Unix 操作系统中，可执行文件叫做*chromedriver*，而在 Windows 中，它的文件名是*chromedriver.exe*。
 
-最后一步，将*play_live_radio.py*保存在您的章节文件夹中并运行它。该脚本也可以在本书的资源页面找到，显示在[清单6-10](#listing6-10)中。
+最后一步，将*play_live_radio.py*保存在您的章节文件夹中并运行它。该脚本也可以在本书的资源页面找到，显示在清单 6-10 中。
 
 ```py
 # Put your web driver in the same folder as this script 
@@ -2451,15 +2451,15 @@ button = browser.find_element_by_xpath('//*[@id="b_top_play"]')
 button.click()
 ```
 
-清单6-10：用于自动化在线直播电台的Python代码
+清单 6-10：用于自动化在线直播电台的 Python 代码
 
-我们首先从*selenium*模块中导入`webdriver()`。首先，脚本启动网页浏览器。然后，`get()`函数根据提供的网址将我们带到直播电台网站。接着，我们将播放按钮定义为变量`button`，使用我们生成的XPath。最后，我们使用*selenium*模块中的`click()`来激活网站上的播放按钮。因此，如果一切安装和配置正确，当您运行脚本时，网页浏览器将打开，在线直播电台将开始播放。
+我们首先从*selenium*模块中导入`webdriver()`。首先，脚本启动网页浏览器。然后，`get()`函数根据提供的网址将我们带到直播电台网站。接着，我们将播放按钮定义为变量`button`，使用我们生成的 XPath。最后，我们使用*selenium*模块中的`click()`来激活网站上的播放按钮。因此，如果一切安装和配置正确，当您运行脚本时，网页浏览器将打开，在线直播电台将开始播放。
 
-使用F9键逐行运行脚本非常具有教育意义。您将看到，在第一行执行后，Chrome浏览器会在您的计算机上打开，在第二行执行后，浏览器会将您带到在线电台网站。通过最后两行，播放按钮被激活。此时，您将听到正在播放的直播电台。
+使用 F9 键逐行运行脚本非常具有教育意义。您将看到，在第一行执行后，Chrome 浏览器会在您的计算机上打开，在第二行执行后，浏览器会将您带到在线电台网站。通过最后两行，播放按钮被激活。此时，您将听到正在播放的直播电台。
 
 ### 语音激活直播电台
 
-我们将为脚本添加语音识别和文本转语音功能，以便您可以通过语音激活在线直播电台。脚本*voice_live_radio.py*在[清单6-11](#listing6-11)中展示了如何实现这一功能。
+我们将为脚本添加语音识别和文本转语音功能，以便您可以通过语音激活在线直播电台。脚本*voice_live_radio.py*在清单 6-11 中展示了如何实现这一功能。
 
 ```py
 # Put web driver in the same folder as this script 
@@ -2499,29 +2499,29 @@ from mptpkg import voice_to_text, print_say
                     continue
 ```
 
-清单6-11：用于语音激活在线直播电台的Python代码
+清单 6-11：用于语音激活在线直播电台的 Python 代码
 
 我们首先导入所有需要的模块。由于我们需要语音识别和文本转语音功能，我们从本地的`mptpkg`包中导入`voice_to_text()`来将语音转换为文本。我们还从本地的`mptpkg`包中导入`print_say()`来将文本转换为语音。
 
 然后我们定义`live_radio()`，通过一些修改来实现*play_live_radio.py*的功能。当该函数被激活时，脚本将访问在线直播电台站点并点击播放按钮，从而启动直播电台的播放。我们使用`headless`选项，因此您不会看到浏览器弹出。我们还将变量`button`设为全局变量，以便以后在脚本中使用该变量。
 
-在第2行，一个无限循环开始。每次迭代时，脚本都会问：“我能为您做些什么？”在您对着麦克风讲话后，`voice_to_text()`将您的语音转换为文本，并将其保存为字符串变量`inp`。`lower()`函数将所有字符转换为小写，以避免由于字母大写而导致的匹配错误。
+在第 2 行，一个无限循环开始。每次迭代时，脚本都会问：“我能为您做些什么？”在您对着麦克风讲话后，`voice_to_text()`将您的语音转换为文本，并将其保存为字符串变量`inp`。`lower()`函数将所有字符转换为小写，以避免由于字母大写而导致的匹配错误。
 
-当你说“停止监听”时，代码中的`if`分支被激活4。脚本会打印`Goodbye`，循环中断，脚本结束。当你的语音命令中包含*radio*时，代码中的`elif`分支被激活5。因此，`live_radio()`被调用，在线直播电台开始播放。当电台播放时，脚本会在后台静默监听你的命令。如果你在播放过程中说“停止播放”，按钮会再次被点击，电台的状态会从播放变为停止。之后，脚本退出电台模式并返回主菜单。
+当你说“停止监听”时，代码中的`if`分支被激活 4。脚本会打印`Goodbye`，循环中断，脚本结束。当你的语音命令中包含*radio*时，代码中的`elif`分支被激活 5。因此，`live_radio()`被调用，在线直播电台开始播放。当电台播放时，脚本会在后台静默监听你的命令。如果你在播放过程中说“停止播放”，按钮会再次被点击，电台的状态会从播放变为停止。之后，脚本退出电台模式并返回主菜单。
 
 ## 语音激活视频
 
 你可以应用在前一节中学到的方法，来语音激活预录的在线视频或甚至是在线直播电视。
 
-NBC的*Nightly News with Lester Holt*提供预录视频，网址为[https://www.nbcnews.com/nightly-news-full-episodes/](https://www.nbcnews.com/nightly-news-full-episodes/)，如[图6-7](#figure6-7)所示。
+NBC 的*Nightly News with Lester Holt*提供预录视频，网址为[`www.nbcnews.com/nightly-news-full-episodes/`](https://www.nbcnews.com/nightly-news-full-episodes/)，如图 6-7 所示。
 
-![f06007](Images/f06007.png)
+![f06007](img/f06007.png)
 
-图6-7：NBC的*Nightly News*首页
+图 6-7：NBC 的*Nightly News*首页
 
-我们将使用Python与网页浏览器互动，点击激活在线视频的播放按钮。你可以在视频框架中看到一个三角形的播放按钮。按照“控制网页”一节中的步骤（第125页）找到该按钮的XPath。
+我们将使用 Python 与网页浏览器互动，点击激活在线视频的播放按钮。你可以在视频框架中看到一个三角形的播放按钮。按照“控制网页”一节中的步骤（第 125 页）找到该按钮的 XPath。
 
-[列表6-12](#listing6-12)中的脚本*voice_online_video.py*展示了如何语音激活在线视频。
+列表 6-12 中的脚本*voice_online_video.py*展示了如何语音激活在线视频。
 
 ```py
 # Import functions from the local package
@@ -2549,19 +2549,19 @@ def online_video():
         break
 ```
 
-列表6-12：语音激活在线视频的脚本
+列表 6-12：语音激活在线视频的脚本
 
-逻辑与处理直播电台时相同。我们首先定义`online_video()`，以便稍后调用。当该函数被激活时，脚本将访问网站，定位播放按钮的XPath 1，并点击它以便视频开始播放。
+逻辑与处理直播电台时相同。我们首先定义`online_video()`，以便稍后调用。当该函数被激活时，脚本将访问网站，定位播放按钮的 XPath 1，并点击它以便视频开始播放。
 
-一个无限循环从第2行开始。在每次循环中，脚本会询问：“我能帮您做什么？”在你对着麦克风说话后，`voice_to_text()`将你的语音转换为文本，并将其保存为一个全小写的字符串变量`inp`。
+一个无限循环从第 2 行开始。在每次循环中，脚本会询问：“我能帮您做什么？”在你对着麦克风说话后，`voice_to_text()`将你的语音转换为文本，并将其保存为一个全小写的字符串变量`inp`。
 
 当你说“停止监听”时，代码中的`if`分支被激活。脚本会打印`Goodbye!`，循环中断，脚本结束。当你的语音命令中包含*video*时，代码中的`elif`分支被激活。结果，`online_video()`被调用，在线视频开始播放。
 
 ## 总结
 
-在本章中，你学习了网页抓取的基础知识：HTML是如何工作的，包括HTML标签的不同类型及其用途，以及如何使用Beautiful Soup库解析HTML文件并抓取所需信息。
+在本章中，你学习了网页抓取的基础知识：HTML 是如何工作的，包括 HTML 标签的不同类型及其用途，以及如何使用 Beautiful Soup 库解析 HTML 文件并抓取所需信息。
 
-利用这些技巧，你学会了如何解析播客《NPR News Now》的源文件并定位其MP3文件。然后，你使用*webbrowser*模块播放在线MP3文件。你还学会了如何语音激活在线播客，利用*pygame*模块播放音频文件，从而可以通过语音命令随时停止播放。
+利用这些技巧，你学会了如何解析播客《NPR News Now》的源文件并定位其 MP3 文件。然后，你使用*webbrowser*模块播放在线 MP3 文件。你还学会了如何语音激活在线播客，利用*pygame*模块播放音频文件，从而可以通过语音命令随时停止播放。
 
 然后，你学习了如何语音激活在线电台盒子。具体来说，你学习了如何使用 Selenium 网络驱动程序与网页浏览器互动。你指示 Python 点击播放按钮以启动在线广播。你还学会了使用语音控制来完成这些任务。
 
@@ -2571,7 +2571,7 @@ def online_video():
 
 1.  修改 *parse_local.py* 以打印出 `class` 属性值和肯塔基大学图书馆的 `<a>` 标签的网页地址。
 
-1.  修改 *scrape_live_web.py* 以打印出“所有其他问题与评论”区域的信息，如 [图6-2](#figure6-2) 所示。
+1.  修改 *scrape_live_web.py* 以打印出“所有其他问题与评论”区域的信息，如 图 6-2 所示。
 
 1.  这个网址指向由格温妮斯·帕特洛和奥普拉·温弗瑞主持的播客：*https://goop.com/the-goop-podcast/gwyneth-x-oprah-power-perception-soul-purpose/.* 编写一个脚本来语音激活这个在线播客。
 
@@ -2579,7 +2579,7 @@ def online_video():
 
 构建虚拟个人助手
 
-![](Images/chapterart.png)
+![](img/chapterart.png)
 
 在本章和下一章，你将学习如何创建你自己的虚拟个人助手（VPA），类似于亚马逊的 Alexa。你将首先了解你的 VPA 及其功能概述。然后，你将一次性导入所有需要的模块，以便能够立即开始运行你的 VPA。你将编写一个脚本，让你的 VPA 全天候待命而不打扰你。每当你需要帮助时，可以说“你好，Python”来唤醒它，当你希望它再次待机时，可以使用语音命令让它进入待机模式。
 
@@ -2589,7 +2589,7 @@ def online_video():
 
 第四个功能是发送电子邮件。如果你说“给杰西卡发邮件”，脚本将启动电子邮件功能，从你的收件人列表中提取杰西卡的电子邮件地址，并询问你输入主题行和内容，你可以口述后告诉 VPA 发送。
 
-在第8章，你将学习如何让你的 VPA 能够回答（几乎）任何问题。在开始之前，请为本章创建文件夹 */mpt/ch07/*。和往常一样，本章的所有脚本可以在书籍的资源页面找到，[https://www.nostarch.com/make-python-talk](https://www.nostarch.com/make-python-talk)/。
+在第八章，你将学习如何让你的 VPA 能够回答（几乎）任何问题。在开始之前，请为本章创建文件夹 */mpt/ch07/*。和往常一样，本章的所有脚本可以在书籍的资源页面找到，[`www.nostarch.com/make-python-talk`](https://www.nostarch.com/make-python-talk)/。
 
 ## 虚拟个人助手概述
 
@@ -2597,7 +2597,7 @@ def online_video():
 
 ### 下载 VPA 文件
 
-让我们下载所需的文件。访问书籍的资源网站 [https://www.nostarch.com/make-python-talk/](https://www.nostarch.com/make-python-talk/%20)，从 */mpt/mptpkg/* 目录中下载以下文件：*mywakeup.py*、*mytimer.py*、*myalarm.py*、*myjoke.py* 和 *myemail.py*。将它们放在你存放自己制作的本地包文件的计算机同一目录中。有关说明，请参考第五章。我将在本章后面解释这些文件的作用。
+让我们下载所需的文件。访问书籍的资源网站 [`www.nostarch.com/make-python-talk/`](https://www.nostarch.com/make-python-talk/%20)，从 */mpt/mptpkg/* 目录中下载以下文件：*mywakeup.py*、*mytimer.py*、*myalarm.py*、*myjoke.py* 和 *myemail.py*。将它们放在你存放自己制作的本地包文件的计算机同一目录中。有关说明，请参考第五章。我将在本章后面解释这些文件的作用。
 
 接下来，打开计算机中包目录 */mpt/mptpkg/* 下的脚本 *__init__.py*。正如你在第五章中所回忆的，你已经将以下两行代码放入其中：
 
@@ -2606,7 +2606,7 @@ from .mysr import voice_to_text
 from .mysay import print_say
 ```
 
-将[清单 7-1](#listing7-1)中的五行代码添加到 *__init__.py* 的末尾。
+将清单 7-1 中的五行代码添加到 *__init__.py* 的末尾。
 
 ```py
 from .mywakeup import wakeup
@@ -2620,7 +2620,7 @@ from .myemail import email
 
 这段代码从五个模块中导入了五个函数 `wakeup()`、`timer()`、`alarm()`、`joke()` 和 `email()` 到本地包中，以便你稍后可以在包级别导入它们。关于这一点，我稍后会详细解释。
 
-接下来，访问书籍的资源网站，并从章节目录 */mpt/ch07/* 中下载 *vpa.py*。将其保存在你存放本章 Python 脚本的计算机位置。*vpa.py* 的代码展示在[清单 7-2](#listing7-2)中。
+接下来，访问书籍的资源网站，并从章节目录 */mpt/ch07/* 中下载 *vpa.py*。将其保存在你存放本章 Python 脚本的计算机位置。*vpa.py* 的代码展示在清单 7-2 中。
 
 ```py
 # Import functions from the local package
@@ -2664,7 +2664,7 @@ from mptpkg import voice_to_text, print_say, wakeup, timer, alarm, joke, email
 
 清单 7-2：VPA 的 Python 代码
 
-我们首先从本地包 *mptpkg* 中导入七个函数（`voice_to_text()`、`print_say()`、`wakeup()` 等）。[清单 7-1](#listing7-1) 中的代码已经从本地模块导入了五个函数（`wakeup()`、`timer()` 等）到 *mptpkg*，因此这里我们直接在包级别导入这些函数。
+我们首先从本地包 *mptpkg* 中导入七个函数（`voice_to_text()`、`print_say()`、`wakeup()` 等）。清单 7-1 中的代码已经从本地模块导入了五个函数（`wakeup()`、`timer()` 等）到 *mptpkg*，因此这里我们直接在包级别导入这些函数。
 
 我们通过创建一个无限循环 1 来启动脚本。在每次迭代中，VPA 在后台安静地监听你的语音命令。你可以说“Hello Python”来唤醒 VPA。唤醒后，VPA 会询问：“How may I help you？”并接收你的语音命令。你可以激活 VPA 的四个功能之一 2：设置计时器、设置闹钟、讲笑话或发送电子邮件。
 
@@ -2692,7 +2692,7 @@ Python 标准库中有几个可以提供时间和日期的模块，包括著名�
 
 ### 创建本地模块 mywakeup
 
-首先，您需要设置脚本以识别某些命令。在您的 Spyder 编辑器中打开您刚刚下载的 *mywakeup.py*。此脚本基于第三章的 *mysr.py*，并进行了重大修改。[列表 7-3](#listing7-3) 突出了这些差异。
+首先，您需要设置脚本以识别某些命令。在您的 Spyder 编辑器中打开您刚刚下载的 *mywakeup.py*。此脚本基于第三章的 *mysr.py*，并进行了重大修改。列表 7-3 突出了这些差异。
 
 ```py
 import speech_recognition as sr
@@ -2759,13 +2759,13 @@ OK, exit the script; goodbye!
 
 ## 让您的 VPA 设置定时器
 
-让我们探索第一个功能：设置定时器。为了做到这一点，你首先要学习如何在Python中获取时间。我们将使用*arrow*模块获取当前时间，然后创建一个接受书面命令的定时器。最后，我们将在本地模块*mytimer*中创建一个`timer()`函数，并将其导入到VPA脚本中；这样，我们就可以通过语音命令来设置定时器。
+让我们探索第一个功能：设置定时器。为了做到这一点，你首先要学习如何在 Python 中获取时间。我们将使用*arrow*模块获取当前时间，然后创建一个接受书面命令的定时器。最后，我们将在本地模块*mytimer*中创建一个`timer()`函数，并将其导入到 VPA 脚本中；这样，我们就可以通过语音命令来设置定时器。
 
-### 使用Python获取时间
+### 使用 Python 获取时间
 
-让我们先学习如何使用Python获取时间。
+让我们先学习如何使用 Python 获取时间。
 
-以下脚本，*get_time.py*，展示了如何以不同格式获取当前时区的时间。这只是一个示例，帮助你熟悉*arrow*模块；它并不是VPA脚本的一部分。
+以下脚本，*get_time.py*，展示了如何以不同格式获取当前时区的时间。这只是一个示例，帮助你熟悉*arrow*模块；它并不是 VPA 脚本的一部分。
 
 ```py
 import arrow
@@ -2783,9 +2783,9 @@ print("the current second is",arrow.now().format('s'))
 
 我们首先导入*arrow*模块。它的`now()`函数提供当前本地日期和时间，但你需要使用`format()`来指定格式和细节级别。
 
-[表7-1](#table7-1)列出了`format()`函数在*arrow*模块中常用的格式及其含义。例如，大写的`HH`和`H`分别以24小时制生成当前小时值，带有或不带有前导零，而`hh`和`h`则以12小时制生成相同的值。
+表 7-1 列出了`format()`函数在*arrow*模块中常用的格式及其含义。例如，大写的`HH`和`H`分别以 24 小时制生成当前小时值，带有或不带有前导零，而`hh`和`h`则以 12 小时制生成相同的值。
 
-在第1步，我们以24小时制的`H:m:s`格式获取当前时间，并打印出来。在第2步，我们以12小时制的格式`hh:mm:ss`获取时间，并加上AM或PM。最后，我们打印出当前时间的小时值。你也可以对分钟值或秒钟值执行相同的操作。
+在第 1 步，我们以 24 小时制的`H:m:s`格式获取当前时间，并打印出来。在第 2 步，我们以 12 小时制的格式`hh:mm:ss`获取时间，并加上 AM 或 PM。最后，我们打印出当前时间的小时值。你也可以对分钟值或秒钟值执行相同的操作。
 
 如果你运行该脚本，输出将类似如下：
 
@@ -2797,7 +2797,7 @@ the current minute is 35
 the current second is 46
 ```
 
-表7-1：*arrow*模块`format()`方法的一些常用格式
+表 7-1：*arrow*模块`format()`方法的一些常用格式
 
 | **格式代码** | **含义** |
 | --- | --- |
@@ -2806,9 +2806,9 @@ the current second is 46
 | `MMM` | 月份的简写名称 |
 | `MMMM` | 完整的月份名称 |
 | `YYYY` | 年份的正常格式（例如，2021） |
-| `HH` | 带前导零的小时数（24小时制，十进制） |
-| `hh` | 带前导零的小时数（12小时制，十进制） |
-| `A` | AM或PM |
+| `HH` | 带前导零的小时数（24 小时制，十进制） |
+| `hh` | 带前导零的小时数（12 小时制，十进制） |
+| `A` | AM 或 PM |
 | `mm` | 带前导零的分钟数（十进制） |
 | `ss` | 带前导零的秒数（十进制） |
 
@@ -2829,7 +2829,7 @@ print("today is", today_date.format('MM/DD/YYYY'))
 print("today is", today_date.format('ddd'))
 ```
 
-在第1步，我们使用`now()`生成当前日期和时间，并将其保存到字符串变量`today_date`中。在第2步，我们以“2021年1月1日”的格式打印出日期，月份名称使用简写形式，日期则使用MM/DD/YYYY模式的数字格式。在第3步，我们打印出星期几，并再次使用简写形式。
+在第 1 步，我们使用`now()`生成当前日期和时间，并将其保存到字符串变量`today_date`中。在第 2 步，我们以“2021 年 1 月 1 日”的格式打印出日期，月份名称使用简写形式，日期则使用 MM/DD/YYYY 模式的数字格式。在第 3 步，我们打印出星期几，并再次使用简写形式。
 
 该脚本生成类似如下的输出：
 
@@ -2841,13 +2841,13 @@ today is Monday
 today is Mon
 ```
 
-现在你知道如何在Python中获取时间了，接下来你将学习如何设置定时器。
+现在你知道如何在 Python 中获取时间了，接下来你将学习如何设置定时器。
 
 ### 构建一个定时器
 
-我们将使用新的*arrow*模块技能和*time*模块中的`sleep()`函数来构建一个可以接受书面命令的计时器。你不会在你的VPA脚本中使用这个，但你会学到构建一个可以接受语音命令的计时器所需的技能。
+我们将使用新的*arrow*模块技能和*time*模块中的`sleep()`函数来构建一个可以接受书面命令的计时器。你不会在你的 VPA 脚本中使用这个，但你会学到构建一个可以接受语音命令的计时器所需的技能。
 
-我们将限制输入只能包含小时、分钟或小时和分钟（脚本不会接受秒）。因此，你可以将计时器设置为2小时后响起，或者1小时30分钟后响起，或者20分钟后响起，但不能设置为1小时30分钟20秒后响起。
+我们将限制输入只能包含小时、分钟或小时和分钟（脚本不会接受秒）。因此，你可以将计时器设置为 2 小时后响起，或者 1 小时 30 分钟后响起，或者 20 分钟后响起，但不能设置为 1 小时 30 分钟 20 秒后响起。
 
 在详细介绍脚本之前，我们先理解一下其背后的逻辑。你的书面命令应该是`set a timer for 1 hour 20 minutes`、`set a timer for 2 hours`或`set a timer for 25 minutes`的形式。然后，脚本将你的命令保存在字符串变量`inp`中。
 
@@ -2861,9 +2861,9 @@ today is Mon
 
 +   `inp.find("hour")`的值和`inp.find("minute")`的值都不是`-1`。这意味着`hour`和`minute`都在变量`inp`中。你已经将计时器设置为`set a timer for 1 hour 20 minutes`的形式。我们提取`timer for`和`hour`之间的小时数，以及`hour`和`minute`之间的分钟数。
 
-我们将把这个时间添加到当前时间中，以确定计时器应何时响起。然后，我们每0.5秒检查一次时间，确保不漏掉计时器响起的时刻。当时间达到预设时间时，计时器响起。
+我们将把这个时间添加到当前时间中，以确定计时器应何时响起。然后，我们每 0.5 秒检查一次时间，确保不漏掉计时器响起的时刻。当时间达到预设时间时，计时器响起。
 
-计时器在*timer.py*中设置，见[列表7-4](#listing7-4)。
+计时器在*timer.py*中设置，见列表 7-4。
 
 ```py
 import time
@@ -2912,13 +2912,13 @@ while True:
     time.sleep(0.5)
 ```
 
-列表7-4：设置计时器的脚本
+列表 7-4：设置计时器的脚本
 
-我们首先打印出指令。在步骤1中，脚本获取用户的书面输入，指定设置计时器的时间，然后将其保存到变量`inp`中。
+我们首先打印出指令。在步骤 1 中，脚本获取用户的书面输入，指定设置计时器的时间，然后将其保存到变量`inp`中。
 
-然后我们检查输入中是否包含`hour`和`minute`。如果输入2中没有`minute`，我们将`addminute`的值设置为`0`，并将`addhour`的值设置为`timer for`和`hour`之间的数字。我们将使用类似的方法处理当书面命令中没有`hour`的情况3，或同时包含`hour`和`minute`的情况4。
+然后我们检查输入中是否包含`hour`和`minute`。如果输入 2 中没有`minute`，我们将`addminute`的值设置为`0`，并将`addhour`的值设置为`timer for`和`hour`之间的数字。我们将使用类似的方法处理当书面命令中没有`hour`的情况 3，或同时包含`hour`和`minute`的情况 4。
 
-*arrow* 模块中的 `now()` 函数获取当前的小时、分钟和秒值。我们将 `addminute` 和 `addhour` 的值加到当前时间上，得到计时器应该响铃的时间。5时，我们会调整分钟值超过 59 或小时值超过 23 的情况。然后我们将闹钟响铃的时间设置为 `H:m:s` 格式。
+*arrow* 模块中的 `now()` 函数获取当前的小时、分钟和秒值。我们将 `addminute` 和 `addhour` 的值加到当前时间上，得到计时器应该响铃的时间。5 时，我们会调整分钟值超过 59 或小时值超过 23 的情况。然后我们将闹钟响铃的时间设置为 `H:m:s` 格式。
 
 我们启动一个无限的 `while` 循环，每 0.5 秒检查一次当前时间。当当前时间达到设定的闹钟时间时，我们触发闹钟。脚本会打印出 `Your timer has gone off!`，然后脚本结束。
 
@@ -2939,7 +2939,7 @@ Your timer has gone off!
 
 现在我们将创建一个类似于 *timer.py* 脚本的 `timer()` 函数，但我们将使用语音命令而不是书面命令。
 
-打开你刚刚从书籍资源网站下载的 *mytimer.py* 文件，并在 Spyder 编辑器中打开它。该模块将定义你的 VPA 将使用的 `timer()` 函数，如 [列表 7-5](#listing7-5) 所示。
+打开你刚刚从书籍资源网站下载的 *mytimer.py* 文件，并在 Spyder 编辑器中打开它。该模块将定义你的 VPA 将使用的 `timer()` 函数，如 列表 7-5 所示。
 
 ```py
 import time
@@ -3003,7 +3003,7 @@ How may I help you?
 
 构建闹钟与设置计时器类似，只是我们指定闹钟响起的时间，而不是说它应该从现在起在某个时间响起。你可以单独指定小时值，例如 8 点，或指定小时和分钟的值，例如 7:25 am。
 
-目前，脚本将接收书面命令。脚本 *alarm_clock.py* 如 [列表 7-6](#listing7-6) 所示。
+目前，脚本将接收书面命令。脚本 *alarm_clock.py* 如 列表 7-6 所示。
 
 ```py
 import time
@@ -3065,7 +3065,7 @@ print(f"OK, your alarm will go off at {inp}!")
 
 现在，我们将创建 `alarm()` 函数，它将使用 *alarm_clock.py* 代码。该代码将接受语音输入，而不是书面输入，并同时提供语音和文本输出。
 
-打开你刚从书籍资源网站下载的 *myalarm.py*，并在 Spyder 编辑器中打开它。该脚本将定义虚拟助手使用的 `alarm()` 函数，见 [Listing 7-7](#listing7-7)。
+打开你刚从书籍资源网站下载的 *myalarm.py*，并在 Spyder 编辑器中打开它。该脚本将定义虚拟助手使用的 `alarm()` 函数，见 Listing 7-7。
 
 ```py
 import time
@@ -3119,9 +3119,9 @@ How may I help you?
 
 ### 创建你的笑话列表
 
-你可以从许多资源中创建笑话列表。我使用的是Quick, Funny Jokes! 网站（[https://www.quickfunnyjokes.com/math.html](https://www.quickfunnyjokes.com/math.html)）。
+你可以从许多资源中创建笑话列表。我使用的是 Quick, Funny Jokes! 网站（[`www.quickfunnyjokes.com/math.html`](https://www.quickfunnyjokes.com/math.html)）。
 
-我挑选了15个笑话并将它们保存在我电脑上章节文件夹*/mpt/ch07/*中的文件*jokes.txt*里。你可以使用任意数量的笑话，只要你也将它们保存在一个单独的文本文件中，就像我们在这里做的一样。以下是我的15个笑话：
+我挑选了 15 个笑话并将它们保存在我电脑上章节文件夹*/mpt/ch07/*中的文件*jokes.txt*里。你可以使用任意数量的笑话，只要你也将它们保存在一个单独的文本文件中，就像我们在这里做的一样。以下是我的 15 个笑话：
 
 ```py
 There are three kinds of people in the world—those who can count and those who can't. 
@@ -3161,7 +3161,7 @@ A circle is just a round straight line with a hole in the middle.
 
 在这一部分，你将创建一个`joke()`函数。当这个函数被调用时，它会访问你电脑中的文件*jokes.txt*，获取内容并将其拆分成单个笑话，然后将它们放入一个列表。它接着会从这个列表中随机选择一个笑话，并大声读出来。
 
-我们将把脚本*myjoke.py*（见[列表7-8](#listing7-8)）作为本地模块导入到你的VPA中。
+我们将把脚本*myjoke.py*（见列表 7-8）作为本地模块导入到你的 VPA 中。
 
 ```py
 1 import random
@@ -3180,17 +3180,17 @@ from mptpkg import print_say
     print_say(joke)
 ```
 
-列表7-8：创建一个*joke*模块的脚本
+列表 7-8：创建一个*joke*模块的脚本
 
-首先，我们导入*random*模块，我们将用它来从列表中随机选择一个笑话。在第1行，我们开始定义`joke()`。
+首先，我们导入*random*模块，我们将用它来从列表中随机选择一个笑话。在第 1 行，我们开始定义`joke()`。
 
-然后，我们读取文件*jokes.txt*中的内容，并将其存储在字符串变量`content`中。请注意，由于我们将*jokes.txt*放在了与模块脚本*myjoke.py*不同的目录中，我们需要指定文件的路径，`../ch07/`告诉Python文件位于名为*mptpkg*的平行文件夹中。通过这种方式，我们还可以在其他章节中使用讲笑话的功能，这一点我们将在第17章中实现。
+然后，我们读取文件*jokes.txt*中的内容，并将其存储在字符串变量`content`中。请注意，由于我们将*jokes.txt*放在了与模块脚本*myjoke.py*不同的目录中，我们需要指定文件的路径，`../ch07/`告诉 Python 文件位于名为*mptpkg*的平行文件夹中。通过这种方式，我们还可以在其他章节中使用讲笑话的功能，这一点我们将在第十七章中实现。
 
 我们知道单个笑话之间是通过双空行分隔的，因此我们使用`split()`将文件内容拆分成独立的字符串，并将它们放入列表`jokelist`中。接着，我们使用*random*模块中的`choice()`随机选择一个笑话。最后，脚本将选中的笑话打印出来并大声朗读。
 
 ### 讲笑话
 
-现在，你将把刚创建的笑话模块导入到你的VPA中，这样它就能用人类的声音讲笑话给你听。让我们聚焦在*vpa.py*中讲笑话的部分：
+现在，你将把刚创建的笑话模块导入到你的 VPA 中，这样它就能用人类的声音讲笑话给你听。让我们聚焦在*vpa.py*中讲笑话的部分：
 
 ```py
 `--snip--`
@@ -3203,7 +3203,7 @@ from mptpkg import joke
 `--snip--`
 ```
 
-我们首先从本地*mptpkg*包中导入新建的*myjoke*模块中的`joke()`函数。在VPA代码的内部`while`循环部分，有一个`elif`分支，在这个分支中，我们告诉VPA，如果语音命令中包含*tell*和*joke*，则激活讲笑话的功能。
+我们首先从本地*mptpkg*包中导入新建的*myjoke*模块中的`joke()`函数。在 VPA 代码的内部`while`循环部分，有一个`elif`分支，在这个分支中，我们告诉 VPA，如果语音命令中包含*tell*和*joke*，则激活讲笑话的功能。
 
 这是我与脚本*vpa.py*进行一次交互的结果，我的输入部分用粗体标出：
 
@@ -3219,21 +3219,21 @@ How may I help you?
 
 ## 发送免提电子邮件
 
-在这一部分，我们将探讨如何实现完全免提的发送电子邮件功能。你将首先学习如何使用书面命令通过Python发送电子邮件；这将使你能够创建一个接受语音命令的电子邮件模块。之后，你将把这个电子邮件模块导入到你的VPA中，这样你就可以用语音发送电子邮件了。
+在这一部分，我们将探讨如何实现完全免提的发送电子邮件功能。你将首先学习如何使用书面命令通过 Python 发送电子邮件；这将使你能够创建一个接受语音命令的电子邮件模块。之后，你将把这个电子邮件模块导入到你的 VPA 中，这样你就可以用语音发送电子邮件了。
 
 ### 发送带有书面命令的电子邮件
 
 在继续之前，你需要准备一些东西。
 
-首先，你需要一个电子邮件帐户来通过Python发送电子邮件。这个示例使用了我的Gmail账户，[ukmarkliu@gmail.com](mailto:ukmarkliu@gmail.com)，你应该用自己的电子邮件地址替换它。
+首先，你需要一个电子邮件帐户来通过 Python 发送电子邮件。这个示例使用了我的 Gmail 账户，ukmarkliu@gmail.com，你应该用自己的电子邮件地址替换它。
 
-Gmail和许多其他邮件提供商要求你申请一个单独的应用程序密码，这与常规的电子邮件密码不同。例如，Google账户帮助页面展示了如何设置Gmail应用密码；请参见[https://support.google.com/accounts/answer/185833/](https://support.google.com/accounts/answer/185833/)。
+Gmail 和许多其他邮件提供商要求你申请一个单独的应用程序密码，这与常规的电子邮件密码不同。例如，Google 账户帮助页面展示了如何设置 Gmail 应用密码；请参见[`support.google.com/accounts/answer/185833/`](https://support.google.com/accounts/answer/185833/)。
 
-在Python中发送电子邮件需要几个步骤。你首先需要连接到你的邮件提供商的简单邮件传输协议（SMTP）服务器。SMTP是用于发送电子邮件的互联网标准。一旦连接建立，你需要使用电子邮件地址和密码登录。然后，你需要提供收件人的电子邮件地址、主题行和电子邮件内容。最后，你将请求Python发送实际的电子邮件。
+在 Python 中发送电子邮件需要几个步骤。你首先需要连接到你的邮件提供商的简单邮件传输协议（SMTP）服务器。SMTP 是用于发送电子邮件的互联网标准。一旦连接建立，你需要使用电子邮件地址和密码登录。然后，你需要提供收件人的电子邮件地址、主题行和电子邮件内容。最后，你将请求 Python 发送实际的电子邮件。
 
-*smtplib*模块在Python标准库中，因此无需安装。你还需要至少一个电子邮件地址作为收件人的地址。你可以使用另一个自己的电子邮件地址，或者请求一个朋友的地址。
+*smtplib*模块在 Python 标准库中，因此无需安装。你还需要至少一个电子邮件地址作为收件人的地址。你可以使用另一个自己的电子邮件地址，或者请求一个朋友的地址。
 
-脚本*emails.py*可以接收你输入的命令，并使用Python发送电子邮件，如[清单7-9](#listing7-9)所示。
+脚本*emails.py*可以接收你输入的命令，并使用 Python 发送电子邮件，如清单 7-9 所示。
 
 ```py
 import smtplib
@@ -3266,27 +3266,27 @@ print('Ok, email sent')
 mysmt.quit()
 ```
 
-清单7-9：使用Python发送电子邮件的脚本
+清单 7-9：使用 Python 发送电子邮件的脚本
 
 我们导入了*smtplib*模块，并创建了一个字典*emails*，用于将姓名与电子邮件地址匹配。这样，当你输入一个人的名字时，脚本将从字典中检索对应的电子邮件。
 
-在第1步，我们连接到Gmail的SMTP服务器。如果你不是使用Gmail，你需要查找你的邮件提供商的域名和端口号。如果你使用Gmail，则无需更改。
+在第 1 步，我们连接到 Gmail 的 SMTP 服务器。如果你不是使用 Gmail，你需要查找你的邮件提供商的域名和端口号。如果你使用 Gmail，则无需更改。
 
-然后，我们开始与您的邮件服务器建立通信，并使用传输层安全性（TLS）加密。脚本需要TLS加密来保证安全性。一旦连接建立，你需要使用电子邮件地址和密码登录，因此请确保将`ukmarkliu@gmail.com`替换为你自己的电子邮件地址。我已经在代码中屏蔽了我的Gmail密码。
+然后，我们开始与您的邮件服务器建立通信，并使用传输层安全性（TLS）加密。脚本需要 TLS 加密来保证安全性。一旦连接建立，你需要使用电子邮件地址和密码登录，因此请确保将`ukmarkliu@gmail.com`替换为你自己的电子邮件地址。我已经在代码中屏蔽了我的 Gmail 密码。
 
-然后，脚本请求一些信息以发送电子邮件2。它首先请求收件人的姓名，你必须已经将其存储在字典`emails`中，供脚本检索。通过姓名，脚本从字典中检索电子邮件。然后，它还会要求你输入电子邮件的主题行和内容，你将在屏幕右下角的IPython控制台中输入。
+然后，脚本请求一些信息以发送电子邮件 2。它首先请求收件人的姓名，你必须已经将其存储在字典`emails`中，供脚本检索。通过姓名，脚本从字典中检索电子邮件。然后，它还会要求你输入电子邮件的主题行和内容，你将在屏幕右下角的 IPython 控制台中输入。
 
-在第3步，我们使用`sendmail()`发送电子邮件，它需要三个输入：你的电子邮件地址；收件人的电子邮件地址；以及用换行符`\n`分隔的主题行和电子邮件内容。
+在第 3 步，我们使用`sendmail()`发送电子邮件，它需要三个输入：你的电子邮件地址；收件人的电子邮件地址；以及用换行符`\n`分隔的主题行和电子邮件内容。
 
-完成后，脚本将确认电子邮件已发送。你可以自己尝试这个脚本，并确保你可以使用Python发送电子邮件。
+完成后，脚本将确认电子邮件已发送。你可以自己尝试这个脚本，并确保你可以使用 Python 发送电子邮件。
 
-接下来，我们将创建一个使用Python发送电子邮件的模块，然后将其添加到您的VPA中。
+接下来，我们将创建一个使用 Python 发送电子邮件的模块，然后将其添加到您的 VPA 中。
 
 ### 创建电子邮件模块
 
-我们首先需要创建脚本*myemail.py*，将其用作VPA中的本地模块。在该模块中，我们定义了一个`email()`函数。调用该函数后，它将连接到您的电子邮件服务器，并要求您通过语音输入——收件人姓名、主题行和电子邮件内容——然后发送电子邮件。
+我们首先需要创建脚本*myemail.py*，将其用作 VPA 中的本地模块。在该模块中，我们定义了一个`email()`函数。调用该函数后，它将连接到您的电子邮件服务器，并要求您通过语音输入——收件人姓名、主题行和电子邮件内容——然后发送电子邮件。
 
-*myemail.py*的内容类似于*emails.py*，有一些不同之处：脚本将通过语音输入和打印消息来请求您的输入，并且您需要使用语音输入而不是书面输入。这些不同之处在[列表7-10](#listing7-10)中有突出显示。
+*myemail.py*的内容类似于*emails.py*，有一些不同之处：脚本将通过语音输入和打印消息来请求您的输入，并且您需要使用语音输入而不是书面输入。这些不同之处在列表 7-10 中有突出显示。
 
 ```py
 `--snip--`
@@ -3317,15 +3317,15 @@ def email():
     mysmt.quit()
 ```
 
-列表7-10：创建本地*myemail*模块的脚本
+列表 7-10：创建本地*myemail*模块的脚本
 
 正如您所看到的，您需要从本地*mptpkg*包中导入`voice_to_text()`来捕捉您的语音输入，以口述收件人的姓名、电子邮件主题行和内容。您还需要从本地*mptpkg*包中导入`print_say()`来打印并朗读消息。
 
-现在，模块已经准备好，可以导入到VPA脚本中了。
+现在，模块已经准备好，可以导入到 VPA 脚本中了。
 
 ### 添加电子邮件功能
 
-接下来，您需要将`email()`从*myemail.py*导入到VPA中，这样您就可以100%免提地发送电子邮件。让我们聚焦到*vpa.py*中负责发送电子邮件的部分：
+接下来，您需要将`email()`从*myemail.py*导入到 VPA 中，这样您就可以 100%免提地发送电子邮件。让我们聚焦到*vpa.py*中负责发送电子邮件的部分：
 
 ```py
 `--snip--`
@@ -3361,65 +3361,65 @@ How may I help you?
 `--snip--`
 ```
 
-首先，您应该唤醒VPA。在您说“发送电子邮件”之后，电子邮件功能会被激活。VPA会询问收件人的姓名——我说了我的名字，然后我的肯塔基大学（UKY）电子邮件地址与之匹配。它还会询问主题行和电子邮件内容。收集完信息后，电子邮件被发送，脚本退出电子邮件功能。
+首先，您应该唤醒 VPA。在您说“发送电子邮件”之后，电子邮件功能会被激活。VPA 会询问收件人的姓名——我说了我的名字，然后我的肯塔基大学（UKY）电子邮件地址与之匹配。它还会询问主题行和电子邮件内容。收集完信息后，电子邮件被发送，脚本退出电子邮件功能。
 
-[图7-1](#figure7-1)显示了我在UKY电子邮件账户中收到的电子邮件。
+图 7-1 显示了我在 UKY 电子邮件账户中收到的电子邮件。
 
-![f07007](Images/f07007.png)
+![f07007](img/f07007.png)
 
-图7-1：使用Python脚本100%免提发送的电子邮件
+图 7-1：使用 Python 脚本 100%免提发送的电子邮件
 
 ## 总结
 
-在本章中，您学会了如何创建一个可以设置闹钟和计时器、讲笑话甚至免提发送电子邮件的VPA！您通过说“Hello Python”唤醒VPA，然后给出指令以激活四个功能之一。本章教会了您如何创建新功能，将其制作成本地模块，并在主脚本中使用。
+在本章中，您学会了如何创建一个可以设置闹钟和计时器、讲笑话甚至免提发送电子邮件的 VPA！您通过说“Hello Python”唤醒 VPA，然后给出指令以激活四个功能之一。本章教会了您如何创建新功能，将其制作成本地模块，并在主脚本中使用。
 
-在下一章中，您将学习如何使用WolframAlpha API，利用该网站的广阔知识空间，使您的VPA能够回答（几乎）任何问题。
+在下一章中，您将学习如何使用 WolframAlpha API，利用该网站的广阔知识空间，使您的 VPA 能够回答（几乎）任何问题。
 
 ## 章节末练习
 
-1.  编写一个脚本，打印出一条消息并大声朗读今天的日期和时间，格式为“今天是2021年9月8日，现在的时间是09:03:07 AM。”
+1.  编写一个脚本，打印出一条消息并大声朗读今天的日期和时间，格式为“今天是 2021 年 9 月 8 日，现在的时间是 09:03:07 AM。”
 
 1.  修改*mywakeup.py*，使得结束脚本*vpa.py*的唯一方式是说“退出脚本”。
 
 # 8
 
-无所不知的VPA
+无所不知的 VPA
 
-![](Images/chapterart.png)
+![](img/chapterart.png)
 
 我们在第七章创建的虚拟个人助理（VPA）可以为你设置计时器或闹钟，讲笑话，或者发送邮件。现在我们将对它进行升级，使你可以向它询问几乎任何问题——包括每日新闻和天气、油价以及旅行信息——并利用它几乎无限的科学、数学、历史和社会知识。
 
-在本章中，你将访问计算引擎WolframAlpha的信息库，并在WolframAlpha无法提供答案时，使用Wikipedia作为备选。如果两个网站都无法回答，你的VPA将告诉你：“我还在学习，暂时不知道答案。” 你的VPA将会完善，能够回答几乎任何问题。
+在本章中，你将访问计算引擎 WolframAlpha 的信息库，并在 WolframAlpha 无法提供答案时，使用 Wikipedia 作为备选。如果两个网站都无法回答，你的 VPA 将告诉你：“我还在学习，暂时不知道答案。” 你的 VPA 将会完善，能够回答几乎任何问题。
 
 在开始之前，为本章设置文件夹*/mpt/ch08/*。像往常一样，本章中的所有脚本都可以在书籍资源页面找到。
 
-## 从WolframAlpha获取答案
+## 从 WolframAlpha 获取答案
 
-*WolframAlpha*是一个计算知识引擎，提供用于事实查询的在线服务，特别专注于数值和计算能力，尤其是在科学和技术领域。在本节中，你将学习如何通过API从WolframAlpha获取答案，然后编写一个Python脚本来检索信息。
+*WolframAlpha*是一个计算知识引擎，提供用于事实查询的在线服务，特别专注于数值和计算能力，尤其是在科学和技术领域。在本节中，你将学习如何通过 API 从 WolframAlpha 获取答案，然后编写一个 Python 脚本来检索信息。
 
-### 申请API密钥
+### 申请 API 密钥
 
-第一步是申请一个API密钥。WolframAlpha为你提供每月最多2,000次免费的非商业API调用。前往[https://account.wolfram.com/login/create/](https://account.wolfram.com/login/create/)并按照步骤创建账户，如[图8-1](#figure8-1)所示。
+第一步是申请一个 API 密钥。WolframAlpha 为你提供每月最多 2,000 次免费的非商业 API 调用。前往[`account.wolfram.com/login/create/`](https://account.wolfram.com/login/create/)并按照步骤创建账户，如图 8-1 所示。
 
-![f08001](Images/f08001.png)
+![f08001](img/f08001.png)
 
-图8-1：创建你的免费Wolfram ID。
+图 8-1：创建你的免费 Wolfram ID。
 
-点击**创建Wolfram ID**，然后登录。Wolfram ID本身只提供浏览器访问权限，因此你需要获取一个AppID才能使用Python进行查询。前往[https://products.wolframalpha.com/api/](https://products.wolframalpha.com/api/)申请API，并点击左下角的**获取API访问权限**，如[图8-2](#figure8-2)所示。
+点击**创建 Wolfram ID**，然后登录。Wolfram ID 本身只提供浏览器访问权限，因此你需要获取一个 AppID 才能使用 Python 进行查询。前往[`products.wolframalpha.com/api/`](https://products.wolframalpha.com/api/)申请 API，并点击左下角的**获取 API 访问权限**，如图 8-2 所示。
 
-![f08002](Images/f08002.png)
+![f08002](img/f08002.png)
 
-图8-2：在WolframAlpha申请API。
+图 8-2：在 WolframAlpha 申请 API。
 
-应该会弹出一个小对话框，如[图8-3](#figure8-3)所示。
+应该会弹出一个小对话框，如图 8-3 所示。
 
-![f08003](Images/f08003.png)
+![f08003](img/f08003.png)
 
-图8-3：WolframAlpha获取新AppID窗口
+图 8-3：WolframAlpha 获取新 AppID 窗口
 
-填写应用名称和描述信息，然后点击**获取AppID**。例如，你可以在应用名称字段中输入`虚拟助手`，在描述字段中输入`学习如何用Python构建自己的虚拟个人助手`。
+填写应用名称和描述信息，然后点击**获取 AppID**。例如，你可以在应用名称字段中输入`虚拟助手`，在描述字段中输入`学习如何用 Python 构建自己的虚拟个人助手`。
 
-之后，你的AppID应该会出现在弹出窗口中。你需要点击**确定**来激活AppID。这个密钥将是一个长且独特的字符字符串，用于区分其他用户，类似于`HG**************YQ`（我已遮挡中间的字符）。将你的AppID保存在安全的地方；你稍后会用到它。
+之后，你的 AppID 应该会出现在弹出窗口中。你需要点击**确定**来激活 AppID。这个密钥将是一个长且独特的字符字符串，用于区分其他用户，类似于`HG**************YQ`（我已遮挡中间的字符）。将你的 AppID 保存在安全的地方；你稍后会用到它。
 
 ### 获取信息
 
@@ -3456,7 +3456,7 @@ print(res)
 
 然后，我们使用你的 AppID 创建客户端。在第 1 步，脚本会要求用户输入一个查询，该查询将通过 IPython 控制台在 Spyder IDE 的右下面板中输入。
 
-在第 2 步，我们将查询发送给 WolframAlpha，并检索 `result` 对象，将其保存在变量 `response` 中。`result` 对象包含一个生成器对象中的多个结果。*生成器函数* 是构建迭代器的便捷快捷方式，有时用于避免将大量数据保存在短期内存（RAM）中。你可以从权威的在线资源（例如，[https://wiki.python.org/moin/Generators](https://wiki.python.org/moin/Generators)）了解更多关于生成器的内容。这就是我们为何使用内置函数 `next()` 来遍历来自 WolframAlpha 的不同答案组，并提取答案的文本部分。关于如何使用 *wolframalpha* 模块进行查询过程的详细描述，请参考 [https://pypi.org/project/wolframalpha/](https://pypi.org/project/wolframalpha/)。最后，提取的文本将被打印出来。
+在第 2 步，我们将查询发送给 WolframAlpha，并检索 `result` 对象，将其保存在变量 `response` 中。`result` 对象包含一个生成器对象中的多个结果。*生成器函数* 是构建迭代器的便捷快捷方式，有时用于避免将大量数据保存在短期内存（RAM）中。你可以从权威的在线资源（例如，[`wiki.python.org/moin/Generators`](https://wiki.python.org/moin/Generators)）了解更多关于生成器的内容。这就是我们为何使用内置函数 `next()` 来遍历来自 WolframAlpha 的不同答案组，并提取答案的文本部分。关于如何使用 *wolframalpha* 模块进行查询过程的详细描述，请参考 [`pypi.org/project/wolframalpha/`](https://pypi.org/project/wolframalpha/)。最后，提取的文本将被打印出来。
 
 这是与 *wolfram.py* 的一个简单交互，输入的文本为加粗部分：
 
@@ -3525,10 +3525,10 @@ metabolic equivalent | 4.8 metabolic equivalents
 
 What do you want to know from WolframAlpha?
 **What is the speed of light?**
-2.998×10^8 m/s (meters per second)
+2.998×10⁸ m/s (meters per second)
 ```
 
-WolframAlpha收集了来自各种来源的信息，例如CIA的*世界事实手册*和*美国地质调查局*，因此它拥有全面的历史数据。你可以问关于事件、人物或事实的问题，比如车辆安全气囊是什么时候发明的：
+WolframAlpha 收集了来自各种来源的信息，例如 CIA 的*世界事实手册*和*美国地质调查局*，因此它拥有全面的历史数据。你可以问关于事件、人物或事实的问题，比如车辆安全气囊是什么时候发明的：
 
 ```py
 What do you want to know from WolframAlpha?
@@ -3551,9 +3551,9 @@ What do you want to know from WolframAlpha?
 
 #### 数学计算
 
-WolframAlpha可以回答你在数学、科学和技术领域的问题，涵盖从基础数学到微积分，再到常微分方程等内容。
+WolframAlpha 可以回答你在数学、科学和技术领域的问题，涵盖从基础数学到微积分，再到常微分方程等内容。
 
-例如，如果你想将125转换为二进制，你可以如下使用*wolfram.py*：
+例如，如果你想将 125 转换为二进制，你可以如下使用*wolfram.py*：
 
 ```py
 What do you want to know from WolframAlpha?
@@ -3561,7 +3561,7 @@ What do you want to know from WolframAlpha?
 1111101_2
 ```
 
-输出末尾的`2`表示响应是二进制格式。WolframAlpha还可以回答关于个人财务的问题，比如抵押贷款支付、信用卡计算和州税等。例如，要计算每月的抵押贷款支付，你只需要提供三项信息——贷款金额、利率和贷款期限——你就能得到答案：
+输出末尾的`2`表示响应是二进制格式。WolframAlpha 还可以回答关于个人财务的问题，比如抵押贷款支付、信用卡计算和州税等。例如，要计算每月的抵押贷款支付，你只需要提供三项信息——贷款金额、利率和贷款期限——你就能得到答案：
 
 ```py
 What do you want to know from WolframAlpha?
@@ -3569,11 +3569,11 @@ What do you want to know from WolframAlpha?
 monthly payment | $948
 ```
 
-使用关键字`mortgage`，你告诉脚本贷款金额`$150,000`，利率`6.5%`，以及期限`30年`。请注意，你查询的格式并不重要——你不需要在数字中使用逗号，参数的顺序也可以随意，脚本应该能够理解。
+使用关键字`mortgage`，你告诉脚本贷款金额`$150,000`，利率`6.5%`，以及期限`30 年`。请注意，你查询的格式并不重要——你不需要在数字中使用逗号，参数的顺序也可以随意，脚本应该能够理解。
 
 ## 为你的虚拟个人助理（VPA）添加一个全能功能
 
-我们在这里的目标是为你在第七章创建的虚拟个人助理（VPA）添加一个全能功能。我们主要依赖WolframAlpha来回答你的问题，但WolframAlpha也不能回答所有问题。在这种情况下，我们将搜索维基百科。如果维基百科也无法提供答案，VPA将告诉你它没有答案。
+我们在这里的目标是为你在第七章创建的虚拟个人助理（VPA）添加一个全能功能。我们主要依赖 WolframAlpha 来回答你的问题，但 WolframAlpha 也不能回答所有问题。在这种情况下，我们将搜索维基百科。如果维基百科也无法提供答案，VPA 将告诉你它没有答案。
 
 为了使用下一个脚本，确保在虚拟环境激活的情况下安装以下包：
 
@@ -3581,9 +3581,9 @@ monthly payment | $948
 **pip install wikipedia** 
 ```
 
-### WolframAlpha无法回答的问题
+### WolframAlpha 无法回答的问题
 
-尽管WolframAlpha拥有庞大的知识库，但它并不能回答所有问题。在某些领域，尤其是一般性参考问题，维基百科提供的答案比WolframAlpha更多。例如，如果你在*wolfram.py*中输入`University of Kentucky`作为查询，脚本将抛出一个`StopIteration`异常。这是因为`next()`无法在任何答案组中找到结果。
+尽管 WolframAlpha 拥有庞大的知识库，但它并不能回答所有问题。在某些领域，尤其是一般性参考问题，维基百科提供的答案比 WolframAlpha 更多。例如，如果你在*wolfram.py*中输入`University of Kentucky`作为查询，脚本将抛出一个`StopIteration`异常。这是因为`next()`无法在任何答案组中找到结果。
 
 另一方面，如果你运行第五章中的脚本*wiki.py*并输入`University of Kentucky`作为查询，你将得到以下输出：
 
@@ -3594,11 +3594,11 @@ The University of Kentucky (UK) is a public university in Lexington,
 `--snip--`
 ```
 
-维基百科也不能回答你所有的问题。例如，如果你在*wiki.py*中输入`how many people live outside the earth`作为查询，API将抛出一个`PageError`异常，导致该版本的脚本以错误状态突然结束。
+维基百科也不能回答你所有的问题。例如，如果你在*wiki.py*中输入`how many people live outside the earth`作为查询，API 将抛出一个`PageError`异常，导致该版本的脚本以错误状态突然结束。
 
 我们将通过编写一个脚本来改进我们的 VPA，该脚本首先查询 WolframAlpha，如果没有找到结果，则查询 Wikipedia。如果在 Wikipedia 上也找不到答案，脚本将打印出 `I am still learning. I don't know the answer to your question yet.` 我们将通过将调用放在 `try` 块中并在 `except` 块中处理异常来处理这些外部 API 引发的错误。
 
-访问书本的资源页面，下载 *know_all.py* 并将其保存在章节文件夹中。该脚本显示在 [列表 8-2](#listing8-2) 中。
+访问书本的资源页面，下载 *know_all.py* 并将其保存在章节文件夹中。该脚本显示在 列表 8-2 中。
 
 ```py
 import wolframalpha
@@ -3657,7 +3657,7 @@ What do you want to know?
 
 现在我们将创建 `know_all()` 函数，该函数将使用脚本 *myknowall.py*，但这次将接受语音命令，而不是书面命令，并且将同时打印和说出响应，而不仅仅是打印消息。
 
-从书本资源中下载 *myknowall.py* 并将其保存在本地包文件夹 */mpt/mptpkg/* 中。由于我们将把它作为本地包中的一个本地模块使用，请确保将其保存在本地包文件夹中，而不是章节文件夹中。该脚本将定义 VPA 使用的 `know_all()` 函数，简化版本显示在 [列表 8-3](#listing8-3) 中。
+从书本资源中下载 *myknowall.py* 并将其保存在本地包文件夹 */mpt/mptpkg/* 中。由于我们将把它作为本地包中的一个本地模块使用，请确保将其保存在本地包文件夹中，而不是章节文件夹中。该脚本将定义 VPA 使用的 `know_all()` 函数，简化版本显示在 列表 8-3 中。
 
 ```py
 `--snip--`
@@ -3701,9 +3701,9 @@ from mptpkg import know_all
 `--snip--`
 ```
 
-我们从本地的 *mptpkg* 包中导入 `know_all()`，并替换原来的 `else` 分支。在第7章的 *vpa.py* 中，如果没有激活四种功能，脚本会进入下一次迭代。而在新的 *vpa.py* 脚本中，如果四种功能都没有激活，则会启用知无不言的功能，默认情况下，脚本会在WolframAlpha和Wikipedia中搜索答案。
+我们从本地的 *mptpkg* 包中导入 `know_all()`，并替换原来的 `else` 分支。在第七章的 *vpa.py* 中，如果没有激活四种功能，脚本会进入下一次迭代。而在新的 *vpa.py* 脚本中，如果四种功能都没有激活，则会启用知无不言的功能，默认情况下，脚本会在 WolframAlpha 和 Wikipedia 中搜索答案。
 
-注意，这里我们在调用 `know_all()` 之前添加了条件 `if len(inp)>6`。如果没有这个条件，如果你长时间什么都不说，脚本会将输入视为空字符串。结果，你会不断听到回答 `I am still learning. I don't know the answer to your question yet.` 有了这个条件，如果你没有说任何话，脚本会进入下一次迭代，而不会执行任何操作，因为空字符串的长度为0。
+注意，这里我们在调用 `know_all()` 之前添加了条件 `if len(inp)>6`。如果没有这个条件，如果你长时间什么都不说，脚本会将输入视为空字符串。结果，你会不断听到回答 `I am still learning. I don't know the answer to your question yet.` 有了这个条件，如果你没有说任何话，脚本会进入下一次迭代，而不会执行任何操作，因为空字符串的长度为 0。
 
 运行 *vpa.py* 并通过说“Hello Python”来唤醒它。之后，你可以问任何你想问的问题。以下是与脚本交互的示例输出，我的语音输入以粗体显示：
 
@@ -3722,12 +3722,12 @@ Coronaviruses are a group of related RNA viruses that cause diseases in mammals 
 `--snip--`
 ```
 
-如你所见，激活 VPA 后，我首先问了1981年美国总统是谁。答案包括了两位总统，因为权力交接发生在1981年1月。之后，我问了关于冠状病毒的问题。VPA提供了详细的回答。
+如你所见，激活 VPA 后，我首先问了 1981 年美国总统是谁。答案包括了两位总统，因为权力交接发生在 1981 年 1 月。之后，我问了关于冠状病毒的问题。VPA 提供了详细的回答。
 
 ## 概述
 
-在本章中，你将第7章中的VPA进行了升级，现在你可以问它几乎任何问题——包括有关天气、油价、旅行情况的最新信息，以及关于科学、数学、历史和社会的几乎无限的事实。
+在本章中，你将第七章中的 VPA 进行了升级，现在你可以问它几乎任何问题——包括有关天气、油价、旅行情况的最新信息，以及关于科学、数学、历史和社会的几乎无限的事实。
 
-你学会了如何申请API并访问计算引擎WolframAlpha中的庞大知识库，当WolframAlpha无法提供答案时，你还可以使用Wikipedia作为备选。如果这两个网站都无法回答，你的VPA会告知你。到此为止，你的VPA已经完成，能够为你回答几乎所有问题。使用这样的API是一项极为强大的技能。
+你学会了如何申请 API 并访问计算引擎 WolframAlpha 中的庞大知识库，当 WolframAlpha 无法提供答案时，你还可以使用 Wikipedia 作为备选。如果这两个网站都无法回答，你的 VPA 会告知你。到此为止，你的 VPA 已经完成，能够为你回答几乎所有问题。使用这样的 API 是一项极为强大的技能。
 
 在接下来的几章中，你将学习如何创建自己控制语音的图形游戏，游戏能够与你对话。

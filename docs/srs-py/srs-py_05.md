@@ -2,7 +2,7 @@
 
 **分发你的软件**
 
-![image](../images/common01.jpg)
+![image](img/common01.jpg)
 
 可以肯定地说，在某个时刻，你会希望分发你的软件。虽然你可能会忍不住直接将代码打包并上传到互联网，Python 提供了工具来帮助你的最终用户更轻松地使用你的软件。你应该已经熟悉使用 *setup.py* 来安装 Python 应用程序和库，但你可能从未深入了解过它的背后原理或如何创建你自己的 *setup.py*。
 
@@ -10,7 +10,7 @@
 
 ### **setup.py 的一点历史**
 
-distutils 库最初由软件开发者 Greg Ward 创建，自 1998 年以来一直是标准 Python 库的一部分。Ward 希望为开发者提供一种简便的方式，帮助他们自动化为最终用户安装软件包的过程。软件包提供 *setup.py* 文件作为标准的 Python 脚本进行安装，开发者可以使用 distutils 来进行安装，如 [Listing 5-1](ch05.xhtml#ch5list1) 所示。
+distutils 库最初由软件开发者 Greg Ward 创建，自 1998 年以来一直是标准 Python 库的一部分。Ward 希望为开发者提供一种简便的方式，帮助他们自动化为最终用户安装软件包的过程。软件包提供 *setup.py* 文件作为标准的 Python 脚本进行安装，开发者可以使用 distutils 来进行安装，如 Listing 5-1 所示。
 
 #!/usr/bin/python
 
@@ -32,7 +32,7 @@ packages=['rebuildd'])
 
 以 *setup.py* 文件为项目根基，用户只需运行该文件并传入相应的命令作为参数，即可构建或安装你的软件。即使你的分发版除了原生 Python 模块外还包含 C 模块，distutils 也能自动处理它们。
 
-distutils 的开发在 2000 年被放弃；从那时起，其他开发者接手了它的后续工作。一个显著的继承者是名为 setuptools 的打包库，它提供了更频繁的更新和更多高级功能，比如自动处理依赖关系、Egg 分发格式以及 easy_install 命令。由于 distutils 在开发时仍是 Python 标准库中接受的软件打包方式，setuptools 提供了与其一定程度的向后兼容性。 [Listing 5-2](ch05.xhtml#ch5list2) 展示了如何使用 setuptools 构建与 [Listing 5-1](ch05.xhtml#ch5list1) 中相同的安装包。
+distutils 的开发在 2000 年被放弃；从那时起，其他开发者接手了它的后续工作。一个显著的继承者是名为 setuptools 的打包库，它提供了更频繁的更新和更多高级功能，比如自动处理依赖关系、Egg 分发格式以及 easy_install 命令。由于 distutils 在开发时仍是 Python 标准库中接受的软件打包方式，setuptools 提供了与其一定程度的向后兼容性。 Listing 5-2 展示了如何使用 setuptools 构建与 Listing 5-1 中相同的安装包。
 
 #!/usr/bin/env python
 
@@ -106,7 +106,7 @@ import setuptools
 
 setuptools.setup()
 
-两行代码——就这么简单。setup 所需的实际元数据存储在 *setup.cfg* 中，如 [Listing 5-3](ch05.xhtml#ch5list3) 所示。
+两行代码——就这么简单。setup 所需的实际元数据存储在 *setup.cfg* 中，如 Listing 5-3 所示。
 
 [metadata]
 
@@ -144,7 +144,7 @@ Programming Language :: Python
 
 如你所见，*setup.cfg* 使用了一种易于编写和阅读的格式，直接受 distutils2 的启发。许多其他工具，例如 Sphinx 或 Wheel，也从这个 *setup.cfg* 文件中读取配置——这本身就是一个很好的理由，值得开始使用它。
 
-在 [Listing 5-3](ch05.xhtml#ch5list3) 中，项目描述是从 *README.rst* 文件中读取的。保持一个 README 文件是一个好的实践——最好使用 RST 格式——这样用户可以快速了解项目内容。仅凭这些基本的 *setup.py* 和 *setup.cfg* 文件，你的包就已经准备好发布并供其他开发者和应用使用。如果需要，setuptools 文档提供了更多细节，例如，如果你的安装过程有额外步骤，或者你想包括额外的文件。
+在 Listing 5-3 中，项目描述是从 *README.rst* 文件中读取的。保持一个 README 文件是一个好的实践——最好使用 RST 格式——这样用户可以快速了解项目内容。仅凭这些基本的 *setup.py* 和 *setup.cfg* 文件，你的包就已经准备好发布并供其他开发者和应用使用。如果需要，setuptools 文档提供了更多细节，例如，如果你的安装过程有额外步骤，或者你想包括额外的文件。
 
 另一个有用的打包工具是 pbr，*Python Build Reasonableness* 的缩写。该项目最初在 OpenStack 中启动，作为 setuptools 的扩展，旨在简化包的安装和部署。与 setuptools 一起使用的 pbr 打包工具，补充了 setuptools 中缺失的一些功能，包括以下内容：
 
@@ -156,7 +156,7 @@ Programming Language :: Python
 
 +   基于 git 标签的版本管理，采用语义化版本控制
 
-而且这一切几乎不需要你额外的努力。要使用 pbr，你只需要启用它，如 [Listing 5-4](ch05.xhtml#ch5list4) 所示。
+而且这一切几乎不需要你额外的努力。要使用 pbr，你只需要启用它，如 Listing 5-4 所示。
 
 import setuptools
 
@@ -174,7 +174,7 @@ setup_requires 参数告诉 setuptools，必须先安装 pbr 才能使用 setupt
 
 为了解决这些问题，PEP 427 被编写出来，定义了一种新的 Python 分发包标准，叫做 Wheel。该格式的参考实现作为一个工具提供，也叫做 Wheel。
 
-Wheel 从 pip 版本 1.4 开始得到支持。如果你正在使用 setuptools 并且安装了 Wheel 包，它会自动作为一个名为 bdist_wheel 的 setuptools 命令进行集成。如果你没有安装 Wheel，可以通过命令 pip install wheel 来安装它。[清单 5-5](ch05.xhtml#ch5list5) 显示了调用 bdist_wheel 时的部分输出，已缩短以便打印。
+Wheel 从 pip 版本 1.4 开始得到支持。如果你正在使用 setuptools 并且安装了 Wheel 包，它会自动作为一个名为 bdist_wheel 的 setuptools 命令进行集成。如果你没有安装 Wheel，可以通过命令 pip install wheel 来安装它。清单 5-5 显示了调用 bdist_wheel 时的部分输出，已缩短以便打印。
 
 $ python setup.py bdist_wheel
 
@@ -282,13 +282,13 @@ python setup.py bdist_wheel --universal
 
 universal=1
 
-如果你构建的 Wheel 包含二进制程序或库（例如用 C 编写的 Python 扩展），那么这个二进制 Wheel 可能并不像你想象的那样具有可移植性。它默认在一些平台上可用，比如 Darwin（macOS）或 Microsoft Windows，但可能在所有 Linux 发行版上都无法工作。PEP 513 (*[https://www.python.org/dev/peps/pep-0513](https://www.python.org/dev/peps/pep-0513)*) 针对这个 Linux 问题，通过定义一个名为 manylinux1 的新平台标签以及保证在该平台上可用的最小库集合来解决这个问题。
+如果你构建的 Wheel 包含二进制程序或库（例如用 C 编写的 Python 扩展），那么这个二进制 Wheel 可能并不像你想象的那样具有可移植性。它默认在一些平台上可用，比如 Darwin（macOS）或 Microsoft Windows，但可能在所有 Linux 发行版上都无法工作。PEP 513 (*[`www.python.org/dev/peps/pep-0513`](https://www.python.org/dev/peps/pep-0513)*) 针对这个 Linux 问题，通过定义一个名为 manylinux1 的新平台标签以及保证在该平台上可用的最小库集合来解决这个问题。
 
 Wheel 是一个很好的格式，用于分发可直接安装的库和应用程序，因此建议你也将它们构建并上传到 PyPI。
 
 ### **与世界分享你的工作**
 
-一旦你有了一个合适的 *setup.py* 文件，构建一个可以分发的源代码 tarball 变得很容易。sdist setuptools 命令正是做了这件事，正如 [Listing 5-6](ch05.xhtml#ch5list6) 中所示。
+一旦你有了一个合适的 *setup.py* 文件，构建一个可以分发的源代码 tarball 变得很容易。sdist setuptools 命令正是做了这件事，正如 Listing 5-6 中所示。
 
 $ python setup.py sdist
 
@@ -334,9 +334,9 @@ $ python setup.py sdist
 
 sdist 命令会在源代码树的 *dist* 目录下创建一个 tar 包。这个 tar 包包含了所有源代码树中的 Python 模块。如前一节所述，你也可以使用 bdist_wheel 命令构建 Wheel 格式的归档。Wheel 格式的归档安装速度更快，因为它们已经是安装所需的正确格式。
 
-让代码可以访问的最后一步是将你的包导出到用户可以通过pip安装的地方。这意味着将项目发布到PyPI。
+让代码可以访问的最后一步是将你的包导出到用户可以通过 pip 安装的地方。这意味着将项目发布到 PyPI。
 
-如果这是你第一次导出到PyPI，最好在一个安全的沙盒中测试发布过程，而不是在生产服务器上。你可以使用PyPI的测试服务器进行此目的；它复制了主索引的所有功能，但仅用于测试。
+如果这是你第一次导出到 PyPI，最好在一个安全的沙盒中测试发布过程，而不是在生产服务器上。你可以使用 PyPI 的测试服务器进行此目的；它复制了主索引的所有功能，但仅用于测试。
 
 第一步是将项目注册到测试服务器。首先打开你的 *~/.pypirc* 文件，并添加以下几行：
 
@@ -380,7 +380,7 @@ $ python setup.py register -r testpypi
 
 这会连接到测试 PyPI 服务器实例并创建一个新条目。别忘了使用 -r 选项；否则会使用真实的生产 PyPI 实例！
 
-显然，如果一个同名的项目已经在那注册过了，过程将会失败。请重新尝试使用一个新的名称，一旦你成功注册了程序并收到OK响应，你就可以上传源代码的tar包，参考[清单5-7](ch05.xhtml#ch5list7)。
+显然，如果一个同名的项目已经在那注册过了，过程将会失败。请重新尝试使用一个新的名称，一旦你成功注册了程序并收到 OK 响应，你就可以上传源代码的 tar 包，参考清单 5-7。
 
 $ python setup.py sdist upload -r testpypi
 
@@ -434,7 +434,7 @@ $ python setup.py sdist upload -r testpypi
 
 *清单 5-7：将您的 tarball 上传到 PyPI*
 
-另外，您也可以上传一个 Wheel 存档，如 [清单 5-8](ch05.xhtml#ch5list8) 所示。
+另外，您也可以上传一个 Wheel 存档，如 清单 5-8 所示。
 
 $ python setup.py bdist_wheel upload -r testpypi
 
@@ -554,7 +554,7 @@ packages=['rebuildd'])
 
 #### ***可视化入口点***
 
-查看包中可用入口点的最简单方法是使用名为 entry point inspector 的包。你可以通过运行 `pip install entry-point-inspector` 来安装它。安装后，它提供了一个名为 epi 的命令，你可以从终端运行该命令，交互式地发现已安装软件包提供的入口点。[列表 5-9](ch05.xhtml#ch5list9) 展示了我在系统上运行 epi group list 的示例。
+查看包中可用入口点的最简单方法是使用名为 entry point inspector 的包。你可以通过运行 `pip install entry-point-inspector` 来安装它。安装后，它提供了一个名为 epi 的命令，你可以从终端运行该命令，交互式地发现已安装软件包提供的入口点。列表 5-9 展示了我在系统上运行 epi group list 的示例。
 
 $ epi group list
 
@@ -578,7 +578,7 @@ $ epi group list
 
 *列表 5-9：获取入口点组的列表*
 
-[列表 5-9](ch05.xhtml#ch5list9) 中来自 epi group list 的输出显示了系统中提供入口点的不同软件包。表格中的每一项是一个入口点组的名称。请注意，此列表包括 console_scripts，我们稍后会讨论。我们可以使用 epi 命令与 show 命令来显示特定入口点组的详细信息，如[列表 5-10](ch05.xhtml#ch5list10)所示。
+列表 5-9 中来自 epi group list 的输出显示了系统中提供入口点的不同软件包。表格中的每一项是一个入口点组的名称。请注意，此列表包括 console_scripts，我们稍后会讨论。我们可以使用 epi 命令与 show 命令来显示特定入口点组的详细信息，如列表 5-10 所示。
 
 $ epi group show console_scripts
 
@@ -671,7 +671,7 @@ entry_points={
 
 我们使用格式 module.submodule:function 来定义入口点。你可以看到，这里我们为客户端和服务器分别定义了一个入口点 ➊。
 
-当运行python setup.py install时，setuptools将创建一个类似[Listing 5-11](ch05.xhtml#ch5list11)中的脚本。
+当运行 python setup.py install 时，setuptools 将创建一个类似 Listing 5-11 中的脚本。
 
 #!/usr/bin/python
 
@@ -691,25 +691,25 @@ load_entry_point('foobar==1', 'console_scripts', 'foobar')()
 
 )
 
-*Listing 5-11: setuptools生成的控制台脚本*
+*Listing 5-11: setuptools 生成的控制台脚本*
 
-这段代码扫描foobar包的入口点，并从console_scripts组中检索foobar键，用于定位并运行相应的函数。load_entry_point的返回值将是对foobar.client.main函数的引用，该函数将不带任何参数地被调用，并且它的返回值将作为退出码。
+这段代码扫描 foobar 包的入口点，并从 console_scripts 组中检索 foobar 键，用于定位并运行相应的函数。load_entry_point 的返回值将是对 foobar.client.main 函数的引用，该函数将不带任何参数地被调用，并且它的返回值将作为退出码。
 
-请注意，这段代码使用pkg_resources来发现并加载Python程序中的入口点文件。
+请注意，这段代码使用 pkg_resources 来发现并加载 Python 程序中的入口点文件。
 
 **注意**
 
-*如果你在setuptools上使用pbr，生成的脚本比setuptools默认构建的脚本更简单（因此更快），因为它会直接调用你在入口点中编写的函数，而无需在运行时动态搜索入口点列表。*
+*如果你在 setuptools 上使用 pbr，生成的脚本比 setuptools 默认构建的脚本更简单（因此更快），因为它会直接调用你在入口点中编写的函数，而无需在运行时动态搜索入口点列表。*
 
-使用控制台脚本是一种技术，它消除了编写可移植脚本的负担，同时确保你的代码保留在Python包中，并且可以被其他程序导入（和测试）。
+使用控制台脚本是一种技术，它消除了编写可移植脚本的负担，同时确保你的代码保留在 Python 包中，并且可以被其他程序导入（和测试）。
 
 #### ***使用插件和驱动程序***
 
 入口点使得发现和动态加载由其他包部署的代码变得容易，但这并不是它们唯一的用途。任何应用程序都可以提议并注册入口点和组，然后按需使用它们。
 
-在本节中，我们将创建一个类似cron风格的守护进程pycrond，它将允许任何Python程序通过在pytimed组中注册入口点来注册一个命令，使得该命令每隔几秒钟执行一次。该入口点所指示的属性应为一个返回number_of_seconds和callable的对象。
+在本节中，我们将创建一个类似 cron 风格的守护进程 pycrond，它将允许任何 Python 程序通过在 pytimed 组中注册入口点来注册一个命令，使得该命令每隔几秒钟执行一次。该入口点所指示的属性应为一个返回 number_of_seconds 和 callable 的对象。
 
-这是我们使用pkg_resources来发现入口点并在一个名为*pytimed.py*的程序中实现pycrond的代码：
+这是我们使用 pkg_resources 来发现入口点并在一个名为*pytimed.py*的程序中实现 pycrond 的代码：
 
 import pkg_resources
 
@@ -743,7 +743,7 @@ time.sleep(1)
 
 seconds_passed += 1
 
-该程序由一个无限循环组成，循环遍历pytimed组的每个入口点。每个入口点通过load()方法加载。程序随后调用返回的方法，该方法需要返回等待的秒数，并且还需要返回前面提到的可调用对象。
+该程序由一个无限循环组成，循环遍历 pytimed 组的每个入口点。每个入口点通过 load()方法加载。程序随后调用返回的方法，该方法需要返回等待的秒数，并且还需要返回前面提到的可调用对象。
 
 *pytimed.py* 中的程序是一个非常简化且天真的实现，但足以满足我们的示例需求。现在我们可以编写另一个 Python 程序，命名为 *hello.py*，它需要定期调用其中的某个函数：
 
@@ -779,7 +779,7 @@ entry_points={
 
 *setup.py* 脚本在 pytimed 组中注册了一个名为 hello 的扩展点，其值指向函数 hello.say_hello。一旦使用该 *setup.py* 安装了该包—例如，使用 pip install—pytimed 脚本就能检测到新添加的扩展点。
 
-在启动时，pytimed 会扫描 pytimed 组并找到 key 为 hello 的扩展。然后，它会调用 hello.say_hello 函数，获取两个值：每次调用之间等待的秒数和要调用的函数，在此示例中为 2 秒和 print_hello。通过运行该程序，就像我们在 [列表 5-12](ch05.xhtml#ch5list12) 中所做的那样，你可以看到每隔 2 秒就会在屏幕上打印出“你好，世界！”。
+在启动时，pytimed 会扫描 pytimed 组并找到 key 为 hello 的扩展。然后，它会调用 hello.say_hello 函数，获取两个值：每次调用之间等待的秒数和要调用的函数，在此示例中为 2 秒和 print_hello。通过运行该程序，就像我们在 列表 5-12 中所做的那样，你可以看到每隔 2 秒就会在屏幕上打印出“你好，世界！”。
 
 >>> 导入 pytimed
 
@@ -833,7 +833,7 @@ stevedore 的 ExtensionManager 类提供了一种简单的方法来加载所有�
 
 如果你查看 stevedore 文档，你会发现 ExtensionManager 有多种子类，可以处理不同的情况，比如根据扩展名称或函数的结果加载特定的扩展。这些都是常用的模式，你可以将它们应用到你的程序中，以直接实现这些模式。
 
-例如，我们可能只想从我们的入口点组加载并运行一个扩展。利用stevedore.driver.DriverManager类可以实现这一点，正如[列表5-13](ch05.xhtml#ch5list13)所示。
+例如，我们可能只想从我们的入口点组加载并运行一个扩展。利用 stevedore.driver.DriverManager 类可以实现这一点，正如列表 5-13 所示。
 
 from stevedore.driver import DriverManager
 
@@ -859,29 +859,29 @@ seconds_passed += 1
 
 main("hello")
 
-*列表5-13：使用stevedore从入口点运行单个扩展*
+*列表 5-13：使用 stevedore 从入口点运行单个扩展*
 
 在这种情况下，只有一个扩展根据名称被加载并选择。这使得我们可以快速构建一个*驱动系统*，在其中只有一个扩展被程序加载并使用。
 
 ### **总结**
 
-Python的打包生态系统有一段坎坷的历史；然而，目前情况正在稳定。setuptools库提供了完整的打包解决方案，不仅能将你的代码以不同的格式传输并上传到PyPI，还能通过入口点与其他软件和库进行连接。
+Python 的打包生态系统有一段坎坷的历史；然而，目前情况正在稳定。setuptools 库提供了完整的打包解决方案，不仅能将你的代码以不同的格式传输并上传到 PyPI，还能通过入口点与其他软件和库进行连接。
 
-### **Nick Coghlan谈打包**
+### **Nick Coghlan 谈打包**
 
-Nick是Red Hat的Python核心开发人员。他撰写了几份PEP提案，包括PEP 426（Python软件包元数据2.0），并且他作为我们的终身仁慈独裁者Guido van Rossum的代表，Guido是Python的作者。
+Nick 是 Red Hat 的 Python 核心开发人员。他撰写了几份 PEP 提案，包括 PEP 426（Python 软件包元数据 2.0），并且他作为我们的终身仁慈独裁者 Guido van Rossum 的代表，Guido 是 Python 的作者。
 
-**Python的打包解决方案（distutils、setuptools、distutils2、distlib、bento、pbr等）种类繁多。你认为这种碎片化和分歧的原因是什么？**
+**Python 的打包解决方案（distutils、setuptools、distutils2、distlib、bento、pbr 等）种类繁多。你认为这种碎片化和分歧的原因是什么？**
 
 简单来说，软件发布、分发和集成是一个复杂的问题，仍有很多空间可以为不同的使用场景提供多种解决方案。在我最近的讲座中，我提到这个问题主要与时间有关，因为不同的打包工具诞生于软件分发的不同时代。
 
-**PEP 426定义了Python包的新元数据格式，仍然相对较新，尚未批准。你认为它将如何解决当前的打包问题？**
+**PEP 426 定义了 Python 包的新元数据格式，仍然相对较新，尚未批准。你认为它将如何解决当前的打包问题？**
 
-PEP 426最初作为Wheel格式定义的一部分开始，但Daniel Holth意识到Wheel可以与setuptools定义的现有元数据格式兼容。因此，PEP 426是现有setuptools元数据与distutils2和其他打包系统（如RPM和npm）的一些理念的整合。它解决了一些现有工具所遇到的挫折（例如，清晰地区分不同类型的依赖）。
+PEP 426 最初作为 Wheel 格式定义的一部分开始，但 Daniel Holth 意识到 Wheel 可以与 setuptools 定义的现有元数据格式兼容。因此，PEP 426 是现有 setuptools 元数据与 distutils2 和其他打包系统（如 RPM 和 npm）的一些理念的整合。它解决了一些现有工具所遇到的挫折（例如，清晰地区分不同类型的依赖）。
 
-主要的收益将是PyPI上的REST API，提供完整的元数据访问，以及（希望）能够根据上游元数据自动生成符合分发策略的包。
+主要的收益将是 PyPI 上的 REST API，提供完整的元数据访问，以及（希望）能够根据上游元数据自动生成符合分发策略的包。
 
-**Wheel格式相对较新，尚未广泛使用，但它似乎很有前景。为什么它不是标准库的一部分？**
+**Wheel 格式相对较新，尚未广泛使用，但它似乎很有前景。为什么它不是标准库的一部分？**
 
 事实证明，标准库并不是一个适合用于打包标准的地方：它演化得太慢，而且标准库的新增功能不能在 Python 的早期版本中使用。因此，在今年早些时候的 Python 语言峰会上，我们调整了 PEP 流程，允许 distutils-sig 管理与打包相关的 PEP 的完整审批周期，python-dev 只会参与涉及直接修改 CPython 的提案（如 pip 启动）。
 

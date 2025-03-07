@@ -1,4 +1,4 @@
-# [第三部分](nsp-venkitachalam503045-0008.xhtml#rpt03)
+# 第三部分
 
 # 图片的乐趣
 

@@ -6,7 +6,7 @@
 
 异常在任何较低级别引发时，我们将异常的值分配给
 
-**82** 第4章
+**82** 第四章
 
 异常并存储在错误变量中。当我们打印该变量时，用户将看到相关的错误信息。因为异常已经在
 
@@ -156,7 +156,7 @@ move() 方法，每个 Monster 都可以移动到并记住它的新位置。
 
 **实现** 类的实际代码，展示对象是 *如何* 完成它的任务的。
 
-**第 84 章**
+**第八十四章**
 
 如果你是类的创建者或维护者，你需要完全理解实现——所有方法的代码以及它们
 
@@ -232,19 +232,19 @@ move() 方法，每个 Monster 都可以移动到并记住它的新位置。
 
 主板、播放声音等等。
 
-[第5章 g](#p118)为你提供了对 pygame 如何工作的基本理解，并提供了构建基于 pygame 的程序的标准模板。我们将
+第五章 g 为你提供了对 pygame 如何工作的基本理解，并提供了构建基于 pygame 的程序的标准模板。我们将
 
 先构建几个简单程序，创建一个控制图像的程序
 
 使用键盘输入，然后我们将构建一个球体反弹程序。
 
-[第6章 e](#p150)解释了如何将 pygame 最好地作为面向对象框架使用。你将看到如何使用
+第六章 e 解释了如何将 pygame 最好地作为面向对象框架使用。你将看到如何使用
 
 面向对象技术，并开发简单的按钮和文本输入
 
 领域。
 
-[第7章 d](index_split_003.html#p172)描述了 pygwidgets 模块，它包含了许多标准用户界面控件的完整实现，比如按钮、输入框
+第七章 d 描述了 pygwidgets 模块，它包含了许多标准用户界面控件的完整实现，比如按钮、输入框
 
 和输出字段、单选按钮、复选框等，所有这些都使用面向对象技术
 
@@ -294,29 +294,29 @@ Python 语言的设计旨在处理
 
 理解如何有效使用面向对象编程（OOP）技术。
 
-本章提供了pygame的一般介绍，因此大多数
+本章提供了 pygame 的一般介绍，因此大多数
 
 本章中的信息和示例将使用过程化编程。开始
 
-接下来的章节中，我将解释如何使用pygame有效地运用OOP。
+接下来的章节中，我将解释如何使用 pygame 有效地运用 OOP。
 
-**安装Pygame**
+**安装 Pygame**
 
-Pygame是一个免费的可下载包。我们将使用包管理器
+Pygame 是一个免费的可下载包。我们将使用包管理器
 
-*pip*（即*pip安装包*）用于安装Python包。如引言中所述，我假设你已经从*python.org*安装了官方版本的Python。pip程序作为该下载的一部分包含在内，因此你应该已经安装了它。
+*pip*（即*pip 安装包*）用于安装 Python 包。如引言中所述，我假设你已经从*python.org*安装了官方版本的 Python。pip 程序作为该下载的一部分包含在内，因此你应该已经安装了它。
 
-与标准应用程序不同，你必须从命令行运行pip
+与标准应用程序不同，你必须从命令行运行 pip
 
-一行。在Mac上，启动终端应用程序（位于*实用工具*文件夹内）。
+一行。在 Mac 上，启动终端应用程序（位于*实用工具*文件夹内）。
 
-子文件夹位于*应用程序*文件夹内）。在Windows系统中，点击
+子文件夹位于*应用程序*文件夹内）。在 Windows 系统中，点击
 
-Windows图标，输入**cmd**，然后按回车。
+Windows 图标，输入**cmd**，然后按回车。
 
 **注**
 
-*本书没有在Linux系统上进行测试。然而，大部分内容* *应该可以在最小调整的情况下运行。在Linux发行版上安装pygame，*
+*本书没有在 Linux 系统上进行测试。然而，大部分内容* *应该可以在最小调整的情况下运行。在 Linux 发行版上安装 pygame，*
 
 *以你惯用的方式打开终端。*
 
@@ -326,15 +326,15 @@ python3 -m pip install -U pip --user
 
 python3 -m pip install -U pygame --user
 
-第一个命令确保你拥有最新版本的pip。
+第一个命令确保你拥有最新版本的 pip。
 
-程序。第二行安装pygame的最新版本。
+程序。第二行安装 pygame 的最新版本。
 
-如果你在安装pygame时遇到任何问题，请查阅pygame文档
+如果你在安装 pygame 时遇到任何问题，请查阅 pygame 文档
 
-文档可以在[*https://www.pygame.org/wiki/GettingStarted*](https://www.pygame.org/wiki/GettingStarted)查阅。要测试pygame是否正确安装，打开IDLE（Python的开发环境，
+文档可以在[*https://www.pygame.org/wiki/GettingStarted*](https://www.pygame.org/wiki/GettingStarted)查阅。要测试 pygame 是否正确安装，打开 IDLE（Python 的开发环境，
 
-随Python的默认实现一起捆绑在一起），并且在shell中win-
+随 Python 的默认实现一起捆绑在一起），并且在 shell 中 win-
 
 然后按回车：
 
@@ -342,13 +342,13 @@ import pygame
 
 如果你看到类似“Hello from the pygame
 
-社区”或者如果你根本没有收到任何消息，那么pygame已经安装
+社区”或者如果你根本没有收到任何消息，那么 pygame 已经安装
 
-正确无误。没有错误消息表示Python已经能够
+正确无误。没有错误消息表示 Python 已经能够
 
-查找并加载pygame包并准备就绪。如果你想
+查找并加载 pygame 包并准备就绪。如果你想
 
-查看使用pygame的示例游戏，输入以下命令（这
+查看使用 pygame 的示例游戏，输入以下命令（这
 
 启动一个版本的*太空侵略者*）：
 
@@ -356,19 +356,19 @@ python3 -m pygame.examples.aliens
 
 **90** 第五章
 
-在我们开始使用pygame之前，我需要解释两个重要的概念。首先，我将解释程序中如何处理单个像素。
+在我们开始使用 pygame 之前，我需要解释两个重要的概念。首先，我将解释程序中如何处理单个像素。
 
-使用GUI的程序。然后，我将讨论事件驱动的程序以及它们如何不同于
+使用 GUI 的程序。然后，我将讨论事件驱动的程序以及它们如何不同于
 
 与典型的基于文本的程序有所不同。之后，我们将编写一些程序
 
-演示关键pygame功能的程序。
+演示关键 pygame 功能的程序。
 
 **窗口详情**
 
 计算机屏幕由大量的行列组成
 
-由称为*像素*的小点组成（源自*图像元素*）。用户通过一个或多个窗口与GUI程序进行交互；每个窗口都是屏幕上的矩形区域。程序可以控制任何单个
+由称为*像素*的小点组成（源自*图像元素*）。用户通过一个或多个窗口与 GUI 程序进行交互；每个窗口都是屏幕上的矩形区域。程序可以控制任何单个
 
 窗口中的像素。如果你运行多个 GUI 程序，每个
 
@@ -490,7 +490,7 @@ Pygame 简介 **91**
 
 pixelLocation = (3, 5)
 
-**92** 第 5 章
+**92** 第五章
 
 0
 
@@ -560,7 +560,7 @@ pixelLocation = (3, 5)
 
 在 pygame 中由一组四个值表示：x, y, 宽度, 高度。矩形的
 
-图5-4中的图像具有3、5、11、7的值。我将展示如何使用
+图 5-4 中的图像具有 3、5、11、7 的值。我将展示如何使用
 
 即使是下一个示例程序中这样的矩形，也会用到。即使你的
 
@@ -570,7 +570,7 @@ pixelLocation = (3, 5)
 
 检测。
 
-《Pygame简介**93**
+《Pygame 简介**93**
 
 0
 
@@ -624,13 +624,13 @@ pixelLocation = (3, 5)
 
 …
 
-*图5-4：窗口中的图像*
+*图 5-4：窗口中的图像*
 
 ***像素颜色***
 
 让我们探索一下颜色在计算机屏幕上的表示方式。如果你
 
-如果你有使用过像Photoshop这样的图形程序，你可能
+如果你有使用过像 Photoshop 这样的图形程序，你可能
 
 你可能已经知道这是如何工作的，但你可能还是想要快速复习一下。
 
@@ -640,15 +640,15 @@ pixelLocation = (3, 5)
 
 每个像素由一定量的红色、绿色和蓝色组成，其中
 
-每种颜色的量通过一个0到255之间的值来指定，0表示没有，255表示最大强度-
+每种颜色的量通过一个 0 到 255 之间的值来指定，0 表示没有，255 表示最大强度-
 
-以全强度显示。因此，存在256 × 256 × 256种可能的组合-
+以全强度显示。因此，存在 256 × 256 × 256 种可能的组合-
 
-组合的可能性或16,777,216种（通常简称“1600万”）种颜色，
+组合的可能性或 16,777,216 种（通常简称“1600 万”）种颜色，
 
 为每个像素。
 
-pygame中的颜色是通过RGB值给出的，我们将它们写成Python
+pygame 中的颜色是通过 RGB 值给出的，我们将它们写成 Python
 
 使用三个数字的元组。以下是我们为主要颜色创建常量的方式：
 
@@ -660,7 +660,7 @@ BLUE = (0, 0, 255) # 无红色，无绿色，完全蓝色
 
 **94** 第五章
 
-以下是几种颜色的定义。你可以使用任意组合的三种数字（0到255之间）来创建颜色：
+以下是几种颜色的定义。你可以使用任意组合的三种数字（0 到 255 之间）来创建颜色：
 
 BLACK = (0, 0, 0) # 无红色，无绿色，无蓝色
 
@@ -678,7 +678,7 @@ YELLOW = (255, 255, 0)
 
 PURPLE = (128, 0, 128)
 
-在pygame中，当你想要填充窗口背景时，你需要指定颜色-
+在 pygame 中，当你想要填充窗口背景时，你需要指定颜色-
 
 在窗口的背景上绘制一个形状，绘制文本等。
 
@@ -690,17 +690,17 @@ PURPLE = (128, 0, 128)
 
 在到目前为止书中的大多数程序中，主要代码通常位于
 
-当调用内建的input()函数时，程序会停止并
+当调用内建的 input()函数时，程序会停止并
 
 等待用户输入以便工作。程序的输出通常由
 
-使用print()函数输出。
+使用 print()函数输出。
 
-在交互式图形用户界面（GUI）程序中，这种模型不再适用。GUI介绍-
+在交互式图形用户界面（GUI）程序中，这种模型不再适用。GUI 介绍-
 
 引入了一种新的计算模型，称为*事件驱动*模型。事件-
 
-驱动程序不再依赖input()和print()；相反，用户通过
+驱动程序不再依赖 input()和 print()；相反，用户通过
 
 可以通过键盘和/或鼠标或其他指点设备在窗口中随意操作元素
 
@@ -740,9 +740,9 @@ PURPLE = (128, 0, 128)
 
 窗口更新用户看到的内容。
 
-Pygame简介 **95**
+Pygame 简介 **95**
 
-![图片 18](index-125_1.png)
+![图片 18](img/index-125_1.png)
 
 例如，假设我们有一个简单的 GUI 程序，显示两个按钮
 
@@ -958,7 +958,7 @@ RGB 值为 BLACK，我们将用它来绘制窗口的背景。
 
 pygame.display.set_mode() 函数并传入所需的宽度和
 
-窗口的高度。最后，我们调用另一个pygame函数来创建
+窗口的高度。最后，我们调用另一个 pygame 函数来创建
 
 创建一个时钟对象，这将在我们的主循环底部用于
 
@@ -984,7 +984,7 @@ pygame.display.set_mode() 函数并传入所需的宽度和
 
 6\. 无限循环。
 
-这里我们开始我们的主循环。这是一个简单的while True无限循环。
+这里我们开始我们的主循环。这是一个简单的 while True 无限循环。
 
 同样，你可以把主循环中的每次迭代当作一个
 
@@ -992,7 +992,7 @@ pygame.display.set_mode() 函数并传入所需的宽度和
 
 7\. 检查并处理事件；通常称为*事件循环*。
 
-在这一部分，我们调用pygame.event.get()来获取事件列表，
+在这一部分，我们调用 pygame.event.get()来获取事件列表，
 
 自上次检查以来发生了什么（上次主循环执行时）
 
@@ -1006,9 +1006,9 @@ pygame.display.set_mode() 函数并传入所需的宽度和
 
 关闭窗口时，我们检查的唯一事件类型是常量
 
-pygame.QUIT，由pygame在用户点击关闭按钮时生成。
+pygame.QUIT，由 pygame 在用户点击关闭按钮时生成。
 
-如果我们发现这个事件，我们告诉pygame退出，这样可以释放出任何
+如果我们发现这个事件，我们告诉 pygame 退出，这样可以释放出任何
 
 使用它的资源。然后，我们退出程序。
 
@@ -1030,7 +1030,7 @@ pygame.QUIT，由pygame在用户点击关闭按钮时生成。
 
 最简单的方法是直接用颜色填充窗口，我们在这里就做了这个
 
-使用window.fill()调用，指定一个黑色背景。我们也可以
+使用 window.fill()调用，指定一个黑色背景。我们也可以
 
 画一个背景图，但我们现在先不做。
 
@@ -1044,29 +1044,29 @@ pygame.QUIT，由pygame在用户点击关闭按钮时生成。
 
 代码按层次从最远到最近进行绘制。例如，假设我们
 
-我们想要绘制两个部分重叠的圆，A和B。如果我们先画A
+我们想要绘制两个部分重叠的圆，A 和 B。如果我们先画 A
 
-如果我们先画A，它将出现在B后面，A的一部分会被B遮挡。
+如果我们先画 A，它将出现在 B 后面，A 的一部分会被 B 遮挡。
 
-如果我们先画B然后是A，情况就相反，我们看到A在
+如果我们先画 B 然后是 A，情况就相反，我们看到 A 在
 
-在B前面。这是一个自然的映射，等同于图形中的层次结构。
+在 B 前面。这是一个自然的映射，等同于图形中的层次结构。
 
-例如Photoshop这样的图形程序。
+例如 Photoshop 这样的图形程序。
 
 11\. 更新窗口。
 
-这一行告诉pygame将我们包含的所有绘图内容展示出来。
+这一行告诉 pygame 将我们包含的所有绘图内容展示出来。
 
-它在窗口中。Pygame实际上在步骤8、9和
+它在窗口中。Pygame 实际上在步骤 8、9 和
 
-10 在一个离屏缓冲区中。当你告诉pygame更新时，它会将
+10 在一个离屏缓冲区中。当你告诉 pygame 更新时，它会将
 
 将离屏缓冲区的内容放入实际窗口。
 
-Pygame简介 **99**
+Pygame 简介 **99**
 
-![Image 19](index-129_1.png)
+![Image 19](img/index-129_1.png)
 
 12\. 稍微放慢节奏。
 
@@ -1074,7 +1074,7 @@ Pygame简介 **99**
 
 如果程序没有暂停，程序可能会比设计的帧速率运行得更快，
 
-直到经过指定的帧速率时间后，pygame才会继续执行。该段代码告诉pygame等到
+直到经过指定的帧速率时间后，pygame 才会继续执行。该段代码告诉 pygame 等到
 
 经过指定时间后，为了使我们的帧显示一致，
 
@@ -1098,13 +1098,13 @@ Pygame简介 **99**
 
 在应用程序窗口中显示图像。
 
-在pygame中，所有图像（和声音）都需要保存在外部文件中
+在 pygame 中，所有图像（和声音）都需要保存在外部文件中
 
 路径类型：相对路径和绝对路径。
 
-pygame支持许多标准的图像文件格式，包括*.png*、*.jpg*和*.gif*。在这个程序中，我们将从文件*ball.png*中加载一个球的图片。提醒一下，本书中所有主要示例的代码和相关资源都可以在[*https://www.nostarch.com/*](https://www.nostarch.com/objectorientedpython/) 下载。
+pygame 支持许多标准的图像文件格式，包括*.png*、*.jpg*和*.gif*。在这个程序中，我们将从文件*ball.png*中加载一个球的图片。提醒一下，本书中所有主要示例的代码和相关资源都可以在[*https://www.nostarch.com/*](https://www.nostarch.com/objectorientedpython/) 下载。
 
-[*objectorientedpython/* a](https://www.nostarch.com/objectorientedpython/)和[*https://github.com/IrvKalb/O*](https://github.com/IrvKalb/Object-Oriented-Python-Code/) *面向对象Python代码/*。
+[*objectorientedpython/* a](https://www.nostarch.com/objectorientedpython/)和[*https://github.com/IrvKalb/O*](https://github.com/IrvKalb/Object-Oriented-Python-Code/) *面向对象 Python 代码/*。
 
 尽管在这个程序中我们只需要一个图像文件，但最好
 
@@ -1112,17 +1112,17 @@ pygame支持许多标准的图像文件格式，包括*.png*、*.jpg*和*.gif*�
 
 这里给你提供了一个例子。首先，创建一个项目文件夹。将你的主程序
 
-在该文件夹中，以及包含Python类和相关文件的任何文件
+在该文件夹中，以及包含 Python 类和相关文件的任何文件
 
 功能。然后，在项目文件夹中创建一个*images*文件夹，在其中放入你要在程序中使用的任何图像文件。还要创建
 
-一个*声音*文件夹，并将你要使用的任何声音文件放在那里。图5-6
+一个*声音*文件夹，并将你要使用的任何声音文件放在那里。图 5-6
 
 显示了建议的结构。本书中的所有示例程序
 
 将使用这个项目文件夹结构。
 
-*图5-6：建议的项目文件夹层次结构*
+*图 5-6：建议的项目文件夹层次结构*
 
 *路径*（也称为*路径名*）是唯一标识文件或文件夹在计算机上位置的字符串。要加载图像或声音文件
 
@@ -1130,11 +1130,11 @@ pygame支持许多标准的图像文件格式，包括*.png*、*.jpg*和*.gif*�
 
 路径有两种类型：相对路径和绝对路径。
 
-*相对路径*是相对于当前文件夹的路径，通常称为*当前* *工作目录*。当你使用IDLE或
+*相对路径*是相对于当前文件夹的路径，通常称为*当前* *工作目录*。当你使用 IDLE 或
 
-**100** 第5章
+**100** 第五章
 
-如果你使用PyCharm，它会将当前文件夹设置为包含你主Python程序的文件夹，因此你可以轻松使用相对路径。在本书中，我假设
+如果你使用 PyCharm，它会将当前文件夹设置为包含你主 Python 程序的文件夹，因此你可以轻松使用相对路径。在本书中，我假设
 
 如果你使用的是 IDE，并且会将所有路径表示为相对路径。
 
@@ -1158,7 +1158,7 @@ pygame支持许多标准的图像文件格式，包括*.png*、*.jpg*和*.gif*�
 
 来自 pathlib 的 Path
 
-# 将此放入第2节，定义一个常量
+# 将此放入第二部分，定义一个常量
 
 BASE_PATH = Path(__file__).resolve().parent
 
@@ -1626,25 +1626,25 @@ clock.tick(FRAMES_PER_SECOND) # 让 pygame 等待
 
 一旦检测到按键，我们会查看事件来找出按下了哪个键。每个
 
-每个按键在pygame中都有一个关联常量，因此我们检查用户是否
+每个按键在 pygame 中都有一个关联常量，因此我们检查用户是否
 
 按下了左、上、下或右方向键。对于这些键，我们进行修改
 
-适当调整球的x或y坐标的值，数值较小
+适当调整球的 x 或 y 坐标的值，数值较小
 
 像素的数量。
 
-接下来我们基于球的x和y坐标创建一个pygame矩形对象
+接下来我们基于球的 x 和 y 坐标创建一个 pygame 矩形对象
 
-y坐标及其高度和宽度4。我们可以检查两个矩形是否相交
+y 坐标及其高度和宽度 4。我们可以检查两个矩形是否相交
 
 角度重叠的处理调用：
 
-*<booleanVariable>* = *<rect1>* .colliderect( *<rect2>* ) 这个调用比较两个矩形，如果它们有任何重叠，则返回True
+*<booleanVariable>* = *<rect1>* .colliderect( *<rect2>* ) 这个调用比较两个矩形，如果它们有任何重叠，则返回 True
 
-或者如果它们没有重叠，则返回False。我们将球的矩形与目标矩形进行比较
+或者如果它们没有重叠，则返回 False。我们将球的矩形与目标矩形进行比较
 
-角度为5，如果它们重叠，程序会打印“Ball is touching the target”（球与目标接触）
+角度为 5，如果它们重叠，程序会打印“Ball is touching the target”（球与目标接触）
 
 输出到命令行窗口。
 
@@ -1652,7 +1652,7 @@ y坐标及其高度和宽度4。我们可以检查两个矩形是否相交
 
 目标先绘制，这样当两个矩形重叠时，球会出现在目标上方
 
-目标6\。
+目标 6\。
 
 当程序运行时，如果球的矩形与目标的矩形重叠
 
@@ -1664,19 +1664,19 @@ y坐标及其高度和宽度4。我们可以检查两个矩形是否相交
 
 处理键盘交互的第二种方式是*轮询*键盘
 
-键盘。这涉及到询问pygame获取一个表示哪些键被按下的列表
+键盘。这涉及到询问 pygame 获取一个表示哪些键被按下的列表
 
 当前每帧按下的键使用以下调用：
 
 *<aTuple>* = pygame.key.get_pressed()
 
-这个调用返回一个由0和1组成的元组，表示每个键的状态：
+这个调用返回一个由 0 和 1 组成的元组，表示每个键的状态：
 
-如果按键处于松开状态则为0，按下状态为1。然后可以使用已定义的常量
+如果按键处于松开状态则为 0，按下状态为 1。然后可以使用已定义的常量
 
-在pygame中作为返回元组的索引，查看特定的按键是否被按下。例如，以下几行可以用来判断
+在 pygame 中作为返回元组的索引，查看特定的按键是否被按下。例如，以下几行可以用来判断
 
-A键的状态：
+A 键的状态：
 
 keyPressedTuple = pygame.key.get_pressed()
 
@@ -1684,21 +1684,21 @@ keyPressedTuple = pygame.key.get_pressed()
 
 aIsDown = keyPressedTuple[pygame.K_a]
 
-pygame中定义的所有按键常量的完整列表
+pygame 中定义的所有按键常量的完整列表
 
 可以在[a](https://www.pygame.org/docs/ref/key.html)找到。
 
-Pygame介绍 **107**
+Pygame 介绍 **107**
 
-列表5-5中的代码展示了如何使用这种技巧来连续移动图像，而不是每次按下键时只移动一次。在这个版本中，我们
+列表 5-5 中的代码展示了如何使用这种技巧来连续移动图像，而不是每次按下键时只移动一次。在这个版本中，我们
 
-将键盘处理从第7节移到第8节。其余部分的
+将键盘处理从第七部分移到第八部分。其余部分的
 
-代码与列表5-4中的前一个版本完全相同。
+代码与列表 5-4 中的前一个版本完全相同。
 
 **文件：PygameDemo3_MoveByKeyboard/PygameMoveByKeyboardContinuous.py**
 
-# pygame演示3(b) - 一张图像，连续模式下，键按住时持续移动
+# pygame 演示 3(b) - 一张图像，连续模式下，键按住时持续移动
 
 --- 截断 ---
 
@@ -1706,7 +1706,7 @@ Pygame介绍 **107**
 
 for event in pygame.event.get():
 
-# 点击了关闭按钮？退出pygame并结束程序
+# 点击了关闭按钮？退出 pygame 并结束程序
 
 如果 event.type == pygame.QUIT:
 
@@ -1882,7 +1882,7 @@ sys.exit()
 
 2 如果 (ballX < 0) 或 (ballX >= MAX_WIDTH):
 
-xSpeed = -xSpeed # 反转X方向
+xSpeed = -xSpeed # 反转 X 方向
 
 如果 (ballY < 0) 或 (ballY >= MAX_HEIGHT):
 
@@ -1980,7 +1980,7 @@ ballX 坐标并将 ySpeed 添加到 ballY 坐标 3。此位置
 
 并为你维护许多其他属性。你可以通过：  
 
-这些属性可以通过 *点语法* 直接按名称访问，如表 5-1 所示。（我将在第 8 章提供更多细节）  
+这些属性可以通过 *点语法* 直接按名称访问，如表 5-1 所示。（我将在第八章提供更多细节）  
 
 **表 5-1：** 直接访问 rect 属性  
 
@@ -2126,7 +2126,7 @@ pygame 的 rect 也可以看作并访问为一个包含四个元素的列表
 
 **文件: PygameDemo4_OneBal Bounce/PygameOneBal BounceRects.py**
 
-# pygame演示4(b) - 一个图像，使用矩形在窗口中反弹
+# pygame 演示 4(b) - 一个图像，使用矩形在窗口中反弹
 
 # 1 - 导入包
 
@@ -2188,7 +2188,7 @@ while True:
 
 for event in pygame.event.get():
 
-# 点击关闭按钮？退出pygame并结束程序
+# 点击关闭按钮？退出 pygame 并结束程序
 
 if event.type == pygame.QUIT:
 
@@ -2200,11 +2200,11 @@ sys.exit()
 
 2 if (ballRect.left < 0) or (ballRect.right >= WINDOW_WIDTH):
 
-xSpeed = -xSpeed # 反转X方向
+xSpeed = -xSpeed # 反转 X 方向
 
 if (ballRect.top < 0) or (ballRect.bottom >= WINDOW_HEIGHT):
 
-ySpeed = -ySpeed # 反转Y方向
+ySpeed = -ySpeed # 反转 Y 方向
 
 # 更新球的矩形，使用两个方向的速度
 
@@ -2228,7 +2228,7 @@ pygame.display.update()
 
 clock.tick(FRAMES_PER_SECOND)
 
-*Listing 5-7: 基于位置的动画，使用矩形让球在窗口中反弹* Pygame简介 **113**
+*Listing 5-7: 基于位置的动画，使用矩形让球在窗口中反弹* Pygame 简介 **113**
 
 使用矩形对象的方法既不比使用独立变量更好，也不更差。结果程序的工作方式完全相同
 
@@ -2236,15 +2236,15 @@ clock.tick(FRAMES_PER_SECOND)
 
 矩形对象的属性。
 
-加载完球的图像后，我们调用get_rect()方法 1
+加载完球的图像后，我们调用 get_rect()方法 1
 
 获取图像的边界矩形。这个调用返回一个矩形对象，
 
-我们将其存储到名为ballRect的变量中。我们使用ballRect.width和
+我们将其存储到名为 ballRect 的变量中。我们使用 ballRect.width 和
 
 ballRect.height 直接访问球图像的宽度和高度。
 
-（在之前的版本中，我们使用了一个常量100作为宽度和
+（在之前的版本中，我们使用了一个常量 100 作为宽度和
 
 height.) 从加载的图像中获取这些值使我们的代码更加简洁
 
@@ -2254,9 +2254,9 @@ height.) 从加载的图像中获取这些值使我们的代码更加简洁
 
 用于检查球的矩形是否超出任何部分的独立变量
 
-如果球矩形超出了边界，我们可以使用ballRect.left和ballRect.right来判断
+如果球矩形超出了边界，我们可以使用 ballRect.left 和 ballRect.right 来判断
 
-从左侧或右侧边缘掉出 2。我们使用ballRect.top和ballRect-
+从左侧或右侧边缘掉出 2。我们使用 ballRect.top 和 ballRect-
 
 Rect.bottom。与其更新单独的 x 和 y 坐标变量，
 
@@ -2302,9 +2302,9 @@ ballImage = pygame.image.load('images/ball.png')
 
 bounceSound = pygame.mixer.Sound('sounds/boing.wav')
 
-**第114章 第5章**
+**第一百一十四章 第五章**
 
-为了在每次更改小球的水平或垂直方向时播放“boing”声音效果，我们修改第 8 节，使其看起来像这样：
+为了在每次更改小球的水平或垂直方向时播放“boing”声音效果，我们修改第八部分，使其看起来像这样：
 
 # 8 - 执行任何“每帧”操作
 
@@ -2348,7 +2348,7 @@ pygame.mixer.music.play( *<循环次数>* , *<起始位置>* ) 要反复播放�
 
 程序正确加载音效和背景音乐文件并
 
-启动背景音效播放。唯一的更改是在第4节，
+启动背景音效播放。唯一的更改是在第四部分，
 
 如此处所示。
 
@@ -2364,13 +2364,13 @@ pygame.mixer.music.load('sounds/background.mp3')
 
 pygame.mixer.music.play(-1, 0.0)
 
-Pygame允许更加精细的背景处理
+Pygame 允许更加精细的背景处理
 
 声音。你可以在[a*tps://www.pygame.org/docs/*](https://www.pygame.org/docs/ref/music.html#module-pygame.mixer.music)找到完整的文档
 
 [*ref/music.html#module-pygame.mixer.music*](https://www.pygame.org/docs/ref/music.html#module-pygame.mixer.music).
 
-Pygame简介 **115**
+Pygame 简介 **115**
 
 **注释**
 
@@ -2490,19 +2490,19 @@ pygame.draw.line(window, BLUE, (20, 60), (60, 20), 1)
 
 pygame.draw.circle(window, GREEN, (250, 50), 30, 0) # 填充
 
-pygame.draw.circle(window, GREEN, (400, 50), 30, 2) # 2像素边缘
+pygame.draw.circle(window, GREEN, (400, 50), 30, 2) # 2 像素边缘
 
 # 绘制一个填充矩形和一个空心矩形
 
 pygame.draw.rect(window, RED, (250, 150, 100, 50), 0) # 填充
 
-pygame.draw.rect(window, RED, (400, 150, 100, 50), 1) # 1像素边缘
+pygame.draw.rect(window, RED, (400, 150, 100, 50), 1) # 1 像素边缘
 
 # 绘制一个填充椭圆和一个空心椭圆
 
 pygame.draw.ellipse(window, YELLOW, (250, 250, 80, 40), 0) # 填充
 
-pygame.draw.ellipse(window, YELLOW, (400, 250, 80, 40), 2) # 2像素边缘
+pygame.draw.ellipse(window, YELLOW, (400, 250, 80, 40), 2) # 2 像素边缘
 
 # 绘制一个六边形
 
@@ -2534,7 +2534,7 @@ pygame.display.update()
 
 clock.tick(FRAMES_PER_SECOND) # 让 pygame 等待
 
-*清单 5-8：一个程序，展示如何在 pygame 中使用 cal s 绘制基本图形函数* 所有基础图形的绘制发生在第10章。我们进行
+*清单 5-8：一个程序，展示如何在 pygame 中使用 cal s 绘制基本图形函数* 所有基础图形的绘制发生在第十章。我们进行
 
 调用 pygame 的绘图函数，绘制一个带有两条对角线的矩形，填充
 
@@ -2542,11 +2542,11 @@ clock.tick(FRAMES_PER_SECOND) # 让 pygame 等待
 
 六边形、多边形弧线和两条抗锯齿线。
 
-Pygame简介 **117**
+Pygame 简介 **117**
 
-![图像 20](index-147_1.png)
+![图像 20](img/index-147_1.png)
 
-*图5-7：一个示例程序，展示如何使用 cal s 绘制基本形状*
+*图 5-7：一个示例程序，展示如何使用 cal s 绘制基本形状*
 
 ***基础形状参考***
 
@@ -2554,7 +2554,7 @@ Pygame简介 **117**
 
 绘制这些基本形状。在以下所有内容中，color 参数期待
 
-允许你传入一个RGB值的元组：
+允许你传入一个 RGB 值的元组：
 
 **抗锯齿线**
 
@@ -2580,7 +2580,7 @@ pygame.draw.aalines(window, color, closed, points, blend=True)
 
 与现有的像素颜色混合，而不是覆盖它们。
 
-**118** 第5章
+**118** 第五章
 
 **弧形**
 
@@ -2590,7 +2590,7 @@ pygame.draw.arc(window, color, rect, angle_start, angle_stop, width=0)
 
 两个角度参数是初始角度和结束角度（以弧度表示，范围从
 
-右侧为零）。width参数是绘制
+右侧为零）。width 参数是绘制
 
 外边缘。
 
@@ -2598,43 +2598,43 @@ pygame.draw.arc(window, color, rect, angle_start, angle_stop, width=0)
 
 pygame.draw.circle(window, color, pos, radius, width=0)
 
-在窗口中绘制一个圆形。pos是圆心，
+在窗口中绘制一个圆形。pos 是圆心，
 
-radius是半径。width参数是绘制
+radius 是半径。width 参数是绘制
 
-外边缘。如果width为0，则圆形将被填充。
+外边缘。如果 width 为 0，则圆形将被填充。
 
 **椭圆**
 
 pygame.draw.ellipse(window, color, rect, width=0)
 
-在窗口中绘制一个椭圆。给定的rect是椭圆的区域
+在窗口中绘制一个椭圆。给定的 rect 是椭圆的区域
 
-椭圆将被填充。width参数是绘制外边缘的粗细。
+椭圆将被填充。width 参数是绘制外边缘的粗细。
 
-边缘。如果width为0，则椭圆将被填充。
+边缘。如果 width 为 0，则椭圆将被填充。
 
 **线条**
 
 pygame.draw.line(window, color, startpos, endpos, width=1)
 
-在窗口中绘制一条线。width参数是线条的粗细。
+在窗口中绘制一条线。width 参数是线条的粗细。
 
 **线条**
 
 pygame.draw.lines(window, color, closed, points, width=1)
 
-在窗口中绘制一系列线条。closed参数是一个简单的
+在窗口中绘制一系列线条。closed 参数是一个简单的
 
-布尔值；如果为True，则会在第一个和最后一个点之间绘制一条线。
+布尔值；如果为 True，则会在第一个和最后一个点之间绘制一条线。
 
-完成形状的坐标。points参数是一个包含（x，y）坐标的列表或元组。
+完成形状的坐标。points 参数是一个包含（x，y）坐标的列表或元组。
 
 坐标由线段连接（必须至少有
 
-两个）。width参数是线条的粗细。注意，指定比1更宽的线条不会填补线条之间的空隙。
+两个）。width 参数是线条的粗细。注意，指定比 1 更宽的线条不会填补线条之间的空隙。
 
-设定线条宽度大于1不会填充线条之间的间隙。
+设定线条宽度大于 1 不会填充线条之间的间隙。
 
 因此，宽线条和锐角不会无缝连接。
 
@@ -2642,27 +2642,27 @@ pygame.draw.lines(window, color, closed, points, width=1)
 
 pygame.draw.polygon(window, color, pointslist, width=0)
 
-在窗口中绘制一个多边形。pointslist指定了多边形的顶点
+在窗口中绘制一个多边形。pointslist 指定了多边形的顶点
 
-多边形的顶点。width参数是绘制外边缘的粗细。
+多边形的顶点。width 参数是绘制外边缘的粗细。
 
-边缘。如果width为0，则多边形将被填充。
+边缘。如果 width 为 0，则多边形将被填充。
 
-Pygame简介 **119**
+Pygame 简介 **119**
 
 **矩形**
 
 pygame.draw.rect(window, color, rect, width=0)
 
-在窗口中绘制一个矩形。rect是矩形的区域。
+在窗口中绘制一个矩形。rect 是矩形的区域。
 
-width参数是绘制外边缘的粗细。如果width为0，
+width 参数是绘制外边缘的粗细。如果 width 为 0，
 
 那么矩形将被填充。
 
 **注释**
 
-*有关更多信息，请参见* [http://www.pygame.org/docs/ref/draw.html *.*](http://www.pygame.org/docs/ref/draw.html)
+*有关更多信息，请参见* [`www.pygame.org/docs/ref/draw.html *.*`](http://www.pygame.org/docs/ref/draw.html)
 
 一组原始调用允许你灵活地绘制任何形状。
 
@@ -2674,7 +2674,7 @@ width参数是绘制外边缘的粗细。如果width为0，
 
 **总结**
 
-在这一章中，我介绍了pygame的基础知识。你已经安装了pygame
+在这一章中，我介绍了 pygame 的基础知识。你已经安装了 pygame
 
 你的计算机，接着了解了事件驱动编程的模型
 
@@ -2684,49 +2684,49 @@ width参数是绘制外边缘的粗细。如果width为0，
 
 颜色在代码中的表示方式。
 
-为了从一开始就学习pygame，我介绍了一个12节的
+为了从一开始就学习 pygame，我介绍了一个 12 节的
 
 一个不做任何事情的模板，只是打开一个窗口，可以用来构建
 
-任何基于pygame的程序。使用这个框架，我们接着构建了示例
+任何基于 pygame 的程序。使用这个框架，我们接着构建了示例
 
-程序展示了如何在窗口中绘制图像（使用blit()）,
+程序展示了如何在窗口中绘制图像（使用 blit()）,
 
 如何检测鼠标事件，以及如何处理键盘输入。接下来
 
 演示都解释了如何构建基于位置的动画。
 
-矩形在pygame中非常重要，所以我介绍了如何使用其属性
+矩形在 pygame 中非常重要，所以我介绍了如何使用其属性
 
-rect对象的属性可以被使用。我还提供了一些示例代码
+rect 对象的属性可以被使用。我还提供了一些示例代码
 
 展示如何播放音效和背景音乐，以增强用户的
 
-增强你程序的乐趣。最后，我介绍了如何使用pygame方法
+增强你程序的乐趣。最后，我介绍了如何使用 pygame 方法
 
 使用方法在窗口中绘制原始形状。
 
-尽管我在pygame中介绍了许多概念，但几乎每个
+尽管我在 pygame 中介绍了许多概念，但几乎每个
 
 本章中展示的所有内容本质上都是过程化的。rect
 
-对象是直接构建在pygame中的面向对象代码的一个例子。在
+对象是直接构建在 pygame 中的面向对象代码的一个例子。在
 
-在下一章中，我将展示如何在代码中使用OOP，使得pygame的使用更加
+在下一章中，我将展示如何在代码中使用 OOP，使得 pygame 的使用更加
 
 有效地。
 
-**120** 第5章
+**120** 第五章
 
 **6**
 
-**面向对象的pygame游戏**
+**面向对象的 pygame 游戏**
 
 在本章中，我将展示如何
 
-你可以在代码中有效地使用OOP技术，
+你可以在代码中有效地使用 OOP 技术，
 
-pygame框架。我们将从
+pygame 框架。我们将从
 
 一个过程化代码的例子，然后将其拆分
 
@@ -2734,7 +2734,7 @@ pygame框架。我们将从
 
 该类的方法。之后，我们将构建两个
 
-类SimpleButton和SimpleText实现了
+类 SimpleButton 和 SimpleText 实现了
 
 基本用户界面小部件：一个按钮和一个字段，用于
 
@@ -2742,47 +2742,47 @@ pygame框架。我们将从
 
 回调函数。
 
-**用OOP和Pygame构建屏幕保护程序球**
+**用 OOP 和 Pygame 构建屏幕保护程序球**
 
-在第5章中，我们创建了一个老式的屏幕保护程序，其中一个球在窗口内弹跳（如果你需要回忆，查看清单5-6）。
+在第五章中，我们创建了一个老式的屏幕保护程序，其中一个球在窗口内弹跳（如果你需要回忆，查看清单 5-6）。
 
 该代码可以正常工作，但球体的数据和操控代码交织在一起，这意味着有大量的初始化代码，
 
 使得球体的数据和代码相互交织，这意味着有大量的初始化代码，
 
-更新和绘制球体的代码被嵌入在12步的程序中
+更新和绘制球体的代码被嵌入在 12 步的程序中
 
 框架。
 
-更具模块化的方法是将代码拆分成一个Ball类和一些
+更具模块化的方法是将代码拆分成一个 Ball 类和一些
 
-主程序实例化一个Ball对象并调用其方法。
+主程序实例化一个 Ball 对象并调用其方法。
 
 在本节中，我们将进行这次拆分，我将展示如何创建多个
 
-从Ball类中创建球体。
+从 Ball 类中创建球体。
 
-***创建一个Ball类***
+***创建一个 Ball 类***
 
 我们将首先从主程序中提取所有与球体相关的代码，
 
-程序并将其移动到一个独立的Ball类中。查看原始代码，
+程序并将其移动到一个独立的 Ball 类中。查看原始代码，
 
 我们可以看到，处理球体的各个部分包括：
 
-• 第4节，加载球体图像的代码
+• 第四部分，加载球体图像的代码
 
-• 第5节，创建并初始化所有具有
+• 第五部分，创建并初始化所有具有
 
 与球体有关的东西
 
-• 第8节，其中包括移动球体、检测边缘的代码
+• 第八部分，其中包括移动球体、检测边缘的代码
 
 弹跳，改变速度和方向
 
-• 第10节，绘制球体的代码
+• 第十部分，绘制球体的代码
 
-从中我们可以得出结论，我们的Ball类将需要以下内容
+从中我们可以得出结论，我们的 Ball 类将需要以下内容
 
 方法：
 
@@ -2792,13 +2792,13 @@ pygame框架。我们将从
 
 **update()** 在每一帧中根据
 
-球体的x速度和y速度
+球体的 x 速度和 y 速度
 
 **draw()** 在窗口中绘制球体
 
 第一步是创建一个项目文件夹，其中需要一个*Ball.py*
 
-新的Ball类代码文件、主代码文件*Main_BallBounce.py*，以及包含*ball.png*图像文件的*images*文件夹。
+新的 Ball 类代码文件、主代码文件*Main_BallBounce.py*，以及包含*ball.png*图像文件的*images*文件夹。
 
 列表 6-1 显示了新 Ball 类的代码。
 
@@ -2822,7 +2822,7 @@ self.windowWidth = windowWidth
 
 self.windowHeight = windowHeight
 
-**122** 第6章
+**122** 第六章
 
 2 self.image = pygame.image.load('images/ball.png')
 
@@ -2988,7 +2988,7 @@ sys.exit()
 
 3 oBall.update() # 告诉 Ball 更新自己
 
-**124** 第 6 章
+**124** 第六章
 
 # 9 - 在绘制之前清空窗口
 
@@ -3050,7 +3050,7 @@ Ball 对象。
 
 **文件：PygameDemo6_BallBounceObjectOriented/Main_BallBounceManyBalls.py**
 
-# pygame演示6(b) - 使用Ball类，反弹多个小球
+# pygame 演示 6(b) - 使用 Ball 类，反弹多个小球
 
 --- 略 ---
 
@@ -3062,15 +3062,15 @@ N_BALLS = 3
 
 1 ballList = []
 
-对每个oBall在范围0到N_BALLS中：
+对每个 oBall 在范围 0 到 N_BALLS 中：
 
-# 每次循环时，创建一个Ball对象
+# 每次循环时，创建一个 Ball 对象
 
 oBall = Ball(window, WINDOW_WIDTH, WINDOW_HEIGHT)
 
-面向对象的Pygame **125**
+面向对象的 Pygame **125**
 
-ballList.append(oBall) # 将新的Ball对象添加到Ball列表中
+ballList.append(oBall) # 将新的 Ball 对象添加到 Ball 列表中
 
 # 6 - 永久循环
 
@@ -3080,9 +3080,9 @@ while True:
 
 # 8 - 执行“每帧”动作
 
-2 对每个oBall在ballList中：
+2 对每个 oBall 在 ballList 中：
 
-oBall.update() # 告诉每个Ball更新自己
+oBall.update() # 告诉每个 Ball 更新自己
 
 # 9 - 在重新绘制窗口之前清除它
 
@@ -3090,9 +3090,9 @@ window.fill(BLACK)
 
 # 10 - 绘制窗口元素
 
-3 对每个oBall在ballList中：
+3 对每个 oBall 在 ballList 中：
 
-oBall.draw() # 告诉每个Ball绘制自己
+oBall.draw() # 告诉每个 Ball 绘制自己
 
 # 11 - 更新窗口
 
@@ -3102,45 +3102,45 @@ pygame.display.update()
 
 clock.tick(FRAMES_PER_SECOND)
 
-*清单6-3：创建、移动和显示三个小球*
+*清单 6-3：创建、移动和显示三个小球*
 
-我们从一个空的Ball对象列表开始1。然后我们有一个循环
+我们从一个空的 Ball 对象列表开始 1。然后我们有一个循环
 
-这段代码创建了三个Ball对象，我们将每个Ball对象添加到Ball列表中
+这段代码创建了三个 Ball 对象，我们将每个 Ball 对象添加到 Ball 列表中
 
-对象，ballList。每个Ball对象选择并记住一个随机化的
+对象，ballList。每个 Ball 对象选择并记住一个随机化的
 
-起始位置和随机的x和y方向速度。
+起始位置和随机的 x 和 y 方向速度。
 
-在主循环中，我们遍历所有Ball对象并告诉
+在主循环中，我们遍历所有 Ball 对象并告诉
 
-每个对象更新自己2，改变每个Ball的x和y坐标
+每个对象更新自己 2，改变每个 Ball 的 x 和 y 坐标
 
 将对象移动到一个新位置。然后，我们再次遍历列表，调用
 
-每个Ball对象的draw()方法3。
+每个 Ball 对象的 draw()方法 3。
 
 当我们运行程序时，我们看到三个小球，每个小球都从一个随机
 
-随机位置，并且每个球以随机的x和y速度移动。每个
+随机位置，并且每个球以随机的 x 和 y 速度移动。每个
 
 小球正确地从窗口边界反弹。
 
-使用这种面向对象的方法，我们没有对Ball类做任何更改
+使用这种面向对象的方法，我们没有对 Ball 类做任何更改
 
-类别，但我们刚刚修改了主程序，现在管理一个Ball对象的列表
+类别，但我们刚刚修改了主程序，现在管理一个 Ball 对象的列表
 
-对象而不是单一的Ball对象。这是一个常见且非常积极的
+对象而不是单一的 Ball 对象。这是一个常见且非常积极的
 
-OOP代码的副作用：编写良好的类通常可以在不做任何修改的情况下重用
+OOP 代码的副作用：编写良好的类通常可以在不做任何修改的情况下重用
 
 改变。
 
-***创建许多、许多Ball对象***
+***创建许多、许多 Ball 对象***
 
-我们可以将常量N_BALLS的值从3改为更大的值
+我们可以将常量 N_BALLS 的值从 3 改为更大的值
 
-更大的值，例如300，快速创建那样多的球（图6-1）。通过
+更大的值，例如 300，快速创建那样多的球（图 6-1）。通过
 
 通过仅更改一个常量，我们使行为发生了重大变化
 
@@ -3150,15 +3150,15 @@ OOP代码的副作用：编写良好的类通常可以在不做任何修改的�
 
 **126** 第六章
 
-![图像 21](index-156_1.png)
+![图像 21](img/index-156_1.png)
 
-*图6-1：创建、更新和绘制300个Ball对象*
+*图 6-1：创建、更新和绘制 300 个 Ball 对象*
 
 我们可以从一个类实例化任意数量的对象
 
 该脚本在定义游戏对象（如飞船、僵尸等）时至关重要，
 
-干尸、子弹、宝物等等，也可用于构建GUI控件，如
+干尸、子弹、宝物等等，也可用于构建 GUI 控件，如
 
 按钮、复选框、文本输入框和文本输出框。
 
@@ -3190,11 +3190,11 @@ OOP代码的副作用：编写良好的类通常可以在不做任何修改的�
 
 6\. 程序根据按钮点击执行某些操作
 
-好的GUI还允许用户在按钮上点击一下，暂时
+好的 GUI 还允许用户在按钮上点击一下，暂时
 
 鼠标滑出按钮，按钮切换为上升状态，然后，随着
 
-面向对象的Pygame **127**
+面向对象的 Pygame **127**
 
 鼠标按钮仍然按下，鼠标滑回按钮图像时，按钮会切换回按下图像。如果用户点击按钮，但随后滑动
 
@@ -3228,7 +3228,7 @@ OOP代码的副作用：编写良好的类通常可以在不做任何修改的�
 
 • 绘制当前的按钮图像。
 
-第6-4号列出了SimpleButton类的代码。（我们将在第7章构建一个
+第 6-4 号列出了 SimpleButton 类的代码。（我们将在第七章构建一个
 
 更复杂的按钮类。）这个类有三个方法，__init__()、handleEvent() 和 draw()，它们实现了上述行为。handleEvent()方法的代码有点棘手，但
 
@@ -3242,7 +3242,7 @@ OOP代码的副作用：编写良好的类通常可以在不做任何修改的�
 
 **文件：PygameDemo7_SimpleButton/SimpleButton.py**
 
-# SimpleButton类
+# SimpleButton 类
 
 #
 
@@ -3250,9 +3250,9 @@ OOP代码的副作用：编写良好的类通常可以在不做任何修改的�
 
 #
 
-导入pygame
+导入 pygame
 
-从pygame.locals导入*
+从 pygame.locals 导入*
 
 类 SimpleButton():
 
@@ -3272,7 +3272,7 @@ self.loc = loc
 
 self.surfaceUp = pygame.image.load(up)
 
-**128** 第6章
+**128** 第六章
 
 self.surfaceDown = pygame.image.load(down)
 
@@ -3288,27 +3288,27 @@ self.state = SimpleButton.STATE_IDLE
 
 def handleEvent(self, eventObj): 2
 
-# 如果用户点击按钮，此方法将返回True。
+# 如果用户点击按钮，此方法将返回 True。
 
-# 通常返回False。
+# 通常返回 False。
 
-如果eventObj.type不在(MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN)中：3
+如果 eventObj.type 不在(MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN)中：3
 
 # 按钮只关心与鼠标相关的事件。
 
-返回False
+返回 False
 
 eventPointInButtonRect = self.rect.collidepoint(eventObj.pos)
 
-如果self.state == SimpleButton.STATE_IDLE:
+如果 self.state == SimpleButton.STATE_IDLE:
 
-如果(eventObj.type == MOUSEBUTTONDOWN)且eventPointInButtonRect:
+如果(eventObj.type == MOUSEBUTTONDOWN)且 eventPointInButtonRect:
 
 self.state = SimpleButton.STATE_ARMED
 
 elif self.state == SimpleButton.STATE_ARMED:
 
-如果(eventObj.type == MOUSEBUTTONUP)且eventPointInButtonRect:
+如果(eventObj.type == MOUSEBUTTONUP)且 eventPointInButtonRect:
 
 self.state = SimpleButton.STATE_IDLE
 
@@ -3320,7 +3320,7 @@ self.state = SimpleButton.STATE_DISARMED
 
 elif self.state == SimpleButton.STATE_DISARMED:
 
-如果eventPointInButtonRect:
+如果 eventPointInButtonRect:
 
 self.state = SimpleButton.STATE_ARMED
 
@@ -3328,45 +3328,45 @@ elif eventObj.type == MOUSEBUTTONUP:
 
 self.state = SimpleButton.STATE_IDLE
 
-返回False
+返回 False
 
 def draw(self): 4
 
 # 将按钮的当前外观绘制到窗口中。
 
-如果self.state == SimpleButton.STATE_ARMED:
+如果 self.state == SimpleButton.STATE_ARMED:
 
 self.window.blit(self.surfaceDown, self.loc)
 
-否则：# IDLE或DISARMED
+否则：# IDLE 或 DISARMED
 
 self.window.blit(self.surfaceUp, self.loc)
 
-*列表6-4：SimpleButton类*
+*列表 6-4：SimpleButton 类*
 
 `__init__()`方法首先将所有传入的值保存到
 
-实例变量1用于在其他方法中。它随后初始化了几个
+实例变量 1 用于在其他方法中。它随后初始化了几个
 
 更多实例变量。
 
-每当主程序检测到任何事件时，它都会调用handleEvent()
+每当主程序检测到任何事件时，它都会调用 handleEvent()
 
-方法2。这方法首先检查事件是否为MOUSEMOTION之一，
+方法 2。这方法首先检查事件是否为 MOUSEMOTION 之一，
 
-面向对象的Pygame **129**
+面向对象的 Pygame **129**
 
-![图片22](index-159_1.png)
+![图片 22](img/index-159_1.png)
 
-MOUSEBUTTONUP，或者MOUSEBUTTONDOWN 3。方法的其余部分已实现。
+MOUSEBUTTONUP，或者 MOUSEBUTTONDOWN 3。方法的其余部分已实现。
 
 作为一个*状态机*，这个技术我将在后面详细介绍。
 
-[第15章](index_split_006.html#p340) 代码有些复杂，你可以自由地研究它是如何工作的，但现在请注意它使用了实例变量
+第十五章 代码有些复杂，你可以自由地研究它是如何工作的，但现在请注意它使用了实例变量
 
 self.state（在多次调用过程中）用于检测用户是否
 
-用户点击了按钮时。`handleEvent()`方法在用户点击按钮时返回True。
+用户点击了按钮时。`handleEvent()`方法在用户点击按钮时返回 True。
 
 用户通过按下按钮完成鼠标点击，然后稍后
 
@@ -3376,13 +3376,13 @@ False。
 
 最后，`draw()`方法使用对象实例变量的状态。
 
-self.state决定绘制哪个图像（上或下）4。
+self.state 决定绘制哪个图像（上或下）4。
 
-***主代码使用SimpleButton***
+***主代码使用 SimpleButton***
 
-在主代码中使用SimpleButton时，我们首先从
+在主代码中使用 SimpleButton 时，我们首先从
 
-在主循环开始之前，使用如下代码初始化SimpleButton类：
+在主循环开始之前，使用如下代码初始化 SimpleButton 类：
 
 oButton = SimpleButton(window, (150, 30)，
 
@@ -3390,7 +3390,7 @@ oButton = SimpleButton(window, (150, 30)，
 
 'images/buttonDown.png')
 
-这一行创建一个SimpleButton对象，并指定绘制位置。
+这一行创建一个 SimpleButton 对象，并指定绘制位置。
 
 它（如通常一样，坐标指的是边界矩形的左上角）
 
@@ -3398,33 +3398,33 @@ oButton = SimpleButton(window, (150, 30)，
 
 在主循环中，每当发生任何事件时，我们需要调用
 
-使用handleEvent()方法检查用户是否点击了按钮。如果用户
+使用 handleEvent()方法检查用户是否点击了按钮。如果用户
 
 用户点击按钮时，程序应执行某些操作。也在
 
-在主循环中，我们需要调用draw()方法来显示按钮。
+在主循环中，我们需要调用 draw()方法来显示按钮。
 
 窗口中。
 
 我们将构建一个小型测试程序，它将生成一个用户界面。
 
-如图6-2所示，加入一个SimpleButton实例。
+如图 6-2 所示，加入一个 SimpleButton 实例。
 
-*图6-2：一个包含单个SimpleButton实例的程序用户界面* 每当用户完成对按钮的点击时，程序
+*图 6-2：一个包含单个 SimpleButton 实例的程序用户界面* 每当用户完成对按钮的点击时，程序
 
-在shell中输出一行文本，表明按钮已被点击。
+在 shell 中输出一行文本，表明按钮已被点击。
 
-列表6-5包含主程序代码。
+列表 6-5 包含主程序代码。
 
 **文件：PygameDemo7_SimpleButton/Main_SimpleButton.py**
 
-# Pygame演示7 - SimpleButton测试
+# Pygame 演示 7 - SimpleButton 测试
 
 --- 省略 ---
 
 # 5 - 初始化变量
 
-# 创建SimpleButton实例
+# 创建 SimpleButton 实例
 
 **130** 第六章
 
@@ -3450,7 +3450,7 @@ sys.exit()
 
 # 将事件传递给按钮，查看是否被点击
 
-2 如果oButton.handleEvent(event):
+2 如果 oButton.handleEvent(event):
 
 3 print('用户已点击按钮')
 
@@ -3472,11 +3472,11 @@ pygame.display.update()
 
 clock.tick(FRAMES_PER_SECOND)
 
-*列表6-5：创建并响应SimpleButton的主程序*
+*列表 6-5：创建并响应 SimpleButton 的主程序*
 
-再次，我们从[第5章](#p118)的标准pygame模板开始。
+再次，我们从第五章的标准 pygame 模板开始。
 
-在主循环之前，我们创建一个SimpleButton 1的实例，并指定—
+在主循环之前，我们创建一个 SimpleButton 1 的实例，并指定—
 
 创建一个窗口用于绘制，指定位置、上图像路径和
 
@@ -3484,39 +3484,39 @@ clock.tick(FRAMES_PER_SECOND)
 
 每次进入主循环时，我们需要对检测到的事件做出反应。
 
-在主程序中。为了实现这一点，我们调用SimpleButton类的
+在主程序中。为了实现这一点，我们调用 SimpleButton 类的
 
-handleEvent()方法2并传入来自主程序的事件。
+handleEvent()方法 2 并传入来自主程序的事件。
 
 handleEvent()方法跟踪用户在按钮上的所有操作
 
-（按下、释放、滚出、滚回）。当handleEvent()
+（按下、释放、滚出、滚回）。当 handleEvent()
 
-返回True，表示已发生点击事件，我们执行相应的操作。
+返回 True，表示已发生点击事件，我们执行相应的操作。
 
-与点击该按钮相关的操作，这里我们只是在3中打印一条信息。
+与点击该按钮相关的操作，这里我们只是在 3 中打印一条信息。
 
-最后，我们调用按钮的draw()方法4，绘制一个表示
+最后，我们调用按钮的 draw()方法 4，绘制一个表示
 
 发送按钮的相应状态（按下或释放）。
 
 ***创建一个包含多个按钮的程序***
 
-使用我们的SimpleButton类，我们可以实例化任意数量的按钮。
+使用我们的 SimpleButton 类，我们可以实例化任意数量的按钮。
 
 例如，我们可以修改我们的主程序，加入三个按钮。
 
-SimpleButton实例，如图6-3所示。
+SimpleButton 实例，如图 6-3 所示。
 
-面向对象的Pygame **131**
+面向对象的 Pygame **131**
 
-![图23](index-161_1.png)
+![图 23](img/index-161_1.png)
 
-*图6-3：包含三个SimpleButton对象的主程序*
+*图 6-3：包含三个 SimpleButton 对象的主程序*
 
-我们不需要对SimpleButton类文件做任何修改来
+我们不需要对 SimpleButton 类文件做任何修改来
 
-我们这样做，只需要修改主程序代码以实例化三个SimpleButton
+我们这样做，只需要修改主程序代码以实例化三个 SimpleButton
 
 对象而不是一个。
 
@@ -3586,7 +3586,7 @@ SimpleButton 类会影响从该类实例化的所有按钮。每个
 
 它是否被点击过。
 
-**第132章 第6节**
+**第一百三十二章 第六部分**
 
 **构建可重用的面向对象文本显示**
 

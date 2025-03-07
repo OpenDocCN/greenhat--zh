@@ -1,14 +1,14 @@
-# [12](nsp-venkitachalam503045-0008.xhtml#rch12)
+# 12
 
 # Karplus-Strong 在 Raspberry Pi Pico 上的实现
 
-![](images/nsp-venkitachalam503045-circle-image.jpg)
+![](img/nsp-venkitachalam503045-circle-image.jpg)
 
-在[第 4 章](nsp-venkitachalam503045-0016.xhtml#ch04)中，你学习了如何使用 Karplus-Strong 算法生成拨弦声。你将生成的声音保存为 WAV 文件，并在计算机上播放五声音阶的音符。在本章中，你将学习如何将该项目缩小到适应一个微小的硬件平台：Raspberry Pi Pico。
+在第四章中，你学习了如何使用 Karplus-Strong 算法生成拨弦声。你将生成的声音保存为 WAV 文件，并在计算机上播放五声音阶的音符。在本章中，你将学习如何将该项目缩小到适应一个微小的硬件平台：Raspberry Pi Pico。
 
-Pico（见[图 12-1](nsp-venkitachalam503045-0027.xhtml#fig12-1)）采用 RP2040 微控制器芯片构建，该芯片仅有 264KB 的随机存取内存（RAM）。与典型个人计算机的数十GB内存相比，这个内存显得微不足道！Pico 还配备了 2MB 的闪存，这与普通计算机的几百GB硬盘空间形成对比。尽管有这些限制，Pico 依然非常强大。它能够执行许多有用的服务，同时比普通计算机更便宜，功耗也更低。你的手表、空调、烘干机、汽车、手机——像 RP2040 这样的微型控制器无处不在！
+Pico（见图 12-1）采用 RP2040 微控制器芯片构建，该芯片仅有 264KB 的随机存取内存（RAM）。与典型个人计算机的数十 GB 内存相比，这个内存显得微不足道！Pico 还配备了 2MB 的闪存，这与普通计算机的几百 GB 硬盘空间形成对比。尽管有这些限制，Pico 依然非常强大。它能够执行许多有用的服务，同时比普通计算机更便宜，功耗也更低。你的手表、空调、烘干机、汽车、手机——像 RP2040 这样的微型控制器无处不在！
 
-![](images/nsp-venkitachalam503045-f12001.jpg)
+![](img/nsp-venkitachalam503045-f12001.jpg)
 
 图 12-1：Raspberry Pi Pico
 
@@ -20,11 +20,11 @@ Pico（见[图 12-1](nsp-venkitachalam503045-0027.xhtml#fig12-1)）采用 RP2040
 
 +   • 使用 I2S 数字音频协议和 I2S 放大器将音频数据发送到扬声器
 
-+   • 在资源受限的微控制器上实现[第 4 章](nsp-venkitachalam503045-0016.xhtml#ch04)中的 Karplus-Strong 算法
++   • 在资源受限的微控制器上实现第四章中的 Karplus-Strong 算法
 
-## [工作原理](nsp-venkitachalam503045-0008.xhtml#rah1401)
+## 工作原理
 
-我们在[第 4 章](nsp-venkitachalam503045-0016.xhtml#ch04)中详细讨论了 Karplus-Strong 算法，因此这里不再赘述。相反，我们将重点讲解本版本项目的不同之处。你在[第 4 章](nsp-venkitachalam503045-0016.xhtml#ch04)中编写的程序是为笔记本电脑或台式机设计的。得益于计算机充足的内存和硬盘资源，它在使用 Karplus-Strong 算法生成 WAV 文件并通过扬声器播放音频时没有问题。现在的挑战是将项目代码适配到资源受限的 Raspberry Pi Pico 上。这将需要以下修改：
+我们在第四章中详细讨论了 Karplus-Strong 算法，因此这里不再赘述。相反，我们将重点讲解本版本项目的不同之处。你在第四章中编写的程序是为笔记本电脑或台式机设计的。得益于计算机充足的内存和硬盘资源，它在使用 Karplus-Strong 算法生成 WAV 文件并通过扬声器播放音频时没有问题。现在的挑战是将项目代码适配到资源受限的 Raspberry Pi Pico 上。这将需要以下修改：
 
 +   • 使用较小的音频采样率以减少内存需求
 
@@ -36,27 +36,27 @@ Pico（见[图 12-1](nsp-venkitachalam503045-0027.xhtml#fig12-1)）采用 RP2040
 
 我们将在这些修改出现时讨论具体细节。
 
-### [输入与输出](nsp-venkitachalam503045-0008.xhtml#rbh1401)
+### 输入与输出
 
-为了使项目具有交互性，你希望 Pico 能够根据用户输入生成声音。你需要将五个按钮连接到 Pico，因为 Pico 没有键盘或鼠标。（你将使用第六个按钮来运行程序。）我们还需要想办法生成声音输出，因为与个人计算机不同，Pico 板没有内置扬声器。[图 12-2](nsp-venkitachalam503045-0027.xhtml#fig12-2) 显示了项目的框图。
+为了使项目具有交互性，你希望 Pico 能够根据用户输入生成声音。你需要将五个按钮连接到 Pico，因为 Pico 没有键盘或鼠标。（你将使用第六个按钮来运行程序。）我们还需要想办法生成声音输出，因为与个人计算机不同，Pico 板没有内置扬声器。图 12-2 显示了项目的框图。
 
-![](images/nsp-venkitachalam503045-f12002.jpg)
+![](img/nsp-venkitachalam503045-f12002.jpg)
 
 图 12-2：项目的框图
 
-当你按下按钮时，运行在 Pico 上的 MicroPython 代码将使用 Karplus-Strong 算法生成一个拨弦声音。算法产生的数字声音样本将发送到一个独立的 MAX98357A 放大器板，该板将数字数据解码为模拟音频信号。MAX98357A 还会放大模拟信号，这样你就可以将其输出连接到外部 8 欧姆扬声器，从而听到音频。[图 12-3](nsp-venkitachalam503045-0027.xhtml#fig12-3) 显示了 Adafruit MAX98357A 板。
+当你按下按钮时，运行在 Pico 上的 MicroPython 代码将使用 Karplus-Strong 算法生成一个拨弦声音。算法产生的数字声音样本将发送到一个独立的 MAX98357A 放大器板，该板将数字数据解码为模拟音频信号。MAX98357A 还会放大模拟信号，这样你就可以将其输出连接到外部 8 欧姆扬声器，从而听到音频。图 12-3 显示了 Adafruit MAX98357A 板。
 
-![](images/nsp-venkitachalam503045-f12003.jpg)
+![](img/nsp-venkitachalam503045-f12003.jpg)
 
 图 12-3：Adafruit MAX98357A I2S 放大器板
 
 Pi Pico 需要以特定格式将数据发送到放大器板，以便它能够成功地被解读为音频信号。这就是 I2S 协议的作用。
 
-### [I2S 协议](nsp-venkitachalam503045-0008.xhtml#rbh1402)
+### I2S 协议
 
-*Inter-IC 音频 (I2S) 协议* 是一种在设备之间发送数字音频数据的标准。它是从微控制器获取高质量音频输出的一种简单、便捷的方式。该协议通过三种数字信号传输音频，这些信号如[图 12-4](nsp-venkitachalam503045-0027.xhtml#fig12-4)所示。
+*Inter-IC 音频 (I2S) 协议* 是一种在设备之间发送数字音频数据的标准。它是从微控制器获取高质量音频输出的一种简单、便捷的方式。该协议通过三种数字信号传输音频，这些信号如图 12-4 所示。
 
-![](images/nsp-venkitachalam503045-f12004.jpg)
+![](img/nsp-venkitachalam503045-f12004.jpg)
 
 图 12-4：I2S 协议
 
@@ -66,7 +66,7 @@ Pi Pico 需要以特定格式将数据发送到放大器板，以便它能够成
 
 对于这个项目，Pico 将充当 I2S 发送器，因此它将生成 SCK、WS 和 SD 信号。MicroPython 实际上为 Pico 提供了一个完全实现的 `I2S` 模块，因此生成信号的大部分工作将在后台为你完成。如你所见，Pico 将把信号发送到 MAX98357A 板，该板专门设计用于通过 I2S 协议接收音频数据。然后，板子将 I2S 数据转换为模拟音频信号，能够通过扬声器播放。
 
-## [需求](nsp-venkitachalam503045-0008.xhtml#rah1402)
+## 需求
 
 你将使用 MicroPython 为 Raspberry Pi Pico 编写程序。你将需要以下硬件：
 
@@ -86,21 +86,21 @@ Pi Pico 需要以特定格式将数据发送到放大器板，以便它能够成
 
 +   • 一根 Micro USB 数据线，用于将代码上传到 Pico
 
-### [硬件设置](nsp-venkitachalam503045-0008.xhtml#rbh1403)
+### 硬件设置
 
-你将在面包板上组装硬件。[图 12-5](nsp-venkitachalam503045-0027.xhtml#fig12-5) 显示了连接方式。
+你将在面包板上组装硬件。图 12-5 显示了连接方式。
 
-![](images/nsp-venkitachalam503045-f12005.jpg)
+![](img/nsp-venkitachalam503045-f12005.jpg)
 
 图 12-5：硬件连接
 
-[图 12-6](nsp-venkitachalam503045-0027.xhtml#fig12-6) 显示了 Pico 的引脚图，来自官方数据手册，是你进行连接时的实用参考。
+图 12-6 显示了 Pico 的引脚图，来自官方数据手册，是你进行连接时的实用参考。
 
-![](images/nsp-venkitachalam503045-f12006.jpg)
+![](img/nsp-venkitachalam503045-f12006.jpg)
 
 图 12-6：来自 Raspberry Pi Pico 数据手册的引脚图
 
-[表 12-1](nsp-venkitachalam503045-0027.xhtml#tab12-1) 总结了你需要在面包板上实现的电气连接。[图 12-5](nsp-venkitachalam503045-0027.xhtml#fig12-5) 显示了这些连接。
+表 12-1 总结了你需要在面包板上实现的电气连接。图 12-5 显示了这些连接。
 
 表 12-1：电气连接
 
@@ -118,35 +118,35 @@ Pi Pico 需要以特定格式将数据发送到放大器板，以便它能够成
 | GND | MAX98357A GND |
 | 3V3(OUT) | MAX98357A Vin |
 
-一旦你连接好硬件，你的项目应该看起来像[图12-7](nsp-venkitachalam503045-0027.xhtml#fig12-7)。
+一旦你连接好硬件，你的项目应该看起来像图 12-7。
 
-![](images/nsp-venkitachalam503045-f12007.jpg)
+![](img/nsp-venkitachalam503045-f12007.jpg)
 
-图12-7：完全搭建好的硬件
+图 12-7：完全搭建好的硬件
 
-然而，在开始使用Pico之前，你需要设置MicroPython。
+然而，在开始使用 Pico 之前，你需要设置 MicroPython。
 
-### [MicroPython 设置](nsp-venkitachalam503045-0008.xhtml#rbh1404)
+### MicroPython 设置
 
-使用MicroPython设置你的树莓派Pico非常简单。请按照以下步骤操作：
+使用 MicroPython 设置你的树莓派 Pico 非常简单。请按照以下步骤操作：
 
-1.  1\. 访问[https://micropython.org](https://micropython.org)，进入下载页面，并找到树莓派Pico。
+1.  1\. 访问[`micropython.org`](https://micropython.org)，进入下载页面，并找到树莓派 Pico。
 
-1.  2\. 下载包含Pico版本的MicroPython实现的UF2二进制文件（版本1.18或更高）。
+1.  2\. 下载包含 Pico 版本的 MicroPython 实现的 UF2 二进制文件（版本 1.18 或更高）。
 
-1.  3\. 按下Pico上的白色BOOTSEL按钮，同时按住这个按钮，用Micro USB数据线将Pico连接到计算机上。然后松开按钮。
+1.  3\. 按下 Pico 上的白色 BOOTSEL 按钮，同时按住这个按钮，用 Micro USB 数据线将 Pico 连接到计算机上。然后松开按钮。
 
-1.  4\. 你应该能看到一个名为*RPI-RP2*的文件夹出现在计算机上。将UF2文件拖放到该文件夹中。
+1.  4\. 你应该能看到一个名为*RPI-RP2*的文件夹出现在计算机上。将 UF2 文件拖放到该文件夹中。
 
-文件复制完成并且Pico重启后，你就可以开始使用MicroPython编写Pico代码了！
+文件复制完成并且 Pico 重启后，你就可以开始使用 MicroPython 编写 Pico 代码了！
 
-## [代码](nsp-venkitachalam503045-0008.xhtml#rah1403)
+## 代码
 
-代码包括一些初步的设置，接着是用于生成和播放五个音符的函数。然后，所有内容在程序的`main()`函数中组合起来。要查看完整的程序，可以跳到[《完整代码》](nsp-venkitachalam503045-0027.xhtml#ah1407)第275页。代码也可以在GitHub上找到，地址是[https://github.com/mkvenkit/pp2e/blob/main/karplus_pico/karplus_pico.py](https://github.com/mkvenkit/pp2e/blob/main/karplus_pico/karplus_pico.py)。
+代码包括一些初步的设置，接着是用于生成和播放五个音符的函数。然后，所有内容在程序的`main()`函数中组合起来。要查看完整的程序，可以跳到《完整代码》第 275 页。代码也可以在 GitHub 上找到，地址是[`github.com/mkvenkit/pp2e/blob/main/karplus_pico/karplus_pico.py`](https://github.com/mkvenkit/pp2e/blob/main/karplus_pico/karplus_pico.py)。
 
-### [设置](nsp-venkitachalam503045-0008.xhtml#rbh1405)
+### 设置
 
-代码从一些基本的设置开始。首先，导入所需的MicroPython模块：
+代码从一些基本的设置开始。首先，导入所需的 MicroPython 模块：
 
 import time
 
@@ -160,7 +160,7 @@ from machine import I2S
 
 from machine import Pin
 
-你导入`time`模块来使用其“sleep”功能，以便在代码执行过程中创建定时暂停。`array`模块将允许你创建数组，通过I2S发送声音数据。数组是比Python列表更高效的版本，因为它要求所有成员必须是相同的数据类型。你将使用`random`模块用随机值填充初始缓冲区（Karplus-Strong算法的第一步），并且你将使用`os`模块检查某个音符是否已经保存在文件系统中。最后，`I2S`模块将允许你发送声音数据，而`Pin`模块让你设置Pico的引脚输出。
+你导入`time`模块来使用其“sleep”功能，以便在代码执行过程中创建定时暂停。`array`模块将允许你创建数组，通过 I2S 发送声音数据。数组是比 Python 列表更高效的版本，因为它要求所有成员必须是相同的数据类型。你将使用`random`模块用随机值填充初始缓冲区（Karplus-Strong 算法的第一步），并且你将使用`os`模块检查某个音符是否已经保存在文件系统中。最后，`I2S`模块将允许你发送声音数据，而`Pin`模块让你设置 Pico 的引脚输出。
 
 通过声明一些有用的信息来完成设置：
 
@@ -180,13 +180,13 @@ from machine import Pin
 
 ❸ SR = 16000
 
-在这里，你定义了一个字典`pmNotes`，它将音符的名称映射到其整数频率值❶。你将使用音符的名称来保存包含声音数据的文件，并使用频率值通过Karplus-Strong算法生成声音。你还定义了一个字典`btnNotes`，它将每个按钮的ID（表示为整数0到4）映射到一个元组，该元组包含相应的音符名称和频率值❷。这个字典控制当用户按下每个按钮时播放哪个音符。
+在这里，你定义了一个字典`pmNotes`，它将音符的名称映射到其整数频率值❶。你将使用音符的名称来保存包含声音数据的文件，并使用频率值通过 Karplus-Strong 算法生成声音。你还定义了一个字典`btnNotes`，它将每个按钮的 ID（表示为整数 0 到 4）映射到一个元组，该元组包含相应的音符名称和频率值❷。这个字典控制当用户按下每个按钮时播放哪个音符。
 
-最后，你将采样率定义为16,000 Hz❸。这是每秒发送的声音幅度值数，使用I2S发送。请注意，这比在[第4章](nsp-venkitachalam503045-0016.xhtml#ch04)中使用的44,100 Hz采样率要低得多。这是因为Pico的内存有限，相较于标准计算机来说有所差异。
+最后，你将采样率定义为 16,000 Hz❸。这是每秒发送的声音幅度值数，使用 I2S 发送。请注意，这比在第四章中使用的 44,100 Hz 采样率要低得多。这是因为 Pico 的内存有限，相较于标准计算机来说有所差异。
 
-### [生成音符](nsp-venkitachalam503045-0008.xhtml#rbh1406)
+### 生成音符
 
-你借助两个函数`generate_note()`和`create_notes()`生成五个五声音阶的音符。`generate_note()`函数使用Karplus-Strong算法计算单个音符的幅度值，而`create_notes()`则协调生成所有五个音符并将它们的样本数据保存到Pico的文件系统中。我们先来看看`generate_note()`函数。（你在[第4章](nsp-venkitachalam503045-0016.xhtml#ch04)中实现了一个类似的函数，所以现在复习一下原始实现可能是个不错的选择。）
+你借助两个函数`generate_note()`和`create_notes()`生成五个五声音阶的音符。`generate_note()`函数使用 Karplus-Strong 算法计算单个音符的幅度值，而`create_notes()`则协调生成所有五个音符并将它们的样本数据保存到 Pico 的文件系统中。我们先来看看`generate_note()`函数。（你在第四章中实现了一个类似的函数，所以现在复习一下原始实现可能是个不错的选择。）
 
 # 生成给定频率的音符
 
@@ -216,13 +216,13 @@ buf.pop(0)
 
 ❺ 返回样本
 
-该函数首先将`nSamples`设置为`SR`，即样本缓冲区的长度，它将保存最终的音频数据。由于`SR`是每秒的样本数，这意味着你将创建一个持续一秒钟的音频片段。然后，通过将采样率除以生成音符的频率，你计算出Karplus-Strong环形缓冲区中的样本数`N`。
+该函数首先将`nSamples`设置为`SR`，即样本缓冲区的长度，它将保存最终的音频数据。由于`SR`是每秒的样本数，这意味着你将创建一个持续一秒钟的音频片段。然后，通过将采样率除以生成音符的频率，你计算出 Karplus-Strong 环形缓冲区中的样本数`N`。
 
-接下来，你初始化缓冲区。首先，你创建一个带有随机初始值的环形缓冲区 ❶。`random.random()`方法返回[0.0, 1.0]范围内的值，所以`2*random.random() - 1`将这些值缩放到范围[−1.0, 1.0]。记住，算法需要正负幅度值。请注意，你实现的是一个常规的Python列表作为环形缓冲区，而不是像在[第4章](nsp-venkitachalam503045-0016.xhtml#ch04)中那样使用`deque`对象。MicroPython的`deque`实现有一些限制，无法提供你所需的环形缓冲区功能。因此，你将使用常规的`append()`和`pop()`列表方法来添加和移除缓冲区中的元素。你还创建了一个`array`对象作为采样缓冲区，长度为`nSamples`，并用零填充 ❷。`'h'`参数指定该数组中的每个元素是一个*有符号短整型*，即一个16位的值，可以是正数或负数。由于每个采样值将由16位值表示，因此这正是你所需要的。
+接下来，你初始化缓冲区。首先，你创建一个带有随机初始值的环形缓冲区 ❶。`random.random()`方法返回[0.0, 1.0]范围内的值，所以`2*random.random() - 1`将这些值缩放到范围[−1.0, 1.0]。记住，算法需要正负幅度值。请注意，你实现的是一个常规的 Python 列表作为环形缓冲区，而不是像在第四章中那样使用`deque`对象。MicroPython 的`deque`实现有一些限制，无法提供你所需的环形缓冲区功能。因此，你将使用常规的`append()`和`pop()`列表方法来添加和移除缓冲区中的元素。你还创建了一个`array`对象作为采样缓冲区，长度为`nSamples`，并用零填充 ❷。`'h'`参数指定该数组中的每个元素是一个*有符号短整型*，即一个 16 位的值，可以是正数或负数。由于每个采样值将由 16 位值表示，因此这正是你所需要的。
 
-接下来，你遍历`samples`数组中的元素，并使用Karplus-Strong算法构建音频片段。你从环形缓冲区获取第一个采样值，并将其从范围[−1.0, 1.0]缩放到范围[−32767, 32767] ❸。（16位有符号短整型的范围是[−32767, 32768]。你将幅度值缩放到尽可能高，这样可以获得最大的音量输出。）然后你计算环形缓冲区中前两个采样值的衰减平均值 ❹。（这里，`0.4975`等同于原始实现中的`0.995*0.5`。）你使用`append()`将新的幅度值添加到环形缓冲区的末尾，同时使用`pop()`移除第一个元素，从而保持缓冲区的固定大小。在循环结束时，采样缓冲区已满，所以你返回它进行进一步处理 ❺。
+接下来，你遍历`samples`数组中的元素，并使用 Karplus-Strong 算法构建音频片段。你从环形缓冲区获取第一个采样值，并将其从范围[−1.0, 1.0]缩放到范围[−32767, 32767] ❸。（16 位有符号短整型的范围是[−32767, 32768]。你将幅度值缩放到尽可能高，这样可以获得最大的音量输出。）然后你计算环形缓冲区中前两个采样值的衰减平均值 ❹。（这里，`0.4975`等同于原始实现中的`0.995*0.5`。）你使用`append()`将新的幅度值添加到环形缓冲区的末尾，同时使用`pop()`移除第一个元素，从而保持缓冲区的固定大小。在循环结束时，采样缓冲区已满，所以你返回它进行进一步处理 ❺。
 
-注意 使用`append()`和`pop()`更新环形缓冲区是可行的，但这并不是一种高效的计算方法。我们将在[“实验！”](nsp-venkitachalam503045-0027.xhtml#ah1406)中更深入地探讨优化问题，具体内容请见[第273页](nsp-venkitachalam503045-0027.xhtml#p273)。
+注意 使用`append()`和`pop()`更新环形缓冲区是可行的，但这并不是一种高效的计算方法。我们将在“实验！”中更深入地探讨优化问题，具体内容请见第 273 页。
 
 现在让我们来看看`create_notes()`函数：
 
@@ -268,7 +268,7 @@ print("正在写入 " + file_name + "...")
 
 第一次运行代码时，`create_notes()` 会运行 `generate_note()` 函数，利用 Karplus-Strong 算法为每个音符创建一个文件。这将会在 Pico 上创建 *C4.bin*、*Eb.bin*、*F.bin*、*G.bin* 和 *Bb.bin* 文件。在后续的运行中，该函数会发现这些文件已经存在，因此不需要再创建它们。
 
-### [播放音符](nsp-venkitachalam503045-0008.xhtml#rbh1407)
+### 播放音符
 
 `play_note()` 函数通过使用 I2S 协议输出样本来播放五声音阶中的一个音符。下面是该函数的定义：
 
@@ -338,7 +338,7 @@ print("异常：{}".format(e))
 
 接下来，你启动一个 `while` 循环，从文件中读取样本 ❺。在循环中，你使用 `readinto()` 方法将文件中的一批样本读取到 `memoryview` 对象中 ❻，该方法返回读取的样本数量（`num_read`）。你通过 I2S 使用 `audio_out.write()` 方法从 `memoryview` 对象输出样本 ❽。`[:num_read]` 切片符号确保你写出的样本数与读取的样本数相同。你在 ❾ 处处理任何异常。当读取到 `memoryview` 对象中零个样本时 ❼，就完成数据输出，这时可以跳出 `while` 循环并关闭 *.bin* 文件 ❿。
 
-### [编写 main() 函数](nsp-venkitachalam503045-0008.xhtml#rbh1408)
+### 编写 main() 函数
 
 现在让我们来看一下 `main()` 函数，它将所有代码组合在一起：
 
@@ -414,7 +414,7 @@ break
 
 ❽ time.sleep(0.2)
 
-函数的开始是设置 Pico 上的板载 LED ❶。它在开始时切换为 ON，以表示 Pico 正在忙于初始化。接下来，您调用 `create_notes()` 函数 ❷。正如我们讨论的，这个函数仅在文件系统中不存在时，才会为音符创建 *.bin* 文件。为了管理音频输出，您实例化 `I2S` 模块为 `audio_out` ❸。该模块需要多个输入参数。第一个参数是 I2S ID，对于 Raspberry Pi Pico，ID 为 `0`。接下来是与时钟（SCK）、字选择（WS）和数据（SD）信号对应的引脚号。我们在[“I2S 协议”](nsp-venkitachalam503045-0027.xhtml#bh1402) [第 262 页](nsp-venkitachalam503045-0027.xhtml#p262)中讨论过这些信号。然后，您将 I2S 模式设置为 `TX`，表示这是一个 I2S 发送器。接下来，将 `bits` 设置为 `16`，表示每个样本的位数，并将 `format` 设置为 `MONO`，因为只有一个音频输出通道。您将采样率设置为 `SR`，最后，设置内部 I2S 缓冲区 `ibuf` 的值为 `2000`。
+函数的开始是设置 Pico 上的板载 LED ❶。它在开始时切换为 ON，以表示 Pico 正在忙于初始化。接下来，您调用 `create_notes()` 函数 ❷。正如我们讨论的，这个函数仅在文件系统中不存在时，才会为音符创建 *.bin* 文件。为了管理音频输出，您实例化 `I2S` 模块为 `audio_out` ❸。该模块需要多个输入参数。第一个参数是 I2S ID，对于 Raspberry Pi Pico，ID 为 `0`。接下来是与时钟（SCK）、字选择（WS）和数据（SD）信号对应的引脚号。我们在“I2S 协议” 第 262 页中讨论过这些信号。然后，您将 I2S 模式设置为 `TX`，表示这是一个 I2S 发送器。接下来，将 `bits` 设置为 `16`，表示每个样本的位数，并将 `format` 设置为 `MONO`，因为只有一个音频输出通道。您将采样率设置为 `SR`，最后，设置内部 I2S 缓冲区 `ibuf` 的值为 `2000`。
 
 注意：流畅的音频体验需要连续不断的数据输出。MicroPython 使用 Pico 中的一个特殊硬件模块，称为直接内存访问（DMA）。DMA 可以在不直接涉及 CPU 的情况下，将数据从内存传输到 I2S 输出。CPU 只需要保持内部缓冲区（代码中的`ibuf`）填充数据，同时 DMA 执行任务时，CPU 可以自由执行其他操作。内部缓冲区的大小通常设置为音频输出的两倍，确保 DMA 不会因数据不足而导致音频失真。在这种情况下，您将每次传输 1,000 字节到 I2S，因此将 `ibuf` 设置为两倍大小。
 
@@ -422,9 +422,9 @@ break
 
 设置完成后，使用 `play_note()` 函数播放 C4 音符，以表明 Pico 已准备好接受按键输入 ❺，同时将板载 LED 切换为 OFF ❻。接着，启动一个 `while` 循环来监控按键按下情况。在这个循环中，你使用 `for` 循环检查五个按钮中是否有任何一个的值为 `0`，表示按钮被按下。如果是，你会在 `btnNotes` 字典中查找对应按钮的音符，并使用 `play_note()` 播放该音符 ❼。当音符播放完成后，跳出 `for` 循环，并等待 0.2 秒 ❽ 后继续执行外部的 `while` 循环。
 
-## [运行 Pico 代码](nsp-venkitachalam503045-0008.xhtml#rah1404)
+## 运行 Pico 代码
 
-现在，你已经准备好测试你的项目了！为了在 Pico 上运行代码，安装两个软件是很有用的。第一个是 Thonny，一个开源、易于使用的 Python 集成开发环境（IDE），你可以从 [https://thonny.org](https://thonny.org) 下载。Thonny 让你轻松将项目代码复制到 Raspberry Pi Pico，并管理 Pico 上的文件。一个典型的开发周期如下：
+现在，你已经准备好测试你的项目了！为了在 Pico 上运行代码，安装两个软件是很有用的。第一个是 Thonny，一个开源、易于使用的 Python 集成开发环境（IDE），你可以从 [`thonny.org`](https://thonny.org) 下载。Thonny 让你轻松将项目代码复制到 Raspberry Pi Pico，并管理 Pico 上的文件。一个典型的开发周期如下：
 
 1.  1\. 通过 USB 将你的 Pico 连接到电脑。
 
@@ -440,21 +440,21 @@ break
 
 1.  7\. 每当你想编辑代码时，点击 IDE 中的 **停止/重启** 按钮，Thonny 会将你带到 Pico 上的 Python 解释器。
 
-另一个在使用 Pico 时非常有用的软件是 CoolTerm，你可以从 [http://freeware.the-meiers.org](http://freeware.the-meiers.org) 下载。CoolTerm 让你监控 Pico 的串口输出。程序中的所有打印语句都会显示在这里。使用 CoolTerm 时，确保 Thonny 不是处于“停止”状态。Pico 代码应该是运行状态，因为 Pico 无法同时连接到 Thonny 和 CoolTerm。
+另一个在使用 Pico 时非常有用的软件是 CoolTerm，你可以从 [`freeware.the-meiers.org`](http://freeware.the-meiers.org) 下载。CoolTerm 让你监控 Pico 的串口输出。程序中的所有打印语句都会显示在这里。使用 CoolTerm 时，确保 Thonny 不是处于“停止”状态。Pico 代码应该是运行状态，因为 Pico 无法同时连接到 Thonny 和 CoolTerm。
 
-一旦代码运行起来，按下一个个按键，你会听到从扬声器传出的美妙五声音阶。[图 12-8](nsp-venkitachalam503045-0027.xhtml#fig12-8) 显示了典型会话的串口输出。
+一旦代码运行起来，按下一个个按键，你会听到从扬声器传出的美妙五声音阶。图 12-8 显示了典型会话的串口输出。
 
-![](images/nsp-venkitachalam503045-f12008.jpg)
+![](img/nsp-venkitachalam503045-f12008.jpg)
 
 图 12-8：CoolTerm 中的 Raspberry Pi Pico 输出示例
 
 看看你能用数字乐器的五个按钮编排并演奏出什么旋律！
 
-## [总结](nsp-venkitachalam503045-0008.xhtml#rah1405)
+## 总结
 
-在本章中，你将你的 Karplus-Strong 算法实现从[第 4 章](nsp-venkitachalam503045-0016.xhtml#ch04)中调整，使其能够在一个小型微控制器上运行，并利用 Raspberry Pi Pico 构建了一个数字乐器。你学会了如何在 Pico 上运行 Python（以 MicroPython 形式），以及如何使用 I2S 协议传输音频数据。你还了解了从个人计算机到资源受限设备（如 Pico）的代码迁移限制。
+在本章中，你将你的 Karplus-Strong 算法实现从第四章中调整，使其能够在一个小型微控制器上运行，并利用 Raspberry Pi Pico 构建了一个数字乐器。你学会了如何在 Pico 上运行 Python（以 MicroPython 形式），以及如何使用 I2S 协议传输音频数据。你还了解了从个人计算机到资源受限设备（如 Pico）的代码迁移限制。
 
-## [实验!](nsp-venkitachalam503045-0008.xhtml#rah1406)
+## 实验!
 
 1.  1\. MAX98357A I2S 板可以让你增加输出的音量（增益）。查看该板的 datasheet 并尝试提高从扬声器发出的声音。
 
@@ -464,7 +464,7 @@ break
 
     1.  b. 使用整数运算代替浮点运算。你需要考虑如何生成和缩放初始的随机值。
 
-    MicroPython 文档中的语言参考页面 ([https://docs.micropython.org](https://docs.micropython.org/)) 上有一篇关于最大化代码速度的文章。文档还建议了如何测试你的结果。首先，定义一个用于计时的函数：
+    MicroPython 文档中的语言参考页面 ([`docs.micropython.org`](https://docs.micropython.org/)) 上有一篇关于最大化代码速度的文章。文档还建议了如何测试你的结果。首先，定义一个用于计时的函数：
 
     def timed_function(f, *args, **kwargs):
 
@@ -506,7 +506,7 @@ break
 
 1.  4\. 当你按下按钮时，新的音符不会在当前音符播放完之前开始播放。如何在按下新按钮时立即停止当前音符并切换到播放新音符？
 
-## [完整代码](nsp-venkitachalam503045-0008.xhtml#rah1407)
+## 完整代码
 
 这是此项目的完整代码列表。
 
@@ -516,7 +516,7 @@ karplus_pico.py
 
 使用 Karplus-Strong 算法生成音乐音符
 
-五声音阶。运行在树莓派Pico上。（MicroPython）
+五声音阶。运行在树莓派 Pico 上。（MicroPython）
 
 作者：Mahesh Venkitachalam
 
@@ -752,7 +752,7 @@ sd=Pin(2),          # SD 引脚
 
 mode=I2S.TX,        # I2S 发送器
 
-bits=16,            # 每个采样16位
+bits=16,            # 每个采样 16 位
 
 format=I2S.MONO,    # 单声道 - 单通道
 

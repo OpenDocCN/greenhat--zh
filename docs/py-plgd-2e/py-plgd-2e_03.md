@@ -1,16 +1,16 @@
-# [2](nsp-venkitachalam503045-0008.xhtml#rch02)
+# 2
 
 # 螺旋图
 
-![](images/nsp-venkitachalam503045-circle-image.jpg)
+![](img/nsp-venkitachalam503045-circle-image.jpg)
 
-你可以使用一个螺旋图玩具（如[图2-1](nsp-venkitachalam503045-0013.xhtml#fig2-1)所示）来绘制数学曲线。这个玩具由两个不同大小的带有塑料齿轮的圆环组成，一个大环和一个小环。小环上有几个孔。你将一支钢笔或铅笔穿过其中一个孔，然后在大环内旋转小环（大环的内侧有齿轮），保持两个轮子相互接触，从而绘制出无数复杂且对称的图案。
+你可以使用一个螺旋图玩具（如图 2-1 所示）来绘制数学曲线。这个玩具由两个不同大小的带有塑料齿轮的圆环组成，一个大环和一个小环。小环上有几个孔。你将一支钢笔或铅笔穿过其中一个孔，然后在大环内旋转小环（大环的内侧有齿轮），保持两个轮子相互接触，从而绘制出无数复杂且对称的图案。
 
-在这个项目中，你将使用Python创建一个类似螺旋图的曲线动画。程序将使用参数方程来描述螺旋图的环的运动，并绘制这些曲线（我称之为*螺旋*）。你将把完成的绘图保存为PNG格式的图片文件。程序会随机绘制螺旋图，或者你可以使用命令行选项来绘制具有特定参数的螺旋图。
+在这个项目中，你将使用 Python 创建一个类似螺旋图的曲线动画。程序将使用参数方程来描述螺旋图的环的运动，并绘制这些曲线（我称之为*螺旋*）。你将把完成的绘图保存为 PNG 格式的图片文件。程序会随机绘制螺旋图，或者你可以使用命令行选项来绘制具有特定参数的螺旋图。
 
-![](images/nsp-venkitachalam503045-f02001.jpg)
+![](img/nsp-venkitachalam503045-f02001.jpg)
 
-图2-1：螺旋图玩具
+图 2-1：螺旋图玩具
 
 在这个项目中，你将学习如何在计算机上绘制螺旋图案。你还将学习如何完成以下任务：
 
@@ -24,11 +24,11 @@
 
 提个小心：我选择使用`turtle`模块来绘制螺旋图，主要是出于说明的目的，并且因为它很有趣，但`turtle`比较慢，在需要高性能的图形创建时并不理想。（你对乌龟期望什么呢？）如果你想快速绘制图形，有更好的方法可以做到，接下来的项目中你将探索这些选择。
 
-## [它是如何工作的](nsp-venkitachalam503045-0008.xhtml#rah0401)
+## 它是如何工作的
 
 本项目的核心是使用*参数方程*，这些方程将曲线上的点的坐标表示为一个或多个变量的函数，这些变量叫做*参数*。你将把参数的值代入方程，计算出形成螺旋图案的点。然后你会把这些点传递给`turtle`模块来绘制曲线。
 
-### [理解参数方程](nsp-venkitachalam503045-0008.xhtml#rbh0401)
+### 理解参数方程
 
 为了理解参数方程是如何工作的，我们将从一个简单的例子开始：一个圆。考虑一个半径为*r*，并且以二维平面原点为中心的圆。这个圆由所有满足方程*x*² + *y*² = *r*²的点组成。然而，这不是一个参数方程。一个参数方程会根据某个变量（即参数）的变化，给出所有可能的*x*和*y*值。
 
@@ -38,65 +38,65 @@
 
 *y* = *r* sin(θ)
 
-这两个方程一起构成了我们圆的*参数*表示，其中参数是 θ，即点 (*x*, *y*) 相对于正 x 轴的角度。任何在这些方程中得到的 (*x*, *y*) 值都将满足原始方程 *x*² + *y*² = *r*²。当 θ 从 0 变化到 2π 时，这些方程生成的 x 和 y 坐标将形成圆。[图 2-2](nsp-venkitachalam503045-0013.xhtml#fig2-2) 展示了这一方案。
+这两个方程一起构成了我们圆的*参数*表示，其中参数是 θ，即点 (*x*, *y*) 相对于正 x 轴的角度。任何在这些方程中得到的 (*x*, *y*) 值都将满足原始方程 *x*² + *y*² = *r*²。当 θ 从 0 变化到 2π 时，这些方程生成的 x 和 y 坐标将形成圆。图 2-2 展示了这一方案。
 
-![](images/nsp-venkitachalam503045-f02002.jpg)
+![](img/nsp-venkitachalam503045-f02002.jpg)
 
 图 2-2：用参数方程描述圆
 
 记住，这两个方程适用于以坐标系原点为中心的圆。你可以通过将圆心从点 (0, 0) 平移到点 (*a*, *b*)，将圆放置在 XY 平面中的任何位置。然后，参数方程变为 *x* = *a* + *r* cos(θ) 和 *y* = *b* + *r* sin(θ)。
 
-开发表示 Spirograph 玩具的参数方程与开发圆的参数方程没有太大区别，因为从本质上讲，Spirograph 只是绘制两个交错的圆。[图 2-3](nsp-venkitachalam503045-0013.xhtml#fig2-3) 展示了类似 Spirograph 运动的数学模型。该模型没有齿轮齿；齿轮齿仅用于 Spirograph 玩具中防止打滑，在理想的数学模型世界中，你不需要担心任何打滑的问题。
+开发表示 Spirograph 玩具的参数方程与开发圆的参数方程没有太大区别，因为从本质上讲，Spirograph 只是绘制两个交错的圆。图 2-3 展示了类似 Spirograph 运动的数学模型。该模型没有齿轮齿；齿轮齿仅用于 Spirograph 玩具中防止打滑，在理想的数学模型世界中，你不需要担心任何打滑的问题。
 
-![](images/nsp-venkitachalam503045-f02003.jpg)
+![](img/nsp-venkitachalam503045-f02003.jpg)
 
 图 2-3：Spirograph 玩具的数学模型
 
-在[图 2-3](nsp-venkitachalam503045-0013.xhtml#fig2-3)中，*C* 是小圆的中心，*P* 是笔尖，*q* 是相对于正 x 轴的 *C* 角度。大圆的半径是 *R*，小圆的半径是 *r*。你可以通过以下方式表示半径的比率，设为变量 *k*：
+在图 2-3 中，*C* 是小圆的中心，*P* 是笔尖，*q* 是相对于正 x 轴的 *C* 角度。大圆的半径是 *R*，小圆的半径是 *r*。你可以通过以下方式表示半径的比率，设为变量 *k*：
 
-![](images/nsp-venkitachalam503045-m02001.jpg)
+![](img/nsp-venkitachalam503045-m02001.jpg)
 
-线段 ![](images/nsp-venkitachalam503045-m02002.jpg) 告诉你笔尖离小圆心的距离。你可以通过将 ![](images/nsp-venkitachalam503045-m02002.jpg) 与小圆半径 *r* 的比率表示为变量 *l*，如下所示：
+线段 ![](img/nsp-venkitachalam503045-m02002.jpg) 告诉你笔尖离小圆心的距离。你可以通过将 ![](img/nsp-venkitachalam503045-m02002.jpg) 与小圆半径 *r* 的比率表示为变量 *l*，如下所示：
 
-![](images/nsp-venkitachalam503045-m02003.jpg)
+![](img/nsp-venkitachalam503045-m02003.jpg)
 
 现在，你可以将这些变量组合成以下参数方程，表示点 *P*（笔尖）在小圆旋转进入大圆时的 x 和 y 坐标：
 
-![](images/nsp-venkitachalam503045-m02004.jpg)
+![](img/nsp-venkitachalam503045-m02004.jpg)
 
-![](images/nsp-venkitachalam503045-m02005.jpg)
+![](img/nsp-venkitachalam503045-m02005.jpg)
 
-注意：这些曲线被称为 *内接摆线*。尽管方程看起来可能有些复杂，但推导过程相当直接。如果你想深入了解数学，可以查看维基百科上的 Spirograph 页面：[http://en.wikipedia.org/wiki/Spirograph](http://en.wikipedia.org/wiki/Spirograph)。
+注意：这些曲线被称为 *内接摆线*。尽管方程看起来可能有些复杂，但推导过程相当直接。如果你想深入了解数学，可以查看维基百科上的 Spirograph 页面：[`en.wikipedia.org/wiki/Spirograph`](http://en.wikipedia.org/wiki/Spirograph)。
 
-[图2-4](nsp-venkitachalam503045-0013.xhtml#fig2-4)展示了用这些方程绘制的示例曲线。对于这条曲线，我设置*R*为220，*r*为65，*l*为0.8。通过选择这三个参数的不同值，然后逐步增加角度θ，你可以绘制出各种各样迷人的曲线。
+图 2-4 展示了用这些方程绘制的示例曲线。对于这条曲线，我设置*R*为 220，*r*为 65，*l*为 0.8。通过选择这三个参数的不同值，然后逐步增加角度θ，你可以绘制出各种各样迷人的曲线。
 
-![](images/nsp-venkitachalam503045-f02004.jpg)
+![](img/nsp-venkitachalam503045-f02004.jpg)
 
-图2-4：一个示例曲线
+图 2-4：一个示例曲线
 
 唯一剩下的任务是确定何时停止绘制，因为螺旋图形可能需要小圆绕大圆旋转许多圈才能完成一个完整的图案。你可以通过查看内外圆的半径比来计算螺旋图形的*周期性*（螺旋图形开始重复的时间）：
 
-![](images/nsp-venkitachalam503045-m02006.jpg)
+![](img/nsp-venkitachalam503045-m02006.jpg)
 
-通过将分子和分母除以*最大公约数（**GCD）*，简化这个分数。然后，分子告诉你曲线完成自身所需的周期数。例如，在[图2-4](nsp-venkitachalam503045-0013.xhtml#fig2-4)中，(*r*, *R*)的GCD是5：
+通过将分子和分母除以*最大公约数（**GCD）*，简化这个分数。然后，分子告诉你曲线完成自身所需的周期数。例如，在图 2-4 中，(*r*, *R*)的 GCD 是 5：
 
-![](images/nsp-venkitachalam503045-m02007.jpg)
+![](img/nsp-venkitachalam503045-m02007.jpg)
 
-这告诉你，曲线将在小圆绕大圆旋转13圈后开始重复。分母中的44告诉你小圆围绕其自身中心旋转的次数，这也为你提供了曲线形状的线索。如果你数一数[图2-4](nsp-venkitachalam503045-0013.xhtml#fig2-4)中的花瓣（或叶片），你会发现正好有44个！
+这告诉你，曲线将在小圆绕大圆旋转 13 圈后开始重复。分母中的 44 告诉你小圆围绕其自身中心旋转的次数，这也为你提供了曲线形状的线索。如果你数一数图 2-4 中的花瓣（或叶片），你会发现正好有 44 个！
 
-一旦你将半径比表达为简化形式*r*/*R*，绘制螺旋线的参数θ的范围就是[0, 2π*r*]。这告诉你何时停止绘制特定的螺旋线。在[图2-4](nsp-venkitachalam503045-0013.xhtml#fig2-4)中，当θ达到26π（即2π × 13）时，你应该停止。如果不知道角度的结束范围，你将会不停地循环，重复绘制相同的曲线。
+一旦你将半径比表达为简化形式*r*/*R*，绘制螺旋线的参数θ的范围就是[0, 2π*r*]。这告诉你何时停止绘制特定的螺旋线。在图 2-4 中，当θ达到 26π（即 2π × 13）时，你应该停止。如果不知道角度的结束范围，你将会不停地循环，重复绘制相同的曲线。
 
-### [使用turtle图形绘制曲线](nsp-venkitachalam503045-0008.xhtml#rbh0402)
+### 使用 turtle 图形绘制曲线
 
-Python的`turtle`模块没有绘制曲线的功能。相反，你将通过使用上一节讨论的参数方程，计算出不同点之间的直线，从而绘制一个螺旋线。只要从一个点到下一个点的角度变化θ足够小，结果就会呈现曲线效果。
+Python 的`turtle`模块没有绘制曲线的功能。相反，你将通过使用上一节讨论的参数方程，计算出不同点之间的直线，从而绘制一个螺旋线。只要从一个点到下一个点的角度变化θ足够小，结果就会呈现曲线效果。
 
-为了演示，下面的程序使用`turtle`绘制一个圆。它使用我们基本的圆形参数方程，*x* = *a* + *r* cos(θ) 和 *y* = *b* + *r* sin(θ)，来计算圆上的点，并将这些点用直线连接起来。从技术上讲，程序实际上是绘制一个*N*边形，但由于角度参数的变化非常小，*N*将非常大，因此该多边形看起来就像一个圆。输入以下代码，将其保存为*drawcircle.py*，并在Python中运行：
+为了演示，下面的程序使用`turtle`绘制一个圆。它使用我们基本的圆形参数方程，*x* = *a* + *r* cos(θ) 和 *y* = *b* + *r* sin(θ)，来计算圆上的点，并将这些点用直线连接起来。从技术上讲，程序实际上是绘制一个*N*边形，但由于角度参数的变化非常小，*N*将非常大，因此该多边形看起来就像一个圆。输入以下代码，将其保存为*drawcircle.py*，并在 Python 中运行：
 
 import math
 
 import turtle
 
-# 使用turtle绘制圆形
+# 使用 turtle 绘制圆形
 
 def drawCircleTurtle(x, y, r):
 
@@ -128,7 +128,7 @@ turtle.mainloop()
 
 现在你准备好绘制一些旋画了！你将使用之前介绍的相同`turtle`方法。唯一需要改变的是用来计算点的参数方程的细节。
 
-## [需求](nsp-venkitachalam503045-0008.xhtml#rah0402)
+## 需求
 
 你将使用以下方法来创建你的旋画：
 
@@ -136,13 +136,13 @@ turtle.mainloop()
 
 +   • `Pillow`，*Python Imaging Library（**PIL**）*的一个分支，用于保存旋画图像
 
-## [代码](nsp-venkitachalam503045-0008.xhtml#rah0403)
+## 代码
 
 首先你将定义一个类`Spiro`来绘制曲线。你可以使用这个类来绘制单个曲线并自定义参数，或者作为一个动画的一部分，绘制多个随机的旋画。为了协调动画，你将定义另一个名为`SpiroAnimator`的类。在程序的顶层，你将编写一个函数来将绘图保存为图像文件，并使用`main()`函数来获取用户输入并启动绘制。
 
-要查看完整的项目代码，请跳转到[“完整代码”](nsp-venkitachalam503045-0013.xhtml#ah0407)部分，位于[第 36 页](nsp-venkitachalam503045-0013.xhtml#p36)。你也可以从[https://github.com/mkvenkit/pp2e/blob/main/spirograph/spiro.py](https://github.com/mkvenkit/pp2e/blob/main/spirograph/spiro.py)下载该项目的代码。
+要查看完整的项目代码，请跳转到“完整代码”部分，位于第 36 页。你也可以从[`github.com/mkvenkit/pp2e/blob/main/spirograph/spiro.py`](https://github.com/mkvenkit/pp2e/blob/main/spirograph/spiro.py)下载该项目的代码。
 
-### [绘制旋画](nsp-venkitachalam503045-0008.xhtml#rbh0403)
+### 绘制旋画
 
 `Spiro` 类提供了用于绘制单个螺旋图案的方法。以下是 `Spiro` 类的构造函数：
 
@@ -176,7 +176,7 @@ self.setparams(xc, yc, col, R, r, l)
 
 self.restart()
 
-`Spiro` 构造函数创建了一个新的 `turtle` 对象 ❶。这样，每个单独的 `Spiro` 对象将拥有自己的 `turtle` 对象，也就是说，你可以创建多个 `Spiro` 对象同时绘制多个螺旋图案。你将海龟光标的形状设置为海龟 ❷。（你可以在 `turtle` 文档中找到其他选择，访问 [https://docs.python.org/3/library/turtle.xhtml](https://docs.python.org/3/library/turtle.xhtml)）。你将参数化绘图的角度增量设置为 5 度 ❸，并创建一个布尔类型的 `drawingComplete` 标志，用于指示螺旋图案是否完成 ❹。当多个 `Spiro` 对象同时绘图时，这个标志将非常有用，它帮助你追踪某个特定的螺旋图案是否已完成。构造函数最后通过调用两个设置方法完成初始化，接下来将讨论这两个方法。
+`Spiro` 构造函数创建了一个新的 `turtle` 对象 ❶。这样，每个单独的 `Spiro` 对象将拥有自己的 `turtle` 对象，也就是说，你可以创建多个 `Spiro` 对象同时绘制多个螺旋图案。你将海龟光标的形状设置为海龟 ❷。（你可以在 `turtle` 文档中找到其他选择，访问 [`docs.python.org/3/library/turtle.xhtml`](https://docs.python.org/3/library/turtle.xhtml)）。你将参数化绘图的角度增量设置为 5 度 ❸，并创建一个布尔类型的 `drawingComplete` 标志，用于指示螺旋图案是否完成 ❹。当多个 `Spiro` 对象同时绘图时，这个标志将非常有用，它帮助你追踪某个特定的螺旋图案是否已完成。构造函数最后通过调用两个设置方法完成初始化，接下来将讨论这两个方法。
 
 #### 设置方法
 
@@ -332,11 +332,11 @@ self.t.hideturtle()
 
 你首先检查`drawingComplete`标志是否已经设置❶；如果没有，你就继续执行剩下的代码。你会增加当前角度❷，计算对应当前角度的(*x*, *y*)位置❸，并将海龟移到那里，同时绘制出线段❹。这就像是在`draw()`方法中的`for()`循环里的代码，只不过它只执行一次。
 
-当我讨论Spirograph的参数方程时，我提到了曲线的周期性。Spirograph在某个角度之后开始重复自己。你通过检查角度是否已经达到为该特定曲线计算的完整范围❺来结束`update()`函数。如果是这样，你将设置`drawingComplete`标志，因为spiro已经完成。最后，你会隐藏海龟光标，这样你就可以看到你美丽的创作。
+当我讨论 Spirograph 的参数方程时，我提到了曲线的周期性。Spirograph 在某个角度之后开始重复自己。你通过检查角度是否已经达到为该特定曲线计算的完整范围❺来结束`update()`函数。如果是这样，你将设置`drawingComplete`标志，因为 spiro 已经完成。最后，你会隐藏海龟光标，这样你就可以看到你美丽的创作。
 
-### [协调动画](nsp-venkitachalam503045-0008.xhtml#rbh0404)
+### 协调动画
 
-`SpiroAnimator`类允许你同时绘制多个随机spiro作为动画。这个类通过定时器定期调用每个`Spiro`对象的`update()`方法，协调多个`Spiro`对象的活动，这些对象的参数是随机分配的。这个技术周期性地更新图形，并允许程序处理按钮按下、鼠标点击等事件。
+`SpiroAnimator`类允许你同时绘制多个随机 spiro 作为动画。这个类通过定时器定期调用每个`Spiro`对象的`update()`方法，协调多个`Spiro`对象的活动，这些对象的参数是随机分配的。这个技术周期性地更新图形，并允许程序处理按钮按下、鼠标点击等事件。
 
 让我们首先看看`SpiroAnimator`类的构造函数：
 
@@ -360,7 +360,7 @@ self.height = turtle.window_height()
 
 ❸ self.restarting = False
 
-# 创建Spiro对象
+# 创建 Spiro 对象
 
 self.spiros = []
 
@@ -370,7 +370,7 @@ for i in range(N):
 
 ❹ rparams = self.genRandomParams()
 
-# 设置spiro参数
+# 设置 spiro 参数
 
 ❺ spiro = Spiro(*rparams)
 
@@ -380,7 +380,7 @@ self.spiros.append(spiro)
 
 ❻ turtle.ontimer(self.update, self.deltaT)
 
-`SpiroAnimator`构造函数将`deltaT`设置为`10`，这是你在计时器中使用的时间间隔，单位为毫秒❶。接着，你会存储海龟窗口的尺寸❷，并初始化一个标志，表示重启正在进行中❸。在一个重复*N*次的循环中（`N`通过构造函数传递给`SpiroAnimator`），你会创建新的`Spiro`对象❺并将它们添加到`spiros`列表中。在创建每个`Spiro`对象之前，你调用`genRandomParams()`辅助方法❹，随机分配spiro的参数（我们接下来会看这个方法）。这里的`rparams`是一个元组，你需要将其传递给`Spiro`构造函数。然而，构造函数期望多个参数，因此你使用Python的`*`运算符将元组解包为多个参数。最后，你设置`turtle.ontimer()`方法，在`deltaT`毫秒后调用`update()`❻，从而启动动画。
+`SpiroAnimator`构造函数将`deltaT`设置为`10`，这是你在计时器中使用的时间间隔，单位为毫秒❶。接着，你会存储海龟窗口的尺寸❷，并初始化一个标志，表示重启正在进行中❸。在一个重复*N*次的循环中（`N`通过构造函数传递给`SpiroAnimator`），你会创建新的`Spiro`对象❺并将它们添加到`spiros`列表中。在创建每个`Spiro`对象之前，你调用`genRandomParams()`辅助方法❹，随机分配 spiro 的参数（我们接下来会看这个方法）。这里的`rparams`是一个元组，你需要将其传递给`Spiro`构造函数。然而，构造函数期望多个参数，因此你使用 Python 的`*`运算符将元组解包为多个参数。最后，你设置`turtle.ontimer()`方法，在`deltaT`毫秒后调用`update()`❻，从而启动动画。
 
 #### 生成随机参数
 
@@ -514,9 +514,9 @@ spiro.t.showturtle()
 
 这个方法使用内置的`turtle`方法，如果光标可见则隐藏它，或者如果不可见则显示光标。稍后你将看到如何通过在动画运行时按键触发`toggleTurtles()`方法。
 
-### [保存曲线](nsp-venkitachalam503045-0008.xhtml#rbh0405)
+### 保存曲线
 
-在你辛苦生成涡旋图形后，最好有一种方式来保存结果。独立的`saveDrawing()`函数将绘图窗口的内容保存为PNG图像文件：
+在你辛苦生成涡旋图形后，最好有一种方式来保存结果。独立的`saveDrawing()`函数将绘图窗口的内容保存为 PNG 图像文件：
 
 def saveDrawing():
 
@@ -540,7 +540,7 @@ canvas = turtle.getcanvas()
 
 ❸ canvas.postscript(file = fileName + '.eps')
 
-# 使用Pillow模块将PostScript图像文件转换为PNG
+# 使用 Pillow 模块将 PostScript 图像文件转换为 PNG
 
 ❹ img = Image.open(fileName + '.eps')
 
@@ -552,11 +552,11 @@ turtle.showturtle()
 
 你隐藏了海龟光标，这样它们就不会出现在最终的绘图中 ❶。然后，你使用`datetime()`生成基于时间戳的唯一文件名（格式为*日-月-年-时-分-秒*）❷。你将这个字符串附加到*spiro-*，生成文件名。
 
-`turtle`程序使用由`tkinter`创建的用户界面（UI）窗口，你使用`tkinter`的`canvas`对象将窗口保存为嵌入式 PostScript（EPS）文件格式 ❸。由于EPS是基于矢量的，你可以用它打印高分辨率的图像，但PNG格式更为通用，所以你使用`Pillow`打开EPS文件 ❹并将其保存为PNG文件 ❺。最后，你重新显示海龟光标。
+`turtle`程序使用由`tkinter`创建的用户界面（UI）窗口，你使用`tkinter`的`canvas`对象将窗口保存为嵌入式 PostScript（EPS）文件格式 ❸。由于 EPS 是基于矢量的，你可以用它打印高分辨率的图像，但 PNG 格式更为通用，所以你使用`Pillow`打开 EPS 文件 ❹并将其保存为 PNG 文件 ❺。最后，你重新显示海龟光标。
 
-### [解析命令行参数和初始化](nsp-venkitachalam503045-0008.xhtml#rbh0406)
+### 解析命令行参数和初始化
 
-本书中的大多数项目都有命令行参数，用于定制代码。与其尝试手动解析这些参数并弄得一团糟，不如将这一繁琐任务交给Python的`argparse`模块。你在spiro程序的`main()`函数的第一部分中就是这么做的：
+本书中的大多数项目都有命令行参数，用于定制代码。与其尝试手动解析这些参数并弄得一团糟，不如将这一繁琐任务交给 Python 的`argparse`模块。你在 spiro 程序的`main()`函数的第一部分中就是这么做的：
 
 def main():
 
@@ -566,7 +566,7 @@ def main():
 
 ❷ parser.add_argument('--sparams', nargs=3, dest='sparams', required=False,
 
-help="sparams中的三个参数：R，r，l。"
+help="sparams 中的三个参数：R，r，l。"
 
 # 解析参数
 
@@ -578,7 +578,7 @@ help="sparams中的三个参数：R，r，l。"
 
 `main()`函数继续通过设置一些`turtle`参数：
 
-# 将绘图窗口的宽度设置为屏幕宽度的80%
+# 将绘图窗口的宽度设置为屏幕宽度的 80%
 
 ❶ turtle.setup(width=0.8)
 
@@ -586,7 +586,7 @@ help="sparams中的三个参数：R，r，l。"
 
 turtle.shape('turtle')
 
-# 将标题设置为Spirographs!
+# 将标题设置为 Spirographs!
 
 turtle.title("Spirographs!")
 
@@ -602,17 +602,17 @@ turtle.title("Spirographs!")
 
 ❹ turtle.hideturtle()
 
-你使用`setup()`将绘图窗口的宽度设置为屏幕宽度的80%。(你也可以给`setup()`指定特定的高度和原点参数。)然后将光标形状设置为海龟形状，并将程序窗口的标题设置为*Spirographs!*接下来，使用`onkey()`与`saveDrawing()`函数指示程序在按下键盘上的S键时保存绘图 ❷。调用`listen()`使绘图窗口监听用户事件（如按键） ❸。最后，隐藏海龟光标 ❹。
+你使用`setup()`将绘图窗口的宽度设置为屏幕宽度的 80%。(你也可以给`setup()`指定特定的高度和原点参数。)然后将光标形状设置为海龟形状，并将程序窗口的标题设置为*Spirographs!*接下来，使用`onkey()`与`saveDrawing()`函数指示程序在按下键盘上的 S 键时保存绘图 ❷。调用`listen()`使绘图窗口监听用户事件（如按键） ❸。最后，隐藏海龟光标 ❹。
 
 `main()`函数的其余部分如下：
 
-# 检查是否有任何传递给`--sparams`的参数，并绘制Spirograph
+# 检查是否有任何传递给`--sparams`的参数，并绘制 Spirograph
 
 ❶ 如果有`args.sparams`：
 
 ❷ params = [float(x) for x in args.sparams]
 
-# 使用给定参数绘制Spirograph
+# 使用给定参数绘制 Spirograph
 
 col = (0.0, 0.0, 0.0)
 
@@ -638,39 +638,39 @@ turtle.onkey(spiroAnim.restart, "space")
 
 ❻ turtle.mainloop()
 
-你首先检查是否给`--sparams`传入了任何参数 ❶；如果有，程序将只绘制由这些参数定义的单个螺旋图。参数目前是以字符串形式存在的，但你需要将它们解释为数字。你使用列表推导式将它们转换为浮动列表 ❷。（*列表推导式*是Python的一种构造，可以用简洁且强大的方式创建列表。例如，`a = [2*x for x in range(1, 5)]`会创建一个包含前四个偶数的列表。）然后，你使用这些参数构造一个`Spiro`对象 ❸（借助Python的`*`操作符，它可以将列表展开为一系列参数），并调用`draw()`来绘制螺旋图 ❹。
+你首先检查是否给`--sparams`传入了任何参数 ❶；如果有，程序将只绘制由这些参数定义的单个螺旋图。参数目前是以字符串形式存在的，但你需要将它们解释为数字。你使用列表推导式将它们转换为浮动列表 ❷。（*列表推导式*是 Python 的一种构造，可以用简洁且强大的方式创建列表。例如，`a = [2*x for x in range(1, 5)]`会创建一个包含前四个偶数的列表。）然后，你使用这些参数构造一个`Spiro`对象 ❸（借助 Python 的`*`操作符，它可以将列表展开为一系列参数），并调用`draw()`来绘制螺旋图 ❹。
 
-如果在命令行没有指定任何参数，程序将进入随机动画模式。在这种模式下，你创建一个`SpiroAnimator`对象 ❺，并传入参数`4`，这会让它一次绘制四个螺旋图。然后，你使用两个`onkey`调用来捕捉额外的按键事件。按下T键会通过`toggleTurtles()`方法显示或隐藏乌龟光标，而按下空格键（`space`）则会调用`restart()`，在任何时刻中断动画并开始绘制四个不同的随机螺旋图。最后，你调用`mainloop()`，让`tkinter`窗口保持打开，等待事件 ❻。
+如果在命令行没有指定任何参数，程序将进入随机动画模式。在这种模式下，你创建一个`SpiroAnimator`对象 ❺，并传入参数`4`，这会让它一次绘制四个螺旋图。然后，你使用两个`onkey`调用来捕捉额外的按键事件。按下 T 键会通过`toggleTurtles()`方法显示或隐藏乌龟光标，而按下空格键（`space`）则会调用`restart()`，在任何时刻中断动画并开始绘制四个不同的随机螺旋图。最后，你调用`mainloop()`，让`tkinter`窗口保持打开，等待事件 ❻。
 
-## [运行螺旋图动画](nsp-venkitachalam503045-0008.xhtml#rah0404)
+## 运行螺旋图动画
 
 现在是时候运行你的程序了：
 
 $ `python spiro.py`
 
-默认情况下，*spiro.py*程序同时绘制四个随机螺旋图，如[图2-5](nsp-venkitachalam503045-0013.xhtml#fig2-5)所示。按下S键保存绘图，按下T键切换光标，按下空格键重新启动动画。
+默认情况下，*spiro.py*程序同时绘制四个随机螺旋图，如图 2-5 所示。按下 S 键保存绘图，按下 T 键切换光标，按下空格键重新启动动画。
 
-![](images/nsp-venkitachalam503045-f02005.jpg)
+![](img/nsp-venkitachalam503045-f02005.jpg)
 
-图2-5：*spiro.py*的示例运行
+图 2-5：*spiro.py*的示例运行
 
 现在再次运行程序，这次在命令行传入参数来绘制特定的螺旋图：
 
 $ `python spiro.py --sparams 300 100 0.9`
 
-[图2-6](nsp-venkitachalam503045-0013.xhtml#fig2-6)展示了输出结果。如你所见，这段代码绘制了一个由用户指定参数定义的单一螺旋图，区别于[图2-5](nsp-venkitachalam503045-0013.xhtml#fig2-5)，后者展示了多个随机螺旋图的动画。
+图 2-6 展示了输出结果。如你所见，这段代码绘制了一个由用户指定参数定义的单一螺旋图，区别于图 2-5，后者展示了多个随机螺旋图的动画。
 
-![](images/nsp-venkitachalam503045-f02006.jpg)
+![](img/nsp-venkitachalam503045-f02006.jpg)
 
-图2-6：使用特定参数的*spiro.py*示例运行
+图 2-6：使用特定参数的*spiro.py*示例运行
 
 尝试不同的参数，看它们如何影响结果曲线，玩得开心。
 
-## [总结](nsp-venkitachalam503045-0008.xhtml#rah0405)
+## 总结
 
-在这个项目中，你学会了如何创建类似Spirograph的曲线。你还学会了如何调整输入参数，生成各种不同的曲线，并在屏幕上进行动画。我希望你喜欢创作这些螺旋图。（你会在[第13章](nsp-venkitachalam503045-0028.xhtml#ch13)中发现一个惊喜，届时你将学会如何将螺旋图投影到墙上！）
+在这个项目中，你学会了如何创建类似 Spirograph 的曲线。你还学会了如何调整输入参数，生成各种不同的曲线，并在屏幕上进行动画。我希望你喜欢创作这些螺旋图。（你会在第十三章中发现一个惊喜，届时你将学会如何将螺旋图投影到墙上！）
 
-## [实验！](nsp-venkitachalam503045-0008.xhtml#rah0406)
+## 实验！
 
 以下是一些进一步实验螺旋图的方法：
 
@@ -678,7 +678,7 @@ $ `python spiro.py --sparams 300 100 0.9`
 
 1.  2\. 你可能已经注意到，当曲线被绘制时，海龟光标总是面朝右侧，但这并不是海龟的移动方式！将海龟朝向改为在绘制曲线时始终朝着绘制的方向。(提示：计算每一步的两个点之间的方向向量，并使用`turtle`.`setheading()`方法重新调整海龟的方向。)
 
-## [完整代码](nsp-venkitachalam503045-0008.xhtml#rah0407)
+## 完整代码
 
 这是完整的涡轮图程序：
 
@@ -686,7 +686,7 @@ $ `python spiro.py --sparams 300 100 0.9`
 
 spiro.py
 
-一个模拟绘制涡轮图的Python程序。
+一个模拟绘制涡轮图的 Python 程序。
 
 作者：Mahesh Venkitachalam
 

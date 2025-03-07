@@ -1,4 +1,4 @@
-# [第五部分](nsp-venkitachalam503045-0008.xhtml#rpt05)
+# 第五部分
 
 # 硬件黑客
 

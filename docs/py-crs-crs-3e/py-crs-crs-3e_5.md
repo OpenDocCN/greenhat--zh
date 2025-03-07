@@ -2,7 +2,7 @@
 
 寻求帮助
 
-![](Images/chapterart.png)
+![](img/chapterart.png)
 
 每个人在学习编程时都会遇到卡壳的情况。因此，作为程序员，最重要的技能之一就是如何高效地解决问题。这个附录概述了几种在编程遇到困惑时帮助你重新开始的方法。
 
@@ -18,7 +18,7 @@
 
 让你的回答尽可能具体。对于第一个问题，像“我正在尝试在我的新 Windows 笔记本电脑上安装最新版本的 Python”这样的明确陈述已经足够详细，能够帮助 Python 社区的其他人提供帮助。而像“我正在尝试安装 Python”这样的说法，则无法提供足够的信息，其他人也无法提供太多帮助。
 
-你对第二个问题的回答应该提供足够的细节，这样就不会建议你重复已经尝试过的步骤：“我去了[https://python.org/downloads](https://python.org/downloads)并点击了适合我系统的下载按钮。然后我运行了安装程序”比“我去了 Python 网站下载了一些东西”更有帮助。
+你对第二个问题的回答应该提供足够的细节，这样就不会建议你重复已经尝试过的步骤：“我去了[`python.org/downloads`](https://python.org/downloads)并点击了适合我系统的下载按钮。然后我运行了安装程序”比“我去了 Python 网站下载了一些东西”更有帮助。
 
 对于第三个问题，了解你收到的具体错误信息非常有帮助，这样你就可以利用这些信息在网上搜索解决方案，或者在寻求帮助时提供这些信息。
 
@@ -36,7 +36,7 @@
 
 ### 请参考本书的资源
 
-本书的在线资源，可以通过 [https://ehmatthes.github.io/pcc_3e](https://ehmatthes.github.io/pcc_3e) 访问，包含了许多有助于设置系统和逐章操作的部分。如果你还没有查看过，请看一下这些资源，看看是否有对你情况有帮助的内容。
+本书的在线资源，可以通过 [`ehmatthes.github.io/pcc_3e`](https://ehmatthes.github.io/pcc_3e) 访问，包含了许多有助于设置系统和逐章操作的部分。如果你还没有查看过，请看一下这些资源，看看是否有对你情况有帮助的内容。
 
 ## 在线搜索
 
@@ -56,23 +56,23 @@ Python was not found; run without arguments to install from the Microsoft
 
 ### Stack Overflow
 
-*Stack Overflow* ([https://stackoverflow.com](https://stackoverflow.com)) 是程序员最受欢迎的问答网站之一，通常会出现在 Python 相关搜索的结果第一页。会员们在遇到困难时发布问题，其他会员则尝试提供有帮助的回答。用户可以投票支持他们认为最有用的回答，因此最好的回答通常是你最先能找到的。
+*Stack Overflow* ([`stackoverflow.com`](https://stackoverflow.com)) 是程序员最受欢迎的问答网站之一，通常会出现在 Python 相关搜索的结果第一页。会员们在遇到困难时发布问题，其他会员则尝试提供有帮助的回答。用户可以投票支持他们认为最有用的回答，因此最好的回答通常是你最先能找到的。
 
 许多基础的 Python 问题在 Stack Overflow 上都有非常清晰的答案，因为社区随着时间的推移已经将其完善。用户也被鼓励发布更新，因此回答通常保持相对的时效性。截止本文写作时，几乎有两百万个与 Python 相关的问题在 Stack Overflow 上得到了回答。
 
-在你在 Stack Overflow 上发布问题之前，有一个期望需要了解。问题应该是你面临的情况的最简短示例。如果你发布 5 到 20 行代码，能够重现你遇到的错误，并且如果你在本附录第 477 页中提到的“第一步”中回答了相关问题，通常会有人帮助你。如果你分享一个包含多个大型文件的项目链接，人们就很不可能提供帮助。这里有一个很好的指南，介绍了如何写出一个好的问题：[https://stackoverflow.com/help/how-to-ask](https://stackoverflow.com/help/how-to-ask)。这个指南中的建议适用于任何程序员社区求助时。
+在你在 Stack Overflow 上发布问题之前，有一个期望需要了解。问题应该是你面临的情况的最简短示例。如果你发布 5 到 20 行代码，能够重现你遇到的错误，并且如果你在本附录第 477 页中提到的“第一步”中回答了相关问题，通常会有人帮助你。如果你分享一个包含多个大型文件的项目链接，人们就很不可能提供帮助。这里有一个很好的指南，介绍了如何写出一个好的问题：[`stackoverflow.com/help/how-to-ask`](https://stackoverflow.com/help/how-to-ask)。这个指南中的建议适用于任何程序员社区求助时。
 
 ### 官方 Python 文档
 
-官方 Python 文档（[https://docs.python.org](https://docs.python.org)）对于初学者来说可能有些难以掌握，因为它的目的更多是记录语言本身，而不是提供详细的解释。官方文档中的示例通常可以正常工作，但您可能无法理解其中的所有内容。不过，它仍然是一个在搜索中遇到时可以参考的好资源，并且随着您对 Python 理解的加深，它将变得更加有用。
+官方 Python 文档（[`docs.python.org`](https://docs.python.org)）对于初学者来说可能有些难以掌握，因为它的目的更多是记录语言本身，而不是提供详细的解释。官方文档中的示例通常可以正常工作，但您可能无法理解其中的所有内容。不过，它仍然是一个在搜索中遇到时可以参考的好资源，并且随着您对 Python 理解的加深，它将变得更加有用。
 
 ### 官方库文档
 
-如果您使用的是某个特定的库，例如 Pygame、Matplotlib 或 Django，相关的官方文档链接通常会出现在搜索结果中。例如，[https://docs.djangoproject.com](https://docs.djangoproject.com) 在使用 Django 时非常有帮助。如果您计划使用这些库，熟悉它们的官方文档是一个不错的主意。
+如果您使用的是某个特定的库，例如 Pygame、Matplotlib 或 Django，相关的官方文档链接通常会出现在搜索结果中。例如，[`docs.djangoproject.com`](https://docs.djangoproject.com) 在使用 Django 时非常有帮助。如果您计划使用这些库，熟悉它们的官方文档是一个不错的主意。
 
 ### r/learnpython
 
-Reddit 由多个名为 *subreddit* 的子论坛组成。*r/learnpython* 子论坛（[https://reddit.com/r/learnpython](https://reddit.com/r/learnpython)）非常活跃且充满支持。您可以阅读他人的问题并发布自己的问题。通常您会得到多个不同的观点，这对于深入理解您正在研究的主题非常有帮助。
+Reddit 由多个名为 *subreddit* 的子论坛组成。*r/learnpython* 子论坛（[`reddit.com/r/learnpython`](https://reddit.com/r/learnpython)）非常活跃且充满支持。您可以阅读他人的问题并发布自己的问题。通常您会得到多个不同的观点，这对于深入理解您正在研究的主题非常有帮助。
 
 ### 博客文章
 
@@ -82,12 +82,12 @@ Reddit 由多个名为 *subreddit* 的子论坛组成。*r/learnpython* 子论�
 
 *Discord* 是一个在线聊天平台，拥有一个 Python 社区，您可以在这里寻求帮助并参与 Python 相关的讨论。
 
-要查看它，请访问 [https://pythondiscord.com](https://pythondiscord.com) 并点击右上角的 **Discord** 链接。如果您已经有 Discord 账户，可以使用现有账户登录。如果没有账户，请输入用户名并按照提示完成注册。
+要查看它，请访问 [`pythondiscord.com`](https://pythondiscord.com) 并点击右上角的 **Discord** 链接。如果您已经有 Discord 账户，可以使用现有账户登录。如果没有账户，请输入用户名并按照提示完成注册。
 
 如果这是您第一次访问 Python Discord，您需要先接受社区规则才能完全参与。一旦完成，您可以加入任何您感兴趣的频道。如果您需要帮助，请确保在 Python 帮助频道中发帖。
 
 ## Slack
 
-*Slack* 是另一个在线聊天平台。它通常用于公司内部通讯，但也有许多公共小组您可以加入。如果您想查看 Python Slack 小组，可以从 [https://pyslackers.com](https://pyslackers.com) 开始。点击页面顶部的 **Slack** 链接，然后输入您的电子邮件地址以获取邀请。
+*Slack* 是另一个在线聊天平台。它通常用于公司内部通讯，但也有许多公共小组您可以加入。如果您想查看 Python Slack 小组，可以从 [`pyslackers.com`](https://pyslackers.com) 开始。点击页面顶部的 **Slack** 链接，然后输入您的电子邮件地址以获取邀请。
 
 一旦进入 Python 开发者工作区，您将看到一个频道列表。点击 **Channels**，然后选择您感兴趣的话题。您可能希望从 *#help* 和 *#django* 频道开始。
