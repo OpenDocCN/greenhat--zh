@@ -1,20 +1,28 @@
 - en: '9'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '9'
 - en: Spatial Trees
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 空间树
 - en: '![](image_fi/book_art/chapterart.png)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![](image_fi/book_art/chapterart.png)'
 - en: The previous chapter showed how nearest-neighbor search allows us to find nearby
     or close data points, broadening our ability to answer coffee-related questions,
     such as finding the closest physical location or finding items with similar attributes.
     In this chapter, we build on the concepts of tree-based data structures and spatial
     partitioning to further improve our nearest-neighbor searches.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 上一章展示了如何通过最近邻搜索来找到附近或相近的数据点，扩展了我们回答与咖啡相关问题的能力，例如找到最近的物理位置或找到具有相似属性的项目。本章我们将在基于树的数据结构和空间划分的基础上，进一步提升我们的最近邻搜索能力。
 - en: Chapter 8 discussed how we can adapt the algorithmic concepts for finding a
     specific value to the more general problem of finding nearest neighbors. We also
     saw how operations become more difficult as we transition from a single dimension
@@ -22,8 +30,10 @@
     space or similar friends (based on empathy, willingness to listen, and the ever-important
     coolness factor). Grids replace the simple arrays, and it’s no longer sufficient
     to sort along a single dimension.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 第 8 章讨论了如何将寻找特定值的算法概念适应到更一般的寻找最近邻问题中。我们还看到，随着从单一维度过渡到多维度，操作变得更加复杂。也许我们想在二维空间中寻找附近的咖啡馆，或寻找相似的朋友（基于共情、倾听意愿以及永恒重要的酷感因子）。网格取代了简单的数组，单一维度排序已经不再足够。
 - en: 'This chapter introduces two new tree-based data structures: uniform quadtrees
     and k-d trees. The term *quadtree* is often used to describe an entire class of
     two-dimensional data structures, based on the original quadtree proposed by computer
@@ -36,12 +46,19 @@
     to the data and allow us to scale to higher dimensions. Through examining quadtrees
     and k-d trees, we learn to generalize and modify tree-based data structures—and
     examine these data structures by comparison with the projects of city planners.'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章介绍了两种基于树的新数据结构：均匀四叉树和 k-d 树。术语*四叉树*通常用来描述一个二维数据结构的整个类，基于计算机科学家 Raphael Finkel
+    和 Jon Bentley 提出的原始四叉树，该结构将每个二维节点在每个级别分割成四个子区域。我们关注的是均匀四叉树，如研究员和发明家 David P. Anderson
+    提出的结构。该结构具有与网格结构相似的等大小子区域，从而延续了我们在上一章中的讨论。相比之下，*k-d 树*由 Jon Bentley 发明，使用一种更灵活的二进制分割方案，可以进一步适应数据并允许我们扩展到更高的维度。通过研究四叉树和
+    k-d 树，我们学会了如何概括和修改基于树的数据结构，并通过与城市规划项目的比较来审视这些数据结构。
 - en: Quadtrees
+  id: totrans-6
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 四叉树
 - en: While grids provide a convenient data structure for storing two-dimensional
     data, they come with their own host of complexities. As we saw in the previous
     chapter, both the overhead and usefulness of grids depend heavily on how finely
@@ -50,14 +67,21 @@
     On the other hand, coarsely grained partitioning can result in a large number
     of points per bin, as in [Figure 9-1](#figure9-1), resembling a simple linear
     scan over a large number of individual points.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然网格提供了一种方便的二维数据存储结构，但它们也带来了许多复杂性。正如我们在上一章所看到的，网格的开销和实用性在很大程度上取决于我们如何细分空间。使用大量网格单元（通过创建细粒度的网格）需要大量内存，并可能要求我们搜索许多单元。另一方面，粗粒度的分割可能导致每个单元中有大量的点，如[图
+    9-1](#figure9-1)所示，类似于对大量单独点的简单线性扫描。
 - en: '![A two‐by‐two grid with 11 data points and a single target point.](image_fi/502604c09/f09001.png)'
+  id: totrans-8
   prefs: []
   type: TYPE_IMG
+  zh: '![一个包含 11 个数据点和一个目标点的二维网格](image_fi/502604c09/f09001.png)'
 - en: 'Figure 9-1: A grid with a small number of bins'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9-1：一个具有少量格子的网格
 - en: We can think of the grids in terms of different approaches to home organization.
     If we throw all our kitchen equipment into a single massive drawer, it takes forever
     to find a given item. This is equivalent to having a single large grid bin. To
@@ -67,6 +91,7 @@
     things are looking up—we no longer need to search under the frying pans to find
     the cinnamon. A little additional structure makes our cooking routine significantly
     easier.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
 - en: However, we can take the idea too far. Perhaps we have too many utensils and
@@ -77,6 +102,7 @@
     staring at a whole wall of drawers, wondering how many we’ll need to check to
     find something to beat our eggs. This is what happens when we use grids with overly
     fine bins.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
 - en: The solution to this conundrum is to partition space dynamically relative to
@@ -86,6 +112,7 @@
     Until then we can store them with the ladles and whisks. When we need more granularity,
     we subpartition our space further. To provide this dynamism, we can turn to *uniform
     quadtrees*.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
 - en: A uniform quadtree brings the branching structure of trees to grids. Each node
@@ -95,19 +122,23 @@
     quadrant. The term *uniform* refers to the fact that nodes are partitioned into
     equal-sized spatial regions and thus partition the space within the node uniformly.
     [Figure 9-2](#figure9-2) illustrates a quadtree split.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
 - en: '![The root node of the quadtree shown at the top encompasses the entire space
     and contains 11 points. Each of the four children contains a uniform region of
     the root node’s space and all points that fall within that region.](image_fi/502604c09/f09002.png)'
+  id: totrans-14
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-2: A quadtree node can have up to four children representing four
     equal-sized quadrants of that space.'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
 - en: When discussing the four subtrees, it’s common to label them NorthWest, NorthEast,
     SouthWest, and SouthEast to reflect their spatial positions in the original region.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
 - en: Internal quadtree nodes store pointers to up to four children, along with associated
@@ -118,24 +149,37 @@
     by keeping both a 2×2 grid of pointers to child nodes (for internal nodes) and
     an array for points (for leaf nodes). We either set the child entries to `null`
     in a leaf node or use an empty array for internal nodes.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 内部四叉树节点存储最多四个子节点的指针，以及与之关联的元数据，如分支中点的数量或该区域的空间边界（节点在 x 轴和 y 轴上的最小值和最大值）。叶子节点存储该区域内的点列表，以及任何所需的元数据。我们可以通过同时保持指向子节点的
+    2×2 指针网格（对于内部节点）和点数组（对于叶子节点），使用一个统一的数据结构来表示内部节点和叶子节点。我们可以在叶子节点中将子节点条目设置为 `null`，或在内部节点中使用空数组。
 - en: 'The following is an example of a composite data structure for the `QuadTreeNode`:'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下是一个 `QuadTreeNode` 的复合数据结构示例：
 - en: '[PRE0]'
+  id: totrans-19
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'We use a simple composite data structure for the points:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们为点使用了一个简单的复合数据结构：
 - en: '[PRE1]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: As in the previous chapter, we could alternatively store the points in arrays
     or ordered tuples.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如前一章所述，我们也可以选择将点存储在数组或有序元组中。
 - en: 'Technically, we don’t need to store the spatial bounds of the node explicitly.
     We can instead derive the bounds for each node from bounds of the root node and
     the sequence of splits, since each node partitions its points along the middle
@@ -146,20 +190,28 @@
     instead of deriving them, making implementing our search algorithms significantly
     easier. I’ve often found that the value of storing this type of additional spatial
     information outweighs the additional memory costs.'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 从技术上讲，我们不需要显式地存储节点的空间边界。我们可以通过从根节点的边界和分割序列中推导出每个节点的边界，因为每个节点都会沿每个维度的中线分割其点，将空间划分为四个可预测大小的子区域。给定根节点的原始边界和一系列分支，我们可以精确计算出任何子节点的边界。然而，预计算并存储边界有一个明显的优势：在任何给定的节点，我们可以直接查找边界，而不是推导它们，这使得我们实现搜索算法变得更加容易。我发现，存储这种额外的空间信息的价值往往超过了额外的内存开销。
 - en: The power of quadtrees is that branching at each level (where there are enough
     points) effectively creates an adaptive, hierarchical grid. [Figure 9-3](#figure9-3)
     shows an example of one quadtree’s spatial partitioning.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 四叉树的强大之处在于每一级的分支（当有足够的点时）有效地创建了一个自适应的分层网格。[图 9-3](#figure9-3) 显示了一个四叉树空间分区的示例。
 - en: '![A visualization of a four‐level quadtree. Lines indicate the splits at each
     level.](image_fi/502604c09/f09003.png)'
+  id: totrans-25
   prefs: []
   type: TYPE_IMG
+  zh: '![一个四层四叉树的可视化。线条表示每个级别的分割。](image_fi/502604c09/f09003.png)'
 - en: 'Figure 9-3: The spatial partition created by a quadtree'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9-3：四叉树创建的空间分区
 - en: Imagine the successive partitions of a quadtree and how we search them as the
     interactive geographical search software in a sci-fi thriller. The protagonists
     crowd the command room and stare at a large screen representing the entire city.
@@ -171,20 +223,28 @@
     level. Everyone stares at the new geo-subset intently, before they select a further
     subquadrant and zoom in again. The search concludes when our heroes have found
     the transmitter closest to the target points.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 想象一下四叉树的连续分区，以及我们如何将其作为科幻惊悚片中的互动地理搜索软件进行搜索。主角们挤满了指挥室，凝视着代表整个城市的大屏幕。紧张的音乐播放着。随着新信息的不断涌入，操作员从屏幕中选择一个象限。有人说：“在那里放大并增强”，操作员照做了。无论对话如何，这一操作等同于在四叉树中下降一级。瞬间，指挥室的屏幕上显示了城市的一个子集。显示范围的整个区域是上一层级的一个象限。每个人都专注地盯着新的地理子集，随后他们选择进一步的子象限并再次放大。搜索在我们的英雄找到了最接近目标点的发射器时结束。
 - en: 'As with other trees, we can add a wrapper data structure around the uniform
     quadtree to simplify bookkeeping:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 和其他树一样，我们可以在统一的四叉树外部添加一个包装数据结构，以简化账务管理：
 - en: '[PRE2]'
+  id: totrans-29
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: The root node is created as an empty node with the correct dimensions at the
     time the tree itself is created, so we do not need to worry about its being null.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
 - en: Building Uniform Quadtrees
+  id: totrans-31
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -195,23 +255,27 @@
     we need to make the current node an internal node (with child nodes) or a leaf
     node (with a list of points). There are different mechanisms we can use for this
     test, but here are the most common:'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
 - en: Are there enough points to justify a split? If we have too few points, the cost
     of checking the distance to the child nodes is higher than exhaustively checking
     each of the points. It’s not worth the overhead.
+  id: totrans-33
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Are the spatial bounds large enough to justify a split? What if we have 10 points
     in exactly the same location? We could split and split and split without ever
     partitioning the points. It’s a waste of time and memory.
+  id: totrans-34
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Have we hit a maximum depth? This provides an alternate check to prevent us
     from wasting time and memory on excessive subdivision by capping how deep our
     tree can be.
+  id: totrans-35
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
@@ -225,6 +289,7 @@
     to do before they give up. After four levels, the planner might call it “good
     enough” and move on. If the criteria for stopping aren’t met, the planner sighs,
     mumbles “Really? Again?” and subdivides the plot.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
 - en: When partitioning a level, we divide the current space into four equal quadrants,
@@ -233,32 +298,41 @@
     root), we’d construct the tree in [Figure 9-4](#figure9-4). As shown by the illustration,
     we can save memory by only storing the non-empty children for each node. If a
     quadrant doesn’t have a child, we can set its pointer to `null`.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
 - en: '![The figure shows a quadtree with four levels. Each leaf node contains a single
     point.](image_fi/502604c09/f09004.png)'
+  id: totrans-38
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-4: An example quadtree with four levels'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
 - en: The code for bulk construction of quadtrees is very similar to the code presented
     in the next section for adding points. In fact, iteratively adding points to an
     empty quadtree is a good approach for constructing it.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
 - en: Adding Points
+  id: totrans-41
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'Since quadtrees are dynamic data structures, we can efficiently add points
     while maintaining the tree structure. We start with the wrapper function for the
     `QuadTree` data structure:'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于四叉树是动态数据结构，我们可以在保持树结构的同时高效地添加点。我们从`QuadTree`数据结构的包装函数开始：
 - en: '[PRE3]'
+  id: totrans-43
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: This wrapper guarantees we are always calling `QuadTreeNodeInsert` with a non-null
     node. The code also checks that the inserted point falls within the quadtree’s
     bounds. This is critical, as uniform quadtrees use equal-sized bins and cannot
@@ -266,8 +340,10 @@
     The code returns `False` if the point is out of range, but, depending on the implementation,
     you might want to use another mechanism such as returning an error or throwing
     an exception.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个包装器保证我们始终调用`QuadTreeNodeInsert`时传入的是非空节点。代码还会检查插入的点是否落在四叉树的边界内。这是至关重要的，因为均匀四叉树使用的是相同大小的容器，且无法动态调整大小。所有点必须落在根节点的空间边界内。如果点超出范围，代码返回`False`，但是根据实现方式，你可能想使用其他机制，比如返回错误或抛出异常。
 - en: 'As shown in the following code, adding points to a node consists of traversing
     the tree to find the new point’s location. This search can end in one of two ways:
     at a leaf node or at an internal dead end. If we terminate the search at a leaf
@@ -275,11 +351,15 @@
     bounds, max depth, and number of points), we might need to split the node into
     subnodes. If we end at an internal dead end, then we have found a path that previously
     didn’t contain any points. We can create the appropriate node.'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 如以下代码所示，向节点添加点的过程是遍历树来找到新点的位置。这个搜索可以通过两种方式结束：在叶子节点或内部死胡同。如果我们在叶子节点结束搜索，就可以在该节点添加新点。根据我们的分割标准（空间边界、最大深度和点的数量），我们可能需要将节点分割成子节点。如果我们结束于内部死胡同，那就说明我们找到了一个先前没有包含任何点的路径。我们可以在此创建适当的节点。
 - en: '[PRE4]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: The code starts by incrementing `num_points` to represent the new point ❶. The
     function then determines which of the four bins the new point falls into by computing
     the size of the bins and using that to map the x and y indices to either `0` or
@@ -289,8 +369,10 @@
     both `xbin` and `ybin` are either `0` or `1` to simplify the logic. Instead of
     enumerating all four cases, we can compute the child’s bounds with arithmetic.
     Finally, at leaf nodes, the code inserts the points directly into the node ❺.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码首先通过增加`num_points`来表示新点❶。然后，函数通过计算容器的大小，并使用这些信息将x和y索引映射到`0`或`1`来确定新点属于四个容器中的哪一个❷。如果节点不是叶子节点，代码需要递归地将点添加到正确的子节点❸。它首先检查子节点是否存在。如果不存在（即子节点的指针为`null`），则创建子节点❹。我们利用`xbin`和`ybin`都只能是`0`或`1`这一事实来简化逻辑。我们不需要列举所有四种情况，而是可以通过算术运算计算子节点的边界。最后，在叶子节点中，代码直接将点插入到节点中❺。
 - en: We aren’t done yet, though. The code needs to check whether the splitting conditions
     are met ❻; if so, it splits the current leaf node. Luckily, we can reuse the same
     insertion function for splitting as we did to add a point. The code marks the
@@ -301,44 +383,59 @@
     have to correct `num_points` to avoid double-counting the reinserted points ❽
     (due to the counter increment at ❶). The code also clears the list of points at
     the newly internal node.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 不过，我们还没完成。代码需要检查是否满足分割条件❻；如果满足，就会分割当前的叶子节点。幸运的是，我们可以重用插入函数来进行分割，就像我们插入一个点时一样。代码将节点标记为非叶子节点（`node.is_leaf
+    = False`），并使用`FOR`循环逐一重新插入点❼。因为当前节点不再是叶子节点，重新插入的点现在会落到正确的子节点，并根据需要创建新的子节点。然而，由于我们为每个点调用了两次这个函数，我们需要修正`num_points`，以避免重复计数重新插入的点❽（由于❶处的计数器增加）。代码还会清空新内部节点的点列表。
 - en: '[Figure 9-5](#figure9-5) shows what happens if we add two points to the tree.
     The inserted open-circle point causes one node to split before triggering the
     max-depth condition. The resulting leaf node holds two points. The inserted open-square
     point adds a single new child node corresponding to its parent NorthWest quadrant.
     The code does not split again because of the minimum number of points condition.'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 9-5](#figure9-5)显示了如果我们向树中添加两个点会发生什么。插入的空心圆点在触发最大深度条件之前导致一个节点分裂。结果的叶节点包含两个点。插入的空心方形点为其父节点的西北象限添加了一个新的子节点。由于最小点数条件，代码没有再次分裂。'
 - en: As noted in the previous section, we can use this approach to construct a uniform
     quadtree from a set of points. First, we create an empty root node with the necessary
     spatial bounds. Then we incrementally add each point from our set. Since splits
     are always based at the halfway point along each dimension, the tree structure
     does not change due to the order in which we insert the points.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前一部分所述，我们可以使用这种方法从一组点构建一个统一的四叉树。首先，我们创建一个空的根节点，并设置必要的空间边界。然后我们逐步将每个点添加到树中。由于分裂始终基于每个维度的中间点，树的结构不会因我们插入点的顺序而改变。
 - en: '![A figure showing the addition of two points to the uniform quadtree. The
     open circle is inserted in the root’s NorthWest Child and that node’s SouthWest
     child. The previous leaf now has two points and is split again. Both points are
     in the same resulting node, which is a leaf due to the depth constraint.](image_fi/502604c09/f09005.png)'
+  id: totrans-51
   prefs: []
   type: TYPE_IMG
+  zh: '![一幅图，显示将两个点添加到统一四叉树的过程。空心圆插入到根节点的西北子节点及该节点的西南子节点。之前的叶节点现在有两个点并再次分裂。两个点位于同一节点中，该节点由于深度限制而成为叶节点。](image_fi/502604c09/f09005.png)'
 - en: 'Figure 9-5: An example of adding two points, indicated by a shaded circle and
     shaded square, to a quadtree'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9-5：将两个点（表示为阴影圆圈和阴影方块）添加到四叉树的示例
 - en: Removing Points
+  id: totrans-53
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 删除节点
 - en: Removing points from a node follows a similar, but more complex, process as
     inserting points. We delete the point from the list in the leaf node. We can then
     proceed back up the tree, removing splits that are no longer warranted by our
     criteria. This can involve recursively extracting the points from each of the
     node’s children (which may themselves have children) and merging them into a single
     list at the next leaf node.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 从节点中删除点的过程与插入点类似，但更为复杂。我们首先从叶节点中的点列表中删除该点。然后，我们可以沿着树返回，删除那些不再符合我们标准的分裂。这可能涉及递归地从每个节点的子节点中提取点（这些子节点可能本身也有子节点），并将它们合并到下一个叶节点的单一列表中。
 - en: One additional difficulty is determining which point to delete. As with grids,
     the user might insert arbitrarily close or even duplicate points. In the code
     below, we delete the first matching point in the leaf node’s list. Due to floating-point
@@ -346,16 +443,23 @@
     cannot use a direct equality test. Therefore, we use a helper function to find
     a point that is close enough. We can reuse the `approx_equal` function from Listing
     8-3 for this test.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个困难是确定删除哪个点。与网格一样，用户可能会插入任意接近的点，甚至是重复的点。在下面的代码中，我们删除叶节点列表中的第一个匹配点。由于浮动点误差（由于浮动点变量的精度限制而导致的舍入误差），我们也不能使用直接的相等测试。因此，我们使用一个辅助函数来找到足够接近的点。我们可以复用在清单
+    8-3 中的`approx_equal`函数来进行此测试。
 - en: 'We also use a helper function to collapse nodes that no longer meet our splitting
     criteria. The code collapses a node with children and returns an array with all
     the subtree’s points:'
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还使用一个辅助函数来合并那些不再符合分裂标准的节点。代码会合并一个有子节点的节点，并返回包含整个子树所有点的数组：
 - en: '[PRE5]'
+  id: totrans-57
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: The code starts by checking whether the current node is already a leaf and,
     if so, directly returning the array of points ❶. Otherwise, the node is internal,
     and the code needs to aggregate the individual data points from each child. The
@@ -363,43 +467,63 @@
     and, if not, recursively calling `QuadTreeNodeCollapse` to aggregate the points
     ❷. The function finishes by setting the current node to be a leaf ❸ and returning
     the points ❹.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码首先检查当前节点是否已经是叶节点，如果是，则直接返回点的数组 ❶。否则，该节点是内部节点，代码需要从每个子节点中汇总单独的数据点。代码循环遍历四个子节点，检查它们是否为`null`，如果不是，则递归调用`QuadTreeNodeCollapse`来汇总点
+    ❷。函数最后通过将当前节点设置为叶节点 ❸，并返回点 ❹。
 - en: With that helper function, we can move on to the deletion function. We start
     with the wrapper.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这个辅助函数后，我们可以进入删除函数。我们从包装器开始。
 - en: '[PRE6]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: The wrapper function starts by checking that the point lies within the bounds
     of the tree and thus could be in the tree. If so, it calls the recursive deletion
     function.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 包装函数首先检查点是否位于树的边界内，因此可能在树中。如果是，它会调用递归删除函数。
 - en: The recursive deletion code proceeds down the tree as though searching for the
     point. When it reaches a leaf, it deletes the point if it exists. It then returns
     up the tree, collapsing nodes as needed. The function returns `True` if a point
     was deleted.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 递归删除代码沿树向下推进，仿佛在搜索目标点。当到达叶子节点时，如果该点存在，则删除该点。然后，代码向上返回树，必要时压缩节点。如果删除了一个点，函数返回
+    `True`。
 - en: '[PRE7]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: The code starts by checking whether the recursion has reached a leaf node ❶.
     If so, it iterates through the array of points ❷, checking whether each one matches
     the target point ❸. If the code finds a matching point, it removes it from the
     array, decrements the count of points in this node, and returns `True` to indicate
     a successful deletion. Note that only a single matching point is ever deleted.
     If the code does not find a matching point at the leaf, it returns `False`.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码首先检查递归是否到达叶子节点 ❶。如果是，它会遍历点数组 ❷，检查每个点是否与目标点匹配 ❸。如果找到匹配的点，它会将其从数组中移除，减少该节点中的点数，并返回
+    `True`，表示删除成功。请注意，只有一个匹配点会被删除。如果代码在叶子节点没有找到匹配点，它会返回 `False`。
 - en: The search then progresses down into the bin into which the target point would
     be assigned ❹. The code checks whether the correct child exists and, if not, returns
     `False` to indicate the point is not in the tree ❺. Otherwise, the code recursively
     calls `QuadTreeNodeDelete` on the child ❻.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 搜索随后进入目标点应该被分配的桶 ❹。代码检查是否存在正确的子节点，如果不存在，则返回 `False`，表示该点不在树中 ❺。否则，代码递归调用 `QuadTreeNodeDelete`
+    来处理子节点 ❻。
 - en: If the recursive call to `QuadTreeNodeDelete` returns `True`, then the code
     has deleted a point from one of its children. It updates the count of points and
     checks whether the child is empty ❼. If so, it deletes the child node. Then the
@@ -407,65 +531,95 @@
     an internal node ❽. If not, it collapses the node. The code returns `True` to
     indicate the deletion was successful. If the recursive call did not return `True`,
     then no point was deleted. The function finishes by returning `False` ❾.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果对 `QuadTreeNodeDelete` 的递归调用返回 `True`，则说明代码已从其子节点中删除了一个点。它会更新点的计数，并检查该子节点是否为空
+    ❼。如果为空，它会删除该子节点。然后，代码检查当前节点是否继续满足作为内部节点的标准 ❽。如果不满足，则会压缩该节点。代码返回 `True`，表示删除成功。如果递归调用未返回
+    `True`，则说明没有删除任何点。该函数最终返回 `False` ❾。
 - en: Searching Uniform QuadTrees
+  id: totrans-67
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 搜索均匀四叉树
 - en: We begin our search of the quadtree at the root node. At each node, we first
     ask whether the node could contain anything closer than our current candidate.
     If so, for an internal node we explore the children recursively, and for a leaf
     node we test the points directly. However, if we determine that the current node
     could *not* contain our nearest neighbor, we can prune the search by ignoring
     not only that node but its entire subtree.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们从四叉树的根节点开始搜索。在每个节点中，我们首先询问该节点是否可能包含比当前候选点更接近的点。如果是这样，对于内部节点，我们递归地探索其子节点；对于叶子节点，我们直接测试这些点。然而，如果我们确定当前节点不可能包含我们最近的邻居，我们可以通过忽略该节点及其整个子树来剪枝搜索。
 - en: 'We check the compatibility of points within a node using the same test we applied
     to grid cells in Chapter 8. We have similar information at our disposal: the location
     of the point and the bounding box of the region. As described in the previous
     chapter, the distance computation is:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用与第8章中对网格单元应用的相同测试来检查节点内点的兼容性。我们可以使用相似的信息：点的位置和区域的边界框。如前一章所述，距离计算为：
 - en: '![g09001](image_fi/502604c09/g09001.png)'
+  id: totrans-70
   prefs: []
   type: TYPE_IMG
+  zh: '![g09001](image_fi/502604c09/g09001.png)'
 - en: where
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中
 - en: IF *x* < *x*[min] THEN *x*[dist] = *x*[min] – *x*
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 *x* < *x*[min]，则 *x*[dist] = *x*[min] – *x*
 - en: IF *x*[min] ≤ *x* ≤ *x*[max] THEN *x*[dist] = 0
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 *x*[min] ≤ *x* ≤ *x*[max]，则 *x*[dist] = 0
 - en: IF *x* > *x*[max] THEN *x*[dist] = *x* – *x*[max]
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 *x* > *x*[max]，则 *x*[dist] = *x* – *x*[max]
 - en: and
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 和
 - en: IF *y < y*[min]THEN *y*[dist] *= y*[min] *– y*
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 *y < y*[min]，则 *y*[dist] *= y*[min] *– y*
 - en: IF *y*[min] ≤ *y* ≤ *y*[max] THEN *y*[dist] = 0
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 *y*[min] ≤ *y* ≤ *y*[max]，则 *y*[dist] = 0
 - en: IF *y* > *y*[max] THEN *y*[dist] = *y* – *y*[max]
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 *y* > *y*[max]，则 *y*[dist] = *y* – *y*[max]
 - en: In short, we’re checking the distance from our search target to the closest
     possible point contained in the node’s spatial region. To revisit the example
     from the last chapter, we’re once again asking how far our lazy neighbor would
     need to throw a ball in order to just barely return it to our yard. This check
     only tests whether a point at this distance could exist within the node. We need
     to explore the node to see what points exist.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
 - en: Consider searching for the nearest neighbor of the point marked with an X in
     [Figure 9-6](#figure9-6). This figure shows the same distribution of points as
     our original map of coffee shop locations in Figure 8-3, where the X is our current
     location and the other points are nearby cafés.
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
 - en: We start at the root node with a dummy candidate point with infinite distance.
@@ -477,13 +631,16 @@
     shops, this corresponds to starting with an imaginary café that is infinitely
     far away. Any real café on our list is guaranteed to be closer than this imaginary
     point.
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
 - en: '![A set of two‐dimensional points. There are 11 data points and 1 query point
     in the upper left‐hand area of the plot.](image_fi/502604c09/f09006.png)'
+  id: totrans-82
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-6: An example data set for nearest-neighbor search'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
 - en: 'Since our (dummy) candidate point has infinite distance, our compatibility
@@ -493,6 +650,7 @@
     of the cells we are testing varies at each level of the tree. At higher levels,
     each node covers a large amount of space. As we descend lower, the spatial bounds
     tighten.'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
 - en: We prioritize which child node to search first based on the childrens’ proximity
@@ -501,36 +659,43 @@
     of the four quadrants would our target point fall?” In this case, our query point
     falls in the NorthWest quadrant, as shown in [Figure 9-7](#figure9-7), so we start
     there.
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
 - en: We proceed down the pointer to the NorthWest child and find ourselves focusing
     on a subset of both the space and the points as shown in [Figure 9-8](#figure9-8).
     The grayed-out nodes represent nodes that have not been explored, and the grayed-out
     points have not been checked.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
 - en: '![The figure shows the root node with lines to indicate its partition into
     four quadrants. The query point is shown as an X in the NorthWest quadrant.](image_fi/502604c09/f09007.png)'
+  id: totrans-87
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-7: The query point falls within the NorthWest quadrant of the quadtree’s
     root node.'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
 - en: '![The diagram shows the first three levels of a quadtree. The child corresponding
     to the root node’s northwest quadrant is circled to indicate that the search is
     exploring that node.](image_fi/502604c09/f09008.png)'
+  id: totrans-89
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-8: The nearest-neighbor search for the example shown in [Figure 9-6](#figure9-6)
     starts by searching the subtree corresponding to the NorthWest quadrant of the
     root node.'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
 - en: Again, our test of spatial compatibility reveals that this node *could* contain
     our nearest neighbor. The minimum distance to the any point in the node is less
     than that of our current (dummy) candidate. We’re at another internal node, which
     means that the space is further partitioned into four subregions.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
 - en: Our search continues to the SouthWest child of the internal node in question,
@@ -539,15 +704,18 @@
     Since we’re at a leaf node, we explicitly check the distance to each point in
     that node. In this case, there is only a single point, and it is closer than our
     dummy candidate.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
 - en: '![The diagram shows the first three levels of a quadtree. Three nodes are solid:
     the root node, the root node’s NorthWest child, and that node’s SouthWest child.
     The current node in the search is circled.](image_fi/502604c09/f09009.png)'
+  id: totrans-93
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-9: At the second level of the quadtree, our search starts with the
     closest quadrant to the target point, SouthWest.'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
 - en: We’ve found our first real candidate nearest neighbor! Its distance becomes
@@ -557,6 +725,7 @@
     distance that we’ll need to travel to get a cup of coffee. We might find closer
     coffee shops later in our search, but at least we don’t have to travel infinite
     miles. The relief is palpable.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
 - en: 'Once we’ve tested all the points in a leaf node, we return to the (internal)
@@ -566,16 +735,19 @@
     shows that we can skip the NorthWest quadrant: as shown in [Figure 9-10](#figure9-10),
     the closest possible point in its spatial bounds is further than the candidate
     we already have. It can’t possibly contain a better neighbor.'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
 - en: '![A diagram showing the four quadrants in the root’s NorthWest child. Lines
     from the query point to the best node so far indicate the threshold distance.
     The min distance to the current node’s NorthWest child is also indicated by a
     longer line.](image_fi/502604c09/f09010.png)'
+  id: totrans-97
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-10: An illustration of the relative distance between the best candidate
     seen so far and the current node’s NorthWest quadrant'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
 - en: We can also skip the empty NorthEast and SouthEast quadrants. Since they don’t
@@ -585,34 +757,41 @@
     in this node as illustrated by the grayed-out quadrants in [Figure 9-11](#figure9-11).
     The two data points in the NorthWest quadrant also remain gray, because we never
     tested them.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
 - en: '![The search has returned to the root node’s NorthWest child. Three of the
     node’s quadrants are grayed out to indicate they were pruned from the search.](image_fi/502604c09/f09011.png)'
+  id: totrans-100
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-11: The nearest-neighbor search is able to skip three of the node’s
     four quadrants.'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
 - en: Once we’ve finished checking the quadrants within an internal node, we return
     to its parent and repeat the process. The next closest quadrant is SouthWest,
     which our pruning test confirms is close enough to possibly contain a better neighbor,
     as shown in [Figure 9-12](#figure9-12).
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
 - en: Any time we find a child that, according to our simple distance test, *could*
     contain a closer point, we proceed down that pathway to check if there are indeed
     closer neighbors. In this case, our search descends into the SouthWest quadrant.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
 - en: '![An illustration of pruning at the root node. The query point is shown with
     an X, and a line shows the distance to the best neighbor so far. A second line
     shows the (smaller) distance to the root’s SouthWest child.](image_fi/502604c09/f09012.png)'
+  id: totrans-104
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-12: A pruning test where the candidate quadrant could include a closer
     neighbor than the current best point'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
 - en: At the next level, four potential quadrants again vie for our attention. Armed
@@ -622,34 +801,42 @@
     We can skip the other three quadrants; the NorthEast and SouthWest quadrants are
     both empty and thus have null child pointers, and we use a distance test to confirm
     that the SouthEast quadrant is too far away to contain a better neighbor.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
 - en: This time when we return to the root node, we can prune out the two remaining
     children, as shown in [Figure 9-14](#figure9-14).
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
 - en: The remote expanses of both the NorthEast and SouthEast quadrants lie well outside
     our distance threshold.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
 - en: '![The search has progressed down the entire branch corresponding to the root
     node’s SouthWest child. That child has three of its four quadrants grayed out.
     ](image_fi/502604c09/f09013.png)'
+  id: totrans-109
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-13: While checking the root node’s SouthWest quadrant, the nearest-neighbor
     search can again skip three of the four subquadrants.'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
 - en: '![The search has returned to the root node. Two of the root node’s quadrants
     are grayed out. Nine of the 11 data points remain gray.](image_fi/502604c09/f09014.png)'
+  id: totrans-111
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-14: Upon returning to the root node of the quadtree, the search can
     skip two of that node’s quadrants.'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
 - en: Nearest-Neighbor Search Code
+  id: totrans-113
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -657,13 +844,17 @@
     with a helper function to compute the distance from the target point (*x*, *y*)
     to a node. The code for checking the minimum distance to a node is similar to
     the minimum distance code presented for grids in the last chapter:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE8]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: However, in this case, the code does not need to compute the minimum and maximum
     bounds for the node, since each node stores them explicitly.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
 - en: The main search algorithm uses the same recursive formulation described for
@@ -675,33 +866,42 @@
     one and `null` otherwise. It’s important to note that in this implementation,
     a return value of `null` means that there are no points in the current node closer
     than `best_dist`.
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
 - en: 'We use a thin wrapper that passes along the root node and an initial infinite
     distance:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE9]'
+  id: totrans-119
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Our wrapper function for nearest-neighbor search does not check that the target
     point falls within the quadtree bounds. This allows us to use the code to find
     neighbors within the tree for target points that fall outside the tree’s bounds,
     increasing the usefulness of the code.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
 - en: 'Here’s the code for recursively searching the nodes:'
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-122
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: The function starts with the pruning test, skipping the node and returning `null`
     if no point could be closer than `best_dist` ❶. The code then checks if it is
     at a leaf node ❷. If it has reached a leaf, it uses a `FOR` loop to check whether
     each point is closer than `best_dist`, updating `best_dist` and `best_candidate`
     if so. At the end of this loop, we return `best_candidate`, which has the value
     `null` if we haven’t found a new closer point.
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
 - en: The next block of code handles the logic for an internal node. We have only
@@ -714,6 +914,7 @@
     child node. This adjustment is necessary because, for many internal nodes, our
     target point will lie completely outside the 2×2 grid represented by the current
     node.
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
 - en: We then recursively explore the non-null children using a pair of nested `FOR`
@@ -722,9 +923,11 @@
     and `best_dist` ❺. At the end of the function, we return `best_candidate`. As
     in the case of the leaf node, `best_candidate` may be `null` if we haven’t found
     a point closer than the original `best_dist`.
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
 - en: k-d Trees
+  id: totrans-126
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -735,6 +938,7 @@
     problems are common whenever we’re looking for similar points in data sets, such
     as searching for similar conditions (temperature, pressure, humidity) in a weather
     data set.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
 - en: In theory, we could scale quadtrees by simply splitting along more dimensions.
@@ -747,15 +951,18 @@
     precipitation, and wind speed, we would be using five-dimensional points and splitting
     32 subtrees at each level! This immense overhead is the same problem we found
     when scaling grids to higher dimensions.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
 - en: To effectively scale to higher dimensions, we need to rein in the branching
     factor. There are a variety of powerful data structures designed to enable efficient
     proximity search in higher dimensions. One example is the k-d tree, which builds
     off similar concepts as the quadtree.
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
 - en: k-d Tree Structure
+  id: totrans-130
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -766,6 +973,7 @@
     dimension. Each internal node thus partitions the data into exactly two children:
     a left child whose points fall below (or equal to) the split value, and a right
     child whose points fall above the split value.'
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
 - en: When working with k-d trees, we lose the regular grid-like structure of the
@@ -774,13 +982,16 @@
     dimension in turn allows the k-d tree to scale to higher-dimensional data sets.
     We no longer need to split into 2^(*D*) children at each level. [Figure 9-15](#figure9-15)
     shows an example k-d tree.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
 - en: '![The root node of the k‐d tree is split along the y‐dimension. Each of the
     two resulting children is split along the x‐dimension.](image_fi/502604c09/f09015.png)'
+  id: totrans-133
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-15: A k-d tree split along a single dimension at each level'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
 - en: 'A k-d tree can adjust more flexibly to the structure of the data than quadtrees.
@@ -790,11 +1001,14 @@
     node thus stores both the dimension along which we’re partitioning (`split_dim`)
     and the value (`split_val`), with points assigned to the left child if their value
     in that one dimension is less than or equal to the node’s split value:'
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-136
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: Rather than split along alternating axes, producing partitioning similar to
     that of the quadtree in [Figure 9-15](#figure9-15), we can tailor our tree structure
     by choosing splits based on the composition of the data points within the current
@@ -804,15 +1018,18 @@
     value based on the distribution of data points, such as splitting at the middle
     of the range or the median of the points’ values along the split dimension. The
     difference between these two options is illustrated in [Figure 9-16](#figure9-16).
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
 - en: '![The left box shows points partitioned at the middle of the x‐dimension, splitting
     the space in half. The right box shows points partitioned at the median value
     along the x‐dimension, resulting in two boxes with an approximately equal number
     of points but different sizes.](image_fi/502604c09/f09016b.png)'
+  id: totrans-138
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-16: A node split at the middle (left) and median (right)'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
 - en: 'The flexible structure of the k-d tree means we need to take additional care
@@ -826,39 +1043,51 @@
     `x_max`, where `x_min[d]` represents the lowest value along dimension `d` contained
     within the current node and `x_max[d]` represents the highest. All points within
     the node satisfy:'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE12]'
+  id: totrans-141
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: As a result of its complexity, each k-d tree node stores a significant amount
     of information. While this might initially seem like expensive overhead, as we’ll
     see in this section, the cost is offset by the power and flexibility of tree itself.
     As with every other data structure in this book, we are making an explicit tradeoff
     in terms of memory, data structure complexity, and later algorithmic efficiency.
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
 - en: 'Here is an example composite data structure for the `KDTreeNode`:'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE13]'
+  id: totrans-144
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: In this case, we use an array to represent each point, allowing it to have arbitrary
     dimensions.
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
 - en: As with other trees in this book, we can wrap the nodes in an outer data structure
     such as a `KDTree`.
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE14]'
+  id: totrans-147
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: It is helpful to store the number of dimensions in this wrapper data structure
     to check for consistency during operations such as insertion, deletion, or search.
     The value of `num_dimensions` is set at time of the k-d tree’s creation and remains
     fixed for this tree.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
 - en: 'This flexibility of choosing a strategy for splitting nodes illustrates the
@@ -866,19 +1095,23 @@
     to further adapt to the data. If our points are clustered, we choose splits that
     provide the most information by focusing on those regions. [Figure 9-17](#figure9-17)
     demonstrates this dynamic partitioning.'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
 - en: '![The figure of a k‐d tree with horizontal or vertical lines representing the
     different splits at each level. The subdivisions are all of different dimensions.](image_fi/502604c09/f09017.png)'
+  id: totrans-150
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-17: The spatial partition created by a k-d tree'
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
 - en: Consider our ongoing task of locating nearby coffee shops. If we are taking
     a road trip along Interstate 95 from Florida to Maine, we could preprocess the
     data to store only those coffee shops within 50 miles of the highway.[Figure 9-18](#figure9-18)
     shows an example distribution of this shape.
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
 - en: 'This prefiltering helps limit the search space to only coffee shops near the
@@ -891,6 +1124,7 @@
     we do not gain as much pruning from partitioning uniformly east and west as well.
     We can increase the amount of pruning, and thus decrease the search cost, by biasing
     our partitions along the north-south direction.'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
 - en: To give another analogy, if quadtrees are the daily routine of a city planner
@@ -902,16 +1136,20 @@
     use the median point along this dimension to provide a balanced tree. The result
     might not always look as orderly as the quadtrees squares, but it can be much
     more effective.
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
 - en: '![A scatterplot of points in the shape of Route 95.](image_fi/502604c09/f09018.png)'
+  id: totrans-155
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-18: An example of how coffee shops might be distributed along a major
     highway'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
 - en: Tighter Spatial Bounds
+  id: totrans-157
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -922,13 +1160,16 @@
     candidate exist in the bounding boxes of actual points within the node?” While
     this might seem like a small change, depending on what logic we use to split the
     nodes, we can see significant savings, as shown in [Figure 9-19](#figure9-19).
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
 - en: '![The tight bounding box of a k‐d tree node is shown as a dashed box bounding
     the points within the node.](image_fi/502604c09/f09019.png)'
+  id: totrans-159
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-19: The bounding box of points within a k-d tree node'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
 - en: If we use these tighter bounding boxes during node construction, we can better
@@ -937,30 +1178,38 @@
     tree structure looks like the one in [Figure 9-20](#figure9-20). The black boxes
     indicate the tight bounding boxes at each node. The gray points and lines are
     shown to place the nodes’ bounds in the context of the rest of the data set.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
 - en: '![Each node in the k‐d tree is shown as a set of points, and a tight bounding
     box is laid over the grayed‐out full data set.](image_fi/502604c09/f09020.png)'
+  id: totrans-162
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9-20: A three-level k-d tree and the bounding boxes for each node'
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
 - en: During a search, we use the black boxes (tight bounding boxes) for pruning.
     As you can see from the figure, the resulting regions can be significantly smaller,
     allowing us to prune much more aggressively. Since the tight bounding box is smaller,
     it will often have a greater minimum distance to our query point.
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
 - en: 'We can use a simple helper function to compute the tight bounding boxes from
     a set of points represented as arrays ([Listing 9-1](#listing9-1)):'
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE15]'
+  id: totrans-166
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'Listing 9-1: A helper function to compute the tight bounding box of the points
     in a node'
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
 - en: The code extracts the number of points and number of dimensions from the input
@@ -969,20 +1218,24 @@
     array ❸. The code then iterates through the remaining points in the array and
     checks whether any of them fall outside the bounds ❹. If so, it extends the bounds.
     The code ends by returning the two arrays ❺.
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
 - en: This helper function also illustrates the benefit of prechecking that all our
     points contain the correct number of dimensions in the `KDTree`’s wrapper function.
     This check ensures that we do not try to access our invalid array entries for
     our data points.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
 - en: Of course, tracking these additional bounds adds significant complexity when
     we start dealing with dynamic changes. Adding points to a k-d tree can increase
     the bounds for a given node. Similarly, removing nodes may shrink the bounds.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
 - en: Building k-d Trees
+  id: totrans-171
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -994,19 +1247,24 @@
     we use two of these tests, minimum number of points and minimum width, but using
     at least one of the last two tests is essential to avoid infinite recursion when
     you have duplicate data points.'
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
 - en: 'We start with a wrapper function to check that our data is valid:'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE16]'
+  id: totrans-174
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: The code starts by checking that all points have the correct dimensionality.
     It then checks that there are points from which to build the tree. If so, it allocates
     a new root node (overwriting the previous tree) and recursively builds the k-d
     tree using the function below. Otherwise, it sets the root to `null` to indicate
     an empty tree.
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
 - en: The primary difference between k-d tree and quadtree construction is that k-d
@@ -1016,16 +1274,20 @@
     they don’t add any real complexity. The code for building a k-d tree recursively
     partitions our set of points among the child nodes until we reach the termination
     criteria.
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-177
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: This code starts with bookkeeping to fill in the information needed at each
     node. We record the essential details, such as the number of points and number
     of dimensions of the current points ❶. Then the function loops over all the points,
     computing the tight bounding box for the node ❷ using the helper function in [Listing
     9-1](#listing9-1).
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
 - en: Once we have the bounds, the code loops over each of the dimensions to find
@@ -1037,30 +1299,39 @@
     into two arrays, `left_pts` and `right_pts`, according to the split dimension
     and value ❻. Those arrays are used to recursively build the two children nodes
     ❼.
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
 - en: 'One approach for choosing `split_dim` and `split_val` is to split along the
     middle of the widest dimension. The code for this is relatively simple and most
     of it can be incorporated into the initial block that finds the widest dimension
     ❸:'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-181
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'and then later setting the split dimension and the value at ❺:'
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-183
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: Bulk construction of k-d trees has a significant advantage over dynamically
     inserting and removing points. By considering all the data points during construction,
     we can better adapt the structure of the tree to the data. We choose splits based
     on all the data points instead of the subset inserted so far.
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
 - en: k-d Tree Operations
+  id: totrans-185
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1072,6 +1343,7 @@
     choose one of two children. As the high-level concepts are similar to those presented
     for the quadtree, we will not go into the code in detail for each one. Instead,
     let’s look at some of the differences.
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
 - en: Insertion When inserting points into a k-d tree node, we use `split_dim` and
@@ -1080,15 +1352,19 @@
     Finally, if we are tracking the tight bounding box for each node, we need to update
     the bounds to account for the new point. Since we are adding points, this update
     will always increase the size of the bounding box.
+  id: totrans-187
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-188
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: This code iterates over each dimension of the new point, checks whether it falls
     outside the bounding box, and, if so, updates the bounds.
+  id: totrans-189
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
@@ -1098,6 +1374,7 @@
     whether the bounds can be tightened (using the points in a leaf or the two children’s
     bounding boxes for an internal node). We also check whether internal nodes can
     be collapsed.
+  id: totrans-190
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
@@ -1108,16 +1385,20 @@
     ![i09001](image_fi/502604c09/i09001.png) that we used for quadtrees and grids.
     We start by competing the minimum distance from the point to the node’s spatial
     bounds along each individual dimension:'
+  id: totrans-191
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: IF *x*[*d*] < *x*[min][*d*] THEN *dist*[d] = *x*[min][*d*] − *x*[*d*]
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
 - en: IF *x*[min][*d*] ≤ *x* ≤ *x*[max][*d*] THEN *dist*[d] = 0
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
 - en: IF *x*[*d*] > *x*[max][*d*] THEN *dist*[d] = *x*[*d*] − *x*[max][*d*]
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
 - en: 'where *x*[*d*] represents the query point’s *d*th dimension, and *x*[min][*d*]and
@@ -1125,13 +1406,16 @@
     Then we compute the sum of squared distances along each dimension and take the
     square root. We can implement this entire computation as a `WHILE` loop over the
     dimensions:'
+  id: totrans-195
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-196
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: Note that k-d trees can be more sensitive to additions and deletions than quadtrees.
     While both trees can become unbalanced due to the splitting rules and the distribution
     of points, k-d trees’ splits are chosen based on the data at the time. If we significantly
@@ -1141,9 +1425,11 @@
     the tightness of the nodes’ spatial bounds. This illustrates another tradeoff
     we see with data structures—the performance of a structure may degrade as the
     data changes.
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
 - en: Why This Matters
+  id: totrans-198
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1155,6 +1441,7 @@
     a regular grid structure introduces new costs for higher dimensions. Examining
     how quadtrees, octtrees, and their variants scale across different data sets provides
     an important lens for how we think about utilizing spatial structure.
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
 - en: A k-d tree represents a combination of the concepts we have built up over the
@@ -1163,6 +1450,7 @@
     binary search trees and choosing a single dimension along which to split at each
     node. In addition, it allows more flexibility to adapt to the structure of the
     data, increasing pruning power.
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
 - en: Quadtrees and k-d trees aren’t the only data structures for facilitating nearest-neighbor
@@ -1173,5 +1461,6 @@
     of this book, quadtrees and k-d trees serve as excellent examples of how we can
     combine the spatial pruning of nearest-neighbor search with tree-based structures
     to allow the spatial trees to adapt to the data at hand.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
