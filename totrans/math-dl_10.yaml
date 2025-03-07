@@ -1,37 +1,51 @@
 - en: '**10'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '**10'
 - en: BACKPROPAGATION**
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: BACKPROPAGATION**
 - en: '![image](Images/common.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/common.jpg)'
 - en: Backpropagation is currently *the* core algorithm behind deep learning. Without
     it, we cannot train deep neural networks in a reasonable amount of time, if at
     all. Therefore, practitioners of deep learning need to understand what backpropagation
     is, what it brings to the training process, and how to implement it, at least
     for simple networks. For the purposes of this chapter, I’ll assume you have no
     knowledge of backpropagation.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 反向传播目前是深度学习的核心算法。如果没有它，我们无法在合理的时间内训练深度神经网络，甚至根本无法训练。因此，深度学习的从业者需要理解反向传播是什么，它为训练过程带来了什么，以及如何实现它，至少对于简单的网络而言。本章的目的是假设你对反向传播没有任何了解。
 - en: We’ll begin the chapter by discussing what backpropagation is and what it isn’t.
     We’ll then work through the math for a trivial network. After that, we’ll introduce
     a matrix description of backpropagation suitable for building fully connected
     feedforward neural networks. We’ll explore the math and experiment with a NumPy-based
     implementation.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章的开始，我们将讨论反向传播是什么以及它不是什么。接着，我们将通过一个简单的网络来推导相关的数学。之后，我们将介绍一种适用于构建全连接前馈神经网络的反向传播矩阵描述。我们将探索数学原理并尝试基于NumPy的实现。
 - en: Deep learning toolkits like TensorFlow don’t implement backpropagation the way
     we will in the first two sections of this chapter. Instead, they use computational
     graphs, which we’ll discuss at a high level to conclude the chapter.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 像TensorFlow这样的深度学习工具包不会像我们在本章前两部分那样实现反向传播。相反，它们使用计算图，我们将在本章结束时对其进行高层次的讨论。
 - en: What Is Backpropagation?
+  id: totrans-6
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 反向传播是什么？
 - en: In [Chapter 7](ch07.xhtml#ch07), we introduced the idea of the gradient of a
     scalar function of a vector. We worked with gradients again in [Chapter 8](ch08.xhtml#ch08)
     and saw their connection to the Jacobian matrix. Recall in that chapter, we discussed
@@ -42,8 +56,10 @@
     from one part of the loss landscape to another to find where the network performs
     best. The goal of training is to minimize the loss function over the training
     set.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[第7章](ch07.xhtml#ch07)中，我们介绍了标量函数关于向量的梯度的概念。在[第8章](ch08.xhtml#ch08)中，我们再次使用了梯度，并看到了它们与雅可比矩阵的关系。回想那一章，我们讨论了训练神经网络本质上是一个优化问题。我们知道，训练神经网络涉及一个损失函数，这是一个关于网络权重和偏置的函数，它告诉我们网络在训练集上的表现。当我们进行梯度下降时，我们将使用梯度来决定如何从损失景观的一个部分移动到另一个部分，以找到网络表现最好的地方。训练的目标是最小化训练集上的损失函数。
 - en: That’s the high-level picture. Now let’s make it a little more concrete. Gradients
     apply to functions that accept vector inputs and return a scalar value. For a
     neural network, the vector input is the weights and biases, the parameters that
@@ -55,13 +71,18 @@
     to train a neural network via gradient descent, we need to know how each weight
     and bias value contributes to the loss function; that is, we need to know ∂*L*/∂*w*,
     for some weight (or bias) *w*.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 这就是高层次的概述。现在让我们更具体一点。梯度应用于接受向量输入并返回标量值的函数。对于神经网络来说，向量输入是权重和偏置，它们是定义网络架构固定后如何执行的参数。从符号上看，我们可以将损失函数写作*L*(**θ**)，其中**θ**（theta）是网络中所有权重和偏置的向量。我们的目标是沿着损失函数定义的空间移动，找到最小值，即导致最小损失*L*的特定**θ**。我们通过使用*L*(**θ**
+    )的梯度来实现这一目标。因此，为了通过梯度下降训练神经网络，我们需要了解每个权重和偏置值如何影响损失函数；也就是说，我们需要知道∂*L*/∂*w*，其中*w*是某个权重（或偏置）。
 - en: Backpropagation is the algorithm that tells us what ∂*L*/∂*w* is for each weight
     and bias of the network. With the partial derivatives, we can apply gradient descent
     to improve the network’s performance on the next pass of the training data.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 反向传播是告诉我们每个网络的权重和偏置的∂*L*/∂*w*是什么的算法。通过这些偏导数，我们可以应用梯度下降来改进网络在下一轮训练数据上的表现。
 - en: Before we go any further, a word on terminology. You’ll often hear machine learning
     folks use *backpropagation* as a proxy for the entire process of training a neural
     network. Experienced practitioners understand what they mean, but people new to
@@ -70,8 +91,11 @@
     the network’s error, the ∂*L*/∂*w*’s. *Gradient descent* is the algorithm that
     uses the ∂*L*/∂*w*’s to modify the weights and biases to improve the network’s
     performance on the training set.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 在继续之前，我们需要说一下术语。你会经常听到机器学习的人用 *反向传播* 这个词来代指训练神经网络的整个过程。经验丰富的从业者明白他们的意思，但对于刚接触机器学习的人来说，有时会感到有些困惑。为了明确，*反向传播*
+    是一个算法，它找出每个权重和偏差对网络误差的贡献，即 ∂*L*/∂*w*。*梯度下降* 是另一个算法，它使用 ∂*L*/∂*w* 来修改权重和偏差，从而提高网络在训练集上的表现。
 - en: Rumelhart, Hinton, and Williams introduced backpropagation in their 1986 paper
     “Learning Representations by Back-propagating Errors.” Ultimately, backpropagation
     is an application of the chain rule we discussed in [Chapters 7](ch07.xhtml#ch07)
@@ -80,91 +104,138 @@
     layers of the network, propagating the error signal to find ∂*L*/∂*w* for each
     weight and bias. Note, practitioners frequently shorten the name to “backprop.”
     You’ll encounter that term often.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: Rumelhart、Hinton 和 Williams 在他们1986年的论文《通过反向传播误差学习表示》中介绍了反向传播算法。最终，反向传播是我们在[第7章](ch07.xhtml#ch07)和[第8章](ch08.xhtml#ch08)中讨论的链式法则的应用。反向传播从网络的输出开始，带有损失函数。然后它向
+    *backward*（即“反向”）传播，逐层传播错误信号，以找到每个权重和偏差的 ∂*L*/∂*w*。需要注意的是，实践者通常将“反向传播”简称为“backprop”，你会经常遇到这个词。
 - en: We’ll work through backpropagation by example in the following two sections.
     For now, the primary thing to understand is that it is the first of two pieces
     we need to train neural networks. It provides the information required by the
     second piece, gradient descent, the subject of [Chapter 11](ch11.xhtml#ch11).
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在接下来的两个章节中通过实例来演示反向传播。现在，最需要理解的主要内容是，反向传播是训练神经网络的两个步骤中的第一个步骤。它提供了第二个步骤——梯度下降所需的信息，后者是[第11章](ch11.xhtml#ch11)的内容。
 - en: Backpropagation by Hand
+  id: totrans-13
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 手动反向传播
 - en: Let’s define a simple neural network, one that accepts two input values, has
     two nodes in its hidden layer, and has a single output node, as shown in [Figure
     10-1](ch10.xhtml#ch10fig01).
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们定义一个简单的神经网络，它接受两个输入值，在隐藏层有两个节点，并且有一个单一的输出节点，如[图 10-1](ch10.xhtml#ch10fig01)所示。
 - en: '![image](Images/10fig01.jpg)'
+  id: totrans-15
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/10fig01.jpg)'
 - en: '*Figure 10-1: A simple neural network*'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 10-1：一个简单的神经网络*'
 - en: '[Figure 10-1](ch10.xhtml#ch10fig01) shows the network with its six weights,
     *w*[0] through *w*[5], and three bias values, *b*[0], *b*[1], and *b*[2]. Each
     value is a scalar.'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 10-1](ch10.xhtml#ch10fig01) 显示了这个网络的六个权重，*w*[0] 到 *w*[5]，以及三个偏差值，*b*[0]、*b*[1]
+    和 *b*[2]。每个值都是一个标量。'
 - en: We’ll use sigmoid activation functions in the hidden layer,
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在隐藏层使用 Sigmoid 激活函数，
 - en: '![Image](Images/245equ01.jpg)'
+  id: totrans-19
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/245equ01.jpg)'
 - en: and no activation function for the output node. To train the network, we’ll
     use a squared-error loss function,
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出节点没有激活函数。为了训练这个网络，我们将使用平方误差损失函数，
 - en: '![Image](Images/245equ02.jpg)'
+  id: totrans-21
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/245equ02.jpg)'
 - en: where *y* is the label, zero or one, for a training example and *a*[2] is the
     output of the network for the input associated with *y*, namely *x*[0] and *x*[1].
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 *y* 是训练示例的标签，值为零或一，而 *a*[2] 是网络对于与 *y* 相关的输入，即 *x*[0] 和 *x*[1]，的输出。
 - en: Let’s write the equations for a forward pass with this network, a pass that
     moves left to right from the input, *x*[0] and *x*[1], to the output, *a*[2].
     The equations are
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们写出这个网络的前向传播方程，它是从输入 *x*[0] 和 *x*[1] 向输出 *a*[2] 进行的前向传播。方程如下：
 - en: '![Image](Images/10equ01.jpg)'
+  id: totrans-24
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/10equ01.jpg)'
 - en: Here, we’ve introduced intermediate values *z*[0] and *z*[1] to be the arguments
     to the activation functions. Notice that *a*[2] has no activation function. We
     could have used a sigmoid here as well, but as our labels are either 0 or 1, we’ll
     learn a good output value regardless.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们引入了中间值 *z*[0] 和 *z*[1]，它们是激活函数的参数。请注意，*a*[2] 没有激活函数。我们本可以在这里使用 Sigmoid
+    函数，但由于我们的标签仅为 0 或 1，我们无论如何都能学习到一个好的输出值。
 - en: If we pass a single training example through the network, the output is *a*[2].
     If the label associated with the training example, ***x*** = (*x*[0], *x*[1]),
     is *y*, the squared-error loss is as indicated in [Figure 10-1](ch10.xhtml#ch10fig01).
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们通过网络传递一个单独的训练样本，输出是 *a*[2]。如果与训练样本相关的标签 ***x*** = (*x*[0]，*x*[1]) 是 *y*，则平方误差损失如
+    [图 10-1](ch10.xhtml#ch10fig01) 所示。
 - en: The argument to the loss function is *a*[2]; *y* is a fixed constant. However,
     *a*[2] depends directly on *w*[4], *w*[5], *b*[2], and the values of *a*[1] and
     *a*[0], which themselves depend on *w*[0], *w*[1], *w*[2], *w*[3], *b*[0], *b*[1],
     *x*[0], and *x*[1]. Therefore, thinking in terms of the weights and biases, we
     could write the loss function as
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 损失函数的参数是 *a*[2]；*y* 是一个固定常数。然而，*a*[2] 直接依赖于 *w*[4]、*w*[5]、*b*[2]，以及 *a*[1] 和
+    *a*[0] 的值，而后者又依赖于 *w*[0]、*w*[1]、*w*[2]、*w*[3]、*b*[0]、*b*[1]、*x*[0] 和 *x*[1]。因此，从权重和偏差的角度思考，我们可以将损失函数写成
 - en: '*L* = *L*(*w*[0], *w*[1], *w*[2], *w*[3], *w*[4], *w*[5], *b*[0], *b*[1], *b*[2];*x*[0],
     *x*[1], *y*) = *L*(**θ**; ***x***, *y*)'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: '*L* = *L*(*w*[0]，*w*[1]，*w*[2]，*w*[3]，*w*[4]，*w*[5]，*b*[0]，*b*[1]，*b*[2]；*x*[0]，*x*[1]，*y*)
+    = *L*(**θ**；***x***，*y*)'
 - en: 'Here, **θ** represents the weights and biases; it’s considered the variable.
     The parts after the semicolon are constants in this case: the input vector ***x***
     = (*x*[0], *x*[1]) and the associated label, *y*.'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，**θ** 代表权重和偏差，它被视为变量。分号后面的部分在这种情况下是常数：输入向量 ***x*** = (*x*[0]，*x*[1]) 和相关的标签
+    *y*。
 - en: 'We need the gradient of the loss function, ▽*L*(**θ**; ***x***, *y*). To be
     explicit, we need all the partial derivatives, ∂*L*/∂*w*[5], ∂*L*/∂*b*[0], and
     so on, for all weights and biases: nine partial derivatives in total.'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要损失函数的梯度，▽*L*(**θ**；***x***，*y*)。明确来说，我们需要所有的偏导数，∂*L*/∂*w*[5]，∂*L*/∂*b*[0]，等等，涉及所有权重和偏差：总共有九个偏导数。
 - en: Here’s our plan of attack. First, we’ll work through the math to calculate expressions
     for the partial derivatives of all nine values. Second, we’ll write some Python
     code to implement the expressions so we can train the network of [Figure 10-1](ch10.xhtml#ch10fig01)
@@ -173,25 +244,37 @@
     be understated, tedious. We’ll succeed, but we’ll see in the following section
     that, thankfully, we have a far more compact way we can represent backpropagation,
     especially for fully connected feedforward networks. Let’s get started.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是我们的攻击计划。首先，我们通过数学推导来计算所有九个值的偏导数表达式。其次，我们将编写一些 Python 代码来实现这些表达式，以便训练 [图 10-1](ch10.xhtml#ch10fig01)
+    网络来对鸢尾花进行分类。在这个过程中我们将学到一些东西，也许最重要的一点是，通过手工计算偏导数，简直可以说是乏味。我们会成功的，但接下来的部分会让我们看到，幸运的是，背向传播有一种更紧凑的表示方式，尤其是对于完全连接的前馈神经网络。让我们开始吧。
 - en: Calculating the Partial Derivatives
+  id: totrans-32
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 计算偏导数
 - en: We need expressions for all the partial derivatives of the loss function for
     the network in [Figure 10-1](ch10.xhtml#ch10fig01). We also need an expression
     for the derivative of our activation function, the sigmoid. Let’s begin with the
     sigmoid, as a clever trick writes the derivative in terms of the sigmoid itself,
     a value calculated during the forward pass.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要得到 [图 10-1](ch10.xhtml#ch10fig01) 网络的损失函数所有偏导数的表达式。我们还需要激活函数（sigmoid）的导数表达式。我们从
+    sigmoid 开始，因为一个巧妙的技巧可以将导数表示为 sigmoidal 函数本身，这是在前向传播过程中计算得到的值。
 - en: The derivative of the sigmoid is shown next.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: Sigmoid 的导数如下所示。
 - en: '![Image](Images/10equ02.jpg)![Image](Images/10equ03.jpg)'
+  id: totrans-35
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/10equ02.jpg)![Image](Images/10equ03.jpg)'
 - en: The trick of [Equation 10.2](ch10.xhtml#ch10equ02) is to add and subtract one
     in the numerator to change the form of the factor to be another copy of the sigmoid
     itself. So, the derivative of the sigmoid is the product of the sigmoid and one
@@ -200,137 +283,212 @@
     and *a*[1]. Therefore, during the derivation of the backpropagation partial derivatives,
     we’ll be able to substitute *a*[0] and *a*[1] via [Equation 10.3](ch10.xhtml#ch10equ03)
     for the derivative of the sigmoid to avoid calculating it a second time.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: '[公式 10.2](ch10.xhtml#ch10equ02)的技巧是，在分子中加减一个 1，以改变因子的形式，使其成为 sigmoidal 函数本身的另一个副本。因此，sigmoid
+    的导数是 sigmoid 与 1 减去 sigmoid 的乘积。回顾 [公式 10.1](ch10.xhtml#ch10equ01)，我们看到前向传播计算了
+    sigmoid，也就是激活函数 *a*[0] 和 *a*[1]。因此，在推导反向传播偏导数时，我们可以通过 [公式 10.3](ch10.xhtml#ch10equ03)
+    用 *a*[0] 和 *a*[1] 来代替 sigmoid 的导数，从而避免重复计算。'
 - en: Let’s start with the derivatives. True to backpropagation’s name, we’ll work
     backward from the loss function and apply the chain rule to arrive at the expressions
     we need. The derivative of the loss function,
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们从偏导数开始。正如反向传播的名字所示，我们将从损失函数开始，逆向工作并应用链式法则，以得出我们所需的表达式。损失函数的导数，
 - en: '![Image](Images/247equ01.jpg)'
+  id: totrans-38
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](Images/247equ01.jpg)'
 - en: is
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 是
 - en: '![Image](Images/10equ04.jpg)'
+  id: totrans-40
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](Images/10equ04.jpg)'
 - en: This means that everywhere in the expressions that follow, we can replace ∂*L*/∂*a*[2]
     with *a*[2] − *y*. Recall *y* is the label for the current training example, and
     we compute *a*[2] during the forward pass as the output of the network.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着在接下来的表达式中，我们可以将 ∂*L*/∂*a*[2] 替换为 *a*[2] − *y*。回想一下，*y* 是当前训练样本的标签，我们在前向传播时将
+    *a*[2] 计算为网络的输出。
 - en: Let’s now find expressions for *w*[5], *w*[4], and *b*[2], the parameters used
     to calculate *a*[2]. The chain rule tells us
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们找到 *w*[5]、*w*[4] 和 *b*[2] 的表达式，它们是计算 *a*[2] 时使用的参数。链式法则告诉我们
 - en: '![Image](Images/10equ05.jpg)'
+  id: totrans-43
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](Images/10equ05.jpg)'
 - en: since
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 因为
 - en: '![Image](Images/248equ01.jpg)'
+  id: totrans-45
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](Images/248equ01.jpg)'
 - en: We’ve substituted in the expression for *a*[2] from [Equation 10.1](ch10.xhtml#ch10equ01).
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经将 [方程 10.1](ch10.xhtml#ch10equ01) 中的 *a*[2] 表达式代入。
 - en: 'Similar logic leads to expressions for *w*[4] and *b*[2]:'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似的逻辑得出 *w*[4] 和 *b*[2] 的表达式：
 - en: '![Image](Images/10equ06.jpg)'
+  id: totrans-48
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](Images/10equ06.jpg)'
 - en: Fantastic! We have three of the partial derivatives we need—only six more to
     go. Let’s write the expressions for *b*[1], *w*[1], and *w*[3],
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 太棒了！我们得到了三个需要的偏导数——还剩六个。让我们写出 *b*[1]、*w*[1] 和 *w*[3] 的表达式，
 - en: '![Image](Images/10equ07.jpg)'
+  id: totrans-50
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](Images/10equ07.jpg)'
 - en: where we use
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里我们使用
 - en: '![Image](Images/248equ02.jpg)'
+  id: totrans-52
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](Images/248equ02.jpg)'
 - en: substituting *a*[1] for σ(*z*[1]) as we calculate *a*[1] during the forward
     pass.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 在计算 *a*[1] 时，我们将 *a*[1] 代入 σ(*z*[1])，因为我们在前向传播过程中计算了 *a*[1]。
 - en: 'A similar calculation gives us expressions for the final three partial derivatives:'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个类似的计算给出了最后三个偏导数的表达式：
 - en: '![Image](Images/10equ08.jpg)'
+  id: totrans-55
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](Images/10equ08.jpg)'
 - en: Whew! That was tedious, but now we have what we need. Notice, however, that
     this is a very rigid process—if we change the network architecture, activation
     function, or loss function, we need to derive these expressions again. Let’s use
     the expressions to classify iris flowers.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 呼！这确实很繁琐，但现在我们已经得到了需要的内容。不过请注意，这是一个非常严谨的过程——如果我们改变网络结构、激活函数或损失函数，就需要重新推导这些表达式。现在让我们使用这些表达式来分类鸢尾花。
 - en: Translating into Python
+  id: totrans-57
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 转换为 Python 代码
 - en: 'The code I’ve presented here is in the file *nn_by_hand.py*. Take a look at
     it in an editor to see the overall structure. We’ll start with the `main` function
     ([Listing 10-1](ch10.xhtml#ch10ex01)):'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 我在这里展示的代码位于文件 *nn_by_hand.py* 中。请在编辑器中查看它，了解整体结构。我们将从 `main` 函数开始（[列表 10-1](ch10.xhtml#ch10ex01)）：
 - en: '[PRE0]'
+  id: totrans-59
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '*Listing 10-1: The* `*main*` *function*'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 10-1：`*main*` *函数*'
 - en: First, we set the number of epochs and the learning rate, η (eta) ❶. The number
     of epochs is the number of passes through the training set to update the network
     weights and biases. The network is straightforward, and our dataset tiny, with
     only 70 samples, so we need many epochs for training. Gradient descent uses the
     learning rate to decide how to move based on the gradient values. We’ll explore
     the learning rate more thoroughly in [Chapter 11](ch11.xhtml#ch11).
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们设置训练轮数和学习率 η（eta）❶。训练轮数是通过训练集的次数，用来更新网络的权重和偏置。由于网络简单，数据集很小，只有 70 个样本，所以我们需要很多轮训练。梯度下降使用学习率来决定如何根据梯度值进行调整。我们将在[第11章](ch11.xhtml#ch11)中更深入地探讨学习率。
 - en: 'Next, we load the dataset ❷. We’re using the same iris dataset we used in [Chapter
     6](ch06.xhtml#ch06) and again in [Chapter 9](ch09.xhtml#ch09), keeping only the
     first two features and classes 0 and 1\. See the `BuildDataset` function in *nn_by_hand.py*.
     The return values are NumPy arrays: `xtrn` (70 × 2) and `xtst` (30 × 2) for training
     and test data, and the associated labels in `ytrn` and `ytst`.'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们加载数据集❷。我们使用的是在[第6章](ch06.xhtml#ch06)和[第9章](ch09.xhtml#ch09)中使用过的相同的鸢尾花数据集，仅保留前两个特征和类别0与1。请参阅
+    *nn_by_hand.py* 中的 `BuildDataset` 函数。返回值是NumPy数组：`xtrn`（70 × 2）和 `xtst`（30 × 2），分别用于训练数据和测试数据，以及在
+    `ytrn` 和 `ytst` 中的相应标签。
 - en: We need someplace to store the network weights and biases. A Python dictionary
     will do, so we set it up next with default values ❸. Notice that we set the bias
     values to zero and the weights to small random values in [−0.00005, +0.00005].
     These seem to work well enough in this case.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要一个地方来存储网络的权重和偏置。使用一个 Python 字典就可以，所以我们接下来将其设置为默认值❸。注意，我们将偏置值设置为零，将权重设置为小的随机值，范围在
+    [−0.00005, +0.00005] 之间。在这个例子中，这些值似乎效果很好。
 - en: The remainder of `main` evaluates the randomly initialized network (`Evaluate`
     ❹) on the test data, performs gradient descent to train the model (`GradientDescent`
     ❺), and evaluates the test data again to demonstrate that training worked ❻.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: '`main` 的其余部分在测试数据上评估随机初始化的网络（`Evaluate` ❹），执行梯度下降来训练模型（`GradientDescent` ❺），并再次评估测试数据以证明训练有效
+    ❻。'
 - en: '[Listing 10-2](ch10.xhtml#ch10ex02) shows `Evaluate` as well as `Forward`,
     which `Evaluate` calls.'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单 10-2](ch10.xhtml#ch10ex02) 显示了 `Evaluate` 以及 `Evaluate` 调用的 `Forward`。'
 - en: '[PRE1]'
+  id: totrans-66
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: '*Listing 10-2: The* `*Evaluate*` *function*'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 10-2：* `*Evaluate*` *函数*'
 - en: Let’s begin with `Forward`, which performs a forward pass over the data in `x`.
     After creating a place to hold the output of the network (`out`), each input is
     run through the network using the current value of the parameters ❷. Notice that
     the code is a direct implementation of [Equation 10.1](ch10.xhtml#ch10equ01),
     with `out[k]` in place of *a*[2]. When all inputs have been processed, we return
     the collected outputs to the caller.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们从 `Forward` 开始，它对 `x` 中的数据执行前向传播。在创建一个存放网络输出的位置（`out`）之后，每个输入都会使用当前参数值 ❷
+    通过网络。注意，这段代码是[方程 10.1](ch10.xhtml#ch10equ01)的直接实现，其中 `out[k]` 代替了 *a*[2]。当所有输入处理完毕后，我们将收集到的输出返回给调用者。
 - en: Now let’s look at `Evaluate`. Its arguments are a set of input features, `x`,
     associated labels, `y`, and the network parameters, `net`. `Evaluate` first runs
     the data through the network by calling `Forward` to populate `out`. These are
@@ -338,8 +496,12 @@
     labels, we apply a threshold ❶ to call outputs < 0.5 class 0 and outputs ≥ 0.5
     class 1\. The predicted label is appended to `pred` and tallied by comparing it
     to the actual label in `y`.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们来看 `Evaluate`。它的参数是一组输入特征 `x`，相关的标签 `y`，以及网络参数 `net`。`Evaluate` 首先通过调用
+    `Forward` 将数据传递给网络以填充 `out`。这些是网络的原始浮动输出。为了与实际标签进行比较，我们应用一个阈值 ❶，将输出 < 0.5 的归为类
+    0，输出 ≥ 0.5 的归为类 1。预测标签将被附加到 `pred` 中，并通过与实际标签 `y` 进行比较来进行统计。
 - en: If the actual and predicted labels are both zero, the model has correctly identified
     a *true negative* (`TN`), a true instance of class 0\. If the network predicts
     class 0, but the actual label is class 1, we have a *false negative* (`FN`), a
@@ -347,25 +509,38 @@
     1 is a *false positive* (`FP`). The only remaining option is an actual class 1
     instance labeled as class 1, a *true positive* (`TP`). Finally, we return the
     tallies and predictions to the caller.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果实际标签和预测标签都是零，则模型正确识别出了一个*真负类*（`TN`），即类 0 的真实实例。如果网络预测为类 0，但实际标签为类 1，则我们得到了*假负类*（`FN`），即被标记为类
+    0 的类 1 实例。相反，将类 0 实例标记为类 1 是*假正类*（`FP`）。唯一剩下的选项是一个实际的类 1 实例被标记为类 1，即*真正类*（`TP`）。最后，我们将计数和预测结果返回给调用者。
 - en: '[Listing 10-3](ch10.xhtml#ch10ex03) presents `GradientDescent`, which [Listing
     10-1](ch10.xhtml#ch10ex01) calls ❺. This is where we implement the partial derivatives
     calculated above.'
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单 10-3](ch10.xhtml#ch10ex03) 展示了 `GradientDescent`，这是[清单 10-1](ch10.xhtml#ch10ex01)中调用的
+    ❺。这里实现了前面计算的部分导数。'
 - en: '[PRE2]'
+  id: totrans-72
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: '*Listing 10-3: Using* `*GradientDescent*` *to train the network*'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 10-3：使用* `*GradientDescent*` *训练网络*'
 - en: The `GradientDescent` function contains a double loop. The outer loop ❶ is over
     `epochs`, the number of full passes through the training set. The inner loop ❷
     is over the training examples, one at a time. The forward pass comes first ❸ to
     calculate the output, `a2`, and intermediate values.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: '`GradientDescent` 函数包含一个双重循环。外部循环 ❶ 遍历 `epochs`，即训练集的完整遍历次数。内部循环 ❷ 遍历训练示例，一次处理一个。前向传播首先进行
+    ❸，用于计算输出 `a2` 和中间值。'
 - en: The next block of code implements the backward pass using the partial derivatives,
     [Equations 10.4](ch10.xhtml#ch10equ04) through [10.8](ch10.xhtml#ch10equ08), to
     move the error (loss) backward through the network ❹. We use the average loss
@@ -373,98 +548,147 @@
     the contribution to the loss for each weight and bias value for each training
     example. This explains adding each new contribution to the total over the training
     set.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来的代码块使用部分导数实现反向传播，通过[方程 10.4](ch10.xhtml#ch10equ04)到[10.8](ch10.xhtml#ch10equ08)，将误差（损失）向网络反向传播
+    ❹。我们使用训练集上的平均损失来更新权重和偏置。因此，我们会为每个训练示例累积每个权重和偏置值对损失的贡献。这也解释了为什么我们需要将每个新贡献加到训练集的总损失中。
 - en: After passing each training example through the net and accumulating its contribution
     to the loss, we update the weights and biases ❺. The partial derivatives give
     us the gradient, the direction of maximal change; however, we want to minimize,
     so we move in the direction *opposite* to the gradient, subtracting the average
     of the loss due to each weight and bias from its current value.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 将每个训练样本通过网络并累积其对损失的贡献传递后，我们更新权重和偏置 ❺。偏导数给出了梯度，即最大变化的方向；然而，我们想要最小化，所以我们沿着*梯度的反方向*移动，从当前值中减去每个权重和偏置导致的损失的平均值。
 - en: For example,
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，
 - en: '[PRE3]'
+  id: totrans-78
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: is
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 是
 - en: '![Image](Images/252equ01.jpg)'
+  id: totrans-80
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](Images/252equ01.jpg)'
 - en: where η = 0.1 is the learning rate and *m* is the number of samples in the training
     set. The summation is over the partial for *b*[2] evaluated for each input sample,
     ***x**[i]*, the average value of which, multiplied by the learning rate, is used
     to adjust *b*[2] for the next epoch. Another name we frequently use for the learning
     rate is *step size*. This parameter controls how quickly the weights and biases
     of the network step through the loss landscape toward a minimum value.
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中η = 0.1为学习率，*m*为训练集中样本数。求和是对*b*[2]的偏导数求和，针对每个输入样本***x**[i]*评估，其平均值乘以学习率，用于调整下一个epoch的*b*[2]。我们经常用的另一个名称是学习率*步长*。该参数控制网络的权重和偏置如何在损失地形图上迈向最小值。
 - en: Our implementation is complete. Let’s run it to see how well it does.
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的实现已经完成。让我们运行它，看看它的表现如何。
 - en: Training and Testing the Model
+  id: totrans-83
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 训练和测试模型
 - en: Let’s take a look at the training data. We can plot the features, one on each
     axis, to see how easy it might be to separate the two classes. The result is [Figure
     10-2](ch10.xhtml#ch10fig02), with class 0 as circles and class 1 as squares.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看一下训练数据。我们可以绘制特征，每个轴一个，看看分离两个类别有多容易。结果是[Figure 10-2](ch10.xhtml#ch10fig02)，其中类0为圆圈，类1为方块。
 - en: '![image](Images/10fig02.jpg)'
+  id: totrans-85
   prefs: []
   type: TYPE_IMG
+  zh: '![图像](Images/10fig02.jpg)'
 - en: '*Figure 10-2: The iris training data showing class 0 (circles) and class 1
     (squares)*'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Figure 10-2: 显示类0（圆圈）和类1（方块）的鸢尾花训练数据*'
 - en: It’s straightforward to see that the two classes are quite separate from each
     other so that even our elementary network with two hidden neurons should be able
     to learn the difference between them. Compare this plot with the left side of
     [Figure 6-2](ch06.xhtml#ch06fig02), which shows the first two features for all
     three iris classes. If we had included class 2 in our dataset, two features would
     not be enough to separate all three classes.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 很容易看出两个类别彼此相当分离，即使是我们带有两个隐藏神经元的基础网络也应该能够学习它们之间的差异。将此图与[Figure 6-2](ch06.xhtml#ch06fig02)左侧进行比较，该图显示了所有三种鸢尾花类别的前两个特征。如果我们的数据集中包含类2，则两个特征将不足以分离所有三个类别。
 - en: Run the code with
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行以下代码
 - en: '[PRE4]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: For me, this produces
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 对我来说，这产生
 - en: Training for 1000 epochs, learning rate 0.10000
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练1000个epochs，学习率为0.10000
 - en: 'Before training:'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练前：
 - en: 'TN: 15 FP: 0'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 'TN: 15 FP: 0'
 - en: 'FN: 15 TP: 0'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 'FN: 15 TP: 0'
 - en: 'After training:'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练后：
 - en: 'TN: 14 FP: 1'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 'TN: 14 FP: 1'
 - en: 'FN: 1 TP: 14'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 'FN: 1 TP: 14'
 - en: We’re told training used 1,000 passes through the training set of 70 examples.
     This is the outer loop of [Listing 10-3](ch10.xhtml#ch10ex03). We’re then presented
     with two tables of numbers, characterizing the network before training and after.
     Let’s walk through these tables to understand the story they tell.
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们被告知训练使用了70个示例的训练集进行了1000次训练通过。这是[Listing 10-3](ch10.xhtml#ch10ex03)的外循环。然后我们被呈现出两个表格的数字，描述了训练前和训练后的网络。让我们逐步走过这些表格，了解它们所讲述的故事。
 - en: 'The tables are known by several names: *contingency tables*, *2* × *2 tables*,
     or *confusion matrices*. The term *confusion matrix* is the most general, though
     it’s usually reserved for multiclass classifiers. The labels count the number
@@ -472,21 +696,30 @@
     test set. The test set includes 30 samples, 15 from each class. If the network
     is perfect, all class 0 samples will be in the TN count, and all class 1 in the
     TP count. Errors are FP or FN counts.'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 表格有几个名称：*列联表*，*2* × *2表*或*混淆矩阵*。术语*混淆矩阵*最为通用，尽管通常用于多类分类器。标签计算测试集中真阳性、真阴性、假阳性和假阴性的数量。测试集包括30个样本，每类15个。如果网络完美，则所有0类样本将计入TN计数，所有1类样本将计入TP计数。错误为FP或FN计数。
 - en: The randomly initialized network labels everything as class 0\. We know this
     because there are 15 TN samples (those that are truly class 0) and 15 FN samples
     (15 class 1 samples that are labeled class 0). The overall accuracy before training
     is then 15/(15 + 15) = 0.5 = 50 percent.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 随机初始化的网络将所有样本都标记为 class 0。我们知道这一点，因为有 15 个 TN 样本（真正的 class 0 样本）和 15 个 FN 样本（15
+    个被标记为 class 0 的 class 1 样本）。因此，训练前的总体准确率为 15/(15 + 15) = 0.5 = 50%。
 - en: After training, the 1,000 passes through the outer loop of the code in [Listing
     10-3](ch10.xhtml#ch10ex03), the test data is almost perfectly classified, with
     14 of the 15 class 0 and 14 of the 15 class 1 labels correctly assigned. The overall
     accuracy is now (14 + 14)/(15 + 15) = 28/30 = 93.3 percent—not too shabby considering
     our model has a single hidden layer of two nodes.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 经过训练后，在[代码清单 10-3](ch10.xhtml#ch10ex03)中，代码外部循环执行了 1,000 次，测试数据几乎完全被正确分类，其中
+    15 个 class 0 中有 14 个被正确标记，15 个 class 1 中有 14 个被正确标记。总体准确率为 (14 + 14)/(15 + 15)
+    = 28/30 = 93.3%，考虑到我们的模型只有一个隐藏层且该层有两个节点，这个结果还不错。
 - en: Again, this exercise’s main point is to see how tedious and potentially error-prone
     it is to calculate derivatives by hand. The code above works with scalars; it
     doesn’t process vectors or matrices to take advantage of any symmetry possible
@@ -494,12 +727,16 @@
     we can do better. Let’s look again at the backpropagation algorithm for fully
     connected networks and see if we can use vectors and matrices to arrive at a more
     elegant approach.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 再次强调，这个练习的主要目的是展示手动计算导数是多么繁琐且容易出错。上面的代码是与标量一起工作的；它并未处理向量或矩阵，也没有利用通过更好的表示反向传播算法而可能产生的任何对称性。幸运的是，我们可以做得更好。让我们再次查看全连接网络的反向传播算法，看看是否能利用向量和矩阵来得到更优雅的实现。
 - en: Backpropagation for Fully Connected Networks
+  id: totrans-103
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 全连接网络的反向传播
 - en: In this section, we’ll explore the equations that allow us to pass an error
     term backward from the output of the network to the input. Additionally, we’ll
     see how to use this error term to calculate the necessary partial derivatives
@@ -507,27 +744,38 @@
     all the essential expressions on hand, we’ll implement Python classes that will
     allow us to build and train fully connected feedforward neural networks of arbitrary
     depth and shape. We’ll conclude by testing the classes against the MNIST dataset.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将探讨能够将误差项从网络输出传递到输入的方程式。此外，我们还将看到如何使用这个误差项来计算层的权重和偏置的必要偏导数，以便我们能够实现梯度下降。掌握了所有基本的表达式后，我们将实现
+    Python 类，使我们能够构建并训练具有任意深度和形状的全连接前馈神经网络。最后，我们将通过测试 MNIST 数据集来验证这些类的效果。
 - en: Backpropagating the Error
+  id: totrans-105
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 反向传播误差
 - en: 'Let’s begin with a useful observation: the layers of a fully connected neural
     network can be thought of as vector functions:'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们从一个有用的观察开始：全连接神经网络的各层可以被看作是向量函数：
 - en: '***y*** = ***f***(***x***)'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: '***y*** = ***f***(***x***)'
 - en: where the input to the layer is ***x*** and the output is ***y***. The input,
     ***x***, is either the actual input to the network for a training sample or, if
     working with one of the hidden layers of the model, the previous layer’s output.
     These are both vectors; each node in a layer produces a single scalar output,
     which, when grouped, becomes ***y***, a vector representing the output of the
     layer.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中，层的输入是***x***，输出是***y***。输入***x***，要么是网络的实际输入（用于训练样本），要么是模型的某个隐藏层的输出（如果我们在处理隐藏层）。这两者都是向量；每个层中的节点会生成一个标量输出，这些标量输出组合起来就是***y***，一个表示该层输出的向量。
 - en: The forward pass runs through the layers of the network in order, mapping ***x**[i]*
     to ***y**[i]* so that ***y**[i]* becomes ***x**[i]*+1, the input to layer *i*
     + 1\. After all layers are processed, we use the final layer output, call it ***h***,
@@ -538,131 +786,193 @@
     is a vector of zeros, except for the index of the actual class label, which is
     one. This is why many toolkits, like Keras, map integer class labels to one-hot
     vectors.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 前向传播依次通过网络的各个层，映射***x**[i]*到***y**[i]*，使得***y**[i]*变成***x**[i]*+1，即层*i*+1的输入。所有层都处理完后，我们使用最后一层的输出，称之为***h***，来计算损失，*L*(***h***,
+    ***y***[true])。损失是衡量网络在输入***x***上的错误程度，我们通过将其与真实标签***y***[true]进行比较来确定。请注意，如果模型是多分类的，输出***h***是一个向量，每个可能的类别对应一个元素，而真实标签是一个零向量，除了实际类别标签的索引位置为一。这就是为什么许多工具包（如Keras）将整数类别标签映射到独热编码向量的原因。
 - en: We need to move the loss value, or the *error*, back through the network; this
     is the backpropagation step. To do this for a fully connected network using per-layer
     vectors and weight matrices, we need to first see how to run the forward pass.
     As we did for the network we built above, we’ll separate applying the activation
     function from the action of a fully connected layer.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要将损失值，或称为*误差*，反向传播通过网络；这就是反向传播步骤。为了对一个全连接网络使用每层向量和权重矩阵进行操作，我们需要首先了解如何执行前向传播。就像我们为上面构建的网络所做的那样，我们将激活函数的应用与全连接层的操作分开。
 - en: For example, for any layer with the input vector ***x*** coming from the layer
     below, we need to calculate an output vector, ***y***. For a fully connected layer,
     the forward pass is
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，对于任何一个输入向量***x***来自下层的层，我们需要计算一个输出向量，***y***。对于一个全连接层，前向传播为
 - en: '***y*** = ***Wx*** + ***b***'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: '***y*** = ***Wx*** + ***b***'
 - en: where ***W*** is a weight matrix, ***x*** is the input vector, and ***b*** is
     the bias vector.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中，***W***是权重矩阵，***x***是输入向量，***b***是偏置向量。
 - en: For an activation layer, we have
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于一个激活层，我们有
 - en: '***y*** = **σ**(***x***)'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: '***y*** = **σ**(***x***)'
 - en: 'for whatever activation function, **σ**, we choose. We’ll stick with the sigmoid
     for the remainder of this chapter. Note we made the function a vector-valued function.
     To do this, we apply the scalar sigmoid function to each element of the input
     vector to produce the output vector:'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于我们选择的任何激活函数**σ**。我们将在本章的其余部分中使用sigmoid函数。请注意，我们将函数设置为向量值函数。为此，我们将标量sigmoid函数应用于输入向量的每个元素，以生成输出向量：
 - en: '**σ**(***x***) = [*σ*(*x*[0]) *σ*(*x*[1]) ... *σ*(*x[n]*[−1])]^⊤'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: '**σ**(***x***) = [*σ*(*x*[0]) *σ*(*x*[1]) ... *σ*(*x[n]*[−1])]^⊤'
 - en: A fully connected network consists of a series of fully connected layers followed
     by activation layers. Therefore, the forward pass is a chain of operations that
     begins with the input to the model being given to the first layer to produce an
     output, which is then passed to the next layer’s input, and so on until all layers
     have been processed.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个全连接网络由一系列全连接层和后续的激活层组成。因此，前向传播是一个操作链，首先将模型的输入传递给第一层以生成输出，然后将其传递给下一层的输入，依此类推，直到所有层都被处理。
 - en: The forward pass leads to the final output and the loss. The derivative of the
     loss function with respect to the network output is the first error term. To pass
     the error term back down the model, we need to calculate how the error term changes
     with a change to the input of a layer using how the error changes with a change
     to the layer’s output. Specifically, for each layer, we need to know how to calculate
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 前向传播导致最终输出和损失。损失函数对网络输出的导数是第一个误差项。为了将误差项反向传播到模型中，我们需要计算误差项如何随着层输入的变化而变化，这通过计算层输出变化时误差的变化来实现。具体来说，对于每一层，我们需要知道如何计算
 - en: '![Image](Images/256equ01.jpg)'
+  id: totrans-120
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/256equ01.jpg)'
 - en: That is, we need to know how the error term changes with a change in the input
     to the layer given
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 也就是说，我们需要知道误差项如何随着层输入的变化而变化，给定
 - en: '![Image](Images/256equ02.jpg)'
+  id: totrans-122
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/256equ02.jpg)'
 - en: 'which is how the error term changes with a change in the output of the layer.
     The chain rule tells us how to do it:'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 这表示误差项如何随着层输出的变化而变化。链式法则告诉我们如何做：
 - en: '![Image](Images/10equ09.jpg)'
+  id: totrans-124
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/10equ09.jpg)'
 - en: where ∂*E*/∂***x*** for layer *i* becomes ∂*E*/∂***y*** for layer *i* − 1 as
     we move backward through the network.
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中，层 *i* 的 ∂*E*/∂***x*** 在我们向后通过网络时变为层 *i* − 1 的 ∂*E*/∂***y***。
 - en: Operationally, the backpropagation algorithm becomes
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 从操作上看，反向传播算法变成了
 - en: Run a forward pass to map ***x*** → ***y***, layer by layer, to get the final
     output, ***h***.
+  id: totrans-127
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 进行一次前向传递，将 ***x*** → ***y***，逐层映射，以得到最终输出 ***h***。
 - en: Calculate the value of the derivative of the loss function using ***h*** and
     ***y***[true]; this becomes ∂*E*/∂***y*** for the output layer.
+  id: totrans-128
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用***h***和***y***[true]计算损失函数的导数值；这对于输出层变为 ∂*E*/∂***y***。
 - en: Repeat for all earlier layers to calculate ∂*E*/∂***x*** from ∂*E*/∂***y***,
     causing ∂*E*/∂***x*** for layer *i* to become ∂*E*/∂***y*** for layer *i* − 1.
+  id: totrans-129
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对所有先前的层重复此过程，从 ∂*E*/∂***y*** 计算 ∂*E*/∂***x***，使得层 *i* 的 ∂*E*/∂***x*** 变为层 *i*
+    − 1 的 ∂*E*/∂***y***。
 - en: This algorithm passes the error term backward through the network. Let’s work
     out how to get the necessary partial derivatives by layer type, beginning with
     the activation layer.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个算法将误差项反向传递通过网络。让我们从激活层开始，推导如何按层类型获取所需的偏导数。
 - en: We will assume we know ∂*E*/∂***y*** and are looking for ∂*E*/∂***x***. The
     chain rule says
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们假设我们知道 ∂*E*/∂***y*** 并且正在寻找 ∂*E*/∂***x***。链式法则说
 - en: '![Image](Images/10equ10.jpg)'
+  id: totrans-132
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/10equ10.jpg)'
 - en: Here, we’re introducing ⊙ to represent the Hadamard product. Recall that the
     Hadamard product is the element-wise multiplication of two vectors or matrices.
     (See [Chapter 5](ch05.xhtml#ch05) for a refresher.)
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们引入⊙表示哈达玛积。回想一下，哈达玛积是两个向量或矩阵的逐元素乘法。（参见[第5章](ch05.xhtml#ch05)以获取复习资料。）
 - en: We now know how to pass the error term through an activation layer. The only
     other layer we’re considering is a fully connected layer. If we expand [Equation
     10.9](ch10.xhtml#ch10equ09), we get
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们现在知道如何通过激活层传递误差项。我们考虑的唯一其他层是全连接层。如果我们展开[方程 10.9](ch10.xhtml#ch10equ09)，我们得到
 - en: '![Image](Images/10equ11.jpg)'
+  id: totrans-135
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/10equ11.jpg)'
 - en: since
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于
 - en: '![Image](Images/257equ01.jpg)'
+  id: totrans-137
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/257equ01.jpg)'
 - en: The result is ***W***^⊤, not ***W***, because the derivative of a matrix times
     a vector in denominator notation is the transpose of the matrix rather than the
     matrix itself.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是 ***W***^⊤，而不是 ***W***，因为矩阵与向量的导数采用分母符号表示时，应该是矩阵的转置，而不是矩阵本身。
 - en: Let us pause for a bit to recap and think about the form of [Equations 10.10](ch10.xhtml#ch10equ10)
     and [10.11](ch10.xhtml#ch10equ11). These equations tell us how to pass the error
     term backward from layer to layer. What are the shapes of these values? For the
@@ -672,52 +982,81 @@
     is a *k*-element vector, as is the derivative of the activation function, σ′(***x***).
     Finally, the Hadamard product between the two also outputs a *k*-element vector,
     as needed.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们暂停一下，回顾并思考一下[方程 10.10](ch10.xhtml#ch10equ10)和[10.11](ch10.xhtml#ch10equ11)的形式。这些方程告诉我们如何将误差项从一层反向传递到另一层。这些值的形状是什么？对于激活层，如果输入有
+    *k* 个元素，那么输出也有 *k* 个元素。因此，[方程 10.10](ch10.xhtml#ch10equ10)中的关系应该将一个 *k* 元素的向量映射到另一个
+    *k* 元素的向量。误差项 ∂*E*/∂***y*** 是一个 *k* 元素的向量，激活函数的导数 σ′(***x***) 也是一个 *k* 元素的向量。最后，两者之间的哈达玛积也会输出一个
+    *k* 元素的向量，这是所需要的。
 - en: For the fully connected layer, we have an *m*-element input, ***x***; an *n*
     × *m*-element weight matrix, ***W***; and an output vector, ***y***, of *n*-elements.
     So we need to generate an *m*-element vector, ∂*E*/∂***x***, from the *n*-element
     error term, ∂*E*/∂***y***. Multiplying the transpose of the weight matrix, an
     *m* × *n-*element matrix, by the error term does result in an *m*-element vector,
     since *m* × *n* by *n* × 1 is *m* × 1, an *m*-element column vector.
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于全连接层，我们有一个 *m* 元素的输入，***x***；一个 *n* × *m* 元素的权重矩阵，***W***；以及一个 *n* 元素的输出向量，***y***。所以我们需要从
+    *n* 元素的误差项 ∂*E*/∂***y*** 生成一个 *m* 元素的向量 ∂*E*/∂***x***。通过将权重矩阵的转置（一个 *m* × *n*
+    元素的矩阵）与误差项相乘，确实会得到一个 *m* 元素的向量，因为 *m* × *n* 和 *n* × 1 的乘积是 *m* × 1，一个 *m* 元素的列向量。
 - en: Calculating Partial Derivatives of the Weights and Biases
+  id: totrans-141
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 计算权重和偏置的偏导数
 - en: '[Equations 10.10](ch10.xhtml#ch10equ10) and [10.11](ch10.xhtml#ch10equ11) tell
     us how to pass the error term backward through the network. However, the point
     of backpropagation is to calculate how changes in the weights and biases affect
     the error so we can use gradient descent. Specifically, for every fully connected
     layer, we need expressions for'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: '[方程10.10](ch10.xhtml#ch10equ10)和[方程10.11](ch10.xhtml#ch10equ11)告诉我们如何将误差项反向传递通过网络。然而，反向传播的重点是计算权重和偏置的变化如何影响误差，以便我们使用梯度下降。具体而言，对于每一层完全连接层，我们需要以下表达式：'
 - en: '![Image](Images/258equ01.jpg)'
+  id: totrans-143
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/258equ01.jpg)'
 - en: given
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 给定
 - en: '![Image](Images/258equ02.jpg)'
+  id: totrans-145
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/258equ02.jpg)'
 - en: Let’s start with ∂*E*/∂***b***. Applying the chain rule yet again gives
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们从∂*E*/∂***b***开始。再次应用链式法则得到：
 - en: '![Image](Images/10equ12.jpg)'
+  id: totrans-147
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/10equ12.jpg)'
 - en: meaning the error due to the bias term for a fully connected layer is the same
     as the error due to the output.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着，完全连接层的偏置项的误差与输出的误差相同。
 - en: 'The calculation for the weight matrix is similar:'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 权重矩阵的计算是类似的：
 - en: '![Image](Images/10equ13.jpg)'
+  id: totrans-150
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/10equ13.jpg)'
 - en: The equation above tells us the error due to the weight matrix is a product
     of the output error and the input, ***x***. The weight matrix is an *n* × *m-*element
     matrix, as the forward pass multiplies by the *m*-element input vector. Therefore,
@@ -725,15 +1064,20 @@
     *m* matrix. We know ∂*E*/∂***y*** is an *n*-element column vector, and the transpose
     of ***x*** is an *m*-element row vector. The outer product of the two is an *n*
     × *m* matrix, as required.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 上面的方程告诉我们，权重矩阵的误差是输出误差与输入***x***的乘积。权重矩阵是一个*n* × *m*的矩阵，因为前向传递是与*m*元素的输入向量相乘。因此，来自权重的误差贡献∂*E*/∂***W***也必须是一个*n*
+    × *m*的矩阵。我们知道∂*E*/∂***y***是一个*n*元素的列向量，而***x***的转置是一个*m*元素的行向量。两者的外积是一个*n* × *m*的矩阵，正如所要求的那样。
 - en: '[Equations 10.10](ch10.xhtml#ch10equ10), [10.11](ch10.xhtml#ch10equ11), [10.12](ch10.xhtml#ch10equ12),
     and [10.13](ch10.xhtml#ch10equ13) apply for a single training example. This means
     for a specific input to the network, these equations, especially 10.12 and 10.13,
     tell us the contribution to the loss by the biases and weights of any layer *for
     that input sample*.'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: '[方程10.10](ch10.xhtml#ch10equ10)、[方程10.11](ch10.xhtml#ch10equ11)、[方程10.12](ch10.xhtml#ch10equ12)和[方程10.13](ch10.xhtml#ch10equ13)适用于单个训练样本。这意味着对于特定的输入，这些方程，尤其是10.12和10.13，告诉我们任何一层的偏置和权重对损失的贡献是*针对该输入样本*的。'
 - en: To implement gradient descent, we need to accumulate these errors, the ∂*E*/∂***W***
     and ∂*E*/∂***b*** terms, over the training samples. We then use the average value
     of these errors to update the weights and biases at the end of every epoch or,
@@ -741,123 +1085,179 @@
     11](ch11.xhtml#ch11), all we’ll do here is outline how we use backpropagation
     to implement gradient descent and leave the details to that chapter and the code
     we’ll implement next.
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了实现梯度下降，我们需要在训练样本中累积这些误差，即∂*E*/∂***W***和∂*E*/∂***b***项。然后，我们使用这些误差的平均值在每个epoch结束时（或我们将要实现的小批量）更新权重和偏置。由于梯度下降是[第11章](ch11.xhtml#ch11)的内容，因此我们这里只是概述如何使用反向传播来实现梯度下降，详细内容将在那一章以及我们接下来实现的代码中给出。
 - en: 'In general, however, to train the network, we need to do the following for
     each sample in the minibatch:'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 一般来说，要训练网络，我们需要对小批量中的每个样本执行以下操作：
 - en: Forward pass the sample through the network to create the output. Along the
     way, we need to store the input to each layer, as we need it to implement backpropagation
     (that is, we need ***x***^⊤ from [Equation 10.13](ch10.xhtml#ch10equ13)).
+  id: totrans-155
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将样本通过网络进行前向传递以创建输出。在这个过程中，我们需要存储每一层的输入，因为我们在实现反向传播时需要它（即我们需要[方程10.13](ch10.xhtml#ch10equ13)中的***x***^⊤）。
 - en: Calculate the value of the derivative of the loss function, which for us is
     the mean squared error, to use as the first error term in back-propagation.
+  id: totrans-156
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算损失函数的导数值，对我们来说是均方误差，用作反向传播中的第一个误差项。
 - en: Run through the layers of the network in reverse order, calculating ∂*E*/∂***W***
     and ∂*E*/∂***b*** for each fully connected layer. These values are accumulated
     for each sample in the minibatch (**Δ*W***, **Δ*b***).
+  id: totrans-157
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 按逆序通过网络的各层，计算每个完全连接层的∂*E*/∂***W***和∂*E*/∂***b***。这些值会针对小批量中的每个样本进行累积（**Δ*W***，**Δ*b***）。
 - en: When the minibatch samples have been processed and the errors accumulated, it’s
     time to take a gradient descent step. This is where the weights and biases of
     each layer are updated via
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 当小批量样本处理完并且误差累积后，便是进行梯度下降步骤的时候了。这时，每一层的权重和偏置通过以下方式更新：
 - en: '![Image](Images/10equ14.jpg)'
+  id: totrans-159
   prefs: []
   type: TYPE_IMG
+  zh: '![Image](Images/10equ14.jpg)'
 - en: with **Δ*W*** and **Δ*b*** being the accumulated errors over the minibatch and
     *m* being the size of the minibatch. Repeated gradient descent steps lead to a
     final set of weights and biases—a trained network.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: '**Δ*W*** 和 **Δ*b*** 是小批量上的累计误差，*m* 是小批量的大小。重复的梯度下降步骤会得到一组最终的权重和偏置——一个训练好的网络。'
 - en: This section is quite math-heavy. The following section translates the math
     into code, where we’ll see that for all the math, the code, because of NumPy and
     object-oriented design, is quite compact and elegant. If you’re fuzzy on the math,
     I suspect the code will go a long way toward clarifying things for you.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 本节内容较为数学化。下一节将数学转化为代码，在这里我们将看到，尽管数学复杂，但由于 NumPy 和面向对象设计，代码非常简洁优雅。如果你对数学部分不太熟悉，我猜代码会在很大程度上帮助你澄清这些内容。
 - en: A Python Implementation
+  id: totrans-162
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 一个 Python 实现
 - en: Our implementation is in the style of toolkits like Keras. We want the ability
     to create arbitrary, fully connected networks, so we’ll use Python classes for
     each layer and store the architecture as a list of layers. Each layer maintains
     its weights and biases, along with the ability to do a forward pass, a backward
     pass, and a gradient descent step. For simplicity, we’ll use sigmoid activations
     and the squared error loss.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的实现风格类似于像 Keras 这样的工具包。我们希望能够创建任意的全连接网络，因此我们会使用 Python 类来表示每一层，并将架构存储为一系列层的列表。每一层都会维护自己的权重和偏置，并具备执行前向传播、反向传播和梯度下降步骤的能力。为了简化，我们使用
+    sigmoid 激活函数和平方误差损失函数。
 - en: 'We need two classes: `ActivationLayer` and `FullyConnectedLayer`. An additional
     `Network` class holds the pieces together and handles training. The classes are
     in the file *NN.py*. (The code here is modified from the original code by Omar
     Aflak and is used with his permission. See the GitHub link in *NN.py*. I modified
     the code to use minibatches and support gradient descent steps other than for
     every sample.)'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要两个类：`ActivationLayer` 和 `FullyConnectedLayer`。另有一个 `Network` 类将这些部分结合起来并处理训练。所有类都位于文件
+    *NN.py* 中。（此处的代码修改自 Omar Aflak 的原始代码，并已获得他的许可使用。详见 *NN.py* 中的 GitHub 链接。我修改了代码，使其支持小批量训练，并能在每个样本之外支持其他梯度下降步骤。）
 - en: Let’s walk through each of the three classes, starting with `ActivationLayer`
     (see [Listing 10-4](ch10.xhtml#ch10ex04)). The translation of the math we’ve done
     to code form is quite elegant, in most cases a single line of NumPy.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们逐步了解每个类，从 `ActivationLayer` 开始（见 [示例 10-4](ch10.xhtml#ch10ex04)）。我们已经做的数学转化成代码的方式非常优雅，在大多数情况下，只需一行
+    NumPy 代码。
 - en: '[PRE5]'
+  id: totrans-166
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: '*Listing 10-4: The* `*ActivationLayer*` *class*'
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: '*示例 10-4：* `*ActivationLayer*` *类*'
 - en: '[Listing 10-4](ch10.xhtml#ch10ex04) shows `ActivationLayer` and includes only
     three methods: `forward`, `backward`, and `step`. The simplest is `step`. It does
     nothing, as there’s nothing for an activation layer to do during gradient descent
     because there are no weights or bias values.'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: '[示例 10-4](ch10.xhtml#ch10ex04) 展示了 `ActivationLayer` 类，其中只包含三个方法：`forward`、`backward`
+    和 `step`。最简单的是 `step` 方法。它不做任何操作，因为激活层在梯度下降期间没有任何需要做的事情，因为没有权重或偏置值。'
 - en: The `forward` method accepts the input vector, ***x***, stores it for later
     use, and then calculates the output vector, ***y***, by applying the sigmoid activation
     function.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: '`forward` 方法接受输入向量 ***x***，将其存储以供稍后使用，然后通过应用 sigmoid 激活函数计算输出向量 ***y***。'
 - en: The `backward` method accepts ∂*E*/∂***y***, the `output_error` from the layer
     above. It then returns [Equation 10.10](ch10.xhtml#ch10equ10) by applying the
     derivative of the sigmoid (`sigmoid_prime`) to the input set during the forward
     pass, multiplied element-wise by the error.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: '`backward` 方法接受 ∂*E*/∂***y***，即来自上一层的 `output_error`。然后，它通过应用 sigmoid 函数的导数（`sigmoid_prime`）到前向传播时的输入集，并按元素与误差相乘，从而返回
+    [公式 10.10](ch10.xhtml#ch10equ10)。'
 - en: The `sigmoid` and `sigmoid_prime` helper functions are
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: '`sigmoid` 和 `sigmoid_prime` 辅助函数是'
 - en: '[PRE6]'
+  id: totrans-172
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: The `FullyConnectedLayer` class is next. It’s more complex than the `ActivationLayer`
     class, but not significantly so. See [Listing 10-5](ch10.xhtml#ch10ex05).
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来是 `FullyConnectedLayer` 类。它比 `ActivationLayer` 类更复杂，但差别不大。请参见 [示例 10-5](ch10.xhtml#ch10ex05)。
 - en: '[PRE7]'
+  id: totrans-174
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: '*Listing 10-5: The* `*FullyConnectedLayer*` *class*'
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: '*示例 10-5：* `*FullyConnectedLayer*` *类*'
 - en: We tell the constructor the number of input and output nodes. The number of
     input nodes (`input_size`) specifies the number of elements in the vector coming
     into the layer. Likewise, `output_size` specifies the number of elements in the
     output vector.
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们告诉构造器输入节点和输出节点的数量。输入节点的数量（`input_size`）指定进入层的向量中元素的数量。同样，`output_size` 指定输出向量中元素的数量。
 - en: Fully connected layers accumulate weight and bias errors over the minibatch,
     the ∂*E*/∂***W*** terms in `delta_w` and the ∂*E*/∂***b*** terms in `delta_b`
     ❶. Each sample processed is counted in `passes`.
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 全连接层在小批量数据上累积权重和偏置误差，`delta_w` 中的 ∂*E*/∂***W*** 项和 `delta_b` 中的 ∂*E*/∂***b***
+    项 ❶。每处理一个样本，`passes` 中的计数就会增加。
 - en: 'We must initialize neural networks with random weight and bias values; therefore,
     the constructor sets up an initial weight matrix and bias vector using uniform
     random values in the range [−0.5, 0.5] ❷. Notice, the bias vector is 1 × *n*,
@@ -865,43 +1265,66 @@
     way training samples are usually stored: a matrix in which each row is a sample
     and each column a feature. The computation produces the same results because scalar
     multiplication is commutative: *ab* = *ba*.'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们必须使用随机的权重和偏置值来初始化神经网络；因此，构造函数使用区间 [−0.5, 0.5] 内的均匀随机值设置初始权重矩阵和偏置向量 ❷。注意，偏置向量是
+    1 × *n* 的行向量。代码颠倒了上述方程的顺序，以匹配训练样本通常存储的方式：一个矩阵，其中每一行是一个样本，每一列是一个特征。计算结果是相同的，因为标量乘法是交换的：*ab*
+    = *ba*。
 - en: The `forward` method stashes the input vector for later use by `backward` and
     then calculates the output of the layer, multiplying the input by the weight matrix
     and adding the bias term ❸.
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: '`forward` 方法将输入向量存储起来，以供 `backward` 方法稍后使用，然后计算该层的输出，将输入乘以权重矩阵并加上偏置项 ❸。'
 - en: Only two methods remain. The `backward` method receives ∂*E*/∂***y*** (`output_error`)
     and calculates ∂*E*/∂***x*** (`input_error`), ∂*E*/∂***W*** (`weights_error`),
     and ∂*E*/∂***b*** (`output_error`). We add the errors to the running error total
     for the layer, `delta_w` and `delta_b`, for `step` to use.
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 只剩下两个方法。`backward` 方法接收 ∂*E*/∂***y***（`output_error`）并计算 ∂*E*/∂***x***（`input_error`）、∂*E*/∂***W***（`weights_error`）和
+    ∂*E*/∂***b***（`output_error`）。我们将这些误差添加到该层的累积误差总和 `delta_w` 和 `delta_b` 中，以供 `step`
+    使用。
 - en: The `step` method includes a gradient descent step for a fully connected layer.
     Unlike the empty method of `ActivationLayer`, the `FullyConnectedLayer` has plenty
     to do. We update the weight matrix and bias vector using the average error, as
     in [Equation 10.14](ch10.xhtml#ch10equ14) ❹. This implements the gradient descent
     step over the minibatch. Finally, we reset the accumulators and counter for the
     next minibatch ❺.
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: '`step` 方法包括一个用于全连接层的梯度下降步骤。与 `ActivationLayer` 的空方法不同，`FullyConnectedLayer`
+    有很多工作要做。我们使用平均误差来更新权重矩阵和偏置向量，正如在[方程 10.14](ch10.xhtml#ch10equ14) ❹中所示。这实现了对小批量数据的梯度下降步骤。最后，我们重置累加器和计数器，为下一个小批量数据做准备
+    ❺。'
 - en: The `Network` class brings everything together, as shown in [Listing 10-6](ch10.xhtml#ch10ex06).
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Network` 类将所有内容整合在一起，如[清单 10-6](ch10.xhtml#ch10ex06)所示。'
 - en: '[PRE8]'
+  id: totrans-183
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: '*Listing 10-6: The* `*Network*` *class*'
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 10-6：* `*Network*` *类*'
 - en: The constructor for the `Network` class is straightforward. We set a `verbose`
     flag to toggle displaying the mean error over the minibatch during training. Successful
     training should show this error decreasing over time. As layers are added to the
     network, they are stored in `layers`, which the constructor initializes ❶. The
     `add` method adds layer objects to the network by appending them to `layers` ❷.
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Network` 类的构造函数很简单。我们设置一个 `verbose` 标志，用于在训练过程中切换显示小批量的平均误差。成功的训练应该显示这个误差随着时间的推移而减小。随着层的增加，它们被存储在
+    `layers` 中，构造函数初始化了这个 `layers` ❶。`add` 方法通过将层对象附加到 `layers` 中，来将层添加到网络中 ❷。'
 - en: 'After the network is trained, the `predict` method generates output for each
     input sample in `input_data` with a forward pass through the layers of the network.
     Notice the pattern: the input sample is assigned to `output`; then the loop over
@@ -909,15 +1332,21 @@
     of the previous layer as input to the next; and so on through the entire network.
     When the loop ends, `output` contains the output of the final layer, so it’s appended
     to `result`, which is returned to the caller ❸.'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 在网络训练完成后，`predict` 方法通过网络的各层进行前向传播，为 `input_data` 中的每个输入样本生成输出。注意模式：输入样本被赋值给
+    `output`；然后循环遍历 `layers`，依次调用每层的 `forward` 方法，将上一层的输出作为输入传递给下一层；如此往复，直到整个网络。循环结束时，`output`
+    包含最终层的输出，因此它会被附加到 `result` 中并返回给调用者 ❸。
 - en: Training the network is `fit`’s job. The name matches the standard training
     method for `sklearn`. The arguments are the NumPy array of sample vectors, one
     per row (`x_train`), and their labels as one-hot vectors (`y_train`). The number
     of minibatches to train comes next. We’ll discuss minibatches in a bit. We also
     provide the learning rate, η (eta), and an optional minibatch size, `batch_size`.
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练网络是`fit`的工作。这个名字与`sklearn`的标准训练方法相匹配。参数是样本向量的NumPy数组，每行一个(`x_train`)，以及它们的标签作为一热向量(`y_train`)。接下来是训练所需的小批量数。稍后我们会讨论小批量。我们还需要提供学习率η（eta）和可选的小批量大小`batch_size`。
 - en: The `fit` method uses a double loop. The first is over the desired number of
     minibatches ❹. As we learned earlier, a minibatch is a subset of the full training
     set, and an epoch is one full pass through the training set. Using the entire
@@ -927,76 +1356,104 @@
     anywhere from 16 to 128 samples at a time. Powers of two are often used to make
     things nice for GPU-based deep learning toolkits. For us, there’s no difference
     between a minibatch of 64 or 63 samples in terms of performance.
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: '`fit`方法使用了一个双重循环。第一个循环是遍历所需的小批量数量❹。正如我们之前所学，小批量是完整训练集的一个子集，一个周期（epoch）是训练集的完整遍历。使用整个训练集称为*批量训练*，批量训练使用周期。然而，正如你将在[第11章](ch11.xhtml#ch11)中看到的那样，有充分的理由不使用批量训练，因此引入了*小批量*的概念。典型的小批量大小通常在16到128个样本之间。为了方便GPU深度学习工具包，通常使用2的幂次方。对我们来说，使用64或63个样本的小批量在性能上没有区别。'
 - en: We select most minibatches as sequential sets of the training data to ensure
     all the data is used. Here, we’re being a bit lazy and instead select random subsets
     each time we need a minibatch. This simplifies the code and adds one more place
     where randomness can show its utility. That’s what `idx` gives us, a random ordering
     of indices into the training set, keeping only the first `batch_size` worth. We
     then use `x_batch` and `y_batch` for the actual forward and backward passes.
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们选择大多数小批量作为训练数据的顺序集合，以确保所有数据都被使用。在这里，我们有些懒，改为每次需要小批量时选择随机子集。这样可以简化代码，并增加一个随机性的应用场景。这就是`idx`的作用，它给我们提供了一个随机排列的训练集索引，只保留前`batch_size`个样本。然后，我们使用`x_batch`和`y_batch`进行实际的前向和反向传播。
 - en: The second loop is over the samples in the minibatch ❺. Samples are passed individually
     through the layers of the network, calling `forward` just as `predict` does. For
     display purposes, the actual mean squared error between the forward pass output
     and the sample label is accumulated for the minibatch ❻.
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 第二个循环遍历小批量中的样本❺。样本逐一通过网络的各层，像`predict`一样调用`forward`。为了显示目的，实际的均方误差在前向传播输出与样本标签之间累积，得出小批量的误差❻。
 - en: The backward pass begins with the output error term, the derivative of the loss
     function, `mse_prime` ❼. The pass then continues *backward* through the layers
     of the network, passing the previous layer’s output error as input to the layer
     below, directly mirroring the forward pass process.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 反向传递从输出误差项开始，即损失函数的导数`mse_prime`❼。然后，反向传递继续*向后*穿过网络的各层，将上一层的输出误差作为输入传递给下一层，这个过程直接镜像了前向传播的过程。
 - en: Once the loop processes all the minibatch samples ❺, it’s time to take a gradient
     descent step based on the mean error each layer in the network accumulated over
     the samples ❽. The argument to `step` needs only the learning rate. The minibatch
     concludes by reporting the average error if `verbose` is set for every 10th minibatch.
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦循环处理完所有的小批量样本❺，就该根据每层在样本中累计的平均误差进行梯度下降步骤❽。`step`的参数仅需要学习率。若设置了`verbose`，则每处理完10个小批量会报告平均误差。
 - en: We’ll experiment with this code again in [Chapter 11](ch11.xhtml#ch11) as we
     explore gradient descent. For now, let’s test it with the MNIST dataset to see
     how well it works.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在[第11章](ch11.xhtml#ch11)中再次实验这段代码，探索梯度下降。现在，让我们用MNIST数据集测试它，看看它的效果如何。
 - en: Using the Implementation
+  id: totrans-194
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 使用实现
 - en: Let’s take *NN.py* for a spin. We’ll use it to build a classifier for the MNIST
     dataset, which we first encountered in [Chapter 9](ch09.xhtml#ch09). The original
     MNIST dataset consists of 28×28-pixel grayscale images of handwritten digits with
     black backgrounds. It’s a workhorse of the machine learning community. We’ll resize
     the images to 14×14 pixels before turning them into vectors of 196 elements (=
     14 × 14).
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们来试试*NN.py*。我们将用它来构建一个MNIST数据集的分类器，这是我们在[第9章](ch09.xhtml#ch09)中首次遇到的。原始MNIST数据集包含28×28像素的手写数字灰度图像，背景为黑色。它是机器学习社区的工作马。我们将在将这些图像转化为196个元素（=
+    14 × 14）的向量之前，将它们调整为14×14像素。
 - en: The dataset includes 60,000 training images and 10,000 test images. The vectors
     are stored in NumPy arrays; see the files in the *dataset* directory. The code
     to generate the dataset is in *build_dataset.py*. If you want to run the code
     yourself, you’ll need to install Keras and OpenCV for Python first. Keras supplies
     the original set of images and maps the training set labels to one-hot vectors.
     OpenCV rescales the images from 28×28 to 14×14 pixels.
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 该数据集包括60,000张训练图像和10,000张测试图像。这些向量存储在NumPy数组中；请参阅*dataset*目录中的文件。生成数据集的代码在*build_dataset.py*中。如果你想自己运行代码，首先需要安装Keras和OpenCV的Python版本。Keras提供了原始的图像集，并将训练集标签映射到one-hot向量。OpenCV将图像从28×28调整为14×14像素。
 - en: The code we need is in *mnist.py* and is shown in [Listing 10-7](ch10.xhtml#ch10ex07).
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要的代码在*mnist.py*中，见[列表 10-7](ch10.xhtml#ch10ex07)。
 - en: '[PRE9]'
+  id: totrans-198
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: '*Listing 10-7: Classifying MNIST digits*'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: '*列表 10-7：分类MNIST数字*'
 - en: Notice that we import *NN.py* right after NumPy. We load the training images,
     test images, and labels next ❶. The `Network` class expects each sample vector
     to be a 1 × *n* row vector, so we reshape the training data from (60000,196) to
     (60000,1,196)—the same as the test data ❷. At the same time, we scale the 8-bit
     data from [0, 255] to [0, 1]. This is a standard preprocessing step for image
     data, as doing so makes it easier for the network to learn.
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，我们在导入NumPy后立即导入*NN.py*。接下来，我们加载训练图像、测试图像和标签❶。`Network`类要求每个样本向量是一个1×*n*的行向量，因此我们将训练数据从(60000,196)调整为(60000,1,196)—与测试数据相同❷。同时，我们将8位数据从[0,
+    255]缩放到[0, 1]。这是图像数据的标准预处理步骤，因为这样做能使网络更容易学习。
 - en: Building the model comes next ❸. First, we create an instance of the `Network`
     class. Then, we add the input layer by defining a `FullyConnectedLayer` with 196
     inputs and 100 outputs. A sigmoid activation layer follows this. We then add a
@@ -1005,8 +1462,10 @@
     layer mapping the 50 outputs of the previous layer to 10, the number of classes,
     along with adding its activation layer. This approach mimics common toolkits like
     Keras.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来是构建模型❸。首先，我们创建一个`Network`类的实例。然后，我们通过定义一个具有196个输入和100个输出的`FullyConnectedLayer`来添加输入层。接着是一个sigmoid激活层。然后，我们添加第二个全连接层，将第一层的100个输出映射到50个输出，并附加一个激活层。最后，我们添加一个最后的全连接层，将上一层的50个输出映射到10个输出，即类别数量，并添加其激活层。这种方法模仿了常见的工具包，比如Keras。
 - en: Training happens by calling `fit` ❹. We specify 40,000 minibatches using the
     default minibatch size of 64 samples. We set the learning rate to 1.0, which works
     well in this instance. Training takes some 17 minutes on my old Intel i5 Ubuntu
@@ -1020,62 +1479,102 @@
     diagonal; there are no cases where the true label and model label disagree. The
     overall accuracy is printed last as the diagonal sum divided by the sum of the
     matrix, the total number of test samples.
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练通过调用`fit` ❹来进行。我们指定了40,000个小批次，使用默认的小批次大小64个样本。我们将学习率设置为1.0，这在此情况下表现良好。训练在我老旧的Intel
+    i5 Ubuntu系统上大约需要17分钟。随着模型的训练，每个小批次的平均误差会被报告。当训练完成时，我们将10,000个测试样本通过网络，计算出一个10
+    × 10的混淆矩阵 ❺。回忆一下，混淆矩阵的行是实际的类标签，这里是实际的数字0到9。列对应预测的标签，即每个输入样本的10个输出中最大的值。矩阵元素表示实际标签是*i*，而分配的标签是*j*的次数。如果模型是完美的，那么矩阵将是纯对角线的，意味着没有任何实际标签和模型标签不一致的情况。最后，整体准确率是通过对角线元素的和除以矩阵的总和（即所有测试样本的总数）来计算的。
 - en: My run of *mnist.py* produced
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 我运行*mnist.py*时得到的结果是
 - en: minibatch 39940/40000  error=0.003941790
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: minibatch 39940/40000  error=0.003941790
 - en: minibatch 39950/40000  error=0.001214253
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: minibatch 39950/40000  error=0.001214253
 - en: minibatch 39960/40000  error=0.000832551
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: minibatch 39960/40000  error=0.000832551
 - en: minibatch 39970/40000  error=0.000998448
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: minibatch 39970/40000  error=0.000998448
 - en: minibatch 39980/40000  error=0.002377286
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: minibatch 39980/40000  error=0.002377286
 - en: minibatch 39990/40000  error=0.000850956
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: minibatch 39990/40000  error=0.000850956
 - en: '[[ 965    0    1   1   1   5   2   3   2    0]'
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: '[[ 965    0    1   1   1   5   2   3   2    0]'
 - en: '[   0 1121    3   2   0   1   3   0   5    0]'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: '[   0 1121    3   2   0   1   3   0   5    0]'
 - en: '[   6    0 1005   4   2   0   3   7   5    0]'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: '[   6    0 1005   4   2   0   3   7   5    0]'
 - en: '[   0    1    6 981   0   4   0   9   4    5]'
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: '[   0    1    6 981   0   4   0   9   4    5]'
 - en: '[   2    0    3   0 953   0   5   3   1   15]'
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: '[   2    0    3   0 953   0   5   3   1   15]'
 - en: '[   4    0    0  10   0 864   5   1   4    4]'
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: '[   4    0    0  10   0 864   5   1   4    4]'
 - en: '[   8    2    1   1   3   4 936   0   3    0]'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: '[   8    2    1   1   3   4 936   0   3    0]'
 - en: '[   2    7   19   2   1   0   0 989   1    7]'
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: '[   2    7   19   2   1   0   0 989   1    7]'
 - en: '[   5    0    4   5   3   5   7   3 939    3]'
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: '[   5    0    4   5   3   5   7   3 939    3]'
 - en: '[   5    5    2  10   8   2   1   3   6 967]]'
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: '[   5    5    2  10   8   2   1   3   6 967]]'
 - en: accuracy = 0.9720000
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: accuracy = 0.9720000
 - en: 'The confusion matrix is strongly diagonal, and the overall accuracy is 97.2
     percent. This isn’t too bad of a result for a simple toolkit like *NN.py* and
     a fully connected feedforward network. The largest error that the network made
@@ -1083,80 +1582,111 @@
     The next closest error was confusing fours for nines 15 times (element [4,9]).
     Both of these errors make sense: sevens and twos often look similar, as do fours
     and nines.'
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 混淆矩阵呈强对角线形状，整体准确率为97.2%。对于像*NN.py*这样的简单工具包和一个全连接前馈网络来说，这并不是一个差的结果。网络最大的错误是把七和二混淆了19次（混淆矩阵的元素[7,2]）。接下来的错误是把四和九混淆了15次（元素[4,9]）。这两种错误是可以理解的：七和二看起来常常相似，四和九也是如此。
 - en: 'We started this chapter with a network we created that included two inputs,
     two nodes in the hidden layer, and an output. The file *iris.py* implements the
     same model by adapting the dataset to what `Network` expects. We won’t walk through
     the code, but do run it. When I do, I get slightly better performance on the test
     set: 14 out of 15 correct for class 0 and 15 out of 15 for class 1.'
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在本章一开始创建了一个包含两个输入、两个隐藏层节点和一个输出的网络。文件*iris.py*通过调整数据集以适应`Network`的要求，来实现相同的模型。我们不再逐行讲解代码，但一定要运行它。当我运行时，我在测试集上的表现略有提升：类别0的正确率为15个中14个，类别1的正确率为15个中15个。
 - en: Sadly, the backpropagation methods detailed here and in the previous section
     are not ultimately flexible enough for deep learning. Modern toolkits don’t use
     these approaches. Let’s explore what deep learning toolkits do when it comes to
     backpropagation.
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 可惜的是，这里和上一节详细介绍的反向传播方法，最终并不够灵活，无法满足深度学习的需求。现代工具包不再使用这些方法。让我们探索一下现代深度学习工具包在反向传播方面是如何处理的。
 - en: Computational Graphs
+  id: totrans-224
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 计算图
 - en: In computer science, a *graph* is a collection of nodes (vertices) and edges
     connecting them. We’ve been using graphs all along to represent neural networks.
     In this section, we’ll use graphs to represent expressions instead.
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 在计算机科学中，*图*是一种由节点（顶点）和连接它们的边组成的集合。我们一直在使用图来表示神经网络。在这一节中，我们将用图来表示表达式。
 - en: 'Consider this simple expression:'
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑这个简单的表达式：
 - en: '*y* = *mx* + *b*'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: '*y* = *mx* + *b*'
 - en: To evaluate this expression, we follow agreed-upon rules regarding operator
     precedence. Following the rules implies a sequence of primitive operations that
     we can represent as a graph, as shown in [Figure 10-3](ch10.xhtml#ch10fig03).
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 要评估这个表达式，我们遵循关于运算符优先级的约定规则。遵循这些规则意味着一系列基本操作，我们可以将其表示为一个图，如[图 10-3](ch10.xhtml#ch10fig03)所示。
 - en: '![image](Images/10fig03.jpg)'
+  id: totrans-229
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/10fig03.jpg)'
 - en: '*Figure 10-3: A computational graph implementing* `y = mx + b`'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 10-3：实现* `y = mx + b` *的计算图*'
 - en: Data flows through the graph of [Figure 10-3](ch10.xhtml#ch10fig03) along the
     arrows, from left to right. Data originates in *sources*, here *x*, *m*, and *b*,
     and flows through *operators*, * and +, to the output, *y*.
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据沿着[图 10-3](ch10.xhtml#ch10fig03)中的箭头流动，从左到右。数据起始于*源*，这里是*x*、*m*和*b*，并通过*运算符*、*和+，流向输出*y*。
 - en: '[Figure 10-3](ch10.xhtml#ch10fig03) is a *computational graph*—a graph specifying
     how to evaluate an expression. Compilers for languages like C generate computational
     graphs in some form to translate high-level expressions into sequences of machine
     language instructions. For the expression above, first the *x* and *m* values
     are multiplied, and the resulting output of the multiplication operation is passed
     to an addition operation, along with *b*, to produce the final output, *y*.'
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图 10-3](ch10.xhtml#ch10fig03)是一个*计算图*——一个指定如何评估表达式的图。像 C 语言这样的编译器会以某种形式生成计算图，将高级表达式转换为机器语言指令的序列。对于上面的表达式，首先将*x*和*m*的值相乘，乘法操作的结果被传递给加法操作，并与*b*一起产生最终输出*y*。'
 - en: We can represent expressions, including those representing complex deep neural
     networks, as computational graphs. We represented fully connected feedforward
     models this way, as data flowing from the input, ***x***, through the hidden layers
     to the output, the loss function.
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以将表达式表示为计算图，包括那些表示复杂深度神经网络的表达式。我们就是这样表示完全连接的前馈模型的，数据从输入***x***流经隐藏层到达输出，即损失函数。
 - en: Computational graphs are how deep learning toolkits like TensorFlow and PyTorch
     manage the structure of a model and implement backpropagation. Unlike the rigid
     calculations earlier in the chapter, a computational graph is generic and capable
     of representing all the architectures used in deep learning.
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算图是像 TensorFlow 和 PyTorch 这样的深度学习工具包如何管理模型结构并实现反向传播的方式。与本章早期的严格计算不同，计算图是通用的，能够表示深度学习中使用的所有架构。
 - en: As you peruse the deep learning literature and begin to work with specific toolkits,
     you will run across two different approaches to using computational graphs. The
     first generates the graph dynamically when data is available. PyTorch uses this
     method, called *symbol-to-number*. TensorFlow uses the second method, *symbol-to-symbol*,
     to build a static computational graph ahead of time. Both approaches implement
     graphs, and both can automatically calculate the derivatives needed for backpropagation.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 当你浏览深度学习文献并开始使用特定工具包时，你会遇到两种不同的计算图使用方法。第一种是在数据可用时动态生成图，PyTorch 使用这种方法，称为*符号到数字*。TensorFlow
+    使用第二种方法，*符号到符号*，提前构建一个静态计算图。两种方法都实现了图，且都能自动计算反向传播所需的导数。
 - en: TensorFlow generates the derivatives it needs for backpropagation in much the
     same way we did in the previous section. Like addition, each operation knows how
     to create the derivative of its outputs with respect to its inputs. That, along
@@ -1169,42 +1699,52 @@
     it’s possible to use custom functions in layers without working through the derivatives.
     The graph engine does it for you, as long as you use primitive operations the
     engine already supports.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
 - en: 'Let’s walk through the forward and backward passes of a computational graph.
     This example comes from the 2015 paper “TensorFlow: Large-Scale Machine Learning
     on Heterogeneous Distributed Systems” (*[https://arxiv.org/pdf/1603.04467.pdf](https://arxiv.org/pdf/1603.04467.pdf)*).'
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
 - en: A hidden layer in a fully connected model is expressed as
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
 - en: '***y*** = **σ**(***Wx*** + ***b***)'
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
 - en: for weight matrix ***W***, bias vector ***b***, input ***x***, and output ***y***.
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
 - en: '[Figure 10-4](ch10.xhtml#ch10fig04) shows the same equation as a computational
     graph.'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/10fig04.jpg)'
+  id: totrans-242
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 10-4: The computational graphs representing the forward and backward
     passes through one layer of a feedforward neural network*'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
 - en: '[Figure 10-4](ch10.xhtml#ch10fig04) presents two versions. The top of the figure
     shows the forward pass, where data flows from ***x***, ***W***, and ***b*** to
     produce the output. Notice how the arrows lead left to right.'
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
 - en: Note the sources are tensors, here either vectors or matrices. The outputs of
     operations are also tensors. The tensors flow through the graph, hence the name
     *TensorFlow*. [Figure 10-4](ch10.xhtml#ch10fig04) represents matrix multiplication
     as `@`, the NumPy matrix multiplication operator. The activation function is **σ**.
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
 - en: For the backward pass, the sequence of derivatives begins with ∂***y***/∂***y***
@@ -1213,6 +1753,7 @@
     the graph evaluation engine processes the proper set of operators in the proper
     order. Each operator has its needed input derivatives available when it’s that
     operator’s turn to be processed.
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
 - en: '[Figure 10-4](ch10.xhtml#ch10fig04) uses ∂ before an operator to indicate the
@@ -1220,6 +1761,7 @@
     two outputs because there are two inputs, ***Wx*** and ***b***. The same is true
     for matrix multiplication (∂@). The derivative of the activation function is shown
     as **σ**′.'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
 - en: Notice that arrows run from ***W*** and ***x*** in the forward pass to the derivative
@@ -1231,6 +1773,7 @@
     were below what is shown in [Figure 10-4](ch10.xhtml#ch10fig04), the ∂***y***/∂***x***
     output from the matrix multiplication operator would become the input for the
     backward pass through that layer, and so on.
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
 - en: The power of computational graphs makes modern deep learning toolkits highly
@@ -1238,9 +1781,11 @@
     the user with detailed and highly tedious gradient calculations. As you continue
     to explore deep learning, do appreciate what the toolkits make possible with only
     a few lines of code.
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
 - en: Summary
+  id: totrans-250
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1248,6 +1793,7 @@
     deep learning practical. First, we worked through calculating the necessary derivatives
     by hand for a tiny network and saw how laborious a process it was. However, we
     were able to train the tiny network successfully.
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
 - en: Next, we used our matrix calculus knowledge from [Chapter 8](ch08.xhtml#ch08)
@@ -1256,6 +1802,7 @@
     trained a model to high accuracy using the MNIST dataset. While effective and
     general in terms of the number of hidden layers and their sizes, the toolkit was
     restricted to fully connected models.
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
 - en: We ended the chapter with a cursory look at how modern deep learning toolkits
@@ -1263,10 +1810,12 @@
     graph enables arbitrary combinations of primitive operations, each of which can
     pass gradients backward as necessary, thereby allowing the complex model architectures
     we find in deep learning.
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
 - en: The second half of training a deep model is gradient descent, which puts the
     gradients calculated by backpropagation to work. Let’s now turn our attention
     that way.
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
