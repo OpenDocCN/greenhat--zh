@@ -1,22 +1,22 @@
-# <samp class="SANS_Dogma_OT_Bold_B_11">INDEX</samp>
+# INDEX
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">符号</samp>
++   符号
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">=</samp>（赋值运算符），39
++   =（赋值运算符），39
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">$</samp>（美元符号），166
++   $（美元符号），166
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">**</samp>（双星号运算符），137，142，171
++   **（双星号运算符），137，142，171
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">–</samp>（减法运算符），171
++   –（减法运算符），171
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">%</samp>（取模运算），171
++   %（取模运算），171
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">+</samp>（加法运算符），5
++   +（加法运算符），5
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">A</samp>
++   A
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">active_tab</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">Tabs</samp> 组件，105
++   active_tab 属性，Tabs 组件，105
 
 +   注释
 
@@ -30,7 +30,7 @@
 
 +   世界银行 API，74–75
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">append()</samp> 方法，列表，4
++   append() 方法，列表，4
 
 +   应用主题资源管理器，156–157
 
@@ -42,7 +42,7 @@
 
 +   资产配置可视化应用，96–97，102，104，111。*参见* 投资组合应用
 
-+   赋值运算符（<samp class="SANS_TheSansMonoCd_W5Regular_11">=</samp>），39
++   赋值运算符（=），39
 
 +   属性
 
@@ -62,7 +62,7 @@
 
 +   Plotly 图形对象折线图，116
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">B</samp>
++   B
 
 +   *base-styles.css* 样式表，134–135
 
@@ -170,27 +170,27 @@
 
 +   *另见* SVM Explorer 应用  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Button</samp> 组件, 80–81  
++   Button 组件, 80–81  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">children</samp> 属性, 81  
++   children 属性, 81  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">className</samp> 属性, 81  
++   className 属性, 81  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">disabled</samp> 属性, 81  
++   disabled 属性, 81  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">href</samp> 属性, 81  
++   href 属性, 81  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">id</samp> 属性, 81  
++   id 属性, 81  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">n_clicks</samp> 属性, 81  
++   n_clicks 属性, 81  
 
 +   概览, 80–81  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">size</samp> 属性, 81  
++   size 属性, 81  
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">C</samp>  
++   C  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">callback_context</samp> 全局变量, 120–121  
++   callback_context 全局变量, 120–121  
 
 +   回调装饰器  
 
@@ -248,7 +248,7 @@
 
 +   双向同步，120
 
-+   使用 <samp class="SANS_TheSansMonoCd_W5Regular_11">State</samp>，118–119
++   使用 State，118–119
 
 +   概述，61
 
@@ -272,15 +272,15 @@
 
 +   SVM Explorer 应用，136–139
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">children</samp> 参数，137
++   children 参数，137
 
 +   组合命名滑块和按钮组件，138–139
 
 +   定义，137
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">**kwargs</samp> 参数，137
++   **kwargs 参数，137
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">_omit</samp> 函数，138
++   _omit 函数，138
 
 +   概述，136
 
@@ -288,15 +288,15 @@
 
 +   Charming Data YouTube 频道，124，163
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">children</samp> 参数，<samp class="SANS_TheSansMonoCd_W5Regular_11">Loading</samp> 组件，148
++   children 参数，Loading 组件，148
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">children</samp> 属性
++   children 属性
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Button</samp> 组件，81
++   Button 组件，81
 
 +   HTML 组件，58
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Tabs</samp> 组件，105
++   Tabs 组件，105
 
 +   区域图
 
@@ -318,7 +318,7 @@
 
 +   分类算法和，125
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">className</samp> 属性，52，81
++   className 属性，52，81
 
 +   对象和，11–15
 
@@ -330,23 +330,23 @@
 
 +   SVM，123–124，126–127
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">className</samp> 参数，<samp class="SANS_TheSansMonoCd_W5Regular_11">Loading</samp> 组件，148
++   className 参数，Loading 组件，148
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">className</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">Button</samp> 组件，81
++   className 属性，Button 组件，81
 
 +   清理数据，49–50。 *另见* 数据管理
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">color</samp> 属性
++   color 属性
 
 +   Plotly Express 区域图，93
 
 +   Plotly Express 折线图，67–68
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">COLORS</samp> 字典，100，114
++   COLORS 字典，100，114
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">component_id</samp> 参数，回调装饰器，62
++   component_id 参数，回调装饰器，62
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">component_property</samp> 参数，回调装饰器，62
++   component_property 参数，回调装饰器，62
 
 +   组件
 
@@ -384,7 +384,7 @@
 
 +   *custom-styles.css* 样式表，134
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">D</samp>
++   D
 
 +   达莫达兰，阿斯瓦斯，100
 
@@ -412,25 +412,25 @@
 
 +   Dash Bootstrap 组件 (DBCs)
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Button</samp> 组件, 80–81
++   Button 组件, 80–81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">children</samp> 属性, 81
++   children 属性, 81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">className</samp> 属性, 81
++   className 属性, 81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">disabled</samp> 属性, 81
++   disabled 属性, 81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">href</samp> 属性, 81
++   href 属性, 81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">id</samp> 属性, 81
++   id 属性, 81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">n_clicks</samp> 属性, 81
++   n_clicks 属性, 81
 
 +   概览, 80–81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Card</samp> 组件, 103
++   Card 组件, 103
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">children</samp> 参数, 137
++   children 参数, 137
 
 +   组合命名的滑块和按钮组件, 138–139
 
@@ -438,65 +438,65 @@
 
 +   投资组合应用, 106–107
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">**kwargs</samp> 参数, 137
++   **kwargs 参数, 137
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">_omit</samp> 函数, 138
++   _omit 函数, 138
 
 +   SVM Explorer 应用, 136–139
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Input</samp> 组件, 103, 107–108
++   Input 组件, 103, 107–108
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">InputGroup</samp> 组件, 103, 107–109
++   InputGroup 组件, 103, 107–109
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">InputGroupText</samp> 组件, 103, 108
++   InputGroupText 组件, 103, 108
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RadioItems</samp> 组件, 81–83
++   RadioItems 组件, 81–83
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">id</samp> 属性, 82
++   id 属性, 82
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">input_class_name</samp> 属性, 83
++   input_class_name 属性, 83
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">options</samp> 属性, 82
++   options 属性, 82
 
 +   概览, 81–82
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">value</samp> 属性, 82–83
++   value 属性, 82–83
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Table</samp> 组件, 111
++   Table 组件, 111
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Tabs</samp> 组件, 104–105
++   Tabs 组件, 104–105
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Tooltip</samp> 组件，103，109
++   Tooltip 组件，103，109
 
 +   Dash Bootstrap Theme Explorer，156
 
 +   Dash Core 组件（DCCs）
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">DataTable</samp> 组件，109–111
++   DataTable 组件，109–111
 
 +   已定义，49
 
 +   点表示法，59
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Dropdown</samp> 组件，55，60–61
++   Dropdown 组件，55，60–61
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Graph</samp> 组件，59，129，143–146
++   Graph 组件，59，129，143–146
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Interval</samp> 组件，85，86，90–91
++   Interval 组件，85，86，90–91
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Loading</samp> 组件，147–148
++   Loading 组件，147–148
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Markdown</samp> 组件，112–113
++   Markdown 组件，112–113
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">NameDropdown</samp> 组件，141–143
++   NameDropdown 组件，141–143
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件，83–84
++   RangeSlider 组件，83–84
 
 +   可重用组件，135–147
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Slider</samp> 组件，107，139–141
++   Slider 组件，107，139–141
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Store</samp> 组件，84–85
++   Store 组件，84–85
 
 +   Dash Enterprise 应用库，154
 
@@ -506,7 +506,7 @@
 
 +   dash-labs，160–161
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">data_frame</samp> 属性，分级地图，93
++   data_frame 属性，分级地图，93
 
 +   DataFrames
 
@@ -546,19 +546,19 @@
 
 +   SVM Explorer 应用，130–131
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">data</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件，85
++   data 属性，RangeSlider 组件，85
 
 +   数据检索回调，全局数据分析应用，86–87
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">dataset.make_X()</samp> 函数，SVM Explorer 应用，131
++   dataset.make_X() 函数，SVM Explorer 应用，131
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">datasets.make_circles()</samp> 函数，SVM Explorer 应用，131
++   datasets.make_circles() 函数，SVM Explorer 应用，131
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">datasets.make_classification()</samp> 函数，SVM Explorer 应用，131
++   datasets.make_classification() 函数，SVM Explorer 应用，131
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">datasets.make_moons()</samp> 函数，SVM Explorer 应用，131
++   datasets.make_moons() 函数，SVM Explorer 应用，131
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">DataTable</samp> 组件，109–111
++   DataTable 组件，109–111
 
 +   数据类型
 
@@ -580,27 +580,27 @@
 
 +   默认函数参数，181
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">def</samp> 关键字，函数，178–179
++   def 关键字，函数，178–179
 
 +   字典，60，69–70
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">COLORS</samp> 字典，100，114
++   COLORS 字典，100，114
 
 +   使用初始化 DataFrame，35
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">kwargs</samp> 字典，137，139–140
++   kwargs 字典，137，139–140
 
 +   概述，9–10
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">dictionary.items()</samp> 方法，9–10
++   dictionary.items() 方法，9–10
 
 +   脏数据，49
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">disabled</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">Button</samp> 组件，81
++   disabled 属性，Button 组件，81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Div</samp> 组件，51–54，132–134，139–141
++   Div 组件，51–54，132–134，139–141
 
-+   美元符号（<samp class="SANS_TheSansMonoCd_W5Regular_11">$</samp>），166
++   美元符号（$），166
 
 +   点符号
 
@@ -610,61 +610,61 @@
 
 +   HTML 组件，57
 
-+   双星号运算符（<samp class="SANS_TheSansMonoCd_W5Regular_11">**</samp>），137，142，171
++   双星号运算符（**），137，142，171
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Dropdown</samp> 组件，55，60–61
++   Dropdown 组件，55，60–61
 
 +   屠邦，查尔斯，92
 
 +   动态属性，14
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">E</samp>
++   E
 
 +   编辑器窗口，PyCharm IDE，23
 
 +   爱因斯坦，阿尔伯特，163
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">elif</samp> 关键字, 173–175
++   elif 关键字, 173–175
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">else</samp> 关键字, 173–175
++   else 关键字, 173–175
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">endswith()</samp> 方法, 字符串, 172
++   endswith() 方法, 字符串, 172
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">extend()</samp> 方法, 列表, 5
++   extend() 方法, 列表, 5
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">F</samp>
++   F
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">figs</samp> 模块, SVM Explorer 应用, 145
++   figs 模块, SVM Explorer 应用, 145
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">fig.update_layout()</samp> 方法, Plotly 折线图, 116
++   fig.update_layout() 方法, Plotly 折线图, 116
 
 +   图形创建回调, 全球数据分析应用, 88–90
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">figure</samp> 属性, <samp class="SANS_TheSansMonoCd_W5Regular_11">Graph</samp> 组件, 59, 62–63
++   figure 属性, Graph 组件, 59, 62–63
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Figure</samp> 语法, Plotly 饼图, 114
++   Figure 语法, Plotly 饼图, 114
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">find()</samp> 方法, 字符串, 172
++   find() 方法, 字符串, 172
 
 +   Finxter, 1, 163
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">1st.index()</samp> 方法, 列表, 6–7
++   1st.index() 方法, 列表, 6–7
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">1st.remove(x)</samp> 方法, 列表, 5
++   1st.remove(x) 方法, 列表, 5
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">1st.reverse()</samp> 方法, 列表, 5
++   1st.reverse() 方法, 列表, 5
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">1st.sort()</samp> 方法, 列表, 6
++   1st.sort() 方法, 列表, 6
 
 +   Flask 库, 26
 
 +   浮动数, 170
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">for</samp> 循环, 175–176
++   for 循环, 175–176
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">"</samp><samp class="SANS_TheSansMonoCd_W5Regular_11">format</samp><samp class="SANS_TheSansMonoCd_W5Regular_11">"</samp><samp class="SANS_TheSansMonoCd_W5Regular_11">: {</samp><samp class="SANS_TheSansMonoCd_W5Regular_11">"</samp><samp class="SANS_TheSansMonoCd_W5Regular_11">specifier</samp><samp class="SANS_TheSansMonoCd_W5Regular_11">"</samp><samp class="SANS_TheSansMonoCd_W5Regular_11">:</samp> <samp class="SANS_TheSansMonoCd_W5Regular_11">"</samp><samp class="SANS_TheSansMonoCd_W5Regular_11">$,.0f</samp><samp class="SANS_TheSansMonoCd_W5Regular_11">"</samp><samp class="SANS_TheSansMonoCd_W5Regular_11">}</samp> 属性, <samp class="SANS_TheSansMonoCd_W5Regular_11">DataTable</samp> 组件, 111
++   "format": {"specifier": "$,.0f"} 属性, DataTable 组件, 111
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">FormattedSlider</samp> 组件, 139
++   FormattedSlider 组件, 139
 
 +   功能, 对象, 11–14
 
@@ -674,19 +674,19 @@
 
 +   定义, 178
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">def</samp> 关键字，178–179
++   def 关键字，178–179
 
 +   包装函数，124，137，139–141
 
 +   *另见* 回调函数
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">G</samp>
++   G
 
 +   Gamma 滑块，SVM Explorer 应用，129
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">generate_data()</samp> 函数，SVM Explorer 应用，130–131
++   generate_data() 函数，SVM Explorer 应用，130–131
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">geo</samp> 属性，Plotly Express 区域图，94
++   geo 属性，Plotly Express 区域图，94
 
 +   GitHub
 
@@ -712,15 +712,15 @@
 
 +   Dash Core 组件
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Button</samp> 组件，80–81
++   Button 组件，80–81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Interval</samp> 组件，85，86，90–91
++   Interval 组件，85，86，90–91
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RadioItems</samp> 组件，81–83
++   RadioItems 组件，81–83
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件，83–84
++   RangeSlider 组件，83–84
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Store</samp> 组件，84–85
++   Store 组件，84–85
 
 +   数据管理，74–78
 
@@ -748,41 +748,41 @@
 
 +   全局变量，50，64
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Graph</samp> 组件
++   Graph 组件
 
 +   社交媒体分析应用，59
 
 +   SVM Explorer 应用，129，143–146
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">H</samp>
++   H
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">hover_data</samp> 属性
++   hover_data 属性
 
 +   Plotly Express 区域图，93
 
 +   Plotly Express 折线图，69–70
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">href</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">Button</samp> 组件，81
++   href 属性，Button 组件，81
 
 +   HTML 组件
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Div</samp> 组件, 51, 132–134, 139–141
++   Div 组件, 51, 132–134, 139–141
 
 +   点符号, 57
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">html.A</samp> 组件, 54, 58, 132–133
++   html.A 组件, 54, 58, 132–133
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">html.H1</samp> 组件, 58
++   html.H1 组件, 58
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">html.P</samp> 组件, 140–141
++   html.P 组件, 140–141
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">html.Section</samp> 组件, 136–138
++   html.Section 组件, 136–138
 
 +   社交媒体分析应用, 51, 57–58
 
 +   HTML 表格, 111
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">I</samp>
++   I
 
 +   集成开发环境 (IDE)
 
@@ -790,27 +790,27 @@
 
 +   PyCharm IDE, 19–30
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">id</samp> 属性
++   id 属性
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Button</samp> 组件, 81
++   Button 组件, 81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">DataTable</samp> 组件, 110
++   DataTable 组件, 110
 
 +   HTML 组件, 58
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RadioItems</samp> 组件, 82
++   RadioItems 组件, 82
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件, 85
++   RangeSlider 组件, 85
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Slider</samp> 组件, 107
++   Slider 组件, 107
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">if</samp> 关键字, 173–175
++   if 关键字, 173–175
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">if</samp> 语句, 11
++   if 语句, 11
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">import pandas</samp> 语句, 33
++   import pandas 语句, 33
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">included</samp> 属性, <samp class="SANS_TheSansMonoCd_W5Regular_11">Slider</samp> 组件, 107
++   included 属性, Slider 组件, 107
 
 +   索引
 
@@ -818,7 +818,7 @@
 
 +   列表元素, 6–7
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">index(x)</samp> 方法, 列表元素, 7
++   index(x) 方法, 列表元素, 7
 
 +   指标
 
@@ -830,19 +830,19 @@
 
 +   继承, 15
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">in</samp> 关键字, 173, 178
++   in 关键字, 173, 178
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Input</samp> 参数
++   Input 参数
 
 +   回调装饰器, 62
 
 +   图形创建回调, 88–90
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">input_class_name</samp> 属性, <samp class="SANS_TheSansMonoCd_W5Regular_11">RadioItems</samp> 组件, 83
++   input_class_name 属性, RadioItems 组件, 83
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">InputGroup</samp> 组件, 107–109  
++   InputGroup 组件, 107–109  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">insert()</samp> 方法, 列表, 4  
++   insert() 方法, 列表, 4  
 
 +   安装  
 
@@ -866,7 +866,7 @@
 
 +   交互模式, Python, 167  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Interval</samp> 组件, 85, 86, 90–91  
++   Interval 组件, 85, 86, 90–91  
 
 +   投资组合应用  
 
@@ -894,25 +894,25 @@
 
 +   Dash Bootstrap 组件  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Card</samp> 组件, 106  
++   Card 组件, 106  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">InputGroup</samp> 组件, 107–109  
++   InputGroup 组件, 107–109  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Slider</samp> 组件, 107  
++   Slider 组件, 107  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Table</samp> 组件, 111  
++   Table 组件, 111  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Tabs</samp> 组件, 104–105  
++   Tabs 组件, 104–105  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Tooltip</samp> 组件, 109  
++   Tooltip 组件, 109  
 
 +   Dash 核心组件  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">DataTable</samp> 组件, 109–111  
++   DataTable 组件, 109–111  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Markdown</samp> 组件, 112–113  
++   Markdown 组件, 112–113  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Slider</samp> 组件, 106–107  
++   Slider 组件, 106–107  
 
 +   数据管理, 100  
 
@@ -934,21 +934,21 @@
 
 +   标签, 104–105  
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">is</samp> 关键字, 178
++   is 关键字, 178
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">J</samp>
++   J
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">join()</samp> 方法, 字符串, 172
++   join() 方法, 字符串, 172
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">K</samp>
++   K
 
 +   核心下拉菜单, SVM Explorer 应用, 129
 
 +   键值对, 字典, 9
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">L</samp>
++   L
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">labels</samp> 属性
++   labels 属性
 
 +   Plotly Express 地图, 93
 
@@ -966,7 +966,7 @@
 
 +   学习标签, 投资组合应用, 104
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">len()</samp> 方法, 字符串, 173
++   len() 方法, 字符串, 173
 
 +   库, 导入
 
@@ -988,13 +988,13 @@
 
 +   添加元素, 4–5
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">append()</samp> 方法, 4
++   append() 方法, 4
 
 +   拼接, 4–5
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">extend()</samp> 方法, 5
++   extend() 方法, 5
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">insert()</samp> 方法, 4
++   insert() 方法, 4
 
 +   索引元素, 6–7
 
@@ -1008,27 +1008,27 @@
 
 +   排序元素, 6
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Loading</samp> 组件
++   Loading 组件
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">children</samp> 参数, 148
++   children 参数, 148
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">className</samp> 参数, 148
++   className 参数, 148
 
 +   加载符号, 147
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">style</samp> 参数, 148
++   style 参数, 148
 
 +   加载旋转器, 124, 147
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">local</samp> 选项, <samp class="SANS_TheSansMonoCd_W5Regular_11">storage_type</samp> 属性, 85
++   local 选项, storage_type 属性, 85
 
 +   对数缩放, Plotly Express 折线图, 68
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">log_y</samp> 属性, Plotly Express 折线图, 68
++   log_y 属性, Plotly Express 折线图, 68
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">lower()</samp> 方法，字符串，171
++   lower() 方法，字符串，171
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">M</samp>
++   M
 
 +   机器学习仪表板，123–152
 
@@ -1048,69 +1048,69 @@
 
 +   安全边际（安全边际；边际），126–127
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Markdown</samp> 组件，112–113
++   Markdown 组件，112–113
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">marks</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件，84
++   marks 属性，RangeSlider 组件，84
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">max_intervals</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">Interval</samp> 组件，85
++   max_intervals 属性，Interval 组件，85
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">max</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件，84
++   max 属性，RangeSlider 组件，84
 
 +   Mayer，Christian，125，163
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">memory</samp> 选项，<samp class="SANS_TheSansMonoCd_W5Regular_11">storage_type</samp> 属性，85
++   memory 选项，storage_type 属性，85
 
 +   方法，已定义，14
 
 +   最小可工作示例，155
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">min</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件，84
++   min 属性，RangeSlider 组件，84
 
-+   减法运算符（<samp class="SANS_TheSansMonoCd_W5Regular_11">–</samp>），171
++   减法运算符（–），171
 
-+   取余操作（<samp class="SANS_TheSansMonoCd_W5Regular_11">%</samp>），171
++   取余操作（%），171
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">multi</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">Dropdown</samp> 组件，60
++   multi 属性，Dropdown 组件，60
 
 +   *mystyles.css* 样式表，56–57
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">N</samp>
++   N
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">NameDropdown</samp> 组件
++   NameDropdown 组件
 
 +   定义，141–142
 
 +   实例化，142–143
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">NamedSlider</samp> 组件，140–141
++   NamedSlider 组件，140–141
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">name</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">DataTable</samp> 组件，110
++   name 属性，DataTable 组件，110
 
 +   导航栏，PyCharm IDE，23
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">n_clicks</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">Button</samp> 组件，81
++   n_clicks 属性，Button 组件，81
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">n_intervals</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">Interval</samp> 组件，85
++   n_intervals 属性，Interval 组件，85
 
 +   噪声级别滑块，SVM Explorer 应用，129
 
 +   数值数据类型，170–171
 
-+   双星号运算符 (<samp class="SANS_TheSansMonoCd_W5Regular_11">**</samp>), 171
++   双星号运算符 (**), 171
 
 +   浮点数，170
 
-+   整数除法运算符 (<samp class="SANS_TheSansMonoCd_W5Regular_11">//</samp>), 170–171
++   整数除法运算符 (//), 170–171
 
 +   整数，170
 
-+   减号运算符 (<samp class="SANS_TheSansMonoCd_W5Regular_11">–</samp>), 171
++   减号运算符 (–), 171
 
-+   取模运算符 (<samp class="SANS_TheSansMonoCd_W5Regular_11">%</samp>), 171
++   取模运算符 (%), 171
 
 +   NumPy 库，124
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">O</samp>
++   O
 
 +   面向对象编程
 
@@ -1166,23 +1166,23 @@
 
 +   Dash 回调装饰器，63
 
-+   Dash <samp class="SANS_TheSansMonoCd_W5Regular_11">Dropdown</samp> 组件，61
++   Dash Dropdown 组件，61
 
 +   Dash 企业应用程序画廊，154
 
-+   Dash <samp class="SANS_TheSansMonoCd_W5Regular_11">Graph</samp> 组件, 59
++   Dash Graph 组件, 59
 
-+   双星号运算符 (<samp class="SANS_TheSansMonoCd_W5Regular_11">**</samp>), 137
++   双星号运算符 (**), 137
 
 +   Finxter，1，163
 
 +   HTML 和核心组件，57
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">dataset.make_X()</samp> 函数的输入参数，131
++   dataset.make_X() 函数的输入参数，131
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Interval</samp> 组件，85
++   Interval 组件，85
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">ipdb</samp> 备忘单，160
++   ipdb 备忘单，160
 
 +   加载动画，148
 
@@ -1218,23 +1218,23 @@
 
 +   开源应用，154
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">options</samp> 属性
++   options 属性
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Dropdown</samp> 组件，60
++   Dropdown 组件，60
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RadioItems</samp> 组件，82
++   RadioItems 组件，82
 
 +   异常值，127
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Output</samp> 参数
++   Output 参数
 
 +   回调装饰器，62
 
 +   图形创建回调，88–90
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">P</samp>
++   P
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">page_size</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">DataTable</samp> 组件，111
++   page_size 属性，DataTable 组件，111
 
 +   pandas 库
 
@@ -1260,27 +1260,27 @@
 
 +   Parmer, Chris，52
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">pd.DataFrame()</samp> 构造函数，35
++   pd.DataFrame() 构造函数，35
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">pd.Series()</samp> 构造函数，34
++   pd.Series() 构造函数，34
 
 +   饼图，113–114
 
 +   Play 标签，投资组合应用
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Card</samp> 组件，106
++   Card 组件，106
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">InputGroup</samp> 组件，107–109
++   InputGroup 组件，107–109
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Markdown</samp> 组件，112–113
++   Markdown 组件，112–113
 
 +   概述，103
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Slider</samp> 组件，107
++   Slider 组件，107
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Tabs</samp> 组件，104–105
++   Tabs 组件，104–105
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Tooltip</samp> 组件，109
++   Tooltip 组件，109
 
 +   Plotly Express
 
@@ -1302,7 +1302,7 @@
 
 +   饼图，113–114
 
-+   加法运算符（<samp class="SANS_TheSansMonoCd_W5Regular_11">+</samp>），5
++   加法运算符（+），5
 
 +   项目工具窗口，PyCharm IDE，23
 
@@ -1372,11 +1372,11 @@
 
 +   函数，178–179
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">hello world</samp> 程序，167
++   hello world 程序，167
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">in</samp> 关键字，178
++   in 关键字，178
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">is</samp> 关键字，178
++   is 关键字，178
 
 +   安装，166–167
 
@@ -1428,9 +1428,9 @@
 
 +   无限循环，177
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">for</samp> 循环，175–176
++   for 循环，175–176
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">while</samp> 循环，175–176
++   while 循环，175–176
 
 +   脚本，167–168
 
@@ -1438,79 +1438,79 @@
 
 +   *Python 一行代码*（Mayer），125–126
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">R</samp>
++   R
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RadioItems</samp> 组件，81–83
++   RadioItems 组件，81–83
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">id</samp> 属性，82
++   id 属性，82
 
 +   指标选择，82
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">input_class_name</samp> 属性，83
++   input_class_name 属性，83
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">options</samp> 属性，82
++   options 属性，82
 
 +   概览，81–82
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">value</samp> 属性，82–83
++   value 属性，82–83
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件
++   RangeSlider 组件
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">data</samp> 属性，85
++   data 属性，85
 
 +   DCC 库，83–84
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">id</samp> 属性，85
++   id 属性，85
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">marks</samp> 属性，84
++   marks 属性，84
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">max</samp> 属性，84
++   max 属性，84
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">min</samp> 属性，84
++   min 属性，84
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">step</samp> 属性，84
++   step 属性，84
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">storage_type</samp> 属性，85
++   storage_type 属性，85
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">value</samp> 属性，84
++   value 属性，84
 
 +   年份选择，83
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">read_csv()</samp> 函数，pandas，36
++   read_csv() 函数，pandas，36
 
 +   rems，已定义，112
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">replace()</samp> 方法，字符串，172
++   replace() 方法，字符串，172
 
 +   重置阈值按钮，SVM Explorer 应用，129
 
 +   结果标签页, 投资组合应用, 104, 110
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">return</samp> 关键字, 参数, 180
++   return 关键字, 参数, 180
 
 +   可重用组件
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Card</samp> 组件, 136–139
++   Card 组件, 136–139
 
 +   等高线, 146–147
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">FormattedSlider</samp> 组件, 139
++   FormattedSlider 组件, 139
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Graph</samp> 组件, 143–146
++   Graph 组件, 143–146
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Loading</samp> 组件, 147–148
++   Loading 组件, 147–148
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">NameDropdown</samp> 组件, 141–143
++   NameDropdown 组件, 141–143
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">NamedSlider</samp> 组件, 140–141
++   NamedSlider 组件, 140–141
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Slider</samp> 组件, 139–141
++   Slider 组件, 139–141
 
 +   ROC 曲线图, SVM Explorer 应用, 129
 
 +   运行工具窗口, PyCharm IDE, 23
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">S</samp>
++   S
 
 +   安全余量 (margin of safety), 126–127
 
@@ -1520,27 +1520,27 @@
 
 +   scikit-learn, 128, 130–131
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">scope</samp> 属性, Plotly Express 等值区域图, 93
++   scope 属性, Plotly Express 等值区域图, 93
 
 +   脚本, 167–168
 
 +   选择数据集下拉菜单, SVM Explorer 应用, 128
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">self</samp> 参数, 面向对象编程, 14
++   self 参数, 面向对象编程, 14
 
 +   Series 对象, pandas 库, 34–35
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">session</samp> 选项, <samp class="SANS_TheSansMonoCd_W5Regular_11">storage_type</samp> 属性, 85
++   session 选项, storage_type 属性, 85
 
 +   展示标签, Plotly 论坛, 155
 
 +   缩小单选按钮, SVM Explorer 应用, 129
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">size</samp> 属性, <samp class="SANS_TheSansMonoCd_W5Regular_11">Button</samp> 组件, 81
++   size 属性, Button 组件, 81
 
 +   切片, 7–8, 37
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Slider</samp> 组件
++   Slider 组件
 
 +   投资组合应用, 106–107
 
@@ -1564,9 +1564,9 @@
 
 +   Dash Core 组件
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Dropdown</samp> 组件, 60–61
++   Dropdown 组件, 60–61
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Graph</samp> 组件, 59
++   Graph 组件, 59
 
 +   数据管理, 49–50
 
@@ -1582,7 +1582,7 @@
 
 +   概述, 50–51
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">style</samp> 属性, 54–55
++   style 属性, 54–55
 
 +   在线资源, 45
 
@@ -1590,13 +1590,13 @@
 
 +   设置项目, 46–48
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">start</samp> 参数, 切片, 7–8
++   start 参数, 切片, 7–8
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">start</samp> 索引, 37
++   start 索引, 37
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">startswith()</samp> 方法, 字符串, 172
++   startswith() 方法, 字符串, 172
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">State</samp> 参数
++   State 参数
 
 +   使用回调, 118–119
 
@@ -1604,47 +1604,47 @@
 
 +   静态属性（静态变量）, 14
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">step</samp> 参数, 切片, 7–8
++   step 参数, 切片, 7–8
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">step</samp> 属性, <samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件, 84
++   step 属性, RangeSlider 组件, 84
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">stop</samp> 索引, 7–8, 37
++   stop 索引, 7–8, 37
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">storage_type</samp> 属性, <samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件, 85
++   storage_type 属性, RangeSlider 组件, 85
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Store</samp> 组件, 84–85
++   Store 组件, 84–85
 
 +   字符串
 
 +   已定义, 171
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">endswith()</samp> 方法, 172
++   endswith() 方法, 172
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">find()</samp> 方法, 172
++   find() 方法, 172
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">join()</samp> 方法, 172
++   join() 方法, 172
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">in</samp> 关键字, 173
++   in 关键字, 173
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">len()</samp> 方法, 173
++   len() 方法, 173
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">lower()</samp> 方法, 171
++   lower() 方法, 171
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">replace()</samp> 方法, 172
++   replace() 方法, 172
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">startswith()</samp> 方法, 172
++   startswith() 方法, 172
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">strip()</samp> 方法, 171
++   strip() 方法, 171
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">upper()</samp> 方法, 171–172
++   upper() 方法, 171–172
 
 +   空白字符, 171
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">strip()</samp> 方法, 字符串, 171
++   strip() 方法, 字符串, 171
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">style</samp> 参数, <samp class="SANS_TheSansMonoCd_W5Regular_11">Loading</samp> 组件, 148
++   style 参数, Loading 组件, 148
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">style</samp> 属性, 54–55
++   style 属性, 54–55
 
 +   样式表
 
@@ -1660,7 +1660,7 @@
 
 +   FontAwesome 图标, 99
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">SPACELAB</samp> 主题, 99
++   SPACELAB 主题, 99
 
 +   支持向量机。*参见* SVMs
 
@@ -1676,23 +1676,23 @@
 
 +   CSS 样式表, 134–135
 
-+   Dash <samp class="SANS_TheSansMonoCd_W5Regular_11">Graph</samp> 组件, 129
++   Dash Graph 组件, 129
 
 +   数据管理, 130–131
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">figs</samp> 模块, 145
++   figs 模块, 145
 
 +   Gamma 滑块, 129
 
 +   HTML 组件
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">html.A</samp> 组件, 132–133
++   html.A 组件, 132–133
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">html.Div</samp> 组件, 132–134, 139–141
++   html.Div 组件, 132–134, 139–141
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">html.P</samp> 组件, 140–141
++   html.P 组件, 140–141
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">html.Section</samp> 组件, 136–138
++   html.Section 组件, 136–138
 
 +   导入库, 130
 
@@ -1714,21 +1714,21 @@
 
 +   可重用组件, 135–148
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Card</samp> 组件, 136–139
++   Card 组件, 136–139
 
 +   等高线, 146–147
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">FormattedSlider</samp> 组件, 139
++   FormattedSlider 组件, 139
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Graph</samp> 组件, 143–146
++   Graph 组件, 143–146
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Loading</samp> 组件, 147–148
++   Loading 组件, 147–148
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">NameDropdown</samp> 组件，141–143
++   NameDropdown 组件，141–143
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">NamedSlider</samp> 组件，140–141
++   NamedSlider 组件，140–141
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Slider</samp> 组件，139–141
++   Slider 组件，139–141
 
 +   ROC 曲线图，129
 
@@ -1742,9 +1742,9 @@
 
 +   阈值滑块，129
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">update_svm_graph</samp> 函数，149–150
++   update_svm_graph 函数，149–150
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">utils</samp> 文件夹，132，136，145
++   utils 文件夹，132，136，145
 
 +   缩放多个图层，133
 
@@ -1758,49 +1758,49 @@
 
 +   *另见* SVM Explorer 应用
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">T</samp>
++   T
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Table</samp> 组件，111
++   Table 组件，111
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Tabs</samp> 组件，104–105
++   Tabs 组件，104–105
 
 +   阈值滑块，SVM Explorer 应用，129
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Tooltip</samp> 组件，109
++   Tooltip 组件，109
 
 +   Twitter 点赞分析应用。*参见* 社交媒体分析应用
 
 +   双向同步，回调，120
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">type</samp> 属性，<samp class="SANS_TheSansMonoCd_W5Regular_11">DataTable</samp> 组件，111
++   type 属性，DataTable 组件，111
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">U</samp>
++   U
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">update_svm_graph</samp> 函数，SVM Explorer 应用，151
++   update_svm_graph 函数，SVM Explorer 应用，151
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">upper()</samp> 方法，字符串，171–172
++   upper() 方法，字符串，171–172
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">utils</samp> 文件夹，SVM Explorer 应用，132，136，145
++   utils 文件夹，SVM Explorer 应用，132，136，145
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">V</samp>
++   V
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">value</samp> 属性
++   value 属性
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">Dropdown</samp> 组件，61
++   Dropdown 组件，61
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RadioItems</samp> 组件，82–83
++   RadioItems 组件，82–83
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">RangeSlider</samp> 组件，84
++   RangeSlider 组件，84
 
 +   视口，网页，103
 
 +   Virtualenv，21
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">W</samp>
++   W
 
 +   Ward, Ann Marie，163
 
-+   <samp class="SANS_TheSansMonoCd_W5Regular_11">while</samp> 循环，175–176
++   while 循环，175–176
 
 +   空白字符，171
 
@@ -1822,6 +1822,6 @@
 
 +   命名滑块，140–141
 
-+   <samp class="SANS_Futura_Std_Bold_Condensed_B_11">X</samp>
++   X
 
 +   星汉，128，152

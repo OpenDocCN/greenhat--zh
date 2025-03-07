@@ -1,6 +1,4 @@
-## 7
-
-仿射变换
+## 仿射变换
 
 ![Image](img/common01.jpg)
 

@@ -1,6 +1,4 @@
-# 7
-
-# 照片马赛克
+## # 照片马赛克
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

@@ -1,10 +1,6 @@
-# 第二部分
+# 第二部分：学习说话
 
-学习说话
-
-# 3
-
-语音识别
+## 语音识别
 
 ![](img/chapterart.png)
 
@@ -560,9 +556,7 @@ while True:
 
 1.  修改*voice_open_file.py*，使其从本地*mysr*模块导入`voice_to_text()`。
 
-# 4
-
-让 Python 发声
+## 让 Python 发声
 
 ![](img/chapterart.png)
 
@@ -1126,9 +1120,7 @@ print_say(content)
 
 1.  修改脚本*area_hs.py*，让它在你说出三角形的高度和底边长度时计算三角形的面积。
 
-# 5
-
-语音应用
+## 语音应用
 
 ![](img/chapterart.png)
 
@@ -1881,9 +1873,7 @@ Python 检查语音命令中的*play a*和*song*，如果找到，就激活音�
 
 1.  假设你计算机上的音乐文件不是 MP3 格式，而是 WAV 格式。你如何修改*play_selena_gomez.py*，使得脚本仍然能够正常工作？
 
-# 6
-
-Web 爬取播客、电台和视频
+## Web 爬取播客、电台和视频
 
 ![](img/chapterart.png)
 
@@ -2575,9 +2565,7 @@ def online_video():
 
 1.  这个网址指向由格温妮斯·帕特洛和奥普拉·温弗瑞主持的播客：*https://goop.com/the-goop-podcast/gwyneth-x-oprah-power-perception-soul-purpose/.* 编写一个脚本来语音激活这个在线播客。
 
-# 7
-
-构建虚拟个人助手
+## 构建虚拟个人助手
 
 ![](img/chapterart.png)
 
@@ -3381,9 +3369,7 @@ How may I help you?
 
 1.  修改*mywakeup.py*，使得结束脚本*vpa.py*的唯一方式是说“退出脚本”。
 
-# 8
-
-无所不知的 VPA
+## 无所不知的 VPA
 
 ![](img/chapterart.png)
 

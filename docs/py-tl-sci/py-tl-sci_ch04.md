@@ -1,6 +1,4 @@
-## **4
-
-用 Spyder 进行**严肃编程**
+## 用 Spyder 进行**严肃编程**
 
 ![image](img/common.jpg)
 

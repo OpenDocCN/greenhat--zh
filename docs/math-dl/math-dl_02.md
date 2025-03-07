@@ -1,6 +1,4 @@
-## **2
-
-概率**
+## 概率**
 
 ![image](img/common.jpg)
 

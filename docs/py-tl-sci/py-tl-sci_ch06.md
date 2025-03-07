@@ -1,6 +1,4 @@
-## **6
-
-JUPYTERLAB：你的科学中心**
+## JUPYTERLAB：你的科学中心**
 
 ![image](img/common.jpg)
 

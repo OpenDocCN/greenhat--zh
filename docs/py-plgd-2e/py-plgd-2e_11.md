@@ -1,6 +1,4 @@
-# 8
-
-# 自动立体图
+## # 自动立体图
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

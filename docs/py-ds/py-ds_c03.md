@@ -1,6 +1,4 @@
-# 3
-
-Python 数据科学库
+## Python 数据科学库
 
 ![](img/chapterart.png)
 

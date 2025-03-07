@@ -1,6 +1,4 @@
-## **18
-
-NUMPY: 数值计算 Python**
+## NUMPY: 数值计算 Python**
 
 ![image](img/common.jpg)
 

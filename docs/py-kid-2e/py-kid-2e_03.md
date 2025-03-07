@@ -1,6 +1,4 @@
-## 2
-
-计算与变量
+## 计算与变量
 
 ![Image](img/common.jpg)
 

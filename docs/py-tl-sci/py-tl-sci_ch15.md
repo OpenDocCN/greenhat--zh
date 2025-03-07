@@ -1,6 +1,4 @@
-## **15**
-
-THE SCIENTIFIC LIBRARIES**
+## THE SCIENTIFIC LIBRARIES**
 
 ![image](img/common.jpg)
 

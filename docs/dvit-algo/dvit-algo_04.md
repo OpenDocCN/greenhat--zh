@@ -1,6 +1,4 @@
-# 5
-
-纯数学
+## 纯数学
 
 ![](img/circleart.png)
 

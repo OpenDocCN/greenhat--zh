@@ -1,6 +1,4 @@
-# 11
-
-缓存
+## 缓存
 
 ![](img/chapterart.png)
 

@@ -1,6 +1,4 @@
-## **2
-
-使用 **Conda 环境保持组织**
+## 使用 **Conda 环境保持组织**
 
 ![image](img/common.jpg)
 

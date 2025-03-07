@@ -1,6 +1,4 @@
-# 3
-
-组间比较
+## 组间比较
 
 ![](img/chapterart.png)
 

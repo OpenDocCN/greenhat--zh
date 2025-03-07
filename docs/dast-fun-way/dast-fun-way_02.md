@@ -1,6 +1,4 @@
-# 2
-
-二分查找
+## 二分查找
 
 ![](img/chapterart.png)
 

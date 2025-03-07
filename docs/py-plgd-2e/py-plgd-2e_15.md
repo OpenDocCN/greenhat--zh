@@ -1,6 +1,4 @@
-# 11
-
-# 卷积渲染
+## # 卷积渲染
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

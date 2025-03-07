@@ -1,6 +1,4 @@
-## 11
-
-开始你的第一个游戏：Bounce!
+## 开始你的第一个游戏：Bounce!
 
 ![Image](img/common.jpg)
 

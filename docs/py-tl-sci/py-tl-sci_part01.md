@@ -1,6 +1,4 @@
-# **第一部分
-
-设置你的科学编码环境**
+# 第一部分：设置你的科学编码环境**
 
 在第一部分中，你将创建一个科学编码环境，为未来多年的工作打下基础。你将首先安装*Anaconda*，这是一个适用于 Windows、macOS 和 Linux 的 Python 发行版，提供了本书中将使用的科学库。然后，你将学习使用 conda 包和环境管理器来保持项目的组织和更新。之后，你将熟悉流行的编码工具 Jupyter Qt 控制台、Spyder、Jupyter Notebook 和 JupyterLab。
 

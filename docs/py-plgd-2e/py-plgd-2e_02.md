@@ -1,6 +1,4 @@
-# 1
-
-# 科赫雪花
+## # 科赫雪花
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

@@ -1,6 +1,4 @@
-# 1
-
-数据基础
+## 数据基础
 
 ![](img/chapterart.png)
 

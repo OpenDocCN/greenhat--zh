@@ -1,6 +1,4 @@
-# 2
-
-Python 数据结构
+## Python 数据结构
 
 ![](img/chapterart.png)
 

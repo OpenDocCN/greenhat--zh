@@ -1,6 +1,4 @@
-# 13
-
-# 使用树莓派显示激光音频
+## # 使用树莓派显示激光音频
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

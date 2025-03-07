@@ -1,6 +1,4 @@
-## 15
-
-创建 Mr. Stick Man
+## 创建 Mr. Stick Man
 
 ![Image](img/common.jpg)
 

@@ -1,6 +1,4 @@
-# 9
-
-空间树
+## 空间树
 
 ![](img/chapterart.png)
 

@@ -1,6 +1,4 @@
-# 8
-
-网格
+## 网格
 
 ![](img/chapterart.png)
 

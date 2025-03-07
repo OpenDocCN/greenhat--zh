@@ -1,6 +1,4 @@
-# 2
-
-预测
+## 预测
 
 ![](img/chapterart.png)
 

@@ -1,6 +1,4 @@
-# 4
-
-栈和队列
+## 栈和队列
 
 ![](img/chapterart.png)
 

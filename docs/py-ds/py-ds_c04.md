@@ -1,6 +1,4 @@
-# 4
-
-从文件和 API 获取数据
+## 从文件和 API 获取数据
 
 ![](img/chapterart.png)
 

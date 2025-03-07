@@ -1,6 +1,4 @@
-# 14
-
-跳表
+## 跳表
 
 ![](img/chapterart.png)
 

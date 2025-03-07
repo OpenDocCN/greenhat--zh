@@ -1,6 +1,4 @@
-## 5
-
-使用 if 和 else 提问
+## 使用 if 和 else 提问
 
 ![图片](img/common.jpg)
 

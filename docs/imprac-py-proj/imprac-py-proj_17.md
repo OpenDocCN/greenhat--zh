@@ -4,7 +4,7 @@
 
 本附录提供了每一章实践项目的解决方案。数字版可通过本书官方网站下载，网址为 *[`www.nostarch.com/impracticalpython/`](https://www.nostarch.com/impracticalpython/)*。
 
-### **第一章：傻乎乎的名字生成器**
+### 第一章：傻乎乎的名字生成器**
 
 #### ***猪拉丁语***
 
@@ -61,7 +61,7 @@ print("{}\n".format(text), file=sys.stderr)
 pprint.pprint(mapped, width=110)
 ```
 
-### **第二章：寻找回文咒语**
+### 第二章：寻找回文咒语**
 
 #### ***词典清理***
 
@@ -93,7 +93,7 @@ for word in word_list:
 print("{}".format(word_list_clean))
 ```
 
-### **第三章：解开字谜**
+### 第三章：解开字谜**
 
 #### ***寻找二元组***
 
@@ -138,7 +138,7 @@ for k in sorted(mapped):
     print("{} {}".format(k, mapped[k]))
 ```
 
-### **第四章：解码美国内战密码**
+### 第四章：解码美国内战密码**
 
 #### ***黑客林肯***
 
@@ -407,7 +407,7 @@ def perms(num_cols):
     return results
 ```
 
-### **第五章：编码英国内战密码**
+### 第五章：编码英国内战密码**
 
 #### ***拯救玛丽***
 
@@ -506,7 +506,7 @@ for i in range(1, increment + 1):
                 print("Interval doesn't work", file=sys.stderr)
 ```
 
-### **第六章：写隐形墨水**
+### 第六章：写隐形墨水**
 
 #### ***检查空白行数量***
 
@@ -597,7 +597,7 @@ doc.save('ciphertext_message_letterhead.docx')
 print("Done"))
 ```
 
-### **第八章：为俳句诗歌计数音节**
+### 第八章：为俳句诗歌计数音节**
 
 #### ***音节计数器与词典文件***
 
@@ -635,7 +635,7 @@ for word in test_data:
         print(" not found", file=sys.stderr)
 ```
 
-### **第十章：我们是孤独的吗？探索费米悖论**
+### 第十章：我们是孤独的吗？探索费米悖论**
 
 #### ***遥远的银河***
 
@@ -919,7 +919,7 @@ if __name__ == '__main__':
     main()
 ```
 
-### **第十一章：蒙提·霍尔问题**
+### 第十一章：蒙提·霍尔问题**
 
 #### ***生日悖论***
 
@@ -953,7 +953,7 @@ there's a 50% chance that 2 of them will share the same birthday.
 """)
 ```
 
-### **第十三章：模拟外星火山**
+### 第十三章：模拟外星火山**
 
 #### ***跨越距离***
 
@@ -1057,7 +1057,7 @@ if __name__ == "__main__":
     main()
 ```
 
-### **第十六章：利用本福德定律发现欺诈**
+### 第十六章：利用本福德定律发现欺诈**
 
 #### ***击败本福德***
 

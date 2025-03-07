@@ -1,6 +1,4 @@
-# 12
-
-B 树
+## B 树
 
 ![](img/chapterart.png)
 

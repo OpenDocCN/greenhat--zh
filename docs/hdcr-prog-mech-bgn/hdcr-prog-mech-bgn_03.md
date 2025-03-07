@@ -1,6 +1,4 @@
-## 2
-
-两种 Python 编程范式
+## 两种 Python 编程范式
 
 ![图片](img/common01.jpg)
 

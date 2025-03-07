@@ -1,6 +1,4 @@
-## **9**
-
-**抽象语法树、Hy 和类似 Lisp 的属性**
+## **抽象语法树、Hy 和类似 Lisp 的属性**
 
 ![image](img/common01.jpg)
 

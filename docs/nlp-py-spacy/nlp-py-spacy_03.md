@@ -1,6 +1,4 @@
-## **3**
-
-与容器对象和定制 spaCy**工作
+## 与容器对象和定制 spaCy**工作
 
 ![Image](img/comm1.jpg)
 

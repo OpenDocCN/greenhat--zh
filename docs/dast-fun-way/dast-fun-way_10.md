@@ -1,6 +1,4 @@
-# 10
-
-哈希表
+## 哈希表
 
 ![](img/chapterart.png)
 

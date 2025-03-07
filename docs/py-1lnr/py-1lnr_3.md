@@ -1,6 +1,4 @@
-## **3
-
-数据科学**
+## 数据科学**
 
 ![Image](img/comm-1.jpg)
 
@@ -165,13 +163,9 @@ a = np.array([[1, 0, 0],
 
 print(np.max(a))
 
-# 2
+## print(np.min(a))
 
-print(np.min(a))
-
-# 0
-
-print(np.average(a))
+## print(np.average(a))
 
 # 0.6666666666666666
 ```
@@ -377,15 +371,11 @@ a = np.array([1, 2, 3, 4])
 
 print(a.ndim)
 
-# 1
-
-b = np.array([[2, 1, 2], [3, 2, 3], [4, 3, 4]])
+## b = np.array([[2, 1, 2], [3, 2, 3], [4, 3, 4]])
 
 print(b.ndim)
 
-# 2
-
-c = np.array([[[1, 2, 3], [2, 3, 4], [3, 4, 5]],
+## c = np.array([[[1, 2, 3], [2, 3, 4], [3, 4, 5]],
 
               [[1, 2, 4], [2, 3, 5], [3, 4, 6]]])
 

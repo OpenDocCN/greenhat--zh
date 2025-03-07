@@ -1,6 +1,4 @@
-# 4
-
-A/B 测试
+## A/B 测试
 
 ![](img/chapterart.png)
 

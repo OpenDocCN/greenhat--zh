@@ -1,6 +1,4 @@
-## **7
-
-VISUALIZATIONS**
+## VISUALIZATIONS**
 
 ![Image](img/comm1.jpg)
 

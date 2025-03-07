@@ -1,6 +1,4 @@
-# 3
-
-# 康威生命游戏
+## # 康威生命游戏
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

@@ -1,6 +1,4 @@
-# 15
-
-# 树莓派上的音频机器学习
+## # 树莓派上的音频机器学习
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

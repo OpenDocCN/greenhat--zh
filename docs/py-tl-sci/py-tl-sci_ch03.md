@@ -1,6 +1,4 @@
-## **3
-
-在 JUPYTER QT CONSOLE 中的简单脚本编写**
+## 在 JUPYTER QT CONSOLE 中的简单脚本编写**
 
 ![image](img/common.jpg)
 

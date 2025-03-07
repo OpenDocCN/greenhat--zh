@@ -1,10 +1,6 @@
-# 第三部分
+# 第三部分：互动游戏
 
-互动游戏
-
-# 9
-
-使用 *turtle* 模块进行图形和动画
+## 使用 *turtle* 模块进行图形和动画
 
 ![](img/chapterart.png)
 
@@ -523,9 +519,7 @@ except t.Terminator:
 
 1.  通过使用`goto()`函数来复制*rectangle.py*中的结果。你不能使用`forward()`、`backward()`、`left()`或`right()`等函数。
 
-# 10
-
-井字棋
+## 井字棋
 
 ![](img/chapterart.png)
 
@@ -1057,9 +1051,7 @@ Congrats player blue, you won!
 
 1.  修改*ttt_click.py*，使得玩家只有通过横向或纵向连续标记三个单元格才能获胜，但不能通过对角线获胜。
 
-# 11
-
-四子棋
+## 四子棋
 
 ![](img/chapterart.png)
 
@@ -1671,9 +1663,7 @@ Congrats player red, you won!
 
 1.  修改 *conn_hs.py* 使得你与一个人对战，而不是与计算机对战。
 
-# 12
-
-猜单词游戏
+## 猜单词游戏
 
 ![](img/chapterart.png)
 
@@ -2145,9 +2135,7 @@ Great job, you got the word right!
     list('Hi Python')
     ```
 
-# 13
-
-智能游戏：增加智能
+## 智能游戏：增加智能
 
 ![](img/chapterart.png)
 

@@ -1,6 +1,4 @@
-## **3
-
-使用 NUMPY**
+## 使用 NUMPY**
 
 ![image](img/common.jpg)
 

@@ -1,6 +1,4 @@
-## 1
-
-入门指南
+## 入门指南
 
 ![image](img/common.jpg)
 

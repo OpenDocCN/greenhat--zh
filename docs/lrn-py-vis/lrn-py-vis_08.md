@@ -1,6 +1,4 @@
-# 8
-
-字典和 JSON
+## 字典和 JSON
 
 ![](img/chapterart.png)
 

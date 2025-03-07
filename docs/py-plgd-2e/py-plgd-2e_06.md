@@ -1,6 +1,4 @@
-# 4
-
-# 使用 Karplus-Strong 的音乐泛音
+## # 使用 Karplus-Strong 的音乐泛音
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

@@ -1,6 +1,4 @@
-# 10
-
-# 圆环上的康威生命游戏
+## # 圆环上的康威生命游戏
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

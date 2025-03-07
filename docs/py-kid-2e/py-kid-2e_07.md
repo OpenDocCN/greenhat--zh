@@ -1,6 +1,4 @@
-## 6
-
-循环进行中
+## 循环进行中
 
 ![Image](img/common.jpg)
 

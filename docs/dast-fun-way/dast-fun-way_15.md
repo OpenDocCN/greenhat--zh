@@ -1,6 +1,4 @@
-# 15
-
-图
+## 图
 
 ![](img/chapterart.png)
 

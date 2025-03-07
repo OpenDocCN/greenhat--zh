@@ -1,6 +1,4 @@
-# 6
-
-监督学习
+## 监督学习
 
 ![](img/chapterart.png)
 

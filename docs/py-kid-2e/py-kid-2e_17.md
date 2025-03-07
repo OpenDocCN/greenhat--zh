@@ -1,6 +1,4 @@
-## 14
-
-开发 Mr. Stick Man 游戏
+## 开发 Mr. Stick Man 游戏
 
 ![Image](img/common.jpg)
 

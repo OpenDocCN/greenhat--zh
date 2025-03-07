@@ -1,6 +1,4 @@
-# 7
-
-几何学
+## 几何学
 
 ![](img/circleart.png)
 

@@ -1,6 +1,4 @@
-## **3
-
-REPEAT AFTER ME**
+## REPEAT AFTER ME**
 
 ![image](img/common01.jpg)
 

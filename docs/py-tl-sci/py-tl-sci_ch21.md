@@ -1,6 +1,4 @@
-## **21**
-
-**使用 Python 和 Pandas 管理日期和时间**
+## **使用 Python 和 Pandas 管理日期和时间**
 
 ![image](img/common.jpg)
 

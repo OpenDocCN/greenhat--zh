@@ -1,6 +1,4 @@
-## 4
-
-点和向量
+## 点和向量
 
 ![Image](img/common01.jpg)
 

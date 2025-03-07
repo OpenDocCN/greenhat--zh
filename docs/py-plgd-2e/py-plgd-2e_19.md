@@ -1,6 +1,4 @@
-# 14
-
-# 物联网花园
+## # 物联网花园
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

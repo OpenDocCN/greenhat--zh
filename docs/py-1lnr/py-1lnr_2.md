@@ -1,6 +1,4 @@
-## **2
-
-PYTHON 技巧**
+## PYTHON 技巧**
 
 ![Image](img/comm-1.jpg)
 

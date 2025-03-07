@@ -1,6 +1,4 @@
-## **2
-
-使用 Python**
+## 使用 Python**
 
 ![image](img/common.jpg)
 

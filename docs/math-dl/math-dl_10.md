@@ -1,6 +1,4 @@
-## **10
-
-BACKPROPAGATION**
+## BACKPROPAGATION**
 
 ![image](img/common.jpg)
 

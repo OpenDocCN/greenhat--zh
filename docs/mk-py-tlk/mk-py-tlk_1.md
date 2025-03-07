@@ -1,10 +1,6 @@
-# 第一部分
+# 第一部分：入门
 
-入门
-
-# 1
-
-设置 Python、Anaconda 和 Spyder
+## 设置 Python、Anaconda 和 Spyder
 
 ![](img/chapterart.png)
 
@@ -233,9 +229,7 @@ print(7*123)
 
 1.  如果你想计算 55 乘以 234，Spyder 编辑器中的命令行应该输入什么？
 
-# 2
-
-Python 基础回顾
+## Python 基础回顾
 
 ![](img/chapterart.png)
 

@@ -1,6 +1,4 @@
-## **19
-
-**解密 MATPLOTLIB**
+## **解密 MATPLOTLIB**
 
 ![image](img/common.jpg)
 

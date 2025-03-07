@@ -1,6 +1,4 @@
-## **20
-
-PANDAS、SEABORN 和 SCIKIT-LEARN**
+## PANDAS、SEABORN 和 SCIKIT-LEARN**
 
 ![image](img/common.jpg)
 

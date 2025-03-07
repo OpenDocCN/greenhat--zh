@@ -1,6 +1,4 @@
-## **1
-
-安装和启动 Anaconda**
+## 安装和启动 Anaconda**
 
 ![image](img/common.jpg)
 

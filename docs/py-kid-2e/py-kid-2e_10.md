@@ -1,6 +1,4 @@
-## 9
-
-更多的 Turtle 图形
+## 更多的 Turtle 图形
 
 ![图片](img/common.jpg)
 

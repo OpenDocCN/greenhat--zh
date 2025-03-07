@@ -1,6 +1,4 @@
-## **1
-
-PYTHON 复习**
+## PYTHON 复习**
 
 ![图片](img/comm-1.jpg)
 
@@ -365,9 +363,7 @@ print(l)
 ```py
 print([2, 2, 4].index(2))
 
-# 0
-
-print([2, 2, 4].index(2,1))
+## print([2, 2, 4].index(2,1))
 
 # 1
 ```
@@ -409,9 +405,7 @@ enemy = "Lord V."
 
 print(hash(hero))
 
-# 6175908009919104006
-
-print(hash(guide))
+## print(hash(guide))
 
 # -5197671124693729851
 

@@ -1,6 +1,4 @@
-# 2
-
-# Spirographs
+## # Spirographs
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

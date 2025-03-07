@@ -1,6 +1,4 @@
-# 6
-
-聚合数据
+## 聚合数据
 
 ![](img/chapterart.png)
 

@@ -1,6 +1,4 @@
-# 6
-
-Trie 树与数据结构的调整
+## Trie 树与数据结构的调整
 
 ![](img/chapterart.png)
 

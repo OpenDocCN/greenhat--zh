@@ -1,6 +1,4 @@
-## 18
-
-生成 SVG 图像和文本文件
+## 生成 SVG 图像和文本文件
 
 ![Image](img/common01.jpg)
 

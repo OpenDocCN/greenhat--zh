@@ -1,6 +1,4 @@
-# 5
-
-# 鸟群聚集
+## # 鸟群聚集
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

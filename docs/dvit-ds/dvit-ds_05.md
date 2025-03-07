@@ -1,6 +1,4 @@
-# 5
-
-二元分类
+## 二元分类
 
 ![](img/chapterart.png)
 

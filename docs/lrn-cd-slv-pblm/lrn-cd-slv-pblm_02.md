@@ -1,6 +1,4 @@
-## 2
-
-做出决策
+## 做出决策
 
 ![image](img/common.jpg)
 

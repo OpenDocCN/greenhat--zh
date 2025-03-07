@@ -1,6 +1,4 @@
-## 5
-
-发现冥王星
+## 发现冥王星
 
 ![Image](img/common.jpg)
 

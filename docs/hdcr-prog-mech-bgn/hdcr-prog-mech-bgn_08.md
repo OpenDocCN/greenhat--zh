@@ -1,6 +1,4 @@
-## 6
-
-多边形
+## 多边形
 
 ![Image](img/common01.jpg)
 

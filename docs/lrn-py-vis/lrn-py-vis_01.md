@@ -1,6 +1,4 @@
-# 1
-
-Hello, World!
+## Hello, World!
 
 ![](img/chapterart.png)
 

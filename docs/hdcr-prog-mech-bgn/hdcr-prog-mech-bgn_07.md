@@ -1,6 +1,4 @@
-## 5
-
-线与线段
+## 线与线段
 
 ![Image](img/common01.jpg)
 
