@@ -1,0 +1,1838 @@
+- en: '18'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Packaging and Distribution
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The best code in the world amounts to little if you never ship it. Once your
+    project is functional, you should work out how you’ll package and distribute it,
+    before continuing development. The trouble is, packaging in Python sometimes feels
+    like beating yourself with a wet trout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Often, the difficulty doesn’t come from packaging your own code—that’s usually
+    easy enough—but rather from handling your code’s dependencies, especially its
+    non-Python dependencies. Distribution can be a snarly issue for even experienced
+    programmers, due in part to the diverse scenarios in which Python is used. Still,
+    if you understand how things are supposed to work, you’ll have a good foundation
+    for pushing past the frustration and shipping working code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, I’ll break down the essentials of packaging and distributing
+    a Python project, first via the Python Package Index, and then as an installable
+    binary. To do this, I’ll walk you through packaging an actual application I wrote:
+    Timecard. This project is well-suited as an example, because it has both Python
+    and system dependencies, plus a few non-code resources, all of which need to be
+    accounted for, somehow. The repository for this project is available on GitHub:
+    [https://github.com/codemouse92/timecard/](https://github.com/codemouse92/timecard/).
+    I’ve set up the `packaging_example` branch to contain only the project itself
+    and none of the packaging files, so you can practice.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter functions as an introduction to the packaging process in general,
+    regardless of the tool you plan to use. However, to avoid getting lost in the
+    weeds explaining the myriad packaging tools out there, I’ll package Timecard using
+    the popular setuptools package, from which we get the majority of modern packaging
+    patterns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Along the way, I’ll touch on many other common tools, including a few popular
+    third-party alternatives, but I won’t go into detail on most of them. In case
+    you want to learn more about these tools, I will link to their official documentation
+    for your reference. Also, if you want to go deeper into packaging in general,
+    one of the best resources is the community-maintained *Python Packaging User Guide*
+    at [https://packaging.python.org/](https://packaging.python.org/), which covers
+    a number of more advanced topics, such as packaging a CPython binary extension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To make this whole idea of packaging feel less threatening to you, I’d also
+    like to mention that the mascot of Python packaging is a happy, purple platypus:
+    an odd little creature that seems to be made up of many disparate parts, is cute
+    and generally friendly, and can lay eggs. (That last part is a pun you’ll likely
+    understand by the time this chapter is over.) If you’re feeling intimidated by
+    packaging right now, go to [https://monotreme.club/](https://monotreme.club/)
+    and revel in the cuteness that is the Python Packaging mascot. They have stickers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Planning Your Packaging
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Before you begin packaging, you need a solid idea of what you’re trying to accomplish,
+    why, and how. Unfortunately, very few developers recognize this necessity and
+    instead plunge headlong into writing their packaging scripts, with no real direction.
+    These ad hoc packaging schemes can suffer from brittleness, unnecessary complexity,
+    a lack of portability between systems, and poor or missing dependency installation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Dangers of Cargo Cult Programming
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In an attempt to encourage the use of good packaging tools and practices, many
+    well-meaning people will provide templates for the files *setup.py*, *setup.cfg*,
+    or others used in packaging, with advice to copy and modify the templates. This
+    practice, known as *cargo cult programming*, is widely employed in Python packaging,
+    to the detriment of both project and ecosystem. Because configuration files are
+    copied blind, errors, hacks, and anti-patterns propagate like plague-carrying
+    rabbits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A bug in packaging won’t always manifest with a failed installation or a helpful
+    error message. For example, a mistake in packaging a library may instead manifest
+    when that library is used as a dependency. Distribution is especially pesky in
+    this regard, as many related bugs are platform specific. Sometimes, you’ll be
+    able to install the package, but the program will fail in surprising ways! Issue
+    trackers are rife with these sorts of tickets, many of which are unhelpfully closed
+    with “Cannot reproduce,” perhaps because the bug only occurs on that one version
+    of Linux with a particular version of that one system library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All that is to say, do not give in to the temptation of cargo cult programming!
+    While it is reasonable to start from a proven template, aim to understand every
+    single line of code therein. Read through the documentation. Be certain you haven’t
+    omitted a needed parameter the template may have overlooked, used some deprecated
+    option, or even swapped the proper sequence of lines. (Yes, that last one is a
+    thing.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thankfully, the *Python Packaging Authority* (*PyPA*) working group has done
+    a lot to move the community away from this. The PyPA is a quasi-official group
+    made up of Python community members who want to make Python packaging a better
+    experience, and membership is open to anyone who maintains a project. They have
+    extensively explained the whys and wherefores of each piece of their packaging
+    templates and the Python Packaging User Guide they maintain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A Note on Packaging Opinions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As you’re about to discover, there are a plethora of ways to package and distribute
+    Python projects. I’ll focus primarily on the techniques advised by the PyPA, but
+    there are plenty of alternatives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whatever packaging techniques you ultimately use, they must produce a reasonably
+    portable, stable, “just works” package. Your end user should be able to run a
+    predictable set of steps on any supported system and succeed at running your code.
+    While it isn’t uncommon for there to be variations in installation instructions
+    from one platform to the next, you want to minimize the number of steps that your
+    end user needs to follow. The more steps, the more chances for errors! Keep things
+    simple and try to respect the recommended packaging and distribution practices
+    for each platform. If your end users consistently report problems or confusion
+    when installing your project, *fix the packaging*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Determining Your Packaging Goals
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Ultimately, the goal of any packaging tool is to create a single *artifact*,
+    usually a file, that can be installed on an end user’s environment, be it a personal
+    computer, a server, a virtual machine, or another piece of hardware. There are
+    a number of ways to package a project in Python for distribution. Selecting the
+    right way all comes down to what your project is and who is going to be using
+    it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At the PyBay2017 conference, Mahmoud Hashemi presented a talk entitled “The
+    Packaging Gradient” ([https://youtu.be/iLVNWfPWAC8](https://youtu.be/iLVNWfPWAC8)),
+    in which he brought a lot of clarity to the Python packaging ecosystem. (I definitely
+    recommend watching it.) In that talk, he introduced the concept of the *packaging
+    gradient*, which visualizes the options for Python packaging and distribution
+    like the layers of an onion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Option 1: Python Modules'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: On the innermost layer of the packaging gradient is the *Python module*, which
+    can be distributed by itself. If your entire project consists of a single Python
+    module, such as some utility script, you may be able to simply distribute that.
+    However, as you’ve probably noticed by now, this isn’t practical whenever there
+    is more than one module involved in the project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unfortunately, many Python developers chicken out at this point, zip up their
+    whole project in a compressed file (perhaps with a README file), and leave the
+    hapless end user to figure out how to run the package on their particular system.
+    Don’t do this to your users. It’s not a great experience.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Option 2: Python Distribution Packages'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'So far in your Python journey, you’ve installed plenty of packages with pip.
+    These are all provided by the *Python Package Index (PyPI)*, an online repository
+    of Python packages. Each package in PyPI is in one or both of two formats: source
+    distribution and built distribution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The *source distribution*, or *sdist*, contains one or more Python packages
+    bundled into a compressed archive, such as a *.tar.gz* file. This is fine as long
+    as your project’s code is solely in Python and only depends on Python packages.
+    This is the second layer in the packaging gradient.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The third layer in the packaging gradient is the *built distribution*, or *bdist*,
+    which contains precompiled Python bytecode, as well as binary files needed for
+    the package to run. A built distribution is faster to install than a source distribution,
+    and it can contain non-Python components.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A built distribution is packaged as a *wheel*, a standardized format defined
+    in PEP 427\. The name *wheel* refers to a wheel of cheese, which is a reference
+    to the “cheese shop,” the original code name for what is now PyPI. Prior to the
+    2012 adoption of the wheel standard, Python unofficially used another format called
+    *eggs*, which had a number of technical limitations that wheel overcame.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The source distribution, and by extension, the associated built distribution,
+    is known as a *distribution package* once it has been bundled together and versioned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyPI can distribute both wheels and sdists, so it’s trivial (and thus recommended)
+    to upload both. If you have to choose, favor sdists. If you were to upload only
+    a *platform wheel*—a wheel built for a specific system—and omitted the sdist,
+    users on other systems would not be able to install your package. Only publishing
+    wheels also leaves out users in situations where auditing the source code is mandatory,
+    such as in some corporations. Still, wheels are faster to install than sdists.
+    Whenever you can, upload both.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Option 3: Application Distribution'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'There’s just one problem so far: PyPI is intended for distributing to developers,
+    not to end users. While it is possible to distribute an application on PyPI, it’s
+    not well-suited for deploying to end users or production environments; pip is
+    too brittle to be that reliable!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter’s example project, Timecard, is certainly a good example of this.
+    While providing a Python distribution package for my application doesn’t hurt,
+    many end users will be at a loss if I just tell them to install from pip. I will
+    need an additional layer in my packaging later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Determining the right distribution method for your application depends largely
+    on your project dependencies, your target environments, and the needs of your
+    end users. Later in this chapter, I’ll cover several good options for distributing
+    an application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Project Structure: src or src-less'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Before you start the process of packaging, you must decide whether to use a
+    *src/* directory. Up to this point, all my examples in this book have used so-called
+    *src-less* (“source-less”) project structures, where the main project package
+    sits directly in the repository. I chose this technique in prior chapters because
+    of the ease of running the package via `python3 -m` `packagenamehere`, without
+    the need for installation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An alternative project structure involves placing all your project modules
+    and scripts in a dedicated *src/* directory. Python developer Ionel Cristian Mărieș,
+    one of the leading advocates of this approach, details several advantages of using
+    a *src/* directory, which I can summarize:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It simplifies maintenance of your packaging scripts.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It keeps your packaging scripts and your project source code clearly separated.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It prevents several common packaging mistakes.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It prevents you from making assumptions about the current working directory.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To test or run your package, you are forced to install your package, usually
+    in a virtual environment.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: That last item may seem like a peculiar benefit. Avoiding that situation is
+    exactly why I didn’t introduce this technique back in Chapter 2, since it would
+    have been impossible to properly introduce *setup.cfg* and *setup.py* then.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In production-grade development, however, forcing yourself to install the package
+    is highly beneficial. It immediately exposes flaws in packaging, assumptions about
+    current working directories, and a number of related problems and anti-patterns.
+    I didn’t actually learn about this until researching this book, and I deeply wish
+    I’d discovered it sooner, as it would have saved me many woes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another benefit of that approach is that it keeps you from putting off questions
+    of packaging until the last step in a project. I can say from personal experience
+    that there is little more frustrating than building an entire project, only to
+    discover you cannot package anywhere but on your own machine! Figure out packaging
+    as early in the development process as you can.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the rest of this book, and in the Timecard project in particular, I’ll use
+    the *src/* directory approach. Even if you don’t use a dedicated *src/* directory,
+    you should install your package in a virtual environment when you want to test
+    it. By the end of the next section, you’ll have done exactly that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Packaging a Distribution Package with setuptools
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There are a lot of interesting packaging tools out there for Python, each with
+    its own vocal proponents, so it can be easy to get overwhelmed. When in doubt,
+    I recommend starting with *setuptools*, the de facto standard tool for Python
+    packaging. Even if you decide to use another packaging tool later, many concepts
+    from setuptools are borrowed by most of the other packaging tools.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The setuptools library is a fork of a Python standard library package called
+    *distutils*. In its heyday, distutils was the official standard packaging tool
+    (ergo, its inclusion), but as of Python 3.10, it is now deprecated in favor of
+    setuptools.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To package Timecard as a distribution package, I will use the `setuptools`
+    and `wheel` modules, the latter of which is not installed by default. It’s good
+    to ensure both are up-to-date in your environment, along with pip. You can do
+    this with the following terminal command, *inside* your virtual environment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Remember to run that inside of the virtual environment you’re using, either
+    by activating the virtual environment first or by directly invoking its captive
+    pip binary (such as `venv/bin/pip`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Project Files and Structure
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Here’s a quick overview of the files I’ll create for this project:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*README.md* is a Markdown file with project information.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*LICENSE* contains the project license.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*pyproject.toml* specifies the build backend and lists build requirements for
+    the package.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*setup.cfg* contains distribution package metadata, options, and dependencies.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*setup.py* used to contain packaging instructions and dependencies; now it
+    just ties things together in the source distribution package.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*MANIFEST.in* lists all the non-code files that should be included in the distribution
+    package.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*requirements.txt* lists dependencies (which are used differently from *setup.cfg*;
+    it’s often useful to have both).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: I’ll cover each of these files in the sections to come.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The recommendations contained herein are based partly on the latest version
+    of PyPA’s sample project, which you can see at [https://github.com/pypa/sampleproject/](https://github.com/pypa/sampleproject/).
+    The rest of the information comes from the PyCon 2021 talk “Packaging Python in
+    2021” by Jeremiah Paige. Bernát Gábor, a member of PyPA, generously reviewed this
+    chapter to make sure it was up-to-date.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where Metadata Belongs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: These days, the Python packaging ecosystem is evolving quickly, and standards
+    are stuck in an odd limbo between yesterday, today, and tomorrow.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Historically, all the metadata for your project—its title, description, and
+    so forth—belonged in a file called *setup.py*. This file also contained other
+    build instructions, such as dependencies to install. Even today, most Python projects
+    still use this convention.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The current convention is to move all of this data into a file called *setup.cfg*,
+    which is easier to maintain by merit of being *declarative*, meaning it focuses
+    on data rather than implementation. This technique is the one I’m using herein.
+    The *setup.py* file still has an occasional role to play, but it’s mostly relegated
+    to legacy builds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the near future, some packaging data, especially the metadata, will be moved
+    to a third file: *pyproject.toml*. This will allow for a clear separation between
+    the project metadata and options used by all packaging tools on the one hand,
+    and the setuptools-specific configuration in *setup.cfg* on the other hand. As
+    of the date of this writing, this new convention isn’t yet implemented by some
+    Python packaging tools, but it is expected to be very soon. In the meantime, *pyproject.toml*
+    still plays the invaluable role of specifying what packaging tools are used.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The README.md and LICENSE Files
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Every good project should have a *README* file, which describes the project,
+    its authors, and its basic usage. Nowadays, these are typically written as Markdown
+    files (*.md*), which are rendered with nice formatting by most version control
+    platforms, such as GitHub, GitLab, Bitbucket, and Phorge.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is a significant packaging mistake to skimp on your README! I like to put
+    a bit of thought and time into mine, and I include (at minimum) the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A project description, written to “sell” users on the project
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A list of authors and contributors
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Basic installation instructions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Basic usage instructions, such as how to start the program
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The technology stack I used
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to contribute code or report an issue
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In addition, whether your code is open source or not, you should include a *LICENSE*
+    file. In the case of free and open source software, this file should contain the
+    complete text of the license. If you need help selecting an open source license
+    for your project, check out [https://choosealicense.com/](https://choosealicense.com/)
+    and [https://tldrlegal.com/](https://tldrlegal.com/). Otherwise, include the copyright
+    information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you prefer, you can also include the *.txt* file extension (*LICENSE.txt*)
+    or use Markdown (*LICENSE.md*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: On occasion, I may also include such files as *BUILDING.md* or *INSTALL.md*,
+    to describe building (for development) or installing the project. Whether you
+    use these is up to you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The setup.cfg File
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When creating a distribution package ultimately intended for production, one
+    of the first files to create is *setup.cfg*, which is placed in the root of the
+    repository. The *setup.cfg* file contains all the project metadata, dependencies,
+    and options for setuptools, and it may be used by other packaging tools as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It may be tempting to grab a minimalist *setup.cfg* template, but I, like Mahmoud
+    Hashemi, recommend you do not wait until the last phase of your project to start
+    on packaging. Using a *src/* directory forces you to think about packaging early.
+    This is one of those lessons I wish I’d learned years ago.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As soon as you start work on a project, create your *setup.cfg* file. I’ll break
+    down the one for Timecard in this section. This is the most important file in
+    your packaging scripts, so I’ll be spending a lot of time on this one file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you want to know about this file format, see the official documentation
+    here: [https://setuptools.readthedocs.io/en/latest/userguide/declarative_config.xhtml](https://setuptools.readthedocs.io/en/latest/userguide/declarative_config.xhtml).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Project Metadata
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In writing the *setup.cfg* file for Timecard, I’ll start with the basic metadata.
+    The *setup.cfg* file is divided into *sections*, indicating the tool or set of
+    options the parameters to follow belong to. Each section is marked out with the
+    section name in square brackets. For example, all the metadata belongs under the
+    `[metadata]` section:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-1: *setup.cfg:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: All the data in a *setup.cfg* file is in key-value pairs. The first key here
+    is called `name`, and I pass the string value `timecard-app`. Notice that I didn’t
+    need to use quotes around the string value. (The documentation outlines the different
+    types *setup.cfg* understands and what types it expects for each key.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Although my program is called Timecard, I gave the distribution package the
+    name “Timecard-App,” to avoid confusion with the unrelated “Timecard” library
+    published on PyPI. This is the name that will be used in the `pip install` command.
+    PyPI further restricts this name: it must contain only ASCII letters and numbers,
+    although you may include periods, underscores, and hyphens in the name, as long
+    as they’re not at the start or end.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The version must be a string following the format outlined in PEP 440, as demonstrated
+    here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-2: *setup.cfg:2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In short, it must be made up of two or three integers, separated by dots: either
+    in the format `major`.`minor` (`''3.0''`) or `major`.`minor`.`micro` (`''3.2.4''`).
+    I strongly recommend employing semantic versioning. In this case, the version
+    of Timecard is major version `2`, minor version `0`, and micro (or “patch”) version
+    `5`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you need to indicate something more in the version, such as a release candidate,
+    beta version, postrelease, or development version, this is permitted using a suffix.
+    For example, `'3.1rc2'` would mean “3.1, release candidate 2.” See PEP 440 for
+    more details on this convention.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Tools like *setuptools-scm* can handle version numbers for you, which can be
+    helpful if you need to update them often: [https://pypi.org/project/setuptools-scm/](https://pypi.org/project/setuptools-scm/).
+    I’ll stick to the manual method for this book, however.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `description` is a one-line description of the package, which I enter here
+    explicitly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-3: *setup.cfg:3*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `long_description` is a large multiline description, which I am deriving
+    directly from the contents of the *README.md* file. The `file:` prefix indicates
+    I’m reading from the file that follows. That file *must* exist in the same directory
+    as *setup.cfg*, as paths are not supported here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since my README is a Markdown file, I also need to indicate that it needs to
+    be processed as Markdown text with UTF-8 encoding, via the `long_description_content_type`
+    keyword argument. If the README were instead written in reStructuredText (another
+    markup language), I’d indicate that with the argument `'text/x-rst'`. Otherwise,
+    if this keyword argument is omitted, it defaults to `'text/plain'`. If you view
+    my project on PyPI ([https://pypi.org/project/Timecard-App/](https://pypi.org/project/Timecard-App/)),
+    you’ll see that the *README.md* is used as the body of the page.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I also include the license information. There are three ways to do that: explicitly
+    via a string value on the `license` key, via a single file with `license_file`,
+    or via multiple files with `license_files`. Since I only have one license for
+    the whole project, and that is in a *LICENSE* file, I’ll use the second option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-4: *setup.cfg:4*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, I’ll include more information about the project authorship:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-5: *setup.cfg:5*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I indicate the `author` (myself) and the contact email for the author, `author_email`.
+    In the case of this project, I’m also the project maintainer. If someone else
+    were responsible for the packaging, their information would be included with the
+    `maintainer` and `maintainer_email` keyword arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I also include the `url` for more information about the project. Optionally,
+    you can include any other links by passing a dictionary to the `project_urls`
+    argument. The keys are all strings with the link names, as they will be displayed
+    on the PyPI project page. The values are the actual URLs as strings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To make finding my distribution package in PyPI easier, I include a space-delimited
+    list of keywords:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-6: *setup.cfg:6*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you find yourself translating a *setup.py* file to a *setup.cfg*, be aware
+    that *setup.py* uses a comma-separated list instead. Be sure to revise it when
+    moving it to *setup.cfg*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Classifiers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: PyPI makes use of *classifiers*, standardized strings that facilitate organizing
+    and searching for packages on the index. The complete list of classifiers can
+    be found at [https://pypi.org/classifiers/](https://pypi.org/classifiers/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I include the relevant classifiers for Timecard in my *setup.cfg*, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-7: *setup.cfg:7*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ve included all of the relevant classifiers for my project above as a list
+    of strings. Your project’s classifier list will likely be different. Browse the
+    complete classifier list from PyPI and find the ones relevant to your project.
+    A good rule of thumb is to pick at least one for each of the categories—the part
+    of each classifier before the first double colon—in the list above. (If this task
+    feels overwhelming, you can skip this part until you’re ready to distribute.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Including Packages
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Now I need to specify what files belong in my package. This is where the *src/*
+    directory approach I used in structuring my repository really comes in handy.
+    In a new section marked as `[options]`, I include the following keys and values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-8: *setup.cfg:8a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `package_dir` key informs setuptools where to find all my packages. It accepts
+    a *dict*, which in *setup.cfg* is denoted as an indented, comma-separated list
+    of key-value pairs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because I’m using the *src/* directory approach, I only need to tell setuptools
+    that all packages, denoted by the empty string as the key, are in the directory
+    `src`. This is recursive, so any nested packages will also be found.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This key does not actually tell setuptools *what* packages it will find. For
+    that part, I need the `packages` key. Instead of manually listing all my packages,
+    I can tell setuptools to use its special `find_packages()` function by passing
+    the value `find:` ❶ (note the trailing colon!). This technique is especially helpful
+    when your project consists of multiple top-level packages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `find:` function can find all the packages in a given directory, but it
+    has to know where to look first. I provide that information in a separate section:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-9: *setup.cfg:9*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the key `where`, I provide the name of the directory to search for packages
+    on, namely `src`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Including Data
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Not everything that ships in a package is code. I need to include some non-code
+    files as well. Returning to my `[options]` section, I indicate that setuptools
+    will be including some non-code files like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-10: *setup.cfg:8b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *setup.cfg*, the values `True` and `False` are interpreted as boolean values,
+    not as strings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are two ways to specify what non-code files to include. The approach I’m
+    taking in this project is to use the *MANIFEST.in* file to list all non-code files
+    I want included in the project. (I’ll cover this file shortly.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The second approach for including non-code files, which I’m not showing here,
+    is to use the `[options.package_data]` section. This gives you finer-grained control
+    over what is and isn’t included, but it is likely overkill for your average project.
+    The setuptools documentation has a good example with this approach: [https://setuptools.readthedocs.io/en/latest/userguide/declarative_config.xhtml](https://setuptools.readthedocs.io/en/latest/userguide/declarative_config.xhtml).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dependencies
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Next, I’ll define my project’s dependencies in the `[options]` section:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-11: *setup.cfg:8c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I can specify the version of Python that the project requires, using `python_requires`
+    in place of a package name. Notice the key and value are still separated by an
+    equal sign, even though the value may also start with an equal, greater-than,
+    or less-than sign. Something like `python_requires = ==3.8` is completely valid,
+    as the `==3.8` is a string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I denote that Timecard requires Python 3.6 or later. I also assume it won’t
+    work with the theoretical Python 4, since major releases of Python aren’t guaranteed
+    to be backward compatible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, I’ll list the packages that my project depends on:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-12: *setup.cfg:8d*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `install_requires` key expects an indented list of values. Each value in
+    the list specifies a Python package dependency. Timecard relies on the `PySide2`
+    library and uses features introduced in version 5.15.0 of that library. Technically,
+    I could have omitted the version and merely listed `PySide2`, but that is often
+    a bad idea. It’s better to test the different versions and determine the oldest
+    one your code will work with. You can always set this to the version you are currently
+    using and change it later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I could also require certain packages only for particular versions of Python.
+    I don’t need this behavior in this example, but here’s what it might look like
+    if I wanted to install PySide2 only for Python 3.7 and earlier:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: After a semicolon at the end of the dependency I want to limit, I include `python_requires`,
+    a comparison operator, and the version *in quotes*. The quotes are necessary,
+    or you’ll get a cryptic `Expected stringEnd` error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, it is seldom necessary to only install packages for certain versions
+    of Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Optionally, I can use the `[options.extras_require]` section to specify additional
+    packages used for certain optional features. For example, if I wanted to allow
+    installing this distribution package with tests, I’d need the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-13: *setup.cfg:10*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When I install Timecard via `pip install Timecard-App[test]`, it will install
+    both the Timecard distribution package and everything I listed under `test` here.
+    You can name the keys whatever you like, as long as you use alphanumeric characters
+    and underscores. You can also include as many keys as you like.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adding Entry Points
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Lastly, I need to specify the *entry points*, the means by which a user starts
+    the program. Instead of having to write custom executable Python scripts to serve
+    as entry points, I can let setuptools do this for me. It will even create these
+    scripts as *.exe* files on Windows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Entry points are specified in the section `[options.entry_points]`, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-14: *setup.cfg:11*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two possible keys here: `''gui_scripts''`, for starting the program’s
+    GUI, and `''console_scripts''`, for starting the command-line version of the program.
+    The value of each is a list of strings containing assignment statements, which
+    assign a particular function to a name that will be the name of the executable
+    file or script. In this case, Timecard needs a single GUI script named *Timecard-App*,
+    which calls the `main()` function in the module *timecard/__main__.py*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The setup.py File
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Before *setup.cfg* became the convention, most projects used *setup.py* to store
+    their project’s metadata and build instructions. All the information now provided
+    to *setup.cfg* was instead passed directly to the `setuptools.setup()` function
+    as keyword arguments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The *setup.py* file is a Python module like any other, so using it for packaging
+    configuration is considered *imperative*—it focuses on how packaging takes place.
+    This stands in contrast to the data-centric (and more error-proof) *declarative*
+    approach with *setup.cfg*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One difficulty with this approach was that folks tended to get clever about
+    their setup configurations. All manner of unrelated functionality crept in: scraping
+    versions from files, creating git tags, publishing to PyPI, and so on. This ran
+    the risk of introducing confusing bugs into the packaging process, which is already
+    particularly hard to debug and could utterly block someone else’s packaging efforts.
+    This has happened to me before!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thankfully, in many modern projects, *setup.py* is no longer needed at all;
+    *setup.cfg* can be used for all setuptools configurations instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, if your project needs good backward compatibility, uses C-extensions,
+    or requires tools that depend on *setup.py*, you will want to include the following
+    minimal *setup.py* file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-15: *setup.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: That file merely imports the `setup()` function from the `setuptools` module
+    and calls it. In the past, all the packaging data would have been passed to `setup()`
+    as keyword arguments, but now, that all lives in *setup.cfg*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: No shebang line is necessary in this file; let the build tools find the interpreter
+    they want to use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The MANIFEST.in File
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The *manifest template*, *MANIFEST.in*, provides a list of all the non-code
+    files that should be included in the distribution package. These files can come
+    from anywhere in your repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-16: *MANIFEST.in:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since my setup files are using the *README.md* and *LICENSE* files, I must include
+    them here. I can list any number of files after an `include` directive, separating
+    each with spaces. Manifest templates also support *glob patterns*, wherein I can
+    use an asterisk (`*`) as a wildcard. For example, `*.md` matches all Markdown
+    files, so any markdown files in the root of my repository, including *README.md*,
+    are automatically included.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I also want to include all the files in the directories *src/timecard/resources/*
+    and *distribution_resources/*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-17: *MANIFEST.in:2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `graft` keyword includes all files that are in the specified directories
+    and below. The *distribution_resources/* directory is where I keep OS-specific
+    installation files for this particular project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are a few more important directives, which I’m not using for Timecard.
+    Here’s a more complex example with a different *MANIFEST.in* file (not belonging
+    to my Timecard project):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example, I add all files under the *stuff/* directory that have the
+    *.ini* file extension. Next, I include the entire *data/* directory with the `graft`
+    directive. The `prune` directive then goes back and excludes all files in the
+    *data/temp/* subdirectory. I also exclude all files in *data/important/* that
+    have the *.scary* file extension. None of the excluded files are deleted, but
+    they are left out of the package.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The order of lines in the manifest template matters. Each subsequent directive
+    adds to or removes from the list of files compiled by the prior lines. If you
+    were to move the `prune` directive above the `graft` directive, the files in *data/temp/*
+    would *not* be excluded!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Your manifest template will be used by setuptools to compile a *MANIFEST* file,
+    which contains a complete list of all the non-code files being included in your
+    distribution package. While you could theoretically write this *MANIFEST* file
+    yourself, listing one file per line, this is strongly discouraged, as it’s easier
+    to mess up the *MANIFEST* file than the *MANIFEST.in* file. Trust setuptools to
+    follow the directives you give it in the manifest template.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are a few more directives and patterns that you can use in *MANIFEST.in*.
+    Check out [https://packaging.python.org/guides/using-manifest-in/](https://packaging.python.org/guides/using-manifest-in/)
+    for more information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The requirements.txt File
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You may remember this file from Chapter 2. The *requirements.txt* file contains
+    a list of Python packages that your project depends on. This probably sounds like
+    its duplicating `install_requires` from *setup.cfg*, but I usually recommend that
+    you use both, for reasons I’ll describe shortly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the *requirements.txt* for Timecard:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-18: *requirements.txt*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You may wonder if there is a way to use the contents of *requirements.txt* in
+    *setup.cfg*, but in fact, it’s best if you keep the two separate. In practice,
+    they serve slightly different purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While the requirements listed in *setup.cfg* include everything you need to
+    install your distribution package, the *requirements.txt* file is best thought
+    of as a list of everything you need to re-create the complete development environment—all
+    the optional packages and development tools needed to participate in developing
+    your project, as opposed to merely using it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Under some circumstances, you may omit *requirements.txt* if you list all your
+    development dependencies as optional dependencies. The other benefit of using
+    *requirements.txt*, however, is the ability to use a specific version of a library
+    or tool—called *pinning*—for development, while enforcing looser version requirements
+    for your users via *setup.cfg*. For example, your application might require `click
+    >= 7.0`, but you’re developing the new version to use `click == 8.0.1` in particular.
+    Pinning is mainly useful for application development. If you’re developing a library,
+    it’s best to avoid pinning, since you can’t really make good assumptions about
+    the package versions that a user of your library will need.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another major benefit of having a *requirements.txt* file is that, as mentioned
+    in Chapter 2, you can quickly install everything needed for development in one
+    step:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'I still recommend you keep *requirements.txt* to the things that your project
+    truly needs, especially when versions matter. You generally wouldn’t include tools
+    like `black` or `flake8`, which can be swapped out for other tools without breaking
+    anything. Sometimes, I’ll create a separate *dev-requirements.txt* file (or *requirements.dev.txt*,
+    if you prefer) with all of my optional development tools. Then, to set up my complete
+    environment in a virtual environment, I’ll only need to run the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you have quite a number of packages installed in your working virtual environment,
+    it can be a pain to try to turn this into a *requirements.txt* file. To aid you
+    in this, you can use the command `pip freeze` to generate a complete list, with
+    versions, of all packages installed in the environment. Then, you can redirect
+    the contents into a file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: That command works the same on Windows, macOS, and Linux, exporting the complete
+    list of packages installed within *venv/*, dependencies and all, to the file *requirements.txt*.
+    Be sure to inspect that file for errors and *remove your own package from it*—it
+    wouldn’t make sense for your package to rely on itself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you want both *requirements.txt* and *dev-requirements.txt*, you’ll want
+    to `pip freeze` on two separate virtual environments: one that runs your package,
+    and the other that contains your complete development environment. In both cases,
+    inspect the output file and remove your own package from it!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pyproject.toml File
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The *pyproject.toml* file serves a few purposes, but the most important is to
+    specify the *build system* used to package your project, a standard introduced
+    in PEP 517 and PEP 518.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 18-19: *pyproject.toml*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `[build-system]` section contains information about what packages are needed
+    for building the distribution package: in this case, `setuptools` and `wheel`.
+    These requirements are specified by assigning a list of strings to `requires`,
+    with each string following the same convention as `install_requires` in *setup.py*.
+    You’ll notice here that I can use any version of `wheel`, but I must use version
+    40.8.0 or later of `setuptools`. The latter is necessary since it is the first
+    version of `setuptools` that supports PEP 517 and PEP 518.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `build-backend` property specifies the scheme used for building the project,
+    in this case, `setuptools.build_meta`. If you were using a different build tool,
+    such as Poetry or Flit, you’d specify that here, according to the tool’s documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The *pyproject.toml* file is also one of the common files for storing Python
+    tool configurations. Many of the major linters, autoformatters, and testing tools
+    (albeit not all of them) support their configurations being stored in this file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PEP 518 introduced the *pyproject.toml* file for project configuration, but
+    it can increasingly be used to store tool configuration as well, thereby cutting
+    down on the number of files in a project. There is heated debate about adding
+    support for *pyproject.toml* to some prominent tools like Flake8\. It’s not as
+    straightforward as it looks. If you really want Flake8 and *pyproject.toml* to
+    play well together, check out *Flake9*, a fork of Flake8 that accomplishes just
+    that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Testing the Setup Configuration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If everything has been configured correctly, you’ll be able to install your
+    project in a virtual environment. I’ll do that now, using the following command
+    (assuming I have a fresh virtual environment called `venv`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: I particularly recommend testing this out in a fresh virtual environment the
+    first time. The trailing dot installs whatever package is detailed by the *setup.cfg*
+    file in the current directory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Watch the output when you install and correct any warnings or errors. Once
+    your package is installed successfully, try to run your project using the entry
+    point(s) you specified in the *setup.cfg*, which should be installed as executables
+    in the *bin/* directory of the virtual environment. I’d run the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: If your project is a library, rather than an application, open the Python shell
+    within the virtual environment (`venv/bin/python`) and import the library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Troubleshooting
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Take the time to test out your project now. Does everything work as expected?
+    Most packaging and distribution tools depend on this instance working correctly!
+    If you encounter any new bugs or errors, go back and fix them. A few common causes
+    of problems appearing only in a virtual-environment installation of your project
+    include the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Missing dependencies that need to be added to *setup.cfg*
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Data files not being included correctly via the *MANIFEST.in* or *setup.cfg*
+    files
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: False assumptions in your code about the current working directory
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Once you have your distribution package installed and working in a virtual environment,
+    you’re ready to move on to the next step!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Installing as Editable
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In some circumstances, it can be useful to install your project in editable
+    mode, so the virtual environment will directly use the source code files in *src/*.
+    Any changes made to the code will immediately be reflected in the test installation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To install in editable mode, supply the `-e` flag to `pip`, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Installing your package in editable mode makes testing and development a lot
+    easier, as you don’t have to reinstall the package each time. However, it’s not
+    without its drawbacks. Installing in editable mode can make it possible for the
+    virtual environment to find external packages and modules that were not explicitly
+    required in *setup.cfg*, thereby covering up packaging problems. Only use `-e`
+    for testing your code, not your packaging.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building Your Package
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Once you’ve ensured that your *setup.cfg* and related files are configured correctly,
+    it’s time to build your source distribution and wheel artifacts. Run the following
+    commands in your terminal, from the root of your project’s repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: The installation command ensures that `setuptools`, `wheel`, and `build` are
+    installed and up-to-date in the current environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next command builds according to whatever `build-backend` is specified in
+    *pyproject.toml*. In this case, the project will be built with setuptools, applying
+    the configuration in the *setup.cfg* file in the current directory. This command
+    builds a source distribution, or sdist, and a built distribution or wheel.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The two artifacts are saved in the newly created *dist/* directory: the *.tar.gz*
+    is your source distribution, and the *.whl* is the `build` distribution wheel.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are a few other commands available for `build`, which you will find in
+    the documentation: [https://pypa-build.readthedocs.io/en/latest/](https://pypa-build.readthedocs.io/en/latest/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternatively, if you’re only using the default invocation of `build`, you can
+    just run `pyproject-build`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Publishing on pip (Twine)
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: From here, you’re ready to publish your distribution package! In this section,
+    I’ll do exactly that with Timecard.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Uploading to Test PyPI
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Before you upload your project to the official PyPI index, test everything out
+    one more time via Test PyPI, which is an altogether separate index specifically
+    for testing out the tools. If you’re experimenting, you’re welcome to use Test
+    PyPI. Packages and user accounts are periodically pruned, so don’t worry if you
+    leave a bit of a mess.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To upload to the index, you must first create an account at [https://test.pypi.org/account/register/](https://test.pypi.org/account/register/).
+    If you had one a while back but it’s not working now, don’t worry; as part of
+    the regular pruning, old accounts are deleted. You can safely make a new one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once you’re logged in, go to **Account settings** and scroll down to **API tokens**.
+    Select **Add API Token**. You can name this token whatever you like, but be certain
+    you set Scope to **Entire account** if you’re uploading a new project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After creating the API token, you must save the entire token (including the
+    leading `pypi-`) before leaving the page, as it will never be shown again. You’ll
+    need this token in the next step.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By the way, you can always delete tokens from the Account settings page. Do
+    this any time you no longer remember the token or have no need of it anymore.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I’ll upload my Timecard-App distribution package to Test PyPI. (You’ll need
+    to try uploading a package with a different name; Timecard-App will be taken by
+    the time you read this.) For this step, I use a package called *twine*, which
+    I install to my user environment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'I use twine to upload the artifacts from my project’s *dist/* directory:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice I’ve explicitly specified that I’m uploading to the *testpypi* repository,
+    which twine knows about by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When prompted, enter the username *__token__* and use your API key from earlier
+    as the password:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Watch the terminal output carefully for any errors or warnings. If you need
+    to make any corrections to your project or its packaging files, be certain to
+    delete the *dist/* directory and cleanly rebuild the *sdist* and *bdist_wheel*
+    artifacts before trying to upload again.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If all goes well, you will be given a URL where you can see your distribution
+    package on Test PyPI. Make sure everything on that page looks correct.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Installing Your Uploaded Package
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Next, make sure you can install your distribution package from Test PyPI in
+    a *fresh* virtual environment. I’ll do that now with my Timecard-App distribution
+    package.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the next step to work, I’ll need to manually install the dependencies for
+    my package. This is one of the reasons I have a separate *requirements.txt* file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, I can install the package itself. Because this is a particularly long
+    command, I’m splitting it up UNIX-style, with the backslash character (`\`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Because I’m testing the distribution package I uploaded to Test PyPI, rather
+    than the regular PyPI, I have to explicitly tell pip to use that as the source
+    repository, which I do with the `--index-url` argument. However, I don’t want
+    to install any of the package dependencies from [test.pypi.org](http://test.pypi.org)—they
+    might be missing, broken, malicious copycats, or otherwise wrong—so I pass the
+    `--no-deps` flag. Finally, I specify that I’m installing the distribution package
+    `Timecard-App`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If all went well, I should be able to invoke Timecard-App within that virtual
+    environment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: I try it out as before, to make sure everything works as expected, and it does!
+    At this point, I’d want to try it out on other machines to ensure it functions
+    as expected. I can use the `pip install` command from a moment ago to install
+    this distribution package on any machine that’s connected to the internet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Uploading to PyPI
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Once I’m certain that Timecard-App is ready for prime time, I can repeat the
+    entire upload process with PyPI at [https://pypi.org/](https://pypi.org/): create
+    a user account (if necessary), log in, create an API key, and finally upload with
+    this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The official PyPI is the default target, so once that upload completes, you’ll
+    be given a new URL: the one for your project on the PyPI. Congratulations! You
+    can now share this link exuberantly. You’ve shipped software!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternative Packaging Tools
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: As you can see, pip, setuptools, wheel, and twine do a pretty good job these
+    days, but there are a lot of steps and details to using them. There are a couple
+    of alternative tools you may benefit from learning on your own.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Poetry
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If you only learn one of these alternative tools, make it this one!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instead of using four different tools, some Python developers prefer *Poetry*,
+    which handles everything from dependency management to building and publishing
+    your distribution package. Absolutely all of the packaging configuration, from
+    dependencies to metadata, goes into *pyproject.toml*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning how to use Poetry is easy because it has excellent, succinct documentation,
+    which is especially clear if you’re already somewhat familiar with setuptools.
+    Information, installation instructions, and documentation can all be found at
+    [https://python-poetry.org/](https://python-poetry.org/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Flit
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*Flit* is a tool that focuses on making the easy packaging scenarios easier—namely,
+    by building and publishing pure Python distribution packages—and leaving the hard
+    stuff for other, more complex tools to handle. It uses a few simple commands to
+    handle building and publishing your distribution package. Many of the ideas from
+    Flit have trickled into other tools and workflows.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The official documentation is the best place to find more information about
+    Flit: [https://flit.readthedocs.io/en/latest/index.xhtml](https://flit.readthedocs.io/en/latest/index.xhtml).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distributing to End Users
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There is still one leg of the journey to go before you reach your goal of being
+    able to distribute software to end users. Installing via pip is not a good means
+    of distributing your software to end users, for two reasons. First, most users
+    don’t know anything about pip. Second, pip was never intended to deploy software
+    in that manner. There are too many things that could go wrong when installing
+    from PyPI, all of which would require the intervention of a Python developer well-versed
+    in the ways of pip. To ship software to non-developers, you need a more robust,
+    user-oriented solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Mahmoud Hashemi describes layers of the packaging gradient for shipping to
+    an end user. I’ve adapted them here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**PEX:** Uses system-wide Python.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Freezers:** Includes Python.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Images and containers:** Includes most or all system dependencies.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Virtual machines:** Includes *kernel*, the “heart” of the operating system.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Hardware:** Includes . . . well, everything!'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Let’s look at each of these options in a little more depth and consider which
+    would be appropriate for Timecard.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PEX
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The lowest-level option for distributing a stand-alone artifact—one that doesn’t
+    need to be installed from pip—is a format called PEX (short for Python Executable).
+    It allows you to package an entire virtual environment as a stand-alone file,
+    which is essentially a neatly structured *.zip* file. This PEX file then relies
+    on the Python interpreter provided by whatever system it’s being run on. Once
+    you have a PEX, you can distribute it to anyone on Mac or Linux who has Python
+    installed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PEX is far from intuitive, in terms of usage. It’s easy enough to turn a virtual
+    environment into a PEX, but actually specifying a script to run on execution takes
+    a bit more work. What’s more, PEX only works on Mac or Linux, so it’s not a viable
+    option if you need to distribute on Windows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since PEX is oriented toward developers, it’s definitely not a good fit for
+    distributing Timecard. If you want to learn more about PEX, read their documentation
+    at [https://pex.readthedocs.io/](https://pex.readthedocs.io/). Alex Leonhardt
+    also has an excellent article about PEX ([https://medium.com/ovni/pex-python-executables-c0ea39cee7f1](https://medium.com/ovni/pex-python-executables-c0ea39cee7f1))
+    that is considerably easier to digest than the documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Freezers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The most portable means by far of packaging and distributing a Python application
+    is with a *freezer*, which bundles the compiled Python code, the Python interpreter,
+    and all the package dependencies into a single artifact. With some freezers, system
+    dependencies are included as well. The benefit of all this is that you wind up
+    with a single executable file in the target system’s preferred format, at the
+    cost of an increased artifact size (usually by about 2–12 MB).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Far and away, this is one of the most common ways of distributing Python applications.
+    It’s used by such programs as Dropbox and Eve Online.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are a number of freezers in existence, but the three most common at present
+    are *PyInstaller*, *cx_Freeze*, and *py2app*. If you’re building GUI-based applications
+    with the Qt 5 toolkit, *fman Build System* is another great option. Yet another
+    option is *py2exe*, although it is presently unmaintained.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyInstaller
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: My personal favorite freezer is PyInstaller. It has the particular advantage
+    of working on all major operating systems. Although you will need to run PyInstaller
+    separately on each of the targeted environments, you will seldom need to configure
+    it more than once.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There is quite a bit to learn about PyInstaller. You’ll find extensive guidance
+    for its use, as well as how to handle various errors and tricky situations, in
+    the official documentation: [https://pyinstaller.readthedocs.io/](https://pyinstaller.readthedocs.io/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyOxidizer
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: One of the newer kids on the block is PyOxidizer. It’s a promising-looking cross-platform
+    tool for converting your project into a single executable file, bundled with the
+    Python interpreter. The focus is on ensuring it remains easy to package, distribute,
+    and install the end product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Complete documentation, as well as a breakdown of what gives PyOxidizer an advantage
+    over other tools, can be found at [https://pyoxidizer.readthedocs.io/en/stable/index.xhtml](https://pyoxidizer.readthedocs.io/en/stable/index.xhtml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: py2app
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: If you only want to package your project for macOS, *py2app* is a great option.
+    It works off your project’s *setup.py* file and freezes down into a single *.app*
+    file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To learn more about py2app, see the official documentation at [https://py2app.readthedocs.io/en/latest/tutorial.xhtml](https://py2app.readthedocs.io/en/latest/tutorial.xhtml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: cx_Freeze
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Another option for freezing your project is *cx_Freeze*, a cross-platform tool
+    for building on Windows, Mac, and Linux. It’s quite a bit older than PyInstaller,
+    but it still works well. If you’re having trouble with PyInstaller or py2app,
+    try this one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Information and documentation can be found at [https://cx_freeze.readthedocs.org/](https://cx_freeze.readthedocs.org/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: fman Build System
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: If you’re building a GUI-based application using the Qt 5 library—Timecard is
+    one such application—you can build and package your project once for all operating
+    systems with *fman Build System*. Unlike other tools, it even creates an executable
+    installer on Windows, a *.dmg* on macOS, a *.deb* package on Debian-based Linux,
+    an *.rpm* on Fedora-based Linux, and a *.tar.xz* for everyone else.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The fman freezer requires you to set up your project in a particular manner,
+    so if you want to use it, you’ll have the best results if you use it from the
+    start of your project. Otherwise, you’ll need to restructure it according to what
+    fman Build System needs (which is why Timecard doesn’t use it).
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can find more information, a great tutorial, and the complete documentation
+    at [https://build-system.fman.io/](https://build-system.fman.io/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Nuitka
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: I mentioned back in Chapter 1 that the *Nuitka* compiler allows you to transpile
+    Python code to C and C++ and then assemble that down to machine code. Nuitka is
+    practically a separate implementation, and the end-result executable is about
+    two times faster than CPython.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As of the date of this writing, Nuitka has reached feature parity with Python
+    3.8\. They’re working on adding 3.9+ features and further optimization. In any
+    case, this is an exciting project to watch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you want truly “compiled” Python code, this is the tool you’re looking for.
+    More information and documentation are available at [https://nuitka.net/pages/overview.xhtml](https://nuitka.net/pages/overview.xhtml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Images and Containers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'All the packaging options I’ve covered up to this point are limited by a common
+    factor: what system libraries are installed on the user’s machine. It’s possible
+    to bundle some of these libraries, such as is seen with PyInstaller, but those
+    are still subject to their *own* dependencies, some of which cannot be bundled.
+    When you start getting into more complex applications, this can become a tricky
+    problem to solve.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This becomes particularly difficult when distributing on Linux. With so many
+    Linux-based operating systems (each with multiple versions) and countless combinations
+    of packages, building once for all can be a royal pain. The solution is found
+    in *containers*, which are self-contained environments that bring all their own
+    dependencies. Multiple applications can be installed on the system, each in its
+    own container, and it won’t matter if they have different or even conflicting
+    dependencies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another advantage of using containers is *sandboxing*, which limits the containerized
+    application’s access to the system. This provides transparency and control to
+    users: they know what privileges any given container has, and in many cases, they
+    can control those privileges.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'At present, there are four major containers: *Flatpak*, *Snapcraft*, *Appimage*,
+    and *Docker*. Each one has unique advantages.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Flatpak
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '*Flatpak* allows you to package an application as a standalone unit that can
+    be installed on virtually any Linux environment, as well as Chrome OS. It is highly
+    forward compatible, meaning your package will continue to work even on as-yet
+    unreleased versions of operating systems that support Flatpak. It is not a container
+    in the strictest sense, but it functions similarly. Even so, installed Flatpaks
+    can share some dependencies they might have in common.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One of the reasons I particularly like Flatpak is that you can select or build
+    each of the dependencies or components you need. I can know that if my Flatpak
+    works on my machine, it will work on others. The extra degree of control and predictability
+    it provides makes it easier to work with snarly packaging scenarios in Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Flatpak also has its own app store, *Flathub*, which makes it easy for end
+    users to browse and install applications on their Linux machines. For more information
+    about and complete documentation on Flatpak, see their official website: [https://flatpak.org/](https://flatpak.org/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can see how I packaged Timecard with Flatpak here: [https://github.com/flathub/com.codemouse92.timecard](https://github.com/flathub/com.codemouse92.timecard).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Snapcraft
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The *Snapcraft* format, maintained by Canonical (the company behind the Ubuntu
+    operating system), packages your application into a dedicated container with its
+    own filesystem. It is sandboxed from the rest of the system, accessing and sharing
+    as little as possible. Because of its structure, you can build snaps from any
+    development environment, including Windows and macOS, although you cannot install
+    snaps in those environments. Snapcraft also has its own associated app store,
+    the *Snap Store*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unfortunately, the footprint of an installed snap can be quite large, as it
+    brings everything *for each container*, excepting the kernel and a handful of
+    core dependencies; it does not share dependencies between snaps. It also can be
+    difficult to give a snap the correct permissions for many user applications to
+    function. Due to these and other criticisms, some Linux environments have dropped
+    their official support for Snapcraft.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Despite all this, Snapcraft is still a viable container format with a fairly
+    loyal following. You can learn more about the format and find complete documentation
+    at [https://snapcraft.io/](https://snapcraft.io/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: AppImage
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The *AppImage* format provides self-contained executables that don’t require
+    anything, including themselves, to be installed. In many ways, an AppImage behaves
+    like a macOS application. Unlike Flatpak and Snapcraft, AppImage requires no infrastructure
+    on the target system, although the user may choose to use *appimaged* to automate
+    registering AppImages with the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: AppImage is intended to be decentralized, allowing you to provide your own download
+    to the end user. You can even issue updates to your package by integrating *AppImageUpdate*.
+    Technically, AppImage does have an app store of sorts, *AppImageHub*, where you
+    can browse through many of the apps that are packaged in the format. New apps
+    are added via a pull request against the store on GitHub.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sole disadvantage of AppImage is that you need to test your package against
+    every Linux distribution you plan to support. Your package *can* rely on existing
+    system libraries, and in fact, it must do so for a few essentials like *libc*
+    (the C language standard library, which is used by nearly everything). As a result,
+    this can create a “works on my machine” scenario, where the AppImage may be implicitly
+    relying on a system library and then may fail when run on another Linux system
+    that lacks that library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To achieve that same aim, it is recommended you build your AppImage on the oldest
+    environment you want to support, as it collects and bundles libraries from the
+    current environment itself. AppImages are pretty decently forward compatible,
+    but they’re not intended to be backward compatible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Still, if you don’t mind working with some extra environments, AppImage can
+    be a fantastic way to distribute your software to any Linux machine, without any
+    other infrastructure being required. More information about the format and complete
+    documentation can be found at [https://appimage.org/](https://appimage.org/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Docker
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In modern software development parlance, *Docker* is usually the first thing
+    that people think of when they hear “container.” It allows you to define a custom
+    environment, bringing everything except the kernel. This is the one format out
+    of the four I’m covering that will work on Windows and macOS, in addition to Linux.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Docker is primarily geared toward deploying on servers, rather than for user
+    applications, as it requires quite a bit of setup on the target machine. Once
+    Docker is configured, it’s relatively trivial to launch an image. This makes it
+    ideal for distributing server applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because a Docker image is a fully self-contained environment, it’s easy to create
+    one for your project. You start by defining a *Dockerfile*, which outlines the
+    steps for building the image. You start with a base image, such as one for a particular
+    operating system, and you install all the packages and dependencies you need.
+    You can even install via pip in the context of the Dockerfile. Docker converts
+    the Dockerfile into an image, which can be uploaded to a registry like *Docker
+    Hub* and then downloaded onto the client machine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Complete information and exhaustive documentation can be found at [https://www.docker.com/](https://www.docker.com/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: A Note on Native Linux Packaging
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Linux users will notice that I haven’t touched native Debian or Fedora packaging
+    at all. These packaging formats are still relevant, but decreasingly so as more
+    portable formats like the preceding gain in adoption. Both Debian and Fedora packaging
+    can be particularly difficult, while offering few, if any, advantages over portable
+    formats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In case this sounds faddish, I assure you that I have been among the slowest
+    to consider Flatpak, Snapcraft, and Appimage as viable alternatives to my beloved
+    Debian packages. The difference in end user experience is slightly improved in
+    these newer portable formats, but more importantly, the *developer* experience
+    is significantly better. All three leverage varying degrees of sandboxing, in
+    a manner similar to virtual environments and in stark contrast to native packaging
+    formats, where one must be concerned with the exact versions of dependencies on
+    each end user machine. What’s more, while portable packaging formats generally
+    play well with virtual environments and PyPI, native packaging formats seldom
+    do, especially when used in full compliance with the standards and policies of
+    the distribution’s package repositories.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you want to package your Python project using Debian or Fedora packaging,
+    you can certainly do so. Tools like *dh-virtualenv* can help! Still, be prepared
+    for a battle if your project has any significant dependencies. Before you try
+    to distribute your project in any native packaging format, be absolutely certain
+    that portable packaging formats will not suffice. This is a decision only you
+    can make.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Documentation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Every project needs documentation, and yes, that includes yours. The best code
+    in the world means nothing if the end user doesn’t know how to install and use
+    it!
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case of particularly small projects, a single *README.md* may be sufficient,
+    so long as it is easily discoverable by users. For anything more robust, you need
+    a better solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The historic answer to documentation in Python was the built-in module *pydoc*,
+    but over the past several years, this has been utterly eclipsed by *Sphinx*. Nearly
+    all documentation in the Python world, including the official documentation for
+    Python itself, is built with Sphinx. In fact, while Sphinx was originally built
+    for Python projects, its robust feature set and ease of use has led to its wide
+    adoption across the entire programming industry.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sphinx builds the documentation using a markup language called *reStructuredText*,
+    abbreviated as *reST*. While a bit more complex and exacting than Markdown, reST
+    is packed full of powerful features for even the most complicated technical writing.
+    The end result can be exported to HTML, PDF, ePUB, Linux man pages, and many other
+    formats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Your project’s documentation belongs in a separate directory, conventionally
+    named *docs/*, in the project repository. If you have the `sphinx` package installed
+    in your environment—usually, your development virtual environment—you can build
+    the basic file structure and configuration by running the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: You will be guided through several questions. For most things, I recommend using
+    the defaults, displayed in square brackets (`[ ]`) at each prompt, until you know
+    better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For most of your documentation, you will write your own reStructuredText (*.rst*)
+    files by hand, saving them in this *docs/* directory. There is no replacement
+    for handwritten documentation! Expecting a user to learn your software purely
+    from API documentation is like teaching someone to use a toaster by explaining
+    the electrical specifications of the heating element.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At the same time, in some projects, especially libraries, it is useful to pull
+    in the docstrings from your code. This is possible with Sphinx as well, using
+    its *autodoc* feature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The best way to get started with Sphinx and reStructuredText, including the
+    autodoc feature, is to read the official Quick Start Guide at [https://www.sphinx-doc.org/en/master/usage/quickstart.xhtml](https://www.sphinx-doc.org/en/master/usage/quickstart.xhtml).
+    That website also provides the rest of the Sphinx documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you’re getting ready to release your project, you will almost certainly
+    want to publish your documentation online. For open source projects, one of the
+    easiest ways to do this is to sign up for a free account on Read the Docs. That
+    service specifically works with Sphinx and reStructuredText, and it can automatically
+    update your documentation from your repository. For more information and to sign
+    up, visit [https://readthedocs.org/](https://readthedocs.org/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wrapping Up
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When you’re getting ready to start a project, consider how you want to handle
+    packaging. There are a lot of options for packaging and distributing Python applications,
+    so that leaves the question of which tools to use. As the developer of your own
+    project, you’re the only person who can ultimately determine the best packaging
+    scheme for your situation. If you’re completely lost, here’s my own opinion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, I strongly recommend using a *src/* directory for your code. It makes
+    everything else easier. Then, get your project set up so you can install it in
+    a virtual environment with pip. Personally, I use setuptools, although both Poetry
+    and Flit are excellent options; use whichever you like more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re developing a library or command-line tool for other Python developers
+    to use, plan to publish it to the PyPI. If your project is an end user application
+    or command-line program, I recommend packaging it into a stand-alone artifact
+    using a tool like PyInstaller. For Linux distribution, I also strongly recommend
+    creating a Flatpak. If you’re building a server application, on the other hand,
+    I recommend packaging it into a Docker image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last level of the packaging gradient is to deploy your project embedded
+    on hardware. There are countless ways to do this, but some of the more popular
+    options include single-board computers like *Arduino* and *Raspberry Pi*. This
+    is a deep enough topic that entire books are dedicated to it. In Chapter 21, I’ll
+    refer you to some resources for further study in this arena.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once again, these are my opinions, based on my own adventures in Python packaging.
+    Regardless, remember that all these tools exist for a reason, and something that
+    works well for my projects may not be suitable for yours. As I said at the start
+    of this chapter, whatever packaging techniques you ultimately use, they should
+    produce a reasonably portable, stable, “just works” package.
+  prefs: []
+  type: TYPE_NORMAL

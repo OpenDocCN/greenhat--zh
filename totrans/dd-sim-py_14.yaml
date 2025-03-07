@@ -1,0 +1,1203 @@
+- en: '11'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Text IO and Context Managers
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: I find that a project doesn’t feel *real* until I start working with files.
+    Text-based files, the most common way to store data, are the key to retaining
+    state between program runs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While it’s perfectly simple to open a text file in Python, there are many silent
+    subtleties that are often overlooked until they bite you in the rear. Many developers
+    make do with some idiosyncratic combination of techniques that appear to work
+    but are far removed from the beauty and simplicity of idiomatic Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, I’ll break down the two central components involved in working
+    with text files: *streams* and *path-like objects*. I’ll cover the myriad ways
+    of opening, reading from, and writing to files, discuss how to work with the filesystem,
+    and wrap up with a whirlwind tour of some common file formats.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Standard Input and Output
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: So far, we’ve taken functions like `print()` and `input()` for granted. They’re
+    practically always the first functions a developer learns in a language, but they’re
+    also an essential starting point for a true understanding of text input and output.
+    Let’s take a deeper look.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Revisiting print()
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As you’ve seen throughout this book, the `print()` function takes a string argument
+    and prints it on the screen. That is simple enough, but the functionality of `print()`
+    does not end there. You can use `print()` to quickly and flexibly output multiple
+    values in a number of ways, and as you’ll see in a later section, you can even
+    use it to write to files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Standard Streams
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To fully understand the potential of `print()`, you must understand streams.
+    When you use `print()`, you send the string to the *standard output stream*, a
+    special communication channel provided by your operating system. The standard
+    output stream behaves like a queue: you push data, usually strings, to the stream,
+    and these strings can be picked up in order by other programs or processes, notably
+    the terminal. Your system sends all strings provided to `print()` to the standard
+    output stream, by default.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Your system also has a *standard error stream* to display error messages. Normal
+    output is sent to the standard output stream, and error-related output is sent
+    to the standard error stream.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So far in this book, when I’ve wanted to print an error message, I’ve used
+    an ordinary `print()` call, the same as for a normal message:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-1: *print_error.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is fine as long as the user only needs the error output to appear in the
+    terminal. However, say the user wants to use the terminal to pipe all program
+    output into files, so that normal output goes into one file and error output goes
+    into the other. Here’s an example in bash:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: The user would expect *output.txt* to contain `Normal message` and *error.txt*
+    to contain `Scary error occurred`. However, because `print()` sends messages to
+    the standard output stream by default, both messages got exported to *output.txt*.
+    Meanwhile, *error.txt* is completely empty.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To send the error text to the standard error stream instead, I have to specify
+    it by using the `file=` keyword argument on `print()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-2: *print_error.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I first import the `sys` module, which gives me access to `sys.stderr`, a handle
+    to the standard error stream. I send the error message to the standard error stream
+    by specifying the argument `file=sys.stderr` in my second `print()` call. The
+    normal message still goes to standard output, as the default argument is `file=sys.stdout`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Revising the shell session from before, the usage is the same, but you can
+    see the outputs are now sent where they’re expected to be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The ordinary message has been piped to the file *output.txt*, and the error
+    message has been piped to the file *error.txt*. This is the standard expected
+    behavior for output from command-line programs being used in this manner.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As the parameter name `file=` suggests, the `print()` function is not limited
+    to the standard streams. In fact, as you’ll see in a moment, it is quite well
+    suited to writing text to files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Flush
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'One important fact to know is that standard streams are implemented as *buffers*:
+    data can be pushed to a buffer, which behaves like a queue. That data will wait
+    there until it is picked up by the terminal, or whatever process or program is
+    intended to display it. In the case of standard output and standard error, text
+    is pushed to the stream buffer, and then the buffer is *flushed* when its contents
+    are all printed to the terminal. Flushing doesn’t always happen when you expect,
+    for a plethora of reasons (all beyond the scope of this book). On occasion, you
+    will send a message with `print()` and then wonder why it hasn’t printed to the
+    terminal yet.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Usually, it’s best to let the system decide when to flush the standard streams,
+    instead of forcing it yourself. However, in some cases, you may want to force
+    it. For example, you may want to add something to the end of a line already displayed
+    on the terminal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s a simple progress indicator that does exactly that. I’ll use `time.sleep()`
+    to indicate that some time-consuming process is happening, like a download. I
+    want to ensure the user knows the program hasn’t crashed, so I display a “Downloading
+    . . . ” message, adding another dot every tenth of a second:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-3: *progress_indicator.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `end=` keyword argument on `print()` prevents a new line from being printed.
+    I’ll come back to this later. The important piece for the example is the `flush=`
+    keyword argument. If I’d omitted that, the user wouldn’t have seen anything until
+    the loop had finished, because the buffer would have waited for the newline character
+    before writing out to the terminal. However, by forcing the buffer to flush, the
+    line on the terminal updates on each loop iteration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you need all your `print()` calls to flush every time by default, you can
+    run Python in *unbuffered mode*, by passing the `-u` flag to the Python interpreter
+    when you invoke your program, as in `python3 -u -m mypackage`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Printing Multiple Values
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The `print()` function can accept any number of ordered arguments, and each
+    will be converted into strings using each value’s `__str__()` special method.
+    This is a sort of quick and dirty alternative to formatting with f-strings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, I might want to store an address in multiple pieces and then be
+    able to print out the whole thing. I’ll initialize the individual values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-4: *address_print.py:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I could use formatted strings to put the address together:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-5: *address_print.py:2a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While this works, I can do the same thing without the f-string, resulting in
+    a simpler `print()` statement:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-6: *address_print.py:2b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `print()` statement converts each argument to a string and then concatenates
+    the pieces together, with a space between each piece (by default). In either case,
+    the output is the same:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The benefits of this `print()` statement without f-strings are readability and
+    efficiency. Since the final output is nothing more than all the pieces concatenated
+    together with spaces, and since I have no need to store the whole string in a
+    single value in memory, the f-string is overkill.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s another example of the `print()` function’s innate concatenating abilities.
+    I can quickly generate a table of property values from a dictionary. First, here’s
+    that dictionary:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-7: *market_table_print.py:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I want to print out a table, with the street, number, and formatted property
+    value, separating each column with a tab character (`\t`). I’ll use an f-string
+    first, just so you can see why I wouldn’t use that approach:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-8: *market_table_print.py:2a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While this produces the desired output (which I’ll show in a moment), the f-string
+    adds an unnecessary layer of complexity. Since I’m separating each column with
+    a tab character, I can once again make better use of `print()` instead:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-9: *market_table_print.py:2b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `sep=` argument allows me to define what string should be used between each
+    of the values. This `sep` string is a space by default, as in [Listing 11-6](#listing11-6),
+    but here, I’m using a tab character (`\t`) as a separator instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I prefer this solution because it’s much more readable. I still use an f-string
+    to format `value` to display the desired comma separator, lest I get uglier output
+    like `$144121`. The values bound to `street` and `address` do not need any special
+    treatment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the output, which is the same for either version of the code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Another advantage of this approach is that if I decide I want to separate columns
+    with spaces and a vertical bar character, I only need to change the `sep=` argument:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-10: *market_table_print.py:2c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If I had used f-strings, I would have needed to change the character I was using
+    for each separation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the new output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `print()` function also has an `end=` parameter, to determine what to append
+    to the end of the output. By default, this is a newline character (`\n`), but
+    you can change this in the same manner as `sep=`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One common use is to set `end=\r`, which will cause the next printed line to
+    overwrite the previous line. This is especially useful in status updates, such
+    as progress messages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Revisiting input()
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `input()` function allows you to receive user input from the terminal, that
+    is, from the *standard input stream*. Unlike with `print()`, the `input()` function
+    has no extra features here, but it is useful to have a formal familiarity with
+    `input()` moving forward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sole argument accepted by `input()` is `prompt`, an optional string that
+    is printed to standard output without adding a trailing newline character. The
+    value passed to `prompt=` is usually a message that informs the user what they’re
+    supposed to input. This argument can be any value that can be converted to a string
+    via its `__str__()` method, the same as in the ordered arguments passed to `print()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s a basic prompt for an MLS number, perhaps intended as part of a property
+    search program:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-11: *search_input.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Running this prompts the user for an `MLS` number and then reports that it’s
+    searching for a property with that number:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: There is absolutely nothing more to using `input()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Streams
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To work with any data file, you need to obtain a *stream*, also called a *file
+    object* or *file-like object*, which offers methods for reading from and writing
+    to that particular file in memory. There are two kinds of streams. *Binary streams*,
+    which form the foundation of all streams, work with data in binary (1s and 0s).
+    *Text streams* handle the encoding and decoding of text from binary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Streams can work with more than just traditional files, such as your run-of-the-mill
+    *.txt* files, Word documents, or what have you. The objects for the standard output
+    (`sys.stdout`), standard error (`sys.stderr`), and standard input (`sys.stdin`)
+    that you’ve already been using are, in fact, streams. Everything you know about
+    the standard streams is the same on any stream.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For this chapter, I’ll focus exclusively on text streams. I’ll dig into binary
+    data and binary streams in Chapter 12.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can create a stream that works with a file by using the built-in `open()`
+    function. There is a *lot* to using this function, but I’ll start with the most
+    simplistic usage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code in this entire section will assume every file is in the same directory
+    as the Python module opening it. If the file is somewhere else on the machine,
+    you’ll need a path, which is a separate topic I’ll explore later in this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To read a file named *213AnywhereAve.txt* (the contents of which are identical
+    to the output coming up), I’ll create a stream to work with it. Python beautifully
+    handles creating the stream to the file in the background, so I only need to use
+    the `open()` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-12: *read_house_open.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `open()` function returns a stream object—specifically, a `TextIOWrapper`
+    object—that works with the contents of the *213AnywhereAve.txt* file. I bind this
+    stream object to `house`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, I read the entire contents of the file by calling the `read()` method
+    on `house` and passing the string it returns directly to `print()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once I’m done working with the file, I *must* close it, and I do that on the
+    last line. It’s important not to leave file closing to the garbage collector,
+    as that is neither guaranteed to work nor portable across all Python implementations.
+    What’s more, when writing to a file, Python is not guaranteed to finish making
+    changes to the file until `close()` is called. This means that if you forget to
+    close before your program ends, your changes may be lost in part or in whole.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Assuming the *213AnywhereAve.txt* file exists in the same directory as this
+    Python module, this code will output the entire contents of the file to the screen:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can only read from this particular stream. Writing to a file requires me
+    to open it differently, which I’ll return to shortly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Context Manager Basics
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A *context manager* is a type of object that automatically handles its own cleanup
+    tasks when program execution leaves a certain section of code, or *context*. This
+    context is provided by a Python `with` statement. (This is the last of Python’s
+    compound statements, alongside familiar friends such as `if`, `try`, and `def`,to
+    name a few.) To really understand how this works, I’ll unpack the underlying logic
+    and build up to the use of context managers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s one remaining problem in [Listing 11-12](#listing11-12). As it stands,
+    the example is pretty safe, as `house.read()` isn’t going to fail unless I’m unable
+    to open the file. In reality, though, I’d do more after opening than just printing
+    out the contents of the file. I may process the data in any number of ways, store
+    it in a collection, or search it for something in particular. There’s lots of
+    room for errors and exceptions. With this approach, if I successfully open the
+    file but experience any sort of exception while reading from or working with that
+    file—say, a `KeyError` if I tried to read it into a dictionary—the `close()` method
+    would never get called.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To get around this, I can wrap the `close()` call in the `finally` clause of
+    a `try` statement:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-13: *read_house_open.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the file *213AnywhereAve.txt* does not exist, it will raise a `FileNotFoundError`
+    exception. If I’m able to open it successfully, I can try to `read()` from the
+    `house` stream. I’m not catching any exceptions, so they’ll automatically bubble
+    up from this `try` statement. Because the `close()` call is in the `finally` clause,
+    it will be called whether there’s an error or not.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, though, always remembering to call `close()` is utterly impractical,
+    not to mention a royal pain. If you forget, or if the program terminates before
+    you can call `close()`, all sorts of pesky bugs can result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Thankfully, all stream objects are context managers, so they can clean up after
+    themselves with a `with` statement, encapsulating that entire `try`-`finally`
+    logic ([Listing 11-13](#listing11-13)) into a single statement:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-14: *read_house_open.py:1c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This opens the *213AnywhereAve.txt* file, binds the stream to `house`, and then
+    runs the line of code for reading and printing from that file. There’s no need
+    for a manual call to `house.close()`, because the `with` statement handles that
+    automatically in the background.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ll dig into the mechanics of `with` more later on, but as it is the canonical
+    way of working with (most) streams, I’ll use it exclusively from here on out.
+  prefs: []
+  type: TYPE_NORMAL
+- en: File Modes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The `open()` function optionally accepts a second argument: *mode=*, which
+    should be a string dictating how the file should be opened, which in turn defines
+    what operations may be performed on the stream object—reading, writing, and so
+    on. If you don’t pass a `mode=` argument, Python uses `mode=''r''`, which opens
+    the file for reading only.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are eight different file modes for text-based files (see [Table 11-1](#table11-1)),
+    and the behavior of each is a little different. The base modes are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`r` opens the file for *reading*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`w` opens the file for *writing*; it truncates (erases) the file contents first.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`a` opens the file for *append* writing (that is, writing to the end of the
+    existing file).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`x` *creates* a new file and opens it for writing; the file must not already
+    exist.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adding the addition (`+`) flag adds either reading or writing, whichever is
+    missing from the mode. The most important usage is the mode `r+`, which allows
+    you to both read from and write to the file *without* the contents being erased
+    first.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The behavior of each mode can feel a bit unexpected at times. [Table 11-1](#table11-1),
+    which is based in part on a Stack Overflow answer by industryworker3595112 (see
+    [https://stackoverflow.com/a/30931305/472647/](https://stackoverflow.com/a/30931305/472647/)),
+    breaks down the functionalities of the modes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 11-1: File Modes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Functionalities** | **Modes** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | **`r`** | **`r+`** | **`w`** | **`w+`** | **`a`** | **`a+`** | **`x`**
+    | **`x+`** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Allow read | ✓ | ✓ |  | ✓ |  | ✓ |  | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Allow write |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Can create new file |  |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Can open existing file | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Erase file contents first |  |  | ✓ | ✓ |  |  |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Allow seek | ✓ | ✓ | ✓ | ✓ |  | ✓* | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Initial position at start | ✓ | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Initial position at end |  |  |  |  | ✓ | ✓ |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '*Only allows seek on read'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In a stream, the *position* dictates where you read to and write from within
+    the file. The `seek()` method allows you to change this position, if the mode
+    supports it. By default, the position will be at either the start or the end of
+    the file. I’ll cover this in depth in a later section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can also use the `mode=` parameter to switch between *text mode* (`t`),
+    which is the default, and *binary mode* (`b`). In Chapter 12, I’ll work exclusively
+    in binary mode. For now, at least be aware of which mode you’re opening a file
+    in. For example, the argument `mode='r+t'` opens the file in read-write text mode,
+    and it is the same as `mode='r+'`. By contrast, `mode='r+b'` opens the file in
+    read-write binary mode. For this entire chapter, I’ll only use the default text
+    mode.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you’re opening a file in read mode (`r` or `r+`), the file *must* already
+    exist. If it doesn’t, the `open()` function will raise `FileNotFoundError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Create mode (`x` or `x+`) expects precisely the opposite: the file *must not*
+    already exist. If it does, the `open()` function will raise `FileExistsError`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Write mode (`w` or `w+`) and append mode (`a` or `a+`) have neither of these
+    problems. If the file exists, it will be opened; if it doesn’t, it will be created.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you attempt to write to a stream opened only for reading (`r`) or read from
+    a stream opened only for writing (`w`, `a`, or `x`), that read or write operation
+    will raise the `io.UnsupportedOperation` error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you want to check in advance which operations a stream supports, use the
+    `readable()`, `writable()`, or `seekable()` methods on the stream. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-15: *check_stream_capabilities.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reading Files
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'To read from a file, you first acquire a stream, opening it in one of the readable
+    modes (`''r''`, `''r+''`, `''w+''`, `''a+''`, or `''x+''`). From there, you can
+    read in one of four ways: `read()`, `readline()`, `readlines()`, or iteration.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For all of the examples in this section, I’ll read from the following text
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-16: *78SomewhereRd.txt*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The read() Method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'I can use the `read()` method to read the complete contents of the `78SomewhereRd.txt`
+    file like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-17: *read_house.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After acquiring the stream `house`, which I opened in read mode, I call the
+    `read()` method to read the entire file in as a single string, which I bind to
+    `contents`. Each of the lines in the *78SomewhereRd.txt* file ends with a newline
+    character (`\n`), and those are retained in the string. If I print `contents`
+    as a raw string via `repr()`, you can see the literal newline characters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This line of code outputs the following (redacted for brevity):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: (Remember, those literal `\n` characters are only there because I printed the
+    raw string. A normal print of contents would recognize the newline characters
+    and create new lines accordingly.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'By default, `read()` will read characters until the end of the file is encountered.
+    You can alter this behavior with the `size=` argument, which takes a maximum number
+    of characters to read. For example, to read a maximum of 20 characters from the
+    file (and less if the end of the file is encountered first), I would do the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-18: *read_house.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This would output the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: The readline() Method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The `readline()` method behaves exactly like `read()`, except that it reads
+    only up to and including a newline (`\n`), instead of just the end of the file.
+    I can use this to read the first two lines of the file. As before, I’m using `repr()`
+    to show the raw strings, as I want to actually *see* the newline characters for
+    the sake of the example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-19: *readline_house.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `house` stream remembers my position in the file, so after each call to
+    `readline()`, the stream position is set to the beginning of the next line. Running
+    this code outputs the first two lines, which I print as raw strings so I can see
+    the literal newline characters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `readline()` method also has a `size=` positional argument, which works
+    like `read(size=)`, except that it will stop at the first newline it encounters
+    if the size is greater than the line’s length.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The readlines() Method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'I can read all the lines in the file at once as a list of strings, using `readlines()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-20: *readlines_house.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each individual line is stored in a string, and all the strings are stored in
+    the list `lines`. Once I’ve read all of the lines, I’ll print each one out, removing
+    the trailing newline character from each string by using the `strip()` method
+    on the string object. This removes any leading and trailing whitespace characters,
+    including newlines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Running that code outputs this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `readlines()` method has a `hint=` parameter, which is similar to the `size=`
+    parameter on `read()`. The critical difference is that `readlines()` *always*
+    reads entire lines. If the number of characters specified in `hint=` is short
+    of the next newline, `readlines()` will still read up to (and including) that
+    next newline.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reading with Iteration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Streams themselves are iterators—they implement the `__iter__()` and `__next__()`
+    special methods. This means I can iterate over a stream directly!
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-21: *iterate_house.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The output is the same as in the last example, but this iterative approach doesn’t
+    have the overhead of creating a list I’ll only throw away after printing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re only reading a file once, direct iteration over the stream is usually
+    going to be the cleaner and (probably) more efficient solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the other hand, if you need to access the contents of a file more than once
+    in your program’s execution, you’ll almost always want to read the data into memory—that
+    is, to read it from the stream and store it in a typical Python collection or
+    other value. It’s always faster to read from a value in memory than from a file!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stream Position
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: After every read and write operation, your position in the stream will change.
+    You can use the `tell()` and `seek()` methods to work with the stream position.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `tell()` method returns your current stream position as a positive integer,
+    representing the number of characters from the start of the file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `seek()` method allows you to move back and forth within a stream, character
+    by character. When working with text streams, it accepts one argument: a positive
+    integer representing a new position to move to, represented by the number of characters
+    from the beginning. This method works on any stream, as long as it isn’t opened
+    in append mode (`''a''` or `''a+''`).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The most common use is to jump to the beginning of the file with `seek(0)`.
+    To demonstrate that, I’ll print out the first line of the *78SomewhereRd.txt*
+    file three times:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-22: *iterate_house.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After opening the file, I loop three times. On each iteration of the loop, I
+    print out the current line, with the newline removed with `strip()`. Then, I reposition
+    the stream at the beginning of the file, before the next loop iteration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: Additionally, you can skip to the end of the stream with `seek(0, 2)`, meaning
+    you’re moving `0` positions away from the end of the file (a `whence` of `2`).
+    When doing this, you must provide `0` as the first argument and `2` as the second
+    argument; nothing else works for this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `seek()` method can also be used to skip to other stream positions, not
+    just the start or the end. A trivial demonstration of this would be to skip one
+    character each time I read the opening line:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-23: *iterate_house_mangle.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead of passing `0` to `seek()`, I’m passing `n`, the iteration count from
+    the loop, before reading the line. On each iteration, the first line is printed
+    again, but with one less character at the beginning:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: That’s an interesting example, though it’s not very useful. Don’t worry—I’ll
+    employ `seek()` in a more practical fashion in some upcoming examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Writing Files
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The first thing to remember about writing to a stream is that you’re always
+    *overwriting*, never *inserting*! This doesn’t matter when you’re appending to
+    the end of a file, but in all other cases, it can cause confusion and undesired
+    results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When modifying a file, read the contents into memory, modify the file there,
+    and then write it out again, to reduce the chances of obliterating data because
+    of a bug. You can write out the new data either in place or to a temporary file
+    that you move into place. I’ll introduce the latter technique later on in this
+    chapter, when I discuss the `pathlib` module. For now, I’ll just overwrite files
+    in place. Either technique will prevent a lot of annoying and destructive bugs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are three ways to write to a stream: the `write()` method, the `writelines()`
+    method, and the `print()` function. Before using any of these, you must be certain
+    your stream is open in a writable file mode (anything except `''r''`) and know
+    your current stream position! All file modes but one have an initial stream position
+    at the beginning of the file. The exception is the append mode (`''a''` and `''a+''`),
+    which has an initial position at the end of the file. As you read from and write
+    to the stream, that position will change.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The write() Method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `write()` method writes the given string to the file, starting at the current
+    stream position, and it returns an integer representing how many characters it
+    wrote to the file. Remember, though, it overwrites any data that’s in the way,
+    from the stream position until the end of the new data. To prevent accidental
+    data loss, read the file into memory, modify the data there, and then write it
+    back out to the same file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'That property description in *78SomewhereRd.txt* isn’t very appealing. I’ll
+    write a program to improve the description and write the updated real estate listing
+    to the file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-24: *improve_real_estate_listing.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, I open the file in read-write mode. Instead of directly modifying the
+    file contents via the stream, I’ll read the file’s data into memory as a string,
+    binding it to `contents`. I’ll revise the description by working on this string,
+    rather than with the stream itself:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-25: *improve_real_estate_listing.py:2a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I use the `replace()` string method to replace the unappealing words and phrases
+    with more attractive ones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once I’m happy with the new version of my string, I can write it out to the
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-26: *improve_real_estate_listing.py:3a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I position myself at the start of the file, since I want to overwrite everything
+    there, using `real_estate_listing.seek(0)`. Then, I write the new contents of
+    the file. Any of the old contents that are in the way are overwritten.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The last remaining trouble is that the new contents are shorter than the old
+    contents, so some old data will be left hanging out at the end of the file. After
+    `write()`, the stream position is at the end of the new data I just wrote, so
+    I can clean up the leftovers from the old data with this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-27: *improve_real_estate_listing.py:4*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By default, the `truncate()` method erases everything from the current stream
+    position through to the end of the file. It does this by truncating (or shortening)
+    the file to a given number of bytes, which can be passed as an argument. If no
+    explicit size is passed in, `truncate()` uses the value provided by the `tell()`
+    method, which corresponds to the current stream position.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once the flow leaves the `with` statement, the stream is flushed and closed,
+    ensuring the changes to the file are written.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'That program doesn’t output anything on the command line. If I open the *78SomewhereRd.txt*
+    file, I can see the new description:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: The writelines() Method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Just as `readlines()` stores the contents of the file as a list of strings,
+    `writelines()` writes out a list of strings to a file. That is all it does. The
+    `writelines()` method doesn’t insert newline characters at the end of each string
+    in the list provided to it. The sole difference between `write()` and `writelines()`
+    is that the latter accepts a list of strings, instead of just a single string,
+    and returns nothing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I can modify the file using `writelines()`. For this example, I restored the
+    *78SomewhereRd.txt* file to what it was in [Listing 11-16](#listing11-16).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-28: *improve_real_estate_listing.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I open the file *78SomewhereRd.txt* as before, but this time, I read the contents
+    in with `real_estate_listing.readlines()`, which returns a list of strings I bind
+    to the name `contents`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, I make my changes to the description by modifying that list of strings.
+    Once again, I’m not working with the stream here at all, but rather with the list
+    of strings containing the data I read from the stream.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-29: *improve_real_estate_listing.py:2b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I iterate over each line in `contents`, make the necessary substitutions, and
+    store the modified lines in a new list, `new_contents`. I’ll be the first to admit
+    that this implementation is much less efficient than the version using `write()`,
+    but this technique becomes useful when you’re working with many lines that need
+    to be individually processed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, I can write out the new file contents using `writelines()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-30: *improve_real_estate_listing.py:3b-4*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I pass the list of strings to `writelines()`. Because the newline character
+    was retained at the end of each line as it was read in by `readlines()`, those
+    same newline characters are being written out. If I had removed them, however,
+    I would have had to add them back in manually before calling `writelines()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The output is the same for the example in the previous section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Writing Files with print()
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You know that `print()` outputs data using the `sys.stdout` stream by default,
+    but you can override this by passing a stream to the `file=` argument. One particular
+    use for this is to conditionally output either to the terminal or to a file. The
+    simple formatting features on `print()` make it an excellent alternative to `write()`,
+    in some cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The rules of usage are identical to `write()` and `writelines()`: you must
+    have a stream that is writable, and you must be mindful of the stream position.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To demonstrate this, I’ll rewrite the real estate listings table produced by
+    [Listing 11-14](#listing11-14) to output to a file, instead of the standard output.
+    I’ll reuse the `nearby_properties` dictionary from [Listing 11-7](#listing11-7):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-31: *print_file_real_estate_listing.py:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s my revised code for generating the real estate listings table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 11-32: *print_file_real_estate_listings.py:2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I open the file *listings.txt* in write mode, since I want to either create
+    or completely replace that file when this code runs. The loop iterating over `nearby_properties`
+    and the call to `print()` are both essentially unchanged from before. The difference
+    here is that I pass the `real_estate_listings` stream to the `file=` parameter
+    of `print()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output is the same as before, but it is written to the *listings.txt* file
+    instead of being printed to the terminal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Line Separators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If you have any experience with writing portable code, you may remember that
+    in Windows operating systems, lines are separated with both the carriage return
+    and the newline (`\r\n`), while only the newline (`\n`) is used in UNIX systems.
+    This difference can be a royal pain when working with files in many languages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the other hand, Python streams abstract this difference out behind the scenes.
+    When writing to a stream in text mode using `print()`, `write()`, or `writelines()`,
+    you only ever use the *universal newline*—which is the newline character (`\n`)—as
+    your line separator. Python will always substitute the system-appropriate line
+    separator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the same way, when reading from files using `read()`, `readline()`, or `readlines()`,
+    you only need to work with the newline character as the line separator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Context Manager Details
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: So far in this chapter, I’ve used a context manager via the `with` statement
+    every time I’ve opened a file, to idiomatically ensure streams are closed as soon
+    as they’re no longer needed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Like many of Python’s compound statements, `with` statements utilize certain
+    special methods to work with objects. This means `with` is not limited to streams:
+    it can be made to handle virtually any situation that calls for ``try-finally
+    logic. To demonstrate this, I’ll unpack precisely how the `with` statement interfaces
+    with streams, and then I’ll apply that knowledge to a custom class.``'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48] VAR = EXPR VAR.__enter__() try:     BLOCK finally:     VAR.__exit__()
+    [PRE49] real_estate_listing = open("213AnywhereAve.txt") try:     print(real_estate_listing.read())
+    finally:     real_estate_listing.close() [PRE50] real_estate_listing = open("213AnywhereAve.txt")
+    **real_estate_listing.__enter__()** try:     print(real_estate_listing.read())
+    finally:     **real_estate_listing.__exit__()** [PRE51] **with** open("213AnywhereAve.txt")
+    **as real_estate_listing:**     print(real_estate_listing.read()) [PRE52] with
+    open(''213AnywhereAve.txt'', ''r'') as left, open(''18SomewhereLn.txt'', ''r'')
+    as right:     # work with the streams left and right however you want [PRE53]
+    class House:     def __init__(self, address, house_key, **rooms):         self.address
+    = address         self.__house_key = house_key         self.__locked = True         self._rooms
+    = dict()         for room, desc in rooms.items():             self._rooms[room.replace("_",
+    " ").lower()] = desc      def unlock_house(self, house_key):         if self.__house_key
+    == house_key:             self.__locked = False             print("House unlocked.")         else:             raise
+    RuntimeError("Wrong key! Could not unlock house.")      def explore(self, room):         if
+    self.__locked:             raise RuntimeError("Cannot explore a locked house.")          try:             return
+    f"The {room.lower()} is {self._rooms[room.lower()]}."         except KeyError
+    as e:             raise KeyError(f"No room {room}") from e      def lock_house(self):         self.__locked
+    = True         print("House locked!") [PRE54] class HouseShowing:      def __init__(self,
+    house, house_key):         self.house = house         self.house_key = house_key
+    [PRE55]  def __enter__(self):         self.house.unlock_house(self.house_key)         return
+    self [PRE56]  def show(self, room):         print(self.house.explore(room)) [PRE57]  def
+    __exit__(self, exc_type, exc_val, exc_tb):       ❶ if exc_type:             print("Sorry
+    about that.")       ❷ self.house.lock_house() [PRE58] house = House("123 Anywhere
+    Street", house_key=1803,               living_room="spacious",               office="bright",               bedroom="cozy",               bathroom="small",               kitchen="modern")
+    [PRE59] with HouseShowing(house, house_key=9999) as showing:     showing.show("Living
+    Room")     showing.show("bedroom")     showing.show("porch") [PRE60] Traceback
+    (most recent call last):   File "context_class.py", line 57, in <module>     with
+    HouseShowing(house, 9999) as showing:   File "context_class.py", line 38, in __enter__     self.house.unlock_house(self.house_key)   File
+    "context_class.py", line 15, in unlock_house     raise RuntimeError("Wrong key!
+    Could not unlock house.") RuntimeError: Wrong key! Could not unlock house. [PRE61]
+    with HouseShowing(house, house_key=**1803**) as showing:     showing.show("Living
+    Room")     showing.show("bedroom")     showing.show("porch") [PRE62] House unlocked.
+    The living room is spacious. The bedroom is cozy. Sorry about that. House locked!
+    Traceback (most recent call last):   File "context_class.py", line 22, in explore     return
+    f"The {room.lower()} is {self._rooms[room.lower()]}." KeyError: ''porch''  The
+    above exception was the direct cause of the following exception:  Traceback (most
+    recent call last):   File "context_class.py", line 60, in <module>     showing.show("porch")   File
+    "context_class.py", line 42, in show     print(self.house.explore(room))  File
+    "context_class.py", line 24, in explore     raise KeyError(f"No room {room}")
+    from e KeyError: ''No room porch'' [PRE63] with HouseShowing(house, 1803) as showing:     showing.show("Living
+    Room")     showing.show("bedroom")     showing.show(**"kitchen"**) [PRE64] House
+    unlocked. The living room is spacious. The bedroom is cozy. The kitchen is modern.
+    House locked! [PRE65] from pathlib import PurePath path = PurePath(''../some_file.txt'')  with
+    open(path, ''r'') as file:     print(file.read())  # this is okay (assuming file
+    exists)  # create empty file if none exists path.touch()            # fails on
+    Pure paths! [PRE66] from pathlib import **Path** path = **Path**(''../some_file.txt'')  with
+    open(path, ''r'') as file:     print(file.read())  # this is okay (assuming file
+    exists)  # create empty file if none exists path.touch()            **# okay on
+    Path!** [PRE67] /path/to/file.txt [PRE68] import pathlib   def path_parts(path):     print(f"{path}\n")      print(f"Drive:
+    {path.drive}")     print(f"Root: {path.root}")     print(f"Anchor: {path.anchor}\n")      print(f"Parent:
+    {path.parent}\n")     for i, parent in enumerate(path.parents):         print(f"Parents
+    [{i}]: {parent}")      print(f"Name: {path.name}")     print(f"Suffix: {path.suffix}")     for
+    i, suffix in enumerate(path.suffixes):         print(f"Suffixes [{i}]: {suffix}")     print(f"Stem:
+    {path.stem}\n")      print("-------------------\n") [PRE69] path_parts(pathlib.PureWindowsPath(''C:/Windows/System/python37.dll''))
+    [PRE70] C:\Windows\System\python37.dll  Drive: C: Root: \ Anchor: C:\  Parent:
+    C:\Windows\System  Parents [0]: C:\Windows\System Parents [1]: C:\Windows Parents
+    [2]: C:\ Name: python37.dll Suffix: .dll Suffixes [0]: .dll Stem: python37 [PRE71]
+    path_parts(pathlib.PurePosixPath(''/usr/lib/x86_64-linux-gnu/libpython3.7m.so.1''))
+    [PRE72] /usr/lib/x86_64-linux-gnu/libpython3.7m.so.1  Drive:  Root: / Anchor:
+    /  Parent: /usr/lib/x86_64-linux-gnu  Parents [0]: /usr/lib/x86_64-linux-gnu Parents
+    [1]: /usr/lib Parents [2]: /usr Parents [3]: / Name: libpython3.7m.so.1 Suffix:
+    .1 Suffixes [0]: .7m Suffixes [1]: .so Suffixes [2]: .1 Stem: libpython3.7m.so
+    [PRE73] from pathlib import PosixPath  path = PosixPath(''/home/jason/.bash_history'')
+    [PRE74] with path.open(''r'') as file:     for line in file:         continue     print(line.strip())
+    [PRE75] w3m nostarch.com [PRE76] from pathlib import PosixPath  path = **PosixPath.joinpath(PosixPath.home(),
+    ''.bash_history'')** [PRE77] w3m nostarch.com [PRE78] from pathlib import PosixPath  path
+    = PosixPath.home() **/** ''.bash_history'' [PRE79] from pathlib import PosixPath  path
+    = **PosixPath(''~/.bash_history'').expanduser()** [PRE80] $ magic_program /home/jason/My_Nextcloud/DeadSimplePython/Status.txt
+    [PRE81] $ magic_program DeadSimplePython/Status.txt [PRE82] from pathlib import
+    Path print(Path.cwd()) [PRE83] from pathlib import Path path = Path(''../settings.ini'')
+    [PRE84] from pathlib import Path path = Path(''../settings.ini'').resolve() [PRE85]
+    omission-git/ ├── LICENSE.md ├── omission/ │   ├── __init__.py │   ├── __main__.py
+    │   ├── app.py │   ├── common/ │   ├── data/ │   ├── interface/ │   ├── game/
+    │   │   ├── __init__.py │   │   └── content_loader.py │   ├── resources/ │   │   ├──
+    audio/ │   │   ├── content/ │   │       └── content.txt │   │   ├── font/ │   │   └──
+    icons/ │   └── tests/ ├── omission.py ├── pylintrc ├── README.md └── .gitignore
+    [PRE86] from pathlib import Path  path = Path(''../resources/content/content.txt'')  with
+    path.open() as file:     data = file.read() [PRE87] print(Path.cwd())  # prints
+    ''/home/jason/Code/omission-git'' [PRE88] from pathlib import Path  path = Path(''**omission/**resources/content/content.txt'')  with
+    path.open() as file:     data = file.read() [PRE89] from pathlib import Path  path
+    = Path(**__file__**)**.resolve()** **path = path.parents[1] / Path(''**resources/content/content.txt**'')**  with
+    path.open() as file:     data = file.read() [PRE90] from pathlib import Path  path
+    = Path(''78SomewhereRd.txt'')  with path.open(''r'') as real_estate_listing:     contents
+    = real_estate_listing.read()     contents = contents.replace(''Tiny'', ''Cozy'')     contents
+    = contents.replace(''Needs repairs'', ''Full of potential'')     contents = contents.replace(''Small'',
+    ''Compact'')     contents = contents.replace(''old storage shed'', ''detached
+    workshop'')     contents = contents.replace(''Built on ancient burial ground.'',                                 ''Unique
+    atmosphere.'') [PRE91] tmp_path = path.with_name(path.name + ''.tmp'')  with tmp_path.open(''w'')
+    as file:     file.write(contents) [PRE92] tmp_path.replace(path)  # move the new
+    file into place of the old one [PRE93] **import json**  nearby_properties = {     "N.
+    Anywhere Ave.":  {         123: 156_852,         124: 157_923,         126: 163_812,         127:
+    144_121,         128: 166_356     },     "N. Everywhere St.":     {         4567:
+    175_753,         4568: 166_212,         4569: 185_123     } } [PRE94] with open(''nearby.json'',
+    ''w'') as jsonfile:     json.dump(nearby_properties, jsonfile) [PRE95] {     "N.
+    Anywhere Ave.": {         "123": 156852,         "124": 157923,         "126":
+    163812,         "127": 144121,         "128": 166356     },     "N. Everywhere
+    St.": {         "4567": 175753,         "4568": 166212,  "4569": 185123     }
+    } [PRE96] import json  with open(''nearby.json'', ''r'') as jsonfile:     nearby_from_file
+    = json.load(jsonfile) [PRE97] for k1, v1 in nearby_from_file.items():     print(repr(k1))     for
+    k2, v2 in v1.items():         print(f''{k2!r}: {v2!r}'') [PRE98] ''N. Anywhere
+    Ave.'' ''123'': 156852 ''124'': 157923 ''126'': 163812 ''127'': 144121 ''128'':
+    166356 ''N. Everywhere St.'' ''4567'': 175753 ''4568'': 166212 ''4569'': 185123
+    [PRE99]`'
+  prefs: []
+  type: TYPE_NORMAL

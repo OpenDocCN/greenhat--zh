@@ -1,0 +1,878 @@
+- en: '13'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Inheritance and Mixins
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Knowing when to use inheritance is even more important than knowing how. The
+    technique is extraordinarily useful for some situations but fantastically ill-suited
+    for most others, making it one of the more controversial topics in object-oriented
+    programming. Syntactically, inheritance is simple to implement. Logistically,
+    the issues surrounding it are so intricate and nuanced that it deserves a chapter
+    of its own.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When to Use Inheritance
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Inheritance can quickly get out of hand, primarily because it feels clever.
+    You must know when *not* to use it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While many languages use inheritance and polymorphism to allow working with
+    many different types of data, Python seldom has such a need. Instead, the language
+    uses duck typing, accepting an argument on the sole merit of its interface. For
+    example, Python does not force you to inherit from a particular base class to
+    make your object an iterator; instead, it recognizes any object with the methods
+    `__iter__()` and `__next__()` as an iterator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since a class is defined by its constituent data, inheritance should extend
+    this definition. If two or more classes need to contain the same sort of data
+    and provide the same interface, inheritance is likely justified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, the built-in `BaseException` class contains several common attributes
+    describing all exceptions. Other exceptions, such as `ValueError` and `RuntimeError`,
+    contain the same data, justifying their inheriting from `BaseException`. The base
+    class defines a common interface for interacting with this data. Derived classes
+    extend the interface and attributes to serve their needs as necessary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re tempted to use inheritance purely to require the implementation of
+    a particular interface in a derived class, or to allow extending a fairly complex
+    interface, consider using *abstract base classes* instead. I’ll come back to that
+    topic in Chapter 14.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Crimes of Inheritance
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Remember: ***decisions about object-oriented design must be based on the data
+    being encapsulated***. Bearing that rule in mind will help you steer clear of
+    many atrocities commonly seen in object-oriented code. There are many misuses
+    of inheritance, and I’ll cover a few of the most egregious here.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One major inheritance anti-pattern is the *god class*, which lacks a single
+    clear responsibility and instead stores or provides access to a large set of shared
+    resources. A god class quickly becomes bloated and unmaintainable. It’s better
+    to use class attributes to store anything that needs to be shared mutably between
+    objects. Even a global variable is less of an anti-pattern than a god class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another inheritance anti-pattern is the *stub class*, which is a class that
+    contains little to no data. Stub classes usually show up because the developer’s
+    motivations for inheritance were based on minimizing repeated code, rather than
+    a consideration of the encapsulated data. This creates a plethora of fairly useless
+    objects with unclear purposes. Better ways exist to prevent repeated code, such
+    as using ordinary functions from a module, instead of writing methods or employing
+    composition. Methods, and thus common code, can be shared between classes with
+    techniques like mixins and abstract base classes (Chapter 14).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mixins, which I’ll introduce later in this chapter, are really a form of composition
+    that just happens to leverage Python’s inheritance mechanisms. They aren’t an
+    exception to the rules.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The third reason for atrocious inheritance schemes is the devilish old desire
+    to produce “clever” code. Inheritance is a nifty-looking hammer, but don’t use
+    it to pound in screws. You get better architecture and fewer bugs with composition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Basic Inheritance in Python
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Before I dive into the deeper mechanics of inheritance, I want to properly cover
+    the basics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ll use the popular personal task management technique of bullet journaling
+    as an example. In real life, a *bullet journal* is a physical book made up of
+    one or more *collections*, which are titled sets of items—bulleted tasks, events,
+    and notes. There are different kinds of collections for different purposes. For
+    an example of inheritance in Python, I’ll write some classes that emulate a bullet
+    journal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, I will write a pared-down `Collection` class, which I’ll inherit from
+    shortly. Remember, a class should be crafted around its data, not its behavior.
+    To keep the example small, I’ll mainly write stub functions, with little to no
+    actual behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-1: *bullet_journal.py:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'By itself, a `Collection` in a bullet journal only needs three things: a title
+    (`self.title`), its page numbers (`self.page_start` and `self.page_end`), and
+    its items (`self.items`).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I add a `__str__()` special instance method for displaying the title when the
+    collection is converted to a string. Implementing this method means I can directly
+    `print()` a `Collection` object. I also offer two instance methods: `expand()`,
+    for adding another page to the collection; and `add_item()`, for adding an entry
+    to the collection. (I skipped writing the logic for this method for brevity.)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, I’ll write a class for the `MonthlyLog`, which is a specialized type of
+    `Collection` for tracking events and items in the context of an entire month.
+    It still has to have a title, page numbers, and a set of items. In addition, it
+    needs to store events. Because it *extends* the data stored, inheritance is a
+    good fit for this situation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-2: *bullet_journal.py:2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You will recall from Chapter 7 that, when instantiating a derived class, one
+    must explicitly call the initializer of the base class. I do that here with `super().__init__()`
+    ❶. I create the title from `month` and `year` ❷, and I also pass the `page_start`
+    and `length` arguments directly. The base class initializer creates these instance
+    attributes, which will be accessible to the `MonthlyLog` object because it inherits
+    from `Collection` ❸.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I override the `__str__()` special instance method, this time appending `"(Monthly
+    Log)"` to the collection title.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I also define the instance method `add_event()` specifically for `MonthlyLog`,
+    for logging events on the calendar view I would store in `self.events`. I won’t
+    implement this calendar behavior here because it’s pretty involved and also irrelevant
+    to the example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s one more derived class, `FutureLog`, which is a collection belonging
+    to one of the next six months:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-3: *bullet_journal.py:3*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `FutureLog` class also inherits from `Collection`, with the added attribute
+    `self.months`, which is a list of months. The class also has a predefined title
+    and length, which I pass to the `Collection` initializer via `super.__init__()`,
+    as I did in `MonthlyLog`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I also override the instance method `add_item()` so it now accepts `month` in
+    addition to the other arguments and so would store the `bullet`, note, and `signifier`
+    in the appropriate month in `FutureLog`. The `month` parameter is optional, so
+    I don’t violate the Liskov Substitution Principle. As before, I’ve skipped the
+    implementation here to keep things moving along.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I want to briefly mention that, much like how I can check if an object is an
+    instance of a class with `isinstance()`, I can check if a *class* is derived from
+    another class with `issubclass()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here’s a very basic usage of my classes, in which I create a `FutureLog`, a
+    `MonthlyLog`, and a `Collection`, adding some items to each:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-4: *bullet_journal.py:4*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because I wrote so many stub functions, this won’t do much, but the fact that
+    it doesn’t fail at least proves what’s working. (Famous last words, I know.) A
+    derived class has the same attributes and methods as its base class, but it can
+    override any of those and add more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multiple Inheritance
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When a class inherits from multiple base classes, it gains all of the attributes
+    and methods of those base classes. This is known as *multiple inheritance*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In languages that permit it, multiple inheritance can be a powerful tool, but
+    one that presents many thorny challenges. I’ll therefore discuss how Python gets
+    around many of these obstacles and what issues remain. As with normal inheritance,
+    your decision about whether to use multiple inheritance should be based primarily
+    on the data, rather than just on the desired functionality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Method Resolution Order
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One potential issue with multiple inheritance occurs if more than one base class
+    has a method of the same name. Suppose you have a class `Calzone`, which inherits
+    from both `Pizza` and `Sandwich`, and both base classes provide a method `__str__()`.
+    If I call `__str__()` on an instance of `Calzone`, Python must *resolve* which
+    method to call, meaning it must decide which class’s `__str__()` method to execute.
+    The rule the language uses to perform this resolution is called the *method resolution
+    order*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, I’ll explain how Python determines the method resolution order.
+    To check the method resolution order on a particular class, consult that class’s
+    `__mro__` attribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here are the classes for my `Calzone` multiple-inheritance scenario:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-5: *calzone.py:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The classes `Pizza` and `Sandwich` are both derived from the `Food` class. A
+    `Calzone` is considered both a type of `Pizza` and a type of `Sandwich`, so it
+    inherits from both of those classes. The question is, what will be printed when
+    this code runs?
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-6: *calzone.py:2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Which version of the `__str__()` special instance method is `Calzone` inheriting?
+    Because both `Pizza` and `Sandwich` derive from `Food` and both override the special
+    instance method `__str__()`, Python must resolve the ambiguity about which class’s
+    implementation of `__str__()` to use when `Calzone.__str__()` is called.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The situation above is known in software development as the *diamond inheritance
+    problem*, or sometimes more ominously as the “Deadly Diamond of Death” (cue scary
+    thunder). It’s one of the nastier method resolution problems that arise with multiple
+    inheritance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Python solves the diamond inheritance problem with a straightforward approach:
+    a technique known as the *C3 Method Resolution Order (C3 MRO)*, or more formally,
+    the *C3 superclass linearization*. (Try saying that 10 times fast.) Python does
+    this automatically, behind the scenes. You need only know how it functions so
+    you can use it to your advantage.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In short, the C3 MRO involves generating a *superclass linearization*—a list
+    of base classes each class inherits from—following a simple set of rules. The
+    superclass linearization is the order in which classes are searched for the method
+    being called.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To demonstrate this, here’s the linearization list of the first class, `Food`.
+    In the (non-Python) notation here, `L[Food]` is the linearization of class `Food`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Like all classes in Python, `Food` inherits from the ubiquitous `object`, so
+    the linearization is `Food, object`. In this linearization, `Food` is considered
+    the *head*, meaning it’s the first item in the linearization list and thus the
+    next class to be considered. The rest of the list is considered the *tail*. In
+    this case, the tail is just one item: `object`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `Pizza` class inherits from `Food`. To do this, Python must look at the
+    linearization of each class `Pizza` directly inherits from and consider each item
+    in the linearization in turn.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following non-Python notation, I’m using `merge()` to indicate the linearizations
+    from base classes I have yet to consider. By the time I’m done, `merge()` should
+    be empty. Each linearization is wrapped in curly braces (`{ }`). The class being
+    considered in each step is in `italics`, and a class that has just been added
+    to the linearization on that step is in `bold`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using this notation, I can illustrate the linearization process for `Pizza`.
+    The C3 MRO here will traverse the heads from left to right. In creating the superclass
+    linearization for `Pizza`, the C3 MRO doesn’t care what methods each class has;
+    it only cares where a class appears in the linearizations it is merging:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Python first considers whether to add the leftmost head—the current class,
+    `Pizza`—to the linearization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: If a head class is not in any tail for any linearization being merged, it is
+    added to the new linearization and removed from any other positions. Since `Pizza`
+    doesn’t appear in any tail, it is added to the linearization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, Python examines the new leftmost head, which is the head of the linearization
+    that needs to be merged:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `Food` class doesn’t appear in any tail, so it is added to the `Pizza`
+    linearization and removed from the linearization being merged:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'That means `object` is the new head of the linearization being merged. Python
+    now considers this new head. Since `object` doesn’t appear in any tail—obviously,
+    since the only linearization being merged no longer has a tail—it can be added
+    to the new linearization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There is nothing left to merge. The linearization for `Pizza` is `Pizza`, `Food`,
+    and `object`. The `Sandwich` class evaluates to nearly the same linearization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: This gets a little more complicated with multiple inheritance, so let’s consider
+    the `Calzone` class. I will need to merge the linearizations of `Pizza` and `Sandwich`,
+    in that particular order, matching the order of the classes in `Calzone`’s inheritance
+    list ([Listing 13-5](#listing13-5)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The C3 MRO first inspects the leftmost head, `Calzone`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Since `Calzone` doesn’t appear in any tail, it’s added to the new linearization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: The new leftmost head to be considered is `Pizza`. It, too, doesn’t appear in
+    any tail, so it is also added to the new linearization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: When `Pizza` is removed from the linearizations being merged, `Food` becomes
+    the new head of that first linearization. As it’s the new leftmost head, it’s
+    considered next. However, `Food` also appears in the tail of the linearization
+    headed by `Sandwich`, so it cannot be added to the linearization yet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The next head is considered instead:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Sandwich` doesn’t appear in any tails, so it can be added to the new linearization
+    and removed from the linearizations being merged. The C3 MRO goes back to considering
+    the leftmost head, which is `Food`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `Food` class appears as the head of both linearizations being merged, but
+    not in any tails, so it can be added. It is also removed from all linearizations
+    to be merged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: This leaves only `object` as the head in each linearization to merge. Since
+    it appears only as a head, not as a tail, it can be added.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: There’s the finished superclass linearization for `Calzone`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To think of that another way, the linearization process will always look for
+    the next-nearest ancestor of the class being considered, as long as that ancestor
+    is not being inherited by any ancestor not yet considered. For `Calzone`, the
+    next-nearest ancestor is `Pizza`, which isn’t inherited by either `Sandwich` or
+    `Food`. The `Sandwich` class is next, and only once both `Pizza` and `Sandwich`
+    are accounted for can their common ancestor, `Food`, be added.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bearing this in mind and revisiting that question of ambiguity from [Listing
+    13-6](#listing13-6), repeated below, which version of `__str__()` gets called
+    here?
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In order to determine which base class is providing the `__str__()` method
+    being called, the superclass linearization for `Calzone` is consulted. According
+    to the method resolution order, Python would first check `Calzone` for a `__str__()`
+    method. Failing to find that, it checks `Pizza` next and finds the desired method.
+    Sure enough, running this code, the output is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Ensuring Consistent Method Resolution Order
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When using multiple inheritance, the order in which you specify base classes
+    matters. Here, I’ll create a `PizzaSandwich` class, representing a sandwich where
+    you use slices of pizza instead of bread:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-7: *calzone.py:3a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `PizzaSandwich` class derives from `(Sandwich, Pizza)`. Recall that `Calzone`
+    inherits from `(Pizza, Sandwich)`. Both `PizzaSandwich` and `Calzone` have the
+    same base classes, but they inherit from them in different orders. That means
+    that `PizzaSandwich` has a slightly different linearization than `Calzone`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: If I went overboard and put a calzone between two slices of pizza, I’d get a
+    `CalzonePizzaSandwich`, which inherits from `(Calzone, PizzaSandwich)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since `Calzone` and `PizzaSandwich` inherit from the same base classes in different
+    orders, what will happen when I try to resolve the `__str__()` method on `CalzonePizzaSandwich`?
+    Here’s how the C3 MRO tries to solve that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The leftmost head, `CalzonePizzaSandwich`, is considered and added first, since
+    it doesn’t appear in any tails:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: The new leftmost head, `Calzone`, is checked next and added.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Next, the C3 MRO looks at `Pizza`, the new leftmost head. It skips this class
+    for now, since `Pizza` appears in the tail of one of the lists.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, it considers the next head, `PizzaSandwich`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'That class can be added, since it’s only a head. After adding `PizzaSandwich`
+    to the new linearization and removing it from the linearizations to merge, the
+    C3 MRO reconsiders the leftmost head:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Pizza` is still not eligible to be added, since it’s still in the tail of
+    the second linearization. The head of the next list, `Sandwich`, is considered
+    next:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'No dice! `Sandwich` appears in the tail of the first linearization being merged.
+    Python cannot determine the method resolution order here because both heads in
+    the last step, `Pizza` and `Sandwich`, are also in the tail of the other linearization.
+    The `CalzonePizzaSandwich` class would cause Python to raise the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The fix for this particular situation is trivial: I’d need to switch the order
+    of base classes on `PizzaSandwich`, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-8: *calzone.py:3b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now, the linearization of `CalzonePizzaSandwich` works:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: When using multiple inheritance, pay close attention to the order in which you
+    specify base classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Be aware that the fixes aren’t always trivial, like in my example here. As
+    you can imagine, the problem is made worse when inheriting with three or more
+    classes. I won’t go into these here, but know that understanding the C3 MRO is
+    a major part of the solution. Raymond Hettinger outlines some other techniques
+    and considerations in his article “Python’s super() considered super!” which you
+    can read here: [https://rhettinger.wordpress.com/2011/05/26/super-considered-super/](https://rhettinger.wordpress.com/2011/05/26/super-considered-super/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To learn more about the C3 MRO, I recommend the article that accompanied the
+    addition of this MRO to Python 2.3: [https://www.python.org/download/releases/2.3/mro/](https://www.python.org/download/releases/2.3/mro/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Interestingly, aside from Python, only a handful of relatively obscure languages
+    use the C3 MRO by default; Perl 5 and onward offers it optionally. It’s one of
+    the relatively unique advantages of Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Explicit Resolution Order
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'While you must always work out the correct inheritance order for your code
+    to run, you can also explicitly call methods on the base classes you want:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-9: *calzone.py:3c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This will ensure that `CalzonePizzaSandwich.__str__()` calls `Calzone.__str__()`,
+    regardless of the method resolution order. You will notice that I have to pass
+    `self` explicitly, since I’m calling the `__str__()` instance method on the `Calzone`
+    class and not on an instance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Resolving Base Class in Multiple Inheritance
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Another challenge with multiple inheritance is ensuring the initializers for
+    all the base classes are called, with the right arguments passed to each. By default,
+    if a class doesn’t declare its own initializer, Python will use the method resolution
+    order to find one. Otherwise, if an initializer is declared by a derived class,
+    it won’t implicitly call the base class initializers; that must be done explicitly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Your first thought might be to use `super()` for this. Indeed, that can work,
+    but only if you have planned it out in advance! The `super()` function looks at
+    the next class (not the current class) in the superclass linearization for the
+    instance. If you’re not expecting this, it can lead to some freaky and unexpected
+    behavior or errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To demonstrate how this should be handled, I’ll add initializers on my first
+    three classes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-10: *make_calzone.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because `Pizza` and `Sandwich` both inherit from `Food`, they need to call the
+    initializer on `Food` via `super().__init__()` and pass the required argument,
+    `name` ❶. All is working as expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But `Calzone` is trickier, since it needs to call `__init__()` on both `Pizza`
+    *and* `Sandwich`. Calling `super()` only provides access to the first base class
+    in the method resolution order, so this would still only call the initializer
+    on `Pizza`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-11: *make_calzone.py:2a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The method resolution order on `Calzone` means that `super().__init__()` calls
+    the initializer on `Pizza`. However, the call to `super().__init__()` in `Pizza.__init__()`
+    ([Listing 13-10](#listing13-10)) will now try to call `__init__()` on the next
+    class in the linearization for the `Calzone` instance. That is, `Pizza`’s initializer
+    will now call `Sandwich.__init__()`. Unfortunately, it will pass the wrong arguments,
+    and the code will throw a rather confusing `TypeError`, complaining about a missing
+    argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The easiest way to handle initializers with multiple inheritance might seem
+    to be to call the `Pizza` and `Sandwich` initializers directly and explicitly,
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-12: *make_calzone.py:2b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This doesn’t solve the problem because my use of `super()` in the base classes
+    still doesn’t play well with the multiple inheritance. Also, if I were to change
+    the base classes, or even just their names, I would also have to rewrite the `Calzone`
+    initializer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The preferred method is to still use `super()` and write the base classes of
+    `Sandwich` and `Pizza` to be used *cooperatively*. This means their initializers,
+    or any other instance methods meant to be used with `super()`, can work either
+    alone or in the context of multiple inheritance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the initializers to work cooperatively, they must not make assumptions about
+    what class will be called with `super()`. If I initialize `Pizza` by itself, then
+    `super()` will refer to `Food`, but when `Pizza.__init__()` is accessed via `super()`
+    from an instance of `Calzone`, it will refer to `Sandwich` instead. It all depends
+    on the method resolution order on the instance (rather than the class).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here, I’ll rewrite `Pizza` and `Sandwich` so their initializers are cooperative:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-13: *make_calzone.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Both initializers will accept keyword arguments and must also accept any other
+    unknown keyword arguments in the variadic parameter, `**kwargs`. This is important,
+    as it will be impossible to know in advance all the arguments that may be passed
+    up via `super().__init__()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each initializer explicitly accepts the arguments it needs, and then it sends
+    the rest up the method resolution order via `super().__init__()`. In both cases,
+    however, I provide a default value for `name` for when `Pizza` or `Sandwich` is
+    instantiated directly. I pass name up to the next initializer, along with all
+    the leftover arguments (if any) in `**kwargs`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To use these cooperative initializers, the new `Calzone` class looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Listing 13-14: *make_calzone.py:2**c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I only need one call to `super().__init__()`, which will point to `Pizza.__init__()`,
+    due to the method resolution order. However, I pass all the arguments for all
+    the initializers in the superclass linearization. I only use keyword arguments,
+    each with a unique name, to ensure that every initializer can pick up what it
+    needs, regardless of the method resolution order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Pizza.__init__()` uses the `toppings` keyword argument and then passes the
+    rest on. `Sandwich.__init__()` is next in the method resolution order, and it
+    picks up `bread` and `fillings` before passing `name` up to the next class, `Food`.
+    More importantly, this code will still work, even if I swap the order of `Pizza`
+    and `Sandwich` in the inheritance list for `Calzone`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see from just that simple example, designing cooperative base classes
+    requires some careful planning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mixins
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: One particular upside of multiple inheritance is that you can work with mixins.
+    A *mixin* is a special type of incomplete (and even invalid) class that contains
+    functionality you might want to add to multiple other classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Typically, mixins are used to share common methods for logging, database connections,
+    networking, authentication, and much more. Whenever you need to reuse the same
+    methods (not just functions) across multiple classes, mixins are one of the best
+    ways to accomplish that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mixins do use inheritance, but they are the exception to the rule that inheritance
+    decisions should be based on data. Mixins essentially rely on a form of *composition*
+    that happens to leverage the inheritance mechanism. A mixin seldom has its own
+    attributes; instead, it often relies its on expectations about the attributes
+    and methods of the classes that use it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In case that’s making your brain hurt a bit, here’s an example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Say I’m creating an application that relies on a *live* settings file that can
+    be updated at any time. I’ll write multiple classes that need to grab information
+    from this settings file. (In reality, I’m only writing one such class for the
+    example. You can imagine the rest.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, I create the file *livesettings.ini*, which I’ll store in the same directory
+    as the module I’m about to write. Here are contents of that *.ini* file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-15: *livesettings.ini*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next is my mixin, which contains only the functionality for working with this
+    settings file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-16: *mixins.py:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The class `SettingsFileMixin` is not a complete class by itself. It lacks an
+    initializer and even refers to an instance attribute it doesn’t have, `self.settings_section`.
+    This is okay, as mixins are never intended to be used by themselves. That missing
+    attribute will need to be provided by any class that uses the mixin.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The mixin does have a couple of class attributes, `settings_path` and `config`.
+    Most importantly, it has a `read_setting()` method, which reads a setting from
+    the *.ini* file. This method uses the `configparser` module to read and return
+    a setting specified by `key` from a particular section: `self.settings_section`,
+    in the *.ini* file that the class attribute `settings_path` points to. If the
+    section, the key, or even the file does not exist, the method will raise a `KeyError`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s a class that prints a greeting to the user. I want this class to acquire
+    the username from the *livesetting.ini* file. To do that, I’ll have this new class
+    use the mixin `SettingsFileMixin` by inheriting from it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-17: *mixins.py:2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `Greeter` class is initialized with a string to use as the greeting. In
+    the initializer, I define that `self.settings_section` instance attribute upon
+    which the `SettingsFileMixin` relies. (In a production-quality mixin, you’d document
+    the necessity for this attribute.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `__str__()` instance method uses the `self.read_setting()` method from the
+    mixin, as if it had been defined as part of this class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The usefulness of this becomes obvious if I add another class, such as one
+    that works with the `MagicNumber` value from *livesetting.ini*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-18: *mixins.py:3*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I can have as many classes as I want read from *livesetting.ini* by having them
+    inherit `SettingsFileMixin`. That mixin provides the single canonical source of
+    that functionality in my project, so any improvements or bug fixes I make to the
+    mixin will be picked up by all the classes that use it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s an example usage of my `Greeter` class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 13-19: *mixins.py:4*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I run the `print()` statement in a loop to demonstrate the effects of changing
+    the `livesettings.ini` file live.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you’re trying this out along with the book, open the *.ini* file before
+    starting the module and change `UserName` to yours, *but do not save the changes
+    yet*. Now run the *mixins.py* module. Once it starts, save the changes to *livesettings.ini*
+    and observe the change:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: Wrapping Up
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '*Inheritance* isn’t quite the dirty word in Python that it sometimes is in
+    other languages. It provides the mechanism for extending classes and enforcing
+    interfaces, resulting in clean and well-structured code in situations that would
+    otherwise lead to spaghetti.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multiple inheritance works well in Python, thanks to the C3 linearization method
+    resolution order, which sidesteps most of the problems usually presented by the
+    diamond inheritance problem. This, in turn, makes it possible to use mixins to
+    add methods to classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With all these shiny, clever-looking tools, it is important to remember that
+    inheritance in its many forms can also easily get out of hand. Before employing
+    any of the tactics in this chapter, you should fully determine what problem you’re
+    trying to solve. At the end of the day, your goal is to create readable, maintainable
+    code. Although inheritance can detract from this when used wrong, if employed
+    judiciously, these techniques can make your code significantly easier to read
+    and maintain.**
+  prefs: []
+  type: TYPE_NORMAL

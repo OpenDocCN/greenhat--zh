@@ -1,0 +1,1523 @@
+- en: '17'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Threading and Parallelism
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Before the advent of asynchrony in Python, you had two options to improve the
+    responsiveness of your program: *threading* and *multiprocessing*. Although the
+    two concepts are often seen as related, and even interchangeable in some languages,
+    they couldn’t be more different in Python.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Threading* is a means of achieving concurrency, which is useful in working
+    around IO-blocking tasks, wherein the code is limited by the speed of something
+    external, like user input, the network, or another program. It is not useful by
+    itself for working around CPU-blocking tasks, wherein the magnitude of processing
+    is the cause of code slowdowns.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Parallelism* is a technique used to deal with CPU-blocking tasks, by running
+    different tasks at the same time on separate CPU cores. *Multiprocessing* is the
+    way we accomplish parallelism in Python. It was introduced to the language in
+    Python 2.6.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concurrency and parallelism are often essential when programming user interfaces,
+    scheduling events, working with networks, and performing labor-intensive tasks
+    in code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Unsurprisingly, there is a lot to threading and multiprocessing, far beyond
+    the conceivable scope of this book. This chapter will anchor you in the core concepts
+    of concurrency and parallelism in Python. From there, you can consult the official
+    documentation: [https://docs.python.org/3/library/concurrency.xhtml](https://docs.python.org/3/library/concurrency.xhtml).
+    I’ll assume you have already read Chapter 16, as I’ll be reworking the Collatz
+    example I introduced throughout that chapter.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Threading
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A single sequence of instructions in a program is called a *thread of execution*,
+    which is usually just referred to as a *thread*. Any Python program not written
+    with concurrency or multiprocessing is contained within a single thread. *Multithreading*,
+    typically just called *threading*, achieves concurrency by running multiple threads
+    simultaneously in the same *process*, which is an instance of a running computer
+    program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In Python, only one thread can run at a time within a single process, so multiple
+    threads have to take turns. Threading is also known as preemptive multitasking,
+    because the operating system is *preempting*, or seizing control from, one running
+    thread to give another thread a turn. This contrasts with asynchrony, also known
+    as cooperative multitasking, wherein a particular task voluntarily gives up control.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While threading is mediated by the operating system, your code is responsible
+    for starting the threads and managing the data they share. This is not a simple
+    task, and a large portion of this chapter will focus on the difficulties of sharing
+    data between threads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concurrency vs. Parallelism
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Although they are often confused, concurrency and parallelism are not the same
+    thing! According to Go co-creator Rob Pike, *concurrency* is the composition of
+    multiple tasks, while *parallelism* involves running multiple tasks at the same
+    time. Parallelism can be brought in as part of a concurrent solution, but you
+    should first understand the concurrent design of your code before you invite multiprocessing
+    to the party. (I highly recommend watching Pike’s talk “Concurrency is not Parallelism”
+    from the Heroku Waza conference: [https://blog.golang.org/waza-talk/](https://blog.golang.org/waza-talk/).)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In many programming languages, threading also achieves parallelism as a side
+    effect of the language and system architecture. This is part of the reason why
+    many confuse concurrency with parallelism. However, Python’s Global Interpreter
+    Lock prevents this implicit parallelism, since any Python process is constrained
+    to run on a single CPU core.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Basic Threading
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Python, the `threading`, `concurrent.futures`, and `queue` modules provide
+    all the classes, functions, and tools you’ll need to work with threading. I’ll
+    use all three in this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To use threading effectively, first identify the IO-bound tasks in your code
+    and isolate each such task behind a single function call. This design will make
+    it easier to thread individual tasks later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case of my Collatz example from Chapter 16, the function `get_input()`
+    is IO-bound, since it waits on input from the user. The rest of the code is not
+    IO-bound, so it can run synchronously. I want to run `get_input()` on a separate
+    thread, so it can run concurrently with the rest of the program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you’re coding along with me, open a fresh copy of *collatz_sync.py* (Listings
+    16-1 through 16-6) in your code editor. In [Listing 17-1](#listing17-1), I have
+    the original synchronous version of the `collatz()` and `length_counter()` methods.
+    I import the `threading` module at the top, as I’ll be using functions from that
+    module throughout this version of my program:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-1: *collatz_threaded.py:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I need to iron out one little wrinkle in my prior design as I introduce threading:
+    a function being run in a separate thread cannot return a value to the caller,
+    but all my original functions return values. I therefore need a different solution
+    for passing those values around.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The naive solution would be to create some sort of central location where the
+    threaded function can store its data, and the most quick-and-dirty way to accomplish
+    this is with a global name:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-2: *collatz_threaded.py:2a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `get_input()` function stores its return value in the new global name `guess`
+    and then returns directly anyway.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Okay, yes, that design is repulsively non-Pythonic for this use case, and I’ll
+    build a cleaner solution a bit later, but it’ll do for the moment. However, this
+    version is analogous to a real-world pattern that *can* be Pythonic: you may need
+    to allow threads to store data in a central, shared location, such as a database.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now for the interesting part. I need to thread the function call—namely, `get_input()`—that
+    I want to execute concurrently:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-3: *collatz_threaded.py:3a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The program can’t do anything until it gets the target value from the user,
+    so I call `get_input()` the ordinary (synchronous) way the first time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I want the *second* call to `get_input()`, wherein the user enters their guess,
+    to run concurrently with the CPU-intensive Collatz calcuations. To run this concurrently,
+    I create a thread with `threading.Thread()`. I pass the function to run in the
+    thread to the `target=` keyword argument of `Thread()`. Any arguments that must
+    be passed to the function being threaded have to be passed as a tuple to `args=`.
+    (Note the trailing comma in the code above!) When the thread starts, it will call
+    `get_input()` and pass it the arguments specified in `args=`. In this case, I
+    am threading the call to `get_input()` and passing the input prompt message as
+    a string.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I bind the thread object I created to `t_guess` and then start it in the background
+    with `t_guess.start()`, so my code can continue as normal without waiting for
+    the `get_input()` function to return.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now I can start the CPU-intensive step of calling `length_counter()` synchronously.
+    While I could thread this, too, there’s no point, as my program can’t really do
+    anything else until `length_counter()` returns a value. Threads are quite a bit
+    more expensive than asynchronous tasks, in terms of performance overhead for creating
+    them. Therefore, you should only create threads when they provide a direct benefit
+    to your program’s performance or perceived responsiveness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once `length_counter()` has finished, the program really can’t do anything more
+    until the thread for `get_input()` is done working and has stored its return value
+    in `guess`. I *join* the thread with `t_guess.join()`, meaning the code will wait
+    for the thread to finish its work before continuing. If the thread is already
+    done, the call to `t_guess.join()` it will immediately return.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'From there, the program carries on as normal. If you run this complete program,
+    you’ll find it has the same behavior as the asynchronous version in Chapter 16:
+    the calculations happen while the program waits on the user to input their guess.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timeouts
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Notice that the program hangs while waiting for a thread to finish up. For [Listing
+    17-3](#listing17-3), this is perfectly safe, as any delay in this scenario would
+    come from the user being slow about entering a value. However, you would be justified
+    in being a bit wary of this indefinite suspension. If your thread is IO-bound
+    from using a network connection or another system process, an unexpected error
+    might cause the thread to never return! Your program would hang indefinitely,
+    without an explanation or error message, until the operating system reports to
+    your bewildered user, `The program has stopped responding`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To help mitigate this issue, you can introduce a *timeout*. This specifies the
+    maximum time until the program gives up waiting on a thread to join, after which,
+    it carries on with or without it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To demonstrate this, I’ll annoy my Collatz game user by making the program a
+    bit impatient. (Yes, this is an absolutely terrible game design choice, but it’s
+    better than dragging you through a fresh example, right?)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-4: *collatz_threaded.py:3b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I pass the `timeout=1.5` keyword argument to `join()` to specify that, once
+    the `join()` statement is reached, the program should only wait for one and a
+    half seconds before continuing, regardless of whether the thread has finished.
+    In effect, this means the user only has one and a half seconds to enter their
+    answer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bear in mind, if the `join()` times out, it doesn’t actually affect the thread
+    at all. It’s still running in the background. The main program just doesn’t wait
+    around for it anymore.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To determine whether a timeout has occurred, I check whether the thread is still
+    alive. If it is, I complain to the user and quit the program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Daemonic Threads
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Another consideration is that exiting the main thread will *not* terminate the
+    other threads. In [Listing 17-4](#listing17-4), if I timed out waiting for the
+    `t_guess` thread, even when I reached the return statement, ending the main flow
+    of execution, that `t_guess` thread would keep running in the background indefinitely.
+    That’s a problem, especially as the user would expect the program to have quit
+    in its entirety.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even so, Python deliberately supplies no obvious way of killing a thread, because
+    doing so can result in some horrible effects, including utterly mangling your
+    program state. However, without a way to abort the thread, it would hang forever
+    after the complaint, and entering data would then do nothing. Once again, if the
+    hanging thread were due to something like a network error, then either your program
+    would go unresponsive, or the waiting thread would keep running in the background
+    long after the main program was closed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To mitigate this here, I make my thread *daemonic*, meaning I tie its lifespan
+    to the lifespan of the process (the main program). When the main thread ends,
+    all the associated daemonic threads are killed as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I define a thread as daemonic when I create it, by specifying the keyword argument
+    `daemon=True`, as I did in [Listing 17-4](#listing17-4). Now, when I exit the
+    main program, the thread is aborted too.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Futures and Executors
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: That quick-and-dirty global-name technique for passing things around is less
+    than ideal for this example, largely because global names are too easily shadowed
+    or improperly mutated. On the other hand, I don’t want to introduce side effects
+    into my `get_input()` function by passing some mutable collection to store the
+    data in instead. I need a more resilient way to return a value from the thread.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is possible, thanks to *futures*, which are sometimes known as promises
+    or delays in other languages. A future is an object that will contain a value
+    at some point in the future but can be passed around like a normal object, even
+    before it contains that value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Carrying on with our current example, I import the `concurrent.futures` module
+    that provides futures. Futures also provide a way to create threads directly,
+    so I no longer need the `threading` module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-5: *collatz_threaded.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this version, I won’t be needing the global name `guess` for storing the
+    return value from `get_input()`, so I’ll just remove the two lines that use it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-6: *collatz_threaded.py:2b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The function now looks like the synchronous version, although it will still
+    work with threading via futures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In my main method, I start the thread with a `ThreadPoolExecutor` object. This
+    is a type of *executor*—an object that creates and manages threads:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-7: *collatz_threaded.py:3c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I create a new `ThreadPoolExecutor` and bind it to the name `executor`. This
+    name is conventional for thread pools and other executors. Then, I create a new
+    thread in that pool with `executor.submit()`, passing the function to be threaded,
+    as well as all its arguments. Unlike when I’m instantiating from a `threading.Thread`
+    object, I do *not* need to wrap the arguments in a tuple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The call to `executor.submit()` returns a future, which I bind to the name `future_guess`.
+    The future object will eventually contain the value returned by `get_input()`,
+    but at the moment, it’s nothing more than a promise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: From here, I continue as normal, running those heavy calculations via `length_counter()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once that’s done, I get the final value of the future with `future_guess.result()`.
+    Like when joining a thread, this will hang until the thread returns a value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After all the threads managed by the executor are done, I need to tell the executor
+    to clean up after itself, which I accomplish with `executor.shutdown()`. This
+    is safe to call, even before the threads are finished, as it will shut down the
+    executor once all threads are finished. Once you’ve called `shutdown()` on an
+    executor, attempting to start new threads with it will raise a `RuntimeError`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A `with` statement can automatically shut down an executor in the same way it
+    can automatically close files. This is useful, in case you forget to shut down
+    your executor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-8: *collatz_threaded.py:3d*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The call to `executor.shutdown()` occurs automatically at the end of the `with`
+    statement. Any statements that should run concurrently with the thread(s) must
+    be in the suite of the `with`, as it won’t be possible for main control flow to
+    leave the `with` statement until all the threads are finished.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this case, I chose to retrieve the result of the future after the thread
+    pool has been shut down, outside of the `with` statement. This order isn’t strictly
+    necessary, but it doesn’t hurt, since the thread pool’s preceding shutdown also
+    implies the thread is done, so there will be no waiting to retrieve from the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Timeouts with Futures
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The `result()` method on a future accepts a `timeout=` keyword argument, just
+    as `join()` does on a `Thread` object. Unlike with `Thread` objects, you can determine
+    if a timeout has occurred by catching the `concurrent.futures.TimeoutError` exception.
+    However, this isn’t as simple as it seems. While you can time out on waiting,
+    there remains the problem of stopping the hanging thread.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s an example, although you probably shouldn’t run this, as it will hang
+    forever:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The trouble is, executors do not properly support daemonic threads and do not
+    support them at all as of Python 3.9\. Executors also do not offer any mechanism
+    for canceling a thread that is already running. In handling the `TimeoutError`
+    above, I cancel any threads that haven’t started yet❶, but once a thread has been
+    started by an executor, it cannot be stopped externally without some horrible
+    and inexcusable hackery.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a thread started by an executor might need to abort under some circumstances,
+    you would need to plan ahead and write custom code for the thread to handle its
+    own timeout internally. This is easier said than done, and in the case of `get_input()`,
+    it is non-trivial and even approaches impossible. To create a timeout for user
+    input, I have to stick with the thread-based technique.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Race Conditions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Race conditions are particularly hard to detect because a single line of code
+    may hide many steps. For example, consider something as seemingly innocuous as
+    incrementing an integer bound to a global name:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-9: *increment.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The augmented addition operator `+=` is not *atomic*, meaning it consists of
+    multiple instructions under the hood. You can see this by disassembling the `increment()`
+    function with the `dis` module:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-10: *increment.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Running [Listing 17-10](#listing17-10) produces the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: The 7 in the leftmost column tells us that the bytecode here corresponds to
+    the line `7` in the Python code, which is `count += 1`. All of these Python bytecode
+    instructions, except the last two, take place on that one line of code! The value
+    of `count` is read, the value `1` is added, and then the new value is stored.
+    These three steps (across five instructions) must take place in uninterrupted
+    succession. But consider what would happen if two threads both called `increment()`
+    at the same time, as illustrated in [Table 17-1](#table17-1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 17-1: Model of Race Condition with Two Threads'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | **Thread A** | **`count` (global)** | **Thread B** |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `0` | ← Read | `0` | *(Waiting)* |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `1` | Increment | `0` | *(Waiting)* |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `1` | *(Waiting)* | `0` | Read → | `0` |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `1` | Write → | `1` | *(Waiting)* | `0` |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | *(Done)* | `1` | Increment | `1` |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | `1` | ← Write | `1` |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | `1` | *(Done)* |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Although two separate threads are supposed to increment the global `count` value,
+    Thread B has read the value `0` from the global count before Thread A has a chance
+    to write its updated value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The worst thing about a race condition is that there is no such thing as a `RaceConditionError`
+    exception that can be raised. There’s no error message and no linter error. Nothing
+    is going to tell you that a race condition is happening—you can only determine
+    it with some in-depth detective work. Since there’s no way to predict when threads
+    will pause and resume, a race condition can hide in plain sight for ages until
+    the perfect conditions arise for it to manifest. This accounts for a terrifying
+    number of “can’t reproduce” bug reports.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A Race Condition Example
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To demonstrate thread safety techniques, I’m going to rather uselessly thread
+    the Collatz calculations. As mentioned before, concurrency will actually *slow
+    down* CPU-bound tasks further. However, the threading pattern I’m about to apply
+    would be useful if the functions involved had only been IO-bound. I’ll also use
+    this scenario to demonstrate multiple concurrency techniques, although some of
+    them are ill-suited to the situation. Roll with it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To reliably demonstrate a race condition, I will need to create a class to
+    serve as a counter. I’ll use this counter, instead of a normal integer, for storing
+    global shared state between different threads working on the Collatz calculation.
+    Again, this would be nonsense in real life, but it ensures I can reliably reproduce
+    a race condition for demonstration purposes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-11: *collatz_pool.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The likelihood of a race condition increases the more time there is between
+    sequential steps in a process, like between reading and updating data. By slipping
+    that `time.sleep()` call into the `increment()` class method ❶, I increase the
+    time between calculating and storing the new count, and I thus practically guarantee
+    the race condition will manifest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now, I’ll thread my `collatz()` function for this example and have it accept
+    a target number as an argument. Every time the Collatz sequence generated by the
+    function has the target number of values, I increment the `Counter` instead of
+    returning a value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-12: *collatz_pool.py:2a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The situation is now prime for a race condition. Now, I only need to dispatch
+    multiple threads—and my problem is aliiiiive! (Cue thunder and evil laughter.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next section, I’ll make some adjustments to the code, merely to create
+    the race condition I’m trying to demonstrate. Understand that the problem isn’t
+    the threading technique itself. The code in the next section is valid. It’s the
+    code in Listings 17-11 and 17-12 that contains the real problem, and I’ll come
+    back around to fixing it in a little while.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating Multiple Threads with ThreadPoolExecutor
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To demonstrate the race condition, I will first do away with the `for` loop
+    in my original `length_counter()` method and replace it with a `ThreadPoolExecutor`.
+    This will allow me to dispatch a new thread for each individual Collatz sequence
+    calculation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-13: *collatz_pool.py:3a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I start by resetting the `Counter` to `0` ❶. I define a `ThreadPoolExecutor`
+    in a `with` statement, and I specify that it may run a maximum of five threads
+    (also known as *workers*) at once ❷.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For this arbitrary example, I pulled this maximum of five workers out of thin
+    air. The maximum number of workers you permit can have a significant impact on
+    your program’s performance: too few workers won’t improve responsiveness enough,
+    but too many can bloat overhead. When using threading, it’s worth doing a bit
+    of trial and error to find the sweet spot!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I need to pass two arguments to the function `collatz()`: the target number
+    of steps (`target`) and the sequence’s starting value (`n`). The target value
+    never changes, but each value for `n` comes from an iterable, `range(2, BOUND)`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `executor.map()` method can dispatch multiple threads iteratively. However,
+    this method is only able to pass a single value, provided by an iterable, to the
+    given function. Since I’m trying to dispatch my `collatz()` function, which accepts
+    two arguments, I need another way to handle the first argument. To accomplish
+    this, I generate a callable object with `functools.partial()`, with the `target`
+    argument effectively passed in advance ❸. I bind this callable object to `func`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `executor.map()` method uses the `range()` iterable to provide the values
+    for the remaining `collatz()` argument via `func` ❹. Each resulting function call
+    will take place in a separate worker thread. The rest of this program is the same
+    as in Listings 17-6 and 17-8.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you run this code as is, you’ll see that nasty race condition at work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: My guess of `210` should be exactly right, but the race condition interfered
+    so badly that the calculated result was wildly inaccurate. If you run this on
+    your computer or update the `time.sleep()` duration, you might get a completely
+    different number, maybe even coincidentally the right number at times. That unpredictability
+    is why race conditions are so hard to debug.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that I’ve finished creating the problem, I can begin to fix it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Locks
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A *lock* can prevent race conditions by ensuring that only one thread can access
+    a shared resource or perform an operation at a time. Any thread that wants to
+    access a resource has to lock it first. If the resource already has a lock on
+    it, the thread must wait until that lock is released.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I can resolve the race condition in the Collatz example by adding a lock to
+    `Counter.increment()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-14: *collatz_pool.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I create a new `Lock` object, which in this case, I bind to a class attribute,
+    `_lock` ❶. Every time `Counter.increment()` is called, the thread will try to
+    *acquire* (take ownership of) the lock with the lock’s `acquire()` method ❷. If
+    another thread has ownership of the lock, any other call to `acquire()` will hang
+    until that owning thread releases the lock. Once a thread acquires the lock, it
+    can continue as before.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A thread must also *release* the lock, via the lock’s `release()` method, as
+    soon as possible after finishing work with the protected resource, so other threads
+    can continue ❸. *Every lock that is acquired must be released*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Because of this requirement, locks are also context managers. Instead of manually
+    calling `acquire()` and `release()` on my `Lock`, I can handle both implicitly
+    via a `with`, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-15: *collatz_pool.py:1c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `with` statement will acquire and release the lock automatically.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s nothing inherently magical about a `Lock`; it’s merely a glorified boolean
+    value. Any thread can acquire an unowned `Lock`, and any thread can release a
+    `Lock`, regardless of owner. You must ensure any code that would be prone to a
+    race condition is hemmed in by the lock acquisition and release. Nothing prevents
+    you from breaking the rules, but debugging such violations can be fraught with
+    danger, or at least considerable annoyance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deadlock, Livelock, and Starvation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A *deadlock* situation occurs when the combined current status of your locks
+    causes all your threads to wait, with no way forward. You can visualize a deadlock
+    as two cars moving toward each other and blocking each other from crossing a one-lane
+    bridge.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The similar *livelock* situation occurs when threads keep infinitely repeating
+    the same interactions, instead of merely waiting, which also results in no real
+    progress. Have you ever had a conversation with a significant other to the effect
+    of “Where do you want to eat?” “I don’t care, where do you want to eat?” If so,
+    you have experienced a real-world example of livelock. Both threads perform work
+    involved in waiting for or deferring to one another, but neither thread gets anywhere.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deadlocks and livelocks will usually cause your program to go unresponsive,
+    often without any messages or errors to suggest why. Whenever you’re using locks,
+    you must be extraordinarily careful to foresee and prevent deadlock and livelock
+    scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To prevent deadlock and livelock, one must be mindful of potential circular
+    wait conditions, in which two or more threads are all mutually waiting on one
+    another to release resources. Because these are hard to depict believably in a
+    code example, I’ll illustrate a common circular wait condition in [Figure 17-1](#figure17-1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/500920c17/f17001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 17-1: Deadlock between two processes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Threads A and B both require access to shared Resources X and Y at the same
+    time. Thread A acquires a lock on Resource X, while Thread B concurrently acquires
+    a lock on Resource Y. Now, Thread A is waiting on Lock B, and Thread B is waiting
+    on Lock A. They’re deadlocked.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The right way to resolve a deadlock or livelock will always depend on your particular
+    situation, but you have a couple of tools at your disposal. First, you can specify
+    a `timeout=` on the lock’s `acquire()` method; if the call times out, it will
+    return `False`. In the situation in [Figure 17-1](#figure17-1), if either thread
+    encountered such a timeout, it could then release any locks it held, thereby allowing
+    the other thread to proceed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Second, any thread can release a lock, so you can forcibly break the deadlock
+    if necessary. If Thread A recognizes a deadlock, it could release Thread B’s lock
+    on Resource Y and proceed anyway, thereby breaking the deadlock. The difficulty
+    with this method is that you risk breaking a lock even if you’re *not* in deadlock,
+    which creates a race condition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Locks are not the only culprits in a deadlock or livelock scenario. *Starvation*
+    occurs when a thread is stuck waiting for a future or to join a thread, especially
+    to acquire some data or resource it needs, but that thread or future never returns
+    for some reason. This can even occur if two or more futures or threads wind up
+    waiting for one another to complete.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A thread can even deadlock itself! If a single thread tries to acquire a `Lock`
+    twice in a row without releasing it first, then it is stuck waiting for itself
+    to release the lock it’s waiting on! If there’s any risk of this situation arising,
+    you can use `threading.RLock`, instead of a `threading.Lock`. With an `RLock`,
+    a single thread can acquire the same lock multiple times without deadlocking,
+    and only the thread that acquired the lock may release it. While you still must
+    release as many times as you acquire, a thread cannot directly deadlock itself
+    with an `RLock`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There is one catch: because an `RLock` may only be released by the owning thread,
+    it’s much harder to break a multithread deadlock with an `RLock` than with an
+    ordinary `Lock`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Passing Messages with Queue
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You can sidestep the risk of race conditions and deadlocks by *passing messages*,
+    at the cost of a bit more memory overhead. This is safer than using futures or
+    a shared data source. Anytime futures don’t work for your situation, your default
+    strategy for exchanging and collating data with multiple threads should be to
+    have those threads pass messages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You would typically pass messages between threads with a queue. One or more
+    threads can push data to the queue, and one or more other threads can pull data
+    from the queue. This is analogous to a waiter passing written orders to a kitchen
+    in a restaurant. Neither the sender nor the receiver needs to wait on the other,
+    unless the message queue is full or empty.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python’s standard library includes the `queue` module, which provides collections
+    that already implement thread safety and proper locking, thus negating the risk
+    of deadlocks. Alternatively, you can use `collections.deque` in the same way for
+    passing messages, because that collection has atomic operations like `append()`
+    and `popleft()`, which make locking unnecessary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ll update my *collatz_pool.py* example to pass results from worker threads
+    back to the main thread via a queue, rather than using a shared object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-16: *collatz_pool.py:1d*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I import the `queue` module and remove that pesky `Counter`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, I’ll adjust my `collatz()` function to push the results onto the queue:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-17: *collatz_pool.py:2b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I accept a `queue.Queue` object on the `results` parameter, and I add an item
+    to that collection via `results.put()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: My design decisions here are deliberate. Data should only flow in one direction
+    via the queue, either input to the worker threads or output from the worker threads.
+    Most design patterns involving queues react to the queue being empty, non-empty,
+    or full, rather than to the contents of the data. If you try to create a queue
+    for moving multiple types of data, it’s all too easy to create a starvation or
+    infinite loop situation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this case, the worker threads running `collatz()` will push their output
+    data to the queue, and `length_counter()` will pull that data in from the queue.
+    If I had needed two-way communication, I would have implemented a second queue
+    to handle data flow in the other direction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each worker thread running `collatz()` must also have a dedicated queue for
+    storing results, lest concurrent calls mix up their results. To do this, I pass
+    the queue as an argument, instead of binding it to a global name. Although this
+    technically violates the “no side effects” principle, it’s acceptable because
+    the queue is intended purely as a data transfer medium.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s my updated `length_counter()` method, using the queue:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-18: *collatz_pool.py:3b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I create the queue object and pass it to each of the workers ❶ in the same way
+    I passed `target` in [Listing 17-13](#listing17-13). The workers will append the
+    length of each generated Collatz sequence to the queue. Once they’re all done,
+    I convert the `results` queue to a list and return the number of times the target
+    appears in that queue.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Futures with Multiple Workers
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: As I mentioned before, you can also solve deadlocks with futures. In fact, that’s
+    the best option for avoiding a deadlock in this multithreaded Collatz example.
+    Futures have little risk of deadlocking, as long as you avoid having multiple
+    threads waiting on futures from one another.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I’m revising my deadlock example further, to implement futures. I only need
+    to import the `concurrent.futures` module to use this technique:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-19: *collatz_**pool.py:1e*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I can also restore my `collatz()` method to its original form, where I am only
+    returning a single value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-20: *collatz_pool.py:2c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `executor.map()` method returns an iterable of futures, which I can use
+    to collect the return values from the worker threads:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-21: *collatz_pool.py:3c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I iterate over each of the values returned by `executor.map()` and count how
+    many of those values match the target. The `executor.map()` method is essentially
+    a threaded drop-in replacement for the built-in `map()` function; while the input
+    processing order is not guaranteed, the output order is. With most other techniques,
+    you cannot rely on the order in which values are returned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is the cleanest approach of all, with minimal overhead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Achieving Parallelism with Multiprocessing
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Since Python 2.6, parallelism is possible via *multiprocessing*, wherein parallel
+    tasks are handled by entirely separate system processes, each with its own dedicated
+    instance of the Python interpreter. Multiprocessing bypasses the limitations imposed
+    by Python’s Global Interpreter Lock (GIL), since each process has its own Python
+    interpreter, and thus its own GIL. This allows a single Python program to employ
+    parallelism. A computer can run these multiple processes simultaneously by distributing
+    them among different CPU cores, to be worked on at the same time. How processes
+    are divided up among cores is the prerogative of the operating system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remember that multiprocessing has performance costs of its own, so merely adding
+    it to your code will not automatically make everything faster. Improving performance
+    requires dedicated thought and work. As with threading and asynchrony, you must
+    carefully consider your code’s design when implementing multiprocessing. You’ll
+    see these principles in action shortly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multiprocessing in Python follows a very similar structure to threading. `Process`
+    objects are used exactly like `Thread` objects. The `multiprocessing` module also
+    provides classes like `Queue` and `Event`, which are analogous to their threading-based
+    cousins but specifically designed for multiprocessing. The `concurrent.futures`
+    module provides `ProcessPoolExecutor`, which looks and acts much the same as `ThreadPoolExecutor`
+    and makes it possible to use futures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pickling Data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Some Python developers recoil at the thought of using `multiprocessing` for
+    one reason: it uses `pickle` behind the scenes. If you recall from Chapter 12,
+    `pickle` is extraordinarily slow and insecure as a data serialization format,
+    so much so that Pythonistas avoid it like the plague, with good reason.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even so, `pickle` does work reasonably well in the context of multiprocessing.
+    First, we don’t need to worry about `pickle` being insecure, because it is being
+    used to transfer data directly between active processes started and managed by
+    your code, so that data is considered trusted. Second, many of `pickle`’s performance
+    issues are offset by the tangible performance gains afforded by parallelism and
+    the fact that the serialized data is never being written to a file, which is itself
+    a CPU-intensive task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moreover, because `pickle` is used in multiprocessing, it is still actively
+    maintained and improved; Python 3.8 saw the implementation of `pickle` protocol
+    5\. You typically don’t need to worry about `pickle` when using multiprocessing;
+    it’s merely an implementation detail most of the time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is important to remember that data must be *picklable*, meaning it can be
+    serialized by the `pickle` protocol, for it to be passed between processes. According
+    to the documentation, you can pickle the following data types:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`None`'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`True` and `False`'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Integers
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Floating-point numbers
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Complex numbers
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Strings
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Bytes-like objects
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Tuples, lists, sets, and dictionaries only containing picklable objects
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Functions (*but not lambdas*) at global scope
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Classes at global scope, with additional requirements
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: For a class to be picklable, all of its instance attributes must be picklable
+    and stored in the instance `__dict__` attribute. When a class is pickled, methods
+    and class attributes are omitted, along with anything else in the class `__dict__`
+    attribute. Alternatively, if a class uses slots or otherwise cannot fulfill this
+    criteria, you can make it picklable by implementing the special instance method
+    `__getstate__()`, which should return a picklable object. Typically, this would
+    be a dictionary of picklable attributes. If the method returns `False`, it signals
+    the class as unpicklable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can also implement the special instance method `__setstate__(state)`, which
+    accepts an unpickled object, which you would unpack into the instance attributes
+    as appropriate. This is a more time-consuming approach, but it’s a good way around
+    the restrictions. If you don’t define this method, one will be created automatically
+    that accepts a dictionary and assigns it directly to the instance’s `__dict__`
+    attribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you’re going to work a lot with picklable data, especially in the context
+    of multithreading, it may be helpful to see the official documentation for the
+    `pickle` module: [https://docs.python.org/3/library/pickle.xhtml](https://docs.python.org/3/library/pickle.xhtml).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Speed Considerations and ProcessPoolExecutor
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Multiprocessing gets around the GIL, allowing the code to use multiple processes,
+    so you might assume it will speed up that CPU-bound activity of calculating the
+    Collatz sequences. Let’s test out that idea.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Continuing from the previous example, I can make use of multiprocessing by
+    swapping my `ThreadPoolExecutor` to a `ProcessPoolExecutor`. I can reuse Listings
+    17-19 and 17-20 (not shown below) and modify [Listing 17-21](#listing17-21) to
+    look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-22: *collatz_multi.py:3a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: All I needed to do was to replace `ThreadPoolExecutor` with `ProcessPoolExecutor`.
+    Here, I didn’t specify `max_workers` on the `ProcessPoolExecutor`, so it defaults
+    to one worker per processor core on the machine. I happen to be on an 8-core machine,
+    so when I run this code on my machine, the `ProcessPoolExecutor` will default
+    to a `max_workers` value of 8\. Your machine may be different.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’m still using Listings 17-6 and 17-8 for the rest of the program, which threads
+    the IO-bound task of getting user input. There’s no sense in using multiprocessing
+    to handle an IO-bound task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If I run this program, however, it is actually the slowest version yet! My computer
+    has an Intel i7 8-core processor, but it took a whopping *21 seconds* to get the
+    results. The version with the `ThreadPoolExecutor` and futures ([Listing 17-18](#listing17-18))
+    took 8 seconds, and the version that didn’t thread the calculations at all ([Listing
+    17-1](#listing17-1)) took less than 3 seconds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rest assured, the code is indeed creating multiple *subprocesses*—separate processes
+    linked to the main process—and bypassing the GIL. The problem is, subprocesses
+    themselves are extremely expensive to create and manage! The overhead of multiprocessing
+    is outweighing any performance gains I might have.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternatively, I could drop the threading on the IO-bound task and instead move
+    the CPU-bound task out to a single subprocess. However, that results in roughly
+    the same performance as seen with threading alone, negating the point of multiprocessing
+    here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One cannot simply throw parallelism at a problem and expect the code to run
+    faster. Effective multiprocessing requires planning. In order to take proper advantage
+    of multiprocessing, I need to give each subprocess a reasonable amount of work
+    to do. As you’ve seen, if I create too many subprocesses, the overhead of the
+    multiprocessing nullifies any performance gains. If I create too few, there will
+    be little to no difference from running it on a single subprocess.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I don’t want to create a new subprocess for each call to `collatz()`, as I
+    did before—a hundred thousand subprocesses is a huge strain on the system resources!
+    Instead, I’ll divide those among four separate subprocesses, each of which performs
+    a quarter of the work. I can do this by *chunking*: defining how much of the work
+    is given to a single subprocess:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-23: *collatz_multi.py:3b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Within the `executor.map()` method, I use the keyword argument `chunksize` to
+    specify that roughly one-quarter of the values being passed should go to each
+    subprocess.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When I run the code, I find this version to be the fastest yet! With a `BOUND
+    = 10**5`, it completes almost instantaneously. If I increase `BOUND` to `10**6`,
+    this version takes 5 seconds, versus 16 seconds for the final version of *collatz_threaded.py*.
+    I can play with the chunking to find the ideal value, which is indeed `4`; any
+    higher value in this scenario won’t make the program run faster than 5 seconds,
+    and a value smaller than `4` is slower.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By carefully applying parallelism, I can bypass the GIL and speed up CPU-bound
+    tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Producer/Consumer Problem
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In parallelism and concurrency, one often classifies threads or processes as
+    either *producers*, which provide data, or *consumers*, which intake that data
+    and process it. It’s possible for a thread or process to be both a producer and
+    a consumer. The *producer/consumer problem* is a common situation in which one
+    or more producers provide data, which is then processed by one or more consumers.
+    The producers and consumers are working independently of one another, at potentially
+    different speeds. The producer might produce values faster than the consumers
+    can process them, or the consumers might process the data faster than it is produced.
+    The challenge is preventing the queue of data being processed from getting too
+    full, lest the consumers wait forever because they don’t know whether the producer
+    is slow or finished.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ll model the producer/consumer problem with the Collatz example, merely so
+    I don’t need to build up a brand-new example. I’ll have one producer provide the
+    starting values of the Collatz sequences, and I’ll have four consumers working
+    in parallel to generate the sequences from those starting values and to determine
+    how many have the target number of steps. (In practice, this pattern is overkill
+    for something as simple as the Collatz example.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'At first blush, this program seems like it should be easy to write: create
+    a queue, fill it with the starting values, and then start four subprocesses on
+    the executor to take values out of that queue. In practice, there are a few problems
+    that need to be solved.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, I cannot wait until the producer has produced all the values before processing.
+    If I tried to pack all the values into the queue at once, I’d have a whopping
+    3.8 MiB if I set my `BOUND` to `10**7`; real-world examples of the producer-consumer
+    problem can involve gigabytes or terabytes of data. Instead, the producer should
+    provide more values only when there’s space in the queue for them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Second, the consumers need to know the difference between the queue being empty
+    because the values are exhausted and the queue being empty because the producer
+    is working on adding more. If something goes wrong to prevent values being added—or,
+    conversely, if something prevents the consumers from processing values—then the
+    code should be able to handle that error gracefully, rather than waiting forever
+    for something to happen. Similarly, when the program is ready to end, each thread
+    or subprocess should clean up after itself—closing files and streams, for example—rather
+    than aborting abruptly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Third, and perhaps hardest to implement, producers and consumers must be reentrant.
+    In other words, if a consumer is paused mid-execution and another consumer is
+    started before the first is resumed, the two consumers should not interfere with
+    one another. Otherwise, they may be in danger of deadlocking (or livelocking)
+    in subtle and unexpected ways.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing the Modules
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'I’m going to need quite a few modules to accomplish this program:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-24: *collatz_producer_consumer.py:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As before, the `concurrent.futures` module allows me to work with both threads
+    and processes. The `multiprocessing` module provides the parallelism-specific
+    versions of concurrency classes, including `multiprocessing.Queue` and `multiprocessing.Event`.
+    The `queue` module provides the exceptions related to `Queue`. I’ll also need
+    `repeat` from `itertools` when dispatching consumers in my particular use case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `signal` module, which may be new to you, allows me to asynchronously monitor
+    for and respond to process control signals coming from the operating system. This
+    is important to ensuring that all my subprocesses shut down cleanly. I’ll come
+    back to this in a moment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Monitoring the Queue
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: I need two shared objects from the `multiprocessing` module for the producer/consumer
+    model to work. The `Queue` stores the data being passed from producer to consumer,
+    and `Event` signals when no more data will be added to the `Queue` by the producer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-25: *collatz_producer_consumer.py:2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’m using global names for these two objects because, unlike with threads, you
+    cannot pass shared objects via arguments when dispatching subprocesses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The producer subprocess will fill the queue with starting values, and the consumer
+    subprocesses will read from it. The `multiprocessing.Queue` class has atomic `put()`
+    and `get()` methods, like `queue.Queue`, so it isn’t prone to race conditions.
+    I pass the argument `100` to the `Queue` initializer here, which sets the queue
+    to hold a maximum of `100` items. The maximum is somewhat arbitrary; you should
+    experiment for your use cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `exit_event` object is an *event*, a special flag that processes can monitor
+    and react to. In this case, the event signals either that the producer will be
+    adding no more values to the queue, or that the program itself has been aborted.
+    The `threading` module provides an analogous `Event` object for concurrency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ll see both of these at work shortly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Subprocess Cleanup
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is each subprocess’s duty to clean up after itself and shut down properly.
+    When the producer is finished producing data, the consumers need to process the
+    remaining data in the queue and then clean themselves up. Similarly, if the main
+    program is aborted, the subprocesses must all be informed so they can shut themselves
+    down.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To handle both of these situations, I’ll write my consumer and producer functions
+    to monitor and respond to `exit_event`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-26: *collatz_producer_consumer.py:3*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I define an *event handler function*, `exit_handler()`, which is designed to
+    respond to operating system events. The event handler function must accept two
+    arguments: the *signal number* that corresponds to a particular system event and
+    the current *stack frame*, which is roughly the current location and scope in
+    the code. Both values will be provided automatically, so there’s no need to worry
+    about figuring out what they should be.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `exit_handler()` function will set `exit_event` ❶. Later, I’ll write my
+    processes to clean up and shut down in response to `exit_event`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I attach the handler to the two signals I want to monitor: `signal.SIGTERM`
+    occurs when the main process terminates ❷, and `signal.SIGINT` occurs when it
+    is interrupted, such as with Ctrl-C on POSIX systems ❸.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consumers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Here’s my usual `collatz()` function, as well as my consumer function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-27: *collatz_producer_consumer.py:4*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `collatz_consumer()` function accepts one argument: the `target` it is
+    looking for. It loops infinitely, until explicitly exited with a `return` statement.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On each iteration, the consumer function checks whether the shared queue, `in_queue`,
+    has anything in it. If it does, the function attempts to get the next item from
+    the queue with `in_queue.get()`, which waits until there’s an item in the queue.
+    I provide a `timeout` of one second ❶, which is important to prevent deadlocks
+    and to give the subprocess an opportunity to check and respond to events. One
+    second is more than ample time for my producer process to put a new item into
+    the queue. If `in_queue.get()` times out, the exception `queue.Empty` is raised,
+    and I exit the subprocess immediately.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the consumer is able to get a value from the queue, it runs the value through
+    `collatz()`, checks the returned value against `target`, and updates `count` accordingly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, I check if `exit_event` is set; if it is, I return `count`, ending
+    the subprocess cleanly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Checking for an Empty Queue
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If you look at the documentation for `multiprocessing.Queue.empty()` (`queue.empty()`
+    in [Listing 17-27](#listing17-27)) and similar methods, there’s a rather ominous
+    statement:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because of multithreading/multiprocessing semantics, this is not reliable.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This does not mean you cannot use the `empty()` method. The “unreliability”
+    has to do with the dynamics I’ve already described at work in concurrency. By
+    the time the subprocess determines that the queue is empty via the `empty()` method,
+    it might *not* be empty anymore, since the producer is operating in parallel.
+    This is okay, however. There’s no harm in another iteration passing if the timing
+    is off.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This dynamic really only becomes treacherous if you rely on `empty()` to ensure
+    you can `put()` a new item in the queue. The queue might be filled up before the
+    subprocess even reaches `put()`, even if it’s the next statement. The same is
+    true of checking `full()` before calling `get()`. That’s why I invert the logic
+    and check that the queue *is not* empty, while still wrapping the `get()` statement
+    in a `try` clause.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Producers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Enough about the consumer. It’s time to put some values in that queue with
+    the producer. The producer function for the Collatz example pushes values to the
+    queue when there’s an empty spot to do so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-28: *collatz_producer_consumer.py:5*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to pushing values to the queue when it isn’t full, the producer
+    function always checks if `exit_event` is set, so it can exit cleanly as soon
+    as possible ❶.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I next try to put a value on the queue with `put()` ❷. In this particular example,
+    if the operation takes more than a second, I want it to time out and thus indicate
+    that the consumers have deadlocked or crashed in some way. If there’s a timeout,
+    the `queue.Full` exception is raised, and I set the `exit_event` ❸ and end the
+    subprocess. Bear in mind, each situation will have its own ideal timeouts, which
+    you’ll have to figure out for yourself. It’s better to have too long a timeout,
+    rather than one that’s too short.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the loop reaches its end without a timeout, I don’t want to set the `exit_event`
+    right away, as that might cause the consumers to quit too early and not process
+    some waiting items. Instead, I loop infinitely, checking whether the queue is
+    empty. I can rely on the `empty()` method here to inform me when the consumers
+    are finished processing the data, since this is the only producer adding values
+    to the queue. On each iteration here, I also sleep for a few milliseconds, so
+    the producer doesn’t chew through processing power while it waits. Once the queue
+    is empty, I set the `exit_event`. Then I exit the function, ending the subprocess.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Starting the Processes
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Now that I have written my producers and consumers, it’s time to dispatch them.
+    I’ll run the producer and all four consumers as subprocesses, which I start with
+    a `ProcessPoolExecutor`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 17-29: *collatz_producer_consumer.py:6*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I submit my producer function from [Listing 17-28](#listing17-28), `range_producer()`,
+    to a single subprocess ❶.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I use `executor.map()` as a convenient way to dispatch multiple consumer subprocesses
+    ❷, but I don’t need to iteratively provide any data, which is the usual purpose
+    of `map()`. Since that function requires an iterable as its second argument, I
+    use `itertools.repeat()` to create an iterator providing exactly four copies of
+    the value `target` ❸. The values in this iterable will be mapped to four separate
+    subprocesses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, I collect and sum all the counts returned by the finished consumer
+    subprocesses via `results` ❹. Because this statement is outside of the `with`
+    statement’s suite, it will only run once the producer subprocess and all four
+    consumer subprocesses have exited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ve designed my code architecture to work with a single producer. If I wanted
+    more than one producer subprocess, I would need to refactor the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As before, I’m using Listings 17-6 and 17-8 for the rest of the program, which
+    will still be threaded.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance Results
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Running the code in [Listing 17-29](#listing17-29) is a bit slower than running
+    the version in [Listing 17-23](#listing17-23)—five seconds on my machine for a
+    `BOUND` of `10**5`, versus the nearly instant return of the previous version—but
+    you can see that it works as expected:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: I chose `128` as my test target, as that’s the length of the Collatz sequence
+    starting with the value `10**5`, which was the last value provided. This allowed
+    me to confirm that the consumer subprocesses didn’t exit before the queue was
+    empty. There are 608 Collatz sequences that are 128 steps long, and that is what
+    is reported after a few seconds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Be aware that the design of this particular code isn’t necessarily going to
+    work for your producer/consumer scenario. You will need to carefully consider
+    how messages and data are passed, how events are set and checked, and how subprocesses
+    (or threads, for that matter) clean up after themselves. I highly recommend reading
+    “Things I Wish They Told Me About Multiprocessing in Python” by Pamela McA’Nulty:
+    [https://www.cloudcity.io/blog/2019/02/27/things-i-wish-they-told-me-about-multiprocessing-in-python/](https://www.cloudcity.io/blog/2019/02/27/things-i-wish-they-told-me-about-multiprocessing-in-python/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Logging with Multiprocessing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There’s one piece of multiprocessing that I’ve chosen to skip over. Normally,
+    when working with multiple processes, you’d use a logging system that includes
+    timestamps and unique identifiers for processes. This is extraordinarily helpful
+    in debugging parallelized code, especially as most other debugging tools will
+    not work across processes. Logging will allow you to see the status of different
+    processes at any given moment in time, so you can tell which ones are working,
+    which are waiting, and which have crashed. I’ll cover logging in general in Chapter
+    19, and you can fit it to your purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wrapping Up
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are many helpful tools for threading and multiprocessing that I simply
+    didn’t have the opportunity to cover here. Now that you have a grasp of the fundamentals
+    of concurrency and parallelism in Python, I highly recommend skimming through
+    the official documentation for the modules I’ve been using, as well as two I’ve
+    skipped:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**`concurrent.futures`**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://docs.python.org/3/library/concurrent.futures.xhtml](https://docs.python.org/3/library/concurrent.futures.xhtml)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**`queue`**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://docs.python.org/3/library/queue.xhtml](https://docs.python.org/3/library/queue.xhtml)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**`multiprocessing`**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://docs.python.org/3/library/multiprocessing.xhtml](https://docs.python.org/3/library/multiprocessing.xhtml)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**`sched`**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://docs.python.org/3/library/sched.xhtml](https://docs.python.org/3/library/sched.xhtml)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**`subprocess`**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://docs.python.org/3/library/subprocess.xhtml](https://docs.python.org/3/library/subprocess.xhtml)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**`_thread`**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://docs.python.org/3/library/_thread.xhtml](https://docs.python.org/3/library/_thread.xhtml)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**`threading`**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://docs.python.org/3/library/threading.xhtml](https://docs.python.org/3/library/threading.xhtml)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remember also that asynchrony libraries have analogous structures and patterns
+    for nearly everything in threading, including locks, events, pools, and futures.
+    Most of the time, if you can thread it, you can write it asynchronously.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In summary, there are three primary ways to multitask in Python: asynchrony
+    (Chapter 16), threading, and multiprocessing. Asynchrony and threading are both
+    for working with IO-bound tasks, while multiprocessing is for speeding up CPU-bound
+    tasks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even so, remember that concurrency and parallelism are not magic bullets! They
+    can improve your program’s responsiveness and, at least in the case of multiprocessing,
+    speed up execution times, but always at the cost of added complexity and the risk
+    of some pretty snarly bugs. They demand careful planning and code architecture,
+    and it’s easy to get their usage wrong. I spent considerable time writing, testing,
+    debugging, and fighting with the Collatz examples until I got them right—more
+    so than with any other examples in this book! Even now, you may discover flaws
+    in the design that I overlooked.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concurrency and parallelism are essential when programming user interfaces,
+    scheduling events, and performing labor-intensive tasks in code. Even so, there’s
+    often nothing wrong with old-fashioned synchronous code. If you don’t need the
+    extra power, then avoid the extra complexity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For further understanding, you may want to look up other concurrency and parallelism
+    patterns, such as the `subprocess` module, job queues like `celery`, and even
+    external operating system utilities like `xargs -P` and `systemd`. There is far
+    more to this than can fit into one chapter. Always carefully research the options
+    for your particular situation.
+  prefs: []
+  type: TYPE_NORMAL

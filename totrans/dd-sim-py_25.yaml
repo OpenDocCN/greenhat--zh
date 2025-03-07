@@ -1,0 +1,1845 @@
+- en: '20'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Testing and Profiling
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](image_fi/book_art/chapterart.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'There are two important rules about code: untested code is broken code, and
+    all claims of performance are mythical until proven otherwise. Thankfully, the
+    Python ecosystem offers a wide variety of tools to test and profile your code.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Testing* is one component of *quality assurance (QA)*, which in software development
+    aims to improve the overall stability and maintainability of code. While many
+    companies have dedicated QA teams, testing should be the shared responsibility
+    of *every single developer* on a project. Similarly, *profiling* is a critical
+    part of confirming that a project meets its performance goals. Even if some design
+    pattern or algorithm looks faster on paper, profiling ensures that your implementation
+    is meaningfully better performing than some alternative. In this chapter, I’ll
+    cover the essentials of testing and profiling in Python, primarily with the pytest
+    testing framework and with an eye toward production code.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Most experienced developers find it most effective to test their programs as
+    part of the coding process, rather than testing the entire finished program after
+    the fact. This approach allows developers the flexibility of catching and correcting
+    issues early, when identifying and performing fixes is easier. I follow this process
+    in this chapter. I’ll walk through the development of a complete (if small) multifile
+    project, writing and expanding tests for each section before continuing with development.
+    You’ll learn how to run basic unit tests, conditionally run tests, and correct
+    flaky tests. You’ll additionally learn how to use fixtures, mocks, and parametrization.
+    I’ll also touch on measuring test coverage, automating testing, benchmarking code,
+    and profiling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What About TDD?
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The practice of testing should not be confused with the specific methodology
+    of *test-driven development (TDD)*, wherein you write tests before writing the
+    code and then write the code to make the tests pass. TDD is not mandatory, as
+    you can just as effectively write the tests just after writing your code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re already a practitioner of TDD, I encourage you to continue applying
+    it throughout this chapter, by writing your tests first. If you’re like me and
+    prefer writing the code before the tests, you can stick with that. The important
+    thing is to write tests, and the sooner, the better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Test Frameworks
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There are several frameworks for running tests in Python, many with unique features
+    and use cases. The most popular testing framework for Python is *pytest*, a streamlined
+    alternative to `unittest`-based frameworks with minimal boilerplate code. If you
+    don’t know which framework to use, this is the one to pick up. You can find out
+    more from the official documentation at [https://docs.pytest.org/](https://docs.pytest.org/),
+    and you can install the `pytest` package from PyPI via pip.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter also uses *tox*, which ensures that your packaging works across
+    different Python environments and automatically runs your test suites in each
+    of those environments. You can find the official tox documentation at [https://tox.readthedocs.io/](https://tox.readthedocs.io/),
+    and you can install the `tox` package from PyPI via pip.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before I dive into testing, I want to touch on a few of the other testing frameworks
+    in regular use in Python projects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python’s standard library includes `unittest`, which has a long history of use.
+    Python 2 had both `unittest` and `unittest2`, and the latter became just `unittest`
+    in Python 3 ([https://docs.python.org/3/library/unittest.xhtml](https://docs.python.org/3/library/unittest.xhtml)).
+    The standard library also includes `doctest`, which allows you to write simple
+    tests in docstrings ([https://docs.python.org/3/library/doctest.xhtml](https://docs.python.org/3/library/doctest.xhtml)).
+    Both of these can be useful when you need to write tests without installing any
+    packages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `unittest` module was further extended and improved by the now discontinued
+    `nose` framework, which added support for plug-ins. This was in turn replaced
+    by `nose2`. However, `nose2` is largely considered outdated, so it’s usually best
+    to rewrite `nose2` tests to pytest or another modern framework when possible.
+    The pytest documentation has a guide to this at [https://docs.pytest.org/en/stable/nose.xhtml](https://docs.pytest.org/en/stable/nose.xhtml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are newer testing libraries, many of which apply innovative ideas and
+    offer simpler interfaces. One such example is *Hypothesis*, which automatically
+    finds edge cases you may have overlooked simply by writing assertions describing
+    what the code *should* do. More information is available in the documentation
+    at [https://hypothesis.readthedocs.io/](https://hypothesis.readthedocs.io/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: My personal favorite testing library is *Ward*, which features improved test
+    organization and clearer output. It also works with Hypothesis, and it is fully
+    compatible with asynchrony. You can learn more at [https://wardpy.com/](https://wardpy.com/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, *RobotFramework* is a test automation framework that integrates with
+    many other tools. It is better suited to large and complex systems that are harder
+    to test, rather than small and compact stand-alone projects. You can learn more
+    about RobotFramework at [https://robotframework.org/](https://robotframework.org/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Example Project
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To demonstrate real-world Python testing, I’ll build a complete (but small)
+    command-line program that performs a proofread check on a plaintext file. The
+    program will accept a file path as input, and then it will check the contents
+    of that file for spelling and grammar errors, using a free API. It will then prompt
+    the user to correct the errors by allowing them to choose between suggested revisions.
+    The corrected text will then be written out to another file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The complete source code for this project can be found on my GitHub, at [https://github.com/codemouse92/textproof](https://github.com/codemouse92/textproof).
+    However, I’ll be demonstrating good testing habits in this chapter by testing
+    the program as I write it. I encourage you to follow along. The `example_starter`
+    branch on that repository contains the initial folder structure and packaging
+    scripts for this example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To implement the actual spelling and grammar checking, I’ll use the free web
+    API for *LanguageTool*, an open-source proofreading tool and service ([https://languagetool.org/](https://languagetool.org/)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the exception of the third-party modules `requests` and `click` and the
+    LanguageTool API, this example only uses features and techniques you’ve already
+    learned elsewhere in this book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To use the LanguageTool API, you make a POST request with `requests`, to which
+    you pass a plaintext string and some other necessary information packed in dictionaries
+    that will be converted behind the scenes to JSON. The LanguageTool service will
+    reply with a very large JSON object containing, among other things, all detected
+    grammar and spelling errors and their suggested corrections. The `requests` module
+    will return this as a Python dictionary. From there, my code will need to pick
+    out whatever information it needs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can find more information about the API, as well as a web interface for
+    trying it out, at [https://languagetool.org/http-api/swagger-ui/#!/default/post_check](https://languagetool.org/http-api/swagger-ui/#!/default/post_check).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `click` module provides a more intuitive way to design a command-line interface
+    than `argparse`, which I used in Chapter 19. I’ll use only the decorators `@click.command()`,
+    `@click.argument()`, and `@click.option()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can install the `requests` and `click` modules in your virtual environment
+    via pip. The official documentation for `requests` can be found at [https://requests.readthedocs.io/](https://requests.readthedocs.io/),
+    although I’ll only use the `requests.post()` method and the `requests.Response`
+    object it returns. The `click` module is documented at [https://click.palletsprojects.com/](https://click.palletsprojects.com/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the LanguageTool API is offline, or if you’re otherwise unable to access
+    it, rest assured that nearly all my tests run *without* access to the API. Thus,
+    even without an internet connection, you should be able to work through most of
+    the examples and ultimately prove that the code works correctly. This is the beauty
+    of testing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Testing and Project Structure
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Before you start testing, it’s critical to get the project structure right.
+    Back in Chapter 18, I introduced the recommended layout for a Python project,
+    including the all-important *setup.cfg* file. I’ll expand on a similar structure
+    for this example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-1: Project directory tree for *textproof/*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The source code for the `textproof` package belongs in *src/textproof/*. As
+    I mentioned back in Chapter 18, use of a *src/* directory is optional but strongly
+    recommended. Not only does it make packaging easier, but it also simplifies configuration
+    of testing tools. What’s more, it forces you to install your package directly
+    before testing, exposing packaging flaws and any wrong assumptions about the current
+    working directory in your code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this structure, the tests themselves will go in the *tests/* directory. This
+    is known as *out-of-place testing*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ll briefly review the setup-related files here, focusing primarily on their
+    effect on the testing configuration. See Chapter 18 for a full explanation of
+    each.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*LICENSE* and *README.md* are fairly self-explanatory, so I won’t reproduce
+    those here. Similarly, *setup.py* is the same as in Chapter 18, so it’s omitted
+    here.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The *setup.cfg* file is largely the same as the one for the Timecard project
+    in Chapter 18, except for the metadata and the dependencies. I’ve omitted the
+    metadata to save space:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-2: *setup.**cfg**:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I’m using two libraries in this project: *requests*, for working with the API,
+    and *click*, for creating the command-line interface. I’m also using pytest for
+    testing; I’ll add some tools here later.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I don’t have any non-code data to include in the package this time, so my *MANIFEST.in*
+    is pretty sparse:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-3: *MANIFEST.in*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The most interesting setup-related file for this example is going to be *pyproject.toml*,
+    which will ultimately store settings for some testing tools I’m using. For the
+    moment, it looks like the one in Chapter 18:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-4: *pyproject.toml:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Under the project structure in [Listing 20-1](#listing20-1), my source code
+    belongs in *src/textproof/*, and my tests belong in *tests/*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Testing Basics
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this first part, I’ll write some initial code and a few basic tests, which
+    I’ll be able to run even before the full program can be executed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Starting the Example
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The first thing my code needs to do is become able to load a text file and
+    save it back out again. I’ll make that happen in my project with a `FileIO` class,
+    which I’ll use for storing the file contents while I’m working with them:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-5: *src/textproof/**fileio.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `FileIO` class’s initializer accepts a path to a file to read and optionally
+    a path for writing back out; if no `out_file` path is specified, it will write
+    to the same file it reads. The `load()` instance method reads the specified file
+    into a `data` instance attribute, and the `save()` instance method writes data
+    out to a file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unit Testing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: I test individual behaviors of my code so far with *unit tests*, so named because
+    each one tests a single *unit*, such as a function, or in this case, a particular
+    conditional path through a function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before I write any more code, I want to test the behaviors of this class so
+    far. In my *tests/* directory, I create *test_fileio.py*. By default in pytest,
+    all test modules must start with `test_` to be detected by the framework. If I
+    named the file *tests/fileio.py*, none of these tests would run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Each test is written as a function containing one or more `assert` statements:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-6: *tests/test_fileio.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because all these tests relate to the same part of the code base, it is useful
+    for organizational purposes to group them together in a class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first two tests check that the path string passed to the `FileIO` initializer
+    is turned into a `pathlib.Path` object bound to the `in_file` and `out_file` attributes,
+    respectively. The third test checks that, if only one path string is provided,
+    that path will be used for both `in_file` and `out_file`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although these may seem like needlessly obvious things to check, these unit
+    tests become invaluable as the code becomes more complex. If any change to the
+    code causes the code to no longer behave in the manner these tests expect, I will
+    be alerted by the failing tests, rather than by some sort of unexpected behavior
+    that must be debugged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Good testing practice demands that each unit test check only one behavior, which
+    is why I wrote three individual tests, instead of one that checks all three things.
+    This helps me zero in on a particular behavior that isn’t working, instead of
+    having to pick through multiple assertions to find what’s broken.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I also didn’t create constants to hold the string literals I keep repeating.
+    While this is contrary to the coding practice of DRY, it is often considered good
+    practice in Python testing, so your tests never run the risk of false positives
+    if a function under testing rebinds, mutates, or otherwise interacts with a variable
+    in an odd way. Avoid using the same variable for both the input and the output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Lastly, notice that pytest requires test functions to start with `test_`, and
+    requires test classes to start with `Test`, in the same way the module must start
+    with `test_`. If I named that first test only *in_path()*, it would not be run
+    as a test. You can change this behavior in the settings for pytest: [https://docs.pytest.org/en/latest/example/pythoncollection.xhtml](https://docs.pytest.org/en/latest/example/pythoncollection.xhtml).
+    Some other testing frameworks, like Ward, do not have this default convention.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Executing the Tests with pytest
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To run these tests, I must first install my package in a virtual environment.
+    In the example below, I already created a virtual environment, *venv/*. I will
+    now install the package, along with its optional testing dependencies, by running
+    the following in the command line from the root of the project:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: This installs the local package according to *setup.cfg*, including any packages
+    needed for testing—namely `pytest`—which were specified in the `[options.extras_require]`
+    section (see [Listing 20-2](#listing20-2)). You’ll notice that I wrap the `.[test]`
+    in single quotes, to keep the command line from misinterpreting those square brackets
+    as a glob pattern.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’m also installing my package in *editable* mode via the `-e` argument, meaning
+    the installation is directly using the files in *src/textproof/*, rather than
+    copying them into the virtual environment. This is extremely useful if I need
+    to run the code through a debugger!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To run my project’s tests with pytest, I issue the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This automatically scans the entire current directory for any modules starting
+    with *test_*, any classes starting with *Test*, and any functions starting with
+    *test_*. When pytest finds these test functions, it runs them, outputting the
+    results onto the terminal in colorful, insightful detail, like this (sans color
+    here in the book, unfortunately):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: All’s green and passing! The pytest tool found three tests in the module *tests/test_fileio.py*,
+    and all three passed, as represented by the three dots after the module name.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Testing for Exceptions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One significant danger when testing is receiving false positives, wherein a
+    test passes only due to a bug or logic error in the code. For example, have you
+    noticed something odd about those passing tests? They all refer to a file called
+    *tests/to_be.txt*, but that file does not exist in the project. If `FileIO` is
+    passed a path to a file that doesn’t exist, it should raise a `FileNotFoundError`
+    instead of proceeding quietly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I’ll put that expectation into the form of a test:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-7: *tests/test_fileio.py:2a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To test that an exception is raised, I use the context manager `pytest.raises()`
+    instead of an ordinary `assert` statement. In the suite of the `with` statement,
+    I run the code that should raise the expected exception.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Re-running pytest shows the test is failing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `F` after the module name indicates a failed test ❶. More details follow
+    the `FAILURES` header, indicating that the expected exception was not raised ❷.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remember that, in this case, failure is a good thing! It means the test has
+    detected a mismatch between the expectations of the test and the behavior of the
+    code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now I set about making the test pass, which, in this case, is as simple as
+    adding some logic to the initializer of the `FileIO` object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-8: *src/textproof/**fileio.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because I installed my local package as editable, I do not have to reinstall
+    before running pytest again—the virtual environment directly uses the source code,
+    so my changes are visible in that context immediately.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Running the tests now shows the first three tests failing and the fourth passing.
+    Readers familiar with the practice of testing will recognize that this is a step
+    forward, not backward: it reveals that the first three tests were originally passing
+    erroneously!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Test Fixtures
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Those tests failed not because of a flaw in the code, but due to their own logic.
+    All three wrongly assumed the presence of a particular file, *tests/to_be.txt*.
+    I could create that file myself, but it would be better to use the test framework
+    to ensure that file is always there in advance. I can do so by creating a *software
+    test fixture*, usually known as a *test fixture* or a *fixture*, which is a function
+    or method that sets up anything a test might need, especially things that are
+    shared by multiple tests. Fixtures can also perform *teardown*—tasks like closing
+    a stream or database connection or deleting temporary files. By using a fixture,
+    you cut down on errors in writing your tests and save time besides.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ll add a fixture to my `TestFileIO` test class, to create that demo file my
+    tests are expecting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-9: *tests**/test_**fileio.py:1c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I define the contents of the demo file in the class attribute `demo_data`. This
+    is acceptable for populating a fixture with example data, so long as I don’t also
+    use the attribute in the test itself as part of an assertion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `demo_in_file()` and `demo_out_file()` functions are turned into fixtures
+    via the `@pytest.fixture` decorator. Both fixtures have two important parameters.
+    The `tmp_path` parameter is actually a fixture that is automatically provided
+    by pytest via *dependency injection*, wherein an object receives the other objects
+    it needs when it is created or called. In this case, merely *naming* the parameter
+    `tmp_path` “magically” causes pytest to provide the `tmp_path` fixture object
+    to this fixture. The `tmp_path` fixture will create a temporary directory on the
+    filesystem, and it will automatically delete that directory and its contents when
+    the fixture is torn down.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `demo_in_file()` fixture itself writes `demo_data` to the file, and then
+    it returns the path to that file. Whatever is returned by the fixture is provided
+    directly to any test using said fixture. You can use `yield` in place of `return`
+    in a fixture if you need to add teardown logic after that statement, such as closing
+    a database connection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `demo_out_file()` fixture returns a path to an *out.txt* file (which doesn’t
+    yet exist) in the temporary directory provided by `tmp_path`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I use the fixtures in my tests like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-10: *tests**/test_**fileio.py:1c* (continued)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Like before, fixtures are added to tests via dependency injection. I need only
+    add a parameter with the fixture’s name (`demo_in_file`), and pytest will inject
+    the fixture. In the context of the test, `demo_in_file` will then refer to whatever
+    value was returned or yielded by the fixture; in this case, that’s a string representation
+    of the path to the demo file the fixture created.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I run pytest again and find that all four tests are passing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here are a few more unit tests, checking the read-write logic of my `FileIO`
+    class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-11: *tests**/test_**fileio.py:3*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s not much to explain here. I test loading a file, saving a file, and
+    ensuring that saving before loading raises a `RuntimeError`. These also pass on
+    the first try.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The one thing worth noting is the name `test_save__no_load`. Some developers
+    like using the naming convention `test_``subject__scenario`, using the double-underscore
+    to separate the subject of the test from the description of the scenario under
+    which the subject is being tested.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Continuing the Example: Using the API'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Now that I have the basic file-reading and file-writing functionality built,
+    I can add the next piece: communicating with the LanguageTool API. Here’s how
+    I do that in my program:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-12: *src/textproof/api.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I use the `requests` module to send a POST request to the public API endpoint
+    at [https://languagetool.org/api/v2/check](https://languagetool.org/api/v2/check).
+    The API will respond with JSON data, which `requests` will automatically convert
+    to a Python dictionary and return from `requests.post()`; I bind this dictionary
+    to `response`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I check the status code of the POST request; if it’s not `200`, that indicates
+    a problem communicating with or using the API, and I’d want to raise a `RuntimeError`
+    with the details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Otherwise, for a successful response, I print out the name and version of the
+    API on the console for reference, as well as the language I’m checking against.
+    Finally, I return the list of errors detected by LanguageTool. (I know about the
+    keys and structure of the dictionary from trying it out at [https://languagetool.org/http-api/swagger-ui/#!/default/post_check](https://languagetool.org/http-api/swagger-ui/#!/default/post_check).)
+  prefs: []
+  type: TYPE_NORMAL
+- en: This either works or doesn’t work, so I won’t test this function directly—although
+    some may see testing it as justifiable. I *will* test the assumptions it makes
+    about the API response later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sharing Data Between Test Modules
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: I need most of my tests to work without internet, for two reasons. First, I
+    want them to work even if I’m disconnected or the API I’m using is temporarily
+    unavailable. Second, I don’t want to send unnecessary API requests just to test
+    my code. Instead, I want to use predetermined local data for most of my tests.
+    This means I’ll need all my tests to have access to this data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I also need to ensure my assumptions about the API, which are what my code and
+    tests are based on, are correct. This looks like a job for testing!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In my *tests/* directory, I create a special *conftest.py* module. This module,
+    *with this exact name*, is used by pytest to perform initial setup and share fixtures
+    and the like between test modules. Here, I define the data I want my tests to
+    use:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-13: *t**ests/conftest.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The value bound to `example_api_response` is adapted directly from the `['matches']`
+    value of the LanguageTool API server response for `example_text`, but I’ve removed
+    all the fields I don’t use in my code. I’ll use this data for many other tests
+    later. The string literal bound to `example_output` is the grammatically correct
+    form of `example_text`, after applying the corrections suggested by LanguageTool.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To make these names available to all test modules in the *tests/* directory,
+    I override the `pytest_configure()` function and add them as attributes of the
+    `pytest` namespace. I can access them in any test module in the *tests/* directory
+    as attributes on `pytest`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Flaky Tests and Conditionally Skipping Tests
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Sometimes, there are conditions under which you might want to skip a test, rather
+    than have it fail. The pytest framework offers a function for doing exactly that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, my API test is the only test dependent on having a working internet
+    connection and the LanguageTool API’s availability. If I’m not careful how I write
+    it, it could easily become a *flaky test*, which is a test that may fail unexpectedly
+    or periodically for reasons other than a flaw in the code it’s testing. Deal with
+    flaky tests as soon as you find them, lest you condition yourself to ignore false
+    negatives. The pytest documentation has an entire section on flaky tests and how
+    to mitigate them at [https://docs.pytest.org/en/stable/flaky.xhtml](https://docs.pytest.org/en/stable/flaky.xhtml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this case, I need to skip my API layout test when the public API server
+    is unavailable or having other problems. In the following code, I do this with
+    the `pytest.skip()` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-14: *t**ests/test_api.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first part of the test is almost identical to my `textproof.api.api_query()`
+    function, as I’m sending a POST request with the `example_text` and storing the
+    response.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, I want to skip the test if `response.status_code` is any value other than
+    `200`, thereby indicating some sort of problem with the API itself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I skip a test with `pytest.skip()`. The pytest results will show that this test
+    was skipped, rather than indicate a failure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the API request was successful, then I iterate over the values in the list
+    bound to the `["matches"]` key in the dictionary representing the API response,
+    and I iterate over the same in `pytest.example_api_response` as defined in *tests/conftest.py*.
+    I create a set from each of those lists, and then I ensure that all the expected
+    keys, as outlined in `pytest.example_api_response`, are also found in the API
+    response.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Advanced Fixtures: Mocking and Parametrizing'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: One of the more challenging components of testing is replicating external inputs,
+    such as user inputs or network responses. *Mocking* enables you to temporarily
+    replace parts of the code with versions that will simulate inputs or other scenarios
+    during testing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Parametrizing* expands a single test out into multiple tests, each one with
+    the same logic but different data. This is especially helpful for testing how
+    your code handles different input data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Continuing the Example: Representing a Typo'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Mocking and parametrizing are particularly useful for testing how code handles
+    different user input. In the case of `textproof`, I’ll be using these concepts
+    to test the command-line user interface, but I have to build that interface first.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In my `textproof` program, I want to represent a single error found by LanguageTool
+    as an object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-15: *src/textproof/typo.py:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the initializer, I populate the instance attributes with data from the API
+    response. In the `__str__()` special instance method, I convert the typo to a
+    string representation by showing the original sentence, underlining the typo with
+    caret symbols (`^`), and then describing the typo on the next line. The result
+    would look something like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Displaying a typo is one thing, but it won’t do much good unless the user can
+    change it somehow. LanguageTool provides some suggestions, and I want to allow
+    a user to choose between them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the instance method for getting the user’s choice, where each suggested
+    correction from LanguageTool is numbered from one onward, and where `0` is “skip”:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-16: *src/textproof/typo.py:2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, here’s the instance method for displaying all the suggestions, which
+    will also call `get_choice()` and act on the user’s choice:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-17: *src/textproof/typo.py:3*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With that code in place, I move onward to tests!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parametrizing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The first thing I want to test is that the `Typo` initializer is storing values
+    where and how I expect them. It’s all too easy to mess up dictionary access, after
+    all! I want to test on multiple scenarios, namely the three typos I have the example
+    data for in my *conftest.py* module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Parametrization* allows you to generate multiple scenarios from the same test
+    function. This is preferred over hardcoding all the scenarios in one test, so
+    you can isolate which specific scenarios are failing. In pytest, this is accomplished
+    with the `@pytest.mark.parametrize()` decorator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-18: *tests/test_typo.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this case, I want to run `test_create_typo()` three times: once for each
+    of the three valid indices on `pytest.example_api_response` (defined in [Listing
+    20-14](#listing20-14)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `@pytest.mark.parametrize` decorator accepts two arguments. The first is
+    the string representation of the name of the parameter to pass values to, which
+    is `"index"` in this case. The second decorator argument is an iterable of values
+    to pass to the named parameter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The test itself must have a parameter of the same name, `index` here, which
+    will receive the values from parametrization. I use that herein to access a particular
+    item in the list `pytest.example_api_response`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If I run this with pytest, I see the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: You’ll notice three dots next to *tests/test_typo.py*, indicating three tests
+    were run. These were the three scenarios for `test_create_typo()`, as generated
+    by parametrization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If one were to fail, you’d see the value passed to the parameter, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `[1]` after the test name indicates the parametrized value, from which you’d
+    know that the problem occurred with the scenario where `index` was `1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indirect Parametrization of Fixtures
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Thinking forward to some other tests I’ll write later, I don’t want to have
+    to directly access items in the `pytest.example_api_response` list every time,
+    as this is going to be repetitive. Instead, I want to provide a fixture that returns
+    part of the example API response. I want this fixture to be available to all tests,
+    not just those defined in the *tests/test_typo.py* module, so it belongs in *conftest.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For this new fixture to work, I will need it to work with parametrization of
+    tests. This is possible via *indirect parametrization*, where parametrized values
+    are relayed to the fixture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s my new fixture:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-19: *tests/conftest.py:2a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To work with parametrization, this fixture *must* have a parameter named `request`,
+    which correlates with pytest’s `request` fixture. Don’t confuse this with the
+    `requests` module I’ve been using to work with the API. (Can you tell yet that
+    pytest is extraordinarily picky about names?) This will be used to receive the
+    indirect parametrization value; I access that value via `request.param`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I’ll also add a similar fixture for generating a `Typo` object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-20: *tests/conftest.py:3a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tests and fixtures are among the rare exceptions to the rule of placing `import`
+    statements at the top of the module. I want to perform the import when the fixture
+    is used and only make the imported names available in the context of the fixture.
+    That way, these imports won’t leak into other fixtures, which is especially helpful
+    if I need to import conflicting names from elsewhere in a different fixture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now I rewrite my test to use these fixtures:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-21: *tests/**test_typo**.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The test itself doesn’t need to change much, since I was already using the names
+    `example_typo` and `example_response` in the suite of the test function. (It’s
+    almost like I planned this!) I add the new fixtures `example_typo` and `example_response`
+    to the parameter list of the test function—these are provided by the special *conftest.py*
+    module—and those names are locally bound to the values returned by those fixtures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I need to parametrize on the fixtures, so I once again use the `@pytest.mark.parametrize`
+    decorator. The first argument is a tuple of names (as strings) I’m parametrizing
+    on. The second is an iterable of tuples, with each tuple representing the values
+    passed to each name. The third argument, the `indirect=` keyword argument, is
+    a tuple (or other iterable) of names that actually refer to fixtures that will
+    receive the values. In this case, both names are fixtures, although that does
+    not necessarily have to be the case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running pytest again shows three tests in *test_typo.py* as passing, indicating
+    that the parametrization is working!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mocking Inputs with Monkeypatch
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The way to know that the `Typo.get_choice()` method is working is to give it
+    some user input. Instead of bribing my four-year-old niece to hammer in some input
+    on the keyboard every time I need to run the test—even though she would work for
+    snacks—I’ll create a *mock* to temporarily replace Python’s built-in `input()`
+    method and provide some inputs for the test. In pytest, mocking is performed by
+    a tool called `monkeypatch`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I’ll add a fixture to *conftest.py* for monkeypatching `input()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-22: *tests/conftest.py:4*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This fixture uses two other fixtures: `request` and `monkeypatch`. I intend
+    to have this fixture receive an iterable via parametrization. I’ll use a closure,
+    provided by `fake()`, to return each value in that iterable with each subsequent
+    call to the closure.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I then temporarily replace the built-in `input()` method with this closure via
+    `monkeypatch.setattr()`. Note that I am actually calling `fake()` here, as I want
+    to monkeypatch the closure itself in place of `input()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that I return nothing from this fixture! Its sole purpose is to mock `input()`
+    for the lifespan of the test using the fixture. The `monkeypatch` fixture will
+    automatically undo itself during teardown.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the first version of my test for the `Typo.get_choice()` unit:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-23: *tests/**test_typo**.py:2a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I parametrize on `fake_inputs`, creating three separate scenarios. The first
+    scenario should act as the user inputting `-1`, `20`, and `3`; the first two inputs
+    would prompt the user to try again. The second scenario would act as if the user
+    had input `3` on the first try. Finally, the third scenario, my favorite, would
+    involve two nonsense inputs: `fish` and `1.1`, followed by the valid input `3`.
+    The `indirect=True` parameter indicates that the other parameters should be passed
+    on to the `fake_inputs` fixture.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ve designed these inputs to be used only with the scenario presented in the
+    third typo scenario; ergo, my explicitly fetching `pytest.example_api_response[2]`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Marking
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: I want to be able to use my `example_typo` fixture, instead of manually accessing
+    the `pytest.example_api_response` list in this test, but it’s rather overkill
+    to parametrize the same value each time to the `example_response` fixture. Instead,
+    I can pass a single parameter with *marking*, which is the application of metadata
+    to tests and fixtures. (Parametrization is a type of marking.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I’ll use my own custom mark called `typo_id` to specify a scenario number.
+    I want this same mark to work on `example_response` and `example_typo`. Here’s
+    the adjusted `example_response` fixture:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-24: *tests/conftest:2b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In short, I try to get the value passed to the `typo_id` mark, but if it’s not
+    provided, I default to using the value provided by parametrization. If a value
+    is not provided to the fixture by either means, an `AttributeError` will be raised
+    from trying to access the then-undefined `request.param`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While I’m here, I’ll modify the `example_typo` fixture in the same way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-25: *tests/conftest:3b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I can now rewrite my `test_choice` test to use the `example_typo` fixture with
+    marking:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-26: *tests/**test_typo**.py:2b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I use the `@pytest.mark.typo_id` decorator to pass a value to the `typo_id`
+    mark, and that is used by the `example_typo` fixture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Running pytest again shows this is successful, with one small hiccup:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There is now a warning about using an unknown mark. To fix this, I need to
+    register the mark with pytest. There are two primary ways I can do this. The first
+    way is to use a configuration file named *pytest.ini*; the second is to add the
+    setting (using slightly different syntax) to *pyproject.toml*. Of the two, the
+    latter is preferred, as it allows you to collect nearly all the configuration
+    settings for various Python tools into one *pyproject.toml* file. I’ll use that
+    approach in this example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-27: *pyproject.toml:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Below the section `[tool.pytest.ini_options]`, I assign to `markers` a list
+    of all custom mark names as strings. The part of the string after the colon is
+    the mark’s optional description, not part of the mark name.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Alternatively, I could register the mark from the `pytest_configure()` function
+    in *conftest.py*, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: However, I’ll stick with the *pyproject.toml* approach in [Listing 20-27](#listing20-27)
+    instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whichever way you register the mark, running pytest again shows that the warning
+    is resolved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Capturing from Standard Streams
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If I want to test `Typo.select_fix()`, I need to not only be able to provide
+    input, but also verify the output. By default, pytest captures everything sent
+    to the standard output and standard error streams, including everything sent from
+    print statements. This is why you cannot use `print()` directly in a test and
+    see the output during the run, unless you invoke pytest with the `-s` argument
+    to shut off standard output and standard error capture. Because pytest captures
+    output, that output can be accessed directly using the `capsys` fixture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Before continuing, I must add the expected outputs to *conftest.py*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-28: *tests/conftest.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I’ll also add a fixture for accessing these prompts using parametrization or
+    the `typo_id` mark:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-29: *tests/conftest.py:5*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the test for `Typo.select_fix()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-30: *tests/**test_typo**.py:3*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I indirectly parametrize on the fixtures `example_typo` and `example_prompt`.
+    I monkeypatch `input()` to always simulate the user entering `0` at choice prompts.
+    *After* running the `example_typo.select_fix()` method, I retrieve the captured
+    output and ensure it matches the expected output as defined in `example_prompts`
+    from *conftest.py*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: GUI Testing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Mocking `input()` and capturing from the standard output stream is all well
+    and good for command-line applications, but what about GUI-based and web-based
+    applications? Although testing a user interface is considerably more complicated,
+    there are a number of libraries that make this easier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*PyAutoGUI* is one such tool, allowing you to control the mouse and keyboard
+    from Python. It’s compatible with any Python test framework, and it works on Windows,
+    macOS, and Linux (but not on mobile). More information is available in the official
+    documentation: [https://pyautogui.readthedocs.io/](https://pyautogui.readthedocs.io/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re using the Qt GUI framework (PyQt5, PyQt6, PySide2, or PySide6), consider
+    *pytest-qt*, which is designed specifically for testing Qt 5 applications. As
+    the name suggests, this is a plug-in for the pytest framework. Check out their
+    official documentation at [https://pytest-qt.readthedocs.io/](https://pytest-qt.readthedocs.io/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you work with web development, you may already be familiar with *Selenium*,
+    a browser automation tool for testing web applications. Selenium has official
+    Python bindings, which are available on pip simply as `selenium`. You can learn
+    more about Selenium at [https://www.selenium.dev/](https://www.selenium.dev/)
+    or by reading the unofficial documentation, *Selenium with Python* by Baiju Muthukadan,
+    at [https://selenium-python.readthedocs.io/](https://selenium-python.readthedocs.io/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: For mobile development, *Appium* is one of the leading test automation frameworks.
+    It borrows some concepts and specifications from Selenium, as the name implies.
+    *Appium-Python-Client* is the official Appium client for Python, and it is available
+    through pip. For more information about Appium, see [https://appium.io/](https://appium.io/)
+    and [https://github.com/appium/python-client](https://github.com/appium/python-client).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Continuing the Example: Connecting the API to Typo'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In my program, I now need to connect the API request logic and the `Typo` class.
+    I’ll create a `CheckedText` class to store the text being edited, alongside the
+    typos detected in it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-31: *src/textproof/checked_text.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ll let you read through the logic yourself, using what you know. In short,
+    the initializer creates a `CheckedText` object by running a provided string of
+    plaintext through the API and then initializing `Typo` objects for each typo reported
+    by the API.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `fix_typos()` instance method will iterate over each `Typo`, prompting the
+    user to select what to do about each via the `Typo.select_fix()` instance method.
+    Then, the method will make the selected correction directly in a copy of the text,
+    bound to `self.revised`. In this logic, I had to work out how to deal with a correction
+    having a different length from the original text being replaced, then factor that
+    into future edits. One of the upcoming tests will confirm this logic worked.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Autouse Fixtures
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: All my tests up to this point, except one, have been able to sidestep use of
+    the API. I need to start tying together all the logic in my `textproof` program,
+    so my upcoming tests will need to monkeypatch the API call. In tests, I *always*
+    want a call to `textproof.api.api_query()` to return `example_api_response`, rather
+    than send a request to the public API. I don’t want to leave it to my (infamously
+    bad) memory to include the fixture on each test that might have such a call. To
+    get around this, I’ll make an *autouse fixture*, which is automatically applied
+    to all tests.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I add the following fixture to *conftest.py*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-32: *tests/conftest.py:6a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `autouse=True` argument passed to the `@pytest.fixture` decorator causes
+    this fixture to be used by *all* tests.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this fixture, I have a callable that can be called in the same way as `textproof.api.api_query`,
+    accepting one argument, which I ignore. The callable returns `example_api_response`.
+    I also print “FAKING IT” to the screen, instead of the public API information
+    that `textproof.api.api_query()` prints. This is ordinarily invisible, since pytest
+    captures all output, but if I invoke the test with `pytest -s`, I can confirm
+    that the monkeypatched function is being used instead of the real thing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There’s one surprising problem with this fixture: it won’t actually monkeypatch
+    the `api_query()` function in the context of the *src/textproof/checked_text.py*
+    module. This is because of this import line:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Monkeypatching occurs *after* the modules have performed all their imports,
+    so replacing `textproof.api.api_query` doesn’t shadow the function that was already
+    imported into this module as `api_query`. In other words, the `import` statement
+    bound the function in question to a second fully qualified name: `textproof.checked_text.api_query`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead, I need to monkeypatch each fully qualified name that the function
+    may be bound to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-33: *tests/conftest.py:6b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If I import `api_query` elsewhere in my program, I’ll need to add any other
+    fully qualified names to this fixture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once this fixture is in place, there’s nothing else I need to do to use it.
+    Because it’s an autouse fixture, all the tests in this project will automatically
+    use it. I can now safely proceed with testing *src/textproof/checked_text.py*,
+    knowing that no actual API requests will take place in the process:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-34: *tests/test_checked_text.py:1*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: That new fixture and test employ the concepts I’ve already introduced, so I
+    won’t rehash them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mixed Parametrization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'It is possible to mix direct and indirect parametrization in the same test.
+    For example, to test different outcomes with the `CheckedText` object, I will
+    need to use the `fake_inputs` fixture while directly providing the expected outcome.
+    I can do that like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-35: *tests/test_checked_text.py:2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The trick here is that, although I’ve specified two arguments to parametrize,
+    I’ve only made one of them—`fake_inputs`—indirect. I can then run the `example_checked.fix_typos()`
+    method, which will use the monkeypatched `input()` function provided by the `fake_inputs`
+    fixture, and then compare `example_checked.revised` to the expected result parametrized
+    on `expected`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I should point out that although this test corresponds to a unit, `CheckedText.fix_typos()`,
+    it is also an *integration test*, because it demonstrates several other units
+    working together correctly. Integration tests are just as important as unit tests,
+    as it’s perfectly possible to have multiple working units that simply don’t interact
+    correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fuzzing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the program I built in this chapter, I provided explicit input values for
+    all my tests. However, passing tests may conceal many bugs, because it’s all too
+    easy to overlook edge cases. *Fuzzing* is a technique that can help catch these
+    edge cases, generating random inputs in tests to find ones that fail in unexpected
+    ways.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The *pythonfuzz* tool, currently maintained by GitLab, is designed to conduct
+    fuzz testing on Python. It works independently of any other testing framework.
+    To learn more about pythonfuzz, check out the README and examples in the official
+    repository: [https://gitlab.com/gitlab-org/security-products/analyzers/fuzzers/pythonfuzz](https://gitlab.com/gitlab-org/security-products/analyzers/fuzzers/pythonfuzz).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wrapping Up the Example
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Have you noticed that I haven’t even run the `textproof` package directly yet?
+    It isn’t a complete or valid program, but even now, I know that all the pieces
+    will work as expected. This is the beauty of testing while coding. I can confirm
+    my work on each part as I go, even if the whole is not complete.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Still, this example would feel wrong if it didn’t result in a complete program,
+    so here’s the last needed module: *src/textproof/__main__.py*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-36: *src/textproof/__main__.py:1a*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This module defines my program’s command-line interface, using the popular `click`
+    package, which is easier to use than the similar built-in `argparse` module. On
+    the command line, I accept one required parameter, *path*, where I want to read
+    the text from. The optional `--output` flag accepts a path depicting where I want
+    to write the revised text to.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I define the `FileIO` object with these paths, read in the text, and instantiate
+    a `CheckedText` object from that text. As you will remember, in the process of
+    instantiating the `CheckedText` object, a request is sent to the LanguageTool
+    public API, and the suggested revisions are sent back.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The call to `check.fix_typos()` will walk the user through each suggestion,
+    prompting them to select a fix, which will be immediately applied. The revised
+    text is given back to the `FileIO` object file and saved to the file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'That’s it! Now I can try this out. First, I’ll create a file containing text
+    to revise, which for this example, I’ll just save in the root of the *textproof/*
+    project directory, next to *setup.cfg*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-37: *fixme.txt*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, I’ll invoke my `textproof` program in the virtual environment, like
+    this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Assuming I have an internet connection with access to the LanguageTool public
+    API, the program will display the first error and prompt me to select a fix. I’ll
+    omit the full output here, since it’s quite long, but I encourage you to try out
+    the program yourself if you’ve been building along with me.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Code Coverage
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When you start talking to developers about testing, you’ll likely hear the term
+    *code coverage* a lot. Code coverage refers to the percentage of lines of code
+    in your project that your tests execute, or *cover*. Good code coverage is important
+    because any uncovered code is likewise not tested and could be harboring bugs
+    or other undesirable behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Python offers two built-in modules that track which statements are executed:
+    `trace` and `ctrace`. Instead of using these directly, most Python developers
+    use the third-party tool *coverage.py* (`coverage` in pip), which employs `trace`
+    and `ctrace` behind the scenes to generate code coverage reports.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’ll test my code coverage now. If you’re using pytest specifically, you can
+    use *pytest-cov*, a plug-in that allows you to invoke coverage.py from pytest.
+    I won’t use that plug-in here, to keep this example as framework agnostic as possible.
+    Instead, I’ve adapted and expanded a technique from developer Will Price ([https://www.willprice.dev/2019/01/03/python-code-coverage.xhtml](https://www.willprice.dev/2019/01/03/python-code-coverage.xhtml)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, I want to add the `coverage` package to my testing dependencies in *setup.cfg*,
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-38: *setup.cfg:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, I’ll ensure that the package is installed in the virtual environment
+    by issuing the following in the command line:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: Code coverage will be assessed the same, whether you install your package as
+    editable (with `-e`) or not.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I also need to tell coverage.py what files to scan and tell it about any replication
+    of those files. This is especially important with an `src`-based project configuration,
+    where tests may be running code installed in a virtual environment. To inform
+    coverage.py what to scan, I add two new sections to the *pyproject.toml* file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-39: *pyproject.toml:2*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the first section, `[tool.coverage.run]`, I specify a list of packages I
+    am testing. In the second section, `[tool.coverage.paths]`, I indicate the path
+    to the original source code and where the source code can be found inside a virtual
+    environment. These paths will be considered equivalent, as far as coverage.py
+    is concerned; the tool will recognize *src/textproof/api.py* and *venv/lib64/python3.9/site-packages/textproof/api.py*
+    as the same module, in terms of results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, I can invoke coverage.py from the command line, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: The first command invokes pytest in the context of coverage.py. Although I don’t
+    pass any arguments to pytest here, you can. If you’re using a different test suite,
+    you can invoke that instead of pytest here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, I combine reports for the same files in different locations, following
+    the guidance I provided in the `[tool.coverage.paths]` section of *pyproject.toml*.
+    Depending on your circumstances, this command may not have anything to combine,
+    but it never hurts to check.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, I display the coverage report:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: Seventy-two percent isn’t too bad for a first attempt! I could go back and add
+    more tests if I wished, pushing this number ever closer to 100 percent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Code coverage is a useful metric to have, so long as you remember that it is
+    part of a larger picture. In his article, “Flaws in coverage measurement” ([https://nedbatchelder.com/blog/200710/flaws_in_coverage_measurement.xhtml](https://nedbatchelder.com/blog/200710/flaws_in_coverage_measurement.xhtml)),
+    coverage.py developer Ned Batchelder points out that 100 percent coverage can
+    create a false sense of security:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are dozens of ways your code or your tests could still [be] broken, but
+    now you aren’t getting any directions. The measurement coverage.py provides is
+    more accurately called statement coverage, because it tells you which statements
+    were executed. Statement coverage testing has taken you to the end of its road,
+    and the bad news is, you aren’t at your destination, but you’ve run out of road.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Similarly, in a 2000 paper entitled “How to Misuse Code Coverage,” Brian Marick
+    makes this observation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a part of your test suite is weak in a way that coverage can detect, it’s
+    likely also weak in a way coverage can’t detect.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: That 72-percent code coverage I achieved tells me that *at least* 28 percent
+    of the code is not being tested, but the true percentage of untested code is almost
+    certainly more. Code coverage can point out areas where additional testing will
+    be helpful, but it cannot issue any guarantees that additional testing isn’t needed
+    elsewhere.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can learn more about coverage.py from the official documentation: [https://coverage.readthedocs.io/](https://coverage.readthedocs.io/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Automating Testing with tox
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Up to this point, I’ve been testing on one virtual environment, which in my
+    case is running Python 3.9\. I also like to believe that said virtual environment
+    only contains the packages demanded explicitly by *setup.cfg*, but I may have
+    forgotten about something I manually installed or something I’d previously specified
+    as a requirement that I’ve since dropped but forgotten to uninstall.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The *tox* tool is a fairly essential part of a testing system, because it automates
+    installing and testing your package in fresh virtual environments for multiple
+    versions of Python. In this section, I’ll demonstrate this tool’s use within my
+    Timecard project.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I should first add `tox` to my *setup.cfg*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-40: *setup.cfg:1c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Traditionally, all of the configuration for tox belongs in a *tox.ini* file.
+    More recently, the trend is shifting toward use of *pyproject.toml* instead, for
+    as much as possible. As I write, however, native support for *pyproject.toml*
+    syntax is still forthcoming. You’ll need to embed the *tox.ini* file contents
+    directly in *pyproject.toml*, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-41: *pyproject.toml:3*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whatever I would have saved in *tox.ini* now belongs in the multiline string
+    assigned to `legacy_tox_ini`, under the `[tool.tox]` section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Within the *tox.ini*-style data itself, I have two sections. Under `[tox]`,
+    I use `isolated_build` to specify that tox should create fresh, isolated virtual
+    environments for its tests. The field `envlist` is a comma-separated list of Python
+    environments I want to test against. The tox tool supports Python 2.7 (`py27`),
+    Python 3.4 (`py34`) through the latest release (`py310`, at the moment), Pypy’s
+    latest releases (`pypy27` and `pypy35`), and Jython (`jython`). (See Chapter 21
+    to learn more about Pypy and Jython.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Under the `[testenv]` section, I list the testing dependencies with `deps`.
+    You’ll notice I omitted `coverage` here, since there’s no need to run coverage
+    in all these different environments. I set `commands` to the command I use to
+    invoke tests: in this case, that’s just `pytest`. This command will be run directly
+    in each virtual environment, so I don’t need to worry about the `venv/bin/` prefix,
+    which would be wrong anyway.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I ensure tox is installed in my primary virtual environment via the following,
+    as usual:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, I can invoke tox:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: It may take several minutes to run. As it does, you’ll notice the `textproof`
+    package and its dependencies (but not the optional `[test]` dependencies) being
+    installed in each virtual environment and the tests being run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After everything has run, you’ll see a summary report:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: I know that my package installs and my tests work on Python 3.8, Python 3.9,
+    and Python 3.10, so I’m also reasonably confident `textproof` could run in any
+    of those environments on other machines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can learn more about tox from the official documentation: [https://tox.readthedocs.io/](https://tox.readthedocs.io/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Benchmarking and Profiling
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: As programmers, we’re often very interested in making our code run faster. You
+    will likely make many decisions about your code, based primarily on the notion
+    that one technique will run faster than another. As I mentioned at the top of
+    the chapter, all claims of performance are mythical until proven otherwise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Benchmarking* is how you establish that one piece of code is faster than another.
+    The closely related technique of *profiling* is how you find areas where existing
+    code can be optimized, by locating performance bottlenecks and common inefficiencies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Python offers four built-in tools that are useful for these tasks: `timeit`,
+    `cProfile`, `profile`, and `tracemalloc`. I’ll cover each briefly.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Benchmarking with timeit
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When you need to quickly verify that one chunk of code is faster than another,
+    `timeit` is an excellent tool. For example, you may encounter a claim online that
+    multiple assignment in Python is faster than the ordinary single assignment I’ve
+    used throughout the book. You can verify that claim using `timeit`, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-42: *profiling_with_timeit.py*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each statement I’m measuring should be in a function or other callable object.
+    I also must determine how many times to evaluate and run each statement. This
+    needs to be a large number of times for the results to be meaningful, and the
+    larger the number is, the more accurate the results will be. I bound this value,
+    `10_000_000` (10 million), to `count` and passed it to the optional `number=`
+    keyword argument of `timeit`, rather than risk entering different numbers on the
+    two function calls, which would skew the results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The number of seconds that elapsed while running the statement repeatedly is
+    returned by `timeit`. I bind the results to `time_multiple_assign` and `time_single_assign`.
+    Finally, I print out the results. I use a tab separator in the print statement
+    to line up the two numbers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Running the code, here are the results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: You’ll get different results each time because your computer manages processes
+    via pre-emptive multitasking (recall Chapter 16), meaning the Python process may
+    get suspended at any time to allow another process to work for a few milliseconds.
+    One profiling result is not conclusive; instead, look for trends among a large
+    sample of results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s not a profound difference between the two, but it’s fairly clear that
+    multiple assignment is *not* faster; it is rather slightly slower, at least on
+    Python 3.10 on my environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternatively, I could pass a string literal containing the code to be timed.
+    In this case, that code must be able to run by itself and not depend on anything
+    else in the module. If I needed to perform some setup, I could pass any amount
+    of code as a string to the `setup=` keyword argument of `timeit`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `timeit` module also can be used from the command line. Here, I’ll benchmark
+    the exact same code as in [Listing 20-42](#listing20-42), but in a UNIX terminal.
+    The responses are inline:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `-n` argument is where I specify how many times the code is executed. The
+    last argument is the required one: the Python code to run, as a string. (If you’re
+    using Bash, remember to wrap the string in single quotes, rather than double quotes,
+    to prevent Bash from trying to interpret anything in the Python code.)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Profiling with cProfile or profile
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: While benchmarking produces a single measurement for each code snippet measured,
+    profiling generates a table of measurements, allowing you to see what parts of
+    the code take the most time to run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Python offers two tools for conducting in-depth code profiling: `cProfile`
+    and `profile`. These both have exactly the same interface, but while `cProfile`
+    is written as a C extension, thereby minimizing overhead and bypassing the GIL,
+    the `profile` module is written purely in Python and has considerably more overhead
+    as a result. For this reason, I use `cProfile` whenever possible and only use
+    `profile` when `cProfile` is not available, such as when I’m using an alternative
+    Python implementation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unlike `timeit`, the `cProfile` and `profile` modules are aware of their own
+    surroundings and can call any functions or methods available in the current namespace.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You *can* perform benchmarks with `cProfile` or `profile`, merely by running
+    the two competing statements or function calls in separate calls to `run()`. However,
+    `timeit` is usually better suited for this purpose. I’m instead going to use `cProfile`
+    for the purpose it’s best suited to: identifying possible performance bottlenecks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I’ll call `cProfile` on the `main()` function from the `textproof` package’s
+    default entry point, like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-43: *src/textproof/__main__.py:1b*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since this is temporary code, I import `cProfile` right here, instead of at
+    the top of the file. Both `cProfile` and `profile` provide identical methods,
+    including `run()`. If you use `profile` instead of `cProfile`, everything else
+    in my examples is the same.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I pass a string containing the Python statement to `profile`. In this case,
+    I want to profile the entire program by calling the `main()` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now I can install and invoke my program. I must not use the usual entry point
+    provided by `textproof`, as that will bypass this whole if `__name__` clause.
+    Instead, I need to execute the package directly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: The program will start as normal, and I can interact with it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After I finish using the program and it exits, `cProfile` displays a report
+    on the terminal. However, this report is huge, difficult to navigate, and unhelpfully
+    sorted by name. I need to sort on something more useful, such as, say, the number
+    of calls.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The class `cProfile.Profile()` provides a bit more control. Ordinarily, I can
+    use it like this, although there’s one critical problem particular to my code
+    that I’ll come back to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-44: *src/textproof/__main__.py:1c*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I create a new `cProfile.Profile` object and bind it to the name `pr`. I enable
+    it with `pr.enable()`, after which I have the code I want to profile. When I’m
+    done, I disable the profiler in the same manner, with `pr.disable()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To sort the profiling results, I create a `pstats.Stats()` object. I strip out
+    the path information with `strip_dirs()`, so I see only module names. Then I sort
+    by the *cumulative runtime* of each function with `sort_stats()`, meaning the
+    total time the program spent running that function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, I print out the stats with `print_stats()`, specifying that I only
+    want to see the first 10 lines of output, instead of the hundreds that would be
+    displayed. I could also pass a floating-point number here, representing a percentage
+    of lines to display.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As of Python 3.8, `cProfile.Profile` is also a context manager, so I can use
+    this syntax instead of manually enabling and disabling:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Listing 20-45: *src/textproof/__main__.py:1d*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you try to run the code from either [Listing 20-44](#listing20-44) or [Listing
+    20-45](#listing20-45), you’ll notice that *there is no output*. I spent about
+    half an hour scratching my head over this one. I finally realized that, because
+    I decorated `main()` with `@click.command()`, Click causes the program to exit
+    immediately at the end of `main()`, instead of returning here to finish up. This
+    sort of problem isn’t exclusive to Click. In real-world applications, there are
+    many situations that will cause the program to terminate without returning from
+    `main()` or another function normally. Perhaps the user closes a window or clicks
+    the Quit button.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this case, I can get the best results by moving the logic right into my
+    `main()` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Listing 20-46: *src/textproof/__main__.py:1e*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Executing that will *finally* give me some useful output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: The columns here are the number of calls (`ncalls`), the total time spent in
+    the function itself (`tottime`), the average time spent in the function (`percall`),
+    the total time spent in the function and anything it calls (`cumtime`), and the
+    average thereof (`percall`). The most insightful of these is `cumtime`, which
+    I sorted on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I might have expected the API call to take the longest, but in fact, it’s sixth
+    on this list, with a cumulative runtime of `0.827` seconds. The method `fix_typos()`
+    from *checked_text.py* is the winner, at `2.693` seconds, but on closer examination,
+    I can see that virtually all this time was spent in the `input()` function. The
+    program’s runtime is IO-bound, but since it feels perfectly responsive, it needs
+    no further attention.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I could increase the number of results displayed and continue to work my way
+    through it, looking for possible bottlenecks, but you get the idea.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can also invoke `cProfile` or `profile` from the command line. By itself,
+    this does not provide a means of showing only a segment of results, which makes
+    seeing the results decidedly non-trivial. Instead, you can view the results graphically
+    with the tool *SnakeViz*, installable from pip as `snakeviz`. Then, I use it like
+    this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: I invoke cProfile directly on the command line, specifying that the profiling
+    results will be saved in the file *profile_out* ❶. Then, I open *profile_out*
+    with `snakeviz`, which will open an interactive graph of the results in your default
+    web browser.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can learn more about SnakeViz at [https://jiffyclub.github.io/snakeviz/](https://jiffyclub.github.io/snakeviz/).
+    There’s quite a lot more to profiling on Python. The official documentation does
+    an excellent job of demonstrating how to perform effective profiling and the various
+    considerations that go into it: [https://docs.python.org/3/library/profile.xhtml](https://docs.python.org/3/library/profile.xhtml).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: tracemalloc
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If `cProfile` or `profile` gives you a picture of time complexity in your code,
+    what about space complexity? If you’re using CPython, you can use *tracemalloc*
+    to examine how memory is allocated on the system and see what parts of your code
+    are using the most memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Bearing in mind the logistical issues I mentioned with `cProfile`, the documentation
+    is more than sufficient to demonstrate how this works: [https://docs.python.org/3/library/tracemalloc.xhtml](https://docs.python.org/3/library/tracemalloc.xhtml).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wrapping Up
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Testing is a critical component of any production-grade project. The Python
+    ecosystem offers many tools for testing code, as well as tools for checking code
+    coverage and automating testing in different environments. In practice, it takes
+    a bit of work to get all these components to work together seamlessly, although
+    using an `src`-based project structure helps. Once your test system is working
+    smoothly, it becomes easier to continually verify that each change you make to
+    the code is a step in the right direction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The project structure I’ve demonstrated also works well with *continuous integration*
+    tools, like GitHub Actions, Travis CI, CircleCI, and Jenkins, which automatically
+    run tests on repository commits or pull requests.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to this, you can gain insights on the performance of your code by
+    benchmarking with `timeit`, profiling with `cProfile` or `profile`, and checking
+    memory allocation with `tracemalloc`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I’ve also got some incredible news for you: if you’ve been following me since
+    Chapter 1, you’ve now seen, learned, and practiced nearly every essential component
+    of the core language, a good chunk of the standard library, and much of the Python
+    ecosystem as a whole. We now have just one more stop to go on our tour.**'
+  prefs: []
+  type: TYPE_NORMAL
