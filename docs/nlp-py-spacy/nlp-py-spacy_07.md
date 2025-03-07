@@ -1,4 +1,4 @@
-## 第八章：VISUALIZATIONS**
+## 第七章：VISUALIZATIONS**
 
 ![Image](img/comm1.jpg)
 

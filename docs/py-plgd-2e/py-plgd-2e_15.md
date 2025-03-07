@@ -1,4 +1,4 @@
-## 第十二章：# 卷积渲染
+## 第十一章：# 卷积渲染
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

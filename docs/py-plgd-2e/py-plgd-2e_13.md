@@ -1,4 +1,4 @@
-## 第十章：# 理解 OpenGL
+## 第九章：# 理解 OpenGL
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

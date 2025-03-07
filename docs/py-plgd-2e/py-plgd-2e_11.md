@@ -1,4 +1,4 @@
-## 第九章：# 自动立体图
+## 第八章：# 自动立体图
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

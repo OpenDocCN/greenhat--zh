@@ -1,4 +1,4 @@
-## 第三章：# Spirographs
+## 第二章：# Spirographs
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

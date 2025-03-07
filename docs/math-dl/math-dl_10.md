@@ -1,4 +1,4 @@
-## 第十一章：BACKPROPAGATION**
+## 第十章：BACKPROPAGATION**
 
 ![image](img/common.jpg)
 

@@ -1,4 +1,4 @@
-## 第五章：# 使用 Karplus-Strong 的音乐泛音
+## 第四章：# 使用 Karplus-Strong 的音乐泛音
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

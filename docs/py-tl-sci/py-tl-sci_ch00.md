@@ -1,4 +1,4 @@
-## 第三章：序言
+## 序言
 
 ![image](img/common.jpg)
 

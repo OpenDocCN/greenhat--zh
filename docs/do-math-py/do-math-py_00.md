@@ -1,4 +1,4 @@
-## 第一章：序言
+## 序言
 
 ![image](img/common-01.jpg)
 

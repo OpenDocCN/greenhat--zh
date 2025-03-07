@@ -1,4 +1,4 @@
-# 第三十二章：**科学家的 Python 工具**
+# 第三十一章：**科学家的 Python 工具**
 
 **Anaconda、JupyterLab 和 Python 科学库使用介绍**
 

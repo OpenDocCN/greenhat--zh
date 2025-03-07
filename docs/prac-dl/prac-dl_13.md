@@ -1,4 +1,4 @@
-## 第十四章：在 Keras 和 MNIST 上的实验**
+## 第十三章：在 Keras 和 MNIST 上的实验**
 
 ![image](img/common.jpg)
 

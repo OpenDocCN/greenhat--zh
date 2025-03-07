@@ -1,4 +1,4 @@
-## 第十四章：# 使用树莓派显示激光音频
+## 第十三章：# 使用树莓派显示激光音频
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

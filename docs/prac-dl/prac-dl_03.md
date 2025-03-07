@@ -1,4 +1,4 @@
-## 第四章：使用 NUMPY**
+## 第三章：使用 NUMPY**
 
 ![image](img/common.jpg)
 

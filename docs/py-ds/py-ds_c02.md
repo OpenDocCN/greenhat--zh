@@ -1,4 +1,4 @@
-## 第三章：Python 数据结构
+## 第二章：Python 数据结构
 
 ![](img/chapterart.png)
 

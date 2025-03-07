@@ -1,4 +1,4 @@
-## 第十一章：面向对象编程与 PVector
+## 第十章：面向对象编程与 PVector
 
 ![](img/chapterart.png)
 

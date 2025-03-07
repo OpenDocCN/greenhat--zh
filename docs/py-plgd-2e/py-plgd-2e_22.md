@@ -1,4 +1,4 @@
-# 第十八章：B
+# 第十七章：B
 
 # Raspberry Pi 设置
 

@@ -1,4 +1,4 @@
-## 第二十三章：PANDAS、SEABORN 和 SCIKIT-LEARN**
+## 第二十二章：PANDAS、SEABORN 和 SCIKIT-LEARN**
 
 ![image](img/common.jpg)
 

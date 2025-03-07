@@ -1,4 +1,4 @@
-## 第十六章：# 树莓派上的音频机器学习
+## 第十五章：# 树莓派上的音频机器学习
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

@@ -1,4 +1,4 @@
-## 第二十四章：**使用 Python 和 Pandas 管理日期和时间**
+## 第二十三章：**使用 Python 和 Pandas 管理日期和时间**
 
 ![image](img/common.jpg)
 
