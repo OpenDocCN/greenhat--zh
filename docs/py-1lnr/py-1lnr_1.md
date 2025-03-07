@@ -1,4 +1,4 @@
-## PYTHON 复习**
+## 第二章：PYTHON 复习**
 
 ![图片](img/comm-1.jpg)
 

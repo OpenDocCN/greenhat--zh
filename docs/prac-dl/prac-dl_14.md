@@ -1,4 +1,4 @@
-## 对 CIFAR-10 的实验**
+## 第十五章：对 CIFAR-10 的实验**
 
 ![image](img/common.jpg)
 

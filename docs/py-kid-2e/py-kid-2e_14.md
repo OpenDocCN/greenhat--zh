@@ -1,4 +1,4 @@
-## 完成你的第一个游戏：Bounce！
+## 第十二章：完成你的第一个游戏：Bounce！
 
 ![Image](img/common.jpg)
 

@@ -1,4 +1,4 @@
-## 做出决策
+## 第二章：做出决策
 
 ![image](img/common.jpg)
 

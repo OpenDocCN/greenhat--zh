@@ -1,4 +1,4 @@
-## 哈希表
+## 第十章：哈希表
 
 ![](img/chapterart.png)
 

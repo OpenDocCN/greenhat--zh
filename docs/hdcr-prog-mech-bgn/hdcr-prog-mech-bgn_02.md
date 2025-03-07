@@ -1,4 +1,4 @@
-## 简短的 Python 入门
+## 第二章：简短的 Python 入门
 
 ![Image](img/common01.jpg)
 

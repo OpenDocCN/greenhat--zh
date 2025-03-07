@@ -1,4 +1,4 @@
-## 使用 tkinter 创建更好的图形
+## 第十章：使用 tkinter 创建更好的图形
 
 ![Image](img/common.jpg)
 

@@ -1,4 +1,4 @@
-## # 在树莓派 Pico 上实现 Karplus-Strong 算法
+## 第十三章：# 在树莓派 Pico 上实现 Karplus-Strong 算法
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

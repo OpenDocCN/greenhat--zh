@@ -1,4 +1,4 @@
-## # 照片马赛克
+## 第八章：# 照片马赛克
 
 ![](img/nsp-venkitachalam503045-circle-image.jpg)
 

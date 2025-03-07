@@ -1,4 +1,4 @@
-## **致谢**
+## 第一章：**致谢**
 
 感谢 No Starch Press 的创始人兼总裁 Bill Pollock，让我又有机会写一本书。还要感谢 Frances Saux，感谢她陪伴我完成两本书的编辑工作，并提供了最顶级的编辑服务。感谢 Gina Redman、Jill Franklin 和 Octopod Studios 为书籍提供了另一幅精彩的封面插图。感谢 Sarah De Vos 的市场支持，Katrina Horlbeck Olsen 的制作编辑支持，以及 No Starch Press 的其他员工，他们不懈努力，制作出“最棒的极客娱乐”。
 

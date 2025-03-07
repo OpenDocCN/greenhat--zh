@@ -1,4 +1,4 @@
-## 概率**
+## 第三章：概率**
 
 ![image](img/common.jpg)
 

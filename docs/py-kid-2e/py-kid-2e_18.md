@@ -1,4 +1,4 @@
-## 创建 Mr. Stick Man
+## 第十五章：创建 Mr. Stick Man
 
 ![Image](img/common.jpg)
 

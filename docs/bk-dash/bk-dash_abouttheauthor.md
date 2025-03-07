@@ -1,4 +1,4 @@
-# 关于作者
+# 第一章：关于作者
 
 Adam Schroeder 已经在 YouTube 上教授 Plotly Dash 超过两年，账号为 *@CharmingData*。他的视频每月观看量超过 60,000 次。Adam 热衷于帮助人们学习数据可视化。他拥有政府与冲突解决硕士学位，并为 Plotly 工作。
 

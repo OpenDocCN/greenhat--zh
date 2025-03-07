@@ -1,4 +1,4 @@
-## 4 第一个 Dash 应用
+## 第六章：4 第一个 Dash 应用
 
 ![](img/opener-img.png)
 

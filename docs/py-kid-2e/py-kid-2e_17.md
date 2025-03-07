@@ -1,4 +1,4 @@
-## 开发 Mr. Stick Man 游戏
+## 第十四章：开发 Mr. Stick Man 游戏
 
 ![Image](img/common.jpg)
 

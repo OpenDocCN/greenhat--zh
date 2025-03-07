@@ -1,4 +1,4 @@
-## 为《Mr. Stick Man》游戏创建图形
+## 第十三章：为《Mr. Stick Man》游戏创建图形
 
 ![图片](img/common.jpg)
 

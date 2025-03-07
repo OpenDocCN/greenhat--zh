@@ -1,4 +1,4 @@
-# 后记
+# 第十三章：后记
 
 干得好！你已经读完了这本书。从那个第一次使用的`print()`函数开始，你已经走了很长一段路！你使用 Processing 的 Python 模式深入研究了随机性、周期性运动、欧几里得向量、交互性等等。你学会了如何编写代码来生成图案、动画和数据可视化。你还学会了如何从 CSV 和 JSON 文件中读取数据，并通过使用面向对象编程和模块来组织你的程序。如果你需要参考书中的示例，可以访问[`github.com/tabreturn/processing.py-book/`](https://github.com/tabreturn/processing.py-book/)或查看[`www.nostarch.com/Learn-Python-Visually/`](https://www.nostarch.com/Learn-Python-Visually/)。该仓库包含每章挑战的解决方案。但仍有很多内容值得探索。
 
