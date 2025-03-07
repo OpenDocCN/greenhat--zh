@@ -1,0 +1,1142 @@
+<html><head></head><body>
+<div id="sbo-rt-content"><section aria-labelledby="header1501" class="chapter" epub:type="chapter" id="ch15" role="doc-chapter">
+<header id="header1501">
+<h1 class="cn"><span aria-label=" Page 354. " class="page" epub:type="pagebreak" id="p354" role="doc-pagebreak"/><span aria-label=" Page 355. " class="page" epub:type="pagebreak" id="p355" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rch15">15</a></h1>
+<h1 class="ct">Audio ML on Pi</h1>
+</header>
+<figure class="figure">
+<p class="fig"><img alt="" height="100" src="images/nsp-venkitachalam503045-circle-image.jpg" width="100"/></p>
+</figure>
+<p class="pf">In the past decade, <i>machine learning (ML)</i> has taken the world by storm. It’s everywhere from facial recognition to predictive text to self-driving cars, and we keep hearing about novel applications of ML seemingly every day. In this chapter, you’ll use Python and TensorFlow to develop an ML-based speech recognition system that will run on an inexpensive Raspberry Pi computer.</p>
+<p><span class="idx" data-term="speech recognition"/>Speech recognition systems are already deployed in a huge number of devices and appliances in the form of voice assistants such as Alexa, Google, and Siri. These systems can perform tasks ranging from setting reminders to switching on your home lights from your office. But all of these platforms require your device to be connected to the internet and for you to sign up for their services. This brings up issues of privacy, security, and power consumption. Does your light bulb <i>really</i> need to be connected to the internet to respond to a voice command? The answer is <i>no</i>. With this project, <span aria-label=" Page 356. " class="page" epub:type="pagebreak" id="p356" role="doc-pagebreak"/>you’ll get a sense of how to design a speech recognition system that works on a low-power device, without the device needing to be connected to the internet.</p>
+<p>Some of the concepts you’ll learn about through this project are:</p>
+<ul style="list-style-type:none">
+<li class="blf">• Using a machine learning workflow to solve a problem</li>
+<li class="bl">• Creating an ML model with TensorFlow and Google Colab</li>
+<li class="bl">• Streamlining an ML model for use on a Raspberry Pi</li>
+<li class="bl">• Processing audio and generating spectrograms with the short-time Fourier transform (STFT)</li>
+<li class="bl">• Leveraging multiprocessing to run tasks in parallel</li>
+</ul>
+<section>
+<h2 class="ah" id="ah1701"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1701">A Machine Learning Overview</a></h2>
+<p class="paft">It’s impossible to do justice to a topic as vast as machine learning in a single section of a single book chapter. Instead, our approach will be to treat ML as just another tool for solving a problem—in this case, how to distinguish between different spoken words. In truth, ML frameworks like TensorFlow have become so mature and easy to use these days that it’s possible to effectively apply ML to a problem without being an expert in the subject. So in this section, we’ll only briefly touch upon the ML terminology relevant to the project.</p>
+<p>ML is a small part of the larger computer science discipline of <i>artificial intelligence (AI)</i>, although when AI is mentioned in the popular press, ML is usually what they mean. ML itself is made of various subdisciplines that involve different approaches and algorithms. In this project, you’ll use a subset of ML called <span class="idx" data-term="deep learning"/><i>deep learning</i>, which harnesses <span class="idx" data-level1="deep neural networks" data-term="machine learning"/><i>deep neural networks (</i><span class="idx" data-level1="DNN" data-term="machine learning"/><i>DNNs)</i> to identify features and patterns in large sets of data. DNNs have their origin in <i>artificial neural networks (ANNs)</i>, which are loosely based on neurons in our brains. ANNs consists of a bunch of <i>nodes</i> with multiple inputs. Each node also has a <i>weight</i> associated with it. The output of an ANN is typically a nonlinear function of the inputs and weights. This output can be connected to the input of another ANN. When you have more than one layer of ANNs, the network becomes a deep neural network. Typically, the more layers the network has—that is, the deeper it goes—the more accurate the learning model becomes.</p>
+<p>For this project, you’ll be using a <span class="idx" data-level1="supervised learning" data-term="machine learning"/><i>supervised learning</i> process, which can be divided into two phases. First is the <span class="idx" data-level1="training" data-term="machine learning"/><i>training phase</i>, where you show the model several inputs and their expected outputs. For example, if you were trying to build a human presence detection system to recognize whether or not there’s a person in a video frame, you would use the training phase to show examples of both cases (human versus no human), with each example labeled correctly. Next is the <span class="idx" data-level1="inference" data-term="machine learning"/><i>inference phase</i>, where you show new inputs and the model makes predictions about them based on what it learned during training. Continuing the example, you’d show your human presence detection system new video frames, and the model would predict whether <span aria-label=" Page 357. " class="page" epub:type="pagebreak" id="p357" role="doc-pagebreak"/>or not there’s a human in each frame. (There are also <span class="idx" data-level1="unsupervised" data-term="machine learning"/><i>unsupervised learning</i> processes, in which the ML system attempts to find patterns by itself, based on unlabeled data.)</p>
+<p>An ML model has many numerical <i>parameters</i> that help it process data. During training, these parameters are adjusted automatically to minimize errors between the expected values and the values the model predicts. Usually a class of algorithms called <span class="idx" data-level1="gradient descent" data-term="machine learning"/><i>gradient descent</i> is used to minimize the error. In addition to the parameters of an ML model, which are adjusted during training, there are also <span class="idx" data-level1="hyperparameters" data-term="machine learning"/><i>hyperparameters</i>, variables that are adjusted for the model as a whole, such as which neural network architecture to use or the size of your training batch. <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#fig15-1">Figure 15-1</a> shows the neural network architecture I’ve chosen for this project.</p>
+<figure class="figure" id="fig15-1">
+<p class="fig"><img alt="" height="1141" src="images/nsp-venkitachalam503045-f15001.jpg" style="width:95%; height:auto;" width="340"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 15-1:</span> <span class="idx" data-level1="DNN architecture" data-term="speech recognition"/>The neural network architecture for the speech recognition project</p>
+</figcaption>
+</figure>
+<p>Each layer in the network architecture represents some form of processing on the data that helps improve the model’s accuracy. The design of the network isn’t trivial, but just defining each layer won’t tell us much about how it works. A broader question to consider is <i>why</i> I’ve chosen this particular network. The answer is that one needs to determine the best network architecture for the project at hand via experimentation. It’s common to try different neural network architectures and see which one produces the <span aria-label=" Page 358. " class="page" epub:type="pagebreak" id="p358" role="doc-pagebreak"/>most accurate results after training. There are also architectures published by ML researchers that are known to perform well, and that’s a good place to start for practical applications.</p>
+<p class="pcust1"><span class="ccust3">NOTE</span> For more information on machine learning, I highly recommend the book <i>Deep Learning: A Visual Approach</i> by Andrew Glassner (No Starch Press, 2021). The book will gives you a good intuition about the subject without getting too much into the math or code. For a comprehensive, hands-on approach, I also recommend the online ML courses on Coursera taught by Andrew Ng.</p>
+</section>
+<section>
+<h2 class="ah" id="ah1702"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1702">How It Works</a></h2>
+<p class="paft">In this project, you’ll use Google’s TensorFlow machine learning framework to train a neural network using a collection of audio files containing speech commands. Then you’ll load an optimized version of the trained model onto a Raspberry Pi equipped with a microphone so the Pi can recognize the commands when you speak them. <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#fig15-2">Figure 15-2</a> shows a block diagram for the project.</p>
+<figure class="figure" id="fig15-2">
+<p class="fig"><img alt="" height="1200" src="images/nsp-venkitachalam503045-f15002.jpg" style="width:95%; height:auto;" width="990"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 15-2:</span> <span class="idx" data-level1="block diagram" data-term="speech recognition"/>A block diagram of the speech recognition project</p>
+</figcaption>
+</figure>
+<p><span aria-label=" Page 359. " class="page" epub:type="pagebreak" id="p359" role="doc-pagebreak"/>For the training portion of the project, you’ll work in Google Colab (short for Colaboratory), a free cloud-based service that lets you write and run Python programs in your web browser. There are two advantages to using Colab. First, you don’t need to install TensorFlow locally on your computer, nor deal with incompatibility issues related to various versions of TensorFlow. Second, Colab runs on machines that are likely much more powerful than yours, so the training process will go more quickly. For training data, you’ll use the <span class="idx" data-term="Mini speech commands dataset"/>Mini Speech Commands dataset from Google, a subset of a larger Speech Commands dataset published in 2018. It consists of thousands of sample recordings of the words <i>yes</i>, <i>no</i>, <i>up</i>, <i>down</i>, <i>left</i>, <i>right</i>, <i>stop</i>, and <i>go</i>, all standardized as 16-bit WAV files with a 16,000 Hz sampling rate. You’ll generate a <span class="idx" data-term="spectrogram"/><i>spectrogram</i> of each recording, an image that shows how the frequency content of the audio changes over time, and use those spectrograms to train a deep neural network (DNN) via TensorFlow.</p>
+<p class="pcust1"><span class="ccust3">NOTE</span> The training portion of this project takes inspiration from Google’s official TensorFlow example called “Simple Audio Recognition.” You’ll use the same neural network architecture as that example. However, the rest of the project deviates significantly from Google’s example, since our goal is to recognize live audio on a Raspberry Pi, whereas the latter runs inference on existing WAV files.</p>
+<p>Once the training is complete, you’ll convert the trained model to a simplified format called <span class="idx" data-term="TensorFlow Lite"/>TensorFlow Lite, which is designed to run on less capable hardware such as embedded systems, and load that streamlined model onto the Raspberry Pi. There you’ll run Python code to continuously monitor the audio input from a USB microphone, take spectrograms of the audio, and perform inference on that data to identify the spoken commands from the training set. You’ll print out the commands that the model identifies to the serial monitor.</p>
+<section>
+<h3 class="bh" id="bh1701"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1701"><span class="idx" data-term="spectrogram"/>Spectrograms</a></h3>
+<p class="paft">A key step in this project is generating spectrograms of the audio data—both the preexisting data used to train the model and the real-time data encountered during inference. In <a class="xref" href="nsp-venkitachalam503045-0016.xhtml#ch04">Chapter 4</a>, you saw how a spectral plot reveals the frequencies present in an audio sample at a particular moment in time. Then, in <a class="xref" href="nsp-venkitachalam503045-0028.xhtml#ch13">Chapter 13</a>, you learned how spectral plots are calculated with a mathematical tool called a <i>discrete Fourier transform (DFT)</i>. A spectrogram is essentially just a series of spectral plots, generated through a sequence of Fourier transformers, which together reveal how the frequency content of some audio data evolves over time.</p>
+<p>You need a spectrogram, rather than a single spectral plot, of each audio sample because the sound of human speech is incredibly complex. Even in the case of a single word, the frequencies present in the sound change significantly—and in distinctive ways—as the word is spoken. For this project, you’ll be working with one-second-long audio clips, each consisting of 16,000 samples. If you computed a single DFT of the entire clip in one go, you wouldn’t get an accurate picture of how the frequencies change <span aria-label=" Page 360. " class="page" epub:type="pagebreak" id="p360" role="doc-pagebreak"/>over the course of the clip, and thus you wouldn’t be able to reliably identify the word being spoken. Instead, you’ll divide the clip into a bunch of overlapping intervals and compute the DFT for each of these intervals, giving you the series of spectral plots needed for a spectrogram. <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#fig15-3">Figure 15-3</a> illustrates this type of computation, called a <span class="idx" data-term="short-time Fourier transform"/><i>short-time Fourier transform (</i><span class="idx" data-term="STFT"/><i>STFT)</i>.</p>
+<figure class="figure" id="fig15-3">
+<p class="fig"><img alt="" height="678" src="images/nsp-venkitachalam503045-f15003.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 15-3:</span> Computing the spectrogram of a signal</p>
+</figcaption>
+</figure>
+<p>The STFT gives you <i>M</i> DFTs of the audio, taken at even time intervals. Time is shown along the x-axis of the spectrogram. Each DFT gives you <i>N</i> frequency bins and the intensity of the sound within each of those bins. The frequency bins are mapped to the y-axis of the spectrogram. Thus, the spectrogram takes the form of an <i>M</i>×<i>N</i> image. Each column of pixels in the image represents one of the DFTs, with color used to convey the intensity of the signal in a given frequency band.</p>
+<p>You might be wondering why we need to use Fourier transforms at all for this project. Why not use the waveforms of the audio clips directly, instead of extracting the frequency information from those waveforms? For an answer, consider <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#fig15-4">Figure 15-4</a>.</p>
+<figure class="figure" id="fig15-4">
+<p class="fig"><span aria-label=" Page 361. " class="page" epub:type="pagebreak" id="p361" role="doc-pagebreak"/><img alt="" height="640" src="images/nsp-venkitachalam503045-f15004_annotated.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 15-4:</span> The waveform and spectrogram of speech samples</p>
+</figcaption>
+</figure>
+<p>The top half of the figure shows the waveform of a recording made by speaking the sequence “Left, right, left, right.” The bottom half of the figure shows a spectrogram of that recording. Looking just at the waveform, you can see that the two <i>left</i>s look vaguely similar, as do the two <i>right</i>s, but it’s hard to pick out strong identifying characteristics of each word’s waveform. By contrast, the spectrogram reveals more visual features associated with each word, like the bright C-shaped curve (shown by the arrows) in each instance of <i>right</i>. We can see these distinctive features more clearly with our own eyes, and a neural network can “see” them as well.</p>
+<p>In the end, since a spectrogram is essentially an image, taking spectrograms of the data turns a speech recognition problem into an image classification problem, allowing us to leverage the rich set of ML techniques that already exist for classifying images. (Of course, a waveform can be treated as an image too, but as you’ve seen, a spectrogram is better at capturing the “signature” of the audio data and hence more suited for ML applications.)</p>
+</section>
+<section>
+<h3 class="bh" id="bh1702"><span aria-label=" Page 362. " class="page" epub:type="pagebreak" id="p362" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1702">Inference on the Raspberry Pi</a></h3>
+<p class="paft"><span class="idx" data-level1="inference strategy" data-term="speech recognition"/>The code on the Raspberry Pi must accomplish several tasks: it needs to read the audio input from the attached microphone, compute the spectrogram of that audio, and do inference using the trained TensorFlow Lite model. Here’s one possible sequence of operations:</p>
+<ol aria-labelledby="ch15list03" style="list-style-type:none">
+<li class="nlf">1. Read microphone data for one second.</li>
+<li class="nl">2. Process data.</li>
+<li class="nl">3. Do inference.</li>
+<li class="nll">4. Repeat.</li>
+</ol>
+<p>There’s a big problem with this approach, however. While you’re busy with steps 2 and 3, more speech data could be coming in, which you’ll end up missing. The solution is to use Python multiprocessing to perform different tasks concurrently. Your main process will just collect the audio data and put it in a queue. In a separate, simultaneous process, you’ll take this data out of the queue and run inference on it. Here’s what the new scheme looks like:</p>
+<section class="list">
+<p class="nlh" id="ch15list03">Main Process</p>
+<ol aria-labelledby="ch15list03" style="list-style-type:none">
+<li class="nl">1. Read microphone data for one second.</li>
+<li class="nl">2. Put data into the queue.</li>
+</ol>
+</section>
+<section class="list">
+<p class="nlh" id="ch15list04">Inference Process</p>
+<ol aria-labelledby="ch15list04" style="list-style-type:none">
+<li class="nl">1. Check if there’s any data in the queue.</li>
+<li class="nll">2. Run inference on the data.</li>
+</ol>
+</section>
+<p>Now the main process won’t miss any audio input, since putting data into the queue is a very quick operation. But there’s another problem. You’re collecting one-second audio samples continuously from the microphone and processing them, but you can’t assume that all spoken commands will fit cleanly into those one-second intervals. A command could come at an edge and be broken up across two consecutive samples, in which case it probably won’t be identified during inference. A better approach is to create overlapping samples, as follows:</p>
+<section class="list">
+<p class="nlh" id="ch15list05">Main Process</p>
+<ol aria-labelledby="ch15list05" style="list-style-type:none">
+<li class="nl">1. For the very first frame, collect a two-second sample.</li>
+<li class="nl">2. Put the two-second sample into the queue.</li>
+<li class="nl">3. Collect another one-second sample.</li>
+<li class="nl">4. Create a two-second sample by moving the latter half of the sample from step 2 to the front and replacing the second half with the sample from step 3.</li>
+<li class="nl">5. Return to step 2.</li>
+</ol>
+</section>
+<section class="list">
+<p class="nlh" id="ch15list06"><span aria-label=" Page 363. " class="page" epub:type="pagebreak" id="p363" role="doc-pagebreak"/>Inference Process</p>
+<ol aria-labelledby="ch15list06" style="list-style-type:none">
+<li class="nl">1. Check if there’s any data in the queue.</li>
+<li class="nl">2. Do inference on a one-second portion of the two-second data based on peak amplitude.</li>
+<li class="nll">3. Return to step 1.</li>
+</ol>
+</section>
+<p>In this new scheme, each sample placed into the queue is two seconds long, but there’s a one-second overlap between consecutive samples, as illustrated in <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#fig15-5">Figure 15-5</a>. This way, even if a word is partially cut off in one sample, you’ll get the full word in the next sample. You’ll still run inference on only one-second clips, which you’ll center on the point in the two-second sample that has the highest amplitude value. This is the part of the sample most likely to contain a spoken word. You need the clips to be one second long for consistency with the training data.</p>
+<figure class="figure" id="fig15-5">
+<p class="fig"><img alt="" height="1137" src="images/nsp-venkitachalam503045-f15005.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 15-5:</span> The two-frame overlapping scheme</p>
+</figcaption>
+</figure>
+<p>Through this combination of multiprocessing and overlapping samples, you’ll design a speech recognition system that minimizes missing inputs and improves inference results.</p>
+</section>
+</section>
+<section>
+<h2 class="ah" id="ah1703"><span aria-label=" Page 364. " class="page" epub:type="pagebreak" id="p364" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1703">Requirements</a></h2>
+<p class="paft"><span class="idx" data-level1="required software" data-term="speech recognition"/>For this project, you’ll need to sign up with Google Colab to train your ML model. On the Raspberry Pi, you’ll need the following Python modules:</p>
+<ul style="list-style-type:none">
+<li class="blf">• <code>tflite_runtime</code> for running the TensorFlow inference</li>
+<li class="bl">• <code>scipy</code> for computing the STFT of audio waveforms</li>
+<li class="bl">• <code>numpy</code> arrays for handling audio data</li>
+<li class="bll">• <code>pyaudio</code> for streaming audio data from the microphone input</li>
+</ul>
+<p>The installation for these modules is covered in <a class="xref" href="nsp-venkitachalam503045-0032.xhtml#appb">Appendix B</a>. You’ll also use Python’s built-in <code>multiprocessing</code> module for running ML inference in a separate thread from the audio processing thread.</p>
+<p><span class="idx" data-level1="required hardware" data-term="speech recognition"/>In the hardware department, you’ll need the following:</p>
+<ul style="list-style-type:none">
+<li class="blf">• One Raspberry Pi 3B+ or newer</li>
+<li class="bl">• One 5 V power supply for the Raspberry Pi</li>
+<li class="bl">• One 16GB SD card</li>
+<li class="bll">• One single-channel USB microphone compatible with the Pi</li>
+</ul>
+<p>Various types of USB microphones are compatible with the Raspberry Pi. <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#fig15-6">Figure 15-6</a> shows an example.</p>
+<figure class="figure" id="fig15-6">
+<p class="fig"><img alt="" height="900" src="images/nsp-venkitachalam503045-f15006.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 15-6:</span> <span class="idx" data-term="USB microphone"/>A USB microphone for the Raspberry Pi</p>
+</figcaption>
+</figure>
+<p>To check if your Pi can recognize your USB microphone, SSH into your Pi and run the following command:</p>
+<div class="codeline">
+<p class="cls">$ <span class="idx" data-term="dmesg command"/><code class="b">dmesg -w</code></p>
+</div>
+<p><span aria-label=" Page 365. " class="page" epub:type="pagebreak" id="p365" role="doc-pagebreak"/>Now plug your microphone into a USB port on the Pi. You should see something similar to the following output:</p>
+<div class="codeline1">
+<p class="cl1f">[26965.023138] usb 1-1.3: New USB device found, idVendor=cafe, idProduct=4010, bcdDevice= 1.00</p>
+<p class="cl1">[26965.023163] usb 1-1.3: New USB device strings: Mfr=1, Product=2, SerialNumber=3</p>
+<p class="cl1">[26965.023179] usb 1-1.3: Product: Mico</p>
+<p class="cl1">[26965.023194] usb 1-1.3: Manufacturer: Electronut Labs</p>
+<p class="cl1l">[26965.023209] usb 1-1.3: SerialNumber: 123456</p>
+</div>
+<p>The information should match the specs of your microphone, indicating it’s been correctly identified.</p>
+</section>
+<section>
+<h2 class="ah" id="ah1704"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1704">The Code</a></h2>
+<p class="paft">The code for this project exists in two parts: the training portion, which you’ll run in Google Colab, and the inference portion, which you’ll run on your Raspberry Pi. We’ll examine these parts one at a time.</p>
+<section>
+<h3 class="bh" id="bh1703"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1703">Training the Model in Google Colab</a></h3>
+<p class="paft">In this section, we’ll look at the <span class="idx" data-term="Google Colab"/>Google Colab code needed to train the speech recognition model. I recommend working with Colab in the Chrome web browser. You’ll begin by getting set up and downloading the training dataset. Then you’ll run some code to get to know the data. You’ll clean up the data to prepare it for training and explore how to generate spectrograms from the data. Finally, you’ll put what you’ve learned to work by creating and training the model. The end result will be a <i>.tflite</i> file, a streamlined TensorFlow Lite version of the trained model that you can load onto your Raspberry Pi. You can also download this <span class="idx" data-level1="code for training" data-term="speech recognition"/>file from the book’s GitHub repository at <a class="url-i" href="https://github.com/mkvenkit/pp2e/tree/main/audioml">https://github.com/mkvenkit/pp2e/tree/main/audioml</a>.</p>
+<p>A Google Colab notebook consists of a series of cells where you enter one or more lines of Python code. Once you’ve entered your desired code into a cell, you run it by clicking the Play icon in the top-left corner of the cell. Any output associated with that cell’s code will then appear beneath the cell. Throughout this section, each code listing will represent a complete Google Colab cell. The cell’s output, if any, will be shown in gray at the end of the listing, beneath a dashed line.</p>
+<section>
+<h4 class="ch" id="ch1701">Setting Up</h4>
+<p class="paft">You begin your Colab notebook with some initial setup. First you import the required Python modules:</p>
+<div class="codeline">
+<p class="clf">import os</p>
+<p class="cl">import pathlib</p>
+<p class="cl">import matplotlib.pyplot as plt</p>
+<p class="cl">import numpy as np</p>
+<p class="cl">import scipy</p>
+<p class="cl">import scipy.signal</p>
+<p class="cl"><span aria-label=" Page 366. " class="page" epub:type="pagebreak" id="p366" role="doc-pagebreak"/>from scipy.io import wavfile</p>
+<p class="cl">import glob</p>
+<p class="clf">import tensorflow as tf</p>
+<p class="cl">from tensorflow.keras.layers.experimental import preprocessing</p>
+<p class="cl">from tensorflow.keras import layers</p>
+<p class="cl">from tensorflow.keras import models</p>
+<p class="cll">from tensorflow.keras import applications</p>
+</div>
+<p>In the next cell, you do some initialization:</p>
+<div class="codeline">
+<p class="clf"># set seed for random functions</p>
+<p class="cl">seed = 42</p>
+<p class="cl">tf.random.set_seed(seed)</p>
+<p class="cll">np.random.seed(seed)</p>
+</div>
+<p>Here you initialize the random functions you’ll be using to shuffle the input filenames.</p>
+<p>Next, <span class="idx" data-level1="download training data" data-term="speech recognition"/>download the training data:</p>
+<div class="codeline1">
+<p class="cl1f">data_dir = 'data/mini_speech_commands'</p>
+<p class="cl1">data_path = pathlib.Path(data_dir)</p>
+<p class="cl1">filename = 'mini_speech_commands.zip'</p>
+<p class="cl1">url = "http://storage.googleapis.com/download.tensorflow.org/data/mini_speech_commands.zip"</p>
+<p class="cl1">if not data_path.exists():</p>
+<p class="cl1">    tf.keras.utils.get_file(filename, origin=url, extract=True, cache_dir='.',</p>
+<p class="cl1l">                            cache_subdir='data')</p>
+</div>
+<p>This cell downloads the <span class="idx" data-level1="Mini speech commands dataset" data-term="speech recognition"/>Mini Speech Commands dataset from Google and extracts the data into a directory called <i>data</i>. Since you’re using Colab, the data will be downloaded to the filesystem on the cloud, not to your local machine, and when your session ends, these files will be deleted. While the session is still active, however, you don’t want to have to keep downloading the data every time you run the cell. The <code>tf.keras.utils.</code><span class="idx" data-level1="keras.utils" data-level2="get_file" data-term="TensorFlow"/><code>get_file()</code> function caches the data so you won’t need to keep downloading it.</p>
+</section>
+<section>
+<h4 class="ch" id="ch1702">Getting to Know the Data</h4>
+<p class="paft">Before you start training your model, it would be useful to take a look at what you just downloaded to get to know your data. You can use Python’s <code>glob</code> module, which helps you find files and directories through pattern matching:</p>
+<div class="codeline">
+<p class="clf">glob.<span class="idx" data-level1="glob" data-term="glob module"/>glob(data_dir + '/*')</p>
+<div class="codelined">
+<p class="clf"><span class="ccust2">['data/mini_speech_commands/up',</span></p>
+</div>
+<p class="cl"><span class="ccust2"> 'data/mini_speech_commands/no',</span></p>
+<p class="cl"><span class="ccust2"> 'data/mini_speech_commands/README.md',</span></p>
+<p class="cl"><span class="ccust2"> 'data/mini_speech_commands/stop',</span></p>
+<p class="cl"><span class="ccust2"> 'data/mini_speech_commands/left',</span></p>
+<p class="cl"><span class="ccust2"> 'data/mini_speech_commands/right',</span></p>
+<p class="cl"><span class="ccust2"> 'data/mini_speech_commands/go',</span></p>
+<p class="cl"><span class="ccust2"> 'data/mini_speech_commands/down',</span></p>
+<p class="cll"><span class="ccust2"> 'data/mini_speech_commands/yes']</span></p>
+</div>
+<p><span aria-label=" Page 367. " class="page" epub:type="pagebreak" id="p367" role="doc-pagebreak"/>You pass <code>glob</code> the <code>'/*'</code> pattern to list all the first-level directories within the <i>data</i> directory (<code>*</code> is a wildcard character). The output shows you that the dataset comes with a <i>README.md</i> text file and eight subdirectories for the eight speech commands you’ll be training the model to identify. For convenience, you create a list of the commands:</p>
+<div class="codeline">
+<p class="cls">commands = ['up', 'no', 'stop', 'left', 'right', 'go', 'down', 'yes']</p>
+</div>
+<p>In your machine learning model, you’ll be matching audio samples to a <code>label_id</code> integer denoting one of the commands. These integers will correspond to the indices from the <code>commands</code> list. For example, a <code>label_id</code> of <code>0</code> indicates <code>'up'</code>, and a <code>label_id</code> of <code>6</code> indicates <code>'down'</code>.</p>
+<p>Now take a look at what’s in those subdirectories:</p>
+<div class="codeline">
+<p class="cl2f"><!--<ccust1>1</ccust1>-->❶ wav_file_names = glob.glob(data_dir + '/*/*')</p>
+<p class="cl2"><!--<ccust1>2</ccust1>-->❷ np.random.<span class="idx" data-level1="random" data-level2="shuffle" data-term="numpy module"/>shuffle(wav_file_names)</p>
+<p class="cl">print(len(wav_file_names))</p>
+<p class="cl">for file_name in wav_file_names[:5]:</p>
+<p class="cl">    print(file_name)</p>
+<div class="codelined">
+<p class="clf"><span class="ccust2">8000</span></p>
+</div>
+<p class="cl"><span class="ccust2">data/mini_speech_commands/down/27c30960_nohash_0.wav</span></p>
+<p class="cl"><span class="ccust2">data/mini_speech_commands/go/19785c4e_nohash_0.wav</span></p>
+<p class="cl"><span class="ccust2">data/mini_speech_commands/yes/d9b50b8b_nohash_0.wav</span></p>
+<p class="cl"><span class="ccust2">data/mini_speech_commands/no/f953e1af_nohash_3.wav</span></p>
+<p class="cll"><span class="ccust2">data/mini_speech_commands/stop/f632210f_nohash_0.wav</span></p>
+</div>
+<p>You use <code>glob</code> again, this time showing it the pattern <code>'/*/*'</code> to list all the files in the subdirectories <!--<ccust1>1</ccust1>-->❶. Then you randomly shuffle the returned list of filenames to reduce any bias in the training data <!--<ccust1>2</ccust1>-->❷. You print the total number of files found, as well as the first five filenames. The output indicates that there are 8,000 WAV files in the dataset, and it gives you some idea of how the files are named—for example, <i>f632210f_nohash_0.wav</i>.</p>
+<p>Next, take a look at some individual WAV files from the dataset:</p>
+<div class="codeline1">
+<p class="cl1f">filepath = 'data/mini_speech_commands/stop/f632210f_nohash_1.wav' <!--<ccust1>1</ccust1>-->❶</p>
+<p class="cl1">rate, data = wavfile.read(filepath) <!--<ccust1>2</ccust1>-->❷</p>
+<p class="cl1">print("rate = {}, data.shape = {}, data.dtype = {}".format(rate, data.shape, data.dtype))</p>
+<p class="cl1f">filepath = 'data/mini_speech_commands/no/f953e1af_nohash_3.wav'</p>
+<p class="cl1">rate, data = wavfile.<span class="idx" data-level1="read" data-term="wavefile module"/>read(filepath)</p>
+<p class="cl1">print("rate = {}, data.shape = {}, data.dtype = {}".format(rate, data.shape, data.dtype))</p>
+<div class="codeline1d">
+<p class="cl1f"><span class="ccust2">rate = 16000, data.shape = (13654,), data.dtype = int16</span></p>
+</div>
+<p class="cl1l"><span class="ccust2">rate = 16000, data.shape = (16000,), data.dtype = int16</span></p>
+</div>
+<p>You set the name of a WAV file you want to look at <!--<ccust1>1</ccust1>-->❶ and use the <code>wavefile</code> module from <code>scipy</code> to read data from the file <!--<ccust1>2</ccust1>-->❷. Then you print the sampling rate, shape (number of samples), and type of the data. You do the same for a second WAV file. The output shows that the sampling rates of both the WAV files are 16,000, as expected, and that each sample is a 16-bit integer for both—also expected. However, the shape indicates the first file <span aria-label=" Page 368. " class="page" epub:type="pagebreak" id="p368" role="doc-pagebreak"/>has only 13,654 samples, and this is a problem. To train the neural network, each WAV file needs to have the same length; in this case, you’d like each recording to be one second, or 16,000 samples, long. Unfortunately, not all the files in the dataset fit that standard. We’ll look at a solution to this problem shortly, but first, try plotting the data from one of these WAV files:</p>
+<div class="codeline">
+<p class="clf">filepath = 'data/mini_speech_commands/stop/f632210f_nohash_1.wav'</p>
+<p class="cl">rate, data = wavfile.read(filepath)</p>
+<p class="cl2l"><!--<ccust1>1</ccust1>-->❶ plt.plot(data)</p>
+</div>
+<figure class="figure" id="g15001">
+<p class="fig"><img alt="" height="425" src="images/nsp-venkitachalam503045-g15001.jpg" style="width:95%; height:auto;" width="731"/></p>
+</figure>
+<p>You use <code>matplotlib</code> to create a plot of the audio waveform <!--<ccust1>1</ccust1>-->❶. The WAV files in this dataset contain 16-bit signed data, which can range from −32,768 to +32,767. The y-axis of the plot shows you that the data in this file ranges from only around −10,000 to +7,500. The plot’s x-axis also underscores that the data is short of the necessary 16,000 samples—the axis runs only to 14,000.</p>
+</section>
+<section>
+<h4 class="ch" id="ch1703"><span class="idx" data-level1="cleaning data" data-term="speech recognition"/>Cleaning the Data</h4>
+<p class="paft">You’ve seen that the dataset needs to be standardized so that each clip is one second long. This type of preparatory work is called <i>data cleaning</i>, and you can do it by padding the audio data with zeros until it reaches a length of 16,000 samples. You should clean the data further by <i>normalizing</i> it—mapping the value of each sample from range [−32,768, +32,767] to range [−1, 1]. This type of normalization is crucial for machine learning, as keeping the input data small and uniform will help the training. (For the mathematically curious, large numbers in the inputs will cause problems in the convergence of gradient descent algorithms used to train the data.)</p>
+<p>As an example of data cleaning, here you apply both padding and normalization to the WAV file you viewed in the previous listing. Then you plot the results to confirm that the cleaning has worked.</p>
+<div class="codeline">
+<p class="cl2f"><!--<ccust1>1</ccust1>-->❶ padded_data = np.zeros((16000,), dtype=np.int16)</p>
+<p class="cl2"><!--<ccust1>2</ccust1>-->❷ padded_data[:data.shape[0]] = data</p>
+<p class="cl2"><!--<ccust1>3</ccust1>-->❸ norm_data = np.array(padded_data/32768.0, dtype=np.float32)</p>
+<p class="cll">plt.plot(norm_data)</p>
+</div>
+<figure class="figure" id="g15002">
+<p class="fig"><span aria-label=" Page 369. " class="page" epub:type="pagebreak" id="p369" role="doc-pagebreak"/><img alt="" height="446" src="images/nsp-venkitachalam503045-g15002.jpg" style="width:95%; height:auto;" width="687"/></p>
+</figure>
+<p>You create a 16-bit <code>numpy</code> array of length 16,000 filled with zeros <!--<ccust1>1</ccust1>-->❶. Then you use the array slice operator, <code>[:]</code>, to copy the contents of the too-short WAV file into the beginning of the array <!--<ccust1>2</ccust1>-->❷. Here <code>data.shape[0]</code> gives you the number of samples in the original WAV file, since <code>data.shape</code> is a tuple in the form <code>(13654,)</code>. You now have one second of WAV data, consisting of the original audio data followed by a padding of zeros as needed. You next create a normalized version of the data by dividing the values in the array by 32,768, the maximum value a 16-bit integer could have <!--<ccust1>3</ccust1>-->❸. Then you plot the data.</p>
+<p>The x-axis of the output shows that the data has been padded to extend to 16,000 samples, with the values from around 14,000 to 16,000 all being zero. Also, the y-axis shows that the values have all been normalized to fall nicely within the range of (−1, 1).</p>
+</section>
+<section>
+<h4 class="ch" id="ch1704"><span class="idx" data-level1="spectrogram example" data-term="speech recognition"/>Looking at Spectrograms</h4>
+<p class="paft">As we’ve discussed, you won’t be training your model on the raw data from the WAV files. Instead, you’ll generate spectrograms of the files and use them to train the model. Here’s an example of how to generate a spectrogram:</p>
+<div class="codeline">
+<p class="clf">filepath = 'data/mini_speech_commands/yes/00f0204f_nohash_0.wav'</p>
+<p class="cl">rate, data = wavfile.read(filepath)</p>
+<p class="cl2"><!--<ccust1>1</ccust1>-->❶ f, t, spec = scipy.signal.stft(data, fs=16000, nperseg=255,</p>
+<p class="cl">                               noverlap = 124, nfft=256)</p>
+<p class="cl2"><!--<ccust1>2</ccust1>-->❷ spec = np.abs(spec)</p>
+<p class="cl">print("spec: min = {}, max = {}, shape = {}, dtype = {}".format(np.min(spec),</p>
+<p class="cl">                                       np.max(spec), spec.shape, spec.dtype))</p>
+<p class="cl2"><!--<ccust1>3</ccust1>-->❸ X = t * 129*124</p>
+<p class="cl2"><!--<ccust1>4</ccust1>-->❹ plt.pcolormesh(X, f, spec)</p>
+<div class="codelineds">
+<p class="cls"><span class="ccust2">spec: min = 0.0, max = 2089.085693359375, shape = (129, 124), dtype = float32</span></p>
+</div>
+<figure class="figure" id="g15003">
+<p class="fig"><span aria-label=" Page 370. " class="page" epub:type="pagebreak" id="p370" role="doc-pagebreak"/><img alt="" height="252" src="images/nsp-venkitachalam503045-g15003.jpg" width="394"/></p>
+</figure>
+</div>
+<p>You pick an arbitrary WAV file from the <i>yes</i> subdirectory and extract its data using the <code>wavfile</code> module from <code>scipy</code>, as before. Then you use the <code>scipy.signal.stft()</code> function to compute the spectrogram of the data <!--<ccust1>1</ccust1>-->❶. In this function call, <code>fs</code> is the sampling rate, <code>nperseg</code> is the length of each segment, and <code>noverlap</code> is the number of overlapping samples between consecutive segments. The <code>stft()</code> function returns a tuple comprising three members: <code>f</code>, an array of frequencies; <code>t</code>, an array of the time intervals mapped to the range [0.0, 1.0]; and <code>spec</code>, the STFT itself, a grid of 129×124 complex numbers (these dimensions are given as <code>shape</code> in the output). You use <code>np.abs()</code> to convert the complex numbers in <code>spec</code> into real numbers <!--<ccust1>2</ccust1>-->❷. Then you print some information about the computed spectrogram. Next, you create an array <code>X</code> to hold the sample numbers corresponding to the time intervals <!--<ccust1>3</ccust1>-->❸. You get these by multiplying <code>t</code> by the dimensions of the grid. Finally, you use the <code>pcolormesh()</code> method to plot the grid in <code>spec</code>, using the values in <code>X</code> as the grid’s x-axis and the values in <code>f</code> as the y-axis <!--<ccust1>4</ccust1>-->❹.</p>
+<p>The output shows the spectrogram. This 129×124 grid of values (an image), and many more like it, will be the input for the neural network. The bright spots around 1,000 Hz and lower, starting around 4,000 samples in, are where the frequency content is most prominent, while darker areas represent less prominent frequencies.</p>
+<p class="pcust1"><span class="ccust3">NOTE</span> Notice that the y-axis in the spectrogram images goes up to only about 8,000 Hz. This is a consequence of the <span class="idx" data-term="sampling theorem"/><i>sampling theorem</i> in digital signal processing, which states that the maximum frequency that can be accurately measured in a digitally sampled signal is half the sampling rate. In this case, that maximum frequency works out to 16,000/2 = 8,000 Hz.</p>
+</section>
+<section>
+<h4 class="ch" id="ch1705"><span class="idx" data-level1="training the model" data-term="speech recognition"/>Training the Model</h4>
+<p class="paft">You’re now ready to turn your attention to training the ML model, and that largely means leaving behind Python libraries like <code>numpy</code> and <code>scipy</code> in favor of TensorFlow methods and data structures like <code>tf.Tensor</code> and <code>tf.data.Dataset</code>. You’ve been using <code>numpy</code> and <code>scipy</code> so far because they’ve provided a convenient way to explore the speech commands dataset, and in fact you could continue using them, but then you’d miss out on the optimization opportunities provided by TensorFlow, which is designed for large-scale ML systems. You’ll find that TensorFlow has near-identical functions <span aria-label=" Page 371. " class="page" epub:type="pagebreak" id="p371" role="doc-pagebreak"/>for most of the computations you’ve done until now, so the transition will be smooth. For our purposes, when I refer to a <span class="idx" data-level1="tensor" data-term="TensorFlow"/><i>tensor</i> in the upcoming discussion, understand that it’s similar to talking about a <code>numpy</code> array.</p>
+<p>To train the ML model, you need to be able to extract the spectrogram and label ID (the spoken command) from the filepath of an input audio file. For that, first create a function that computes an STFT:</p>
+<div class="codeline">
+<p class="clf">def stft(x):</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ f, t, spec = scipy.signal.<span class="idx" data-level1="signal" data-level2="stft" data-term="scipy module"/>stft(x.numpy(), fs=16000, nperseg=255,</p>
+<p class="cl">                                   noverlap=124, nfft=256)</p>
+<p class="cll">  <!--<ccust1>2</ccust1>-->❷ return tf.<span class="idx" data-level1="convert_to_tensor" data-term="TensorFlow"/>convert_to_tensor(np.abs(spec))</p>
+</div>
+<p>The function takes in <code>x</code>, the data extracted from a WAV file, and computes its STFT using <code>scipy</code>, as before <!--<ccust1>1</ccust1>-->❶. Then you convert the returned <code>numpy</code> array to a <code>tf.Tensor</code> object and return the result <!--<ccust1>2</ccust1>-->❷. There is, in fact, a TensorFlow method called <code>tf.signal.stft()</code> that’s similar to the <code>scipy.signal.stft()</code> method, so why not use it? The answer is that the TensorFlow method won’t be available on the Raspberry Pi, where you’ll be using the slimmed-down TensorFlow Lite interpreter. Any preprocessing you do during the training phase should be identical to any preprocessing you do during inference, so you need to ensure that you use the same functions in Colab as you’ll use on the Pi.</p>
+<p>Now you can make use of your <code>stft()</code> function in a helper function that extracts the spectrogram and label ID from a filepath.</p>
+<div class="codeline">
+<p class="clf">def get_spec_label_pair(filepath):</p>
+<p class="cl">    # read WAV file</p>
+<p class="cl">    file_data = tf.io.<span class="idx" data-level1="tf.io" data-level2="read_file" data-term="TensorFlow"/>read_file(filepath)</p>
+<p class="cl">    data, rate = tf.<span class="idx" data-level1="audio_decode_wav" data-term="TensorFlow"/>audio.decode_wav(file_data)</p>
+<p class="cl">    data = tf.<span class="idx" data-level1="squeeze" data-term="TensorFlow"/>squeeze(data, axis=-1)</p>
+<p class="cl">    # add zero padding for N &lt; 16000</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ zero_padding = tf.<span class="idx" data-level1="zeros" data-term="TensorFlow"/>zeros([16000] - tf.<span class="idx" data-level1="shape" data-term="TensorFlow"/>shape(data), dtype=tf.float32)</p>
+<p class="cl">    # combine data with zero padding</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ padded_data = tf.<span class="idx" data-level1="concat" data-term="TensorFlow"/>concat([data, zero_padding], 0)</p>
+<p class="cl">    # compute spectrogram</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ spec = tf.<span class="idx" data-level1="py_function" data-term="TensorFlow"/>py_function(func=stft, inp=[padded_data], Tout=tf.float32)</p>
+<p class="cl">    spec.set_shape((129, 124))</p>
+<p class="cl">    spec = tf.<span class="idx" data-level1="expand_dims" data-term="TensorFlow"/>expand_dims(spec, -1)</p>
+<p class="cl">    # get label</p>
+<p class="cl">  <!--<ccust1>4</ccust1>-->❹ cmd = tf.strings.<span class="idx" data-level1="tf.string" data-level2="split" data-term="TensorFlow"/>split(filepath, os.path.sep)[-2]</p>
+<p class="cl">  <!--<ccust1>5</ccust1>-->❺ label_id = tf.<span class="idx" data-level1="argmax" data-term="TensorFlow"/>argmax(tf.cast(cmd == commands, "uint32"))</p>
+<p class="cl">    # return tuple</p>
+<p class="cll">    return (spec, label_id)</p>
+</div>
+<p>You start by reading the file using <code>tf.io.read_file()</code> and decoding the WAV format using the <code>tf.audio.decode_wav()</code> function. (The latter is comparable to the <code>scipy.io.wavfile.read()</code> function you used previously.) You then use <code>tf.squeeze()</code> to change the shape of the <code>data</code> tensor from (<i>N</i>, 1) to (<i>N</i>, ), which is required for functions coming ahead. Next, you create a tensor for zero-padding the data <!--<ccust1>1</ccust1>-->❶. Tensors are immutable objects, however, so you can’t copy the WAV data directly into a tensor full of zeros, as you did <span aria-label=" Page 372. " class="page" epub:type="pagebreak" id="p372" role="doc-pagebreak"/>earlier with <code>numpy</code> arrays. Instead, you create a tensor with the exact number of zeros you need to pad the data, and then you concatenate it with the data tensor <!--<ccust1>2</ccust1>-->❷.</p>
+<p>You next use <code>tf.py_function()</code> to call the <code>stft()</code> function you defined earlier <!--<ccust1>3</ccust1>-->❸. In this call, you also need to specify the input and the data type of the output. This is a common method for calling a non-TensorFlow function from TensorFlow. You then do some reshaping of the tensor returned by <code>stft()</code>. First you use <code>set_shape()</code> to reshape it to (129, 124), which is necessary because you’re going from a TensorFlow function to a Python function and back. Then you run <code>tf.expand_dims(spec, -1)</code> to add a third dimension, going from (129, 124) to (129, 124, 1). The extra dimension is needed for the neural network model you’ll be building. Finally, you extract the label (for example, <code>'no'</code>) associated with the filepath <!--<ccust1>4</ccust1>-->❹ and convert the label string to the integer <code>label_id</code> <!--<ccust1>5</ccust1>-->❺, which is the index of the string in your <code>commands</code> list.</p>
+<p>Next, you need to get the input files ready for training. Recall that you had 8,000 audio files in the subdirectories and that you randomly shuffled their filepath strings and put them into a list called <code>wav_file_names</code>. Now you’ll partition the data into three: 80 percent, or 6,400 files, for training; 10 percent, or 800 files, for validation; and the other 10 percent for testing. Such partitioning is a common practice in machine learning. Once the model is trained using training data, you can use the validation data to tweak the model’s accuracy by changing the hyperparameters. The testing data is used only for checking the final accuracy of the (tweaked) model.</p>
+<div class="codeline">
+<p class="clf">train_files = wav_file_names[:6400]</p>
+<p class="cl">val_files = wav_file_names[6400:7200]</p>
+<p class="cll">test_files = wav_file_names[7200:]</p>
+</div>
+<p>Now you load the filepath strings into TensorFlow <code>Dataset</code> objects. These objects are critical to working with TensorFlow; they hold your input data and allow for data transformations, and all this can happen at a large scale:</p>
+<div class="codeline">
+<p class="clf">train_ds = tf.data.Dataset.<span class="idx" data-level1="tf.data.Dataset" data-level2="from_tensor_slices" data-term="TensorFlow"/>from_tensor_slices(train_files)</p>
+<p class="cl">val_ds = tf.data.Dataset.from_tensor_slices(val_files)</p>
+<p class="cll">test_ds = tf.data.Dataset.from_tensor_slices(test_files)</p>
+</div>
+<p>Take a look at what you just created:</p>
+<div class="codeline1">
+<p class="cl1f">for val in train_ds.take(5):</p>
+<p class="cl1">    print(val)</p>
+<div class="codeline1d">
+<p class="cl1f"><span class="ccust2">tf.Tensor(b'data/mini_speech_commands/stop/b4aa9fef_nohash_2.wav', shape=(), dtype=string)</span></p>
+</div>
+<p class="cl1"><span class="ccust2">tf.Tensor(b'data/mini_speech_commands/stop/962f27eb_nohash_0.wav', shape=(), dtype=string)</span></p>
+<p class="cl1"><span class="ccust2">--</span><span class="ccust2-i">snip</span><span class="ccust2">--</span></p>
+<p class="cl1l"><span class="ccust2">tf.Tensor(b'data/mini_speech_commands/left/cf87b736_nohash_1.wav', shape=(), dtype=string)</span></p>
+</div>
+<p><span aria-label=" Page 373. " class="page" epub:type="pagebreak" id="p373" role="doc-pagebreak"/>Each <code>Dataset</code> object contains a bunch of tensors of type <code>string</code>, each holding a filepath. What you really need, however, are the <code>(spec, label_id)</code> pairs corresponding to those filepaths. You create those here:</p>
+<div class="codeline">
+<p class="clf">train_ds = train_ds.<span class="idx" data-level1="tf.data.Dataset" data-level2="map" data-term="TensorFlow"/>map(get_spec_label_pair)</p>
+<p class="cl">val_ds = val_ds.map(get_spec_label_pair)</p>
+<p class="cll">test_ds = test_ds.map(get_spec_label_pair)</p>
+</div>
+<p>You use <code>map()</code> to apply your <code>get_spec_label_pair()</code> function to each <code>Dataset</code> object. This technique of mapping a function to a list of things is common in computing. Essentially, you’re going through each filepath in the <code>Dataset</code> object, calling <code>get_spec_label_pair()</code> on it, and storing the resulting <code>(spec, label_id)</code> pair in a new <code>Dataset</code> object.</p>
+<p>Now you further prepare the dataset for training by splitting it up into smaller batches:</p>
+<div class="codeline">
+<p class="clf">batch_size = 64</p>
+<p class="cl">train_ds = train_ds.<span class="idx" data-level1="tensorflow.data.Dataset" data-level2="batch" data-term="TensorFlow"/>batch(batch_size)</p>
+<p class="cll">val_ds = val_ds.batch(batch_size)</p>
+</div>
+<p>Here you set the training and validation datasets to have a batch size of 64. This is a common technique for speeding up the training process. If you tried to work with all 6,400 training samples and 800 validation samples at once, it would require a huge amount of memory and would slow down the training.</p>
+<p>Now you’re finally ready to create your neural network model:</p>
+<div class="codeline">
+<p class="cl2f"><!--<ccust1>1</ccust1>-->❶ input_shape = (129, 124, 1)</p>
+<p class="cl2"><!--<ccust1>2</ccust1>-->❷ num_labels = 8</p>
+<p class="cl">norm_layer = preprocessing.<span class="idx" data-level1="tensorflow.keras.layers.experimental" data-level2="Normalization" data-term="TensorFlow"/>Normalization()</p>
+<p class="cl2"><!--<ccust1>3</ccust1>-->❸ norm_layer.<span class="idx" data-level1="tensorflow.keras.layers" data-level2="adapt" data-term="TensorFlow"/>adapt(train_ds.map(lambda x, _: x))</p>
+<p class="cl2f"><!--<ccust1>4</ccust1>-->❹ model = <code class="i">models</code>.<span class="idx" data-level1="tensorflow.keras.models" data-level2="Sequential" data-term="TensorFlow"/>Sequential([</p>
+<p class="cl">    layers.Input(shape=input_shape),</p>
+<p class="cl">    preprocessing.Resizing(32, 32),</p>
+<p class="cl">    norm_layer,</p>
+<p class="cl">    layers.<span class="idx" data-level1="tensorflow.keras.layers" data-level2="Conv2D" data-term="TensorFlow"/>Conv2D(32, 3, activation='relu'),</p>
+<p class="cl">    layers.Conv2D(64, 3, activation='relu'),</p>
+<p class="cl">    layers.<span class="idx" data-level1="tensorflow.keras.layers" data-level2="MaxPooling2D" data-term="TensorFlow"/>MaxPooling2D(),</p>
+<p class="cl">    layers.<span class="idx" data-level1="tensorflow.keras.layers" data-level2="Dropout" data-term="TensorFlow"/>Dropout(0.25),</p>
+<p class="cl">    layers.<span class="idx" data-level1="tensorflow.keras.layers" data-level2="Flatten" data-term="TensorFlow"/>Flatten(),</p>
+<p class="cl">    layers.<span class="idx" data-level1="tensorflow.keras.layers" data-level2="Dense" data-term="TensorFlow"/>Dense(128, activation='relu'),</p>
+<p class="cl">    layers.Dropout(0.5),</p>
+<p class="cl">    layers.Dense(num_labels),</p>
+<p class="cl">])</p>
+<p class="cl2"><!--<ccust1>5</ccust1>-->❺ model.<span class="idx" data-level1="tensorflow.keras.Model" data-level2="summary" data-term="TensorFlow"/>summary()</p>
+<div class="codelined">
+<p class="clf"><span class="ccust2">Model: "sequential_3"</span></p>
+</div>
+<p class="cl"><span class="ccust2">_____________________________________________________________________</span></p>
+<p class="cl"><span class="ccust2"> Layer (type)                      Output Shape            Param #</span></p>
+<p class="cl"><span class="ccust2">=====================================================================</span></p>
+<p class="cl"><span class="ccust2"> resizing_3 (Resizing)            (None, 32, 32, 1)        0</span></p>
+<p class="clf"><span aria-label=" Page 374. " class="page" epub:type="pagebreak" id="p374" role="doc-pagebreak"/><span class="ccust2"> normalization_3 (Normalization)  (None, 32, 32, 1)        3</span></p>
+<p class="clf"><span class="ccust2"> conv2d_5 (Conv2D)                (None, 30, 30, 32)       320</span></p>
+<p class="clf"><span class="ccust2"> conv2d_6 (Conv2D)                (None, 28, 28, 64)       18496</span></p>
+<p class="clf"><span class="ccust2"> max_pooling2d_3 (MaxPooling2D)   (None, 14, 14, 64)       0</span></p>
+<p class="clf"><span class="ccust2"> dropout_6 (Dropout)              (None, 14, 14, 64)       0</span></p>
+<p class="clf"><span class="ccust2"> flatten_3 (Flatten)              (None, 12544)            0</span></p>
+<p class="clf"><span class="ccust2"> dense_6 (Dense)                  (None, 128)              1605760</span></p>
+<p class="clf"><span class="ccust2"> dropout_7 (Dropout)              (None, 128)              0</span></p>
+<p class="clf"><span class="ccust2"> dense_7 (Dense)                  (None, 8)                1032</span></p>
+<p class="clf"><span class="ccust2">=====================================================================</span></p>
+<p class="cl"><span class="ccust2">Total params: 1,625,611</span></p>
+<p class="cl"><span class="ccust2">Trainable params: 1,625,608</span></p>
+<p class="cll"><span class="ccust2">Non-trainable params: 3</span></p>
+</div>
+<p>You set the shape of the input into the first layer of the model <!--<ccust1>1</ccust1>-->❶ and then set the number of labels <!--<ccust1>2</ccust1>-->❷, which will be the number of units in the model’s output layer. Next, you set up a normalization layer for the spectrogram data. This will scale and shift the data to a distribution centered on 1 with a standard deviation of 1. This is a common practice in ML that improves training. Don’t let the <span class="idx" data-term="lambda"/><code>lambda</code> scare you <!--<ccust1>3</ccust1>-->❸. All it’s doing is defining an <span class="idx" data-term="anonymous function"/>anonymous function that picks out just the spectrogram from each <code>(spec, label_id)</code> pair in the training dataset. The <code>x, _: x</code> is just saying to ignore the second element in the pair and return only the first element.</p>
+<p>You next create the neural network model, one layer at a time <!--<ccust1>4</ccust1>-->❹. The layers correspond to the architecture we viewed earlier in <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#fig15-1">Figure 15-1</a>. Finally, you print out a summary of the model <!--<ccust1>5</ccust1>-->❺, which is shown in the output. The summary tells you all the layers in the model, the shape of the output tensor at each stage, and the number of trainable parameters in each layer.</p>
+<p>Now you need to compile the model. The compilation step sets the optimizer, the loss function, and the data collection metrics for the model:</p>
+<div class="codeline">
+<p class="clf">model.compile(</p>
+<p class="cl">    optimizer=tf.keras.optimizers.<span class="idx" data-level1="tensorflow.keras.optimizers" data-level2="Adam" data-term="TensorFlow"/>Adam(),</p>
+<p class="cl">    loss=<code class="i">tf.keras.losses</code>.<span class="idx" data-level1="tensorflow.keras.losses" data-level2="SparseCategoricalCrossentropy" data-term="TensorFlow"/>SparseCategoricalCrossentropy(from_logits=True),</p>
+<p class="cl">    metrics=['accuracy'],</p>
+<p class="cll">)</p>
+</div>
+<p>A <span class="idx" data-term="loss function"/><i>loss function</i> is a function used to measure how well a neural network is doing by comparing the output of the model to the known correct training data. An <span class="idx" data-term="optimizer"/><i>optimizer</i> is a method used to adjust the trainable parameters in a model to reduce the losses. In this case, you’re using an optimizer of type <span aria-label=" Page 375. " class="page" epub:type="pagebreak" id="p375" role="doc-pagebreak"/><code>Adam</code> and a loss function of type <code>SparseCategoricalCrossentropy</code>. You also get set up to collect some accuracy metrics, which you’ll use to check how the training went.</p>
+<p>Next, you train the model:</p>
+<div class="codeline1">
+<p class="cl1f">EPOCHS = 10</p>
+<p class="cl1">history = model.<span class="idx" data-level1="tensorflow.keras.Model" data-level2="fit" data-term="TensorFlow"/>fit(</p>
+<p class="cl1">    train_ds,</p>
+<p class="cl1">    validation_data=val_ds,</p>
+<p class="cl1">    epochs=EPOCHS,</p>
+<p class="cl1">    callbacks=tf.keras.callbacks.<span class="idx" data-level1="tensorflow.keras.callbacks" data-level2="EarlyStopping" data-term="TensorFlow"/>EarlyStopping(verbose=1, patience=15), <!--<ccust1>1</ccust1>-->❶</p>
+<p class="cl1">)</p>
+<div class="codeline1d">
+<p class="cl1f"><span class="ccust2">Epoch 1/10</span></p>
+</div>
+<p class="cl1"><span class="ccust2">100/100 [==============================] - 38s 371ms/step - loss: 1.7219 - accuracy: 0.3700</span></p>
+<p class="cl1"><span class="ccust2">                                         - val_loss: 1.2672 - val_accuracy: 0.5763</span></p>
+<p class="cl1"><span class="ccust2">Epoch 2/10</span></p>
+<p class="cl1"><span class="ccust2">100/100 [==============================] - 37s 368ms/step - loss: 1.1791 - accuracy: 0.5756</span></p>
+<p class="cl1"><span class="ccust2">                                         - val_loss: 0.9616 - val_accuracy: 0.6650</span></p>
+<p class="cl1"><span class="ccust2">--</span><span class="ccust2-i">snip</span><span class="ccust2">--</span></p>
+<p class="cl1"><span class="ccust2">Epoch 10/10</span></p>
+<p class="cl1"><span class="ccust2">100/100 [==============================] - 39s 388ms/step - loss: 0.3897 - accuracy: 0.8639</span></p>
+<p class="cl1l"><span class="ccust2">                                         - val_loss: 0.4766 - val_accuracy: 0.8450</span></p>
+</div>
+<p>You train the model by passing the training dataset <code>train_ds</code> into <code>model.fit()</code>. You also specify the validation dataset <code>val_ds</code>, which is used to evaluate how accurate the model is. The training takes place over 10 <span class="idx" data-term="epoch"/><i>epochs</i>. During each epoch, the complete set of training data is shown to the neural network. The data is randomly shuffled each time, so training across multiple epochs allows the model to learn better. You use the <code>callback</code> option <!--<ccust1>1</ccust1>-->❶ to set up a function to exit the training if it turns out that the training loss is no longer decreasing with each epoch.</p>
+<p>Running this Colab cell will take some time. The progress will be shown on the screen as the training is in process. Looking at the output, the <code>val_accuracy</code> listed under Epoch 10 shows that the model was about 85 percent accurate at running inference on the validation data by the end of the training. (The <code>val_accuracy</code> metric corresponds to the validation data, while <code>accuracy</code> corresponds to the training data.)</p>
+<p>Now you can try the model by running inference on the testing portion of the data:</p>
+<div class="codeline">
+<p class="clf">test_audio = []</p>
+<p class="cl">test_labels = []</p>
+<p class="cl2f"><!--<ccust1>1</ccust1>-->❶ for audio, label in test_ds:</p>
+<p class="cl">    test_audio.append(audio.numpy())</p>
+<p class="cl">    test_labels.append(label.numpy())</p>
+<p class="cl2f"><!--<ccust1>2</ccust1>-->❷ test_audio = np.array(test_audio)</p>
+<p class="cl">test_labels = np.array(test_labels)</p>
+<p class="cl2f"><!--<ccust1>3</ccust1>-->❸ y_pred = np.<span class="idx" data-level1="argmax" data-term="numpy module"/>argmax(model.predict(test_audio), axis=1)</p>
+<p class="cl">y_true = test_labels</p>
+<p class="cl2f"><span aria-label=" Page 376. " class="page" epub:type="pagebreak" id="p376" role="doc-pagebreak"/><!--<ccust1>4</ccust1>-->❹ test_acc = sum(y_pred == y_true) / len(y_true)</p>
+<p class="cl">print(f'Test set accuracy: {test_acc:.0%}')</p>
+<div class="codelined">
+<p class="clf"><span class="ccust2">25/25 [==============================] - 1s 35ms/step</span></p>
+</div>
+<p class="cll"><span class="ccust2">Test set accuracy: 84%</span></p>
+</div>
+<p>You first fill in two lists, <code>test_audio</code> and <code>test_labels</code>, by iterating through the test dataset <code>test_ds</code> <!--<ccust1>1</ccust1>-->❶. Then you create <code>numpy</code> arrays from these lists <!--<ccust1>2</ccust1>-->❷ and run inference on the data <!--<ccust1>3</ccust1>-->❸. You compute the test accuracy by summing up the number of times the predictions matched the true value and dividing them by the total number of items <!--<ccust1>4</ccust1>-->❹. The output shows an accuracy of 84 percent. Not perfect, but good enough for this project.</p>
+</section>
+<section>
+<h4 class="ch" id="ch1706"><span class="idx" data-level1="exporting model" data-term="speech recognition"/>Exporting the Model to the Pi</h4>
+<p class="paft">Congratulations! You have a fully trained machine learning model. Now you need to get it from Colab onto your Raspberry Pi. The first step is to save it:</p>
+<div class="codeline">
+<p class="cls">model.<span class="idx" data-level1="tensorflow.keras.Model" data-level2="save" data-term="TensorFlow"/>save('audioml.sav')</p>
+</div>
+<p>This saves the model to a file on the cloud called <i>audioml.sav</i>. Next, convert that file to the <span class="idx" data-term="TensorFlow Lite"/>TensorFlow Lite format so you can use it on your Pi:</p>
+<div class="codeline">
+<p class="cl2f"><!--<ccust1>1</ccust1>-->❶ converter = tf.lite.<span class="idx" data-level1="tensorflow.lite" data-level2="TFLiteConverter" data-term="TensorFlow"/>TFLiteConverter.from_saved_model('audioml.sav')</p>
+<p class="cl2"><!--<ccust1>2</ccust1>-->❷ tflite_model = converter.convert()</p>
+<p class="cl2f"><!--<ccust1>3</ccust1>-->❸ with open('audioml.tflite', 'wb') as f:</p>
+<p class="cll">    f.write(tflite_model)</p>
+</div>
+<p>You create a <code>TFLiteConverter</code> object, passing in the saved model filename <!--<ccust1>1</ccust1>-->❶. Then you do the conversion <!--<ccust1>2</ccust1>-->❷ and write the simplified TensorFlow model to a file called <i>audioml.tflite</i> <!--<ccust1>3</ccust1>-->❸. Now you need to <span class="idx" data-term="download file from Colab"/>download this <i>.tflite</i> file from Colab onto your computer. Running the following snippet will give you a browser prompt to save the <i>.tflite</i> file:</p>
+<div class="codeline">
+<p class="clf">from google.colab import files</p>
+<p class="cll">files.download('audioml.tflite')</p>
+</div>
+<p>Once you have the file, you can transfer it to your Raspberry Pi using SSH as we’ve discussed in other chapters.</p>
+</section>
+</section>
+<section>
+<h3 class="bh" id="bh1704"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1704"><span class="idx" data-term="inference on Raspberry Pi"/>Using the Model on the Raspberry Pi</a></h3>
+<p class="paft">Now we’ll turn our attention to the Raspberry Pi portion of the code. This code uses parallel processing to take in audio data from the microphone, prepare that data for your trained ML model, and show the data to the model to perform inference. As usual, you can write the code on your local machine and then transfer it to your Pi via SSH. To view the complete code, see <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#ah1708">“The Complete Code”</a> on <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#p389">page 389</a>. You can also download the code from <a class="url-i" href="https://github.com/mkvenkit/pp2e/tree/main/audioml">https://github.com/mkvenkit/pp2e/tree/main/audioml</a>.</p>
+<section>
+<h4 class="ch" id="ch1707"><span aria-label=" Page 377. " class="page" epub:type="pagebreak" id="p377" role="doc-pagebreak"/>Setting Up</h4>
+<p class="paft">Start by importing the required modules:</p>
+<div class="codeline">
+<p class="clf">from scipy.io import wavfile</p>
+<p class="cl">from scipy import signal</p>
+<p class="cl">import numpy as np</p>
+<p class="cl">import argparse</p>
+<p class="cl">import pyaudio</p>
+<p class="cl">import wave</p>
+<p class="cl">import time</p>
+<p class="cl">from <span class="idx" data-level1="tflite_runtime" data-level2="tflite_runtime" data-term="TensorFlow"/>tflite_runtime.interpreter import Interpreter</p>
+<p class="cll">from multiprocessing import Process, Queue</p>
+</div>
+<p>Next, you initialize some parameters that are defined as global variables:</p>
+<div class="codeline">
+<p class="clf">VERBOSE_DEBUG = False</p>
+<p class="cl">CHUNK = 4000</p>
+<p class="cl">FORMAT = pyaudio.paInt16</p>
+<p class="cl">CHANNELS = 1</p>
+<p class="cl">SAMPLE_RATE = 16000</p>
+<p class="cl">RECORD_SECONDS = 1</p>
+<p class="cl">NCHUNKS = int((SAMPLE_RATE * RECORD_SECONDS) / CHUNK)</p>
+<p class="cl">ND = 2 * CHUNK * NCHUNKS</p>
+<p class="cl">NDH = ND // 2</p>
+<p class="cl"># device index of microphone</p>
+<p class="cl2l"><!--<ccust1>1</ccust1>-->❶ dev_index = -1</p>
+</div>
+<p><code>VERBOSE_DEBUG</code> is a flag you’ll use in many places in the code. For now, you set it to <code>False</code>, but if set to <code>True</code> (via a command line option), it will print out a lot of debugging information.</p>
+<p class="pcust1"><span class="ccust3">NOTE</span> I’ve omitted the <code>print()</code> statements for debugging from the code listings that follow. You can find them in the full code listing and on the book’s GitHub repository.</p>
+<p>The next global variables are for working with the audio input. <code>CHUNK</code> sets the number of data samples read at a time using <code>PyAudio</code>, and <code>FORMAT</code> specifies that the audio data will consist of 16-bit integers. You set <code>CHANNELS</code> to <code>1</code>, since you’ll be using a single-channel microphone, and <code>SAMPLE_RATE</code> to <code>16000</code> for consistency with the ML training data. <code>RECORD_SECONDS</code> indicates that you’ll be grouping the audio into one-second increments (which you’ll stitch together into overlapping two-second clips, as discussed earlier). You calculate the number of chunks in each one-second recording as <code>NCHUNKS</code>. You’ll use <code>ND</code> and <code>NDH</code> to implement the overlapping technique—more on that later.</p>
+<p>Finally, you initialize the device index number of the microphone to <code>-1</code> <!--<ccust1>1</ccust1>-->❶. You’ll need to update this value at the command line once you know your microphone’s index. <span class="idx" data-level1="listing input devices" data-term="speech recognition"/>Here’s a function to help you figure that out. You’ll be able to call this function as a command line option.</p>
+<div class="codeline">
+<p class="clf">def list_devices():</p>
+<p class="cl">    """list pyaudio devices"""</p>
+<p class="cl"><span aria-label=" Page 378. " class="page" epub:type="pagebreak" id="p378" role="doc-pagebreak"/>    # initialize pyaudio</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ p = pyaudio.<span class="idx" data-level1="creating" data-term="pyaudio module"/>PyAudio()</p>
+<p class="cl">    # get device list</p>
+<p class="cl">    index = None</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ nDevices = p.<span class="idx" data-level1="get_device_count" data-term="pyaudio module"/>get_device_count()</p>
+<p class="cl">    print('\naudioml.py:\nFound the following input devices:')</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ for i in range(nDevices):</p>
+<p class="cl">        deviceInfo = p.<span class="idx" data-level1="get_device_info_by_index" data-term="pyaudio module"/>get_device_info_by_index(i)</p>
+<p class="cl">        if deviceInfo['maxInputChannels'] &gt; 0:</p>
+<p class="cl">            print(deviceInfo['index'], deviceInfo['name'],</p>
+<p class="cl">                  deviceInfo['defaultSampleRate'])</p>
+<p class="cl">    # clean up</p>
+<p class="cll">  <!--<ccust1>4</ccust1>-->❹ p.<span class="idx" data-level1="terminate" data-term="pyaudio module"/>terminate()</p>
+</div>
+<p>You initialize <code>PyAudio</code> <!--<ccust1>1</ccust1>-->❶ and get a count of the audio devices it detects <!--<ccust1>2</ccust1>-->❷. Then you iterate through the devices <!--<ccust1>3</ccust1>-->❸. For each one, you retrieve information about the device using <code>get_device_info_by_index()</code> and print out devices with one or more input channels—that is, microphones. You finish by cleaning up <code>PyAudio</code> <!--<ccust1>4</ccust1>-->❹.</p>
+<p>Here’s what a typical output of the function looks like:</p>
+<div class="codeline">
+<p class="clf">audioml.py:</p>
+<p class="cl">Found the following input devices:</p>
+<p class="cll">1 Mico: USB Audio (hw:3,0) 16000.0</p>
+</div>
+<p>This indicates there’s an input device called Mico with a default sample rate of 16,000 and an index of <code>1</code>.</p>
+</section>
+<section>
+<h4 class="ch" id="ch1708">Taking In Audio Data</h4>
+<p class="paft">One of the main tasks for the Pi is to continuously take in the audio input from the microphone and break it up into clips that you can run inference on. You create a <code>get_live_input()</code> function for this purpose. It takes in the <code>interpreter</code> object needed to work with the TensorFlow Lite model. Here’s the start of the function:</p>
+<div class="codeline">
+<p class="clf">def get_live_input(interpreter):</p>
+<p class="cl">    # create a queue object</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ dataq = Queue()</p>
+<p class="cl">    # start inference process</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ proc = Process(target = inference_process, args=(dataq, interpreter))</p>
+<p class="cll">    proc.start()</p>
+</div>
+<p>As we discussed in <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#ah1702">“How It Works,”</a> you’ll need to use separate processes for reading the audio data and doing the inference to avoid missing any input. You create a <code>multiprocessing.</code><span class="idx" data-level1="Queue" data-term="multiprocessing module"/><code>Queue</code> object that the processes will use to communicate with each other <!--<ccust1>1</ccust1>-->❶. Then you create the inference process using <code>multiprocessing.</code><span class="idx" data-level1="Process" data-term="multiprocessing module"/><code>Process()</code> <!--<ccust1>2</ccust1>-->❷. You specify the name of the handler function for the process as <code>inference_process</code>, which takes the <code>dataq</code> and <code>interpreter</code> objects as arguments (we’ll view this function later). You next start the process so the inference will run parallel to the data capture.</p>
+<p>You continue the <code>get_live_input()</code> function by initializing <code>PyAudio:</code></p>
+<div class="codeline">
+<p class="clf"><span aria-label=" Page 379. " class="page" epub:type="pagebreak" id="p379" role="doc-pagebreak"/>    # initialize pyaudio</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ p = pyaudio.PyAudio()</p>
+<p class="cl">    print('opening stream...')</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ stream = p.<span class="idx" data-level1="open" data-term="pyaudio module"/>open(format = FORMAT,</p>
+<p class="cl">                    channels = CHANNELS,</p>
+<p class="cl">                    rate = SAMPLE_RATE,</p>
+<p class="cl">                    input = True,</p>
+<p class="cl">                    frames_per_buffer = CHUNK,</p>
+<p class="cl">                    input_device_index = dev_index)</p>
+<p class="cl">    # discard first 1 second</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ for i in range(0, NCHUNKS):</p>
+<p class="cll">        data = stream.<span class="idx" data-level1="read" data-term="pyaudio module"/>read(CHUNK, exception_on_overflow = False)</p>
+</div>
+<p>You create a <code>PyAudio</code> object <code>p</code> <!--<ccust1>1</ccust1>-->❶ and open an audio input stream <!--<ccust1>2</ccust1>-->❷, using some of your global variables as parameters. Then you discard the first one second of data <!--<ccust1>3</ccust1>-->❸. This is to disregard any spurious data that comes in when the microphone is enabled for the first time.</p>
+<p>Now you’re ready to start reading the data:</p>
+<div class="codeline">
+<p class="clf">    # count for gathering two frames at a time</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ count = 0</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ inference_data = np.<span class="idx" data-level1="zeros" data-term="numpy module"/>zeros((ND,), dtype=np.int16)</p>
+<p class="cl">    print("Listening...")</p>
+<p class="cl">    try:</p>
+<p class="cl">      <!--<ccust1>3</ccust1>-->❸ while True:</p>
+<p class="cl">            chunks = []</p>
+<p class="cl">          <!--<ccust1>4</ccust1>-->❹ for i in range(0, NCHUNKS):</p>
+<p class="cl">                data = stream.<span class="idx" data-level1="read" data-term="pyaudio module"/>read(CHUNK, exception_on_overflow = False)</p>
+<p class="cl">                chunks.append(data)</p>
+<p class="cl">            # process data</p>
+<p class="cl">            buffer = b''.join(chunks)</p>
+<p class="cll">          <!--<ccust1>5</ccust1>-->❺ audio_data = np.frombuffer(buffer, dtype=np.int16)</p>
+</div>
+<p>You initialize <code>count</code> to <code>0</code> <!--<ccust1>1</ccust1>-->❶. You’ll use this variable to keep track of the number of one-second frames of audio data read in. Then you initialize a 16-bit array <code>inference_data</code> with zeros <!--<ccust1>2</ccust1>-->❷. It has <code>ND</code> elements, which corresponds to two seconds of audio. You next enter a <code>while</code> loop to process the audio data continuously <!--<ccust1>3</ccust1>-->❸. In it, you use a <code>for</code> loop <!--<ccust1>4</ccust1>-->❹ to read in one second of audio data, one chunk at a time, appending those chunks to the list <code>chunks</code>. Once you have a full second of data, you convert it into a <code>numpy</code> array <!--<ccust1>5</ccust1>-->❺.</p>
+<p>Next, still within the <code>while</code> loop started in the previous listing, you implement the technique we discussed in <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#ah1702">“How It Works”</a> to create overlapping two-second audio clips. You get help from your <code>NDH</code> global variable.</p>
+<div class="codeline">
+<p class="clf">            if count == 0:</p>
+<p class="cl">                # set first half</p>
+<p class="cl">              <!--<ccust1>1</ccust1>-->❶ inference_data[:NDH] = audio_data</p>
+<p class="cl">                count += 1</p>
+<p class="cl">            elif count == 1:</p>
+<p class="cl">                # set second half</p>
+<p class="cl">              <!--<ccust1>2</ccust1>-->❷ inference_data[NDH:] = audio_data</p>
+<p class="cl">                # add data to queue</p>
+<p class="cl">              <!--<ccust1>3</ccust1>-->❸ dataq.put(inference_data)</p>
+<p class="cl"><span aria-label=" Page 380. " class="page" epub:type="pagebreak" id="p380" role="doc-pagebreak"/>                count += 1</p>
+<p class="cl">            else:</p>
+<p class="cl">                # move second half to first half</p>
+<p class="cl">              <!--<ccust1>4</ccust1>-->❹ inference_data[:NDH] = inference_data[NDH:]</p>
+<p class="cl">                # set second half</p>
+<p class="cl">              <!--<ccust1>5</ccust1>-->❺ inference_data[NDH:] = audio_data</p>
+<p class="cl">                # add data to queue</p>
+<p class="cll">              <!--<ccust1>6</ccust1>-->❻ dataq.<span class="idx" data-level1="Queue" data-level2="put" data-term="multiprocessing module"/>put(inference_data)</p>
+</div>
+<p>The very first time a one-second frame is read in, it’s stored in the first half of <code>inference_data</code> <!--<ccust1>1</ccust1>-->❶. The next frame that comes in is stored in the second half of <code>inference_data</code> <!--<ccust1>2</ccust1>-->❷. Now you have a full two seconds of audio data, so you put <code>inference_data</code> into the queue for the inference process to pick it up <!--<ccust1>3</ccust1>-->❸. For every subsequent frame, the second half of the data is moved to the first half of <code>inference_data</code> <!--<ccust1>4</ccust1>-->❹, the new data is set to the second half <!--<ccust1>5</ccust1>-->❺, and <code>inference_data</code> is added to the queue <!--<ccust1>6</ccust1>-->❻. This creates the desired one-second overlap between each consecutive two-second audio clip.</p>
+<p>The <code>while</code> loop occurs inside a <code>try</code> block. To exit the loop, you just need to press <span class="sm">CTRL</span>-C and trigger the following <code>except</code> block:</p>
+<div class="codeline">
+<p class="clf">    except KeyboardInterrupt:</p>
+<p class="cl">        print("exiting...")</p>
+<p class="cl">    stream.stop_stream()</p>
+<p class="cl">    stream.close()</p>
+<p class="cll">    p.terminate()</p>
+</div>
+<p>This <code>except</code> block performs some basic cleanup by stopping and closing the stream and by terminating <code>PyAudio</code>.</p>
+</section>
+<section>
+<h4 class="ch" id="ch1709"><span class="idx" data-level1="preparing audio data" data-term="speech recognition"/>Preparing the Audio Data</h4>
+<p class="paft">Next, you’ll create a few functions to prepare the audio data for inference. First is <code>process_audio_data()</code>, which takes in a raw two-second clip of audio data pulled from the queue and extracts the most interesting one second of audio from it, based on peak amplitude. We’ll look at this function across several listings:</p>
+<div class="codeline">
+<p class="clf">def process_audio_data(waveform):</p>
+<p class="cl">    # compute peak to peak based on scaling by max 16-bit value</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ PTP = np.<span class="idx" data-level1="ptp" data-term="numpy module"/>ptp(waveform / 32768.0)</p>
+<p class="cl">    # return None if too silent</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ if PTP &lt; 0.3:</p>
+<p class="cll">        return []</p>
+</div>
+<p>You want to skip doing any inference on the microphone audio input if nobody is talking. There will always be some noise in the environment, however, so you can’t simply look for the signal to be 0. Instead, you’ll skip inference if the peak-to-peak amplitude (the difference between the highest value and the lowest value) of the audio is below a certain threshold. For this, you first divide the audio by <code>32768</code> to normalize it to a range of (−1, 1), and you pass the result to <code>np.ptp()</code> to get the peak-to-peak amplitude <!--<ccust1>1</ccust1>-->❶. The normalization makes it easier to express the threshold as a fraction. <span aria-label=" Page 381. " class="page" epub:type="pagebreak" id="p381" role="doc-pagebreak"/>You return an empty list (which will bypass the inference process) if the peak-to-peak amplitude is below <code>0.3</code> <!--<ccust1>2</ccust1>-->❷. You may need to adjust this threshold value depending on the noise level of your environment.</p>
+<p>The <code>process_audio_data()</code> function continues with another technique for normalizing any audio data that won’t be skipped:</p>
+<div class="codeline">
+<p class="clf">    # normalize audio</p>
+<p class="cl">    wabs = np.<span class="idx" data-level1="abs" data-term="numpy module"/>abs(waveform)</p>
+<p class="cl">    wmax = np.<span class="idx" data-level1="max" data-term="numpy module"/>max(wabs)</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ waveform = waveform / wmax</p>
+<p class="cl">    # compute peak to peak based on normalized waveform</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ PTP = np.ptp(waveform)</p>
+<p class="cl">    # scale and center</p>
+<p class="cll">  <!--<ccust1>3</ccust1>-->❸ waveform = 2.0*(waveform - np.min(waveform))/PTP – 1</p>
+</div>
+<p>When you normalized the data before skipping quiet audio samples, you divided the audio by 32,768, the maximum possible value of a 16-bit signed integer. In most cases, however, the peak amplitude of the audio data will be well below this value. Now you want to normalize the audio such that its maximum amplitude, whatever that may be, is scaled to 1. To do this, you first determine the peak amplitude in the audio signal and then divide the signal by that amplitude value <!--<ccust1>1</ccust1>-->❶. Then you compute the new peak-to-peak value of the normalized audio <!--<ccust1>2</ccust1>-->❷ and use this value to scale and center the data <!--<ccust1>3</ccust1>-->❸. Specifically, the expression <code>(waveform – np.min(waveform))/PTP</code> will scale the waveform values to the range (0, 1). Multiplying this by 2 and subtracting 1 will put the values in the range (−1, 1), which is what you need.</p>
+<p>The next part of the function extracts one second of audio from the data:</p>
+<div class="codeline">
+<p class="clf">    # extract 16000 len (1 second) of data</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ max_index = np.<span class="idx" data-level1="argmax" data-term="numpy module"/>argmax(waveform)</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ start_index = max(0, max_index-8000)</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ end_index = min(max_index+8000, waveform.shape[0])</p>
+<p class="cl">  <!--<ccust1>4</ccust1>-->❹ waveform = waveform[start_index:end_index]</p>
+<p class="cl">    # padding for files with less than 16000 samples</p>
+<p class="cl">    waveform_padded = np.<span class="idx" data-level1="zeros" data-term="numpy module"/>zeros((16000,))</p>
+<p class="cl">    waveform_padded[:waveform.shape[0]] = waveform</p>
+<p class="cll">    return waveform_padded</p>
+</div>
+<p>You want to make sure you’re getting the most interesting one second of the data, so you find the array index where the audio amplitude is at the maximum <!--<ccust1>1</ccust1>-->❶. Then you try to grab 8,000 values before <!--<ccust1>2</ccust1>-->❷ and after <!--<ccust1>3</ccust1>-->❸ this index to get a full second of data, using <code>max()</code> and <code>min()</code> to ensure that the start and end indices don’t fall out of range of the original clip. You use slicing to extract the relevant audio data <!--<ccust1>4</ccust1>-->❹. Because of the <code>max()</code> and <code>min()</code> operations, you may end up with less than 16,000 samples, but the neural network strictly requires each input to be 16,000 samples long. To address this problem, you pad the data with zeros, using the same <code>numpy</code> techniques you saw during training. Then you return the result.</p>
+<p><span aria-label=" Page 382. " class="page" epub:type="pagebreak" id="p382" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0030.xhtml#fig15-7">Figure 15-7</a> summarizes the <code>process_audio_data()</code> function by showing an example waveform at the various stages of processing.</p>
+<figure class="figure" id="fig15-7">
+<p class="fig"><img alt="" height="924" src="images/nsp-venkitachalam503045-f15007.jpg" style="width:95%; height:auto;" width="1182"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 15-7:</span> <span class="idx" data-level1="audio preparation stages" data-term="speech recognition"/>The audio preparation process at various stages</p>
+</figcaption>
+</figure>
+<p>The top waveform in <a class="xref" href="nsp-venkitachalam503045-0030.xhtml#fig15-7">Figure 15-7</a> shows the unprocessed audio. The second waveform shows the audio with the values normalized to range (−1, 1). The third waveform shows the audio after a shift and scale—notice on the y-axis how the waveform now fills the entire (−1, 1) range. The fourth waveform consists of 16,000 samples extracted from the third one, centered on the peak amplitude.</p>
+<p>Next, you need a <code>get_spectrogram()</code> function for computing the spectrogram of the audio data:</p>
+<div class="codeline">
+<p class="clf">def get_spectrogram(waveform):</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ waveform_padded = process_audio_data(waveform)</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ if not len(waveform_padded):</p>
+<p class="cl">        return []</p>
+<p class="cl">    # compute spectrogram</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ f, t, Zxx = signal.<span class="idx" data-level1="signal" data-level2="stft" data-term="scipy module"/>stft(waveform_padded, fs=16000, nperseg=255,</p>
+<p class="cl">        noverlap = 124, nfft=256)</p>
+<p class="cl">    # output is complex, so take abs value</p>
+<p class="cl">  <!--<ccust1>4</ccust1>-->❹ spectrogram = np.<span class="idx" data-level1="abs" data-term="numpy module"/>abs(Zxx)</p>
+<p class="cll">    return spectrogram</p>
+</div>
+<p>You call your <code>process_audio_data()</code> function to prepare the audio <!--<ccust1>1</ccust1>-->❶. If the function returns an empty list (because the audio is too quiet), <code>get_spectrogram()</code> returns an empty list as well <!--<ccust1>2</ccust1>-->❷. Next, you compute the spectrogram with <code>signal</code>.<code>stft()</code> from <code>scipy</code>, exactly as you did when training <span aria-label=" Page 383. " class="page" epub:type="pagebreak" id="p383" role="doc-pagebreak"/>the model <!--<ccust1>3</ccust1>-->❸. You then calculate the absolute value of the STFT <!--<ccust1>4</ccust1>-->❹ to convert from complex numbers—again, as you did during training—and return the result.</p>
+</section>
+<section>
+<h4 class="ch" id="ch1710">Running Inference</h4>
+<p class="paft"><span class="idx" data-level1="running inference" data-term="speech recognition"/>The heart of this project is using your trained model to run inference on the incoming audio data and identify any spoken commands. Recall that this occurs in a separate process from the code for taking in audio data from the microphone. Here’s the handler function that coordinates this process:</p>
+<div class="codeline">
+<p class="clf">def inference_process(dataq, interpreter):</p>
+<p class="cl">    success = False</p>
+<p class="cl">    while True:</p>
+<p class="cl">      <!--<ccust1>1</ccust1>-->❶ if not dataq.<span class="idx" data-level1="Queue" data-level2="empty" data-term="multiprocessing module"/>empty():</p>
+<p class="cl">            # get data from queue</p>
+<p class="cl">          <!--<ccust1>2</ccust1>-->❷ inference_data = dataq.<span class="idx" data-level1="Queue" data-level2="get" data-term="multiprocessing module"/>get()</p>
+<p class="cl">            # run inference only if previous one was not successful</p>
+<p class="cl">          <!--<ccust1>3</ccust1>-->❸ if not success:</p>
+<p class="cl">                success = run_inference(inference_data, interpreter)</p>
+<p class="cl">            else:</p>
+<p class="cl">                # skipping, reset flag for next time</p>
+<p class="cll">              <!--<ccust1>4</ccust1>-->❹ success = False</p>
+</div>
+<p>The inference process runs continuously inside a <code>while</code>. Within this loop, you check if there’s any data in the queue <!--<ccust1>1</ccust1>-->❶, and if so, you retrieve it <!--<ccust1>2</ccust1>-->❷. Then you run inference on it with the <code>run_inference()</code> function, which we’ll look at next, but only if the <code>success</code> flag is <code>False</code> <!--<ccust1>3</ccust1>-->❸. This flag keeps you from responding to the same speech command twice. Recall that because of the overlap technique, the second half of one audio clip will be repeated as the first half of the next clip. This lets you catch any audio commands that might be split across two frames, but it means that once you have a successful inference, you should skip the next element in the queue because it will have a portion of the audio from the previous element. When you do a skip like this, you reset <code>success</code> to <code>False</code> <!--<ccust1>4</ccust1>-->❹ to start running inference again on the next piece of data that comes in.</p>
+<p>Now let’s look at the <code>run_inference()</code> function, where the inference is actually carried out:</p>
+<div class="codeline">
+<p class="clf">def run_inference(waveform, interpreter):</p>
+<p class="cl">    # get spectrogram data</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ spectrogram = get_spectrogram(waveform)</p>
+<p class="cl">    if not len(spectrogram):</p>
+<p class="cl">        return False</p>
+<p class="cl">    # get input and output tensors details</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ input_details = interpreter.<span class="idx" data-level1="tflite_runtime" data-level2="get_input_details" data-term="TensorFlow"/>get_input_details()</p>
+<p class="cll">  <!--<ccust1>3</ccust1>-->❸ output_details = interpreter.<span class="idx" data-level1="tflite_runtime" data-level2="get_output_details" data-term="TensorFlow"/>get_output_details()</p>
+</div>
+<p>The function takes in the raw audio data (<code>waveform</code>) for interacting with your TensorFlow Lite model (<code>interpreter</code>). You call <code>get_spectrogram()</code> to process the audio and generate the spectrogram <!--<ccust1>1</ccust1>-->❶, and if the audio was <span aria-label=" Page 384. " class="page" epub:type="pagebreak" id="p384" role="doc-pagebreak"/>too quiet, you return <code>False</code>. Then you get the input <!--<ccust1>2</ccust1>-->❷ and output <!--<ccust1>3</ccust1>-->❸ details from the TensorFlow Lite interpreter. These tell you what the model is expecting as input and what you can expect from it as output. This is what <code>input_details</code> looks like:</p>
+<div class="codeline1">
+<p class="cl1f">[{'name': 'serving_default_input_5:0', 'index': 0, 'shape': array([1, 129, 124,   1]),</p>
+<p class="cl1">  'shape_signature': array([ -1, 129, 124,   1]), 'dtype': &lt;class 'numpy.float32'&gt;,</p>
+<p class="cl1">  'quantization': (0.0, 0), 'quantization_parameters': {'scales': array([], dtype=float32),</p>
+<p class="cl1l">  'zero_points': array([], dtype=int32), 'quantized_dimension': 0}, 'sparsity_parameters': {}}]</p>
+</div>
+<p>Notice that <code>input_details</code> is an array with a dictionary inside it. The <code>'shape'</code> entry is especially of interest: <code>array([1, 129, 124, 1])</code>. You’ve already ensured that your spectrogram, which will be the input to the interpreter, is shaped to this value. The <code>'index'</code> entry is just the index of the tensor in the tensor list inside the interpreter, and <code>'dtype'</code> is the expected data type of the input, which in this case is <code>float32</code>, a signed 32-bit float. You’ll need to reference both <code>'index'</code> and <code>'dtype'</code> later in the <code>run_inference()</code> function.</p>
+<p>Here’s <code>output_details</code>:</p>
+<div class="codeline1">
+<p class="cl1f">[{'name': 'StatefulPartitionedCall:0', 'index': 17, 'shape': array([1, 8]), 'shape_signature':</p>
+<p class="cl1">  array([-1,  8]), 'dtype': &lt;class 'numpy.float32'&gt;, 'quantization': (0.0, 0),</p>
+<p class="cl1">  'quantization_parameters': {'scales': array([], dtype=float32), 'zero_points':</p>
+<p class="cl1l">  array([], dtype=int32), 'quantized_dimension': 0}, 'sparsity_parameters': {}}]</p>
+</div>
+<p>Notice the <code>'shape'</code> entry in this dictionary. It shows that the output will be an array of shape (1, 8). The shape corresponds to the label IDs of the eight speech commands.</p>
+<p>You continue the <code>run_inference()</code> function by actually running inference on the input data:</p>
+<div class="codeline">
+<p class="clf">    # set input</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ input_data = spectrogram.<span class="idx" data-level1="astype" data-term="TensorFlow"/>astype(np.float32)</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ interpreter.set_tensor(input_details[0]['index'], input_data)</p>
+<p class="clf">    # run interpreter</p>
+<p class="cl">    print("running inference...")</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ interpreter.<span class="idx" data-level1="tflite_runtime" data-level2="invoke" data-term="TensorFlow"/>invoke()</p>
+<p class="cl">    # get output</p>
+<p class="cl">  <!--<ccust1>4</ccust1>-->❹ output_data = interpreter.<span class="idx" data-level1="tflite_runtime" data-level2="get_tensor" data-term="TensorFlow"/>get_tensor(output_details[0]['index'])</p>
+<p class="cl">  <!--<ccust1>5</ccust1>-->❺ yvals = output_data[0]</p>
+<p class="cll">    print(yvals)</p>
+</div>
+<p>First you convert the spectrogram data to 32-bit floating point values <!--<ccust1>1</ccust1>-->❶. Recall that your audio data started as 16-bit integers. The scaling and other processing operations converted the data to 64-bit floats, but as you saw in <code>input_details</code>, the TensorFlow Lite model requires 32-bit floats, which is the reason for the conversion. You next set the input value to the appropriate tensor inside the interpreter <!--<ccust1>2</ccust1>-->❷. Here the <code>[0]</code> accesses the first (and only) element in <code>input_details</code>, which as you saw is a dictionary, and <code>['index']</code> retrieves the value under that key in the dictionary to specify which tensor you’re setting. You run inference on the input using the <code>invoke()</code> method <!--<ccust1>3</ccust1>-->❸. <span aria-label=" Page 385. " class="page" epub:type="pagebreak" id="p385" role="doc-pagebreak"/>Then you retrieve the output tensor using similar indexing to the input <!--<ccust1>4</ccust1>-->❹ and get the output itself by extracting the first element from the <code>output_data</code> array <!--<ccust1>5</ccust1>-->❺. (Since you provided only one input, you expect only one output.) Here’s an example of what <code>yvals</code> looks like:</p>
+<div class="codeline1">
+<p class="cl1s">[  6.640185  -26.032831  -26.028618  8.746256  62.545185  -0.5698182  -15.045679  -29.140179 ]</p>
+</div>
+<p>These eight numbers correspond to the eight commands you trained the model with. The values indicate the likelihood of the input data being each word. In this particular array, the value at index <code>4</code> is by far the largest, so that’s what the neural network is predicting as the most probable answer. Here’s how you interpret the result:</p>
+<div class="codeline">
+<p class="clf">    # Important! This should exactly match training labels/ids.</p>
+<p class="cl">    commands = ['up', 'no', 'stop', 'left', 'right', 'go', 'down', 'yes']</p>
+<p class="cll">    print("&gt;&gt;&gt; " + commands[np.argmax(output_data[0])].upper())</p>
+</div>
+<p>You define a <code>commands</code> list in the same order as you used during training. It’s important to keep the order consistent across training and inference, or you’ll end up misinterpreting the results! Then you use <code>np.</code><span class="idx" data-level1="argmax" data-term="numpy module"/><code>argmax()</code> to get the index of the highest value in the output data and use that index to pick up the corresponding string from <code>commands</code>.</p>
+</section>
+<section>
+<h4 class="ch" id="ch1711">Writing the main() Function</h4>
+<p class="paft">Now let’s look at the <code>main()</code> function, which brings everything together:</p>
+<div class="codeline">
+<p class="clf">def main():</p>
+<p class="cl">    # globals set in this function</p>
+<p class="cl">    global VERBOSE_DEBUG</p>
+<p class="cl">    # create parser</p>
+<p class="cl">    descStr = "This program does ML inference on audio data."</p>
+<p class="cl">    parser = argparse.<span class="idx" data-level1="ArgumentParser" data-term="argparse module"/>ArgumentParser(description=descStr)</p>
+<p class="cl">    # add a mutually exclusive group</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ group = parser.<span class="idx" data-level1="ArgumentParser" data-level2="add_mutually_exclusive_group" data-term="argparse module"/>add_mutually_exclusive_group(required=True)</p>
+<p class="cl">    # add mutually exclusive arguments</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ group.<span class="idx" data-level1="ArgumentParser" data-level2="add_argument" data-term="argparse module"/>add_argument('--list', action='store_true', required=False)</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ group.add_argument('--input', dest='wavfile_name', required=False)</p>
+<p class="cl">  <!--<ccust1>4</ccust1>-->❹ group.add_argument('--index', dest='index', required=False)</p>
+<p class="cl">    # add other arguments</p>
+<p class="cl">  <!--<ccust1>5</ccust1>-->❺ parser.add_argument('--verbose', action='store_true', required=False)</p>
+<p class="cl">    # parse args</p>
+<p class="cll">    args = parser.<span class="idx" data-level1="ArgumentParser" data-level2="parse_args" data-term="argparse module"/>parse_args()</p>
+</div>
+<p>You start by setting <code>VERBOSE_DEBUG</code> as a global, since you’ll be setting it in this function and don’t want it to be treated as a local variable. Then you create a familiar <code>argparse.ArgumentParser</code> object and add a mutually exclusive group to the parser <!--<ccust1>1</ccust1>-->❶, since some of your command line options won’t be compatible with each other. Those are the <code>--list</code> option <!--<ccust1>2</ccust1>-->❷, which will list all the <code>PyAudio</code> devices so you can get your microphone’s index number; the <code>--input</code> option <!--<ccust1>3</ccust1>-->❸, which lets you specify a WAV file to use as input instead of live data from the microphone (useful for testing); and the <code>--index</code> <span aria-label=" Page 386. " class="page" epub:type="pagebreak" id="p386" role="doc-pagebreak"/>option <!--<ccust1>4</ccust1>-->❹, which starts capturing audio and running inference using the microphone with the specified index. You also add the non–mutually exclusive <code>--verbose</code> option <!--<ccust1>5</ccust1>-->❺ to print out detailed debug information as the program is run.</p>
+<p>Next, you create the TensorFlow Lite interpreter so you can use the ML model:</p>
+<div class="codeline">
+<p class="clf">    # load TF Lite model</p>
+<p class="cl">    interpreter = <span class="idx" data-level1="tflite_runtime" data-level2="Interpreter" data-term="TensorFlow"/>Interpreter('audioml.tflite')</p>
+<p class="cll">    interpreter.<span class="idx" data-level1="allocate_tensors" data-term="TensorFlow"/>allocate_tensors()</p>
+</div>
+<p>Here you create an <code>Interpreter</code> object, passing it the <i>audioml.tflite</i> file with the model you created during training. Then you call <code>allocate_tensors()</code> to prepare the necessary tensors for running the inference.</p>
+<p>The <code>main()</code> function finishes with branches for the different command line arguments:</p>
+<div class="codeline">
+<p class="clf">    # check verbose flag</p>
+<p class="cl">    if args.verbose:</p>
+<p class="cl">        VERBOSE_DEBUG = True</p>
+<p class="cl">    # test WAV file</p>
+<p class="cl">    if args.wavfile_name:</p>
+<p class="cl">      <!--<ccust1>1</ccust1>-->❶ wavfile_name = args.wavfile_name</p>
+<p class="cl">        # get audio data</p>
+<p class="cl">      <!--<ccust1>2</ccust1>-->❷ rate, waveform = wavfile.<span class="idx" data-level1="read" data-term="wavefile module"/>read(wavfile_name)</p>
+<p class="cl">        # run inference</p>
+<p class="cl">      <!--<ccust1>3</ccust1>-->❸ run_inference(waveform, interpreter)</p>
+<p class="cl">    elif args.list:</p>
+<p class="cl">        # list devices</p>
+<p class="cl">      <!--<ccust1>4</ccust1>-->❹ list_devices()</p>
+<p class="cl">    else:</p>
+<p class="cl">        # store device index</p>
+<p class="cl">      <!--<ccust1>5</ccust1>-->❺ dev_index = int(args.index)</p>
+<p class="cl">        # get live audio</p>
+<p class="cl">      <!--<ccust1>6</ccust1>-->❻ get_live_input(interpreter)</p>
+<p class="cll">    print("done.")</p>
+</div>
+<p>If the <code>--input</code> command line option is used, you get the name of the WAV file <!--<ccust1>1</ccust1>-->❶ and read its contents <!--<ccust1>2</ccust1>-->❷. The resulting data is passed along for inference <!--<ccust1>3</ccust1>-->❸. If the <code>--list</code> option is used, you call your <code>list_devices()</code> function <!--<ccust1>4</ccust1>-->❹. If the <code>--index</code> option is used, you parse the device index <!--<ccust1>5</ccust1>-->❺ and start processing live audio by calling the <code>get_live_input()</code> function <!--<ccust1>6</ccust1>-->❻.</p>
+</section>
+</section>
+</section>
+<section>
+<h2 class="ah" id="ah1705"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1705">Running the Speech Recognition System</a></h2>
+<p class="paft"><span class="idx" data-level1="running" data-term="speech recognition"/>To run the project, gather your Python code and the <i>audioml.tflite</i> file into a folder on your Pi. For testing, you can also download the <i>right.wav</i> file from the book’s GitHub repository and add that to the folder. You can work with your Pi via SSH, as explained in <a class="xref" href="nsp-venkitachalam503045-0032.xhtml#appb">Appendix B</a>.</p>
+<p><span aria-label=" Page 387. " class="page" epub:type="pagebreak" id="p387" role="doc-pagebreak"/>First, try using the <code>--input</code> command line option to run inference on a WAV file:</p>
+<div class="codeline">
+<p class="cls">$ <code class="b">sudo python audioml.py --input right.wav</code></p>
+</div>
+<p>Here’s the output:</p>
+<div class="codeline">
+<p class="clf">running inference...</p>
+<p class="cl">[  6.640185  -26.032831  -26.028618    8.746256   62.545185   -0.5698182</p>
+<p class="cl"> -15.045679  -29.140179 ]</p>
+<p class="cl2"><!--<ccust1>1</ccust1>-->❶ &gt;&gt;&gt; RIGHT</p>
+<p class="cl">run_inference: 0.029174549999879673s</p>
+<p class="cll">done.</p>
+</div>
+<p>Notice that the program has correctly identified the <i>right</i> command recorded on the WAV file <!--<ccust1>1</ccust1>-->❶.</p>
+<p>Now plug your microphone into the Pi and use the <code>--list</code> option to determine its index number, as shown here:</p>
+<div class="codeline">
+<p class="cls">$ <code class="b">sudo python audioml.py --list</code></p>
+</div>
+<p>Your output should be similar to the following:</p>
+<div class="codeline">
+<p class="clf">audioml.py:</p>
+<p class="cl">Found the following input devices:</p>
+<p class="cl">1 Mico: USB Audio (hw:3,0) 16000.0</p>
+<p class="cll">done.</p>
+</div>
+<p>In this example, the microphone has index <code>1</code>. Use that number to run the <code>--index</code> command to do some live speech detection! Here’s an example run:</p>
+<div class="codeline">
+<p class="clf">$ <code class="b">sudo python audioml.py --index 1</code></p>
+<p class="cl">--<code class="i">snip</code>--</p>
+<p class="cl">opening stream...</p>
+<p class="cl">Listening...</p>
+<p class="cl">running inference...</p>
+<p class="cl">[-2.647918    0.17592785 -3.3615346   6.6812882   4.472283   -3.7535028</p>
+<p class="cl">  1.2349942   1.8546474 ]</p>
+<p class="cl2"><!--<ccust1>1</ccust1>-->❶ &gt;&gt;&gt; LEFT</p>
+<p class="cl">run_inference: 0.03520956500142347s</p>
+<p class="cl">running inference...</p>
+<p class="cl">[-2.7683923 -5.9614644 -8.532391   6.906795  19.197264  -4.0255833</p>
+<p class="cl">  1.7236844 -4.374415 ]</p>
+<p class="cl2"><!--<ccust1>2</ccust1>-->❷ &gt;&gt;&gt; RIGHT</p>
+<p class="cl">run_inference: 0.03026762299850816s</p>
+<p class="cl">--<code class="i">snip</code>--</p>
+<p class="cl">^C</p>
+<p class="cl">KeyboardInterrupt</p>
+<p class="cl">exiting...</p>
+<p class="cll">done.</p>
+</div>
+<p><span aria-label=" Page 388. " class="page" epub:type="pagebreak" id="p388" role="doc-pagebreak"/>After starting the program and getting the “Listening . . .” prompt, I spoke the words <i>left</i> and <i>right</i>. The output at <!--<ccust1>1</ccust1>-->❶ and <!--<ccust1>2</ccust1>-->❷ indicates that the program was able to identify the commands correctly.</p>
+<p>Try running the program with the <code>--verbose</code> option to see more information about how it’s working. Also, try speaking different commands in quick succession to verify whether the multiprocessing and overlapping techniques are working.</p>
+</section>
+<section>
+<h2 class="ah" id="ah1706"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1706">Summary</a></h2>
+<p class="paft">This chapter introduced you to the world of machine learning. You learned how to train a deep neural network to recognize speech commands using the TensorFlow framework, and you converted the resulting model to a TensorFlow Lite format for use on a resource-constrained Raspberry Pi. You also learned about spectrograms and the importance of processing input data before ML training. You practiced using Python multiprocessing, reading USB microphone input on a Raspberry Pi using <code>PyAudio</code>, and running a TensorFlow Lite interpreter for ML inference.</p>
+</section>
+<section>
+<h2 class="ah" id="ah1707"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1707">Experiments!</a></h2>
+<ol style="list-style-type:none">
+<li class="nl">1. Now that you know how to process speech commands on a Raspberry Pi, you can build an assistive device that responds to those commands by doing more than printing out the identified words. For example, you could use the commands <i>left</i>, <i>right</i>, <i>up</i>, <i>down</i>, <i>stop</i>, and <i>go</i> to control a camera (or laser!) mounted on a pan/tilt mount. Hint: you'll need to retrain the ML model with just these six commands. You’ll also need to get a two-axis pan/tilt bracket with two servo motors attached. The servos will be connected to the Raspberry Pi and controlled based on the inference results.</li>
+<li class="nl">2. Read about the <i>mel spectrogram</i>, a variant of the spectrogram you used for this project that’s better suited for human speech data.</li>
+<li class="nl">3. Try modifying the neural network by adding or removing some layers. For example, remove the second Conv2D layer. See how the changes affect the training accuracy of the model and the inference accuracy on the Pi.</li>
+<li class="nl">4. This project used an ad hoc neural network, but there are also pretrained neural networks available that you could leverage. For example, read up on MobileNet V2. What changes are needed to adapt your project to use this network instead?</li>
+</ol>
+</section>
+<section>
+<h2 class="ah" id="ah1708"><span aria-label=" Page 389. " class="page" epub:type="pagebreak" id="p389" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1708">The Complete Code</a></h2>
+<p class="paft"><span class="idx" data-level1="complete code" data-term="speech recognition"/>Here’s a complete listing of the code that goes on the Raspberry Pi, including the <code>print()</code> statements for verbose debugging. The Google Colab notebook code can be found at <a class="url-i" href="https://github.com/mkvenkit/pp2e/blob/main/audioml/audioml.ipynb">https://github.com/mkvenkit/pp2e/blob/main/audioml/audioml.ipynb</a>.</p>
+<div class="codeline">
+<p class="clf">"""</p>
+<p class="cl">    simple_audio.py</p>
+<p class="clf">    This programs collects audio data from an I2S mic on the Raspberry Pi</p>
+<p class="cl">    and runs the TensorFlow Lite interpreter on a per-build model.</p>
+<p class="clf">    Author: Mahesh Venkitachalam</p>
+<p class="cl">"""</p>
+<p class="clf">from scipy.io import wavfile</p>
+<p class="cl">from scipy import signal</p>
+<p class="cl">import numpy as np</p>
+<p class="cl">import argparse</p>
+<p class="cl">import pyaudio</p>
+<p class="cl">import wave</p>
+<p class="cl">import time</p>
+<p class="clf">from tflite_runtime.interpreter import Interpreter</p>
+<p class="cl">from multiprocessing import Process, Queue</p>
+<p class="clf">VERBOSE_DEBUG = False</p>
+<p class="cl">CHUNK = 4000                # choose a value divisible by SAMPLE_RATE</p>
+<p class="cl">FORMAT = pyaudio.paInt16</p>
+<p class="cl">CHANNELS = 1</p>
+<p class="cl">SAMPLE_RATE = 16000</p>
+<p class="cl">RECORD_SECONDS = 1</p>
+<p class="cl">NCHUNKS = int((SAMPLE_RATE * RECORD_SECONDS) / CHUNK)</p>
+<p class="cl">ND = 2 * SAMPLE_RATE * RECORD_SECONDS</p>
+<p class="cl">NDH = ND // 2</p>
+<p class="cl"># device index of microphone</p>
+<p class="cl">dev_index = -1</p>
+<p class="clf">def list_devices():</p>
+<p class="cl">    """list pyaudio devices"""</p>
+<p class="cl">    # initialize pyaudio</p>
+<p class="cl">    p = pyaudio.PyAudio()</p>
+<p class="cl">    # get device list</p>
+<p class="cl">    index = None</p>
+<p class="cl">    nDevices = p.get_device_count()</p>
+<p class="cl">    print('\naudioml.py:\nFound the following input devices:')</p>
+<p class="cl">    for i in range(nDevices):</p>
+<p class="cl">        deviceInfo = p.get_device_info_by_index(i)</p>
+<p class="cl">        if deviceInfo['maxInputChannels'] &gt; 0:</p>
+<p class="cl">            print(deviceInfo['index'], deviceInfo['name'], deviceInfo['defaultSampleRate'])</p>
+<p class="cl">    # clean up</p>
+<p class="cl">    p.terminate()</p>
+<p class="clf"><span aria-label=" Page 390. " class="page" epub:type="pagebreak" id="p390" role="doc-pagebreak"/>def inference_process(dataq, interpreter):</p>
+<p class="cl">    """infererence process handler"""</p>
+<p class="cl">    success = False</p>
+<p class="cl">    while True:</p>
+<p class="cl">        if not dataq.empty():</p>
+<p class="cl">            # get data from queue</p>
+<p class="cl">            inference_data = dataq.get()</p>
+<p class="cl">            # run inference only if previous one was not success</p>
+<p class="cl">            # otherwise we will get duplicate results because of</p>
+<p class="cl">            # overlap in input data</p>
+<p class="cl">            if not success:</p>
+<p class="cl">                success = run_inference(inference_data, interpreter)</p>
+<p class="cl">            else:</p>
+<p class="cl">                # skipping, reset flag for next time</p>
+<p class="cl">                success = False</p>
+<p class="clf">def process_audio_data(waveform):</p>
+<p class="cl">    """Process audio input.</p>
+<p class="cl">    This function takes in raw audio data from a WAV file and does scaling</p>
+<p class="cl">    and padding to 16000 length.</p>
+<p class="cl">    """</p>
+<p class="clf">    if VERBOSE_DEBUG:</p>
+<p class="cl">        print("waveform:", waveform.shape, waveform.dtype, type(waveform))</p>
+<p class="cl">        print(waveform[:5])</p>
+<p class="clf">    # compute peak to peak based on scaling by max 16-bit value</p>
+<p class="cl">    PTP = np.ptp(waveform / 32768.0)</p>
+<p class="clf">    if VERBOSE_DEBUG:</p>
+<p class="cl">        print("peak-to-peak (16 bit scaling): {}".format(PTP))</p>
+<p class="clf">    # return None if too silent</p>
+<p class="cl">    if PTP &lt; 0.3:</p>
+<p class="cl">        return []</p>
+<p class="clf">    # normalize audio</p>
+<p class="cl">    wabs = np.abs(waveform)</p>
+<p class="cl">    wmax = np.max(wabs)</p>
+<p class="cl">    waveform = waveform / wmax</p>
+<p class="clf">    # compute peak to peak based on normalized waveform</p>
+<p class="cl">    PTP = np.ptp(waveform)</p>
+<p class="clf">    if VERBOSE_DEBUG:</p>
+<p class="cl">        print("peak-to-peak (after normalize): {}".format(PTP))</p>
+<p class="cl">        print("After normalization:")</p>
+<p class="cl">        print("waveform:", waveform.shape, waveform.dtype, type(waveform))</p>
+<p class="cl">        print(waveform[:5])</p>
+<p class="clf">    # scale and center</p>
+<p class="cl">    waveform = 2.0*(waveform - np.min(waveform))/PTP - 1</p>
+<p class="clf">    # extract 16000 len (1 second) of data</p>
+<p class="cl">    max_index = np.argmax(waveform)</p>
+<p class="cl"><span aria-label=" Page 391. " class="page" epub:type="pagebreak" id="p391" role="doc-pagebreak"/>    start_index = max(0, max_index-8000)</p>
+<p class="cl">    end_index = min(max_index+8000, waveform.shape[0])</p>
+<p class="cl">    waveform = waveform[start_index:end_index]</p>
+<p class="clf">    # padding for files with less than 16000 samples</p>
+<p class="cl">    if VERBOSE_DEBUG:</p>
+<p class="cl">        print("After padding:")</p>
+<p class="clf">    waveform_padded = np.zeros((16000,))</p>
+<p class="cl">    waveform_padded[:waveform.shape[0]] = waveform</p>
+<p class="clf">    if VERBOSE_DEBUG:</p>
+<p class="cl">        print("waveform_padded:", waveform_padded.shape,</p>
+<p class="cl">               waveform_padded.dtype, type(waveform_padded))</p>
+<p class="cl">        print(waveform_padded[:5])</p>
+<p class="clf">    return waveform_padded</p>
+<p class="clf">def get_spectrogram(waveform):</p>
+<p class="cl">    """computes spectrogram from audio data"""</p>
+<p class="clf">    waveform_padded = process_audio_data(waveform)</p>
+<p class="clf">    if not len(waveform_padded):</p>
+<p class="cl">        return []</p>
+<p class="clf">    # compute spectrogram</p>
+<p class="cl">    f, t, Zxx = signal.stft(waveform_padded, fs=16000, nperseg=255,</p>
+<p class="cl">        noverlap = 124, nfft=256)</p>
+<p class="cl">    # output is complex, so take abs value</p>
+<p class="cl">    spectrogram = np.abs(Zxx)</p>
+<p class="clf">    if VERBOSE_DEBUG:</p>
+<p class="cl">        print("spectrogram:", spectrogram.shape, type(spectrogram))</p>
+<p class="cl">        print(spectrogram[0, 0])</p>
+<p class="clf">    return spectrogram</p>
+<p class="clf">def run_inference(waveform, interpreter):</p>
+<p class="cl">    # start timing</p>
+<p class="cl">    start = time.perf_counter()</p>
+<p class="clf">    # get spectrogram data</p>
+<p class="cl">    spectrogram = get_spectrogram(waveform)</p>
+<p class="clf">    if not len(spectrogram):</p>
+<p class="cl">        if VERBOSE_DEBUG:</p>
+<p class="cl">            print("Too silent. Skipping...")</p>
+<p class="cl">        return False</p>
+<p class="clf">    if VERBOSE_DEBUG:</p>
+<p class="cl">        print("spectrogram: %s, %s, %s" % (type(spectrogram),</p>
+<p class="cl">               spectrogram.dtype, spectrogram.shape))</p>
+<p class="clf">    # get input and output tensors details</p>
+<p class="cl"><span aria-label=" Page 392. " class="page" epub:type="pagebreak" id="p392" role="doc-pagebreak"/>    input_details = interpreter.get_input_details()</p>
+<p class="cl">    output_details = interpreter.get_output_details()</p>
+<p class="clf">    if VERBOSE_DEBUG:</p>
+<p class="cl">        print("input_details: {}".format(input_details))</p>
+<p class="cl">        print("output_details: {}".format(output_details))</p>
+<p class="clf">    # reshape spectrogram to match interpreter requirement</p>
+<p class="cl">    spectrogram = np.reshape(spectrogram, (-1, spectrogram.shape[0],</p>
+<p class="cl">                                           spectrogram.shape[1], 1))</p>
+<p class="clf">    # set input</p>
+<p class="cl">    input_data = spectrogram.astype(np.float32)</p>
+<p class="cl">    interpreter.set_tensor(input_details[0]['index'], input_data)</p>
+<p class="clf">    # run interpreter</p>
+<p class="cl">    print("running inference...")</p>
+<p class="cl">    interpreter.invoke()</p>
+<p class="clf">    # get output</p>
+<p class="cl">    output_data = interpreter.get_tensor(output_details[0]['index'])</p>
+<p class="cl">    yvals = output_data[0]</p>
+<p class="cl">    if VERBOSE_DEBUG:</p>
+<p class="cl">        print(output_data)</p>
+<p class="clf">    print(yvals)</p>
+<p class="clf">    # Important! This should exactly match training labels/ids.</p>
+<p class="cl">    commands = ['up', 'no', 'stop', 'left', 'right', 'go', 'down', 'yes']</p>
+<p class="cl">    print("&gt;&gt;&gt; " + commands[np.argmax(output_data[0])].upper())</p>
+<p class="clf">    # stop timing</p>
+<p class="cl">    end = time.perf_counter()</p>
+<p class="cl">    print("run_inference: {}s".format(end - start))</p>
+<p class="cl">    # return success</p>
+<p class="cl">    return True</p>
+<p class="clf">def get_live_input(interpreter):</p>
+<p class="cl">    """this function gets live input from the microphone</p>
+<p class="cl">    and runs inference on it"""</p>
+<p class="clf">    # create a queue object</p>
+<p class="cl">    dataq = Queue()</p>
+<p class="cl">    # start inference process</p>
+<p class="cl">    proc = Process(target = inference_process, args=(dataq, interpreter))</p>
+<p class="cl">    proc.start()</p>
+<p class="clf">    # initialize pyaudio</p>
+<p class="cl">    p = pyaudio.PyAudio()</p>
+<p class="clf">    print('opening stream...')</p>
+<p class="cl">    stream = p.open(format = FORMAT,</p>
+<p class="cl">                    channels = CHANNELS,</p>
+<p class="cl">                    rate = SAMPLE_RATE,</p>
+<p class="cl">                    input = True,</p>
+<p class="cl"><span aria-label=" Page 393. " class="page" epub:type="pagebreak" id="p393" role="doc-pagebreak"/>                    frames_per_buffer = CHUNK,</p>
+<p class="cl">                    input_device_index = dev_index)</p>
+<p class="clf">    # discard first 1 second</p>
+<p class="cl">    for i in range(0, NCHUNKS):</p>
+<p class="cl">        data = stream.read(CHUNK, exception_on_overflow = False)</p>
+<p class="clf">    # count for gathering two frames at a time</p>
+<p class="cl">    count = 0</p>
+<p class="cl">    inference_data = np.zeros((ND,), dtype=np.int16)</p>
+<p class="cl">    print("Listening...")</p>
+<p class="cl">    try:</p>
+<p class="cl">        while True:</p>
+<p class="cl">            # print("Listening...")</p>
+<p class="clf">            chunks = []</p>
+<p class="cl">            for i in range(0, NCHUNKS):</p>
+<p class="cl">                data = stream.read(CHUNK, exception_on_overflow = False)</p>
+<p class="cl">                chunks.append(data)</p>
+<p class="clf">            # process data</p>
+<p class="cl">            buffer = b''.join(chunks)</p>
+<p class="cl">            audio_data = np.frombuffer(buffer, dtype=np.int16)</p>
+<p class="clf">            if count == 0:</p>
+<p class="cl">                # set first half</p>
+<p class="cl">                inference_data[:NDH] = audio_data</p>
+<p class="cl">                count += 1</p>
+<p class="cl">            elif count == 1:</p>
+<p class="cl">                # set second half</p>
+<p class="cl">                inference_data[NDH:] = audio_data</p>
+<p class="cl">                # add data to queue</p>
+<p class="cl">                dataq.put(inference_data)</p>
+<p class="cl">                count += 1</p>
+<p class="cl">            else:</p>
+<p class="cl">                # move second half to first half</p>
+<p class="cl">                inference_data[:NDH] = inference_data[NDH:]</p>
+<p class="cl">                # set second half</p>
+<p class="cl">                inference_data[NDH:] = audio_data</p>
+<p class="cl">                # add data to queue</p>
+<p class="cl">                dataq.put(inference_data)</p>
+<p class="clf">            # print("queue: {}".format(dataq.qsize()))</p>
+<p class="clf">    except KeyboardInterrupt:</p>
+<p class="cl">        print("exiting...")</p>
+<p class="clf">    stream.stop_stream()</p>
+<p class="cl">    stream.close()</p>
+<p class="cl">    p.terminate()</p>
+<p class="clf">def main():</p>
+<p class="cl">    """main function for the program"""</p>
+<p class="cl">    # globals set in this function</p>
+<p class="cl">    global VERBOSE_DEBUG</p>
+<p class="cl"><span aria-label=" Page 394. " class="page" epub:type="pagebreak" id="p394" role="doc-pagebreak"/>    # create parser</p>
+<p class="cl">    descStr = "This program does ML inference on audio data."</p>
+<p class="cl">    parser = argparse.ArgumentParser(description=descStr)</p>
+<p class="cl">    # add a mutually exclusive group</p>
+<p class="cl">    group = parser.add_mutually_exclusive_group(required=True)</p>
+<p class="cl">    # add mutually exclusive arguments</p>
+<p class="cl">    group.add_argument('--list', action='store_true', required=False)</p>
+<p class="cl">    group.add_argument('--input', dest='wavfile_name', required=False)</p>
+<p class="cl">    group.add_argument('--index', dest='index', required=False)</p>
+<p class="cl">    # add other arguments</p>
+<p class="cl">    parser.add_argument('--verbose', action='store_true', required=False)</p>
+<p class="clf">    # parse args</p>
+<p class="cl">    args = parser.parse_args()</p>
+<p class="clf">    # load TF Lite model</p>
+<p class="cl">    interpreter = Interpreter('audioml.tflite')</p>
+<p class="cl">    interpreter.allocate_tensors()</p>
+<p class="clf">    # check verbose flag</p>
+<p class="cl">    if args.verbose:</p>
+<p class="cl">        VERBOSE_DEBUG = True</p>
+<p class="clf">    # test WAV file</p>
+<p class="cl">    if args.wavfile_name:</p>
+<p class="cl">        wavfile_name = args.wavfile_name</p>
+<p class="cl">        # get audio data</p>
+<p class="cl">        rate, waveform = wavfile.read(wavfile_name)</p>
+<p class="cl">        # run inference</p>
+<p class="cl">        run_inference(waveform, interpreter)</p>
+<p class="cl">    elif args.list:</p>
+<p class="cl">        # list devices</p>
+<p class="cl">        list_devices()</p>
+<p class="cl">    else:</p>
+<p class="cl">        # store device index</p>
+<p class="cl">        dev_index = int(args.index)</p>
+<p class="cl">        # get live audio</p>
+<p class="cl">        get_live_input(interpreter)</p>
+<p class="clf">    print("done.")</p>
+<p class="clf"># main method</p>
+<p class="cl">if __name__ == '__main__':</p>
+<p class="cl">    main()</p>
+</div>
+</section>
+</section>
+</div></body></html>

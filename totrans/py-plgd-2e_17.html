@@ -1,0 +1,605 @@
+<html><head></head><body>
+<div id="sbo-rt-content"><section aria-labelledby="header1201" class="chapter" epub:type="chapter" id="ch12" role="doc-chapter">
+<header id="header1201">
+<h1 class="cn"><span aria-label=" Page 258. " class="page" epub:type="pagebreak" id="p258" role="doc-pagebreak"/><span aria-label=" Page 259. " class="page" epub:type="pagebreak" id="p259" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rch12">12</a></h1>
+<h1 class="ct">Karplus-Strong on a Raspberry Pi Pico</h1>
+</header>
+<figure class="figure">
+<p class="fig"><img alt="" height="100" src="images/nsp-venkitachalam503045-circle-image.jpg" width="100"/></p>
+</figure>
+<p class="pf">In <a class="xref" href="nsp-venkitachalam503045-0016.xhtml#ch04">Chapter 4</a>, you learned how to make plucked string sounds using the Karplus-Strong algorithm. You saved the generated sounds as WAV files and played notes from a pentatonic musical scale on your computer. In this chapter, you’ll learn how to shrink that project to fit on a tiny piece of hardware: the Raspberry Pi Pico.</p>
+<p>The Pico (see <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#fig12-1">Figure 12-1</a>) is built using an <span class="idx" data-term="RP2040 chip"/>RP2040 <span class="idx" data-term="microcontroller"/>microcontroller chip, which has just 264KB of random access memory (RAM). Compare that to the tens of gigabytes of RAM on the typical personal computer! The Pico also has 2MB of flash memory on a separate chip, in contrast to a normal computer’s hundreds of gigabytes of hard disk space. Despite these limitations, however, the Pico is still extremely capable. It can perform many useful services, while also being much cheaper and less power-hungry than a regular computer. Your watch, your air conditioning unit, your clothes dryer, your car, your phone—tiny microcontrollers like the RP2040 are everywhere!</p>
+<figure class="figure" id="fig12-1">
+<p class="fig"><span aria-label=" Page 260. " class="page" epub:type="pagebreak" id="p260" role="doc-pagebreak"/><img alt="" height="900" src="images/nsp-venkitachalam503045-f12001.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 12-1:</span> The Raspberry Pi Pico</p>
+</figcaption>
+</figure>
+<p>The goal for this project is to use the Raspberry Pi Pico to create a musical instrument with five buttons. Pressing each button will play a note from a pentatonic scale, generated with the Karplus-Strong algorithm. Some of the concepts you’ll learn from this project are:</p>
+<ul style="list-style-type:none">
+<li class="blf">• Programming a microcontroller using MicroPython, an implementation of Python optimized to run on devices like the Pico</li>
+<li class="bl">• Building a simple audio circuit on a breadboard using the Pico</li>
+<li class="bl">• Using the I2S digital audio protocol and an I2S amplifier to send audio data to a speaker</li>
+<li class="bl">• Implementing the Karplus-Strong algorithm from <a class="xref" href="nsp-venkitachalam503045-0016.xhtml#ch04">Chapter 4</a> on a resource-constrained microcontroller</li>
+</ul>
+<section>
+<h2 class="ah" id="ah1401"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1401"><span class="idx" data-level1="implementation" data-term="Karplus on Pico"/>How It Works</a></h2>
+<p class="paft">We discussed the Karplus-Strong algorithm in detail in <a class="xref" href="nsp-venkitachalam503045-0016.xhtml#ch04">Chapter 4</a>, so we won’t revisit it here. Instead, we’ll focus on what makes this version of the project different. Your program from <a class="xref" href="nsp-venkitachalam503045-0016.xhtml#ch04">Chapter 4</a> was designed to run on a laptop or desktop computer. Thanks to the computer’s ample RAM and hard disk resources, it had no problems creating WAV files using the Karplus-Strong algorithm and playing audio through speakers with <code>pyaudio</code>. The challenge now is to fit the project code onto a resource-constrained Raspberry Pi Pico. This will require the following modifications:</p>
+<ul style="list-style-type:none">
+<li class="blf"><span aria-label=" Page 261. " class="page" epub:type="pagebreak" id="p261" role="doc-pagebreak"/>• Using a smaller audio sampling rate to reduce memory requirements</li>
+<li class="bl">• Using a simple binary file to store raw generated samples rather than a WAV file</li>
+<li class="bl">• Using the I2S protocol to send out the audio data to an external audio amplifier</li>
+<li class="bll">• Using memory management techniques to avoid copying the same data repeatedly</li>
+</ul>
+<p>We’ll discuss the specifics of these modifications as they arise.</p>
+<section>
+<h3 class="bh" id="bh1401"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1401">Input and Output</a></h3>
+<p class="paft">To make the project interactive, you’ll want the Pico to generate sounds in response to user input. You’ll need to wire five push buttons to the Pico for this purpose, since the Pico doesn’t have a keyboard or mouse. (You’ll use a sixth push button to run the program.) We also need to figure out how to produce the sound output, since unlike a personal computer, the Pico board doesn’t have any built-in speakers. <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#fig12-2">Figure 12-2</a> shows a block diagram of the project.</p>
+<figure class="figure" id="fig12-2">
+<p class="fig"><img alt="" height="560" src="images/nsp-venkitachalam503045-f12002.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 12-2:</span> <span class="idx" data-level1="block diagram" data-term="Karplus on Pico"/>A block diagram of the project</p>
+</figcaption>
+</figure>
+<p>When you press a button, the MicroPython code running on the Pico will generate a plucked string sound using the Karplus-Strong algorithm. The digital sound samples produced by the algorithm will be sent to a separate <span class="idx" data-term="MAX98357A"/>MAX98357A amplifier board, which decodes the digital data into an analog audio signal. The MAX98357A also amplifies the analog signal, which allows you to connect its output to an external 8-ohm speaker so you can hear the audio. <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#fig12-3">Figure 12-3</a> shows the Adafruit MAX98357A board.</p>
+<figure class="figure" id="fig12-3">
+<p class="fig"><span aria-label=" Page 262. " class="page" epub:type="pagebreak" id="p262" role="doc-pagebreak"/><img alt="" height="900" src="images/nsp-venkitachalam503045-f12003.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 12-3:</span> An Adafruit MAX98357A I2S amplifier board</p>
+</figcaption>
+</figure>
+<p>The Pi Pico needs to send data to the amplifier board in a certain format for it to successfully be interpreted as an audio signal. Enter the I2S protocol.</p>
+</section>
+<section>
+<h3 class="bh" id="bh1402"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1402"><span class="idx" data-term="I2S protocol"/>The I2S Protocol</a></h3>
+<p class="paft">The <i>Inter-IC Sound (I2S) protocol</i> is a standard for sending digital audio data between devices. It’s a simple, convenient way to get quality audio output from a microcontroller. The protocol transmits audio using three digital signals, which are shown in <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#fig12-4">Figure 12-4</a>.</p>
+<figure class="figure" id="fig12-4">
+<p class="fig"><img alt="" height="324" src="images/nsp-venkitachalam503045-f12004.jpg" style="width:95%; height:auto;" width="1075"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 12-4:</span> <span class="idx" data-level1="waveform" data-term="I2S"/>The I2S protocol</p>
+</figcaption>
+</figure>
+<p>The first signal, <span class="idx" data-level1="SCK signal" data-term="I2S protocol"/>SCK, is the <i>clock</i>, a signal that alternates between high and low at a fixed speed. This sets the rate of data transmission. Next, <span class="idx" data-level1="WS signal" data-term="I2S protocol"/>WS is the <i>word select</i> signal. It steadily alternates between high and low to indicate which audio channel, left or right, is being sent at any given moment. Finally, <span class="idx" data-level1="SD signal" data-term="I2S protocol"/>SD is the <i>serial data</i> signal, which carries the actual audio information, in the form of N-bit binary values representing the amplitude of the sound.</p>
+<p><span aria-label=" Page 263. " class="page" epub:type="pagebreak" id="p263" role="doc-pagebreak"/>To understand how this works, let’s consider an example. Say you want to send stereo audio at a sampling rate of 16,000 Hz and you want the <span class="idx" data-level1="amplitude" data-term="I2S protocol"/>amplitude of each sound sample to be a 16-bit value. The frequency of WS should be the same as the sampling rate, since that’s the rate at which you’re sending each amplitude value. This way, the WS signal will alternate between high and low 16,000 times per second; when it’s high, SD will send the amplitude value of one audio channel, and when it’s low, SD will send the amplitude value of the other audio channel. Since each amplitude value for each channel is made up of 16 bits, SD has to transmit at a rate that’s 16 × 2 = 32 times faster than the sampling rate. The clock controls the rate of transmission, so SCK’s frequency must be 16,000 Hz × 32 = 512,000 Hz.</p>
+<p>For this project, the Pico will be the I2S transmitter, so it will generate the SCK, WS, and SD signals. MicroPython actually has a fully implemented <span class="idx" data-level1="I2S module" data-term="MicroPython"/><code>I2S</code> module for the Pico, so much of the work generating the signals will be done for you, behind the scenes. As you’ve already seen, the Pico will send the signals to a MAX98357A board, which is specifically designed to receive audio data through the I2S protocol. Then the board converts the I2S data into an analog audio signal that can be played through a speaker.</p>
+</section>
+</section>
+<section>
+<h2 class="ah" id="ah1402"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1402">Requirements</a></h2>
+<p class="paft">You’ll program the project for the Raspberry Pi Pico using MicroPython. You’ll need the following <span class="idx" data-level1="hardware requirements" data-term="Karplus on Pico"/>hardware:</p>
+<ul style="list-style-type:none">
+<li class="blf">• One Raspberry Pi Pico board based on the RP2040 chip</li>
+<li class="bl">• One Adafruit MAX98357A I2S breakout board</li>
+<li class="bl">• One 8-ohm speaker</li>
+<li class="bl">• Six push buttons</li>
+<li class="bl">• Five 10 kΩ resistors</li>
+<li class="bl">• One breadboard</li>
+<li class="bl">• An assortment of hookup wires</li>
+<li class="bl">• One Micro USB cable for uploading code to the Pico</li>
+</ul>
+<section>
+<h3 class="bh" id="bh1403"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1403">Hardware Setup</a></h3>
+<p class="paft">You’ll assemble the hardware on a breadboard. <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#fig12-5">Figure 12-5</a> shows the hookup.</p>
+<figure class="figure" id="fig12-5">
+<p class="fig"><span aria-label=" Page 264. " class="page" epub:type="pagebreak" id="p264" role="doc-pagebreak"/><img alt="" height="832" src="images/nsp-venkitachalam503045-f12005.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 12-5:</span> <span class="idx" data-level1="hardware hookup" data-term="Karplus on Pico"/>The hardware hookup</p>
+</figcaption>
+</figure>
+<p><a class="xref" href="nsp-venkitachalam503045-0027.xhtml#fig12-6">Figure 12-6</a> shows a pin diagram of the Pico from the official datasheet, which is a handy reference for your hookup.</p>
+<figure class="figure" id="fig12-6">
+<p class="fig"><img alt="" height="775" src="images/nsp-venkitachalam503045-f12006.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 12-6:</span> <span class="idx" data-level1="pin diagram" data-term="Pico"/>A pin diagram from the Raspberry Pi Pico datasheet</p>
+</figcaption>
+</figure>
+<p><a class="xref" href="nsp-venkitachalam503045-0027.xhtml#tab12-1">Table 12-1</a> summarizes the electrical connections you need to implement on the breadboard. <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#fig12-5">Figure 12-5</a> shows these connections.</p>
+<table id="tab12-1">
+<caption>
+<p class="th"><span aria-label=" Page 265. " class="page" epub:type="pagebreak" id="p265" role="doc-pagebreak"/><span class="thn">Table 12-1:</span> <span class="idx" data-level1="electrical connections" data-term="Karplus on Pico"/>Electrical Connections</p>
+</caption>
+<thead>
+<tr>
+<th scope="col">
+<p class="tch">Pico pin</p>
+</th>
+<th scope="col">
+<p class="tch">Connection</p>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<p class="td">GP3</p>
+</td>
+<td>
+<p class="td">Push button 1 (other pin to VDD via 10 kΩ resistor)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="td">GP4</p>
+</td>
+<td>
+<p class="td">Push button 2 (other pin to VDD via 10 kΩ resistor)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="td">GP5</p>
+</td>
+<td>
+<p class="td">Push button 3 (other pin to VDD via 10 kΩ resistor)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="td">GP6</p>
+</td>
+<td>
+<p class="td">Push button 4 (other pin to VDD via 10 kΩ resistor)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="td">GP7</p>
+</td>
+<td>
+<p class="td">Push button 5 (other pin to VDD via 10 kΩ resistor)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="td">RUN</p>
+</td>
+<td>
+<p class="td">Push button 6 (other pin to GND)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="td">GP0</p>
+</td>
+<td>
+<p class="td">MAX98357A BCLK</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="td">GP1</p>
+</td>
+<td>
+<p class="td">MAX98357A LRC</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="td">GP2</p>
+</td>
+<td>
+<p class="td">MAX98357A DIN</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="td">GND</p>
+</td>
+<td>
+<p class="td">MAX98357A GND</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="td">3V3(OUT)</p>
+</td>
+<td>
+<p class="td">MAX98357A Vin</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Once you’ve hooked up the hardware, your project should look like <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#fig12-7">Figure 12-7</a>.</p>
+<figure class="figure" id="fig12-7">
+<p class="fig"><img alt="" height="999" src="images/nsp-venkitachalam503045-f12007.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 12-7:</span> <span class="idx" data-level1="assembled hardware" data-term="Karplus on Pico"/>The fully built hardware</p>
+</figcaption>
+</figure>
+<p>Before you start using your Pico, however, you need to set up MicroPython.</p>
+</section>
+<section>
+<h3 class="bh" id="bh1404"><span aria-label=" Page 266. " class="page" epub:type="pagebreak" id="p266" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1404"><span class="idx" data-level1="setup" data-term="MicroPython"/>MicroPython Setup</a></h3>
+<p class="paft">Setting up your Raspberry Pi Pico with MicroPython is quite straightforward. Follow these steps:</p>
+<ol style="list-style-type:none">
+<li class="nlf">1. Visit <a class="url-i" href="https://micropython.org">https://micropython.org</a>, go to the Download page, and find the Raspberry Pi Pico.</li>
+<li class="nl">2. Download the UF2 binary file (version 1.18 or later) containing the MicroPython implementation for the Pico.</li>
+<li class="nl">3. Press the white BOOTSEL button on the Pico, and while holding this button down, use your Micro USB cable to connect the Pico to your computer. Then release the button.</li>
+<li class="nll">4. You should see a folder called <i>RPI-RP2</i> pop up on your computer. Drag and drop the UF2 file into this folder.</li>
+</ol>
+<p>Once the copying is done and the Pico reboots, you’re all set to code the Pico using MicroPython!</p>
+</section>
+</section>
+<section>
+<h2 class="ah" id="ah1403"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1403">The Code</a></h2>
+<p class="paft"><span class="idx" data-level1="code listing" data-term="Karplus on Pico"/>The code consists of some initial setup, followed by functions for generating and playing the five notes. Then everything comes together in the program’s <code>main()</code> function. To see the full program, skip ahead to <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#ah1407">“The Complete Code”</a> on <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#p275">page 275</a>. The code is also available on GitHub at <a class="url-i" href="https://github.com/mkvenkit/pp2e/blob/main/karplus_pico/karplus_pico.py">https://github.com/mkvenkit/pp2e/blob/main/karplus_pico/karplus_pico.py</a>.</p>
+<section>
+<h3 class="bh" id="bh1405"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1405">Setting Up</a></h3>
+<p class="paft">The code begins with some basic setup. First, import the required MicroPython modules:</p>
+<div class="codeline">
+<p class="clf">import time</p>
+<p class="cl">import array</p>
+<p class="cl">import random</p>
+<p class="cl">import os</p>
+<p class="clf">from machine import I2S</p>
+<p class="cll">from machine import Pin</p>
+</div>
+<p>You import the <code>time</code> module for its “sleep” functionality to create timed pauses during the execution of the code. The <code>array</code> module will let you create arrays for sending the sound data via I2S. An array is a more efficient version of a Python list, since it requires all members to be of the same data type. You’ll use the <code>random</code> module to fill the initial buffer with random values (the first step in the Karplus-Strong algorithm), and you’ll use the <code>os</code> module to check if a note has already been saved in the filesystem. Finally, the <code>I2S</code> module will let you send sound data, and the <code>Pin</code> module lets you set up the pin outputs of the Pico.</p>
+<p><span aria-label=" Page 267. " class="page" epub:type="pagebreak" id="p267" role="doc-pagebreak"/>You complete the setup by declaring some useful information:</p>
+<div class="codeline">
+<p class="clf"><span class="idx" data-level1="pentatonic scale (minor)" data-term="Karplus on Pico"/>#<span class="idx" data-term="pentatonic scale (minor)"/> notes of a minor pentatonic scale</p>
+<p class="cl"># piano C4-E(b)-F-G-B(b)-C5</p>
+<p class="cl2"><!--<ccust1>1</ccust1>-->❶ pmNotes = {'C4': 262, 'Eb': 311, 'F': 349, 'G':391, 'Bb':466}</p>
+<p class="clf"># button to note mapping</p>
+<p class="cl2"><!--<ccust1>2</ccust1>-->❷ btnNotes = {0: ('C4', 262), 1: ('Eb', 311), 2: ('F', 349), 3: ('G', 391),</p>
+<p class="cl">            4: ('Bb', 466)}</p>
+<p class="clf"># sample rate</p>
+<p class="cl2l"><!--<ccust1>3</ccust1>-->❸ SR = 16000</p>
+</div>
+<p>Here you define a dictionary <code>pmNotes</code> that maps the name of a note to its integer frequency value <!--<ccust1>1</ccust1>-->❶. You’ll use the names of the notes to save files containing the sound data, and you’ll use the frequency values to generate the sounds using the Karplus-Strong algorithm. You also define a dictionary <code>btnNotes</code> that maps the ID of each push button (represented as the integers 0 through 4) to a tuple that has the corresponding note name and frequency value <!--<ccust1>2</ccust1>-->❷. This dictionary controls which note is played when the user presses each button.</p>
+<p>Finally, you define the sampling rate as 16,000 Hz <!--<ccust1>3</ccust1>-->❸. This is the number of sound amplitude values per second that you’ll be sending out via I2S. Notice that this is much lower than the sampling rate of 44,100 Hz used in <a class="xref" href="nsp-venkitachalam503045-0016.xhtml#ch04">Chapter 4</a>. This is because of the limited memory on the Pico compared to a standard computer.</p>
+</section>
+<section>
+<h3 class="bh" id="bh1406"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1406">Generating<span class="idx" data-level1="generating notes" data-term="Karplus on Pico"/> the Notes</a></h3>
+<p class="paft">You generate the five notes of the pentatonic scale with the help of two functions: <code>generate_note()</code> and <code>create_notes()</code>. The <code>generate_note()</code> function uses the Karplus-Strong algorithm to calculate the amplitude values for a single note, while <code>create_notes()</code> coordinates generating all five notes and saving their sample data to the Pico’s filesystem. Let’s consider the <code>generate_note()</code> function first. (You implemented a similar function in <a class="xref" href="nsp-venkitachalam503045-0016.xhtml#ch04">Chapter 4</a>, so this might be a good time to review the original implementation.)</p>
+<div class="codeline">
+<p class="clf"># generate note of given frequency</p>
+<p class="cl">def generate_note(freq):</p>
+<p class="cl">    nSamples = SR</p>
+<p class="cl">    N = int(SR/freq)</p>
+<p class="cl">    # initialize ring buffer</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ buf = [2*random.<span class="idx" data-level1="random module" data-term="MicroPython"/>random() - 1 for i in range(N)]</p>
+<p class="cl">    # init sample buffer</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ samples = array.<span class="idx" data-level1="array module" data-term="MicroPython"/>array('h', [0]*nSamples)</p>
+<p class="cl">    for i in range(nSamples):</p>
+<p class="cl">      <!--<ccust1>3</ccust1>-->❸ samples[i] = int(buf[0] * (2 ** 15 - 1))</p>
+<p class="cl">      <!--<ccust1>4</ccust1>-->❹ avg = 0.4975*(buf[0] + buf[1])</p>
+<p class="cl">        buf.append(avg)</p>
+<p class="cl">        buf.pop(0)</p>
+<p class="cll">  <!--<ccust1>5</ccust1>-->❺ return samples</p>
+</div>
+<p><span aria-label=" Page 268. " class="page" epub:type="pagebreak" id="p268" role="doc-pagebreak"/>The function starts by setting <code>nSamples</code>, the length of the samples buffer that will hold the final audio data, to <code>SR</code>, the sampling rate. Since <code>SR</code> is the number of samples per second, this implies that you’ll be creating a one-second audio clip. Then you compute <code>N</code>, the number of samples in the Karplus-Strong <span class="idx" data-level1="ring buffer" data-term="Karplus on Pico"/>ring buffer, by dividing the sampling rate by the frequency of the note being generated.</p>
+<p>Next, you initialize your buffers. First you create the ring buffer with random initial values <!--<ccust1>1</ccust1>-->❶. The <code>random.random()</code> method returns values in the range [0.0, 1.0], so <code>2*random.random() - 1</code> scales the values to the range [−1.0, 1.0]. Remember, you need both positive and negative amplitudes for the algorithm. Notice that you’re implementing the ring buffer as a regular Python list, instead of as a <code>deque</code> object like you used in <a class="xref" href="nsp-venkitachalam503045-0016.xhtml#ch04">Chapter 4</a>. MicroPython’s <code>deque</code> implementation has restrictions and doesn’t give you what you need for a ring buffer. Instead, you’ll just use the regular <code>append()</code> and <code>pop()</code> list methods to add and remove elements from the buffer. You also create the samples buffer as an <code>array</code> object of length <code>nSamples</code> filled with zeros <!--<ccust1>2</ccust1>-->❷. The <code>'h'</code> argument specifies that each element in this array is a <i>signed short</i>, a 16-bit value that can be positive or negative. Since each sample will be represented by a 16-bit value, this is exactly what you need.</p>
+<p>Next, you iterate over the items in the <code>samples</code> array and build up the audio clip using the Karplus-Strong algorithm. You take the first sample value in the ring buffer and scale it from range [−1.0, 1.0] to range [−32767, 32767] <!--<ccust1>3</ccust1>-->❸. (The range of a 16-bit signed short is [−32767, 32768]. You scale the amplitude values to be as high as possible, which will give you the highest possible volume of sound output.) Then you calculate an attenuated average of the first two samples in the ring buffer <!--<ccust1>4</ccust1>-->❹. (Here, <code>0.4975</code> is the same as <code>0.995*0.5</code> from the original implementation.) You use <span class="idx" data-level1="list" data-level2="append" data-term="MicroPython"/><code>append()</code> to add the new amplitude value to the end of the ring buffer, while using <span class="idx" data-level1="list" data-level2="pop" data-term="MicroPython"/><code>pop()</code> to remove the first element, thus maintaining the buffer’s fixed size. At the end of the loop, the samples buffer is full, so you return it for further processing <!--<ccust1>5</ccust1>-->❺.</p>
+<p class="pcust1"><span class="ccust3">NOTE</span> Using <code>append()</code> and <code>pop()</code> to update the ring buffer works, but it isn’t an efficient method of computation. We’ll look more at optimization in <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#ah1406">“Experiments!”</a> on <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#p273">page 273</a>.</p>
+<p>Now let’s consider the <code>create_notes()</code> function:</p>
+<div class="codeline">
+<p class="clf">def create_notes():</p>
+<p class="cl">    "create pentatonic notes and save to files in flash"</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ files = os.<span class="idx" data-level1="os module" data-level2="listdir" data-term="MicroPython"/>listdir()</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ for (k, v) in pmNotes.items():</p>
+<p class="cl">        # set note filename</p>
+<p class="cl">      <!--<ccust1>3</ccust1>-->❸ file_name = k + ".bin"</p>
+<p class="cl">        # check if file already exists</p>
+<p class="cl">      <!--<ccust1>4</ccust1>-->❹ if file_name in files:</p>
+<p class="cl">            print("Found " + file_name + ". Skipping...")</p>
+<p class="cl">            continue</p>
+<p class="cl">        # generate note</p>
+<p class="cl">        print("Generating note " + k + "...")</p>
+<p class="cl"><span aria-label=" Page 269. " class="page" epub:type="pagebreak" id="p269" role="doc-pagebreak"/>      <!--<ccust1>5</ccust1>-->❺ samples = generate_note(v)</p>
+<p class="cl">        # write to file</p>
+<p class="cl">        print("Writing " + file_name + "...")</p>
+<p class="cl">      <!--<ccust1>6</ccust1>-->❻ file_samples = <span class="idx" data-level1="open" data-term="MicroPython"/>open(file_name, "wb")</p>
+<p class="cl">      <!--<ccust1>7</ccust1>-->❼ file_samples.<span class="idx" data-level1="write" data-term="MicroPython"/>write(samples)</p>
+<p class="cll">      <!--<ccust1>8</ccust1>-->❽ file_samples.<span class="idx" data-level1="close" data-term="MicroPython"/>close()</p>
+</div>
+<p>You don’t want to have to run the Karplus-Strong algorithm every time the user presses a button to play a note, as that would be too slow. Instead, this function creates the notes the first time the code is run and stores them in the Pico’s filesystem as <i>.bin</i> files. Then, as soon as the user presses a button, you’ll be able to read the appropriate file and output the sound data via I2S.</p>
+<p>You begin by using the <code>os</code> module to list the files on the Pico <!--<ccust1>1</ccust1>-->❶. (There’s no “hard disk” on the Pico. Rather, a flash chip on the Pico board is used to store data, and MicroPython provides a way to access this data like a normal filesystem.) Then you iterate through the items in the <code>pmNotes</code> dictionary, which maps note names to frequencies <!--<ccust1>2</ccust1>-->❷. For each note, you generate a filename based on its name in the dictionary (for example, <i>C4.bin</i>) <!--<ccust1>3</ccust1>-->❸. If a file with that name exists in the directory <!--<ccust1>4</ccust1>-->❹, you’ve generated that note already, so you can skip to the next one. Otherwise, you generate the sound samples for that note using the <code>generate_note()</code> function <!--<ccust1>5</ccust1>-->❺. Then you create a binary file with the appropriate name <!--<ccust1>6</ccust1>-->❻ and write the samples to it <!--<ccust1>7</ccust1>-->❼. Finally, you clean up by closing the file <!--<ccust1>8</ccust1>-->❽.</p>
+<p>The first time you run the code, <code>create_notes()</code> will run the <code>generate_note()</code> function to create a file for each note using the Karplus-Strong algorithm. This will create the files <i>C4.bin</i>, <i>Eb.bin</i>, <i>F.bin</i>, <i>G.bin</i>, and <i>Bb.bin</i> on the Pico. On subsequent runs, the function will find these files still in place, so it won’t need to create them again.</p>
+</section>
+<section>
+<h3 class="bh" id="bh1407"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1407"><span class="idx" data-level1="playing notes" data-term="Karplus on Pico"/>Playing a Note</a></h3>
+<p class="paft">The <code>play_note()</code> function plays one of the notes from the pentatonic scale by outputting the samples using the I2S protocol. Here’s the definition:</p>
+<div class="codeline">
+<p class="clf">def play_note(note, audio_out):</p>
+<p class="cl">    "read note from file and send via I2S"</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ fname = note[0] + ".bin"</p>
+<p class="cl">    print("opening " + fname)</p>
+<p class="cl">    # open file</p>
+<p class="cl">    try:</p>
+<p class="cl">        print("opening {}...".format(fname))</p>
+<p class="cl">      <!--<ccust1>2</ccust1>-->❷ file_samples = open(fname, "rb")</p>
+<p class="cl">    except:</p>
+<p class="cl">        print("Error opening file: {}!".format(fname))</p>
+<p class="cl">        return</p>
+<p class="clf">    # allocate sample array</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ samples = <span class="idx" data-level1="bytearray" data-term="MicroPython"/>bytearray(1000)</p>
+<p class="cl">    # <span class="idx" data-level1="memoryview" data-term="MicroPython"/>memoryview used to reduce heap allocation</p>
+<p class="cl">  <!--<ccust1>4</ccust1>-->❹ samples_mv = <span class="idx" data-level1="memoryview" data-term="MicroPython"/>memoryview(samples)</p>
+<p class="clf"><span aria-label=" Page 270. " class="page" epub:type="pagebreak" id="p270" role="doc-pagebreak"/>    # read samples and send to I2S</p>
+<p class="cl">    try:</p>
+<p class="cl">      <!--<ccust1>5</ccust1>-->❺ while True:</p>
+<p class="cl">          <!--<ccust1>6</ccust1>-->❻ num_read = file_samples.<span class="idx" data-level1="readinto" data-term="MicroPython"/>readinto(samples_mv)</p>
+<p class="cl">            # end of file?</p>
+<p class="cl">          <!--<ccust1>7</ccust1>-->❼ if num_read == 0:</p>
+<p class="cl">                break</p>
+<p class="cl">            else:</p>
+<p class="cl">                # send samples via I2S</p>
+<p class="cl">              <!--<ccust1>8</ccust1>-->❽ num_written = audio_out.<span class="idx" data-level1="I2S module" data-level2="write" data-term="MicroPython"/>write(samples_mv[:num_read])</p>
+<p class="cl">  <!--<ccust1>9</ccust1>-->❾ except (Exception) as e:</p>
+<p class="cl">        print("Exception: {}".format(e))</p>
+<p class="clf">    # close file</p>
+<p class="cll">  <!--<ccust1>10</ccust1>-->❿ file_samples.<span class="idx" data-level1="close" data-term="MicroPython"/>close()</p>
+</div>
+<p>The function has two arguments: <code>note</code>, a tuple in the form <code>('C4', 262)</code> conveying the note name and frequency, and <code>audio_out</code>, an instance of the <code>I2S</code> module used for sound output. You first create the appropriate <i>.bin</i> filename based on the name of the note to be played <!--<ccust1>1</ccust1>-->❶. Then you open the file <!--<ccust1>2</ccust1>-->❷. You expect the file to exist at this point, so if the open fails, you just return from the function.</p>
+<p>The rest of the function outputs the audio data via I2S, working in batches of 1,000 samples. To mediate the data transfer, you create a MicroPython <code>bytearray</code> of 1,000 samples <!--<ccust1>3</ccust1>-->❸ and a <code><span class="idx" data-level1="memoryview" data-term="MicroPython"/>memoryview</code> of the samples <!--<ccust1>4</ccust1>-->❹. This is a MicroPython optimization technique to prevent the whole array from being copied when a slice of the array is passed into other functions such as <code>file_samples.readinto()</code> and <code>audio_out.write()</code>.</p>
+<p class="pcust1"><span class="ccust3">NOTE</span> A <span class="idx" data-level1="slice" data-term="MicroPython"/><i>slice</i> of an array represents a range of values within that array. For example, <code>a[100:200]</code> is a slice representing array values <code>a[100]</code> through <code>a[199]</code>.</p>
+<p>Next, you start a <code>while</code> loop to read samples from the file <!--<ccust1>5</ccust1>-->❺. In the loop, you read a batch of samples from the file into the <span class="idx" data-level1="memoryview" data-term="MicroPython"/><code>memoryview</code> object using the <code>readinto()</code> method <!--<ccust1>6</ccust1>-->❻, which returns the number of samples read (<code>num_read</code>). You output the samples from the <span class="idx" data-level1="memoryview" data-term="MicroPython"/><code>memoryview</code> object via I2S using the <code>audio_out.write()</code> method <!--<ccust1>8</ccust1>-->❽. The <code>[:num_read]</code> slice notation ensures you write out the same number of samples you read in. You handle any exceptions at <!--<ccust1>9</ccust1>-->❾. You’re done outputting data when you get to the point where zero samples are read into the <span class="idx" data-level1="memoryview" data-term="MicroPython"/><code>memoryview</code> object <!--<ccust1>7</ccust1>-->❼, in which case you can break out of the <code>while</code> loop and close the <i>.bin</i> file <!--<ccust1>10</ccust1>-->❿.</p>
+</section>
+<section>
+<h3 class="bh" id="bh1408"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh1408"><span class="idx" data-level1="main function" data-term="Karplus on Pico"/>Writing the main() Function</a></h3>
+<p class="paft">Now let’s look at the <code>main()</code> function, which brings all the code together:</p>
+<div class="codeline">
+<p class="clf">def main():</p>
+<p class="cl">    # set up LED</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ led = <span class="idx" data-level1="Pin module" data-term="MicroPython"/>Pin(25, Pin.OUT)</p>
+<p class="cl">    # turn on LED</p>
+<p class="cl">    led.toggle()</p>
+<p class="cl"><span aria-label=" Page 271. " class="page" epub:type="pagebreak" id="p271" role="doc-pagebreak"/>    # create notes and save in flash</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ create_notes()</p>
+<p class="clf">    # create I2S object</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ audio_out = <span class="idx" data-level1="I2S module" data-level2="creating" data-term="MicroPython"/>I2S(</p>
+<p class="cl">        0,                  # I2S ID</p>
+<p class="cl">        sck=Pin(0),         # SCK Pin</p>
+<p class="cl">        ws=Pin(1),          # WS Pin</p>
+<p class="cl">        sd=Pin(2),          # SD Pin</p>
+<p class="cl">        mode=I2S.TX,        # I2S transmitter</p>
+<p class="cl">        bits=16,            # 16 bits per sample</p>
+<p class="cl">        format=I2S.MONO,    # Mono - single channel</p>
+<p class="cl">        rate=SR,            # sample rate</p>
+<p class="cl">        ibuf=2000,          # I2S buffer length</p>
+<p class="cl">    )</p>
+<p class="clf">    # set up btns</p>
+<p class="cl">  <!--<ccust1>4</ccust1>-->❹ btns = [<span class="idx" data-level1="Pin module" data-level2="button input" data-term="MicroPython"/>Pin(3, Pin.IN, Pin.PULL_UP),</p>
+<p class="cl">            Pin(4, Pin.IN, Pin.PULL_UP),</p>
+<p class="cl">            Pin(5, Pin.IN, Pin.PULL_UP),</p>
+<p class="cl">            Pin(6, Pin.IN, Pin.PULL_UP),</p>
+<p class="cl">            Pin(7, Pin.IN, Pin.PULL_UP)]</p>
+<p class="clf">    # "ready" note</p>
+<p class="cl">  <!--<ccust1>5</ccust1>-->❺ play_note(('C4', 262), audio_out)</p>
+<p class="cl">    print("Piano ready!")</p>
+<p class="clf">    # turn off LED</p>
+<p class="cl">  <!--<ccust1>6</ccust1>-->❻ led.<span class="idx" data-level1="Pin module" data-level2="toggle" data-term="MicroPython"/>toggle()</p>
+<p class="clf">    while True:</p>
+<p class="cl">        for i in range(5):</p>
+<p class="cl">            if btns[i].value() == 0:</p>
+<p class="cl">              <!--<ccust1>7</ccust1>-->❼ play_note(btnNotes[i], audio_out)</p>
+<p class="cl">                break</p>
+<p class="cll">      <!--<ccust1>8</ccust1>-->❽ time.sleep(0.2)</p>
+</div>
+<p>The function starts by setting up the Pico’s onboard LED <!--<ccust1>1</ccust1>-->❶. It’s toggled ON at the start to indicate the Pico is busy initializing. Next, you call the <code>create_notes()</code> function <!--<ccust1>2</ccust1>-->❷. As we discussed, this function will create the <i>.bin</i> files for the notes only if they don’t already exist in the filesystem. To manage the audio output, you instantiate the <code>I2S</code> module as <code>audio_out</code> <!--<ccust1>3</ccust1>-->❸. The module requires a number of input parameters. The first parameter is the I2S ID, which is <code>0</code> for the Raspberry Pi Pico. Next come the pin numbers corresponding to the clock (SCK), word select (WS), and data (SD) signals. We discussed these signals in <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#bh1402">“I2S Protocol”</a> <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#p262">on page 262</a>. You then set the I2S mode to <code>TX</code>, indicating this is an I2S transmitter. Next, you set <code>bits</code> to <code>16</code>, indicating the number of bits per sample, and <code>format</code> to <code>MONO</code>, since there’s only one audio output channel. You set the sampling rate to <code>SR</code>, and lastly, you set the value for the <span class="idx" data-level1="I2S module" data-level2="internal buffer" data-term="MicroPython"/>internal I2S buffer <code>ibuf</code> to <code>2000</code>.</p>
+<p class="pcust1"><span aria-label=" Page 272. " class="page" epub:type="pagebreak" id="p272" role="doc-pagebreak"/><span class="ccust3">NOTE</span> A smooth audio experience requires an uninterrupted stream of data output. MicroPython uses a special hardware module in the Pico called <span class="idx" data-term="Direct Memory Access"/>Direct Memory Access (<span class="idx" data-term="DMA"/>DMA) for this. DMA can transfer data from the memory to the I2S output without involving the CPU directly. The CPU just needs to keep an internal buffer (<code>ibuf</code> in the code) filled with data and is free to do other things while the DMA is doing its job. The size of the internal buffer is typically set to at least twice the size of the audio output so the DMA doesn’t run out of data to transfer, which would result in distorted audio. In this case, you’ll be transferring 1,000 bytes to I2S at a time, so you set <code>ibuf</code> to twice that.</p>
+<p>Next, you need to set up the buttons so that notes will play when the buttons are pressed. For this, you create a list of <code>Pin</code> objects called <code>btns</code> <!--<ccust1>4</ccust1>-->❹. For each button in the list, you specify the pin number, the data direction of the pin (<code>Pin.IN</code>, or input, in this case), and whether the pin has a pull-up resistor. In this case, all the push button pins have a 10 kΩ resistor pull-up on them. This means that by default the pins’ voltages are “pulled up” to VDD, or 3.3 V, and when the buttons are pushed, the voltage drops to GND, or 0 V. You’ll use this fact to detect button presses.</p>
+<p>Once the setup is done, you play a C4 note using the <code>play_note()</code> function to indicate the Pico is ready to accept button presses <!--<ccust1>5</ccust1>-->❺, and you also toggle the onboard LED to OFF <!--<ccust1>6</ccust1>-->❻. Then you start a <code>while</code> loop to monitor for button presses. Within this loop, you use a <code>for</code> loop to check whether any of the five buttons have a value of <code>0</code>, indicating the button is pressed. If so, you look up the note corresponding to that button in the <code>btnNotes</code> dictionary and play it using <code>play_note()</code> <!--<ccust1>7</ccust1>-->❼. Once the note is done playing, you break out of the <code>for</code> loop and wait for 0.2 seconds <!--<ccust1>8</ccust1>-->❽ before continuing with the outer <code>while</code> loop.</p>
+</section>
+</section>
+<section>
+<h2 class="ah" id="ah1404"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1404"><span class="idx" data-level1="running the code" data-term="Karplus on Pico"/>Running the Pico Code</a></h2>
+<p class="paft">Now you’re ready to test your project! To run the code on the Pico, it’s useful to install two pieces of software. The first is <span class="idx" data-level1="Thonny" data-term="Karplus on Pico"/>Thonny, an open source, easy-to-use Python integrated development environment (IDE), which you can download from <a class="url-i" href="https://thonny.org">https://thonny.org</a>. Thonny makes it easy to copy your project code to the Raspberry Pi Pico and manage files on the Pico. A typical development cycle is as follows:</p>
+<ol style="list-style-type:none">
+<li class="nlf">1. Connect your Pico to your computer via USB.</li>
+<li class="nl">2. Open Thonny. Click the Python version number in the bottom-right of the window and change the interpreter to <b>MicroPython (Raspberry Pi Pico)</b>.</li>
+<li class="nl">3. Copy your code to Thonny and click the red <b>Stop/Restart</b> button to stop the code from running on the Pico. This will show the Python interpreter at the bottom of the IDE.</li>
+<li class="nl">4. Edit your code in Thonny.</li>
+<li class="nl"><span aria-label=" Page 273. " class="page" epub:type="pagebreak" id="p273" role="doc-pagebreak"/>5. When you’re ready to save the file, select <b>File‣Save As</b>, and you’ll be prompted to save it on the Raspberry Pi Pico. The next dialog will also list the files on the Pico. Save your code as <i>main.py</i>. You can also use this dialog to right-click and delete existing files on the Pico.</li>
+<li class="nl">6. After saving the file, press the extra push button you hooked up to the RUN pin on the Pico, and your code will start running.</li>
+<li class="nll">7. Anytime you want to edit the code, click the <b>Stop/Restart</b> button in the IDE and Thonny will drop you to the Python interpreter on the Pico.</li>
+</ol>
+<p>The other useful piece of software for working with the Pico is <span class="idx" data-term="CoolTerm"/>CoolTerm, which you can download from <a class="url-i" href="http://freeware.the-meiers.org">http://freeware.the-meiers.org</a>. CoolTerm lets you monitor the Pico’s serial output. All print statements from your program will end up here. To use CoolTerm, ensure that you aren’t “stopped” in Thonny. The Pico code should be in the running state, since the Pico can’t connect to both Thonny and CoolTerm at the same time.</p>
+<p>Once you have the code running, press the push buttons one by one and you’ll hear the notes of a nice pentatonic scale coming out of your speaker. <a class="xref" href="nsp-venkitachalam503045-0027.xhtml#fig12-8">Figure 12-8</a> shows the serial output for a typical session.</p>
+<figure class="figure" id="fig12-8">
+<p class="fig"><img alt="" height="266" src="images/nsp-venkitachalam503045-f12008.jpg" style="width:95%; height:auto;" width="877"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 12-8:</span> <span class="idx" data-level1="serial output" data-term="Karplus on Pico"/>A sample Raspberry Pi Pico output in CoolTerm</p>
+</figcaption>
+</figure>
+<p>See what melodies you can compose and play using your digital instrument’s five push buttons!</p>
+</section>
+<section>
+<h2 class="ah" id="ah1405"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1405">Summary</a></h2>
+<p class="paft">In this chapter, you adapted your Karplus-Strong algorithm implementation from <a class="xref" href="nsp-venkitachalam503045-0016.xhtml#ch04">Chapter 4</a> to run on a tiny microcontroller and built a digital musical instrument using a Raspberry Pi Pico. You learned how to run Python (in the form of MicroPython) on the Pico, as well as how to transmit audio data using the I2S protocol. You also learned about the limitations of adapting code from a personal computer to a resource-constrained device like the Pico.</p>
+</section>
+<section>
+<h2 class="ah" id="ah1406"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1406">Experiments!</a></h2>
+<ol style="list-style-type:none">
+<li class="nl">1. The MAX98357A I2S board lets you increase the volume (gain) of the output. Look at the datasheet of this board and try to boost the sound coming from the speaker.</li>
+<li class="nl"><span aria-label=" Page 274. " class="page" epub:type="pagebreak" id="p274" role="doc-pagebreak"/>2. The current implementation of <code>generate_note()</code> isn’t very fast. It didn’t matter that much for this project, because you generate the notes only once. Still, can you make the method faster? Here are a few strategies to try:
+            <ol style="list-style-type:none">
+<li class="nl1">a. Instead of using <code>append()</code> and <code>pop()</code> operations on the <code>buf</code> list, turn the list into a circular buffer by keeping tracking of the current position in the list and incrementing it using the modulo operation <code>%N</code>.</li>
+<li class="nl1">b. Use integer operations instead of floating point. You’ll have to think about how the initial random values will be generated and scaled.
+              </li>
+</ol>
+<p class="nlp">The Language Reference page in the MicroPython documentation (<a class="url-i" href="https://docs.micropython.org/">https://docs.micropython.org</a>) has an article on maximizing the speed of your code. The documentation also suggests how you can test your results. First, define a function to <span class="idx" data-level1="timing" data-term="MicroPython"/>measure timing:</p>
+<div class="codeline">
+<p class="cl3f">def timed_function(f, *args, **kwargs):</p>
+<p class="cl3">    myname = str(f).split(' ')[1]</p>
+<p class="cl3">    def new_func(*args, **kwargs):</p>
+<p class="cl3">        t = time.monotonic()</p>
+<p class="cl3">        result = f(*args, **kwargs)</p>
+<p class="cl3">        delta = time.monotonic() - t</p>
+<p class="cl3">        print('Function {} Time = {:f} s'.format(myname, delta))</p>
+<p class="cl3">        return result</p>
+<p class="cl3l">    return new_func</p>
+</div>
+<p class="nlp">Then use <code>timed_function()</code> as a <span class="idx" data-term="decorator"/><i>decorator</i> for the function you want to time:</p>
+<div class="codeline">
+<p class="cl3f"># generate note of given frequency</p>
+<p class="cl3">@timed_function</p>
+<p class="cl3">def generateNote(freq):</p>
+<p class="cl3">    nSamples = SR</p>
+<p class="cl3">    N = int(SR/freq)</p>
+<p class="cl3l">    --<code class="i">snip</code>--</p>
+</div>
+<p class="nlp">When you call <code>generateNote()</code> in your main code, you’ll see something like this in the serial output:</p>
+<div class="codeline">
+<p class="cl3s">Function generateNote Time = 1019.711ms</p>
+</div>
+</li>
+<li class="nl">3. When you press a hardware push button, it doesn’t just go from ON to OFF, or the reverse. The spring-loaded contacts inside the button bounce between ON and OFF multiple times in a fraction of a second, triggering multiple software events for one physical press of the button. Think about how this could affect your project, and then read up on <span class="idx" data-term="debouncing"/><i>debouncing</i>, a class of techniques for mitigating the problem. What steps can you take to debounce your buttons?</li>
+<li class="nl"><span aria-label=" Page 275. " class="page" epub:type="pagebreak" id="p275" role="doc-pagebreak"/>4. When you press a button, a new note isn’t played until the current note is done playing. How can you abruptly stop playing the current note when a new button is pressed and switch to playing the new note immediately?</li>
+</ol>
+</section>
+<section>
+<h2 class="ah" id="ah1407"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah1407">The Complete Code</a></h2>
+<p class="paft"><span class="idx" data-level1="complete code" data-term="Karplus on Pico"/>Here’s the full code listing for this project.</p>
+<div class="codeline">
+<p class="clf">"""</p>
+<p class="cl">karplus_pico.py</p>
+<p class="clf">Uses the Karplus-Strong algorithm to generate musical notes in a</p>
+<p class="cl">pentatonic scale. Runs on a Raspberry Pi Pico. (MicroPython)</p>
+<p class="clf">Author: Mahesh Venkitachalam</p>
+<p class="cl">"""</p>
+<p class="clf">import time</p>
+<p class="cl">import array</p>
+<p class="cl">import random</p>
+<p class="cl">import os</p>
+<p class="clf">from machine import I2S</p>
+<p class="cl">from machine import Pin</p>
+<p class="clf"># notes of a minor pentatonic scale</p>
+<p class="cl"># piano C4-E(b)-F-G-B(b)-C5</p>
+<p class="cl">pmNotes = {'C4': 262, 'Eb': 311, 'F': 349, 'G':391, 'Bb':466}</p>
+<p class="clf"># button to note mapping</p>
+<p class="cl">btnNotes = {0: ('C4', 262), 1: ('Eb', 311), 2: ('F', 349), 3: ('G', 391),</p>
+<p class="cl">            4: ('Bb', 466)}</p>
+<p class="clf"># sample rate</p>
+<p class="cl">SR = 16000</p>
+<p class="clf">def timed_function(f, *args, **kwargs):</p>
+<p class="cl">    myname = str(f).split(' ')[1]</p>
+<p class="cl">    def new_func(*args, **kwargs):</p>
+<p class="cl">        t = time.ticks_us()</p>
+<p class="cl">        result = f(*args, **kwargs)</p>
+<p class="cl">        delta = time.ticks_diff(time.ticks_us(), t)</p>
+<p class="cl">        print('Function {} Time = {:6.3f}ms'.format(myname, delta/1000))</p>
+<p class="cl">        return result</p>
+<p class="cl">    return new_func</p>
+<p class="clf"># generate note of given frequency</p>
+<p class="cl"># (Uncomment line below when you need to time the function.)</p>
+<p class="cl"># @timed_function</p>
+<p class="cl">def generate_note(freq):</p>
+<p class="cl">    nSamples = SR</p>
+<p class="cl">    N = int(SR/freq)</p>
+<p class="cl"><span aria-label=" Page 276. " class="page" epub:type="pagebreak" id="p276" role="doc-pagebreak"/>    # initialize ring buffer</p>
+<p class="cl">    buf = [2*random.random() - 1 for i in range(N)]</p>
+<p class="clf">    # init sample buffer</p>
+<p class="cl">    samples = array.array('h', [0]*nSamples)</p>
+<p class="cl">    for i in range(nSamples):</p>
+<p class="cl">        samples[i] = int(buf[0] * (2 ** 15 - 1))</p>
+<p class="cl">        avg = 0.4975*(buf[0] + buf[1])</p>
+<p class="cl">        buf.append(avg)</p>
+<p class="cl">        buf.pop(0)</p>
+<p class="clf">    return samples</p>
+<p class="clf"># generate note of given frequency - improved method</p>
+<p class="cl">def generate_note2(freq):</p>
+<p class="cl">    nSamples = SR</p>
+<p class="cl">    sampleRate = SR</p>
+<p class="cl">    N = int(sampleRate/freq)</p>
+<p class="cl">    # initialize ring buffer</p>
+<p class="cl">    buf = [2*random.random() - 1 for i in range(N)]</p>
+<p class="clf">    # init sample buffer</p>
+<p class="cl">    samples = array.array('h', [0]*nSamples)</p>
+<p class="cl">    start = 0</p>
+<p class="cl">    for i in range(nSamples):</p>
+<p class="cl">        samples[i] = int(buf[start] * (2**15 - 1))</p>
+<p class="cl">        avg = 0.4975*(buf[start] + buf[(start + 1) % N])</p>
+<p class="cl">        buf[(start + N) % N] = avg</p>
+<p class="cl">        start = (start + 1) % N</p>
+<p class="clf">    return samples</p>
+<p class="clf">def play_note(note, audio_out):</p>
+<p class="cl">    "read note from file and send via I2S"</p>
+<p class="cl">    fname = note[0] + ".bin"</p>
+<p class="clf">    # open file</p>
+<p class="cl">    try:</p>
+<p class="cl">        print("opening {}...".format(fname))</p>
+<p class="cl">        file_samples = open(fname, "rb")</p>
+<p class="cl">    except:</p>
+<p class="cl">        print("Error opening file: {}!".format(fname))</p>
+<p class="cl">        return</p>
+<p class="clf">    # allocate sample array</p>
+<p class="cl">    samples = bytearray(1000)</p>
+<p class="cl">    # <span class="idx" data-level1="memoryview" data-term="MicroPython"/>memoryview used to reduce heap allocation</p>
+<p class="cl">    samples_mv = <span class="idx" data-level1="memoryview" data-term="MicroPython"/>memoryview(samples)</p>
+<p class="clf">    # read samples and send to I2S</p>
+<p class="cl">    try:</p>
+<p class="cl">        while True:</p>
+<p class="cl">            num_read = file_samples.readinto(samples_mv)</p>
+<p class="cl">            # end of file?</p>
+<p class="cl">            if num_read == 0:</p>
+<p class="cl"><span aria-label=" Page 277. " class="page" epub:type="pagebreak" id="p277" role="doc-pagebreak"/>                break</p>
+<p class="cl">            else:</p>
+<p class="cl">                # send samples via I2S</p>
+<p class="cl">                num_written = audio_out.write(samples_mv[:num_read])</p>
+<p class="cl">    except (Exception) as e:</p>
+<p class="cl">        print("Exception: {}".format(e))</p>
+<p class="clf">    # close file</p>
+<p class="cl">    file_samples.close()</p>
+<p class="clf">def create_notes():</p>
+<p class="cl">    "create pentatonic notes and save to files in flash"</p>
+<p class="cl">    files = os.listdir()</p>
+<p class="cl">    for (k, v) in pmNotes.items():</p>
+<p class="cl">        # set note filename</p>
+<p class="cl">        file_name = k + ".bin"</p>
+<p class="cl">        # check if file already exists</p>
+<p class="cl">        if file_name in files:</p>
+<p class="cl">            print("Found " + file_name + ". Skipping...")</p>
+<p class="cl">            continue</p>
+<p class="cl">        # generate note</p>
+<p class="cl">        print("Generating note " + k + "...")</p>
+<p class="cl">        samples = generate_note(v)</p>
+<p class="cl">        # write to file</p>
+<p class="cl">        print("Writing " + file_name + "...")</p>
+<p class="cl">        file_samples = open(file_name, "wb")</p>
+<p class="cl">        file_samples.write(samples)</p>
+<p class="cl">        file_samples.close()</p>
+<p class="clf">def main():</p>
+<p class="clf">    # set up LED</p>
+<p class="cl">    led = Pin(25, Pin.OUT)</p>
+<p class="cl">    # turn on LED</p>
+<p class="cl">    led.toggle()</p>
+<p class="clf">    # create notes and save in flash</p>
+<p class="cl">    create_notes()</p>
+<p class="clf">    # create I2S object</p>
+<p class="cl">    audio_out = I2S(</p>
+<p class="cl">        0,                  # I2S ID</p>
+<p class="cl">        sck=Pin(0),         # SCK Pin</p>
+<p class="cl">        ws=Pin(1),          # WS Pin</p>
+<p class="cl">        sd=Pin(2),          # SD Pin</p>
+<p class="cl">        mode=I2S.TX,        # I2S transmitter</p>
+<p class="cl">        bits=16,            # 16 bits per sample</p>
+<p class="cl">        format=I2S.MONO,    # Mono - single channel</p>
+<p class="cl">        rate=SR,            # sample rate</p>
+<p class="cl">        ibuf=2000,          # I2S buffer length</p>
+<p class="cl">    )</p>
+<p class="clf">    # set up btns</p>
+<p class="cl">    btns = [Pin(3, Pin.IN, Pin.PULL_UP),</p>
+<p class="cl">            Pin(4, Pin.IN, Pin.PULL_UP),</p>
+<p class="cl"><span aria-label=" Page 278. " class="page" epub:type="pagebreak" id="p278" role="doc-pagebreak"/>            Pin(5, Pin.IN, Pin.PULL_UP),</p>
+<p class="cl">            Pin(6, Pin.IN, Pin.PULL_UP),</p>
+<p class="cl">            Pin(7, Pin.IN, Pin.PULL_UP)]</p>
+<p class="clf">    # "ready" note</p>
+<p class="cl">    play_note(('C4', 262), audio_out)</p>
+<p class="cl">    print("Piano ready!")</p>
+<p class="clf">    # turn off LED</p>
+<p class="cl">    led.toggle()</p>
+<p class="clf">    while True:</p>
+<p class="cl">        for i in range(5):</p>
+<p class="cl">            if btns[i].value() == 0:</p>
+<p class="cl">                play_note(btnNotes[i], audio_out)</p>
+<p class="cl">                break</p>
+<p class="cl">        time.sleep(0.2)</p>
+<p class="clf"># call main</p>
+<p class="cl">if __name__ == '__main__':</p>
+<p class="cl">    main()</p>
+</div>
+</section>
+</section>
+</div></body></html>

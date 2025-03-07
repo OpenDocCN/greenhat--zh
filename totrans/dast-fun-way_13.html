@@ -1,0 +1,172 @@
+<html><head></head><body>
+<div id="sbo-rt-content"><section>
+<header>
+<h1 class="chapter">
+<span class="ChapterNumber"><span epub:type="pagebreak" id="Page_225" title="225"/>13</span><br/>
+<span class="ChapterTitle">Bloom Filters</span></h1>
+</header>
+<figure class="opener">
+<img alt="" height="99" src="image_fi/book_art/chapterart.png" width="98"/>
+</figure>
+<p class="ChapterIntro">As we saw in the previous chapter, we often need to be cognizant of how our data structures fit into local memory and how to limit retrievals from slower memory. As a data structure grows, it can store more data but might not be able to fit into the fastest memory. This chapter introduces the <em>Bloom filter</em>, a data structure that extends the core concepts behind a hash table to limit the amount of memory needed to filter over a large key space. </p>
+<p>Bloom filters were invented in 1970 by computer scientist Burton Bloom. A Bloom filter tracks which keys have been inserted while ruthlessly optimizing for both memory usage and execution time. It tries to answer one very simple yes/no question: have we previously seen this key? For example, we might use a Bloom filter to check if a password is on a list of known weak passwords. Alternatively, we can use Bloom filters as prefiltering step before accessing a larger and more comprehensive, but slower, data structure.</p>
+<p>In its quest for ultimate efficiency, the Bloom filter uses an approach that can result in false positives. This means that with some non-zero <span epub:type="pagebreak" id="Page_226" title="226"/>probability, the Bloom filter will indicate that a key has been inserted when it, in fact, has not. In other words, a Bloom filter of bad passwords might occasionally reject a good one. </p>
+<p>As we will see, the combination of low memory overhead, fast execution time, and a guaranteed lack of false negatives—cases that indicate a key has not occurred when it actually has—make Bloom filters useful for prefiltering tasks and early checks before accessing a more expensive data structure. This leads to a two-stage lookup similar to the approach for caches in <span class="xref" itemid="xref_target_Chapter 11">Chapter 11</span>. To check whether a record is in our data set, we first check whether it has been inserted into the Bloom filter. Since the Bloom filter is a compact data structure in fast memory, we can perform this check quickly. If the Bloom filter returns false, we know the record is not in our data set, and we can skip the expensive lookup in the comprehensive data structure. If the Bloom filter returns true, then either we have received a false positive or the record is in our larger data structure, and we perform the full search.</p>
+<p>Imagine we’d like to determine whether a given record exists in a large database of medical records before we do a more computationally expensive search. The medical database is huge, includes images and videos, and must be stored across a multitude of large hard drives. Further, given the many millions of records, even the index is too large to fit into local memory. While it will occasionally return a false positive and send us searching for a record that does not exist, the Bloom filter will also help us avoid many pointless searches. Whenever the Bloom filter indicates that a record is not in the data set, we can stop the search immediately!</p>
+<h2 id="h1-502604c13-0001">Introducing Bloom Filters</h2>
+<p class="BodyFirst">At its heart, a Bloom filter is an array of binary values. Each bin tracks whether or not we have ever seen anything mapping to that hash value before. A value of 1 indicates that a given bin has been seen before. A value of 0 indicates that it has not. </p>
+<p>Bloom filters can be incredibly useful when we want to easily search for a single value within a large number of values. Imagine this filtering in the context of searching a large, crowded ballroom for a friend. We could spend hours wandering the floor and peering at faces before concluding that our friend is not in attendance. It’s much simpler to ask a knowledgeable event organizer first. We describe our friend to the organizer, who has an excellent memory and can confirm whether anyone matching the description is there. Our description, and the organizer’s mental map, consists of a series of basic attributes. Our friend is tall, wears sneakers, and has glasses.</p>
+<p> The event organizer’s answer may still not be 100 percent accurate—we are using general attributes, and multiple people will share those individual descriptors. Sometimes the organizer will give us a false positive, saying, “I saw someone with those characteristics” when our friend isn’t there. But they will never make a false negative statement and tell us our friend isn’t <span epub:type="pagebreak" id="Page_227" title="227"/>there when they really are. If the organizer has not seen someone with the three characteristics we list, then we can guarantee our friend is not at the event. The response doesn’t need to have zero false positives to help us on average. If the organizer can save us 9 out of every 10 searches, it would be a tremendous win. </p>
+<p>Let’s examine how we can extend the hashing techniques we learned <span class="xref" itemid="xref_target_Chapter 10">Chapter 10</span> to this prefiltering question. We start with a simple indicator array and examine where it falls short. Then we show how the use of multiple hash functions can provide a more robust filtering scheme.</p>
+<h3 id="h2-502604c13-0001">Hash Tables of Indicators</h3>
+<p class="BodyFirst">Consider the simplest filter, a binary indicator array mapped to by a single hash function. When we insert a key, we compute the hash value and mark the appropriate bin with a 1. When we look up a key, we compute the hash value and check the corresponding bin. It’s simple. It’s elegant. And, unfortunately, it breaks at the slightest hash collision.</p>
+<p>Imagine we implement this simple single-hash-function filter for our thousand-page coffee log. Whenever we want to look up a type of coffee in our log, we first ask the filter the simple question, “Have I tried this type of coffee before?” This filter often allows us to avoid binary searching through a thousand pages if we know that we have never tried the coffee before. </p>
+<p>For the first month it works perfectly. Every time we sample a new coffee, we add it to the log and flip the appropriate bit in our filter from 0 to 1, as shown in <a href="#figure13-1" id="figureanchor13-1">Figure 13-1</a>. We use the coffee name as the input to our hash function, allowing us to check future coffees by name.</p>
+<figure>
+<img alt="The string “House Blend” is mapped to bin 6, which has the value 1. The other 11 bins have value 0." class="" height="154" src="image_fi/502604c13/f13001.png" width="251"/>
+<figcaption><p><a id="figure13-1">Figure 13-1</a>: A single hash function can map a string to the index of an array.</p></figcaption>
+</figure>
+<p>For the first few entries, the single-hash-function Bloom filter acts similarly to a regular hash table (without collision resolution) that stores binary values for each entry. We insert a 1 into the appropriate bin for each key seen, and a value of 0 indicates we have not seen any entry hashing to that value. When we ask whether we’ve tried the House Blend variety, we receive a simple “yes” when our lookup returns a 1. </p>
+<p>However, problems emerge as we add more and more values to our filter. After a day of coffee drinking, our binary array begins to fill up. As shown in <a href="#figure13-2" id="figureanchor13-2">Figure 13-2</a>, even if we’re only consuming a few varieties of coffee a day, we start to fill the array with 1s.</p>
+<span epub:type="pagebreak" id="Page_228" title="228"/><figure>
+<img alt="Four of the 12 bins in the binary array have the value 1; the rest are zero." class="" height="43" src="image_fi/502604c13/f13002.png" width="251"/>
+<figcaption><p><a id="figure13-2">Figure 13-2</a>: A binary array that is starting to fill up</p></figcaption>
+</figure>
+<p>Since Bloom filters, unlike hash tables, don’t use chaining or any other mechanism to resolve collisions, two different coffees will occasionally map to the same entry. Soon we don’t know whether we really sampled the Burnt-Bean Dark Roast or whether the corresponding 1 is due to our previous tasting of Raw Bean, Uncooked, Bitter Blast, which happens to map to the same entry. Remember from <span class="xref" itemid="xref_target_Chapter 10">Chapter 10</span> that whenever we are mapping from a large key space (the set of coffee names) to a smaller key space (the entries in an array), we will see collisions. This problem grows worse and worse as we add more entries to our log.</p>
+<p>Within a year, our initial filter is effectively useless. Our varied coffee experiences, while enjoyable, have packed the array with 1s. We now have something like the array shown in <a href="#figure13-3" id="figureanchor13-3">Figure 13-3</a>. Well over half of our queries result in hash collisions and thus false positives. The filter is no longer an efficient prefilter. Rather, it almost always adds the overhead of a useless check before the real search. In our party example, this correlates to using a single attribute to describe our friend. If we provide only our friend’s hair color, the event organizer will almost always have seen someone matching that description. </p>
+<figure>
+<img alt="Eight of the 12 bins in the binary array have the value 1; only 4 are zero." class="" height="43" src="image_fi/502604c13/f13003.png" width="251"/>
+<figcaption><p><a id="figure13-3">Figure 13-3</a>: A binary array that is too full to be a useful coffee tracker</p></figcaption>
+</figure>
+<p>The simplest fix to our mounting collisions would be to increase the space of hash values. We could make our binary array larger. Instead of using 100 indicator values, we could try 1,000. This reduces the likelihood of collisions, but does not remove it entirely. A single collision will still result in a false positive, and, as we saw in <span class="xref" itemid="xref_target_Chapter 10">Chapter 10</span>, some collisions are unavoidable. Our hashing approach isn’t doomed yet, though. We can do even better by adopting a strategy that also reduces the <em>impact</em> of each collision.</p>
+<h3 id="h2-502604c13-0002">The Bloom Filter</h3>
+<p class="BodyFirst">A Bloom filter solves the problem of collisions by taking the idea of hash functions to the extreme. Instead of using a single hash function for each key, it employs <em>k</em> independent hash functions, all mapping the key onto the same range of hash values. For example, as shown in <a href="#figure13-4" id="figureanchor13-4">Figure 13-4</a>, we might use three hash functions for our coffee list. The hash function <em>f1</em> maps this key to index 2; the second function, <em>f2</em>, maps it to index 6; and the third, <em>f3</em>, maps it to index 9.  </p>
+<span epub:type="pagebreak" id="Page_229" title="229"/><figure>
+<img alt="The string “House Blend” is mapped to bin 2 by the first hash function, bin 6 by the second hash function, and bin 9 by the third hash function." class="" height="144" src="image_fi/502604c13/f13004.png" width="261"/>
+<figcaption><p><a id="figure13-4">Figure 13-4</a>: Inserting the string HOUSE BLEND into a Bloom filter using three hash functions</p></figcaption>
+</figure>
+<p>Formally, we define the Bloom filter’s operations as follows:</p>
+<ol class="none">
+<li><span class="RunInHead">Insert key </span>  For each of our <em>k</em> hash functions, map the key to an index and set the value at that index to 1.</li>
+<li><span class="RunInHead">Lookup key </span>  For each of our <em>k</em> hash functions, map the key to an index and check whether the value at that index is 1. Return true if and only if all <em>k</em> array values are 1.</li>
+</ol>
+<p>At first glance, all we have done is make matters worse. Instead of filling up one bin per sample, we’re filling three. Our array is practically guaranteed to fill up faster and see collisions earlier. If we add a second entry, as shown in <a href="#figure13-5" id="figureanchor13-5">Figure 13-5</a>, we add more 1s to our array.</p>
+<figure>
+<img alt="The string “Morning shock” is mapped to bin 5 by the first hash function, bin 2 by the second hash function, and bin 8 by the third hash function." class="" height="169" src="image_fi/502604c13/f13005.png" width="261"/>
+<figcaption><p><a id="figure13-5">Figure 13-5</a>: Inserting the string MORNING SHOCK into a Bloom filter using three hash functions</p></figcaption>
+</figure>
+<p>On the contrary, we’ve actually improved things. The power of the Bloom filter enables us to look up entries efficiently. Instead of succumbing to a single collision, producing a false positive if we see a see a single 1, we require <em>all</em> the bins for our target string to contain a 1, as shown in <a href="#figure13-6" id="figureanchor13-6">Figure 13-6</a>. </p>
+<figure>
+<img alt="The string “Pure Caffeine” is mapped to bin 9 by the first hash function, bin 8 by the second hash function, and bin 5 by the third hash function." class="" height="182" src="image_fi/502604c13/f13006.png" width="261"/>
+<figcaption><p><a id="figure13-6">Figure 13-6</a>: Looking up the string PURE CAFFEINE in a Bloom filter with three hash functions</p></figcaption>
+</figure>
+<p><span epub:type="pagebreak" id="Page_230" title="230"/>If we see a single 0, we know that this entry has not been inserted into the array. In <a href="#figure13-7" id="figureanchor13-7">Figure 13-7</a>, we can see we’ve never sampled the Caffeine +10 roast. In the ballroom, the event organizer only needs to know that our friend is wearing a bowler hat to categorically answer that they’ve seen no one of that description. They’ve seen someone of the correct height and someone with the correct hair color, but no one wearing that hat. We can safely avoid a full search. </p>
+<figure>
+<img alt="The string “Caffeine +10” is mapped to bin 9 by the first hash function, bin 8 by the second hash function, and bin 4 by the third hash function. The first two functions map to bins containing 1, but the final hash function maps to a bin containing 0." class="" height="182" src="image_fi/502604c13/f13007.png" width="261"/>
+<figcaption><p><a id="figure13-7">Figure 13-7</a>: Looking up the string CAFFEINE +10 in a Bloom filter with three hash functions</p></figcaption>
+</figure>
+<p>To register a false positive, <em>each</em> of our hash values must collide with a previous entry. If we balance the size of our array with the number of hash functions, we can reduce the probability for a false positive. </p>
+<p>We can visualize a Bloom filter’s treatment of collisions via a conversation with a knowledgeable barista. Imagine that, on a recent trip, a friend hands us an incredible cup of coffee. After basking in the joy of the rich flavors and potent caffeine content, we ask our friend about this new discovery. To our dismay, our soon to be former friend shrugs, points in a general direction, and claims that they purchased it at a shop “that way.” They can’t remember the name of the barista, the shop, or even the coffee brand. Unfortunately, we don't have time to find the shop and interrogate the owner ourselves. We need to get on our flight home. Holding back tears at the lost knowledge, we jot a few attributes on a piece of paper and resolve to track down the mystery coffee.</p>
+<p>Upon returning home, we visit the most knowledgeable barista we know and show them our notes. We have managed to capture five key traits about our coffee, such as “primary smell is chocolate.” This clearly isn’t enough information to identify the coffee uniquely, but we can ask our barista if they know of anything matching this description. Before paging through their own 10,000-page coffee log to look for a coffee matching all five attributes, the barista considers them independently and rules out a match. Despite our arguments that the flavors worked surprisingly well, our expert has never heard of any coffee that includes an “extra-sweet bubblegum flavor.” They give us a funny look and mumble something about having standards.</p>
+<p>In this case, our five attributes are effectively hash functions, projecting the complex coffee experience into a lower-dimensional space—an array of descriptor words. The barista uses each of these attributes individually to check whether they know of any coffee that could match, using the index of <span epub:type="pagebreak" id="Page_231" title="231"/>their very own coffee log. An entry in the index means at least one match. The per-attribute test might run into false positives, but that’s okay. In the worst case, we waste some time looking through old coffee log entries before determining that nothing perfectly matches. At least we know we will never see a false negative. If even one of the characteristics is unique, the barista can confidently say no, and we can leave confident in the knowledge that no coffee in our barista’s extensive catalog could be our mystery blend.</p>
+<p>We can use just the Bloom filter step to make fast, in-the-moment decisions without subsequently searching a larger data structure. Imagine that our trusted barista maintains a secret list of coffees to avoid, 500 coffees around the world that are so vomit-inducingly terrible they will make us stop drinking coffee for a full month. For various liability reasons, they don’t publish the list. But if we ask our barista friend about a specific coffee on the list, they will give a polite warning that maybe we’d prefer decaf instead. Before sampling any new coffee, we’d do well to check it isn’t on their list. </p>
+<p>Of course, we won’t be able to call the barista each time we get the opportunity to try a new coffee, so we need a quick way of making the decision. Using five informative attributes, including primary smell and viscosity, the barista constructs a Bloom filter for those coffees, marking 1 for each of the five attributes for each coffee on the list. When we have an opportunity to sample a new coffee, we check the five attributes against the list. If any of them map to 0, we can safely drink the new coffee. It is guaranteed to not be on the barista’s list. However, if all the attributes are 1, maybe we should order something else. As a bonus, the barista never has to distribute their secret list. </p>
+<p>We can apply Bloom filters to computer science applications in a similar fashion. Consider the problem of checking a password against a list of known weak passwords. We could systematically search the full list every time someone proposes a new password. Alternatively, we could create a Bloom filter to quickly check if we should reject the password. Occasionally we might reject a reasonable password, but we can guarantee we’ll never let a bad one through. </p>
+<h3 id="h2-502604c13-0003">Bloom Filter Code</h3>
+<p class="BodyFirst">In its simplest form, a Bloom filter can be stored as just an array of binary values. To make the code clearer, we wrap the Bloom filter in a simple composite data structure containing the parameters, such as the size and the number of hash functions:</p>
+<pre><code>BloomFilter {
+    Integer: size
+    Integer: k
+    Array of bits: bins
+    Array of hash functions: h
+}</code></pre>
+<p>Given this wrapper, the code for both the insertion and lookup functions can be implemented with a single <code>WHILE</code> loop:</p>
+<pre><code>BloomFilterInsertKey(BloomFilter: filter, Type: key):
+    Integer: i = 0
+<span epub:type="pagebreak" id="Page_232" title="232"/>    WHILE i &lt; filter.k:
+        Integer: index = filter.h[i](key)
+        filter.bins[index] = 1
+        i = i + 1
+
+BloomFilterLookup(BloomFilter: filter, Type: key):
+    Integer: i = 0
+    WHILE i &lt; filter.k:
+        Integer: index = filter.h[i](key)
+        IF filter.bins[index] == 0:
+            return False
+        i = i + 1
+    return True</code></pre>
+<p class="BodyContinued">In this code, <code>filter.h[i](key)</code> denotes the Bloom filter’s <code>i</code>th hash function applied to <code>key</code>. Both functions use a  loop to iterate over the <em>k</em> hash functions, computing <code>key</code>’s hash value and accessing the corresponding bin in the Bloom filter’s array. In the case of insertion, the code sets the value of the bin to <code>1</code>. In the case of lookup, the code checks whether the bin contains a <code>0</code> and returns <code>False</code> if so.</p>
+<p>In the worst case, the functions cost scales linearly with <em>k</em> as we need to iterate over each hash function for each operation. The structure of lookup provides an additional potential advantage. The lookup can terminate immediately after finding the first 0, skipping any further hash functions. Importantly, the runtime of both insertion and lookup is independent of both the size of the Bloom filter (number of bins) and the number of items inserted. </p>
+<h2 id="h1-502604c13-0002">Tuning Bloom Filter Parameters</h2>
+<p class="BodyFirst">There are multiple parameters that impact the Bloom filter’s false positive rate, including the size of the array and the number of hash functions used. By tuning these parameters to the problem at hand, we can often keep the false positive rate very low while minimizing the amount of memory used. We can do this empirically with real data, through simulation, or with a variety of mathematical approximations of the false positive rate. </p>
+<p>One common and simple approximation is:</p>
+<p class="Equation"><em>FalsePositiveRate</em> = (1 – (1 – 1/<em>m</em>)<sup><em>nk</em></sup>)<sup><em>k</em></sup></p>
+<p class="BodyContinued">where <em>n</em> is the number of items inserted into the Bloom filter, <em>m</em> is the size of the array, and <em>k</em> is the number of hash functions used. This approximation uses simplified assumptions, but it gives a good view into how the various parameters interact:</p>
+<ul>
+<li>Increasing the size of the array (<em>m</em>) always decreases the false positive rate, because there are more bins to store information. </li>
+<li>Increasing the number of items inserted (<em>n</em>) always increases the false positive rate, because we set more of those bins to 1. </li>
+<li><span epub:type="pagebreak" id="Page_233" title="233"/>Increasing the number of hash functions (<em>k</em>) can increase or decrease the false positive rate depending on the other parameters. If we use too many hash functions, we are going to fill up large quantities of the array with each insertion. If we use too few, a small number of collisions could produce a false positive.</li>
+</ul>
+<p><a href="#table13-1" id="tableanchor13-1">Table 13-1</a> provides insight into how the Bloom filter sizes (<em>m</em>) and number of hash functions (<em>k</em>) impact the false positive rate for a fixed number of items inserted (<em>n</em> = 100).</p>
+<figure>
+<figcaption class="TableTitle"><p><a id="table13-1">Table 13-1</a>: Example False Positive Rates for Different Parameterizations (<em>m</em>, <em>k</em>) with <em>n</em><em> </em>= 100</p></figcaption>
+<table border="1" id="table-502604c13-0001">
+<thead>
+<tr>
+<td><b><em>m</em></b></td>
+<td><b><em>k</em> = 1</b></td>
+<td><b><em>k</em> = 3</b></td>
+<td><b><em>k</em> = 5</b></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>0.3942</td>
+<td>0.4704</td>
+<td>0.6535</td>
+</tr>
+<tr>
+<td>400</td>
+<td>0.2214</td>
+<td>0.1473</td>
+<td>0.1855</td>
+</tr>
+<tr>
+<td>600</td>
+<td>0.1536</td>
+<td>0.0610</td>
+<td>0.0579</td>
+</tr>
+<tr>
+<td>800</td>
+<td>0.1176</td>
+<td>0.0306</td>
+<td>0.0217</td>
+</tr>
+<tr>
+<td>1000</td>
+<td>0.0952</td>
+<td>0.0174</td>
+<td>0.0094</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<p>Ultimately the optimal parameter setting will depend on the specific problem. We need to choose a tradeoff among false positive rate, computational cost, and memory cost that best suits our application. </p>
+<h2 id="h1-502604c13-0003">Bloom Filters vs. Hash Tables</h2>
+<p class="BodyFirst">At this point, the skeptical reader may again fling their hands in the air in protest: “Why not just use a hash table? Whenever a key occurs, we can add it along with some trivial data, such as a Boolean value of True, to the hash table. Then we can search this table for exact match keys. Sure, we might have to do some chaining due to collisions, but we’d get exact answers. Why do you always make things so complicated?”</p>
+<p>It’s a fair point. Hash tables do allow us to answer the same question that Bloom filters answer, and more exactly. But, as our skeptical reader noted, they do so at the cost of additional space and potentially runtime. In order for a hash table to fully resolve collisions, we need to store enough information to deterministically say that we have seen this exact key before, and that means storing the key itself. Add to that the overhead of pointers in a chained hash table, as shown in <a href="#figure13-8" id="figureanchor13-8">Figure 13-8</a>, and we could be using significantly more memory.</p>
+<figure>
+<img alt="A linked list for a hash table bucket consists of nodes with data for the key, the value, and a pointer to the next node." class="" height="104" src="image_fi/502604c13/f13008.png" width="406"/>
+<figcaption><p><a id="figure13-8">Figure 13-8</a>: A hash table with chaining requires memory for each key and at least one pointer.</p></figcaption>
+</figure>
+<p><span epub:type="pagebreak" id="Page_234" title="234"/>In contrast, the Bloom filter doesn’t bother storing the keys or pointers to subsequent nodes. It only keeps around a single binary value for each bucket. We can store <em>m</em> bins using exactly <em>m</em> bits. This extreme space efficiency proves valuable for multiple reasons. First, it allows us to vastly increase the number of bins (the size of our filter) while keeping the memory manageable. We can store 32 individual bins for the price of a single 32-bit integer. </p>
+<p>Second, and more importantly for computationally sensitive applications, it often allows us to keep the Bloom filter in memory, or even in the memory’s cache, for fast access. Consider the tradeoffs we explored in the previous chapter of structuring B-tree nodes to reduce the number of retrievals from slower memory. Bloom filters work to maximize the amount of the data structure that directly helps with filtering with the goal of keeping the whole data structure in very fast memory. </p>
+<h2 id="h1-502604c13-0004">Why This Matters</h2>
+<p class="BodyFirst">Bloom filters can be powerful tools when we need to hyper-optimize the tradeoff between memory usage and accuracy. They combine the mathematical mappings introduced in <span class="xref" itemid="xref_target_Chapter 10">Chapter 10</span> with the focus on fitting data into a compact form that can be stored in local memory that we saw in <span class="xref" itemid="xref_target_Chapter 12">Chapter 12</span>. Like caches, they provide an intermediate step to an expensive lookup that can help reduce the cost on average.</p>
+<p>More important, however, is that Bloom filters provide a glimpse into a new type of data structure—one that can occasionally return a false positive. The accuracy of a lookup operation is not guaranteed but rather probabilistically depends on the data. If we’re lucky, we could insert a large number of elements before seeing any false positives. If we’re not, though, we could see collisions early on. This type of data structure provides a different approach to thinking about how we organize data and the relevant tradeoffs. If we are willing to accept some (hopefully small) number of errors, how far can we push the efficiency?</p>
+<p>In the next chapter, we consider a data structure that relies on a different type of randomness. Instead of providing a probabilistically correct answer, skip lists use randomness to avoid bad worst-case behavior and provide efficient operations on average. </p>
+</section>
+</div></body></html>

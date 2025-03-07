@@ -1,0 +1,690 @@
+<html><head></head><body>
+<div id="sbo-rt-content"><section aria-labelledby="header0701" class="chapter" epub:type="chapter" id="ch07" role="doc-chapter">
+<header id="header0701">
+<h1 class="cn"><span aria-label=" Page 112. " class="page" epub:type="pagebreak" id="p112" role="doc-pagebreak"/><span aria-label=" Page 113. " class="page" epub:type="pagebreak" id="p113" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rch07">7</a></h1>
+<h1 class="ct">Photomosaics</h1>
+</header>
+<figure class="figure">
+<p class="fig"><img alt="" height="100" src="images/nsp-venkitachalam503045-circle-image.jpg" width="100"/></p>
+</figure>
+<p class="pf">When I was in the sixth grade, I saw a picture like the one shown in <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#fig7-1">Figure 7-1</a> but couldn’t quite figure out what it was. After squinting at it for a while, I eventually figured it out. (Turn the book upside down, and view it from across the room. I won’t tell anyone.)</p>
+<p>The puzzle works because of how the human eye functions. The low-<span class="idx" data-term="resolution"/>resolution, blocky image shown in the figure is hard to recognize up close, but when it is seen from a distance, you know what it represents because your eyes perceive less detail, which makes the edges smooth.</p>
+<p>A <span class="idx" data-term="photomosaics"/><i>photomosaic</i> is an image that works according to a similar principle. You take a <i>target</i> image, split it into a grid of rectangles, and replace each rectangle with another, smaller image that matches that section of the target. When you look at a photomosaic from a distance, all you see is the target image, but if you come closer, the secret is revealed: the image actually consists of many tiny images!</p>
+<figure class="figure" id="fig7-1">
+<p class="fig"><span aria-label=" Page 114. " class="page" epub:type="pagebreak" id="p114" role="doc-pagebreak"/><img alt="" height="495" src="images/nsp-venkitachalam503045-f07001.jpg" width="410"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 7-1:</span> A puzzling image</p>
+</figcaption>
+</figure>
+<p>In this project, you’ll create a photomosaic using Python. You’ll divide a target image into a <span class="idx" data-level1="grid" data-term="photomosaics"/>grid and replace each block in the grid with a suitable image to create a photomosaic of the original. You’ll be able to specify the grid dimensions and choose whether input images can be reused in the mosaic.</p>
+<p>As you work on the project, you’ll learn how to do the following:</p>
+<ul style="list-style-type:none">
+<li class="blf">• Create images using the Python Imaging Library (PIL).</li>
+<li class="bl">• Compute the average RGB value of an image.</li>
+<li class="bl">• Crop images.</li>
+<li class="bl">• Replace part of an image by pasting in another image.</li>
+<li class="bl">• Compare RGB values using a measurement of average distance in three dimensions.</li>
+<li class="bl">• Use a data structure called a <span class="idx" data-term="k-d tree"/><i>k-d tree</i> to efficiently find the image that best matches a section of the target image.</li>
+</ul>
+<section>
+<h2 class="ah" id="ah0901"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah0901">How It Works</a></h2>
+<p class="paft">To create a photomosaic, begin with a blocky, low-resolution version of the target image (because the number of tile images would be too great in a high-resolution image). The user inputs the dimensions <i>M</i>×<i>N</i> (where <i>M</i> is the number of rows and <i>N</i> is the number of columns) of the mosaic. Next, build the mosaic according to this methodology:</p>
+<ol style="list-style-type:none">
+<li class="nlf">1. Read the input images, which will be drawn on to replace the tiles in the original image.</li>
+<li class="nl"><span aria-label=" Page 115. " class="page" epub:type="pagebreak" id="p115" role="doc-pagebreak"/>2. Read the target image and split it into an <i>M</i>×<i>N</i> grid of tiles.</li>
+<li class="nl">3. For each tile, find the best match from the input images.</li>
+<li class="nl">4. Create the final mosaic by arranging the selected input images in an <i>M</i>×<i>N</i> grid.</li>
+</ol>
+<section>
+<h3 class="bh" id="bh0901"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh0901"><span class="idx" data-level1="splitting target image" data-term="photomosaics"/>Splitting the Target Image</a></h3>
+<p class="paft">We’ll start by looking at how to split the target image into an <i>M</i>×<i>N</i> grid of tiles. Follow the scheme shown in <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#fig7-2">Figure 7-2</a>.</p>
+<figure class="figure" id="fig7-2">
+<p class="fig"><img alt="" height="492" src="images/nsp-venkitachalam503045-f07002.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 7-2:</span> Splitting the target image</p>
+</figcaption>
+</figure>
+<p>We split the original image into a grid of tiles with <i>N</i> columns arranged along the x-axis and <i>M</i> rows arranged along the y-axis. Each tile is represented by an index (<i>i</i>, <i>j</i>) and is <i>w</i> pixels wide and <i>h</i> pixels high. According to this scheme, the original image is <i>w</i> × <i>N</i> pixels wide and <i>h</i> × <i>M</i> pixels high.</p>
+<p>The right side of <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#fig7-2">Figure 7-2</a> shows how to calculate the pixel coordinates for a single tile from this grid. The tile with index (<i>i</i>, <i>j</i>) has a top-left corner coordinate of (<i>i</i> × <i>w, i</i> × <i>j</i>) and a bottom-right corner coordinate of ((<i>i</i> + 1) × <i>w</i>, (<i>j</i> + 1) × <i>h</i>). These coordinates can be used with the PIL to crop and create tiles from the original image.</p>
+</section>
+<section>
+<h3 class="bh" id="bh0902"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh0902"><span class="idx" data-term="average color"/><span class="idx" data-level1="averaging color values" data-term="photomosaics"/>Averaging Color Values</a></h3>
+<p class="paft">Every pixel in an image has a color that can be represented numerically by its red, green, and blue values. In this case, you are using 8-bit images, so each of these three color components has an 8-bit value in the range [0, 255]. You can therefore determine the average color of an image by taking the average of the red, green, and blue values for all of the image’s pixels. Given an image with a total of <i>N</i> pixels, the average RGB is calculated as follows:</p>
+<div class="equation">
+<p class="eq"><img alt="" height="78" src="images/nsp-venkitachalam503045-m07001.jpg" style="width:95%; height:auto;" width="733"/></p>
+</div>
+<p><span aria-label=" Page 116. " class="page" epub:type="pagebreak" id="p116" role="doc-pagebreak"/>Like the RGB for an individual pixel, the average RGB for a whole image is a triplet, not a scalar or single number, because the averages are calculated separately for each color component. You calculate the average RGB to match the tiles from the target image with replacements from among the input images.</p>
+</section>
+<section>
+<h3 class="bh" id="bh0903"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh0903"><span class="idx" data-level1="matching images" data-term="photomosaics"/>Matching Images</a></h3>
+<p class="paft">For each tile in the target image, you need to find a matching image from the images in the input folder specified by the user. To determine whether two images match, use the average RGB values. The best match is the input image with the average RGB value closest to that of the tile from the target image.</p>
+<p>The simplest way to find the best match is to calculate the distance between the average RGB values as if they were points in 3D space. After all, each average RGB consists of three numbers, which you can think of as x-, y-, and z-axis coordinates. You can thus use the following <span class="idx" data-level1="measuring distance" data-term="photomosaics"/>formula from the geometry for calculating the distance between two 3D points:</p>
+<div class="equation">
+<p class="eq"><img alt="" height="44" src="images/nsp-venkitachalam503045-m07002.jpg" width="485"/></p>
+</div>
+<p>Here you compute the distance between the points (<i>r</i><sub>1</sub>, <i>g</i><sub>1</sub>, <i>b</i><sub>1</sub>) and (<i>r</i><sub>2</sub>, <i>g</i><sub>2</sub>, <i>b</i><sub>2</sub>). Given a target average <span class="idx" data-level1="RGB values" data-term="photomosaics"/><span class="idx" data-term="RGB values"/>RGB value (<i>r</i><sub>1</sub>, <i>g</i><sub>1</sub>, <i>b</i><sub>1</sub>), you can plug a list of average RGB values from the input images into the previous formula as (<i>r</i><sub>2</sub>, <i>g</i><sub>2</sub>, <i>b</i><sub>2</sub>) to find the closest matching image. However, there might be hundreds or even thousands of input images to check. We should therefore give some thought to how to efficiently search the set of input images to find the best match.</p>
+<section>
+<h4 class="ch" id="ch0901">Using Linear Search</h4>
+<p class="paft">The simplest approach to searching for a match is a <span class="idx" data-term="linear search"/><i>linear search</i>. In this method, you just iterate through all the RGB values one by one and find the one with the minimum distance to the query value. The code will look something like this:</p>
+<div class="codeline">
+<p class="clf">min_dist = MAX_VAL</p>
+<p class="cl">for val in vals:</p>
+<p class="cl">    dist = distance(query, val)</p>
+<p class="cl">    if dist &lt; MAX_VAL:</p>
+<p class="cll">        min_dist = dist</p>
+</div>
+<p>You go through each value in the list <code>vals</code> one by one and calculate the distance between that value and <code>query</code>. If the result is less than <code>min_dist</code> (which was initialized as the maximum possible distance between two points), you update <code>min_dist</code> with the distance you just calculated. After checking every item in <code>vals</code>, <code>min_dist</code> will contain the smallest distance in the whole dataset.</p>
+<p><span aria-label=" Page 117. " class="page" epub:type="pagebreak" id="p117" role="doc-pagebreak"/>Although a linear search method is easy to understand and implement, it isn’t very efficient. If there are <i>N</i> values in the <code>vals</code> list, the search will take an amount of time proportional to <i>N</i>. You can achieve much better performance with a different data structure and search algorithm.</p>
+</section>
+<section>
+<h4 class="ch" id="ch0902">Using k-d Trees</h4>
+<p class="paft"><span class="idx" data-level1="definition" data-term="k-d tree"/>A <i>k-d tree</i>, or <i>k-dimensional tree</i>, is a data structure that partitions a space of <i>k</i> dimensions—that is, it divides the space into a number of non-overlapping subspaces. This data structure provides a way to sort and search through datasets whose members are points in <i>k</i>-dimensional space. The dataset is represented as a <i>binary tree</i>: each point in the dataset becomes a node in the tree, and each node can have two child nodes. In other words, each node in the tree divides the space into two parts, called <i>subtrees</i>. One part points to the left of the node (the node’s left child and its descendants), and the other points to the right of the node (the node’s right child and its descendants).</p>
+<p>Each node of the tree is associated with one of the dimensions of the space, and that’s the dimension used to determine if points belong in the node’s left subtree or right subtree. If a node is associated with the x-axis, for example, points whose x-values are less than that node’s x-value will be put in the node’s left subtree, and points whose x-values are greater than the node’s x-value will be put in the right subtree. A common method to select the dimension associated with each node is to cycle through them as you move down the levels of the tree. For example, in the case of a three-dimensional k-d tree, you could set the dimensions to be x, y, z, x, y, z, and so on, moving down the tree. Nodes at the same tree height will have the same splitting dimension.</p>
+<p>Let’s look at a simple example of a <span class="idx" data-level1="example" data-term="k-d tree"/>k-d tree. Say you have the following set of points, <i>P</i>:</p>
+<div class="equation">
+<p class="eq"><i>P</i> = {(5, 3), (2, 4), (1, 2), (6, 6), (7, 2), (4, 6), (2, 8)}</p>
+</div>
+<p>In this case, you’d build a two-dimensional k-d tree, since each member of <i>P</i> describes a point in two-dimensional space. You start by associating the first node, or the <i>root</i> node, (5, 3), with the x-dimension. Then you add the next point, (2, 4), as a left child of the root node, since the point’s x-coordinate, 2, is less than 5, the x-coordinate of the root. The node (2, 4), being on the second level of the k-d tree, will use the y-dimension for partition. The next point in the list is (1, 2). Starting again at the root, 1 &lt; 5, so you go to the left child of the root node. You then compare (1, 2) with (2, 4) using the y-dimension. Since 2 &lt; 4, you add (1, 2) as the left child of (2, 4).</p>
+<p>If you continue in this fashion for all the points in <i>P</i>, you’ll create the tree and space partitioning shown in <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#fig7-3">Figure 7-3</a>.</p>
+<figure class="figure" id="fig7-3">
+<p class="fig"><span aria-label=" Page 118. " class="page" epub:type="pagebreak" id="p118" role="doc-pagebreak"/><img alt="" height="729" src="images/nsp-venkitachalam503045-f07003.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 7-3:</span> An example of a k-d tree</p>
+</figcaption>
+</figure>
+<p>The top image of <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#fig7-3">Figure 7-3</a> shows the space partitioning scheme for the tree we just discussed. Starting with point (5, 3), you split the space in two along the x-dimension by drawing a vertical line through that point. Next, you use point (2, 4) to split the left half of the first partition along the y-dimension by drawing a horizontal line through the point, stopping when the line hits the vertical line. Continue in this fashion with the remaining points, and you’ll get the partitioning scheme shown in the figure.</p>
+<p>Why should you care about k-d trees? The answer is that once you arrange a dataset this way, you can search through it much more quickly. Specifically, a <span class="idx" data-level1="nearest-neighbor search" data-term="k-d tree"/><i>nearest-neighbor search</i>—finding the point closest to a queried point—is much faster with a k-d tree than a linear search. For a dataset of <i>N</i> values, the average nearest-neighbor search of a k-d tree takes a time proportional to log(<i>N</i>), much less than the time proportional to <i>N</i> that a linear search would take.</p>
+<p>To demonstrate, let’s try to find the point from <i>P</i> nearest to point <i>q</i>, (2, 3), which is shown in <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#fig7-3">Figure 7-3</a>. Looking at the figure, you can see that point (2, 4) is the match. The nearest-neighbor algorithm will find the match by traversing down the tree from (5, 3) to (2, 4). The algorithm knows, for example, that the right subtree of the root can be skipped, since <i>q</i>’s x-coordinate is less than the root node’s x-coordinate. The spatial partitioning scheme thus lets you skip a larger number of comparisons than with a linear search. This is what makes the k-d tree useful for our problem.</p>
+<p>How can you use a k-d tree in the photomosaic code? You could try to write an implementation from scratch, but there’s an easier option: the <code>scipy</code> library already has a built-in k-d tree class. We’ll look at how to leverage this class later in the chapter.</p>
+</section>
+</section>
+</section>
+<section>
+<h2 class="ah" id="ah0902"><span aria-label=" Page 119. " class="page" epub:type="pagebreak" id="p119" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah0902">Requirements</a></h2>
+<p class="paft">For this project, you’ll use <span class="idx" data-term="Pillow module"/><code>Pillow</code> to read in the images, access their underlying data, and create and modify the images. You’ll also use <span class="idx" data-term="numpy module"/><code>numpy</code> to manipulate image data and <code>scipy</code> to search the image data using a k-d tree.</p>
+</section>
+<section>
+<h2 class="ah" id="ah0903"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah0903">The Code</a></h2>
+<p class="paft">You’ll begin by reading in the input images that you’ll draw on to create the photomosaic. Next, you’ll compute the average RGB value of the images, split the target into a grid, and find the image that best matches each tile in the grid. Finally, you’ll assemble the image tiles to create the actual photomosaic. To see the complete project code, skip ahead to <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#ah0907">“The Complete Code”</a> on <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#p129">page 129</a>. You can also find the code at <a class="url-i" href="https://github.com/mkvenkit/pp2e/tree/main/photomosaic">https://github.com/mkvenkit/pp2e/tree/main/photomosaic</a>.</p>
+<section>
+<h3 class="bh" id="bh0904"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh0904">Reading In the Input Images</a></h3>
+<p class="paft">First <span class="idx" data-level1="reading input images" data-term="photomosaics"/>read in the input images from a given folder. Here’s how to do that:</p>
+<div class="codeline">
+<p class="clf">def getImages(imageDir):</p>
+<p class="cl">    """</p>
+<p class="cl">    given a directory of images, return a list of Images</p>
+<p class="cl">    """</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ files = os.<span class="idx" data-level1="listdir" data-term="os module"/>listdir(imageDir)</p>
+<p class="cl">    images = []</p>
+<p class="cl">    for file in files:</p>
+<p class="cl">      <!--<ccust1>2</ccust1>-->❷ filePath = os.path.<span class="idx" data-level1="path" data-term="os module"/>abspath(os.path.<span class="idx" data-level1="path" data-term="os module"/>join(imageDir, file))</p>
+<p class="cl">        try:</p>
+<p class="cl">            # explicit load so we don't run into resource crunch</p>
+<p class="cl">          <!--<ccust1>3</ccust1>-->❸ fp = open(filePath, "rb")</p>
+<p class="cl">            im = Image.<span class="idx" data-level1="Image" data-term="Python Imaging Library"/>open(fp)</p>
+<p class="cl">            images.append(im)</p>
+<p class="cl">            # force loading the image data from file</p>
+<p class="cl">          <!--<ccust1>4</ccust1>-->❹ im.<span class="idx" data-level1="Image" data-term="Python Imaging Library"/>load()</p>
+<p class="cl">            # close the file</p>
+<p class="cl">          <!--<ccust1>5</ccust1>-->❺ fp.close()</p>
+<p class="cl">        except:</p>
+<p class="cl">            # skip</p>
+<p class="cl">            print("Invalid image: %s" % (filePath,))</p>
+<p class="cll">    return images</p>
+</div>
+<p>You first use <code>os.listdir()</code> to gather the filenames in the <i>imageDir</i> directory in a list called <code>files</code> <!--<ccust1>1</ccust1>-->❶. Next, you iterate through each file in the list and load it into a PIL <code>Image</code> object.</p>
+<p>You use <code>os.path.abspath()</code> and <code>os.path.join()</code> to get the complete filename of the image <!--<ccust1>2</ccust1>-->❷. This idiom is commonly used in Python to ensure that your code will work with both <span class="idx" data-term="relative paths"/>relative paths (for example, <i>\foo\bar\</i>) and absolute paths (<i>c:\foo\bar\</i>), as well as across operating systems with different directory-naming conventions (\ in Windows versus / in Linux).</p>
+<p><span aria-label=" Page 120. " class="page" epub:type="pagebreak" id="p120" role="doc-pagebreak"/>To load the files into PIL <span class="idx" data-level1="Image" data-term="Python Imaging Library"/><code>Image</code> objects, you could pass each filename to the <code>Image.open()</code> method, but if your photomosaic folder had hundreds or thousands of images, doing so would be highly <span class="idx" data-term="system resources"/>resource intensive. Instead, you can use Python to open each image and pass the <span class="idx" data-term="file handles"/>file handle <code>fp</code> into PIL using <code>Image.open()</code>. Once the image has been loaded, close the file handle and release the system resources.</p>
+<p>You open the image file using <code>open()</code> <!--<ccust1>3</ccust1>-->❸ and then pass the handle to <code>Image.open()</code> and store the resulting image, <code>im</code>, in a list called <code>images</code>. Calling <code>Image.load()</code> <!--<ccust1>4</ccust1>-->❹ force-loads the image data inside <code>im</code> because <code>open()</code> is a lazy operation. It identifies the image but doesn’t actually read all the image data until you try to use the image. You finish by closing the file handle to release system resources <!--<ccust1>5</ccust1>-->❺.</p>
+</section>
+<section>
+<h3 class="bh" id="bh0905"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh0905">Calculating the <span class="idx" data-level1="averaging color values" data-term="photomosaics"/>Average Color Value of an Image</a></h3>
+<p class="paft">Once you’ve read in the input images, you need to calculate each image’s average color value. You also need to find the average color value for each section of the target image. Create a function <code>getAverageRGB()</code> to handle both tasks.</p>
+<div class="codeline">
+<p class="clf">def getAverageRGB(image):</p>
+<p class="cl">    """</p>
+<p class="cl">    return the average color value as (r, g, b) for each input image</p>
+<p class="cl">    """</p>
+<p class="cl">    # get each tile image as a numpy array</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ im = np.array(image)</p>
+<p class="cl">    # get the shape of each input image</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ w,h,d = im.<span class="idx" data-level1="array" data-term="numpy module"/>shape</p>
+<p class="cl">    # get the average RGB value</p>
+<p class="cll">  <!--<ccust1>3</ccust1>-->❸ return tuple(np.<span class="idx" data-level1="average" data-term="numpy module"/>average(im.<span class="idx" data-level1="array" data-term="numpy module"/>reshape(w*h, d), axis=0))</p>
+</div>
+<p>The function takes in an <code>Image</code> object—it could be one of the input images or a section of the target image—and uses <code>numpy</code> to convert it into a data array <!--<ccust1>1</ccust1>-->❶. The resulting <code>numpy</code> array has the shape (<code>w</code>, <code>h</code>, <code>d</code>), where <code>w</code> is the width of the image, <code>h</code> is the height, and <code>d</code> is the depth, which, in the case of RGB images, is three units (one each for R, G, and B). You store the <code>shape</code> tuple <!--<ccust1>2</ccust1>-->❷ and then compute the average RGB value by reshaping the array into a more convenient form with shape (<code>w*h</code>, <code>d</code>) so that you can compute the average using <code>numpy.average()</code> <!--<ccust1>3</ccust1>-->❸. (You performed a similar operation in <a class="xref" href="nsp-venkitachalam503045-0019.xhtml#ch06">Chapter 6</a> to get the average brightness of a grayscale image.) You return the result as a tuple.</p>
+</section>
+<section>
+<h3 class="bh" id="bh0906"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh0906"><span class="idx" data-level1="splitting target image" data-term="photomosaics"/>Splitting the Target Image into a Grid</a></h3>
+<p class="paft">Now you need to split the target image into an <i>M</i>×<i>N</i> <span class="idx" data-level1="grid" data-term="photomosaics"/>grid of smaller images. Let’s create a function to do that:</p>
+<div class="codeline">
+<p class="clf">def splitImage(image, size):</p>
+<p class="cl">    """</p>
+<p class="cl">    given the image and dimensions (rows, cols), return an m*n list of images</p>
+<p class="cl">    """</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ W, H = image.<span class="idx" data-level1="Image" data-term="Python Imaging Library"/>size[0], image.size[1]</p>
+<p class="cl"><span aria-label=" Page 121. " class="page" epub:type="pagebreak" id="p121" role="doc-pagebreak"/>  <!--<ccust1>2</ccust1>-->❷ m, n = size</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ w, h = int(W/n), int(H/m)</p>
+<p class="cl">    # image list</p>
+<p class="cl">    imgs = []</p>
+<p class="cl">    # generate a list of images</p>
+<p class="cl">    for j in range(m):</p>
+<p class="cl">        for i in range(n):</p>
+<p class="cl">            # append cropped image</p>
+<p class="cl">      <!--<ccust1>4</ccust1>-->❹ imgs.append(image.<span class="idx" data-level1="Image" data-term="Python Imaging Library"/>crop((i*w, j*h, (i+1)*w, (j+1)*h)))</p>
+<p class="cls">    return imgs</p>
+</div>
+<p>First you gather the dimensions of the target image <!--<ccust1>1</ccust1>-->❶ and the grid size <!--<ccust1>2</ccust1>-->❷. Then you calculate the dimensions of each tile in the target image using basic division <!--<ccust1>3</ccust1>-->❸. Next you need to iterate through the grid dimensions and cut out and store each tile as a separate image. Calling <code>image.crop()</code> <!--<ccust1>4</ccust1>-->❹ crops out a portion of the image using the upper-left and lower-right image coordinates as arguments (as discussed in <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#bh0901">“Splitting the Target Image”</a> on <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#p115">page 115</a>). You end up with a list of images—first, all the images in the first row of the grid, from left to right; then all the images in the second row of the grid; and so on.</p>
+</section>
+<section>
+<h3 class="bh" id="bh0907"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh0907">Finding the Best Match for a Tile</a></h3>
+<p class="paft">Now let’s find the <span class="idx" data-level1="matching images (begin)" data-term="photomosaics"/>best match for a tile from the folder of input images. We’ll look at two ways of doing this: using a linear search and using a k-d tree. For the linear search method, you create a utility function, <code>getBestMatchIndex()</code>, as follows:</p>
+<div class="codeline">
+<p class="clf">def getBestMatchIndex(input_avg, avgs):</p>
+<p class="cl">    """</p>
+<p class="cl">    return index of the best image match based on average RGB value distance</p>
+<p class="cl">    """</p>
+<p class="clf">    # input image average</p>
+<p class="cl">    avg = input_avg</p>
+<p class="clf">    # get the closest RGB value to input, based on RGB distance</p>
+<p class="cl">    index = 0</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ min_index = 0</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ min_dist = float("inf")</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ for val in avgs:</p>
+<p class="cl">      <!--<ccust1>4</ccust1>-->❹ dist = ((val[0] - avg[0])*(val[0] - avg[0]) +</p>
+<p class="cl">                (val[1] - avg[1])*(val[1] - avg[1]) +</p>
+<p class="cl">                (val[2] - avg[2])*(val[2] - avg[2]))</p>
+<p class="cl">      <!--<ccust1>5</ccust1>-->❺ if dist &lt; min_dist:</p>
+<p class="cl">            min_dist = dist</p>
+<p class="cl">            min_index = index</p>
+<p class="cl">        index += 1</p>
+<p class="cls">    return min_index</p>
+</div>
+<p><span aria-label=" Page 122. " class="page" epub:type="pagebreak" id="p122" role="doc-pagebreak"/>You’re trying to search <code>avgs</code>, a list of the average RGB values of the input images, to find the one closest to <code>input_avg</code>, the average RGB value of one of the tiles in the target image. To start, you initialize the closest match index to 0 <!--<ccust1>1</ccust1>-->❶ and the minimum distance to infinity <!--<ccust1>2</ccust1>-->❷. Then you loop through the values in the list of averages <!--<ccust1>3</ccust1>-->❸ and start computing distances <!--<ccust1>4</ccust1>-->❹ using the standard formula shown in <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#bh0903">“Matching Images”</a> on <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#p116">page 116</a>. (You skip taking the square root to reduce computation time.) If the computed distance is less than the stored minimum distance <code>min_dist</code>, it’s replaced with the new minimum distance <!--<ccust1>5</ccust1>-->❺. This test will always pass the first time, since any <span class="idx" data-level1="distance" data-term="photomosaics"/>distance will be less than infinity. At the end of the iteration, <code>min_index</code> is the index of the average RGB value from the <code>avgs</code> list that is closest to <code>input_avg</code>. Now you can use this index to select the matching image from the list of input images.<span class="idx" data-level1="matching images (end)" data-term="photomosaics"/></p>
+<p>Now let’s find the best matches using a k-d tree instead of a linear search. Here’s the function:</p>
+<div class="codeline">
+<p class="clf">def getBestMatchIndicesKDT(qavgs, kdtree):</p>
+<p class="cl">    """</p>
+<p class="cl">    return indices of best Image matches based on RGB value distance</p>
+<p class="cl">    uses a k-d tree</p>
+<p class="cl">    """</p>
+<p class="cl">    # e.g., [array([2.]), array([9], dtype=int64)]</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ res = list(<span class="idx" data-level1="KDTree" data-level2="query" data-term="scipy.spatial module"/>kdtree.query(qavgs, k=1))</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ min_indices = res[1]</p>
+<p class="cll">    return min_indices</p>
+</div>
+<p>The <code>getBestMatchIndicesKDT()</code> function takes two arguments: <code>qavgs</code> is the list of average RGB values for each tile in the target image, and <code>kdtree</code> is the <code>scipy KDTree</code> object created using a list of average RGB values from the input images. (We’ll be creating the <code>KDTree</code> object in <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#bh0909">“Creating the Photomosaic”</a> on <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#p124">page 124</a>.) You use the <code>KDTree</code> object’s <code>query()</code> method to get the points in the tree that are closest to the ones in <code>qavgs</code> <!--<ccust1>1</ccust1>-->❶. Here, the <code>k</code> parameter is the number of nearest neighbors to the queried point you want to return. You just need the closest match, so you pass in <code>k=1</code>. The return value from the <code>query()</code> method is a tuple consisting of two <code>numpy</code> arrays with the distances and indices of the matches. You need the indices, so you pick the second value from the result <!--<ccust1>2</ccust1>-->❷.</p>
+<p>Notice that the <code>query()</code> method <!--<ccust1>1</ccust1>-->❶ allows you to pass in a list of query points instead of just one. This actually runs faster than querying results one by one, and it means you’ll have to call the <code>getBestMatchIndicesKDT()</code> function only once, whereas you’ll have to call the linear search <code>getBestMatch()</code> function many times, once for each tile in the photomosaic.</p>
+<p>The complete program will include an option to choose which of the previous two functions to use, the linear search version or the k-d tree version. It will also have a timer to test which search method is faster.</p>
+</section>
+<section>
+<h3 class="bh" id="bh0908"><span aria-label=" Page 123. " class="page" epub:type="pagebreak" id="p123" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh0908"><span class="idx" data-level1="creating image grid (begin)" data-term="photomosaics"/>Creating an Image Grid</a></h3>
+<p class="paft">You need one more utility function before moving on to photomosaic creation. The <code>createImageGrid()</code> function will create a grid of images of size <i>M</i>×<i>N</i>. This image grid is the final photomosaic image, created from the list of selected input images.</p>
+<div class="codeline">
+<p class="clf">def createImageGrid(images, dims):</p>
+<p class="cl">    """</p>
+<p class="cl">    given a list of images and a grid size (m, n), create a grid of images</p>
+<p class="cl">    """</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ m, n = dims</p>
+<p class="clf">    # sanity check</p>
+<p class="cl">    assert m*n == len(images)</p>
+<p class="clf">    # get the maximum height and width of the images</p>
+<p class="cl">    # don't assume they're all equal</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ width = max([img.size[0] for img in images])</p>
+<p class="cl">    height = max([img.size[1] for img in images])</p>
+<p class="clf">    # create the target image</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ grid_img = Image.<span class="idx" data-level1="Image" data-term="Python Imaging Library"/>new('RGB', (n*width, m*height))</p>
+<p class="clf">    # paste the tile images into the image grid</p>
+<p class="cl">    for index in range(len(images)):</p>
+<p class="cl">      <!--<ccust1>4</ccust1>-->❹ row = int(index/n)</p>
+<p class="cl">      <!--<ccust1>5</ccust1>-->❺ col = index - n*row</p>
+<p class="cl">      <!--<ccust1>6</ccust1>-->❻ grid_img.<span class="idx" data-level1="Image" data-term="Python Imaging Library"/>paste(images[index], (col*width, row*height))</p>
+<p class="cls">    return grid_img</p>
+</div>
+<p>The function takes two parameters: a list of images (the input images you chose based on the closest RGB match to the individual tiles of the target image) and a tuple with the photomosaic’s dimensions (the number of rows and columns you want it to have). You gather the dimensions of the grid <!--<ccust1>1</ccust1>-->❶ and then use <span class="idx" data-term="assert method"/><code>assert</code> to see whether the number of images supplied to <code>createImageGrid()</code> matches the grid size. (The <code>assert</code> method checks assumptions in your code, especially during development and testing.) Then you compute the maximum width and height of the selected images <!--<ccust1>2</ccust1>-->❷, since they may not all be the same size. You’ll use these maximum dimensions to set the standard tile size for the photomosaic. If an input image won’t completely fill a tile, the spaces between the tiles will show as solid black by default.</p>
+<p>Next, you create an empty <code>Image</code> sized to fit all images in the grid <!--<ccust1>3</ccust1>-->❸; you’ll paste the tile images into this. Then you fill the image grid by looping through the selected images and pasting them into the appropriate spot on the grid using the <code>Image.paste()</code> method <!--<ccust1>6</ccust1>-->❻. The first argument to <span aria-label=" Page 124. " class="page" epub:type="pagebreak" id="p124" role="doc-pagebreak"/><code>Image.paste()</code> is the <code>Image</code> object to be pasted, and the second is the top-left coordinate. Now you need to figure out in which row and column to paste an input image into the image grid. To do so, you express the image index in terms of rows and columns. The index of a tile in the image grid is given by <i>N</i> × <i>row</i> + <i>col</i>, where <i>N</i> is the number of cells along the width and (<i>row</i>, <i>col</i>) is the coordinate in the grid; at <!--<ccust1>4</ccust1>-->❹, you determine the row from the previous formula, and at <!--<ccust1>5</ccust1>-->❺, the column.<span class="idx" data-level1="creating image grid (end)" data-term="photomosaics"/></p>
+</section>
+<section>
+<h3 class="bh" id="bh0909"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh0909">Creating the Photomosaic</a></h3>
+<p class="paft">Now that you have all the required utilities, let’s write the main function that creates the photomosaic. Here’s the start of the function:</p>
+<div class="codeline">
+<p class="clf">def createPhotomosaic(target_image, input_images, grid_size,</p>
+<p class="cl">                      reuse_images, use_kdt):</p>
+<p class="cl">    """</p>
+<p class="cl">    creates photomosaic given target and input images</p>
+<p class="cl">    """</p>
+<p class="clf">    print('splitting input image...')</p>
+<p class="cl">    # split target image</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ target_images = splitImage(target_image, grid_size)</p>
+<p class="clf">    print('finding image matches...')</p>
+<p class="cl">    # for each target image, pick one from input</p>
+<p class="cl">    output_images = []</p>
+<p class="cl">    # for user feedback</p>
+<p class="cl">    count = 0</p>
+<p class="cl">  <!--<ccust1>2</ccust1>-->❷ batch_size = int(len(target_images)/10)</p>
+<p class="clf">    # calculate input image averages</p>
+<p class="cl">    avgs = []</p>
+<p class="cl">  <!--<ccust1>3</ccust1>-->❸ for img in input_images:</p>
+<p class="cl">        avgs.append(getAverageRGB(img))</p>
+<p class="clf">    # compute target averages</p>
+<p class="cl">    avgs_target = []</p>
+<p class="cl">  <!--<ccust1>4</ccust1>-->❹ for img in target_images:</p>
+<p class="cl">        # target subimage average</p>
+<p class="cll">        avgs_target.append(getAverageRGB(img))</p>
+</div>
+<p>The <code>createPhotomosaic()</code> function takes as input the target image, the list of input images, the size of the generated photomosaic (number of rows and columns), and flags indicating whether an image can be reused and whether to use a k-d tree to search for image matches. The function begins by calling <code>splitImage()</code> <!--<ccust1>1</ccust1>-->❶ to split the target into a grid of smaller image tiles. Once the image is split, you’re ready to start finding matches for each tile from the images in the input folder. Because this process can be lengthy, however, it’s a good idea to provide feedback to users to let them know that the program is still working. To help with this feedback, you set <code>batch_size</code> to one-tenth the total number of tile images <!--<ccust1>2</ccust1>-->❷. The choice of one-tenth is <span aria-label=" Page 125. " class="page" epub:type="pagebreak" id="p125" role="doc-pagebreak"/>arbitrary and simply a way for the program to say “I’m still alive.” Each time the program processes a tenth of the images, it will print a message indicating that it’s still running.</p>
+<p>To find image matches, you need the average RGB values. You iterate over the input images <!--<ccust1>3</ccust1>-->❸ and use your <code>getAverageRGB()</code> function to compute the average RGB value for each one, storing the results in the list <code>avgs</code>. Then you do the same for each tile in the target image <!--<ccust1>4</ccust1>-->❹, storing the average RGB values into the list <code>avgs_target</code>.</p>
+<p>The function continues with an <code>if...else</code> statement to find RGB matches using either a k-d tree or a linear search. Let’s look at the <code>if</code> branch first, which runs if the <code>use_kdt</code> flag was set to <code>True</code>:</p>
+<div class="codeline">
+<p class="clf">    # use k-d tree for average match?</p>
+<p class="cl">    if use_kdt:</p>
+<p class="cl">        # create k-d tree</p>
+<p class="cl">      <!--<ccust1>1</ccust1>-->❶ kdtree = <span class="idx" data-level1="KDTree" data-level2="creation" data-term="scipy.spatial module"/>KDTree(avgs)</p>
+<p class="cl">        # query k-d tree</p>
+<p class="cl">      <!--<ccust1>2</ccust1>-->❷ match_indices = getBestMatchIndicesKDT(avgs_target, kdtree)</p>
+<p class="cl">        # process matches</p>
+<p class="cl">      <!--<ccust1>3</ccust1>-->❸ for match_index in match_indices:</p>
+<p class="cll">          <!--<ccust1>4</ccust1>-->❹ output_images.append(input_images[match_index])</p>
+</div>
+<p>You create a <code>KDTree</code> object using the list of average RGB values from the input images <!--<ccust1>1</ccust1>-->❶ and retrieve the indices of the best matches by passing in <code>avgs_target</code> and the <code>KDTree</code> object to your <code>getBestMatchIndicesKDT()</code> helper function <!--<ccust1>2</ccust1>-->❷. Then you iterate through all the matching indices <!--<ccust1>3</ccust1>-->❸, find the corresponding input images, and append them to the list <code>output_images</code> <!--<ccust1>4</ccust1>-->❹.</p>
+<p>Next, let’s look at the <code>else</code> branch, which performs a linear search for matches:</p>
+<div class="codeline">
+<p class="clf">    else:</p>
+<p class="cl">        # use linear search</p>
+<p class="cl">      <!--<ccust1>1</ccust1>-->❶ for avg in avgs_target:</p>
+<p class="cl">            # find match index</p>
+<p class="cl">          <!--<ccust1>2</ccust1>-->❷ match_index = getBestMatchIndex(avg, avgs)</p>
+<p class="cl">          <!--<ccust1>3</ccust1>-->❸ output_images.append(input_images[match_index])</p>
+<p class="cl">            # user feedback</p>
+<p class="cl">          <!--<ccust1>4</ccust1>-->❹ if count &gt; 0 and batch_size &gt; 10 and count % batch_size == 0:</p>
+<p class="cl">                print('processed %d of %d...' %(count, len(target_images)))</p>
+<p class="cl">            count += 1</p>
+<p class="cl">            # remove selected image from input if flag set</p>
+<p class="cl">          <!--<ccust1>5</ccust1>-->❺ if not reuse_images:</p>
+<p class="cll">                input_images.remove(match)</p>
+</div>
+<p>For the linear search, you start iterating through the average RGB values of the target image tiles <!--<ccust1>1</ccust1>-->❶. For each tile, you search for the closest match in the list of averages for the input images using <code>getBestMatchIndex()</code> <!--<ccust1>2</ccust1>-->❷. The result is returned as an index, which you use to retrieve the <code>Image</code> object and store it in the <code>output_images</code> list <!--<ccust1>3</ccust1>-->❸. For every <code>batch_size</code> number of images processed <!--<ccust1>4</ccust1>-->❹, you print a message to the user. If the <code>reuse_images</code> flag is set <span aria-label=" Page 126. " class="page" epub:type="pagebreak" id="p126" role="doc-pagebreak"/>to <code>False</code> <!--<ccust1>5</ccust1>-->❺, you remove the selected input image from the list so that it won’t be reused in another tile. (This works best when you have a wide range of input images to choose from.)</p>
+<p>All that remains in the <code>createPhotomosaic()</code> function is to arrange the input images into the final photomosaic:</p>
+<div class="codeline">
+<p class="clf">    print('creating mosaic...')</p>
+<p class="cl">    # draw mosaic to image</p>
+<p class="cl">  <!--<ccust1>1</ccust1>-->❶ mosaic_image = createImageGrid(output_images, grid_size)</p>
+<p class="clf">    # return mosaic</p>
+<p class="cll">    return mosaic_image</p>
+</div>
+<p>You use the <code>createImageGrid()</code> function to build the photomosaic <!--<ccust1>1</ccust1>-->❶. Then you return the resulting image as <code>mosaic_image</code>.</p>
+</section>
+<section>
+<h3 class="bh" id="bh0910"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rbh0910">Writing the main() Function</a></h3>
+<p class="paft">The <code>main()</code> function of the program takes in and parses command line arguments, loads all the images, and does some additional setup. Then it calls the <code>createPhotomosaic()</code> function and saves the resulting photomosaic. As the photomosaic is built, Python times how long the process takes, allowing you to compare the performance of the k-d tree with that of the linear search.<span class="idx" data-level1="command line options (begin)" data-term="photomosaics"/></p>
+<section>
+<h4 class="ch" id="ch0903">Adding the Command Line Options</h4>
+<p class="paft">The <code>main()</code> function supports these command line options:</p>
+<div class="codeline">
+<p class="clf">    # parse arguments</p>
+<p class="cl">    parser = argparse.<span class="idx" data-level1="ArgumentParser" data-term="argparse module"/>ArgumentParser(description='Creates a photomosaic from</p>
+<p class="cl">                                     input images')</p>
+<p class="cl">    # add arguments</p>
+<p class="cl">    parser.add_argument('--target-image', dest='target_image', required=True)</p>
+<p class="cl">    parser.add_argument('--input-folder', dest='input_folder', required=True)</p>
+<p class="cl">    parser.add_argument('--grid-size', nargs=2, dest='grid_size',</p>
+<p class="cl">                        required=True)</p>
+<p class="cl">    parser.add_argument('--output-file', dest='outfile', required=False)</p>
+<p class="cll">    parser.add_argument('--kdt', action='store_true', required=False)</p>
+</div>
+<p>This code contains three required command line parameters: the name of the target image, the name of the input folder of images, and the grid size. The fourth parameter is for the optional filename for the output. If the filename is omitted, the photomosaic will be written to a file named <span class="idx" data-level1="command line options (end)" data-term="photomosaics"/><i>mosaic.png</i>. The fifth argument is a Boolean flag that enables the k-d tree search instead of linear search for matching average RGB values.</p>
+</section>
+<section>
+<h4 class="ch" id="ch0904">Controlling the Size of the Photomosaic</h4>
+<p class="paft">Once all the images are loaded, one issue to address in the <code>main()</code> function is the size (in pixels) of the resulting photomosaic. If you were to blindly paste the input images together based on matching tiles in the target, you <span aria-label=" Page 127. " class="page" epub:type="pagebreak" id="p127" role="doc-pagebreak"/>could end up with a huge photomosaic that is much bigger than the target. To avoid this, resize the input images to match the size of each tile in the grid. (This has the added benefit of speeding up the average RGB computation since you’ll be using smaller images.) Here’s the section of the <code>main()</code> function that handles this task:</p>
+<div class="codeline">
+<p class="clf">        print('resizing images...')</p>
+<p class="cl">        # for given grid size, compute the maximum width and height of tiles</p>
+<p class="cl">      <!--<ccust1>1</ccust1>-->❶ dims = (int(target_image.size[0]/grid_size[1]),</p>
+<p class="cl">                int(target_image.size[1]/grid_size[0]))</p>
+<p class="cl">        print("max tile dims: %s" % (dims,))</p>
+<p class="cl">        # resize</p>
+<p class="cl">        for img in input_images:</p>
+<p class="cll">          <!--<ccust1>2</ccust1>-->❷ img.thumbnail(dims)</p>
+</div>
+<p>You compute the target dimensions based on the specified number of rows and columns in the grid <!--<ccust1>1</ccust1>-->❶; then you use the PIL <code>Image.</code><span class="idx" data-level1="Image" data-term="Python Imaging Library"/><code>thumbnail()</code> method to resize the input images to fit those dimensions <!--<ccust1>2</ccust1>-->❷.</p>
+</section>
+<section>
+<h4 class="ch" id="ch0905">Timing the Performance</h4>
+<p class="paft">When the program is run, you’ll want to know how long it takes to execute. Use the Python <span class="idx" data-term="timeit module"/><code>timeit</code> module for this purpose. The approach for finding execution time is outlined here:</p>
+<div class="codeline">
+<p class="clf">import timeit</p>
+<p class="cl"># start timing</p>
+<p class="cl2"><!--<ccust1>1</ccust1>-->❶ start = timeit.default_timer()</p>
+<p class="cl"># run some code here...</p>
+<p class="cl">--<code class="i">snip</code>--</p>
+<p class="cl"># stop timing</p>
+<p class="cl2"><!--<ccust1>2</ccust1>-->❷ stop = timeit.default_timer()</p>
+<p class="cll">print('Execution time: %f seconds' % (stop - start, ))</p>
+</div>
+<p>You record the start time using the <code>timeit</code> module’s default timer <!--<ccust1>1</ccust1>-->❶. Then, after running some code, you record the stop time <!--<ccust1>2</ccust1>-->❷. Computing the difference gives you the execution time measured in seconds.</p>
+</section>
+</section>
+</section>
+<section>
+<h2 class="ah" id="ah0904"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah0904">Running the Photomosaic Generator</a></h2>
+<p class="paft">Let’s first run the program using the default linear search approach. The photomosaic will consist of a grid of 128×128 images:</p>
+<div class="codeline">
+<p class="clf">$ <code class="b">python photomosaic.py --target-image test-data/cherai.jpg --input-folder</code></p>
+<p class="cl"><code class="b">  test-data/set6/ --grid-size 128 128</code></p>
+<p class="cl">reading input folder...</p>
+<p class="cl">starting photomosaic creation...</p>
+<p class="cl">resizing images...</p>
+<p class="cl">max tile dims: (23, 15)</p>
+<p class="cl">splitting input image...</p>
+<p class="cl">finding image matches...</p>
+<p class="cl">processed 1638 of 16384...</p>
+<p class="cl"><span aria-label=" Page 128. " class="page" epub:type="pagebreak" id="p128" role="doc-pagebreak"/>processed 3276 of 16384...</p>
+<p class="cl">processed 4914 of 16384...</p>
+<p class="cl">processed 6552 of 16384...</p>
+<p class="cl">processed 8190 of 16384...</p>
+<p class="cl">processed 9828 of 16384...</p>
+<p class="cl">processed 11466 of 16384...</p>
+<p class="cl">processed 13104 of 16384...</p>
+<p class="cl">processed 14742 of 16384...</p>
+<p class="cl">processed 16380 of 16384...</p>
+<p class="cl">creating mosaic...</p>
+<p class="cl">saved output to mosaic.png</p>
+<p class="cl">done.</p>
+<p class="cl">Execution time:    setup: 0.402047 seconds</p>
+<p class="cl2"><!--<ccust1>1</ccust1>-->❶ Execution time: creation: 2.123931 seconds</p>
+<p class="cll">Execution time:    total: 2.525978 seconds</p>
+</div>
+<p><a class="xref" href="nsp-venkitachalam503045-0020.xhtml#fig7-4">Figure 7-4(a)</a> shows the target image, and <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#fig7-4">Figure 7-4(b)</a> shows the resulting photomosaic. You can see a close-up of the photomosaic in <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#fig7-4">Figure 7-4(c)</a>. As you can see in the output, it takes about 2.1 seconds <!--<ccust1>1</ccust1>-->❶ to find the best match for each of the 16,384 tiles in the photomosaic using a linear search. That’s not bad, but we can do better.</p>
+<figure class="figure" id="fig7-4">
+<p class="fig"><img alt="" height="274" src="images/nsp-venkitachalam503045-f07004.jpg" style="width:95%; height:auto;" width="1200"/></p>
+<figcaption>
+<p class="figh"><span class="fighn">Figure 7-4:</span> A sample run of the photomosaic generator</p>
+</figcaption>
+</figure>
+<p>Now run the same program with the <code>--kdt</code> option, which enables the use of a k-d tree to search for image matches. Here are the results:</p>
+<div class="codeline">
+<p class="clf">$ <code class="b">python photomosaic.py --target-image test-data/cherai.jpg --input-folder</code></p>
+<p class="cl"><code class="b">  test-data/set6/ --grid-size 128 128 --kdt</code></p>
+<p class="cl">reading input folder...</p>
+<p class="cl">starting photomosaic creation...</p>
+<p class="cl">resizing images...</p>
+<p class="cl">max tile dims: (23, 15)</p>
+<p class="cl">splitting input image...</p>
+<p class="cl">finding image matches...</p>
+<p class="cl">creating mosaic...</p>
+<p class="cl">saved output to mosaic.png</p>
+<p class="cl">done.</p>
+<p class="cl">Execution time:    setup: 0.410334 seconds</p>
+<p class="cl2"><!--<ccust1>1</ccust1>-->❶ Execution time: creation: 1.089237 seconds</p>
+<p class="cll">Execution time:    total: 1.499571 seconds</p>
+</div>
+<p>The photomosaic creation time has dropped from about 2.1 seconds to less than 1.1 seconds <!--<ccust1>1</ccust1>-->❶ with a k-d tree. That’s almost twice the speed!</p>
+</section>
+<section>
+<h2 class="ah" id="ah0905"><span aria-label=" Page 129. " class="page" epub:type="pagebreak" id="p129" role="doc-pagebreak"/><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah0905">Summary</a></h2>
+<p class="paft">In this project, you learned how to create a photomosaic, given a target image and a collection of input images. When viewed from a distance, the photomosaic looks like the original image, but up close, you can see the individual images that make up the mosaic. You also learned about an interesting data structure, the k-d tree, which significantly sped up the process of finding the closest match for each tile in the mosaic.</p>
+</section>
+<section>
+<h2 class="ah" id="ah0906"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah0906">Experiments!</a></h2>
+<p class="paft">Here are some ways to further explore photomosaics:</p>
+<ol style="list-style-type:none">
+<li class="nlf">1. Write a program that creates a blocky version of any image, similar to <a class="xref" href="nsp-venkitachalam503045-0020.xhtml#fig7-1">Figure 7-1</a>.</li>
+<li class="nl">2. With the code in this chapter, you created the photomosaic by pasting the matched images without any gaps in between. A more artistic presentation might include a uniform gap of a few pixels around each tile image. How would you create the gap? (Hint: factor in the gaps when computing the final image dimensions and when pasting the images in <code>createImageGrid()</code>.)</li>
+</ol>
+</section>
+<section>
+<h2 class="ah" id="ah0907"><a class="xref" href="nsp-venkitachalam503045-0008.xhtml#rah0907">The Complete Code</a></h2>
+<p class="paft">Here’s the complete code for the project:</p>
+<div class="codeline">
+<p class="clf">"""</p>
+<p class="cl">photomosaic.py</p>
+<p class="clf">Creates a photomosaic given a target image and a folder of input images.</p>
+<p class="clf">Author: Mahesh Venkitachalam</p>
+<p class="cl">"""</p>
+<p class="clf">import os, random, argparse</p>
+<p class="cl">from PIL import Image</p>
+<p class="cl">import numpy as np</p>
+<p class="cl">from scipy.spatial import KDTree</p>
+<p class="cl">import timeit</p>
+<p class="clf">def getAverageRGBOld(image):</p>
+<p class="cl">    """</p>
+<p class="cl">    given PIL Image, return average value of color as (r, g, b)</p>
+<p class="cl">    """</p>
+<p class="cl">    # no. of pixels in image</p>
+<p class="cl">    npixels = image.size[0]*image.size[1]</p>
+<p class="cl">    # get colors as [(cnt1, (r1, g1, b1)), ...]</p>
+<p class="cl">    cols = image.getcolors(npixels)</p>
+<p class="cl">    # get [(c1*r1, c1*g1, c1*g2), ...]</p>
+<p class="cl"><span aria-label=" Page 130. " class="page" epub:type="pagebreak" id="p130" role="doc-pagebreak"/>    sumRGB = [(x[0]*x[1][0], x[0]*x[1][1], x[0]*x[1][2]) for x in cols]</p>
+<p class="cl">    # calculate (sum(ci*ri)/np, sum(ci*gi)/np, sum(ci*bi)/np)</p>
+<p class="cl">    # the zip gives us [(c1*r1, c2*r2, ...), (c1*g1, c1*g2, ...), ...]</p>
+<p class="cl">    avg = tuple([int(sum(x)/npixels) for x in zip(*sumRGB)])</p>
+<p class="cl">    return avg</p>
+<p class="clf">def getAverageRGB(image):</p>
+<p class="cl">    """</p>
+<p class="cl">    given PIL Image, return average value of color as (r, g, b)</p>
+<p class="cl">    """</p>
+<p class="cl">    # get image as numpy array</p>
+<p class="cl">    im = np.array(image)</p>
+<p class="cl">    # get shape</p>
+<p class="cl">    w,h,d = im.shape</p>
+<p class="cl">    # get average</p>
+<p class="cl">    return tuple(np.average(im.reshape(w*h, d), axis=0))</p>
+<p class="clf">def splitImage(image, size):</p>
+<p class="cl">    """</p>
+<p class="cl">    given Image and dims (rows, cols) returns an m*n list of Images</p>
+<p class="cl">    """</p>
+<p class="cl">    W, H = image.size[0], image.size[1]</p>
+<p class="cl">    m, n = size</p>
+<p class="cl">    w, h = int(W/n), int(H/m)</p>
+<p class="cl">    # image list</p>
+<p class="cl">    imgs = []</p>
+<p class="cl">    # generate list of images</p>
+<p class="cl">    for j in range(m):</p>
+<p class="cl">        for i in range(n):</p>
+<p class="cl">            # append cropped image</p>
+<p class="cl">            imgs.append(image.crop((i*w, j*h, (i+1)*w, (j+1)*h)))</p>
+<p class="cl">    return imgs</p>
+<p class="clf">def getImages(imageDir):</p>
+<p class="cl">    """</p>
+<p class="cl">    given a directory of images, return a list of Images</p>
+<p class="cl">    """</p>
+<p class="cl">    files = os.listdir(imageDir)</p>
+<p class="cl">    images = []</p>
+<p class="cl">    for file in files:</p>
+<p class="cl">        filePath = os.path.abspath(os.path.join(imageDir, file))</p>
+<p class="cl">        try:</p>
+<p class="cl">            # explicit load so we don't run into resource crunch</p>
+<p class="cl">            fp = open(filePath, "rb")</p>
+<p class="cl">            im = Image.open(fp)</p>
+<p class="cl">            images.append(im)</p>
+<p class="cl">            # force loading image data from file</p>
+<p class="cl">            im.load()</p>
+<p class="cl">            # close the file</p>
+<p class="cl">            fp.close()</p>
+<p class="cl">        except:</p>
+<p class="cl">            # skip</p>
+<p class="cl">            print("Invalid image: %s" % (filePath,))</p>
+<p class="cl">    return images</p>
+<p class="clf"><span aria-label=" Page 131. " class="page" epub:type="pagebreak" id="p131" role="doc-pagebreak"/>def getBestMatchIndex(input_avg, avgs):</p>
+<p class="cl">    """</p>
+<p class="cl">    return index of best Image match based on RGB value distance</p>
+<p class="cl">    """</p>
+<p class="clf">    # input image average</p>
+<p class="cl">    avg = input_avg</p>
+<p class="clf">    # get the closest RGB value to input, based on x/y/z distance</p>
+<p class="cl">    index = 0</p>
+<p class="cl">    min_index = 0</p>
+<p class="cl">    min_dist = float("inf")</p>
+<p class="cl">    for val in avgs:</p>
+<p class="cl">        dist = ((val[0] - avg[0])*(val[0] - avg[0]) +</p>
+<p class="cl">                (val[1] - avg[1])*(val[1] - avg[1]) +</p>
+<p class="cl">                (val[2] - avg[2])*(val[2] - avg[2]))</p>
+<p class="cl">        if dist &lt; min_dist:</p>
+<p class="cl">            min_dist = dist</p>
+<p class="cl">            min_index = index</p>
+<p class="cl">        index += 1</p>
+<p class="clf">    return min_index</p>
+<p class="clf">def getBestMatchIndicesKDT(qavgs, kdtree):</p>
+<p class="cl">    """</p>
+<p class="cl">    return indices of best Image matches based on RGB value distance</p>
+<p class="cl">    using a k-d tree</p>
+<p class="cl">    """</p>
+<p class="cl">    # e.g., [array([2.]), array([9], dtype=int64)]</p>
+<p class="cl">    res = list(kdtree.query(qavgs, k=1))</p>
+<p class="cl">    min_indices = res[1]</p>
+<p class="cl">    return min_indices</p>
+<p class="clf">def createImageGrid(images, dims):</p>
+<p class="cl">    """</p>
+<p class="cl">    given a list of images and a grid size (m, n), create</p>
+<p class="cl">    a grid of images</p>
+<p class="cl">    """</p>
+<p class="cl">    m, n = dims</p>
+<p class="clf">    # sanity check</p>
+<p class="cl">    assert m*n == len(images)</p>
+<p class="clf">    # get max height and width of images</p>
+<p class="cl">    # i.e., not assuming they are all equal</p>
+<p class="cl">    width = max([img.size[0] for img in images])</p>
+<p class="cl">    height = max([img.size[1] for img in images])</p>
+<p class="clf">    # create output image</p>
+<p class="cl">    grid_img = Image.new('RGB', (n*width, m*height))</p>
+<p class="clf">    # paste images</p>
+<p class="cl">    for index in range(len(images)):</p>
+<p class="cl">        row = int(index/n)</p>
+<p class="cl">        col = index - n*row</p>
+<p class="cl">        grid_img.paste(images[index], (col*width, row*height))</p>
+<p class="clf"><span aria-label=" Page 132. " class="page" epub:type="pagebreak" id="p132" role="doc-pagebreak"/>    return grid_img</p>
+<p class="clf">def createPhotomosaic(target_image, input_images, grid_size,</p>
+<p class="cl">                      reuse_images, use_kdt):</p>
+<p class="cl">    """</p>
+<p class="cl">    creates photomosaic given target and input images</p>
+<p class="cl">    """</p>
+<p class="clf">    print('splitting input image...')</p>
+<p class="cl">    # split target image</p>
+<p class="cl">    target_images = splitImage(target_image, grid_size)</p>
+<p class="clf">    print('finding image matches...')</p>
+<p class="cl">    # for each target image, pick one from input</p>
+<p class="cl">    output_images = []</p>
+<p class="cl">    # for user feedback</p>
+<p class="cl">    count = 0</p>
+<p class="cl">    batch_size = int(len(target_images)/10)</p>
+<p class="clf">    # calculate input image averages</p>
+<p class="cl">    avgs = []</p>
+<p class="cl">    for img in input_images:</p>
+<p class="cl">        avgs.append(getAverageRGB(img))</p>
+<p class="clf">    # compute target averages</p>
+<p class="cl">    avgs_target = []</p>
+<p class="cl">    for img in target_images:</p>
+<p class="cl">        # target subimage average</p>
+<p class="cl">        avgs_target.append(getAverageRGB(img))</p>
+<p class="clf">    # use k-d tree for average match?</p>
+<p class="cl">    if use_kdt:</p>
+<p class="cl">        # create k-d tree</p>
+<p class="cl">        kdtree = KDTree(avgs)</p>
+<p class="cl">        # query k-d tree</p>
+<p class="cl">        match_indices = getBestMatchIndicesKDT(avgs_target, kdtree)</p>
+<p class="clf">        # process matches</p>
+<p class="cl">        for match_index in match_indices:</p>
+<p class="cl">            output_images.append(input_images[match_index])</p>
+<p class="cl">    else:</p>
+<p class="cl">        # use linear search</p>
+<p class="cl">        for avg in avgs_target:</p>
+<p class="cl">            # find match index</p>
+<p class="cl">            match_index = getBestMatchIndex(avg, avgs)</p>
+<p class="cl">            output_images.append(input_images[match_index])</p>
+<p class="cl">            # user feedback</p>
+<p class="cl">            if count &gt; 0 and batch_size &gt; 10 and count % batch_size == 0:</p>
+<p class="cl">                print('processed {} of {}...'.format(count,</p>
+<p class="cl">                                                     len(target_images)))</p>
+<p class="cl">            count += 1</p>
+<p class="cl">            # remove selected image from input if flag set</p>
+<p class="cl">            if not reuse_images:</p>
+<p class="cl">                input_images.remove(match)</p>
+<p class="clf"><span aria-label=" Page 133. " class="page" epub:type="pagebreak" id="p133" role="doc-pagebreak"/>    print('creating mosaic...')</p>
+<p class="cl">    # draw mosaic to image</p>
+<p class="cl">    mosaic_image = createImageGrid(output_images, grid_size)</p>
+<p class="clf">    # return mosaic</p>
+<p class="cl">    return mosaic_image</p>
+<p class="clf"># gather our code in a main() function</p>
+<p class="cl">def main():</p>
+<p class="cl">    # command line args are in sys.argv[1], sys.argv[2]...</p>
+<p class="cl">    # sys.argv[0] is the script name itself and can be ignored</p>
+<p class="clf">    # parse arguments</p>
+<p class="cl">    parser = argparse.ArgumentParser(description='Creates a photomosaic</p>
+<p class="cl">                                                      from input images')</p>
+<p class="cl">    # add arguments</p>
+<p class="cl">    parser.add_argument('--target-image', dest='target_image', required=True)</p>
+<p class="cl">    parser.add_argument('--input-folder', dest='input_folder', required=True)</p>
+<p class="cl">    parser.add_argument('--grid-size', nargs=2, dest='grid_size',</p>
+<p class="cl">                        required=True)</p>
+<p class="cl">    parser.add_argument('--output-file', dest='outfile', required=False)</p>
+<p class="cl">    parser.add_argument('--kdt', action='store_true', required=False)</p>
+<p class="clf">    args = parser.parse_args()</p>
+<p class="clf">    # start timing</p>
+<p class="cl">    start = timeit.default_timer()</p>
+<p class="clf">    ###### INPUTS ######</p>
+<p class="clf">    # target image</p>
+<p class="cl">    target_image = Image.open(args.target_image)</p>
+<p class="clf">    # input images</p>
+<p class="cl">    print('reading input folder...')</p>
+<p class="cl">    input_images = getImages(args.input_folder)</p>
+<p class="clf">    # check if any valid input images found</p>
+<p class="cl">    if input_images == []:</p>
+<p class="cl">        print('No input images found in %s. Exiting.' % (args.input_folder, ))</p>
+<p class="cl">        exit()</p>
+<p class="clf">    # shuffle list - to get a more varied output?</p>
+<p class="cl">    random.shuffle(input_images)</p>
+<p class="clf">    # size of grid</p>
+<p class="cl">    grid_size = (int(args.grid_size[0]), int(args.grid_size[1]))</p>
+<p class="clf">    # output</p>
+<p class="cl">    output_filename = 'mosaic.png'</p>
+<p class="cl">    if args.outfile:</p>
+<p class="cl">        output_filename = args.outfile</p>
+<p class="clf">    # reuse any image in input</p>
+<p class="cl">    reuse_images = True</p>
+<p class="clf"><span aria-label=" Page 134. " class="page" epub:type="pagebreak" id="p134" role="doc-pagebreak"/>    # resize the input to fit original image size?</p>
+<p class="cl">    resize_input = True</p>
+<p class="clf">    # use k-d trees for matching</p>
+<p class="cl">    use_kdt = False</p>
+<p class="cl">    if args.kdt:</p>
+<p class="cl">        use_kdt = True</p>
+<p class="clf">    ##### END INPUTS #####</p>
+<p class="clf">    print('starting photomosaic creation...')</p>
+<p class="clf">    # if images can't be reused, ensure m*n &lt;= num_of_images</p>
+<p class="cl">    if not reuse_images:</p>
+<p class="cl">        if grid_size[0]*grid_size[1] &gt; len(input_images):</p>
+<p class="cl">            print('grid size less than number of images')</p>
+<p class="cl">            exit()</p>
+<p class="clf">    # resizing input</p>
+<p class="cl">    if resize_input:</p>
+<p class="cl">        print('resizing images...')</p>
+<p class="cl">        # for given grid size, compute max dims w,h of tiles</p>
+<p class="cl">        dims = (int(target_image.size[0]/grid_size[1]),</p>
+<p class="cl">                int(target_image.size[1]/grid_size[0]))</p>
+<p class="cl">        print("max tile dims: %s" % (dims,))</p>
+<p class="cl">        # resize</p>
+<p class="cl">        for img in input_images:</p>
+<p class="cl">            img.thumbnail(dims)</p>
+<p class="clf">    # setup time</p>
+<p class="cl">    t1 = timeit.default_timer()</p>
+<p class="clf">    # create photomosaic</p>
+<p class="cl">    mosaic_image = createPhotomosaic(target_image, input_images, grid_size,</p>
+<p class="cl">                                     reuse_images, use_kdt)</p>
+<p class="clf">    # write out mosaic</p>
+<p class="cl">    mosaic_image.save(output_filename, 'PNG')</p>
+<p class="clf">    print("saved output to %s" % (output_filename,))</p>
+<p class="cl">    print('done.')</p>
+<p class="clf">    # creation time</p>
+<p class="cl">    t2 = timeit.default_timer()</p>
+<p class="clf">    print('Execution time:    setup: %f seconds' % (t1 - start, ))</p>
+<p class="cl">    print('Execution time: creation: %f seconds' % (t2 - t1, ))</p>
+<p class="cl">    print('Execution time:    total: %f seconds' % (t2 - start, ))</p>
+<p class="clf"># standard boilerplate to call the main() function to begin</p>
+<p class="cl"># the program.</p>
+<p class="cl">if __name__ == '__main__':</p>
+<p class="cl">    main()</p>
+</div>
+</section>
+</section>
+</div></body></html>

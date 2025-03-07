@@ -1,0 +1,243 @@
+<html><head></head><body><div id="sbo-rt-content"><section>
+<header>
+<h1 class="chapterTitle">
+<span class="ChapterNumber"><span epub:type="pagebreak" title="149" id="Page_149"/>8</span><br/>
+<span class="ChapterTitle">Language</span>
+</h1>
+</header>
+<figure class="opener">
+<img src="Images/circleart.png" alt=""/>
+</figure>
+<p class="ChapterIntro">In this chapter, we step into the messy world of human language. We’ll start by discussing the differences between language and math that make language algorithms difficult. We’ll continue by building a space insertion algorithm that can take any text in any language and insert spaces wherever they’re missing. After that, we’ll build a phrase completion algorithm that can imitate the style of a writer and find the most fitting next word in a phrase.</p>
+<p>The algorithms in this chapter rely heavily on two tools that we haven’t used before: list comprehensions and corpuses. <em>List comprehensions</em> enable us to quickly generate lists using the logic of loops and iterations. They’re optimized to run very quickly in Python and they’re easy to write concisely, but they can be hard to read and their syntax takes some getting used to. A <em>corpus</em> is a body of text that will “teach” our algorithm the language and style we want it to use.</p>
+<h2 id="h1-123456c08-0001"><span epub:type="pagebreak" title="150" id="Page_150"/>Why Language Algorithms Are Hard</h2>
+<p class="BodyFirst">The application of algorithmic thinking to language goes back at least as far as Descartes, who noticed that although there are infinite numbers, anyone with a rudimentary understanding of arithmetic knows how to create or interpret a number they’ve never encountered before. For example, maybe you’ve never encountered the number 14,326—never counted that high, never read a financial report about that many dollars, never mashed exactly those keys on the keyboard. And yet I’m confident that you can easily grasp exactly how high it is, what numbers are higher or lower than it, and how to manipulate it in equations.</p>
+<p>The algorithm that lets us easily understand hitherto unimagined numbers is simply a combination of the 10 digits (0–9), memorized in order, and the place system. We know that 14,326 is one higher than 14,325 because the digit 6 comes one after the digit 5 in order, they occupy the same place in their respective numbers, and the digits in all the other places are the same. Knowing the digits and the place system enables us to instantly have an idea of how 14,326 is similar to 14,325 and how both are larger than 12 and smaller than 1,000,000. We can also understand at a glance that 14,326 is similar to 4,326 in some respects but differs greatly in size.</p>
+<p>Language is not the same. If you are learning English and you see the word <em>stage</em> for the first time, you cannot reliably reason about its meaning simply by noting its similarity to <em>stale</em> or <em>stake</em> or <em>state</em> or <em>stave</em> or <em>stade</em> or <em>sage</em>, even though those words differ from <em>stage</em> about as much as 14,326 does from 14,325. Nor can you reliably suppose that a bacterium is larger than an elk because of the number of syllables and characters in the words. Even supposedly reliable rules of language, like adding <em>s</em> to form plurals in English, can lead us badly astray when we infer that the word “princes” refers to less of something than the word “princess.”</p>
+<p>In order to use algorithms with language, we must either make language simpler, so that the short mathematical algorithms we have explored so far can reliably work with it, or make our algorithms smarter, so that they can deal with the messy complexity of human language as it has developed naturally. We’ll do the latter.</p>
+<h2 id="h1-123456c08-0002">Space Insertion</h2>
+<p class="BodyFirst">Imagine that you are the chief algorithm officer at a large old company that has a warehouse full of handwritten paper records. The chief record digitization officer has been conducting a long-term project of scanning those paper records to image files, and then using text recognition technology to convert the images to text that can be easily stored in the company’s databases. However, some of the handwriting on the records is awful and the text recognition technology is imperfect, so the final digital text that is extracted from a paper record is sometimes incorrect. You’ve been given only the digitized text and you’re asked to find a way to correct the mistakes without referring to the paper originals.</p>
+<p><span epub:type="pagebreak" title="151" id="Page_151"/>Suppose that you read the first digitized sentence into Python and find that it’s a quote from G. K. Chesterton: “The one perfectly divine thing, the one glimpse of God’s paradise given on earth, is to fight a losing battle—and not lose it.” You take this imperfectly digitized text and store it in a variable called <code>text</code>:</p>
+<pre><code>text = "The oneperfectly divine thing, the oneglimpse of God's paradisegiven on earth, is to fight a losingbattle - and notlose it."</code></pre>
+<p>You’ll notice that this text is in English, and while the spelling of each word is correct, there are missing spaces throughout: <code>oneperfectly</code> should actually be <code>one perfectly</code>, <code>paradisegiven</code> should be <code>paradise given</code>, and so on. (Missing a space is uncommon for humans, but text recognition technology often makes this kind of mistake.) In order to do your job, you’ll have to insert spaces at the appropriate spots in this text. For a fluent English speaker, this task may not seem difficult to do manually. However, imagine that you need to do it quickly for millions of scanned pages—you will obviously need to write an algorithm that can do it for you.</p>
+<h3 id="h2-123456c08-0001">Defining a Word List and Finding Words</h3>
+<p class="BodyFirst">The first thing we will do is teach our algorithm some English words. This isn’t very hard: we can define a list called <code>word_list</code> and populate it with words. Let’s start with just a few words:</p>
+<pre><code>word_list = ['The','one','perfectly','divine']</code></pre>
+<p>In this chapter, we’ll create and manipulate lists using list comprehensions, which you’ll probably like after you get used to them. The following is a very simple list comprehension that creates a copy of our <code>word_list</code>:</p>
+<pre><code>word_list_copy = [word for word in word_list]</code></pre>
+<p>You can see that the syntax <code>for word in word_list</code> is very similar to the syntax for a <code>for</code> loop. But we don’t need a colon or extra lines. In this case, the list comprehension is as simple as possible, just specifying that we want each word in <code>word_list</code> to be in our new list, <code>word_list_copy</code>. This may not be so useful, but we can concisely add logic to make it more useful. For example, if we want to find every word in our word list that contains the letter <em>n</em>, all it takes is the simple addition of an <code>if</code> statement:</p>
+<pre><code>has_n = [word for word in word_list if 'n' in word]</code></pre>
+<p>We can run <code>print(has_n)</code> to see that the result is what we expect:</p>
+<pre><code>['one', 'divine']</code></pre>
+<p>Later in the chapter, you’ll see more complex list comprehensions, including some that have nested loops. However, all of them follow the same basic pattern: a <code>for</code> loop specifying iteration, with optional <code>if</code> statements describing the logic of what we want to select for our final list output.</p>
+<p><span epub:type="pagebreak" title="152" id="Page_152"/>We’ll use Python’s <code>re</code> module to access text manipulation tools. One of <code>re</code>’s useful functions is <code>finditer()</code>, which can search our text to find the location of any word in our <code>word_list</code>. We use <code>finditer()</code> in a list comprehension like so:</p>
+<pre><code>import re
+locs = list(set([(m.start(),m.end()) for word in word_list for m in re.finditer(word, text)]))</code></pre>
+<p>That line is a little dense, so take a moment to make sure you understand it. We’re defining a variable called <code>locs</code>, short for “locations”; this variable will contain the locations in the text of every word in our word list. We’ll use a list comprehension to get this list of locations.</p>
+<p>The list comprehension takes place inside the square brackets (<code>[]</code>). We use <code>for word in word_list</code> to iterate over every word in our <code>word_list</code>. For each word, we call <code>re.finditer()</code>, which finds the selected word in our text and returns a list of every location where that word occurs. We iterate over these locations, and each individual location is stored in <code>m</code>. When we access <code>m.start()</code> and <code>m.end()</code>, we’ll get the location in the text of the beginning and end of the word, respectively. Notice—and get used to—the order of the <code>for</code> loops, since some people find it the opposite of the order they expected.</p>
+<p>The whole list comprehension is enveloped by <code>list(set())</code>. This is a convenient way to get a list that contains only unique values with no duplicates. Our list comprehension alone might have multiple identical elements, but converting it to a set automatically removes duplicates, and then converting it back to a list puts it in the format we want: a list of unique word locations. You can run <code>print(locs)</code> to see the result of the whole operation:</p>
+<pre><code>[(17, 23), (7, 16), (0, 3), (35, 38), (4, 7)]</code></pre>
+<p>In Python, ordered pairs like these are called <em>tuples</em>, and these tuples show the locations of each word from <code>word_list</code> in our text. For example, when we run <code>text[17:23] </code>(using the numbers from the third tuple in the preceding list), we find that it’s <code>divine</code>. Here, <code>d</code> is the 17th character of our text, <code>i</code> is the 18th character of our text, and so on until <code>e</code>, the final letter of <code>divine</code>, is the 22nd character of our text, so the tuple is rounded off with 23. You can check that the other tuples also refer to the locations of words in our <code>word_list</code>.</p>
+<p>Notice that <code>text[4:7]</code> is <code>one</code>, and <code>text[7:16]</code> is <code>perfectly</code>. The end of the word <code>one</code> runs into the beginning of the word <code>perfectly</code> without any intervening space. If we hadn’t noticed that immediately by reading the text, we could have caught it by looking at the tuples (4, 7) and (7, 16) in our <code>locs</code> variable: since 7 is the second element of (4, 7) and also the first element of (7, 16), we know that one word ends in the same index where another word begins. In order to find places where we need to insert spaces, we’ll look for cases like this: where the end of one valid word is at the same place as the beginning of another valid word.</p>
+<h3 id="h2-123456c08-0002">Dealing with Compound Words</h3>
+<p class="BodyFirst">Unfortunately, two valid words appearing together without a space is not conclusive evidence that a space is missing. Consider the word <em>butterfly</em>. We <span epub:type="pagebreak" title="153" id="Page_153"/>know that <em>butter</em> is a valid word and <em>fly</em> is a valid word, but we can’t necessarily conclude that <em>butterfly</em> was written in error, because <em>butterfly</em> is also a valid word. So we need to check not only for valid words that appear together without a space but also for valid words that, when mashed together without a space, do not together form another valid word. This means that in our text, we need to check whether <code>oneperfectly</code> is a word, whether <code>paradisegiven</code> is a word, and so on.</p>
+<p>In order to check this, we need to find all the spaces in our text. We can look at all the substrings between two consecutive spaces and call those potential words. If a potential word is not in our word list, then we’ll conclude that it’s invalid. We can check each invalid word to see whether it’s made up of a combination of two smaller words; if it is, we’ll conclude that there’s a missing space and add it back in, right between the two valid words that have combined to form the invalid word.</p>
+<h3 id="h2-123456c08-0003">Checking Between Existing Spaces for Potential Words</h3>
+<p class="BodyFirst">We can use <code>re.finditer()</code> again to find all the spaces in our text, which we’ll store in a variable called <code>spacestarts</code>. We’ll also add two more elements to our <code>spacestarts</code> variable: one to represent the location of the beginning of the text and one to represent the location of the end. This ensures that we find every potential word, since words at the very beginning and end will be the only words that are not between spaces. We also add a line that sorts the <code>spacestarts</code> list:</p>
+<pre><code>spacestarts = [m.start() for m in re.finditer(' ', text)]
+spacestarts.append(-1)
+spacestarts.append(len(text))
+spacestarts.sort()</code></pre>
+<p>The list <code>spacestarts</code> records the locations of the spaces in our text. We got these locations by using a list comprehension and the <code>re.finditer()</code> tool. In this case, <code>re.finditer()</code> finds the location of every space in the text and stores it in a list, which refers to each individual element as <code>m</code>. For each of those <code>m</code> elements, which are spaces, we get the location where the space begins by using the <code>start()</code> function. We are looking for potential words between those spaces. It will be useful to have another list that records the locations of characters that come just after a space; these will be the locations of the first character of each potential word. We’ll call that list <code>spacestarts_affine</code>, since in technical terms, this new list is an affine transformation of the <code>spacestarts</code> list. <em>Affine</em> is often used to refer to linear transformations, such as adding 1 to each location, which we’ll do here. We’ll also sort this list:</p>
+<pre><code>spacestarts_affine = [ss+1 for ss in spacestarts]
+spacestarts_affine.sort()</code></pre>
+<p>Next, we can get all the substrings that are between two spaces:</p>
+<pre><code>between_spaces = [(spacestarts[k] + 1,spacestarts[k + 1]) for k in range(0,len(spacestarts) - 1 )]</code></pre>
+<p><span epub:type="pagebreak" title="154" id="Page_154"/>The variable we’re creating here is called <code>between_spaces</code>, and it’s a list of tuples of the form (<em>&lt;location of beginning of substring&gt;</em>, <em>&lt;location of end of substring&gt;</em>), like (17, 23). The way we get these tuples is through a list comprehension. This list comprehension iterates over <code>k</code>. In this case, <code>k</code> takes on the values of integers between 0 and one less than the length of the <code>spacestarts</code> list. For each <code>k</code>, we will generate one tuple. The first element of the tuple is <code>spacestarts[k]+1</code>, which is one position after the location of each space. The second element of the tuple is <code>spacestarts[k+1]</code>, which is the location of the next space in the text. This way, our final output contains tuples that indicate the beginning and end of each substring between spaces.</p>
+<p>Now, consider all of the potential words that are between spaces, and find the ones that are not valid (not in our word list):</p>
+<pre><code>between_spaces_notvalid = [loc for loc in between_spaces if \text[loc[0]:loc[1]] not in word_list]</code></pre>
+<p>Looking at <code>between_spaces_notvalid</code>, we can see that it’s a list of the locations of all invalid potential words in our text:</p>
+<pre><code>[(4, 16), (24, 30), (31, 34), (35, 45), (46, 48), (49, 54), (55, 68), (69, 71), (72, 78), (79, 81), (82, 84), (85, 90), (91, 92), (93, 105), (106, 107), (108, 111), (112, 119), (120, 123)]</code></pre>
+<p>Our code thinks that all these locations refer to invalid words. However, if you look at some of the words referred to here, they look pretty valid. For example, <code>text[103:106]</code> outputs the valid word <code>and</code>. The reason our code thinks that <code>and</code> is an invalid word is that it isn’t in our word list. Of course, we could add it to our word list manually and continue using that approach as we need our code to recognize words. But remember that we want this space insertion algorithm to work for millions of pages of scanned text, and they may contain many thousands of unique words. It would be helpful if we could import a word list that already contained a substantial body of valid English words. Such a collection of words is referred to as a <em>corpus.</em></p>
+<h3 id="h2-123456c08-0004">Using an Imported Corpus to Check for Valid Words</h3>
+<p class="BodyFirst">Luckily, there are existing Python modules that allow us to import a full corpus with just a few lines. First, we need to download the corpus:</p>
+<pre><code>import nltk
+nltk.download('brown')</code></pre>
+<p>We’ve downloaded a corpus called <code>brown</code> from the module called <code>nltk</code>. Next, we’ll import the corpus:</p>
+<pre><code>from nltk.corpus import brown
+wordlist = set(brown.words())
+word_list = list(wordlist)</code></pre>
+<p><span epub:type="pagebreak" title="155" id="Page_155"/>We have imported the corpus and converted its collection of words into a Python list. Before we use this new <code>word_list</code>, however, we should do some cleanup to remove what it thinks are words but are actually punctuation marks:</p>
+<pre><code>word_list = [word.replace('*','') for word in word_list]
+word_list = [word.replace('[','') for word in word_list]
+word_list = [word.replace(']','') for word in word_list]
+word_list = [word.replace('?','') for word in word_list]
+word_list = [word.replace('.','') for word in word_list]
+word_list = [word.replace('+','') for word in word_list]
+word_list = [word.replace('/','') for word in word_list]
+word_list = [word.replace(';','') for word in word_list]
+word_list = [word.replace(':','') for word in word_list]
+word_list = [word.replace(',','') for word in word_list]
+word_list = [word.replace(')','') for word in word_list]
+word_list = [word.replace('(','') for word in word_list]
+word_list.remove('')</code></pre>
+<p>These lines use the <code>remove()</code> and <code>replace()</code> functions to replace punctuation with empty strings and then remove the empty strings. Now that we have a suitable word list, we’ll be able to recognize invalid words more accurately. We can rerun our check for invalid words using our new <code>word_list</code> and get better results:</p>
+<pre><code>between_spaces_notvalid = [loc for loc in between_spaces if \text[loc[0]:loc[1]] not in word_list]</code></pre>
+<p>When we print the list <code>between_spaces_notvalid</code>, we get a shorter and more accurate list:</p>
+<pre><code>[(4, 16), (24, 30), (35, 45), (55, 68), (72, 78), (93, 105), (112, 119), (120, 123)]</code></pre>
+<p>Now that we have found the invalid potential words in our text, we’ll check in our word list for words that could be combined to form those invalid words. We can begin by looking for words that start just after a space. These words could be the first half of an invalid word:</p>
+<pre><code>partial_words = [loc for loc in locs if loc[0] in spacestarts_affine and \loc[1] not in spacestarts]</code></pre>
+<p>Our list comprehension iterates over every element of our <code>locs</code> variable, which contains the location of every word in the text. It checks whether <code>locs[0]</code>, the beginning of the word, is in <code>spacestarts_affine</code>, a list containing the characters that come just after a space. Then it checks whether <code>loc[1]</code> is not in <code>spacestarts</code>, which checks whether the word ends where a space begins. If a word starts after a space and doesn’t end at the same place as a space, we put it in our <code>partial_words</code> variable, because this could be a word that needs to have a space inserted after it.</p>
+<p><span epub:type="pagebreak" title="156" id="Page_156"/>Next, let’s look for words that end with a space. These could be the second half of an invalid word. To find them, we make some small changes to the previous logic:</p>
+<pre><code>partial_words_end = [loc for loc in locs if loc[0] not in spacestarts_affine \and loc[1] in spacestarts]</code></pre>
+<p>Now we can start inserting spaces.</p>
+<h3 id="h2-123456c08-0005">Finding First and Second Halves of Potential Words</h3>
+<p class="BodyFirst">Let’s start by inserting a space into <code>oneperfectly</code>. We’ll define a variable called <code>loc</code> that stores the location of <code>oneperfectly</code> in our text:</p>
+<pre><code>loc = between_spaces_notvalid[0]</code></pre>
+<p>We now need to check whether any of the words in <code>partial_words</code> could be the first half of <code>oneperfectly</code>. For a valid word to be the first half of <code>oneperfectly</code>, it would have to have the same beginning location in the text , but not the same ending location, as <code>oneperfectly</code>. We’ll write a list comprehension that finds the ending location of every valid word that begins at the same location as <code>oneperfectly</code>:</p>
+<pre><code>endsofbeginnings = [loc2[1] for loc2 in partial_words if loc2[0] == loc[0] \and (loc2[1] - loc[0]) &gt; 1]</code></pre>
+<p>We’ve specified <code>loc2[0] == loc[0]</code>, which says that our valid word must start at the same place as <code>oneperfectly</code>. We’ve also specified <code>(loc2[1]-loc[0])&gt;1</code>, which ensures that the valid word we find is more than one character long. This is not strictly necessary, but it can help us avoid false positives. Think of words like <em>avoid</em>, <em>aside</em>, <em>along</em>, <em>irate</em>, and <em>iconic</em>, in which the first letter could be considered a word on its own but probably shouldn’t be.</p>
+<p>Our list <code>endsofbeginnings</code> should include the ending location of every valid word that begins at the same place as <code>oneperfectly</code>. Let’s use a list comprehension to create a similar variable, called <code>beginningsofends</code>, that will find the beginning location of every valid word that ends at the same place as <code>oneperfectly</code>:</p>
+<pre><code>beginningsofends = [loc2[0] for loc2 in partial_words_end if loc2[1] == loc[1] and \(loc2[1] - loc[0]) &gt; 1]</code></pre>
+<p>We’ve specified <code>loc2[1] == loc[1]</code>, which says that our valid word must end at the same place as <code>oneperfectly</code>. We’ve also specified <code>(loc2[1]-loc[0])&gt;1</code>, which ensures that the valid word we find is more than one character long, just as we did before.</p>
+<p>We’re almost home; we just need to find whether any locations are contained in both <code>endsofbeginnings</code> and <code>beginningsofends</code>. If there are, that means <span epub:type="pagebreak" title="157" id="Page_157"/>that our invalid word is indeed a combination of two valid words without a space. We can use the <code>intersection()</code> function to find all elements that are shared by both lists:</p>
+<pre><code>pivot = list(set(endsofbeginnings).intersection(beginningsofends))</code></pre>
+<p>We use the <code>list(set())</code> syntax again; just like before, it’s to make sure that our list contains only unique values, with no duplicates. We call the result <code>pivot</code>. It’s possible that <code>pivot</code> will contain more than one element. This would mean that there are more than two possible combinations of valid words that could compose our invalid word. If this happens, we’ll have to decide which combination is the one the original writer intended. This cannot be done with certainty. For example, consider the invalid word <em>choosespain</em>. It’s possible that this invalid word is from a travel brochure for Iberia (“Choose Spain!”), but it’s also possible that it’s from a description of a masochist (“chooses pain”). Because of the huge quantity of words in our language and the numerous ways they can be combined, sometimes we can’t be certain which is right. A more sophisticated approach would take into account context—whether other words around <em>choosespain</em> tend to be about olives and bullfighting or about whips and superfluous dentist appointments. Such an approach would be difficult to do well and impossible to do perfectly, illustrating again the difficulty of language algorithms in general. In our case, we’ll take the smallest element of <code>pivot</code>, not because this is certainly the correct one, but just because we have to take one:</p>
+<pre><code>import numpy as np
+pivot = np.min(pivot)</code></pre>
+<p>Finally, we can write one line that replaces our invalid word with the two valid component words plus a space:</p>
+<pre><code>textnew = text
+textnew = textnew.replace(text[loc[0]:loc[1]],text[loc[0]:pivot]+' '+text[pivot:loc[1]])</code></pre>
+<p>If we print this new text, we can see that it has correctly inserted a space into the misspelling <code>oneperfectly</code>, though it hasn’t yet inserted spaces in the rest of the misspellings.</p>
+<pre><code>The one perfectly divine thing, the oneglimpse of God's paradisegiven on earth, is to fight a losingbattle - and notlose it.</code></pre>
+<p>We can put all this together into one beautiful function, shown in <a id="listinganchor8-1" href="#listing8-1">Listing 8-1</a>. This function will use a <code>for</code> loop to insert spaces into every instance of two valid words running together to become an invalid word.</p>
+<pre><code>def insertspaces(text,word_list):
+
+    locs = list(set([(m.start(),m.end()) for word in word_list for m in re.finditer(word, \text)]))
+<span epub:type="pagebreak" title="158" id="Page_158"/>    spacestarts = [m.start() for m in re.finditer(' ', text)]
+    spacestarts.append(-1)
+    spacestarts.append(len(text))
+    spacestarts.sort()
+    spacestarts_affine = [ss + 1 for ss in spacestarts]
+    spacestarts_affine.sort()
+    partial_words = [loc for loc in locs if loc[0] in spacestarts_affine and loc[1] not in \    spacestarts]
+    partial_words_end = [loc for loc in locs if loc[0] not in spacestarts_affine and loc[1] \    in spacestarts]
+    between_spaces = [(spacestarts[k] + 1,spacestarts[k+1]) for k in \    range(0,len(spacestarts) - 1)]
+    between_spaces_notvalid = [loc for loc in between_spaces if text[loc[0]:loc[1]] not in \    word_list]
+    textnew = text
+    for loc in between_spaces_notvalid:
+        endsofbeginnings = [loc2[1] for loc2 in partial_words if loc2[0] == loc[0] and \    (loc2[1] - loc[0]) &gt; 1]
+        beginningsofends = [loc2[0] for loc2 in partial_words_end if loc2[1] == loc[1] and \    (loc2[1] - loc[0]) &gt; 1]
+        pivot = list(set(endsofbeginnings).intersection(beginningsofends))
+        if(len(pivot) &gt; 0):
+            pivot = np.min(pivot)
+            textnew = textnew.replace(text[loc[0]:loc[1]],text[loc[0]:pivot]+' \            '+text[pivot:loc[1]])
+    textnew = textnew.replace('  ',' ')
+    return(textnew)</code></pre>
+<p class="CodeListingCaption"><a id="listing8-1" href="#listinganchor8-1">Listing 8-1:</a> A function that inserts spaces into texts, combining much of the code in the chapter so far</p>
+<p>Then we can define any text and call our function as follows:</p>
+<pre><code>text = "The oneperfectly divine thing, the oneglimpse of God's paradisegiven on earth, is to \fight a losingbattle - and notlose it."
+print(insertspaces(text,word_list))</code></pre>
+<p>We see the output just as we expect, with spaces inserted perfectly:</p>
+<pre><code>The one perfectly divine thing, the one glimpse of God's paradise given on earth, is to fight a losing battle - and not lose it.</code></pre>
+<p>We’ve created an algorithm that can correctly insert spaces into English text. One thing to consider is whether you can do the same for other languages. You can—as long as you read in a good, appropriate corpus for the language you’re working with to define the <code>word_list</code>, the function we defined and called in this example can correctly insert spaces into text in any language. It can even correct a text in a language you’ve never studied or even heard of. Try different corpuses, different languages, and different texts to see what kind of results you can get, and you’ll get a glimpse of the power of language algorithms.</p>
+<h2 id="h1-123456c08-0003"><span epub:type="pagebreak" title="159" id="Page_159"/>Phrase Completion</h2>
+<p class="BodyFirst">Imagine that you are doing algorithm consulting work for a startup that is trying to add features to a search engine they are building. They want to add phrase completion so that they can provide search suggestions to users. For example, when a user types in <code>peanut</code><code>butter and</code>, a search suggestion feature might suggest adding the word <code>jelly</code>. When a user types in <code>squash</code>, the search engine could suggest both <code>court</code> and <code>soup</code>.</p>
+<p>Building this feature is simple. We’ll start with a corpus, just like we did with our space checker. In this case, we’re interested not only in the individual words of our corpus but also in how the words fit together, so we’ll compile lists of n-grams from our corpus. An <em>n-gram</em> is simply a collection of <em>n</em> words that appear together. For example, the phrase “Reality is not always probable, or likely” is made up of seven words once spoken by the great Jorge Luis Borges. A 1-gram is an individual word, so the 1-grams of this phrase are <em>reality</em>, <em>is</em>, <em>not</em>, <em>always</em>, <em>probable</em>, <em>or</em>, and <em>likely</em>. The 2-grams are every string of two words that appear together, including <em>reality</em><em>is</em>, <em>is not</em>, <em>not always</em>, <em>always probable</em>, and so on. The 3-grams are <em>reality is not</em>, <em>is not always</em>, and so on.</p>
+<h3 id="h2-123456c08-0006">Tokenizing and Getting N-grams</h3>
+<p class="BodyFirst">We’ll use a Python module called <code>nltk</code> to make n-gram collection easy. We’ll first tokenize our text. <em>Tokenizing</em> simply means splitting a string into its component words, ignoring punctuation. For example:</p>
+<pre><code>from nltk.tokenize import sent_tokenize, word_tokenize
+text = "Time forks perpetually toward innumerable futures"
+print(word_tokenize(text))</code></pre>
+<p>The result we see is this:</p>
+<pre><code>['Time', 'forks', 'perpetually', 'toward', 'innumerable', 'futures']</code></pre>
+<p>We can tokenize and get the n-grams from our text as follows:</p>
+<pre><code>import nltk
+from nltk.util import ngrams
+token = nltk.word_tokenize(text)
+bigrams = ngrams(token,2)
+trigrams = ngrams(token,3)
+fourgrams = ngrams(token,4)
+fivegrams = ngrams(token,5)</code></pre>
+<p>Alternatively, we can put all the n-grams in a list called <code>grams</code>:</p>
+<pre><code>grams = [ngrams(token,2),ngrams(token,3),ngrams(token,4),ngrams(token,5)]</code></pre>
+<p>In this case, we have gotten a tokenization and a list of n-grams for a short one-sentence text. However, in order to have an all-purpose phrase <span epub:type="pagebreak" title="160" id="Page_160"/>completion tool, we’ll need a considerably larger corpus. The <code>brown</code> corpus we used for space insertion won’t work because it consists of single words and so we can’t get its n-grams.</p>
+<p>One corpus we could use is a collection of literary texts made available online by Google’s Peter Norvig at <a href="http://norvig.com/big.txt" class="LinkURL">http://norvig.com/big.txt</a>. For the examples in this chapter, I downloaded a file of Shakespeare’s complete works, available for free online at <em><a href="http://www.gutenberg.org/files/100/100-0.txt" class="LinkURL">http://www.gutenberg.org/files/100/100-0.txt</a></em>, and then removed the Project Gutenberg boilerplate text on the top. You could also use the complete works of Mark Twain, available at <em><a href="http://www.gutenberg.org/cache/epub/3200/pg3200.txt" class="LinkURL">http://www.gutenberg.org/cache/epub/3200/pg3200.txt</a></em>. Read a corpus into Python as follows:</p>
+<pre><code>import requests
+file = requests.get('http://www.bradfordtuckfield.com/shakespeare.txt')
+file = file.text
+text = file.replace('\n', '')</code></pre>
+<p>Here, we used the <code>requests</code> module to directly read a text file containing the collected works of Shakespeare from a website where it’s being hosted, and then read it into our Python session in a variable called <code>text</code>.</p>
+<p>After reading in your chosen corpus, rerun the code that created the <code>grams</code> variable. Here it is with the new definition of the <code>text</code> variable:</p>
+<pre><code>token = nltk.word_tokenize(text)
+bigrams = ngrams(token,2)
+trigrams = ngrams(token,3)
+fourgrams = ngrams(token,4)
+fivegrams = ngrams(token,5)
+grams = [ngrams(token,2),ngrams(token,3),ngrams(token,4),ngrams(token,5)]</code></pre>
+<h3 id="h2-123456c08-0007">Our Strategy</h3>
+<p class="BodyFirst">Our strategy for generating search suggestions is simple. When a user types in a search, we check how many words are in their search. In other words, a user enters an n-gram and we determine what<em> n </em>is. When a user searches for an n-gram, we are helping them add to their search, so we will want to suggest an <em>n </em>+ 1-gram. We’ll search  our corpus and find all <em>n </em>+ 1-grams whose first <em>n</em> elements match our n-gram. For example, a user might search for <code>crane</code>, a 1-gram, and our corpus might contain the 2-grams <code>crane feather</code>, <code>crane operator</code>, and <code>crane neck</code>. Each is a potential search suggestion we could offer.</p>
+<p>We could stop there, providing every <em>n </em>+ 1-gram whose first <em>n</em> elements matched the <em>n </em>+ 1-gram the user had entered. However, not all suggestions are equally good. For example, if we are working for a custom engine that searches through manuals for industrial construction equipment, it’s likely that <code>crane operator</code> will be a more relevant, useful suggestion than <code>crane feather</code>. The simplest way to determine which<em> n </em>+ 1-gram is the best suggestion is to offer the<em> </em>one that appears most often in our corpus.</p>
+<p>Thus, our full algorithm: a user searches for an n-gram, we find all <em>n </em>+ 1-grams whose first <em>n</em> elements match the user’s n-gram, and we recommend the matching <em>n </em>+ 1-gram that appears most frequently in the corpus.</p>
+<h3 id="h2-123456c08-0008"><span epub:type="pagebreak" title="161" id="Page_161"/>Finding Candidate <em>n</em> + 1-grams</h3>
+<p class="BodyFirst">In order to find the <em>n </em>+ 1-grams that will constitute our search suggestions, we need to know how long the user’s search term is. Suppose the search term is <code>life is a</code>, meaning that we’re looking for suggestions for how to complete the phrase “life is a . . .”. We can use the following simple lines to get the length of our search term:</p>
+<pre><code>from nltk.tokenize import sent_tokenize, word_tokenize
+search_term = 'life is a'
+split_term = tuple(search_term.split(' '))
+search_term_length = len(search_term.split(' '))</code></pre>
+<p>Now that we know the length of the search term, we know <em>n</em>—it’s 3. Remember that we’ll be returning the most frequent <em>n </em>+ 1-grams (4-grams) to the user. So we need to take into account the different frequencies of different <em>n </em>+ 1-grams. We’ll use a function called <code>Counter()</code>, which will count the number of occurrences of each <em>n </em>+ 1-gram in our collection.</p>
+<pre><code>from collections import Counter
+counted_grams = Counter(grams[search_term_length - 1])</code></pre>
+<p>This line has selected only the <em>n </em>+ 1-grams from our <code>grams</code> variable. Applying the <code>Counter()</code> function creates a list of tuples. Each tuple has an <em>n </em>+ 1-gram as its first element and the frequency of that <em>n </em>+ 1-gram in our corpus as its second element. For example, we can print the first element of <code>counted_grams</code>:</p>
+<pre><code>print(list(counted_grams.items())[0])</code></pre>
+<p>The output shows us the first <em>n </em>+ 1-gram in our corpus and tells us that it appears only once in the entire corpus:</p>
+<pre><code>(('From', 'fairest', 'creatures', 'we'), 1)</code></pre>
+<p>This n-gram is the beginning of Shakespeare’s Sonnet 1. It’s fun to look at some of the interesting 4-grams we can randomly find in Shakespeare’s works. For example, if you run <code>print(list(counted_grams)[10])</code>, you can see that the 10th 4-gram in Shakespeare’s works is “rose might never die.” If you run <code>print(list(counted_grams)[240000])</code>, you can see that the 240,000th n-gram is “I shall command all.” The 323,002nd is “far more glorious star” and the 328,004th is “crack my arms asunder.” But we want to do phrase completion, not just <em>n </em>+ 1-gram browsing. We need to find the subset of <em>n </em>+ 1-grams whose first <em>n</em> elements match our search term. We can do that as follows:</p>
+<pre><code>matching_terms = [element for element in list(counted_grams.items()) if \element[0][:-1] == tuple(split_term)]</code></pre>
+<p>This list comprehension iterates over every <em>n </em>+ 1-gram and calls each element as it does so. For each element, it checks whether <code>element[0][:-1]==tuple(split_term)</code>. The left side of this equality, <code>element[0][:-1]</code>, <span epub:type="pagebreak" title="162" id="Page_162"/>simply takes the first <em>n</em> elements of each <em>n</em> + 1-gram: the <code>[:-1]</code> is a handy way to disregard the last element of a list. The right side of the equality, <code>tuple(split_term)</code>, is the n-gram we’re searching for (“life is a”). So we’re checking for <em>n </em>+ 1-grams whose first <em>n</em> elements are the same as our n-gram of interest. Whichever terms match are stored in our final output, called <code>matching_terms</code>.</p>
+<h3 id="h2-123456c08-0009">Selecting a Phrase Based on Frequency</h3>
+<p class="BodyFirst">Our <code>matching_terms</code> list has everything we need to finish the job; it consists of <em>n </em>+ 1-grams whose first <em>n</em> elements match the search term, and it includes their frequencies in our corpus. As long as there is at least one element in the matching terms list, we can find the element that occurs most frequently in the corpus and suggest it to the user as the completed phrase. The following snippet gets the job done:</p>
+<pre><code>if(len(matching_terms)&gt;0):
+    frequencies = [item[1] for item in matching_terms]
+    maximum_frequency = np.max(frequencies)
+    highest_frequency_term = [item[0] for item in matching_terms if item[1] == \maximum_frequency][0]
+    combined_term = ' '.join(highest_frequency_term)</code></pre>
+<p>In this snippet, we started by defining <code>frequencies</code>, a list containing the frequency of every <em>n </em>+ 1-gram in our corpus that matches the search term. Then, we used the <code>numpy</code> module’s <code>max()</code> function to find the highest of those frequencies. We used another list comprehension to get the first <em>n </em>+ 1-gram that occurs with the highest frequency in the corpus, and finally we created a <code>combined_term</code>, a string that puts together all of the words in that search term, with spaces separating the words.</p>
+<p>Finally, we can put all of our code together in a function, shown in <a id="listinganchor8-2" href="#listing8-2">Listing 8-2</a>.</p>
+<pre><code>def search_suggestion(search_term, text):
+    token = nltk.word_tokenize(text)
+    bigrams = ngrams(token,2)
+    trigrams = ngrams(token,3)
+    fourgrams = ngrams(token,4)
+    fivegrams = ngrams(token,5)
+    grams = [ngrams(token,2),ngrams(token,3),ngrams(token,4),ngrams(token,5)]
+    split_term = tuple(search_term.split(' '))
+    search_term_length = len(search_term.split(' '))
+    counted_grams = Counter(grams[search_term_length-1])
+    combined_term = 'No suggested searches'    
+    matching_terms = [element for element in list(counted_grams.items()) if \element[0][:-1] == tuple(split_term)]
+    if(len(matching_terms) &gt; 0):
+        frequencies = [item[1] for item in matching_terms]
+        maximum_frequency = np.max(frequencies)
+<span epub:type="pagebreak" title="163" id="Page_163"/>        highest_frequency_term = [item[0] for item in matching_terms if item[1] == \maximum_frequency][0]
+        combined_term = ' '.join(highest_frequency_term)
+    return(combined_term)</code></pre>
+<p class="CodeListingCaption"><a id="listing8-2" href="#listinganchor8-2">Listing 8-2:</a> A function that provides search suggestions by taking an n-gram and returning the most likely n + 1-gram that starts with the input n-gram</p>
+<p>When we call our function, we pass an n-gram as the argument, and the function returns an <em>n </em>+ 1-gram. We call it as follows:</p>
+<pre><code>file = requests.get('http://www.bradfordtuckfield.com/shakespeare.txt')
+file = file=file.text
+text = file.replace('\n', '')
+print(search_suggestion('life is a', text))</code></pre>
+<p>And you can see that the suggestion is <code>life is a tedious</code>, which is the most common 4-gram that Shakespeare used that started with the words <code>life is a </code>(tied with two other 4-grams). Shakespeare used this 4-gram only once, in <em>Cymbeline</em>, when Imogen says, “I see a man’s life is a tedious one.” In <em>King Lear</em>, Edgar tells Gloucester “Thy life is a miracle” (or “Thy life’s a miracle,” depending on which text you use), so that 4-gram would also be a valid completion of our phrase.</p>
+<p>We can have some fun by trying a different corpus and seeing how the results differ. Let’s use the corpus of Mark Twain’s collected works:</p>
+<pre><code>file = requests.get('http://www.bradfordtuckfield.com/marktwain.txt')
+file = file=file.text
+text = file.replace('\n', '')</code></pre>
+<p>With this new corpus, we can check for search suggestions again:</p>
+<pre><code>print(search_suggestion('life is a',text))</code></pre>
+<p>In this case, the completed phrase is <code>life is a failure</code>, indicating a difference between the two text corpuses, and maybe also a difference between the style and attitude of Shakespeare and those of Mark Twain. You can also try other search terms. For example, <code>I love</code> is completed by <code>you</code> if we use Mark Twain’s corpus, and <code>thee</code> if we use Shakespeare’s corpus, showing a difference in style across the centuries and ocean, if not a difference in ideas. Try another corpus and some other phrases and see how your phrases get completed. If you use a corpus written in another language, you can do phrase completion for languages you don’t even speak using the exact function we just wrote.</p>
+<h2 id="h1-123456c08-0004">Summary</h2>
+<p class="BodyFirst">In this chapter, we discussed algorithms that can be used to work with human language. We started with a space insertion algorithm that can correct incorrectly scanned texts, and we continued with a phrase completion <span epub:type="pagebreak" title="164" id="Page_164"/>algorithm that can add words to input phrases to match the content and style of a text corpus. The approaches we took to these algorithms are similar to the approaches that work for other types of language algorithms, including spell checkers and intent parsers.</p>
+<p>In the next chapter, we’ll explore machine learning, a powerful and growing field that every good algorithm-smith should be familiar with. We’ll focus on a machine learning algorithm called <em>decision trees</em>, which are simple, flexible, accurate, and interpretable models that can take you far on your journey through algorithms and life.</p>
+</section>
+</div></body></html>

@@ -1,0 +1,409 @@
+<html><head></head><body>
+<div id="sbo-rt-content"><section>
+<header>
+<h1 class="chapter">
+<span class="ChapterNumber"><span epub:type="pagebreak" id="Page_141" title="141"/>7</span><br/>
+<span class="ChapterTitle">Unsupervised Learning</span></h1>
+</header>
+<figure class="opener">
+<img alt="" height="200" src="image_fi/book_art/chapterart.png" width="200"/>
+</figure>
+<p class="ChapterIntro">We’ll start this chapter with an introduction to the concept of unsupervised learning, comparing it to supervised learning. Then we’ll generate data for clustering, the most common task associated with unsupervised learning. We’ll first focus on a sophisticated method called E-M clustering. Finally, we’ll round out the chapter by looking at how other clustering methods relate to the rest of unsupervised learning.</p>
+<h2 id="h1-502888c07-0001"><span epub:type="pagebreak" id="Page_142" title="142"/>Unsupervised Learning vs. Supervised Learning</h2>
+<p class="BodyFirst">The easiest way to understand unsupervised learning is by comparing it to supervised learning. Remember from <span class="xref" itemid="xref_target_Chapter 6">Chapter 6</span> that the supervised learning process is captured by <a href="#figure7-1" id="figureanchor7-1">Figure 7-1</a>.</p>
+<figure>
+<img alt="" class="" height="106" src="image_fi/502888c07/f07001.png" width="605"/>
+<figcaption><p><a id="figure7-1">Figure 7-1</a>: The conceptual map of all supervised learning methods</p></figcaption>
+</figure>
+<p>The <em>target</em> that <a href="#figure7-1">Figure 7-1</a> refers to is the special variable in our dataset that we want to predict. The <em>features</em> are the variables in our dataset that we’ll use to predict the target. The <em>learned function</em> is a function that maps the features to the target. We can check the accuracy of the learned function by comparing our predictions to actual target values. If the predictions are very far from the target values, we know that we should try to find a better learned function. It’s like the target values are supervising our process by telling us how accurate our function is and enabling us to push toward the highest possible accuracy.</p>
+<p>Unsupervised learning doesn’t have this supervision because it doesn’t have a target variable. <a href="#figure7-2" id="figureanchor7-2">Figure 7-2</a> depicts the process of unsupervised learning.</p>
+<figure>
+<img alt="" class="" height="126" src="image_fi/502888c07/f07002.png" width="580"/>
+<figcaption><p><a id="figure7-2">Figure 7-2</a>: The conceptual map of the unsupervised learning process</p></figcaption>
+</figure>
+<p>Instead of trying to map features to a target variable, unsupervised learning is concerned with creating a model of the features themselves; it does this by finding relationships between observations and natural groups in the features. In general, it’s a way of exploring the features. Finding relationships among observations in our data can help us understand them better; it will also help us find anomalies and make the dataset a little less unwieldy.</p>
+<p>The arrow in <a href="#figure7-2">Figure 7-2</a> connects the features to themselves. This arrow indicates that we are finding ways that features relate to one another, such as the natural groups they form; it does not indicate a cycle or repeating process. This probably sounds rather abstract, so let’s make it clearer by looking at a concrete example.</p>
+<h2 id="h1-502888c07-0002"><span epub:type="pagebreak" id="Page_143" title="143"/>Generating and Exploring Data</h2>
+<p class="BodyFirst">Let’s start by looking at some data. Instead of reading in existing data as we’ve done in previous chapters, we’ll generate new data by using Python’s random number generation capabilities. Randomly generated data tends to be simpler and easier to work with than data from real life; this will help us as we’re trying to discuss the complexities of unsupervised learning.</p>
+<p>More importantly, one of the main goals of unsupervised learning is to understand how subsets of data relate to one another. Generating data ourselves will mean that we can judge whether our unsupervised learning methods have found the right relationships among subsets of our data, since we’ll know exactly where those subsets came from and how they relate.</p>
+<h3 id="h2-502888c07-0001">Rolling the Dice</h3>
+<p class="BodyFirst">We’ll start by generating simple example data with some dice rolls:</p>
+<pre><code>from random import choices,seed
+numberofrolls=1800
+seed(9)
+dice1=choices([1,2,3,4,5,6], k=numberofrolls)
+dice2=choices([1,2,3,4,5,6], k=numberofrolls)</code></pre>
+<p>In this snippet, we import the <code>choices()</code> and <code>seed()</code> functions from the <code>random</code> module. These are the functions we’ll use to do random number generation. We define a variable called <code>numberofrolls</code>, which is storing the value <code>1800</code>, the number of simulated dice rolls we want Python to generate for us. We call the <code>seed()</code> function, which isn’t necessary but will ensure you get the same results as the ones presented here in the book.</p>
+<p>Next, we create two lists, <code>dice1</code> and <code>dice2</code>, using the <code>choices()</code> function. We pass two arguments to this function: the list <code>[1,2,3,4,5,6]</code>, which tells the <code>choices()</code> function that we want it to make random selections from the integers between 1 and 6, and <code>k=numberofrolls</code>, which tells the <code>choices()</code> function that we want it to make 1,800 such selections. The <code>dice1</code> list represents 1,800 rolls of one die, and the <code>dice2</code> variable likewise represents 1,800 rolls of a second, separate die.</p>
+<p>You can look at the first 10 elements of <code>dice1</code> as follows:</p>
+<pre><code>print(dice1[0:10])</code></pre>
+<p>You should see the following output (if you ran <code>seed(9)</code> in the preceding snippet):</p>
+<pre><code>[3, 3, 1, 6, 1, 4, 6, 1, 4, 4]</code></pre>
+<p><span epub:type="pagebreak" id="Page_144" title="144"/>This list looks plausible as a record of 10 rolls of a fair die. After generating lists of 1,800 random rolls from two dice, we can find the sums of each of the 1,800 rolls:</p>
+<pre><code>dicesum=[dice1[n]+dice2[n] for n in range(numberofrolls)]</code></pre>
+<p>Here we create the <code>dicesum</code> variable by using a list comprehension. The first element of <code>dicesum</code> is the sum of the first element of <code>dice1</code> and the first element of <code>dice2</code>, the second element of <code>dicesum</code> is the sum of the second element of <code>dice1</code> and the second element of <code>dice2</code>, and so on. All of this code simulates a common scenario: rolling two dice together and looking at the sum of the numbers that are face up after rolling. But instead of rolling the dice ourselves, we have Python simulate all 1,800 rolls for us.</p>
+<p>Once we have the summed dice rolls, we can draw a histogram of all of them:</p>
+<pre><code>from matplotlib import pyplot as plt
+import numpy as np
+fig, ax = plt.subplots(figsize =(10, 7))
+ax.hist(dicesum,bins=[2,3,4,5,6,7,8,9,10,11,12,13],align='left')
+plt.show()</code></pre>
+<p><a href="#figure7-3" id="figureanchor7-3">Figure 7-3</a> shows the result.</p>
+<figure>
+<img alt="" class="" height="269" src="image_fi/502888c07/f07003.png" width="389"/>
+<figcaption><p><a id="figure7-3">Figure 7-3</a>: The outcomes of 1,800 simulated dice rolls</p></figcaption>
+</figure>
+<p>This is a histogram just like the ones we’ve seen in <span class="xref" itemid="xref_target_Chapters 1">Chapters 1</span> and<span class="xref" itemid="xref_target_ 3"> 3</span>. Each vertical bar represents a frequency of a particular dice outcome. For example, the leftmost bar indicates that of our 1,800 rolls, about 50 summed to 2. The tallest bar in the middle indicates that around 300 of our dice rolls summed to 7.</p>
+<p>Histograms like this one show us the <em>distribution</em> of our data—the relative frequency of different observations occurring. Our distribution shows that the highest and lowest values, like 2 and 12, are relatively uncommon, while the middle values, like 7, are much more common. We can also interpret a distribution in terms of probabilities: if we roll two fair dice, 7 is a highly likely outcome, and 2 and 12 are not likely outcomes. We can know <span epub:type="pagebreak" id="Page_145" title="145"/>the approximate likelihood of each outcome by looking at the height of each bar of our histogram.</p>
+<p>We can see that this histogram takes a shape that resembles a bell. The more times we roll our dice, the more bell-like our histogram will become. For large numbers of dice rolls, the histogram of outcomes is closely approximated by a special distribution called the <em>normal distribution</em>, or <em>Gaussian distribution</em>. You also met this distribution in <span class="xref" itemid="xref_target_Chapter 3">Chapter 3</span>, although in that chapter we called it by one of its other names: the bell curve. The normal distribution is a common pattern we observe when we measure the relative frequencies of certain things, like differences between means in <span class="xref" itemid="xref_target_Chapter 3">Chapter 3</span>, or sums of dice rolls here.</p>
+<p>Every bell curve is fully described by just two numbers: a <em>mean</em>, describing the center and highest point of the bell curve, and a <em>variance</em>, describing how widely spread out the bell curve is. The square root of the variance is the <em>standard deviation</em>, another measure of how widely spread out a bell curve is. We can calculate the mean and standard deviation of our dice roll data with the following simple function:</p>
+<pre><code>def getcenter(allpoints):
+    center=np.mean(allpoints)
+    stdev=np.sqrt(np.cov(allpoints))
+    return(center,stdev)
+
+print(getcenter(dicesum))</code></pre>
+<p>This function takes a list of observations as its input. It uses the <code>np.mean()</code> function to get the mean of the list and store it in the variable called <code>center</code>. Then, it uses the <code>np.cov()</code> method. This method’s name, <code>cov</code>, is short for <em>covariance</em>, another measurement of the way data varies. When we calculate a covariance of two separate lists of observations, it tells us how much those datasets vary together. When we calculate a covariance of one list of observations alone, it’s simply called the variance, and the square root of the variance is the standard deviation.</p>
+<p>If we run the preceding snippet, we should get the mean and standard deviation of our dice rolls:</p>
+<pre><code>(6.9511111111111115, 2.468219092930105)</code></pre>
+<p>This output tells us that the mean of our observed dice rolls is about 7 and the standard deviation is about 2.5. Now that we know these numbers, we can plot a bell curve as an overlay on our histogram as follows:</p>
+<pre><code>fig, ax = plt.subplots(figsize =(10, 7))
+ax.hist(dicesum,bins=range(2,14),align='left')
+import scipy.stats as stats
+import math
+mu=7
+sigma=2.5
+x = np.linspace(mu - 2*sigma, mu + 2*sigma, 100)*1
+<span epub:type="pagebreak" id="Page_146" title="146"/>plt.plot(x, stats.norm.pdf(x, mu, sigma)*numberofrolls,linewidth=5)
+plt.show()</code></pre>
+<p><a href="#figure7-4" id="figureanchor7-4">Figure 7-4</a> shows our output.</p>
+<figure>
+<img alt="" class="" height="269" src="image_fi/502888c07/f07004.png" width="389"/>
+<figcaption><p><a id="figure7-4">Figure 7-4</a>: A bell curve overlaid on a histogram of dice rolls</p></figcaption>
+</figure>
+<p>You can see that the bell curve is a continuous curve that we’ve plotted over our histogram. Its value represents relative probability: since it has a relatively high value at 7, and a relatively low value at 2 and 12, we interpret that to mean that we are more likely to roll a 7 than to roll a 2 or 12. We can see that these theoretical probabilities match our observed dice rolls pretty closely, since the height of the bell curve is close to the height of each histogram bar. We can easily check the number of rolls predicted by the bell curve as follows:</p>
+<pre><code>stats.norm.pdf(2, mu, sigma)*numberofrolls
+# output: 38.8734958894954
+
+stats.norm.pdf(7, mu, sigma)*numberofrolls
+# output: 287.23844188903155
+
+stats.norm.pdf(12, mu, sigma)*numberofrolls
+# output: 38.8734958894954</code></pre>
+<p>Here, we use the <code>stats.norm.pdf()</code> function to calculate the expected number of dice rolls for 2, 7, and 12. This function is from the <code>stats</code> module, and its name, <code>norm.pdf</code>, is short for <em>normal probability density function</em>, which is yet another name for our familiar bell curve. The snippet uses <code>stats.norm.pdf()</code> to calculate how high the bell curve is at <em>x </em>= 2, <em>x </em>= 7, and <em>x </em>= 12 (in other words, how likely rolling a 2, rolling a 7, and rolling a 12 are based on the mean and standard deviation we calculated before). Then, it multiplies these likelihoods by the number of times we want to roll the dice (1,800 in this case) to get the total number of expected rolls of 2, 7, and 12, respectively.</p>
+<h3 id="h2-502888c07-0002"><span epub:type="pagebreak" id="Page_147" title="147"/>Using Another Kind of Die</h3>
+<p class="BodyFirst">We’ve calculated probabilities for the hypothetical scenario of rolling two 6-sided dice together because dice rolls give us an easy, familiar way to think about important data science ideas like probabilities and distributions. But of course this is not the only possible type of data we could analyze, or even the only type of dice roll we could analyze.</p>
+<p>Imagine rolling a pair of nonstandard 12-sided dice, whose sides are marked with the numbers 4, 5, 6, . . . , 14, 15. When these dice are rolled together, their sum could be any integer between 8 and 30. We can randomly generate 1,800 hypothetical rolls again and draw a histogram of those rolls by using the same type of code we used before, with a few small changes:</p>
+<pre><code>seed(913)
+dice1=choices([4,5,6,7,8,9,10,11,12,13,14,15], k=numberofrolls)
+dice2=choices([4,5,6,7,8,9,10,11,12,13,14,15], k=numberofrolls)
+dicesum12=[dice1[n]+dice2[n] for n in range(numberofrolls)]
+fig, ax = plt.subplots(figsize =(10, 7))
+ax.hist(dicesum12,bins=range(8,32),align='left')
+mu=np.mean(dicesum12)
+sigma=np.std(dicesum12)
+x = np.linspace(mu - 2*sigma, mu + 2*sigma, 100)*1
+plt.plot(x, stats.norm.pdf(x, mu, sigma)*numberofrolls,linewidth=5)
+plt.show()</code></pre>
+<p><a href="#figure7-5" id="figureanchor7-5">Figure 7-5</a> shows the resulting histogram.</p>
+<figure>
+<img alt="" class="" height="269" src="image_fi/502888c07/f07005.png" width="389"/>
+<figcaption><p><a id="figure7-5">Figure 7-5</a>: A bell curve and histogram for dice rolls using a pair of custom 12-sided dice</p></figcaption>
+</figure>
+<p>The bell shape is roughly the same as in <a href="#figure7-4">Figure 7-4</a>, but in this case, 19 is the most likely outcome, not 7, and the range goes from 8 to 30 instead of from 2 to 12. So we have a normal distribution or bell curve again, but with a different mean and standard deviation.</p>
+<p><span epub:type="pagebreak" id="Page_148" title="148"/>We can plot both of our histograms (Figures 7-4 and 7-5) together as follows:</p>
+<pre><code>dicesumboth=dicesum+dicesum12
+fig, ax = plt.subplots(figsize =(10, 7))
+ax.hist(dicesumboth,bins=range(2,32),align='left')
+import scipy.stats as stats
+import math
+mu=np.mean(dicesum12)
+sigma=np.std(dicesum12)
+x = np.linspace(mu - 2*sigma, mu + 2*sigma, 100)*1
+plt.plot(x, stats.norm.pdf(x, mu, sigma)*numberofrolls,linewidth=5)
+mu=np.mean(dicesum)
+sigma=np.std(dicesum)
+x = np.linspace(mu - 2*sigma, mu + 2*sigma, 100)*1
+plt.plot(x, stats.norm.pdf(x, mu, sigma)*numberofrolls,linewidth=5)
+plt.show()</code></pre>
+<p><a href="#figure7-6" id="figureanchor7-6">Figure 7-6</a> shows the result.</p>
+<figure>
+<img alt="" class="" height="278" src="image_fi/502888c07/f07006.png" width="389"/>
+<figcaption><p><a id="figure7-6">Figure 7-6</a>: A combined histogram showing outcomes from 6-sided and 12-sided dice pairs</p></figcaption>
+</figure>
+<p>This is technically one histogram, though we know that it was generated by combining the data from two separate histograms. Remember that for the pair of 6-sided dice, 7 is the most common outcome, and for the pair of 12-sided dice, 19 is the most common outcome. We see this reflected in a local peak at 7 and another local peak at 19 in our histogram. These two local peaks are called <em>modes</em>. Since we have two modes, this is what we call a <em>bimodal</em> histogram.</p>
+<p>When you look at <a href="#figure7-6">Figure 7-6</a>, it should help you start to understand what the conceptual diagram in <a href="#figure7-2">Figure 7-2</a> is trying to illustrate. We’re not predicting or classifying dice rolls as we’ve done in previous chapters on supervised learning. Instead, we’re making simple theoretical models—in this case, our bell curves—that express our understanding of the data and the way observations relate to one another. In the next section, we’ll use these bell curve models to reason about the data and understand it better.</p>
+<h2 id="h1-502888c07-0003"><span epub:type="pagebreak" id="Page_149" title="149"/>The Origin of Observations with Clustering</h2>
+<p class="BodyFirst">Imagine that we randomly select one dice roll out of all the rolls that we plotted in <a href="#figure7-6">Figure 7-6</a>:</p>
+<pre><code>seed(494)
+randomselection=choices(dicesumboth, k=1)
+print(randomselection)</code></pre>
+<p>You should see the output <code>[12]</code>, indicating that we randomly selected one instance in our data in which we rolled a sum of 12. Without giving you any other information, imagine that I ask you to make an educated guess about which pair of dice was responsible for rolling this particular 12. It could have been either pair: the 6-sided die could have come up as a pair of 6s, or the 12-sided die could have come up in various combinations, like 8 and 4. How can you make an educated guess about which pair of dice is most likely to be the origin of this observation?</p>
+<p>You may have strong intuition already that the 12 was not likely to have been rolled by the 6-sided dice. After all, 12 is the least likely roll for 6-sided dice (tied with 2), but 12 is closer to the middle of <a href="#figure7-5">Figure 7-5</a>, indicating that it’s a more common roll for the 12-sided dice.</p>
+<p>Your educated guess need not be based merely on intuition. We can look at the heights of the histogram bars in Figures 7-4 and 7-5 to see that when we rolled both pairs of dice 1,800 times, we got about 50 instances of 12s from the 6-sided dice and more than 60 instances of 12s from the 12-sided dice. And from a theoretical perspective, the heights of the bell curves in <a href="#figure7-6">Figure 7-6</a> enable us to directly compare the relative probabilities of each outcome for each pair of dice, since we roll both pairs equally often.</p>
+<p>We can do this same type of reasoning to think about dice rolls other than 12. For example, we know that 8 is more likely for the 6-sided dice, not only because of our intuition but also because the left bell curve in <a href="#figure7-6">Figure 7-6</a> is higher than the right bell curve when the <em>x </em>value is 8. In case we don’t have <a href="#figure7-6">Figure 7-6</a> in front of us, we can calculate the heights of each bell curve as follows:</p>
+<pre><code>stats.norm.pdf(8, np.mean(dicesum), np.std(dicesum))*numberofrolls
+# output: 265.87855493973007
+
+stats.norm.pdf(8, np.mean(dicesum12), np.std(dicesum12))*numberofrolls
+# output: 11.2892030357587252</code></pre>
+<p>Here we see that the 6-sided dice are more likely to be the origin of the observed 8 roll: it’s expected about 266 times out of 1,800 rolls of the 6-sided dice, while we expect to roll 8 only about 11 or 12 times out of 1,800 rolls of the 12-sided dice. We can follow exactly the same process <span epub:type="pagebreak" id="Page_150" title="150"/>to determine that the 12-sided pair is more likely to be the origin of the observed 12 roll:</p>
+<pre><code>stats.norm.pdf(12, np.mean(dicesum), np.std(dicesum))*numberofrolls
+# results in 35.87586208537935
+
+stats.norm.pdf(12, np.mean(dicesum12), np.std(dicesum12))*numberofrolls
+# results in 51.42993240324318</code></pre>
+<p>If we use this method of comparing the heights of bell curves, then for any observed dice roll, we can say which dice pair is most likely to be its origin.</p>
+<p>Now that we can make educated guesses about the origin of any dice rolls, we’re ready to tackle <em>clustering</em>, one of the most important, most common tasks in unsupervised learning. The goal of clustering is to answer a global version of the question we considered previously: Which pair of dice is the origin of every observation in our data?</p>
+<p>Clustering begins with a reasoning process that’s similar to the reasoning in our previous section. But instead of reasoning about a single dice roll, we try to determine which dice pair is the origin of every observation in our data. This is a simple process that we can go through as follows:</p>
+<ul class="disc">
+<li>For all rolls of 2, dice pair 1’s bell curve is higher than dice pair 2’s, so, without knowing anything else, we suppose that all rolls of 2 came from dice pair 1.</li>
+<li>For all rolls of 3, dice pair 1’s bell curve is higher than dice pair 2’s, so, without knowing anything else, we suppose that all rolls of 3 came from dice pair 1.</li>
+<li>. . . </li>
+<li>For all rolls of 12, dice pair 2’s bell curve is higher than dice pair 1’s, so, without knowing anything else, we suppose that all rolls of 12 came from dice pair 2.</li>
+<li>. . . </li>
+<li>For all rolls of 30, dice pair 2’s bell curve is higher than dice pair 1’s, so, without knowing anything else, we suppose that all rolls of 30 came from dice pair 2.</li>
+</ul>
+<p>By considering each of the 29 possible dice roll outcomes individually, we can make good guesses about the respective origins of every observation in our data. We can also write code to accomplish this:</p>
+<pre><code>from scipy.stats import multivariate_normal
+def classify(allpts,allmns,allvar):
+    vars=[]
+    for n in range(len(allmns)):
+        vars.append(multivariate_normal(mean=allmns[n], cov=allvar[n]))
+    classification=[]
+    for point in allpts:
+        this_classification=-1
+        this_pdf=0
+        for n in range(len(allmns)):
+<span epub:type="pagebreak" id="Page_151" title="151"/>            if vars[n].pdf(point)&gt;this_pdf:
+                this_pdf=vars[n].pdf(point)
+                this_classification=n+1
+        classification.append(this_classification)
+    return classification</code></pre>
+<p>Let’s look at the <code>classify()</code> function. It takes three arguments. The first argument it requires is <code>allpts</code>, which represents a list of every observation in our data. The other two arguments the function requires are <code>allmns</code> and <code>allvar</code>. These two arguments represent the means and variances, respectively, of every group (that is, every dice pair) in our data.</p>
+<p>The function needs to accomplish what we did visually when we looked at <a href="#figure7-6">Figure 7-6</a> to find which dice pairs were the origin of each roll. We consider the bell curves for each dice pair, and whichever bell curve has a higher value for a particular dice roll is assumed to be the dice pair it came from. In our function, instead of looking visually at bell curves, we need to calculate the values of bell curves and see which one is higher. This is why we create a list called <code>vars</code>. This list starts out empty, but then we append our bell curves to it with the <code>multivariate_normal()</code> function.</p>
+<p>After we have our collection of bell curves, we consider every point in our data. If the first bell curve is higher than the other bell curves at that point, we say that the point is associated with the first dice pair. If the second bell curve is the highest at that point, we say the point belongs to the second dice pair. If we have more than two bell curves, we can compare all of them, classifying every point according to which bell curve is highest. We find the highest bell curve the same way we did when we were looking at <a href="#figure7-6">Figure 7-6</a> previously, but now we’re doing it with code instead of with our eyes. Every time we classify a point, we append its dice pair number to a list called <code>classification</code>. When the function finishes running, it has filled up the list with a dice pair classification for every point in our data, and it returns this as its final value.</p>
+<p>Let’s try out our new <code>classify()</code> function. First, let’s define some points, means, and variances:</p>
+<pre><code>allpoints = [2,8,12,15,25]
+allmeans = [7, 19]
+allvar = [np.cov(dicesum),np.cov(dicesum12)]</code></pre>
+<p>Our <code>allpoints</code> list is a collection of hypothetical dice rolls that we want to classify. Our <code>allmeans</code> list consists of two numbers: 7, the mean dice roll expected from our 6-sided dice pair, and 19, the mean dice roll expected from our 12-sided dice pair. Our <code>allvar</code> list consists of the respective variances of the two dice pairs. Now that we have the three required arguments, we can call our <code>classify()</code> function:</p>
+<pre><code>print(classify(allpoints,allmeans,allvar))</code></pre>
+<p>We see the following output:</p>
+<pre><code>[1, 1, 2, 2, 2]</code></pre>
+<p><span epub:type="pagebreak" id="Page_152" title="152"/>This list is telling us that the first two dice rolls in our <code>allpoints</code> list, 2 and 8, are more likely to be associated with the 6-sided dice pair. The other dice rolls in our <code>allpoints</code> list—12, 15, and 25—are more likely to be associated with the 12-sided dice pair.</p>
+<p>What we’ve just done is take a list of very different dice rolls and classify them into two distinct groups. You might want to call this classification or grouping, but in the world of machine learning, it’s called <em>clustering</em>. If you look at <a href="#figure7-6">Figure 7-6</a>, you can begin to see why. Dice rolls from the 6-sided dice appear to cluster around their most common value, 7, while dice rolls from the 12-sided dice appear to cluster around their most common value, 19. They form little mountains of observations, or groups, that we’re going to call clusters regardless of their shape or size.</p>
+<p>It’s common in practice for data to have this type of clustered structure, in which a small number of subsets (clusters) are apparent, with most observations in each subset appearing close to the subset’s mean, and only a small minority of observations between subsets or far away from the mean. By forming a conclusion about the clusters that exist in our data, and assigning each observation to one of our clusters, we’ve accomplished a simple version of clustering, the main task of this chapter.</p>
+<h2 id="h1-502888c07-0004">Clustering in Business Applications</h2>
+<p class="BodyFirst">Dice rolls have probabilities that are easy to understand and reason about. But not many situations in business require being directly interested in dice rolls. Nevertheless, clustering is commonly used in business, especially by marketers.</p>
+<p>Imagine that <a href="#figure7-6">Figure 7-6</a> is not a record of dice rolls but rather a record of transaction sizes at a retail store you’re running. The lower cluster around 7 indicates that people in one group are spending about $7 at your store, and the higher cluster around 19 indicates that people in another group are spending around $19 at your store. You can say that you have a cluster of low-spending customers and a cluster of high-spending customers.</p>
+<p>Now that you know that you have two distinct groups of customers and you know who they are, you can act on this information. For example, instead of using the same advertising strategy for all your customers, you may want to advertise or market differently to each group. Maybe advertisements emphasizing bargains and utility are persuasive to low spenders, while advertisements emphasizing premium quality and social prestige are more appealing to high spenders. Once you have a firm grasp of the boundary between your two groups of customers, the size of each group, and their most common spending habits, you have most of what you need to enact a sophisticated two-pronged advertisement strategy.</p>
+<p>On the other hand, after discovering the clusters in your data, you might want to eliminate them rather than cater to them. For example, you may believe that your low-spending customers are not budget conscious but rather <span epub:type="pagebreak" id="Page_153" title="153"/>simply unaware of some of your more expensive, useful products. You may focus on more aggressive and informative advertising strictly for them, to encourage all of your customers to be in the high-spending group. Your exact approach will depend on many other details of your business, your products, and your strategy. A cluster analysis can give you important input to your strategic decisions by showing you the salient groups of customers and their characteristics, but it won’t go all the way to providing a clear business strategy from scratch.</p>
+<p>Instead of transaction size, we could imagine that the x-axis of the histogram in <a href="#figure7-6">Figure 7-6</a> refers to another variable, like customer age. Then, our clustering analysis would be telling us that two distinct groups patronize our business: a younger group and an older group. You could do clustering on any numeric variable that you measure related to your customers and potentially find interesting customer groups.</p>
+<p>Corporate marketers had been splitting customers into groups for many years before the term <em>data science</em> was common or even before most of today’s clustering methods were invented. Before the age of data science and clustering, marketers called the practice of splitting customers into groups <em>customer segmentation</em>.</p>
+<p>In practice, marketers often perform segmentation in a nonscientific way, not by finding clusters and boundaries from data but by picking round numbers from guesses or intuition. For example, a television producer might commission surveys of viewers and analyze the data in a way that seems natural, by looking at results from all viewers younger than age 30, then looking at viewers age 30 and up separately. Using the nice, round number 30 provides a potentially natural-seeming boundary between younger and older viewers. However, maybe the producer’s show has scarcely any viewers above age 30, so analyzing responses from this group separately would be a distraction from the much larger group of viewers under 30. A simple cluster analysis might instead reveal a large cluster of viewers around age 18 and a large cluster around age 28, with a boundary between these groups at age 23. Analyzing segments based on this clustering analysis, rather than the round-sounding but ultimately misguided under-30 and over-30 segments, would be more useful to understand the show’s viewers and their opinions.</p>
+<p>Segmentation predates clustering, but clustering is a great way to do segmentation because it enables us to find more accurate and useful segments, and precise boundaries between them. In this case, you could say that the clustering approach is giving us objective, data-driven insights, as compared to the intuition-based or experience-based approach associated with round-number segmentation. Improving from intuition to objective, data-driven insights is one of the main contributions of data science to business.</p>
+<p>So far, we’ve discussed segmentation on only one variable at a time: dice rolls, spending, or age analyzed individually. Instead of clustering and segmenting on only one variable at a time, we can start thinking in multiple dimensions. For example, if we’re running a retail company in the United States, we might find a cluster of young, high spenders in the west; a <span epub:type="pagebreak" id="Page_154" title="154"/>group of older, low spenders in the southeast; and a cluster of middle-aged, moderately high spenders in the north. To discover this, we would have to perform clustering in multiple dimensions at once. Data science clustering methods have this capability, giving them another advantage over traditional segmentation methods.</p>
+<h2 id="h1-502888c07-0005">Analyzing Multiple Dimensions</h2>
+<p class="BodyFirst">In our dice roll data, each observation consists of just one number: the sum of the face-up numbers on the dice we rolled. We don’t record the temperature or color of the dice, the length or width of their edges, or anything else except for exactly one raw number per roll. Our dice roll dataset is <em>one-dimensional</em>. Here a <em>dimension</em> doesn’t necessarily refer to a dimension in space but rather to any measurement that can vary between low and high. Dice rolls can vary a great deal between a low roll like 2 and a high roll like 12 (or more, depending on the dice we’re using), but we measure only their highs and lows on one metric: the sum of the numbers that are face up after we roll them.</p>
+<p>In business scenarios, we’re almost always interested in more than one dimension. When we’re analyzing customer clusters, for example, we want to know customers’ ages, locations, incomes, genders, years of education, and as much more as we can so we can successfully market to them. When we’re working with many dimensions, some things will look different. For example, the bell curves we’ve seen in Figures 7-3 through 7-6 will gain an extra dimension, as in the right side of <a href="#figure7-7" id="figureanchor7-7">Figure 7-7</a>.</p>
+<figure>
+<img alt="" class="" height="229" src="image_fi/502888c07/f07007.png" width="694"/>
+<figcaption><p><a id="figure7-7">Figure 7-7</a>: A univariate bell curve (left) and a bivariate bell curve (right)</p></figcaption>
+</figure>
+<p>The left side of this diagram shows a <em>univariate bell curve</em>, called <em>univariate</em> because it shows relative probabilities for only one variable (the x-axis). The right side shows a <em>bivariate bell curve</em>, one that shows relative probabilities varying along two dimensions: the x- and y-axes. We can imagine that the x- and y-axes in the plot on the right side of <a href="#figure7-7">Figure 7-7</a> could be age and average transaction size, for example.</p>
+<p>A univariate Gaussian curve has a mean that’s represented by just one number, like <em>x </em>= 0 in the left side of <a href="#figure7-7">Figure 7-7</a>. A bivariate Gaussian curve has a mean that’s represented by two numbers: an ordered pair consisting of an x-coordinate and a y-coordinate, like (0, 0). The number of dimensions <span epub:type="pagebreak" id="Page_155" title="155"/>increases, but the idea of using the mean of each dimension to find the highest point of the bell is the same. Finding the means of each dimension will tell us where to find the center and highest point of the bell, around which the other observations tend to cluster. In both the univariate and bivariate cases, we can interpret the height of the bell curve as a probability: points where the bell curve is higher correspond to observations that are more likely.</p>
+<p>Going from one to two dimensions also affects the way we express how spread out our bell curve is. In one dimension, we use the variance (or standard deviation) as a single number that expresses the degree of spread of our curve. In two or more dimensions, we use a matrix, or a rectangular array of numbers, to express the degree of the bell curve’s spread. The matrix we use, called a <em>covariance matrix</em>, records not only how spread out each dimension is on its own but also the extent to which different dimensions vary together. We don’t need to worry about the details of the covariance matrix; we mostly just need to calculate it with the <code>np.cov()</code> function and use it as an input in our clustering methods.</p>
+<p>When you increase the number of dimensions in your clustering analysis from two to three or more, the adjustment is straightforward. Instead of a univariate or bivariate bell curve, we’ll have a <em>multivariate bell curve</em>. In three dimensions, a mean will have three coordinates; in <em>n</em> dimensions, it will have <em>n</em> coordinates. The covariance matrix will also get bigger every time you increase the dimension of your problem. But no matter how many dimensions you have, the features of the bell curve are always the same: it has a mean, which most observations are near, and it has a measure of covariance, which shows how spread out the bell curve is.</p>
+<p>In the rest of the chapter, we’ll look at a two-dimensional example, which will show the idea and process of clustering while still enabling us to draw simple, interpretable plots. This example will show all the essential features of clustering and unsupervised learning that you can apply in any number of dimensions.</p>
+<h2 id="h1-502888c07-0006">E-M Clustering</h2>
+<p class="BodyFirst">We now have all the ingredients required to perform <em>E-M clustering</em>, a powerful unsupervised learning approach that enables us to intelligently find natural groups in multidimensional data. This technique is also called <em>Gaussian mixture modeling</em>, because it uses bell curves (Gaussian distributions) to model how groups mix together. Whatever you call it, it’s useful and relatively straightforward.</p>
+<p>We’ll start by looking at new two-dimensional data that we want to perform clustering on. We can read the data from its online home as follows:</p>
+<pre><code>import ast
+import requests
+link = "https://bradfordtuckfield.com/emdata.txt"
+f = requests.get(link)
+allpoints = ast.literal_eval(f.text)</code></pre>
+<p><span epub:type="pagebreak" id="Page_156" title="156"/>This snippet uses two modules: <code>ast</code> and <code>requests</code>. The <code>requests</code> package allows Python to request a file or dataset from a website—in this case, the website where the clustering data lives. The data is stored in a file as a Python list. Python reads <em>.txt</em> files as strings by default, but we want to read the data into a Python list instead of a string. The <code>ast</code> module contains a <code>literal_eval()</code> method that enables us to read list data from files that would otherwise be treated as strings. We read our list into a variable called <code>allpoints</code>.</p>
+<p>Now that we’ve read the data into Python, we can plot it to see what it looks like:</p>
+<pre><code>allxs=[point[0] for point in allpoints]
+allys=[point[1] for point in allpoints]
+plt.plot(allxs, allys, 'x')
+plt.axis('equal')
+plt.show()</code></pre>
+<p><a href="#figure7-8" id="figureanchor7-8">Figure 7-8</a> shows the results.</p>
+<figure>
+<img alt="" class="" height="283" src="image_fi/502888c07/f07008.png" width="389"/>
+<figcaption><p><a id="figure7-8">Figure 7-8</a>: A plot of our new two-dimensional data</p></figcaption>
+</figure>
+<p>One thing you might notice is that these axes have no labels. This is not an accident: we’re going to work with this data as an unlabeled example and then talk about how it can be applied to many scenarios. You could imagine many possible labels for the axes in this example: maybe the points represent cities, the x-axis is percent population growth, and the y-axis is percent economic growth. If so, performing clustering will identify clusters of cities whose growth has been comparable recently. Maybe this could be useful if you’re a CEO and you’re trying to decide where to open a new franchise of your business. But the axes don’t have to represent the cities’ growth: they could represent anything at all, and our clustering algorithms will work in the same way regardless.</p>
+<p>A few other things are immediately apparent in <a href="#figure7-8">Figure 7-8</a>. Two particularly dense clusters of observations appear at the top and right of the plot, respectively. In the center of the plot, another cluster appears to be much less dense than the other two. We seem to have three clusters in different locations, with different sizes and densities.</p>
+<p><span epub:type="pagebreak" id="Page_157" title="157"/>Instead of relying only on our eyes for this clustering exercise, let’s use a powerful clustering algorithm: the E-M algorithm. <em>E-M</em> is short for <em>expectation-maximization</em>. We can describe this algorithm in four steps:</p>
+<ol class="decimal">
+<li value="1">Guessing: Make guesses for the means and covariances of every cluster.</li>
+<li value="2">Expectation: Classify every observation in our data according to which cluster it’s most likely to be a member of, according to the most recent estimates of means and covariances. (This is called the <em>E</em>, or <em>Expectation</em>, step because we’re classifying based on our expectation of how likely each point is to be in each cluster.)</li>
+<li value="3">Maximization: Use the classifications obtained in the Expectation step to calculate new estimates for the means and covariances of each cluster. (This is called the <em>M</em>, or <em>Maximization</em>, step because we find the means and variances that maximize the probability of matching our data.)</li>
+<li value="4">Convergence: Repeat the Expectation and Maximization steps until reaching a stopping condition.</li>
+</ol>
+<p>If this algorithm seems intimidating, don’t worry; you’ve already done all the hard parts earlier in the chapter. Let’s proceed through each step in turn to understand them better.</p>
+<h3 id="h2-502888c07-0003">The Guessing Step</h3>
+<p class="BodyFirst">The first step is the easiest, since we can make any guess whatsoever for the means and covariances of our clusters. Let’s make some initial guesses:</p>
+<pre><code>#initial guesses
+mean1=[-1,0]
+mean2=[0.5,-1]
+mean3=[0.5,0.5]
+
+allmeans=[mean1,mean2,mean3]
+
+cov1=[[1,0],[0,1]]
+cov2=[[1,0],[0,1]]
+cov3=[[1,0],[0,1]]
+
+allvar=[cov1,cov2,cov3]</code></pre>
+<p>In this snippet, we first make guesses for <code>mean1</code>, <code>mean2</code>, and <code>mean3</code>. These guesses are two-dimensional points that are supposed to be the respective centers of our three clusters. We then make guesses for the covariance of each cluster. We make the easiest-possible guess for covariance: we guess a special, simple matrix called the <em>identity matrix</em> as the covariance matrix for each cluster. (The details of the identity matrix aren’t important right <span epub:type="pagebreak" id="Page_158" title="158"/>now; we use it because it’s simple and tends to work well enough as an initial guess.) We can draw a plot to see what these guesses look like:</p>
+<pre><code>plt.plot(allxs, allys, 'x')
+plt.plot(mean1[0],mean1[1],'r*', markersize=15)
+plt.plot(mean2[0],mean2[1],'r*', markersize=15)
+plt.plot(mean3[0],mean3[1],'r*', markersize=15)
+plt.axis('equal')
+plt.show()</code></pre>
+<p>The plot looks like <a href="#figure7-9" id="figureanchor7-9">Figure 7-9</a>.</p>
+<figure>
+<img alt="" class="" height="290" src="image_fi/502888c07/f07009.png" width="389"/>
+<figcaption><p><a id="figure7-9">Figure 7-9</a>: Our data with some guesses at cluster centers shown as stars</p></figcaption>
+</figure>
+<p>You can see the points plotted again, with stars representing the guesses we made for cluster centers. (The stars will be red if you’re plotting at home.) Our guesses clearly were not very good. In particular, none of our guesses are in the center of the two dense clusters we see at the top and right of the plot, and none are close to the center of the main cloud of points. In this case, starting with inaccurate guesses is good, because it will enable us to see how powerful the E-M clustering algorithm is: it can find the right cluster centers even if our initial guesses in the Guessing step are quite poor.</p>
+<h3 id="h2-502888c07-0004">The Expectation Step</h3>
+<p class="BodyFirst">We’ve completed the Guessing step of the algorithm. For the next step, we need to classify all of our points according to which cluster we believe they’re in. Luckily, we already have our <code>classify()</code> function for this:</p>
+<pre><code>def classify(allpts,allmns,allvar):
+    vars=[]
+    for n in range(len(allmns)):
+        vars.append(multivariate_normal(mean=allmns[n], cov=allvar[n]))
+    classification=[]
+    for point in allpts:
+        this_classification=-1
+        this_pdf=0
+        for n in range(len(allmns)):
+<span epub:type="pagebreak" id="Page_159" title="159"/>            if vars[n].pdf(point)&gt;this_pdf:
+                this_pdf=vars[n].pdf(point)
+                this_classification=n+1
+        classification.append(this_classification)
+    return classification  </code></pre>
+<p>Remember what this function does. Earlier in the chapter, we used it to classify dice rolls. We took a set of dice roll observations and found which dice pair each dice roll was likely to come from by comparing the heights of two bell curves. Here, we will use the function for a similar task, but we’ll use our new unlabeled data instead of dice roll data. For each observation in our new data, this function finds which group it’s likely to belong to by comparing the heights of the bell curve associated with each group. Let’s call this function on our points, means, and variances:</p>
+<pre><code>theclass=classify(allpoints,allmeans,allvar)</code></pre>
+<p>Now we have a list called <code>theclass</code>, which contains a classification of every point in our data. We can look at the first 10 elements of <code>theclass</code> by running <code>print(theclass[:10])</code>. We see the following output:</p>
+<pre><code>[1, 1, 1, 1, 3, 1, 3, 3, 1, 3]</code></pre>
+<p>This output is telling us that the first point in our data seems to be in cluster 1, the fifth point is in cluster 3, and so on. We’ve accomplished the Guessing step and the Expectation step: we have some values for means and variances of our clusters, and we’ve classified every data point into one of our clusters. Before we move on, let’s create a function that will plot our data and clusters:</p>
+<pre><code>def makeplot(allpoints,theclass,allmeans):
+    thecolors=['black']*len(allpoints)
+    for idx in range(len(thecolors)):
+        if theclass[idx]==2:
+            thecolors[idx]='green'
+        if theclass[idx]==3:
+            thecolors[idx]='yellow'
+    allxs=[point[0] for point in allpoints]
+    allys=[point[1] for point in allpoints]
+    for i in range(len(allpoints)):
+        plt.scatter(allxs[i], allys[i],color=thecolors[i])
+    for i in range(len(allmeans)):
+        plt.plot(allmeans[i][0],allmeans[i][1],'b*', markersize=15)
+    plt.axis('equal')
+    plt.show()</code></pre>
+<p>This function takes our data (<code>allpoints</code>), our cluster classifications (<code>theclass</code>), and our cluster means (<code>allmeans</code>) as inputs. Then it assigns colors to each cluster: points in the first cluster are black, points in the second cluster are green, and points in the third cluster are yellow. The <code>plt.scatter()</code> function draws all our points in their colors. Finally, it draws red stars for <span epub:type="pagebreak" id="Page_160" title="160"/>each of our cluster centers. Note this book is printed in black-and-white, so you will see these colors only if you try this code on your own computer.</p>
+<p>We can call this function by running <code>makeplot(allpoints,theclass,allmeans)</code>, and we should see <a href="#figure7-10" id="figureanchor7-10">Figure 7-10</a>.</p>
+<figure>
+<img alt="" class="" height="282" src="image_fi/502888c07/f07010.png" width="389"/>
+<figcaption><p><a id="figure7-10">Figure 7-10</a>: Initial cluster classifications</p></figcaption>
+</figure>
+<p>This is a two-dimensional plot. But to understand how it performed classification into clusters, you should imagine three bivariate bell curves (like the one on the right side of <a href="#figure7-7">Figure 7-7</a>) jutting out of the page, each one centered on one of the star-shaped cluster centers. The covariance we’ve estimated will determine how widely spread out each bell curve is. The cluster classifications are determined by which of these three bell curves is highest for each point in our data. You can imagine that if we moved the centers or changed the covariance estimates, our bivariate bell curves would look different, and we could get different classifications. (This will happen very soon.)</p>
+<p>It’s clear from <a href="#figure7-10">Figure 7-10</a> that we haven’t finished our clustering task. For one thing, the cluster shapes don’t match the shapes we think we see in <a href="#figure7-8">Figure 7-8</a>. But even more obviously, the points that we’ve called <em>cluster centers</em>, shown as stars on this plot, are clearly not in the center of their respective clusters; they’re more or less on the edge of their data. This is why we need to do the Maximization step of the E-M clustering algorithm, in which we’ll recalculate the means and variances of each cluster (and thereby move cluster centers to more appropriate locations).</p>
+<h3 id="h2-502888c07-0005">The Maximization Step</h3>
+<p class="BodyFirst">This step is pretty simple: we just need to take the points in each of our clusters and calculate their means and variances. We can update the <code>getcenters()</code> function we used previously to accomplish this:</p>
+<pre><code>def getcenters(allpoints,theclass,k):
+    centers=[]
+    thevars=[]
+    for n in range(k):
+        pointsn=[allpoints[i] for i in range(0,len(allpoints)) if theclass[i]==(n+1)]
+        xpointsn=[points[0] for points in pointsn]
+<span epub:type="pagebreak" id="Page_161" title="161"/>        ypointsn=[points[1] for points in pointsn]
+        xcenter=np.mean(xpointsn)
+        ycenter=np.mean(ypointsn)
+        centers.append([xcenter,ycenter])
+        thevars.append(np.cov(xpointsn,ypointsn))
+    return centers,thevars</code></pre>
+<p>Our updated <code>getcenters()</code> function is simple. We pass a number <code>k</code> to the function as an argument; this number indicates the number of clusters in our data. We also pass the data and the cluster classifications to the function. The function calculates the mean and variance of every cluster and then returns a list of means (which we call <code>centers</code>) and a list of variances (which we call <code>thevars</code>).</p>
+<p>Let’s call our updated <code>getcenters()</code> function to find the actual means and variances of our three clusters:</p>
+<pre><code>allmeans,allvar=getcenters(allpoints,theclass,3)</code></pre>
+<p>Now that we have newly calculated means and variances, let’s plot our clusters again by running <code>makeplot(allpoints,theclass,allmeans)</code>. The result should look like <a href="#figure7-11" id="figureanchor7-11">Figure 7-11</a>.</p>
+<figure>
+<img alt="" class="" height="282" src="image_fi/502888c07/f07011.png" width="389"/>
+<figcaption><p><a id="figure7-11">Figure 7-11</a>: Recalculated cluster centers</p></figcaption>
+</figure>
+<p>You can see that our cluster centers, the star shapes, have moved since we recalculated them in the Expectation step. But now that the cluster centers have moved, some of our previous cluster classifications are probably incorrect. If you run this on your computer, you’ll see some yellow points that are quite far from the center of the yellow cluster (the cluster at the top right of the plot), and quite close to the centers of the other clusters. Since the centers have moved and we’ve recalculated covariances, we need to rerun our classification function to reclassify all the points into their correct clusters (meaning, we need to run our Expectation step again):</p>
+<pre><code>theclass=classify(allpoints,allmeans,allvar)</code></pre>
+<p><span epub:type="pagebreak" id="Page_162" title="162"/>Again, to think about how this classification is accomplished, you can imagine three bivariate bell curves jutting out of the page, with bell curve centers determined by the positions of the stars, and widths determined by the bell curve covariances we’ve calculated. Whichever bell curve is highest at each point will determine that point’s cluster classification.</p>
+<p>Let’s make another plot that will reflect these newly recalculated cluster classifications by running <code>makeplot(allpoints,theclass,allmeans)</code> yet again. The result is <a href="#figure7-12" id="figureanchor7-12">Figure 7-12</a>.</p>
+<figure>
+<img alt="" class="" height="281" src="image_fi/502888c07/f07012.png" width="389"/>
+<figcaption><p><a id="figure7-12">Figure 7-12</a>: Reclassified cluster classifications</p></figcaption>
+</figure>
+<p>Here, you can see that the stars (cluster centers) are in the same locations as in <a href="#figure7-11">Figure 7-11</a>. But we’ve accomplished reclassification of the points: based on comparing the bell curves for each cluster, we’ve found the cluster that’s most likely to contain every point, and we’ve changed the coloring accordingly. You can compare this to <a href="#figure7-10">Figure 7-10</a> to see the progress we’ve made since we started: we’ve changed our estimates of where the cluster centers are as well as our estimates of which points belong in which clusters.</p>
+<h3 id="h2-502888c07-0006">The Convergence Step</h3>
+<p class="BodyFirst">You can see that two clusters have grown (the lower cluster and the cluster on the left), while one cluster has shrunk (the cluster at the top right). But now we’re in the same situation we were in before: after reclassifying the clusters, the centers are not correct, so we need to recalculate them too.</p>
+<p>Hopefully, you can see the pattern in this process by now: every time we reclassify our clusters, we have to recalculate the clusters’ centers, but every time we recalculate the centers, we have to reclassify the clusters. Stated another way, every time we perform the Expectation step, we have to perform the Maximization step, but every time we perform the Maximization step, we have to perform the Expectation step again.</p>
+<p><span epub:type="pagebreak" id="Page_163" title="163"/>That’s why the next, final step of E-M clustering is to repeat the Expectation and Maximization steps: both steps create a need for the other one. We can write a short loop that will accomplish this for us:</p>
+<pre><code>for n in range(0,100):
+    theclass=classify(allpoints,allmeans,allvar)
+    allmeans,allvar=getcenters(allpoints,theclass,3)</code></pre>
+<p>The first line of the loop’s body (starting with <code>theclass=</code>) accomplishes the Expectation step, and the next line accomplishes the Maximization step. You may wonder whether we’ll get caught in an infinite loop, in which we have to constantly recalculate centers and reclassify clusters again and again forever, never reaching a final answer. We’re lucky because E-M clustering is mathematically guaranteed to <em>converge</em>, meaning that eventually we’ll reach a step where we recalculate the centers and find the same centers we calculated in the previous step, and we reclassify the clusters and find the same clusters we classified in the previous step. At that point, we can stop running our clustering because continuing will just give us a repetition of the same answers over and over.</p>
+<p>In the previous snippet, instead of checking for convergence, we set a limit at 100 iterations. For a dataset as small and simple as ours, this will certainly be more than enough iterations. If you have a complex dataset that doesn’t seem to converge after 100 iterations, you can increase to 1,000 or more until your E-M clustering reaches convergence.</p>
+<p>Let’s think about what we’ve done. We did the Guessing step, guessing means and variances of our clusters. We did the Expectation step, classifying clusters based on means and variances. We did the Maximization step, calculating means and variances based on clusters. And we did the Convergence step, repeating the Expectation and Maximization steps until reaching a stopping condition.</p>
+<p>We’ve completed E-M clustering! Now that we’ve finished, let’s look at a plot of the final estimated clusters and centers by running <code>makeplot(allpoints,theclass,allmeans)</code> one final time; see <a href="#figure7-13" id="figureanchor7-13">Figure 7-13</a>.</p>
+<p>When we look at this plot, we can see that our clustering succeeded. One of our cluster centers (stars) appears close to the center of the large, spread-out cluster. The other two cluster centers appear near the center of the smaller, more compact clusters. Importantly, we can see observations that are closer (in absolute distance) to the small clusters but are classified as being part of the large cluster. This is because E-M clustering takes variance into account; since it sees that the center cluster is more spread out, it assigns a higher variance to it, and therefore it’s able to include more points. Remember that we started with some atrocious guesses for cluster centers, but we got a result that exactly matches what looks perfect to us. Starting from our bad guesses in <a href="#figure7-10">Figure 7-10</a>, we’ve arrived at reasonable-looking results in <a href="#figure7-13">Figure 7-13</a>. This shows the strength of E-M clustering.</p>
+<span epub:type="pagebreak" id="Page_164" title="164"/><figure>
+<img alt="" class="" height="282" src="image_fi/502888c07/f07013.png" width="389"/>
+<figcaption><p><a id="figure7-13">Figure 7-13</a>: Final E-M clustering results</p></figcaption>
+</figure>
+<p>Our E-M clustering process has identified clusters in our data. We’ve completed the clustering algorithm, but we haven’t applied it to any business scenario yet. The way we apply it to business will depend on what the data represents. This was just example data generated for the book, but we could perform exactly the same E-M clustering process on any other data from any field. For example, we might imagine, as we described before, that the points of <a href="#figure7-13">Figure 7-13</a> represent cities, and the x- and y-axes represent types of urban growth. Or, the points of <a href="#figure7-13">Figure 7-13</a> could represent customers, and the x- and y-axes represent customer attributes like total spending, age, location, or anything else.</p>
+<p>What you do with your clusters will depend on the data you’re working with and your goals. But in every situation, knowing the clusters that exist in your data can help you craft different marketing approaches or different products for different clusters, or different strategies for interacting with each of them.</p>
+<h2 id="h1-502888c07-0007">Other Clustering Methods</h2>
+<p class="BodyFirst">E-M clustering is a powerful clustering method, but it’s not the only one. Another method, <em>k-means clustering</em>, is more popular because it’s easier. If you can do E-M clustering, k-means clustering is easy after some straightforward changes to our code. The following are the steps of k-means clustering:</p>
+<ol class="decimal">
+<li value="1">Guessing: Make guesses for the means of every cluster.</li>
+<li value="2">Classification: Classify every observation in our data according to which cluster it’s most likely to be a member of, according to which mean it’s closest to.</li>
+<li value="3">Adjustment: Use the classifications obtained in the Classification step to calculate new estimates for the means of each cluster. </li>
+<li value="4">Convergence: Repeat the Classification and Adjustment steps until reaching a stopping condition.</li>
+</ol>
+<p><span epub:type="pagebreak" id="Page_165" title="165"/>You can see that k-means clustering consists of four steps, just like E-M clustering. The first and last steps (Guessing and Convergence) are identical: we make guesses at the beginning of both processes, and we repeat steps until convergence in both processes. The only differences are in the second and third steps. </p>
+<p>In both algorithms, the second step (Expectation for E-M clustering, Classification for k-means clustering) determines which observations belong to which clusters. The difference is in the way we determine which observations belong to which cluster. For E-M clustering, we determine an observation’s cluster based on comparing the heights of bell curves, as illustrated in <a href="#figure7-6">Figure 7-6</a>. With k-means clustering, we determine an observation’s cluster more simply: by measuring the distance between the observation and each cluster center, and finding which cluster center it’s closest to. So, when we see a dice roll equal to 12, E-M clustering will tell us that it was rolled by the 12-sided dice, because of the heights of bell curves in <a href="#figure7-6">Figure 7-6</a>. However, k-means clustering will tell us that it was rolled by the 6-sided dice, because 12 is closer to 7 (the mean roll of 6-sided dice) than it is to 19 (the mean roll of our 12-sided dice).</p>
+<p>The other difference between E-M clustering and k-means clustering is in the third step (Maximization for E-M clustering and Adjustment for k-means clustering). In E-M clustering, we need to calculate the means and covariance matrices for every cluster. But in k-means clustering, we need to calculate only the means of each cluster—we don’t use covariance estimates at all in k-means clustering. You can see that E-M clustering and k-means clustering both have the same general outline, and differ in only a few particulars of the way classification and adjustment are performed.</p>
+<p>Actually, we can easily implement k-means clustering in Python if we import the right modules:</p>
+<pre><code>from sklearn.cluster import KMeans
+kmeans = KMeans(init="random", n_clusters=3, n_init=10, max_iter=300, random_state=42)
+kmeans.fit(allpoints)
+newclass=[label+1 for label in kmeans.labels_]
+makeplot(allpoints,newclass,kmeans.cluster_centers_)</code></pre>
+<p>Here, we import <code>KMeans()</code> from the same sklearn module we’ve used before. Then, we create an object called <code>kmeans</code>; this is the object we can use to do k-means clustering on our data. You can see that when we call the <code>KMeans()</code> function, we need to specify a few important parameters, including the number of clusters we’re looking for (<code>n_clusters</code>). After we’ve created our <code>kmeans</code> object, we can call its <code>fit()</code> method to find the clusters in our <code>allpoints</code> data (the same data we used before). When we call the <code>fit()</code> method, this determines what cluster every point is in, and we can access the classification of each cluster in the <code>kmeans.labels_</code> object. We can also access the cluster centers in the <code>kmeans.cluster_centers_</code> object. Finally, we can call our <code>makeplot()</code> function, to plot our data and the clusters we found using k-means. <a href="#figure7-14" id="figureanchor7-14">Figure 7-14</a> has the result.</p>
+<span epub:type="pagebreak" id="Page_166" title="166"/><figure>
+<img alt="" class="" height="282" src="image_fi/502888c07/f07014.png" width="389"/>
+<figcaption><p><a id="figure7-14">Figure 7-14</a>: The result of k-means clustering</p></figcaption>
+</figure>
+<p>You can see in this plot that the results of k-means clustering are not very different from the results of E-M clustering: we’ve identified the two dense clusters at the top and right of the plot, and we’ve identified the looser cluster in the rest of the plot. One difference is that the cluster boundaries are not the same: in k-means clustering, the top and right clusters include some observations that look more like members of the less dense cluster. This is not a coincidence; k-means clustering is designed to find clusters that are approximately the same sizes, and it doesn’t have the flexibility that E-M clustering has to find different cluster sizes with different densities.</p>
+<p>Many other clustering methods exist besides E-M and k-means, so many that they are too numerous to write about in detail here. Every clustering method is suited to a particular type of data and a particular application. For example, one powerful yet underappreciated clustering method is called <em>density-based spatial clustering of applications with noise</em> <em>(DBSCAN)</em>. Unlike E-M and k-means clustering, DBSCAN can detect clusters that have unique, nonspherical, non-bell-like shapes, like the shapes shown in <a href="#figure7-15" id="figureanchor7-15">Figure 7-15</a>.</p>
+<figure>
+<img alt="" class="" height="311" src="image_fi/502888c07/f07015.png" width="389"/>
+<figcaption><p><a id="figure7-15">Figure 7-15</a>: The result of DBSCAN clustering, with nonspherical clusters</p></figcaption>
+</figure>
+<p><span epub:type="pagebreak" id="Page_167" title="167"/>You can see two distinct groups, or clusters, of data. But since they swirl around each other, using bell curves to classify them wouldn’t work well. Bell curves can’t easily find the complex boundaries that these clusters have. DBSCAN doesn’t rely on bell curves, but rather relies on careful considerations of the distances between each of the points within and between clusters.</p>
+<p>Another important kind of clustering is called <em>hierarchical clustering</em>. Instead of simply classifying observations into groups, hierarchical clustering yields a nested hierarchy that shows groups of observations in closely related, then successively more distant groups. Every type of clustering has different assumptions and methods associated with it. But all of them are accomplishing the same goal: classifying points into groups without any labels or supervision.</p>
+<h2 id="h1-502888c07-0008">Other Unsupervised Learning Methods</h2>
+<p class="BodyFirst">Clustering is the most popular application of unsupervised learning, but a variety of algorithms besides clustering fall under the broad umbrella of unsupervised learning. Several unsupervised learning methods accomplish <em>anomaly detection</em>: finding observations that don’t fit with the general pattern of a dataset. Some anomaly detection methods are broadly similar to clustering methods, because they sometimes include identifying dense groups of near neighbors (like clusters) and measuring distances between observations and their closest clusters.</p>
+<p>Another group of unsupervised learning methods are called <em>latent variable models</em>. These models try to express the observations in a dataset as a function of hypothetical hidden, or <em>latent</em>, variables. For example, a dataset may consist of student scores in eight classes. We might have a hypothesis that two main types of intelligence exist: analytic and creative. We can check whether students’ scores in quantitative, analytic classes like math and science tend to correlate, and whether students’ scores in more creative classes like language and music tend to correlate. In other words, we hypothesize that there are two hidden, or latent, variables that we haven’t directly measured, analytic intelligence and creative intelligence, and these two latent variables determine the values of all the variables we do observe, all the students’ grades, to a large extent.</p>
+<p>This isn’t the only possible hypothesis. We could also hypothesize that student grades are determined by only one latent variable, general intelligence, or we could hypothesize that student grades are determined by three or any other number of latent variables that we could then try to measure and analyze.</p>
+<p>The E-M clustering we accomplished in this chapter can also be thought of as a type of latent variable model. In the case of clustering dice rolls, the latent variables we’re interested in finding are the mean and standard deviations of the bell curves that indicate cluster locations and sizes. Many of these latent variable models rely on linear algebra and matrix algebra, so if you’re interested in unsupervised learning, you should study those topics diligently.</p>
+<p><span epub:type="pagebreak" id="Page_168" title="168"/>Remember that all of these methods are unsupervised, meaning we have no labels that we can rigorously test our hypotheses against. In the case of <a href="#figure7-13">Figure 7-13</a> and <a href="#figure7-14">Figure 7-14</a>, we can see that the cluster classifications we’ve found look right and make sense in certain ways, but we can’t say with certainty whether they’re correct. Nor can we say whether E-M clustering (whose results are shown in <a href="#figure7-13">Figure 7-13</a>) or k-means clustering (whose results are shown in <a href="#figure7-14">Figure 7-14</a>) is more correct than the other—because there are no “ground truth” group labels that we can use to judge correctness. This is why unsupervised learning methods are often used for data exploration but aren’t often used to get final answers about predictions or classifications.</p>
+<p>Since it’s not possible to definitively say whether any unsupervised learning method has delivered correct results, unsupervised learning requires good judgment to do well. Instead of giving us final answers, it tends to give us insight into data that in turn helps us get ideas for other analyses, including supervised learning. But that doesn’t mean it’s not worthwhile; unsupervised learning can provide invaluable insights and ideas.</p>
+<h2 id="h1-502888c07-0009">Summary</h2>
+<p class="BodyFirst">In this chapter, we covered unsupervised learning, with a focus on E-M clustering. We discussed the concept of unsupervised learning, the details of E-M clustering, and the differences between E-M clustering and other clustering methods like k-means clustering. We finished with a discussion of other unsupervised learning methods. In the next chapter, we’ll discuss web scraping and how to get data quickly and easily from websites for analysis and business applications.</p>
+</section>
+</div></body></html>
