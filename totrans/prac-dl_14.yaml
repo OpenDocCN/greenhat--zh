@@ -1,13 +1,19 @@
 - en: '**14'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '**14'
 - en: EXPERIMENTS WITH CIFAR-10**
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 对CIFAR-10的实验**
 - en: '![image](Images/common.jpg)'
+  id: totrans-2
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/common.jpg)'
 - en: In this chapter, we’ll perform a series of experiments with the CIFAR-10 dataset
     we built in [Chapter 5](ch05.xhtml#ch05). First, we’ll see how two models, one
     shallow, the other deeper, perform on the full dataset. After that, we’ll work
@@ -15,17 +21,23 @@
     between animals and vehicles. Next, we’ll answer the question of what’s better
     for the CIFAR-10 dataset, a single multiclass model or a set of binary models,
     one per class.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们将对我们在[第5章](ch05.xhtml#ch05)中构建的CIFAR-10数据集进行一系列实验。首先，我们将看看两个模型，一个浅层模型，另一个较深的模型，在完整数据集上的表现。之后，我们将使用整个数据集的分组子集，看看能否区分动物和交通工具。接下来，我们将回答一个问题：对于CIFAR-10数据集，是单一的多分类模型更好，还是一组二分类模型，每个类别一个。
 - en: We’ll close the chapter by introducing transfer learning and fine-tuning. These
     are important concepts, often confounded, that are widely used in the machine
     learning community, so we should develop an intuitive feel for how they work.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在本章结束时介绍迁移学习和微调。这些是重要的概念，通常会混淆，且在机器学习社区中广泛使用，因此我们应该培养对它们如何工作的直觉理解。
 - en: A CIFAR-10 Refresher
+  id: totrans-5
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: CIFAR-10复习
 - en: Before we dive into the experiments, let’s refamiliarize ourselves with the
     dataset we’re working with. CIFAR-10 is a 10-class dataset from the Canadian Institute
     for Advanced Research (CIFAR). We built this dataset in [Chapter 5](ch05.xhtml#ch05)
@@ -36,8 +48,10 @@
     each class. CIFAR-10 is probably the second most widely used standard dataset
     in machine learning after MNIST. There is also a 100-class version, CIFAR-100,
     that we’ll not work with in this book, but you’ll see it pop up often in the literature.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 在深入实验之前，让我们重新熟悉一下我们正在使用的数据集。CIFAR-10是一个来自加拿大高级研究院（CIFAR）的10类数据集。我们在[第5章](ch05.xhtml#ch05)中构建了这个数据集，但直到现在才开始使用它。CIFAR-10包含32×32像素的RGB图像，其中有动物（六个类别）和交通工具（四个类别）。可以查看[图5-4](ch05.xhtml#ch5fig4)来查看一些样本图像。训练集有50,000张图像，每个类别有5,000张，因此它是一个平衡数据集。测试集包含10,000张图像，每个类别有1,000张。CIFAR-10可能是继MNIST之后，机器学习中第二个最广泛使用的标准数据集。还有一个100类版本CIFAR-100，我们在本书中不会使用它，但你会在文献中经常看到它。
 - en: As of this writing, the best performing model on unaugmented CIFAR-10 has achieved
     a 1 percent error on the test set ([benchmarks.ai](http://benchmarks.ai)). The
     model that did this has 557 million parameters. Our models will be significantly
@@ -46,44 +60,67 @@
     digit. Because of the variation in natural images, especially in their backgrounds,
     we might expect models to have a harder time learning the CIFAR-10 classes compared
     to MNIST.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 截至目前，最佳的未经增强的CIFAR-10模型在测试集上的错误率已达1% ([benchmarks.ai](http://benchmarks.ai))。这个模型拥有5.57亿个参数。我们将使用的模型会小得多，且测试误差会大得多。然而，这是一个真实的图像数据集，不像MNIST那样非常干净，并且每个数字的背景都是统一的黑色。由于自然图像，特别是其背景的变化，我们可以预期模型在学习CIFAR-10类时会比在MNIST上更加困难。
 - en: 'For reference throughout the chapter, here are CIFAR-10 classes:'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章参考的CIFAR-10类别如下：
 - en: '| **Label** | **Class** | **Label** | **Class** |'
+  id: totrans-9
   prefs: []
   type: TYPE_TB
+  zh: '| **标签** | **类别** | **标签** | **类别** |'
 - en: '| --- | --- | --- | --- |'
+  id: totrans-10
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
 - en: '| 0 | airplane | 5 | dog |'
+  id: totrans-11
   prefs: []
   type: TYPE_TB
+  zh: '| 0 | 飞机 | 5 | 狗 |'
 - en: '| 1 | automobile | 6 | frog |'
+  id: totrans-12
   prefs: []
   type: TYPE_TB
+  zh: '| 1 | 汽车 | 6 | 蛙 |'
 - en: '| 2 | bird | 7 | horse |'
+  id: totrans-13
   prefs: []
   type: TYPE_TB
+  zh: '| 2 | 鸟 | 7 | 马 |'
 - en: '| 3 | cat | 8 | ship |'
+  id: totrans-14
   prefs: []
   type: TYPE_TB
+  zh: '| 3 | 猫 | 8 | 船 |'
 - en: '| 4 | deer | 9 | truck |'
+  id: totrans-15
   prefs: []
   type: TYPE_TB
+  zh: '| 4 | 鹿 | 9 | 卡车 |'
 - en: Working with the Full CIFAR-10 Dataset
+  id: totrans-16
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用完整的CIFAR-10数据集
 - en: Let’s train two different models on the entire CIFAR-10 dataset. The first model
     is the same one we used in [Chapter 13](ch13.xhtml#ch13) for the MNIST dataset.
     We’ll refer to this model as our *shallow model* because it has only two convolutional
     layers. We’ll need to adapt it a touch for the 32 × 32 RGB inputs, but that’s
     straightforward enough to do. The second model, which we’ll call our *deep model*,
     uses multiple convolutional layers before the pooling and fully connected layers.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们在整个CIFAR-10数据集上训练两个不同的模型。第一个模型与我们在[第13章](ch13.xhtml#ch13)中用于MNIST数据集的模型相同。我们将这个模型称为*浅层模型*，因为它只有两个卷积层。我们需要稍微调整一下，以适应32
+    × 32的RGB输入，但这非常容易实现。第二个模型，我们称之为*深层模型*，在池化层和全连接层之前使用了多个卷积层。
 - en: Additionally, we’ll experiment with both stochastic gradient descent and Adadelta
     as our optimization algorithms. We’ll fix the minibatch size at 64 and train for
     60 epochs for a total of 46,875 gradient descent steps. For SGD, we’ll use a learning
@@ -91,8 +128,10 @@
     learning rate on the fly. We can decrease the learning rate for SGD as training
     progresses, but 0.01 is relatively small, and we have a large number of gradient
     descent steps, so we’ll just leave it a constant.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，我们将尝试使用随机梯度下降（SGD）和Adadelta作为优化算法。我们将批量大小固定为64，并训练60个周期，总共进行46,875次梯度下降步骤。对于SGD，我们将使用学习率0.01和动量0.9。请记住，Adadelta是自适应的，会动态调整学习率。我们可以随着训练的进行降低SGD的学习率，但由于0.01已经比较小，而且梯度下降的步骤很多，所以我们将保持其不变。
 - en: The shallow model has 1,626,442 parameters, while the deep model has only 1,139,338\.
     The deep model is deep because it has more layers, but because each convolutional
     layer is using exact convolution, the output decreases by two each time (for a
@@ -103,285 +142,466 @@
     going deeper has actually reduced the number of parameters to learn. This slightly
     counterintuitive result reminds us of the large expense incurred by fully connected
     layers and some of the initial motivation for the creation of CNNs.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 浅层模型有1,626,442个参数，而深层模型只有1,139,338个。深层模型之所以“深”是因为它有更多的层，但由于每个卷积层使用的是精确卷积，每次输出都会减少2（对于3
+    × 3的卷积核）。因此，池化层后的flatten层只有7,744个值，而浅层模型则有12,544个值。flatten层和128节点的全连接层之间的权重矩阵包含了大多数的参数，7,744
+    × 128 = 991,232，而浅层模型为12,544 × 128 = 1,605,632。因此，增加层数实际上减少了需要学习的参数数量。这个略显反直觉的结果提醒我们，全连接层的开销很大，这也是卷积神经网络（CNN）最初被提出的动机之一。
 - en: Building the Models
+  id: totrans-20
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 构建模型
 - en: You’ll find the code for the shallow model in *cifar10_cnn.py* (Adadelta) and
     *cifar10_cnn_SGD.py* (SGD). We’ll work through the code in pieces. The shallow
     model starts in much the same way as for the MNIST dataset, as shown in [Listing
     14-1](ch14.xhtml#ch14lis1).
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以在*cifar10_cnn.py*（Adadelta）和*cifar10_cnn_SGD.py*（SGD）中找到浅层模型的代码。我们将分步讲解这些代码。浅层模型的构建方式与MNIST数据集的方式类似，如[Listing
+    14-1](ch14.xhtml#ch14lis1)所示。
 - en: import keras
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: import keras
 - en: from keras.models import Sequential
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: from keras.models import Sequential
 - en: from keras.layers import Dense, Dropout, Flatten
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: from keras.layers import Dense, Dropout, Flatten
 - en: from keras.layers import Conv2D, MaxPooling2D
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: from keras.layers import Conv2D, MaxPooling2D
 - en: from keras import backend as K
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: from keras import backend as K
 - en: import numpy as np
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: import numpy as np
 - en: batch_size = 64
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: batch_size = 64
 - en: num_classes = 10
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: num_classes = 10
 - en: epochs = 60
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: epochs = 60
 - en: img_rows, img_cols = 32, 32
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: img_rows, img_cols = 32, 32
 - en: x_train = np.load("cifar10_train_images.npy")
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: x_train = np.load("cifar10_train_images.npy")
 - en: y_train = np.load("cifar10_train_labels.npy")
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: y_train = np.load("cifar10_train_labels.npy")
 - en: x_test = np.load("cifar10_test_images.npy")
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: x_test = np.load("cifar10_test_images.npy")
 - en: y_test = np.load("cifar10_test_labels.npy")
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: y_test = np.load("cifar10_test_labels.npy")
 - en: 'if K.image_data_format() == ''channels_first'':'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果 K.image_data_format() == 'channels_first'：
 - en: x_train = x_train.reshape(x_train.shape[0], 3, img_rows, img_cols)
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: x_train = x_train.reshape(x_train.shape[0], 3, img_rows, img_cols)
 - en: x_test = x_test.reshape(x_test.shape[0], 3, img_rows, img_cols)
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: x_test = x_test.reshape(x_test.shape[0], 3, img_rows, img_cols)
 - en: input_shape = (3, img_rows, img_cols)
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: input_shape = (3, img_rows, img_cols)
 - en: 'else:'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 否则：
 - en: x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 3)
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 3)
 - en: x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 3)
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 3)
 - en: input_shape = (img_rows, img_cols, 3)
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: input_shape = (img_rows, img_cols, 3)
 - en: x_train = x_train.astype('float32')
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: x_train = x_train.astype('float32')
 - en: x_test = x_test.astype('float32')
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: x_test = x_test.astype('float32')
 - en: (*\newpage*)
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: (*\newpage*)
 - en: x_train /= 255
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: x_train /= 255
 - en: x_test /= 255
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: x_test /= 255
 - en: y_train = keras.utils.to_categorical(y_train, num_classes)
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: y_train = keras.utils.to_categorical(y_train, num_classes)
 - en: y_test = keras.utils.to_categorical(y_test, num_classes)
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: y_test = keras.utils.to_categorical(y_test, num_classes)
 - en: '*Listing 14-1: Preparing the CIFAR-10 dataset*'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 14-1: 准备 CIFAR-10 数据集*'
 - en: We import the necessary modules and load the CIFAR-10 dataset from the NumPy
     files we created in [Chapter 5](ch05.xhtml#ch05). Notice that the image dimensions
     are now 32 × 32, not 28 × 28, and that the number of channels is 3 (RGB) instead
     of 1 (grayscale). As before, we scale the inputs by 255 to map the images to [0,1]
     and convert the label numbers to one-hot vectors using `to_categorical`.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们导入必要的模块，并从 [第5章](ch05.xhtml#ch05) 中创建的 NumPy 文件加载 CIFAR-10 数据集。注意，图像的尺寸现在是
+    32 × 32，而不是 28 × 28，并且通道数是 3（RGB），而不是 1（灰度）。像之前一样，我们将输入数据缩放为 255，以将图像映射到 [0,1]，并使用
+    `to_categorical` 将标签数字转换为 one-hot 向量。
 - en: Next, we define the model architecture ([Listing 14-2](ch14.xhtml#ch14lis2)).
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们定义模型架构（[Listing 14-2](ch14.xhtml#ch14lis2)）。
 - en: model = Sequential()
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: model = Sequential()
 - en: model.add(Conv2D(32, kernel_size=(3, 3),
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Conv2D(32, kernel_size=(3, 3),
 - en: activation='relu',
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: activation='relu',
 - en: input_shape=input_shape))
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: input_shape=input_shape))
 - en: model.add(Conv2D(64, (3, 3), activation='relu'))
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Conv2D(64, (3, 3), activation='relu'))
 - en: model.add(MaxPooling2D(pool_size=(2, 2)))
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(MaxPooling2D(pool_size=(2, 2)))
 - en: model.add(Dropout(0.25))
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
 - en: model.add(Flatten())
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Flatten())
 - en: model.add(Dense(128, activation='relu'))
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Dense(128, activation='relu'))
 - en: model.add(Dropout(0.5))
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
 - en: model.add(Dense(num_classes, activation='softmax'))
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Dense(num_classes, activation='softmax'))
 - en: model.compile(loss=keras.losses.categorical_crossentropy,
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: model.compile(loss=keras.losses.categorical_crossentropy,
 - en: optimizer=keras.optimizers.Adadelta(),
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: optimizer=keras.optimizers.Adadelta(),
 - en: metrics=['accuracy'])
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: metrics=['accuracy'])
 - en: '*Listing 14-2: Building the shallow CIFAR-10 model*'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 14-2: 构建浅层 CIFAR-10 模型*'
 - en: This step is identical to the MNIST version for the shallow model (see [Listing
     13-1](ch13.xhtml#ch13lis1)). For the deep model, we add more convolutional layers,
     as shown in [Listing 14-3](ch14.xhtml#ch14lis3).
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 这一步与浅层模型的 MNIST 版本相同（参见 [Listing 13-1](ch13.xhtml#ch13lis1)）。对于深度模型，我们添加了更多的卷积层，如
+    [Listing 14-3](ch14.xhtml#ch14lis3) 中所示。
 - en: model = Sequential()
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: model = Sequential()
 - en: model.add(Conv2D(32, kernel_size=(3, 3),
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Conv2D(32, kernel_size=(3, 3),
 - en: activation='relu',
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: activation='relu',
 - en: input_shape=input_shape))
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: input_shape=input_shape))
 - en: model.add(Conv2D(64, (3,3), activation='relu'))
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Conv2D(64, (3,3), activation='relu'))
 - en: model.add(Conv2D(64, (3,3), activation='relu'))
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Conv2D(64, (3,3), activation='relu'))
 - en: model.add(Conv2D(64, (3,3), activation='relu'))
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Conv2D(64, (3,3), activation='relu'))
 - en: model.add(Conv2D(64, (3,3), activation='relu'))
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Conv2D(64, (3,3), activation='relu'))
 - en: model.add(MaxPooling2D(pool_size=(2,2)))
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(MaxPooling2D(pool_size=(2,2)))
 - en: model.add(Dropout(0.25))
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Dropout(0.25))
 - en: model.add(Flatten())
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Flatten())
 - en: model.add(Dense(128, activation='relu'))
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Dense(128, activation='relu'))
 - en: model.add(Dropout(0.5))
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
 - en: model.add(Dense(128, activation='relu'))
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Dense(128, activation='relu'))
 - en: model.add(Dropout(0.5))
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Dropout(0.5))
 - en: model.add(Dense(num_classes, activation='softmax'))
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: model.add(Dense(num_classes, activation='softmax'))
 - en: model.compile(loss=keras.losses.categorical_crossentropy,
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: model.compile(loss=keras.losses.categorical_crossentropy,
 - en: optimizer=keras.optimizers.Adadelta(),
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: optimizer=keras.optimizers.Adadelta(),
 - en: metrics=['accuracy'])
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: metrics=['accuracy'])
 - en: '*Listing 14-3: Building the deep CIFAR-10 model*'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 14-3: 构建深度 CIFAR-10 模型*'
 - en: The extra convolutional layers give the model the opportunity to learn a better
     representation of the input data, which for CIFAR-10 is more complex than the
     simple MNIST images. The representation might be better because a deeper network
     can learn more abstract representations that encompass larger structures in the
     inputs.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 额外的卷积层为模型提供了更好地学习输入数据表示的机会，而对于 CIFAR-10 来说，这比简单的 MNIST 图像要复杂得多。表示可能会更好，因为深度网络可以学习更抽象的表示，涵盖输入数据中的更大结构。
 - en: The code snippets in [Listings 14-2](ch14.xhtml#ch14lis2) and [14-3](ch14.xhtml#ch14lis3)
     compile the model using Adadelta as the optimization algorithm. We also want a
     version of each that uses SGD. If we replace the reference to `Adadelta()` in
     the `compile` method with the following
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Listings 14-2](ch14.xhtml#ch14lis2) 和 [14-3](ch14.xhtml#ch14lis3) 中的代码片段使用
+    Adadelta 作为优化算法编译模型。我们还想要一个使用 SGD 的版本。如果我们将 `compile` 方法中的 `Adadelta()` 替换为以下内容'
 - en: '[PRE0]'
+  id: totrans-92
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: we’ll use SGD with the learning rate and momentum values we indicated earlier.
     For completeness, the rest of the code for both shallow and deep models is shown
     in [Listing 14-4](ch14.xhtml#ch14lis4).
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用之前提到的学习率和动量值来进行SGD优化。为完整起见，浅层和深层模型的其余代码请参见[清单14-4](ch14.xhtml#ch14lis4)。
 - en: print("Model parameters = %d" % model.count_params())
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: print("模型参数 = %d" % model.count_params())
 - en: print(model.summary())
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: print(model.summary())
 - en: history = model.fit(x_train, y_train,
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: history = model.fit(x_train, y_train,
 - en: batch_size=batch_size,
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: batch_size=batch_size,
 - en: epochs=epochs,
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: epochs=epochs,
 - en: verbose=1,
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: verbose=1,
 - en: validation_data=(x_test[:1000], y_test[:1000]))
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: validation_data=(x_test[:1000], y_test[:1000]))
 - en: score = model.evaluate(x_test[1000:], y_test[1000:], verbose=0)
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: score = model.evaluate(x_test[1000:], y_test[1000:], verbose=0)
 - en: print('Test loss:', score[0])
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: print('测试损失:', score[0])
 - en: print('Test accuracy:', score[1])
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: print('测试准确率:', score[1])
 - en: model.save("cifar10_cnn_model.h5")
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: model.save("cifar10_cnn_model.h5")
 - en: '*Listing 14-4: Training and testing the CIFAR-10 models*'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单14-4：训练和测试CIFAR-10模型*'
 - en: This code summarizes the model architecture and number of parameters, trains
     by calling the `fit` method using the first 1,000 test samples for validation,
     and then evaluates the trained model on the remaining 9,000 test samples by calling
@@ -389,35 +609,53 @@
     model to disk (`save`), and store the history showing the per epoch loss and accuracy
     during training. We’ll use the history files to generate plots showing the loss
     and error (1 – accuracy) as a function of the training epoch.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码总结了模型架构和参数数量，通过调用`fit`方法，使用前1,000个测试样本进行验证训练，然后通过调用`evaluate`方法在剩余的9,000个测试样本上评估训练好的模型。我们报告测试损失和准确率。接着，我们将模型保存到磁盘（`save`），并存储显示每个训练周期的损失和准确率的历史记录。我们将使用这些历史记录文件生成图表，展示损失和错误（1
+    – 准确率）随训练周期变化的情况。
 - en: '[Listing 14-4](ch14.xhtml#ch14lis4) gives us four files: shallow model + Adadelta,
     shallow model + SGD, deep model + Adadelta, and deep model + SGD. Let’s run each
     of these to see our final test accuracy and then look at plots of the training
     process to see what we can learn.'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单14-4](ch14.xhtml#ch14lis4)给我们提供了四个文件：浅层模型 + Adadelta，浅层模型 + SGD，深层模型 + Adadelta，以及深层模型
+    + SGD。让我们运行这些文件，查看最终的测试准确率，并查看训练过程的图表，看看我们能从中学到什么。'
 - en: Running the code trains and evaluates the models. This takes some time on our
     CPU-only system, about eight hours total. The random initialization Keras uses
     means that when you run the code yourself, you should see slightly different answers.
     When I ran the code, I got [Table 14-1](ch14.xhtml#ch14tab1).
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行代码将训练并评估模型。在我们的仅限CPU的系统上，这需要一些时间，总共大约八个小时。Keras使用的随机初始化意味着，当你自己运行代码时，你可能会得到稍有不同的结果。当我运行这段代码时，我得到了[表14-1](ch14.xhtml#ch14tab1)。
 - en: '**Table 14-1:** Test Set Accuracies by Model Size and Optimizer'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: '**表14-1：根据模型大小和优化器的测试集准确率**'
 - en: '|  | **Shallow** | **Deep** |'
+  id: totrans-110
   prefs: []
   type: TYPE_TB
+  zh: '|  | **浅层** | **深层** |'
 - en: '| --- | --- | --- |'
+  id: totrans-111
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- |'
 - en: '| Adadelta | 71.9% | 74.8% |'
+  id: totrans-112
   prefs: []
   type: TYPE_TB
+  zh: '| Adadelta | 71.9% | 74.8% |'
 - en: '| SGD | 70.0% | 72.8% |'
+  id: totrans-113
   prefs: []
   type: TYPE_TB
+  zh: '| SGD | 70.0% | 72.8% |'
 - en: The table tells us that using Adadelta gave us a more accurate model for both
     shallow and deep models compared to SGD. We also see that the deep model outperforms
     the shallow model regardless of optimizer. Adaptive optimizers like Adadelta and
@@ -428,24 +666,34 @@
     to SGD after some number of epochs. The idea here is that the adaptive optimizer
     “gets close” to a minimum of the loss function while SGD fine-tunes the process
     at that point.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 这张表告诉我们，使用Adadelta比SGD为浅层和深层模型提供了更精确的模型。我们还可以看到，不论优化器是什么，深层模型都优于浅层模型。由于这个原因，像Adadelta和Adam（也在Keras中）这样的自适应优化器通常优于传统的SGD。然而，我也看到有人声称，一旦学习率设置得当，并随着训练过程的进行逐渐降低，SGD最终和Adadelta一样好，甚至更好。当然，没什么能阻止我们在某个时期使用自适应优化器，然后在训练进行若干周期后切换为SGD。这里的想法是，自适应优化器“接近”损失函数的最小值，而SGD在这一点上进行精细调整。
 - en: Analyzing the Models
+  id: totrans-115
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 分析模型
 - en: Let’s look at how the loss changes during training. [Figure 14-1](ch14.xhtml#ch14fig1)
     shows the loss per epoch for the shallow and deep models using Adadelta (top)
     and SGD (bottom).
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看看训练过程中损失的变化。[图14-1](ch14.xhtml#ch14fig1)展示了使用Adadelta（上图）和SGD（下图）时浅层和深层模型每个周期的损失。
 - en: '![image](Images/14fig01.jpg)'
+  id: totrans-117
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/14fig01.jpg)'
 - en: '*Figure 14-1: Training loss for shallow and deep models using Adadelta (top)
     and SGD (bottom)*'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图14-1：使用Adadelta（上图）和SGD（下图）训练浅层和深层模型的损失*'
 - en: Starting with the Adadelta loss plot, we see that compared to SGD, the loss
     is not as low. We also see that for the shallow model, the loss is increasing
     slightly per epoch. This is a counterintuitive result and seems to contradict
@@ -453,35 +701,45 @@
     of this happening with Adam, another adaptive optimizer, so it is likely an artifact
     of the adaptation algorithm. Regardless, as we saw in [Table 14-1](ch14.xhtml#ch14tab1),
     Adadelta leads to higher accuracies for both shallow and deep models.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 从Adadelta的损失图开始，我们可以看到与SGD相比，损失并没有那么低。我们还看到浅层模型的损失在每个epoch中略微增加。这是一个反直觉的结果，似乎与传统的观念相悖——即训练损失应该只会下降。有报告称在Adam（另一种自适应优化器）中也会出现这种情况，因此这很可能是自适应算法的产物。无论如何，正如我们在[表14-1](ch14.xhtml#ch14tab1)中看到的，Adadelta在浅层和深层模型上都能带来更高的准确性。
 - en: On the bottom of [Figure 14-1](ch14.xhtml#ch14fig1), we see that SGD leads to
     a smaller loss for the shallow model compared to the deep model. This is typically
     interpreted as a hint for potential overfitting. The model is learning the details
     of the training set as the loss tends to 0\. The shallow model using SGD was the
     least performant model according to [Table 14-1](ch14.xhtml#ch14tab1). The deep
     model using SGD did not have such a small loss, at least up to 60 training epochs.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[图14-1](ch14.xhtml#ch14fig1)的底部，我们看到SGD使得浅层模型的损失比深层模型更小。这通常被解读为可能出现过拟合的提示。当损失趋向0时，模型正在学习训练集的细节。根据[表14-1](ch14.xhtml#ch14tab1)，使用SGD的浅层模型是表现最差的模型。使用SGD的深层模型并没有出现如此小的损失，至少在训练了60个epochs之前没有。
 - en: What about the validation set accuracy during training? [Figure 14-2](ch14.xhtml#ch14fig2)
     plots the *error* by epoch. The error is easier to understand visually; it should
     tend toward 0 as accuracy increases. Again, the Adadelta models are on the top,
     and the SGD models are on the bottom.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 那么，训练过程中验证集的准确性如何呢？[图14-2](ch14.xhtml#ch14fig2)按epoch绘制了*误差*。误差在视觉上更容易理解；它应该随着准确性的提高而趋近于0。同样，Adadelta模型在上方，SGD模型在下方。
 - en: As expected, regardless of optimizer, the deeper model performed better and
     had a lower validation set error during training. Note, the validation set error
     is not the final, held-out test set error, but instead the portion of the test
     set used during training, the first 1,000 samples in this case.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如预期的那样，无论使用什么优化器，深层模型表现更好，并且在训练过程中验证集的误差较低。请注意，验证集的误差不是最终的、保留的测试集误差，而是训练过程中使用的测试集部分，在这个例子中是前1,000个样本。
 - en: 'The SGD curves on the bottom of [Figure 14-2](ch14.xhtml#ch14fig2) follow what
     our intuition should tell us: as the model trains, it gets better, leading to
     a smaller error. The deep model quickly overtakes the shallow model—again, an
     intuitive result. Also, the curves are relatively smooth as the model gets better
     and better.'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[图14-2](ch14.xhtml#ch14fig2)底部的SGD曲线符合我们的直觉：随着模型训练的进行，它变得更好，导致误差变小。深层模型很快超越了浅层模型——这也是直观的结果。同时，随着模型的不断改进，曲线变得相对平滑。
 - en: The Adadelta error plots on the top of [Figure 14-2](ch14.xhtml#ch14fig2) are
     a different story. There is an obvious decrease in the error after the first few
     epochs. However, after that, the validation set error jumps around somewhat chaotically
@@ -490,15 +748,21 @@
     of the Adadelta algorithm, which is adjusting the learning rate on the fly to
     search for a better minimum. From the results of [Table 14-1](ch14.xhtml#ch14tab1),
     it’s clear that Adadelta is finding better-performing models.
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: '[图14-2](ch14.xhtml#ch14fig2)顶部的Adadelta误差图呈现出不同的情况。在前几个epoch之后，误差显著下降。然而，之后验证集的误差出现了些许混乱的波动，尽管仍然符合我们直觉的判断，即深层模型的误差应该小于浅层模型。这个混乱的结果是由于Adadelta算法的自适应特性，它在调整学习率时试图寻找更好的最小值。从[表14-1](ch14.xhtml#ch14tab1)的结果可以看出，Adadelta找到了表现更好的模型。'
 - en: '![image](Images/14fig02.jpg)'
+  id: totrans-125
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/14fig02.jpg)'
 - en: '*Figure 14-2: Validation set error for shallow and deep models using Adadelta
     (top) and SGD (bottom)*'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图14-2：使用Adadelta（上图）和SGD（下图）的浅层和深层模型的验证集误差*'
 - en: These experiments tell us that adaptive optimization algorithms and deeper networks
     (to a point) tend toward better-performing models. While recognizing the danger
     inherent in attempting to offer advice in this field, it seems safe to say that
@@ -508,76 +772,119 @@
     the model will be too large for the training set, so there will be a cutoff point
     where increasing the size of the model no longer helps. In that case, get more
     training data, if possible.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些实验告诉我们，自适应优化算法和更深的网络（到一定程度）倾向于产生更好的模型。虽然在尝试提供此领域建议时存在风险，但可以放心地说，应该从自适应优化算法开始，并使用一个足够大的模型。为了了解什么是*足够大*，我建议从一个适中的模型开始，训练后再让模型变得更深，看看是否能改善结果。最终，模型会变得太大，以至于无法适应训练集，所以会有一个临界点，超过这个点后，增加模型的大小不再有帮助。在这种情况下，如果可能的话，获取更多的训练数据。
 - en: Let’s now shift our attention to working with subsets of CIFAR-10.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们把注意力转向处理CIFAR-10的子集。
 - en: Animal or Vehicle?
+  id: totrans-129
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 动物还是车辆？
 - en: Four of the ten classes in CIFAR-10 are vehicles; the remaining six are animals.
     Let’s build a model to separate the two and see what we can learn from it. We
     already have the images; all we need do is recode the labels so that all the vehicles
     are marked as class 0 and all the animals as class 1\. Doing this is straightforward,
     as shown in [Listing 14-5](ch14.xhtml#ch14lis5).
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: CIFAR-10中的十个类别中有四个是车辆，其余六个是动物。让我们构建一个模型来区分这两者，看看我们能从中学到什么。我们已经有了图像；我们需要做的就是重新编码标签，将所有车辆标记为类别0，所有动物标记为类别1。这样做很简单，如[Listing
+    14-5](ch14.xhtml#ch14lis5)所示。
 - en: import numpy as np
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: import numpy as np
 - en: y_train = np.load("cifar10_train_labels.npy")
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: y_train = np.load("cifar10_train_labels.npy")
 - en: y_test  = np.load("cifar10_test_labels.npy")
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: y_test = np.load("cifar10_test_labels.npy")
 - en: 'for i in range(len(y_train)):'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for i in range(len(y_train)):'
 - en: 'if (y_train[i] in [0,1,8,9]):'
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if (y_train[i] in [0,1,8,9]):'
 - en: y_train[i] = 0
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: y_train[i] = 0
 - en: 'else:'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 'else:'
 - en: y_train[i] = 1
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: y_train[i] = 1
 - en: 'for i in range(len(y_test)):'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for i in range(len(y_test)):'
 - en: 'if (y_test[i] in [0,1,8,9]):'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if (y_test[i] in [0,1,8,9]):'
 - en: y_test[i] = 0
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: y_test[i] = 0
 - en: 'else:'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 'else:'
 - en: y_test[i] = 1
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: y_test[i] = 1
 - en: np.save("cifar10_train_animal_vehicle_labels.npy", y_train)
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: np.save("cifar10_train_animal_vehicle_labels.npy", y_train)
 - en: np.save("cifar10_test_animal_vehicle_labels.npy", y_test)
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: np.save("cifar10_test_animal_vehicle_labels.npy", y_test)
 - en: '*Listing 14-5: Adjusting the labels of CIFAR-10 into vehicles (class 0) and
     animals (class 1)*'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Listing 14-5: 将CIFAR-10的标签调整为车辆（类别0）和动物（类别1）*'
 - en: We load the existing train and test label files, already matched in order with
     the train and test image files, and build new label vectors mapping the vehicle
     classes—classes 0, 1, 8, and 9—to 0 and all the others to 1.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们加载现有的训练和测试标签文件，这些文件已与训练和测试图像文件按顺序匹配，并构建新的标签向量，将车辆类别——类别0、1、8和9——映射为0，将其他所有类别映射为1。
 - en: The code in the previous section for building and training the model remains
     the same except for the definition of the model architecture and the particular
     file we load for the train and test labels. The number of classes (`num_classes`)
@@ -588,8 +895,10 @@
     stick with Adadelta as the optimizer and use the first 1,000 test samples for
     validation and the remaining 9,000 for final test. We’ll use the same shallow
     architecture used in the previous section.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 前一节中构建和训练模型的代码保持不变，除了模型架构的定义和我们加载的训练与测试标签文件。类别数量（`num_classes`）设置为2，迷你批量大小为128，我们将训练12个周期。训练集并不完全平衡——有20,000辆车和30,000只动物——但这种不平衡并不严重，所以我们应该没问题。记住，当某一类别较为稀缺时，模型很难很好地学习它。我们将继续使用Adadelta作为优化器，并用前1,000个测试样本进行验证，剩下的9,000个用于最终测试。我们将使用前一节中使用的相同的浅层架构。
 - en: Training this model on the CIFAR-10 images with the recoded labels gives us
     a final test accuracy of 93.6 percent. Let’s be a little pedantic and calculate
     all the performance metrics from [Chapter 11](ch11.xhtml#ch11). To do this, we
@@ -597,60 +906,79 @@
     to work with a Keras model. We’ll also use `basic_metrics` ([Listing 11-2](ch11.xhtml#ch11lis2))
     and `advanced_metrics` ([Listing 11-3](ch11.xhtml#ch11lis3)) from [Chapter 11](ch11.xhtml#ch11).
     The updated code for `tally_predictions` is shown in [Listing 14-6](ch14.xhtml#ch14lis6).
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
 - en: 'def tally_predictions(model, x, y):'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
 - en: pp = model.predict(x)
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
 - en: p = np.zeros(pp.shape[0], dtype="uint8")
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
 - en: '❶ for i in range(pp.shape[0]):'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
 - en: p[i] = 0 if (pp[i,0] > pp[i,1]) else 1
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
 - en: tp = tn = fp = fn = 0
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(len(y)):'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (p[i] == 0) and (y[i] == 0):'
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
 - en: tn += 1
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
 - en: 'elif (p[i] == 0) and (y[i] == 1):'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
 - en: fn += 1
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
 - en: 'elif (p[i] == 1) and (y[i] == 0):'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
 - en: fp += 1
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
 - en: 'else:'
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
 - en: tp += 1
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
 - en: score = float(tp+tn) / float(tp+tn+fp+fn)
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
 - en: return [tp, tn, fp, fn, score]
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 14-6: Calculating basic metrics for Keras models*'
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
 - en: 'We pass in the model, test samples (`x`), and test labels (`y`). Unlike the
@@ -658,6 +986,7 @@
     per class probabilities (`pp`). This returns a 2D array, one row for each sample
     in `x`, where the columns are the probabilities assigned per class. Here there
     are two columns because there are only two classes: vehicle or animal.'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
 - en: Before we can tally the true positives, true negatives, false positives (vehicle
@@ -668,63 +997,83 @@
     can calculate the tallies and return them along with the overall score (accuracy).
     We pass the list returned by `tally_predictions` to `basic_metrics` and then pass
     the output of both of these functions to `advanced_metrics`, as in [Chapter 11](ch11.xhtml#ch11).
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
 - en: 'The full set of binary classifier metrics gives us the following:'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Metric** | **Result** |'
+  id: totrans-171
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- |'
+  id: totrans-172
   prefs: []
   type: TYPE_TB
 - en: '| TP | 5,841 |'
+  id: totrans-173
   prefs: []
   type: TYPE_TB
 - en: '| FP | 4,80 |'
+  id: totrans-174
   prefs: []
   type: TYPE_TB
 - en: '| TN | 3,520 |'
+  id: totrans-175
   prefs: []
   type: TYPE_TB
 - en: '| FN | 159 |'
+  id: totrans-176
   prefs: []
   type: TYPE_TB
 - en: '| TPR (sensitivity, recall) | 0.9735 |'
+  id: totrans-177
   prefs: []
   type: TYPE_TB
 - en: '| TNR (specificity) | 0.8800 |'
+  id: totrans-178
   prefs: []
   type: TYPE_TB
 - en: '| PPV (precision) | 0.9241 |'
+  id: totrans-179
   prefs: []
   type: TYPE_TB
 - en: '| NPV | 0.9568 |'
+  id: totrans-180
   prefs: []
   type: TYPE_TB
 - en: '| FPR | 0.1200 |'
+  id: totrans-181
   prefs: []
   type: TYPE_TB
 - en: '| FNR | 0.0265 |'
+  id: totrans-182
   prefs: []
   type: TYPE_TB
 - en: '| F1 | 0.9481 |'
+  id: totrans-183
   prefs: []
   type: TYPE_TB
 - en: '| MCC | 0.8671 |'
+  id: totrans-184
   prefs: []
   type: TYPE_TB
 - en: '| *κ* | 0.8651 |'
+  id: totrans-185
   prefs: []
   type: TYPE_TB
 - en: '| Informedness | 0.8535 |'
+  id: totrans-186
   prefs: []
   type: TYPE_TB
 - en: '| Markedness | 0.8808 |'
+  id: totrans-187
   prefs: []
   type: TYPE_TB
 - en: '| Accuracy | 0.9361 |'
+  id: totrans-188
   prefs: []
   type: TYPE_TB
 - en: We see that this is a well-performing model although a specificity of 88 percent
@@ -732,6 +1081,7 @@
     correlation coefficient (MCC) is possibly the best single number for characterizing
     a binary classifier. Here we have an MCC of 0.8671 out of 1.0, indicative of a
     good model.
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
 - en: Recall that the *sensitivity* is the probability that an animal is called an
@@ -741,36 +1091,52 @@
     value)* is the probability of the model being correct when it assigns a label
     of “vehicle.” Note also that the false positive rate (FPR) is 1 – specificity,
     and the false negative rate (FNR) is 1 – sensitivity.
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 记住，*敏感度*是模型将动物识别为“动物”的概率，*特异度*是模型将车辆识别为“车辆”的概率。*精度*是模型标记为“动物”时正确的概率，而*NPV（负预测值）*是模型将标签为“车辆”时正确的概率。还需注意，假阳性率（FPR）为
+    1 – 特异度，假阴性率（FNR）为 1 – 敏感度。
 - en: 'A little more code will calculate the ROC curve and its area:'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 多一些代码将计算 ROC 曲线及其面积：
 - en: '[PRE1]'
+  id: totrans-192
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Again, we pass in the trained model, the test samples (`x`), and the animal
     or vehicle labels (`y`). We also convert the output probabilities to class predictions,
     as we did in [Listing 14-6](ch14.xhtml#ch14lis6). The AUC is 0.9267, and [Figure
     14-3](ch14.xhtml#ch14fig3) shows the ROC curve (note the zoomed axes). This curve
     is steep and close to the upper-left corner of the plot—all good signs of a well-performing
     model.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 再次，我们传入训练好的模型、测试样本（`x`）和动物或车辆标签（`y`）。我们还将输出的概率转换为类别预测，就像在[示例 14-6](ch14.xhtml#ch14lis6)中所做的那样。AUC
+    为 0.9267，[图 14-3](ch14.xhtml#ch14fig3)显示了 ROC 曲线（请注意缩放后的坐标轴）。这条曲线陡峭且靠近图的左上角——这是一个表现良好的模型的所有好迹象。
 - en: '![image](Images/14fig03.jpg)'
+  id: totrans-194
   prefs: []
   type: TYPE_IMG
+  zh: '![image](Images/14fig03.jpg)'
 - en: '*Figure 14-3: ROC curve for the animal or vehicle model*'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 14-3: 动物或车辆模型的 ROC 曲线*'
 - en: We grouped animals and vehicles and asked a single model to learn something
     about the difference between them. Clearly, some characteristics differentiate
     the two classes, and the model has learned to use them successfully. However,
     unlike most binary classifiers, we know finer label assignments for the test data.
     For example, we know which of the animals are birds or deer or frogs. Likewise,
     we know which samples are airplanes, ships, or trucks.
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将动物和车辆分组，并让一个模型学习它们之间的区别。显然，一些特征区分了这两个类别，模型成功地学会了使用这些特征。然而，与大多数二分类器不同，我们知道测试数据的更精细的标签分配。例如，我们知道哪些动物是鸟、鹿或青蛙。同样，我们也知道哪些样本是飞机、船或卡车。
 - en: When the model makes a mistake, the mistake is either a false positive (calling
     a vehicle an animal) or a false negative (calling an animal a vehicle). We chose
     animals to be class 1, so false positives are cases where a vehicle was called
@@ -779,78 +1145,127 @@
     classes, and we can do the same for the false negatives to tell us which animal
     classes were assigned to the vehicle class. A few lines of code in [Listing 14-7](ch14.xhtml#ch14lis7)
     give us what we are after.
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 当模型犯错时，错误要么是假阳性（将车辆误认为是动物），要么是假阴性（将动物误认为是车辆）。我们将动物设为类别 1，因此假阳性是将车辆误判为动物的情况。假阴性的反面情况亦然。我们可以使用完整的类别标签来告诉我们有多少假阳性是由哪些车辆类别组成的，我们也可以对假阴性做同样的事情，以告诉我们哪些动物类别被分配给了车辆类别。几行代码在[示例
+    14-7](ch14.xhtml#ch14lis7)中展示了我们所需要的内容。
 - en: import numpy as np
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: import numpy as np
 - en: from keras.models import load_model
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: from keras.models import load_model
 - en: x_test = np.load("cifar10_test_images.npy")/255.0
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: x_test = np.load("cifar10_test_images.npy")/255.0
 - en: y_label= np.load("cifar10_test_labels.npy")
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: y_label= np.load("cifar10_test_labels.npy")
 - en: y_test = np.load("cifar10_test_animal_vehicle_labels.npy")
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: y_test = np.load("cifar10_test_animal_vehicle_labels.npy")
 - en: model = load_model("cifar10_cnn_animal_vehicle_model.h5")
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: model = load_model("cifar10_cnn_animal_vehicle_model.h5")
 - en: pp = model.predict(x_test)
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: pp = model.predict(x_test)
 - en: p = np.zeros(pp.shape[0], dtype="uint8")
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: p = np.zeros(pp.shape[0], dtype="uint8")
 - en: 'for i in range(pp.shape[0]):'
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 'for i in range(pp.shape[0]):'
 - en: p[i] = 0 if (pp[i,0] > pp[i,1]) else 1
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: p[i] = 0 if (pp[i,0] > pp[i,1]) else 1
 - en: hp = []; hn = []
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: hp = []; hn = []
 - en: '❶ for i in range(len(y_test)):'
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: '❶ for i in range(len(y_test)):'
 - en: 'if (p[i] == 0) and (y_test[i] == 1):'
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 'if (p[i] == 0) and (y_test[i] == 1):'
 - en: hn.append(y_label[i])
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: hn.append(y_label[i])
 - en: 'elif (p[i] == 1) and (y_test[i] == 0):'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 'elif (p[i] == 1) and (y_test[i] == 0):'
 - en: hp.append(y_label[i])
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: hp.append(y_label[i])
 - en: hp = np.array(hp)
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: hp = np.array(hp)
 - en: hn = np.array(hn)
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: hn = np.array(hn)
 - en: a = np.histogram(hp, bins=10, range=[0,9])[0]
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: a = np.histogram(hp, bins=10, range=[0,9])[0]
 - en: b = np.histogram(hn, bins=10, range=[0,9])[0]
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: b = np.histogram(hn, bins=10, range=[0,9])[0]
 - en: 'print("vehicles as animals: %s" % np.array2string(a))'
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 'print("将车辆识别为动物: %s" % np.array2string(a))'
 - en: 'print("animals as vehicles: %s" % np.array2string(b))'
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: 'print("将动物识别为车辆: %s" % np.array2string(b))'
 - en: '*Listing 14-7: Using the fine class labels to determine which classes account
     for false positives and false negatives*'
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: '*示例 14-7：使用精细的类别标签确定哪些类别导致假阳性和假阴性*'
 - en: First, we load the test set images, actual labels (`y_label`), and animal or
     vehicle labels (`y_test`). Then, as before, we load the model and get the model
     predictions (`p`). We want to keep track of the actual class label for each false
@@ -860,44 +1275,58 @@
     (`hn`) or FP (`hp`). Note that this works because when we defined the animal or
     vehicle labels, we were careful to keep the order the same as the original label
     set.
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们加载测试集图像、实际标签（`y_label`）和动物或车辆标签（`y_test`）。然后，和之前一样，我们加载模型并得到模型预测（`p`）。我们希望追踪每个假阳性和假阴性的实际类别标签，即分类器所犯的错误。我们通过遍历预测结果，并将其与动物或车辆标签进行比较来做到这一点❶。当发生错误时，我们保存样本的实际标签，无论是假阴性（`hn`）还是假阳性（`hp`）。注意，这样做之所以有效，是因为我们在定义动物或车辆标签时，确保了它们的顺序与原始标签集一致。
 - en: Once we have the actual labels for all FP and FN cases, we use `histogram` to
     do the tallying for us. There are 10 actual class labels, so we tell `histogram`
     that we want to use 10 bins. We also need to specify the range for the bins (`range=[0,9]`).
     We want only the counts themselves, so we need to keep only the first array returned
     by `histogram`, hence the `[0]` at the end of the call. Finally, we print the
     arrays to get
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦我们有了所有假阳性（FP）和假阴性（FN）案例的实际标签，我们使用`histogram`来为我们统计。共有10个实际类别标签，因此我们告诉`histogram`我们希望使用10个区间。我们还需要指定区间的范围（`range=[0,9]`）。我们只需要计数值本身，所以我们只保留`histogram`返回的第一个数组，因此调用的最后加上了`[0]`。最后，我们打印数组得到：
 - en: '[PRE2]'
+  id: totrans-223
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: This means that of the vehicles the model called “animal,” 189 of them were
     of class 0, airplane. The vehicle class least likely to be identified as an animal
     is class 1, automobile. Ships and trucks were similarly likely to be mistaken
     for an animal. Going the other way, we see that class 2, birds, were most likely
     to be mistaken for vehicles and class 5, dogs, were least likely to be misclassified,
     though frogs were a close second.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着模型将189个“动物”识别为类别0，飞机。最不可能被误识为动物的车辆类别是类别1，汽车。船和卡车同样容易被误识为动物。反过来，我们看到类别2，鸟类，最容易被误识为车辆，而类别5，狗类，最不容易被误分类，尽管青蛙紧随其后。
 - en: 'What to make of this? The most commonly misclassified vehicle is an airplane,
     while the most commonly misclassified animal is a bird. This makes sense: a picture
     of an airplane and a picture of a bird flying do look similar. I’ll leave it to
     you to make connections among the other categories.'
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 该如何理解这些结果呢？最常被误分类的车辆是飞机，而最常被误分类的动物是鸟类。这是有道理的：飞机和飞行中的鸟类的图片确实看起来很相似。其他类别的关系就留给你去思考吧。
 - en: Binary or Multiclass?
+  id: totrans-226
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 二分类还是多分类？
 - en: Conventional wisdom in machine learning is that a multiclass model will generally
     outperform multiple binary models. While this is almost certainly true for large
     datasets, large models, and situations with many classes, like the ImageNet dataset
     of 1,000 classes, how does it pan out for small models like the ones we’re working
     with in this chapter? Let’s find out.
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 在机器学习中，传统的观点认为，多分类模型通常比多个二分类模型更具优势。虽然对于大数据集、大模型以及有很多类别的情况，比如包含1,000个类别的ImageNet数据集，这几乎是肯定成立的，但对于我们在本章中使用的小模型来说，这种情况如何呢？让我们来探讨一下。
 - en: There are 5,000 instances of each class in the CIFAR-10 dataset and 10 classes.
     This means we can train 10 binary models where the target class (class 1) is one
     of the 10 classes, and the other class is everything else. This is known as a
@@ -906,86 +1335,112 @@
     answer. The datasets are all imbalanced, 5,000 class 1 instances to 45,000 class
     0, but, as we’ll see, there is still enough data to learn the difference between
     classes.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: CIFAR-10数据集中每个类别有5,000个实例，共有10个类别。这意味着我们可以训练10个二分类模型，其中目标类别（类别1）是10个类别之一，而其他类别则归为“其他”。这种方法被称为*一对多*方法。为了对未知样本进行分类，我们将其分别输入每个分类器，并根据返回的最有信心的答案来分配标签。所有数据集都是不平衡的，类别1有5,000个实例，类别0有45,000个实例，但正如我们所看到的，依然有足够的数据来学习类别之间的差异。
 - en: We need some code to train 10 one-vs-rest models. We’ll use the shallow architecture
     we’ve used before, with a minibatch size of 128, and we’ll train for 12 epochs.
     Before we can train, however, we need to reassign the class labels for the train
     and test sets so that all instances of the target class are a 1 and everything
     else is a 0\. To build the per class labels, we’ll use [Listing 14-8](ch14.xhtml#ch14lis8).
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
 - en: import sys
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
 - en: import numpy as np
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ class1 = eval("["+sys.argv[1]+"]")
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
 - en: y_train = np.load("cifar10_train_labels.npy")
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
 - en: y_test  = np.load("cifar10_test_labels.npy")
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(len(y_train)):'
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (y_train[i] in class1):'
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
 - en: y_train[i] = 1
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
 - en: 'else:'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
 - en: y_train[i] = 0
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(len(y_test)):'
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (y_test[i] in class1):'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
 - en: y_test[i] = 1
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
 - en: 'else:'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
 - en: y_test[i] = 0
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
 - en: np.save(sys.argv[2], y_train)
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
 - en: np.save(sys.argv[3], y_test)
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 14-8: Building the per class labels*'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
 - en: This code makes use of the command line. To call it, use something like
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE3]'
+  id: totrans-249
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: The first argument is the desired target class label, here 1 for automobiles,
     and the next two arguments are the names in which to store the new label assignments
     for the train and test images. The code itself loops over the actual train and
     test labels, and if the label is the target class, the corresponding output label
     is 1; otherwise, it is 0.
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
 - en: This code is more flexible than mapping a single class. By using `eval` ❶, we
     can pass in a comma-separated string of all the CIFAR-10 labels we want to treat
     as the target class. For example, to use this code to make labels for the animal
     versus vehicle example of the previous section, we’d make the first argument `2,3,4,5,6,7`.
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
 - en: Once we have new labels for each of the 10 classes, we can use them to train
@@ -997,6 +1452,7 @@
     the shallow architecture trained on the full CIFAR-10 dataset for 12 epochs (*cifar10_cnn_model.h5*).
     To train the binary models, use the `train_single_models` script. This script
     calls *cifar10_cnn_arbitrary.py* to train a model using a specified binary dataset.
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
 - en: 'To test the models, we need to first load them all from disk along with the
@@ -1004,27 +1460,35 @@
     each of the individual class models keeping the predictions. From the predictions,
     we can assign class labels and build confusion matrices to see how well each approach
     does. First, let’s load the test set and the models:'
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE4]'
+  id: totrans-254
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Notice that we are scaling the test set by 255, as we did with the training
     data. We’ll keep the multiclass model in `mm` and load the 10 single class models
     into the list, `m`.
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
 - en: 'Next, we apply the models to each test set sample:'
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE5]'
+  id: totrans-257
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Calling `predict` with the 10,000 test samples returns a 10,000 × 10 matrix
     for the multiclass model or 10,000 × 2 for the individual models. Each row corresponds
     to a test sample, and each column is the model’s output for each class. For the
     multiclass case, we set `mp` to the maximum value across the columns (`axis=1`)
     to get a vector of 10,000 values, each of which is the predicted class label.
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
 - en: We loop over the individual models and call `predict`, keeping only the class
@@ -1034,124 +1498,163 @@
     across the rows by using `argmax` and `axis=0`, we’ll get the class label of the
     model that had the highest predicted probability for each test sample. This is
     what is in `bp`.
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
 - en: 'With our predictions in hand, we can generate the confusion matrices:'
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE6]'
+  id: totrans-261
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Here rows represent the true class label, and columns represent the model’s
     predicted label. We also store the confusion matrices for future use.
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
 - en: 'We can display the confusion matrices with the code in [Listing 14-9](ch14.xhtml#ch14lis9):'
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
 - en: print("One-vs-rest confusion matrix (rows true, cols predicted):")
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
 - en: print("%s" % np.array2string(100*(cb/1000.0), precision=1))
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
 - en: print()
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
 - en: print("Multiclass confusion matrix:")
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
 - en: print("%s"  % np.array2string(100*(cm/1000.0), precision=1))
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 14-9: Displaying the confusion matrices. See* cifar10_one_vs_many.py'
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
 - en: We divide the counts in `cb` and `cm` by 1,000 because each class is represented
     by that many samples in the test set. This converts the confusion matrix entries
     to a fraction and then a percent when multiplied by 100.
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
 - en: So, how did we do? The multiple one-vs-rest classifiers produced
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
     | **8** | **9** |'
+  id: totrans-272
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-273
   prefs: []
   type: TYPE_TB
 - en: '| **0** | **75.0** | 2.8 | 3.4 | 2.1 | 1.7 | 0.4 | 2.3 | 0.2 | 4.1 | 8.0 |'
+  id: totrans-274
   prefs: []
   type: TYPE_TB
 - en: '| **1** | 0.8 | **84.0** | 0.2 | 0.9 | 0.3 | 0.3 | 1.1 | 0.0 | 1.2 | 11.2 |'
+  id: totrans-275
   prefs: []
   type: TYPE_TB
 - en: '| **2** | 6.5 | 1.6 | **54.0** | 6.3 | 9.5 | 5.3 | 9.1 | 2.3 | 0.8 | 4.6 |'
+  id: totrans-276
   prefs: []
   type: TYPE_TB
 - en: '| **3** | 1.6 | 3.6 | 3.8 | **52.1** | 7.1 | 12.9 | 10.6 | 2.2 | 0.9 | 5.2
     |'
+  id: totrans-277
   prefs: []
   type: TYPE_TB
 - en: '| **4** | 1.8 | 0.8 | 3.6 | 6.5 | **67.6** | 2.3 | 8.6 | 5.3 | 1.3 | 2.2 |'
+  id: totrans-278
   prefs: []
   type: TYPE_TB
 - en: '| **5** | 1.4 | 1.4 | 3.5 | 16.9 | 4.7 | **61.8** | 4.0 | 2.6 | 0.5 | 3.2 |'
+  id: totrans-279
   prefs: []
   type: TYPE_TB
 - en: '| **6** | 0.8 | 0.7 | 1.4 | 3.4 | 2.8 | 1.0 | **86.4** | 0.2 | 0.3 | 3.0 |'
+  id: totrans-280
   prefs: []
   type: TYPE_TB
 - en: '| **7** | 1.5 | 1.3 | 1.7 | 4.9 | 5.2 | 5.2 | 1.5 | **71.5** | 0.1 | 7.1 |'
+  id: totrans-281
   prefs: []
   type: TYPE_TB
 - en: '| **8** | 5.3 | 4.4 | 0.1 | 1.1 | 0.5 | 0.6 | 1.1 | 0.5 | **79.1** | 7.3 |'
+  id: totrans-282
   prefs: []
   type: TYPE_TB
 - en: '| **9** | 1.7 | 4.0 | 0.2 | 0.8 | 0.1 | 0.4 | 0.5 | 0.3 | 0.8 | **91.2** |'
+  id: totrans-283
   prefs: []
   type: TYPE_TB
 - en: And the multiclass classifier came up with
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
     | **8** | **9** |'
+  id: totrans-285
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-286
   prefs: []
   type: TYPE_TB
 - en: '| **0** | **70.2** | 1.6 | 6.0 | 2.6 | 3.3 | 0.5 | 1.8 | 0.9 | 9.8 | 3.3 |'
+  id: totrans-287
   prefs: []
   type: TYPE_TB
 - en: '| **1** | 2.0 | **79.4** | 1.0 | 1.3 | 0.5 | 0.5 | 1.3 | 0.4 | 2.8 | 10.8 |'
+  id: totrans-288
   prefs: []
   type: TYPE_TB
 - en: '| **2** | 5.2 | 0.6 | **56.2** | 6.6 | 13.5 | 6.1 | 7.3 | 2.6 | 1.4 | 0.5 |'
+  id: totrans-289
   prefs: []
   type: TYPE_TB
 - en: '| **3** | 1.2 | 1.1 | 7.2 | **57.7** | 10.2 | 11.5 | 7.3 | 1.7 | 1.2 | 0.9
     |'
+  id: totrans-290
   prefs: []
   type: TYPE_TB
 - en: '| **4** | 1.9 | 0.2 | 5.2 | 4.6 | **77.4** | 1.6 | 4.8 | 2.7 | 1.5 | 0.1 |'
+  id: totrans-291
   prefs: []
   type: TYPE_TB
 - en: '| **5** | 1.0 | 0.2 | 6.4 | 20.7 | 7.7 | **56.8** | 2.7 | 3.5 | 0.8 | 0.2 |'
+  id: totrans-292
   prefs: []
   type: TYPE_TB
 - en: '| **6** | 0.3 | 0.1 | 4.5 | 5.2 | 5.7 | 1.5 | **82.4** | 0.0 | 0.0 | 0.3 |'
+  id: totrans-293
   prefs: []
   type: TYPE_TB
 - en: '| **7** | 1.4 | 0.2 | 4.0 | 6.3 | 10.1 | 4.1 | 0.9 | **71.7** | 0.1 | 1.2 |'
+  id: totrans-294
   prefs: []
   type: TYPE_TB
 - en: '| **8** | 4.7 | 3.0 | 0.8 | 2.0 | 1.3 | 0.6 | 1.0 | 0.6 | **82.6** | 3.4 |'
+  id: totrans-295
   prefs: []
   type: TYPE_TB
 - en: '| **9** | 2.4 | 6.1 | 0.7 | 2.6 | 1.2 | 0.7 | 1.2 | 1.6 | 3.2 | **80.3** |'
+  id: totrans-296
   prefs: []
   type: TYPE_TB
 - en: 'The diagonals are the correct class assignments. Ideally, the matrix would
@@ -1159,12 +1662,15 @@
     or models chose the wrong label. Since each class is equally represented in the
     test set, we can calculate an overall accuracy for both models by using the unweighted
     average of the diagonals. If we do this, we get the following:'
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
 - en: 'one-vs-rest: 72.3%'
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
 - en: 'multiclass: 71.5%'
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
 - en: The one-vs-rest classifiers have the slight edge in this case, though the difference
@@ -1177,11 +1683,13 @@
     percent), more often than the one-vs-rest models. We can see how this might happen.
     Trucks and cars have wheels, and trucks and ships are (especially at the low resolution
     of CIFAR-10) both box-like.
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
 - en: Did we arrive at a definitive answer regarding one-vs-rest or multiclass models?
     No, nor could we in general. However, we did, objectively, get slightly better
     performance by using the multiple models.
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
 - en: One argument given against using multiple models, besides the extra computation
@@ -1192,6 +1700,7 @@
     between classes instead of features that might be strongly associated with a class
     but are also present in other classes. We first encountered hard negatives in
     [Chapter 4](ch04.xhtml#ch04).
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
 - en: However, in this case, it’s difficult to say that the argument holds. For the
@@ -1201,9 +1710,11 @@
     try to learn the difference between trucks, cars, and other vehicles, while the
     one-vs-rest models were, individually, trying to learn only the difference between
     a truck and any other vehicle.
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
 - en: Transfer Learning
+  id: totrans-304
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1214,6 +1725,7 @@
     that used huge datasets. In particular, many models have been built using features
     generated by AlexNet and the various ResNet architectures, which were pretrained
     on the ImageNet dataset.
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
 - en: 'We’ll use the pretrained model to turn input images into output feature vectors,
@@ -1223,6 +1735,7 @@
     network to embed the inputs we want to classify into another space—one that we
     hope will let us build a useful model. We can use transfer learning when the model
     we want to develop has too few training examples to make a good model on its own.'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
 - en: When using transfer learning, it is helpful to know or believe that both models
@@ -1234,6 +1747,7 @@
     images are quite different from each other, so we shouldn’t hope for too much
     success with transfer learning. We’re using what we have on hand to demonstrate
     the technique.
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
 - en: We’ll use a shallow CIFAR-10 model like the ones we just saw to generate the
@@ -1241,6 +1755,7 @@
     epochs. We’ll embed the MNIST dataset by passing the MNIST digit images through
     the pretrained model, keeping the output of the Dense layer, the 128-node vectors
     used to generate the 10-class softmax predictions.
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
 - en: We need to consider a few things before making the embedding. First, the CIFAR-10
@@ -1248,6 +1763,7 @@
     digit images fit this input expectation. Second, even though there are 10 classes
     for both CIFAR-10 and MNIST, this is only a coincidence; in practice, the number
     of classes between the two datasets do not need to match.
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
 - en: How should we get the 28 × 28 MNIST images into a model that’s expecting 32
@@ -1256,107 +1772,141 @@
     than the CIFAR-10 images, we can center the 28 × 28 digit image in the middle
     of a 32 × 32 input. Moreover, we can turn a grayscale image into an RGB image
     by setting each channel (red, green, and blue) to the single grayscale input.
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
 - en: 'The code for all of the following is in *transfer_learning.py*. Setting up
     the embedding process looks like this:'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE7]'
+  id: totrans-312
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: We first load the modules we need from Keras. Then we load the Keras model file,
     *cifar10_cnn_model.h5*, which contains a shallow model from the first section
     of this chapter trained for 12 epochs on the full CIFAR-10 dataset.
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
 - en: Once we have the data loaded and scaled, we can pass each MNIST train and test
     image through the Keras model and extract the 128-node vector from the Dense layer.
     This turns each MNIST image into a 128-element vector; see [Listing 14-10](ch14.xhtml#ch14lis10).
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: train = np.zeros((60000,128))
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
 - en: k = 0
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(600):'
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
 - en: t = np.zeros((100,32,32,3))
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ t[:,2:30,2:30,0] = x_train[k:(k+100)]
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
 - en: t[:,2:30,2:30,1] = x_train[k:(k+100)]
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
 - en: t[:,2:30,2:30,2] = x_train[k:(k+100)]
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: _ = model.predict(t)
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
 - en: ❷ out = [model.layers[5].output]
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
 - en: func = K.function([model.input, K.learning_phase()], out)
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
 - en: (*\newpage*)
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
 - en: train[k:(k+100),:] = func([t, 1.])[0]
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
 - en: k += 100
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("mnist_train_embedded.npy", train)
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
 - en: test = np.zeros((10000,128))
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
 - en: k = 0
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(100):'
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
 - en: t = np.zeros((100,32,32,3))
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
 - en: t[:,2:30,2:30,0] = x_test[k:(k+100)]
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
 - en: t[:,2:30,2:30,1] = x_test[k:(k+100)]
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
 - en: t[:,2:30,2:30,2] = x_test[k:(k+100)]
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
 - en: _ = model.predict(t)
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
 - en: out = [model.layers[5].output]
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
 - en: func = K.function([model.input, K.learning_phase()], out)
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
 - en: test[k:(k+100),:] = func([t, 1.])[0]
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
 - en: k += 100
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("mnist_test_embedded.npy", test)
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 14-10: Running the MNIST images through the pretrained CIFAR-10 model*'
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
 - en: There are 60,000 MNIST training images. We pass each through the Keras model
@@ -1364,6 +1914,7 @@
     this means we need to process 600 sets of 100\. We do the same for the test images,
     of which there are 10,000, so we process 100 sets of 100\. We’ll store the output
     vectors in `train` and `test`.
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
 - en: 'The processing loop for both the train and test images first creates a temporary
@@ -1379,18 +1930,22 @@
     next set of 100\. When we’ve processed the entire MNIST dataset, we keep the embedded
     vectors in a NumPy file. Then we repeat every step we used to process the training
     set for the test set.'
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
 - en: At this point, we have our embedded vectors, so it’s natural to ask whether
     or not the embedding is helping separate the classes. We can see if this is true
     by using a t-SNE plot of the vectors by class label ([Figure 14-4](ch14.xhtml#ch14fig4)).
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/14fig04.jpg)'
+  id: totrans-346
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 14-4: t-SNE plot showing the separation by class for the embedded MNIST
     digit vectors*'
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
 - en: Compare this figure with [Figure 12-10](ch12.xhtml#ch12fig10), which shows the
@@ -1399,128 +1954,167 @@
     is far less clear. However, even though there is overlap, there are concentrations
     of the classes in different parts of the plot, so we have some reason to hope
     that a model might be able to learn how to classify digits using these vectors.
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s train some models using the embedded vectors. For this, we’ll head back
     into the world of classical machine learning. We’ll train some of the models we
     trained in [Chapter 7](ch07.xhtml#ch07) by using the vector form of the MNIST
     digits images.
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
 - en: The code to train and test the models is straightforward. We’ll train a Nearest
     Centroid, 3-Nearest Neighbor, Random Forest with 50 trees, and a linear SVM with
     *C* = 0.1, as shown in [Listing 14-11](ch14.xhtml#ch14lis11).
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
 - en: from sklearn.neighbors import KNeighborsClassifier
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
 - en: from sklearn.ensemble import RandomForestClassifier
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
 - en: from sklearn.neighbors import NearestCentroid
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
 - en: from sklearn.svm import LinearSVC
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
 - en: clf0 = NearestCentroid()
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
 - en: clf0.fit(train, y_train)
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
 - en: nscore = clf0.score(test, y_test)
+  id: totrans-357
   prefs: []
   type: TYPE_NORMAL
 - en: clf1 = KNeighborsClassifier(n_neighbors=3)
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
 - en: clf1.fit(train, y_train)
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
 - en: kscore = clf1.score(test, y_test)
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
 - en: clf2 = RandomForestClassifier(n_estimators=50)
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
 - en: clf2.fit(train, y_train)
+  id: totrans-362
   prefs: []
   type: TYPE_NORMAL
 - en: rscore = clf2.score(test, y_test)
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
 - en: clf3 = LinearSVC(C=0.1)
+  id: totrans-364
   prefs: []
   type: TYPE_NORMAL
 - en: clf3.fit(train, y_train)
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
 - en: sscore = clf3.score(test, y_test)
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("Nearest Centroid    : %0.2f" % nscore)'
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("3-NN                : %0.2f" % kscore)'
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("Random Forest       : %0.2f" % rscore)'
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
 - en: 'print("SVM                 : %0.2f" % sscore)'
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 14-11: Training classical models using the MNIST embedded vectors*'
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
 - en: We load the relevant sklearn modules, create the specific model instances, and
     call `fit`, passing in the 128-element training vectors and the associated class
     labels. The `score` method returns the overall accuracy of the now trained model
     on the test set.
+  id: totrans-372
   prefs: []
   type: TYPE_NORMAL
 - en: Running this code gives us scores of
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Model** | **Score** |'
+  id: totrans-374
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- |'
+  id: totrans-375
   prefs: []
   type: TYPE_TB
 - en: '| Nearest Centroid | 0.6799 |'
+  id: totrans-376
   prefs: []
   type: TYPE_TB
 - en: '| 3-Nearest Neighbors | 0.9010 |'
+  id: totrans-377
   prefs: []
   type: TYPE_TB
 - en: '| Random Forest (50) | 0.8837 |'
+  id: totrans-378
   prefs: []
   type: TYPE_TB
 - en: '| SVM (C=0.1) | 0.8983 |'
+  id: totrans-379
   prefs: []
   type: TYPE_TB
 - en: 'which we can compare to the scaled scores for same models in [Table 7-10](ch07.xhtml#ch7tab10):'
+  id: totrans-380
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Model** | **Score** |'
+  id: totrans-381
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- |'
+  id: totrans-382
   prefs: []
   type: TYPE_TB
 - en: '| Nearest Centroid | 0.8203 |'
+  id: totrans-383
   prefs: []
   type: TYPE_TB
 - en: '| 3-Nearest Neighbors | 0.9705 |'
+  id: totrans-384
   prefs: []
   type: TYPE_TB
 - en: '| Random Forest (50) | 0.9661 |'
+  id: totrans-385
   prefs: []
   type: TYPE_TB
 - en: '| SVM (C =0.1) | 0.9181 |'
+  id: totrans-386
   prefs: []
   type: TYPE_TB
 - en: 'Clearly, in this case, our embedding is not giving us a head start over the
@@ -1532,63 +2126,81 @@
     when trained on the digit images themselves. Moreover, by their very nature, digit
     images are already distinct from each other, especially on a uniform background,
     since the digits were intended by humans to be easily distinguished by sight.'
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
 - en: 'A bit of code gives us the confusion matrix for any of these models:'
+  id: totrans-388
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE8]'
+  id: totrans-389
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Here `clf` is any of the models, `test` is the embedded test set, and `y_test`
     is the labels. We return the confusion matrix with counts in each element, so
     we divide by the sum of the rows, since the row represents the true label, and
     multiply by 100 to get percents. Then we print the array using NumPy commands
     to get a single digit of accuracy and no scientific notation.
+  id: totrans-390
   prefs: []
   type: TYPE_NORMAL
 - en: 'We know already why the Nearest Centroid result is so poor. What about the
     Random Forest and SVM? The confusion matrix for the Random Forest model is shown
     here:'
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Class** | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7**
     | **8** | **9** |'
+  id: totrans-392
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  id: totrans-393
   prefs: []
   type: TYPE_TB
 - en: '| **0** | 96.7 | 0.0 | 0.5 | 0.5 | 0.4 | 0.2 | 0.9 | 0.0 | 0.4 | 0.3 |'
+  id: totrans-394
   prefs: []
   type: TYPE_TB
 - en: '| **1** | 0.0 | 98.6 | 0.5 | 0.0 | 0.4 | 0.1 | 0.4 | 0.0 | 0.1 | 0.1 |'
+  id: totrans-395
   prefs: []
   type: TYPE_TB
 - en: '| **2** | 1.8 | 0.2 | 87.0 | 2.5 | 1.0 | 1.0 | 1.7 | 0.8 | 4.1 | 0.6 |'
+  id: totrans-396
   prefs: []
   type: TYPE_TB
 - en: '| **3** | 1.1 | 0.1 | 2.5 | **80.8** | 0.2 | **6.7** | 0.9 | 1.1 | **6.0**
     | 1.6 |'
+  id: totrans-397
   prefs: []
   type: TYPE_TB
 - en: '| **4** | 0.3 | 0.4 | 1.3 | 0.0 | 88.3 | 0.1 | 1.9 | 1.7 | 0.6 | 5.2 |'
+  id: totrans-398
   prefs: []
   type: TYPE_TB
 - en: '| **5** | 0.6 | 0.8 | 0.7 | **9.8** | 1.6 | **78.8** | **1.8** | 1.1 | 1.6
     | 0.8 |'
+  id: totrans-399
   prefs: []
   type: TYPE_TB
 - en: '| **6** | 3.0 | 0.4 | 0.6 | 0.0 | 0.7 | 1.0 | 93.5 | 0.2 | 0.4 | 0.0 |'
+  id: totrans-400
   prefs: []
   type: TYPE_TB
 - en: '| **7** | 0.2 | 1.0 | 2.9 | 0.1 | 2.7 | 0.4 | 0.0 | 87.7 | 0.7 | 4.4 |'
+  id: totrans-401
   prefs: []
   type: TYPE_TB
 - en: '| **8** | 1.4 | 0.1 | 2.7 | 5.0 | 1.5 | 1.6 | 0.6 | 0.8 | 84.0 | 2.0 |'
+  id: totrans-402
   prefs: []
   type: TYPE_TB
 - en: '| **9** | 2.2 | 0.2 | 1.3 | 1.6 | 2.9 | 0.6 | 0.3 | 3.4 | 1.5 | 86.2 |'
+  id: totrans-403
   prefs: []
   type: TYPE_TB
 - en: We’ve highlighted the two lowest-performing classes, 3 and 5, along with the
@@ -1597,13 +2209,16 @@
     [Figure 14-4](ch14.xhtml#ch14fig4) and show only classes 3, 5, and 8, then we
     get [Figure 14-5](ch14.xhtml#ch14fig5). Considerable mixing between the classes
     is plain to see.
+  id: totrans-404
   prefs: []
   type: TYPE_NORMAL
 - en: '![image](Images/14fig05.jpg)'
+  id: totrans-405
   prefs: []
   type: TYPE_IMG
 - en: '*Figure 14-5: t-SNE plot showing class 3 (plus), class 5 (cross), and class
     8 (triangle right)*'
+  id: totrans-406
   prefs: []
   type: TYPE_NORMAL
 - en: The purpose of this section was to introduce the idea of transfer learning through
@@ -1611,9 +2226,11 @@
     was not a success. The datasets we used were very different from each other, so
     we might have expected this to be the case, but it was useful to verify for ourselves.
     In the next section, we’ll see how we can go one step beyond transfer learning.
+  id: totrans-407
   prefs: []
   type: TYPE_NORMAL
 - en: Fine-Tuning a Model
+  id: totrans-408
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1623,6 +2240,7 @@
     mapped data. In this section, we’ll do something similar, but instead of leaving
     the weights as they are, we’ll let the weights vary while we continue training
     the model with a new, smaller dataset. We are calling this *fine-tuning*.
+  id: totrans-409
   prefs: []
   type: TYPE_NORMAL
 - en: In fine-tuning, we are training a neural network, but instead of initializing
@@ -1640,6 +2258,7 @@
     dataset. That way, we can take advantage of the fact that the model is already
     well adapted to inputs of this kind and, hopefully, get a good model with a small
     dataset.
+  id: totrans-410
   prefs: []
   type: TYPE_NORMAL
 - en: Our experiment will use CIFAR-10\. Our goal is to train a model to differentiate
@@ -1647,114 +2266,148 @@
     of this chapter. However, our dataset is small; we have approximately 500 images
     of each class to work with. We also have a larger dataset, all the vehicles from
     CIFAR-10.
+  id: totrans-411
   prefs: []
   type: TYPE_NORMAL
 - en: 'Therefore, we’ll train the following models with this data:'
+  id: totrans-412
   prefs: []
   type: TYPE_NORMAL
 - en: The shallow architecture using the small dog and cat dataset.
+  id: totrans-413
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: The deep architecture using the small dog and cat dataset.
+  id: totrans-414
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: The deep architecture pretrained on the vehicle data and fine-tuned on the small
     dog and cat dataset.
+  id: totrans-415
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: For the last case, we’ll train several variations using different combinations
     of frozen weights.
+  id: totrans-416
   prefs: []
   type: TYPE_NORMAL
 - en: Building Our Datasets
+  id: totrans-417
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: Before we get to fine-tuning, we need to build our datasets. We’ll use unaugmented
     CIFAR-10 to construct the small dog and cat dataset. We’ll use *augmented* CIFAR-10
     to construct the vehicle dataset. We augmented CIFAR-10 in [Chapter 5](ch05.xhtml#ch05).
+  id: totrans-418
   prefs: []
   type: TYPE_NORMAL
 - en: Building the small dog and cat dataset is straightforward, as shown in [Listing
     14-12](ch14.xhtml#ch14lis12).
+  id: totrans-419
   prefs: []
   type: TYPE_NORMAL
 - en: x_train = np.load("cifar10_train_images.npy")[:,2:30,2:30,:]
+  id: totrans-420
   prefs: []
   type: TYPE_NORMAL
 - en: y_train = np.load("cifar10_train_labels.npy")
+  id: totrans-421
   prefs: []
   type: TYPE_NORMAL
 - en: x_test = np.load("cifar10_test_images.npy")[:,2:30,2:30,:]
+  id: totrans-422
   prefs: []
   type: TYPE_NORMAL
 - en: y_test = np.load("cifar10_test_labels.npy")
+  id: totrans-423
   prefs: []
   type: TYPE_NORMAL
 - en: xtrn = []; ytrn = []
+  id: totrans-424
   prefs: []
   type: TYPE_NORMAL
 - en: xtst = []; ytst = []
+  id: totrans-425
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(y_train.shape[0]):'
+  id: totrans-426
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (y_train[i]==3):'
+  id: totrans-427
   prefs: []
   type: TYPE_NORMAL
 - en: xtrn.append(x_train[i])
+  id: totrans-428
   prefs: []
   type: TYPE_NORMAL
 - en: ytrn.append(0)
+  id: totrans-429
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (y_train[i]==5):'
+  id: totrans-430
   prefs: []
   type: TYPE_NORMAL
 - en: xtrn.append(x_train[i])
+  id: totrans-431
   prefs: []
   type: TYPE_NORMAL
 - en: ytrn.append(1)
+  id: totrans-432
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(y_test.shape[0]):'
+  id: totrans-433
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (y_test[i]==3):'
+  id: totrans-434
   prefs: []
   type: TYPE_NORMAL
 - en: xtst.append(x_test[i])
+  id: totrans-435
   prefs: []
   type: TYPE_NORMAL
 - en: ytst.append(0)
+  id: totrans-436
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (y_test[i]==5):'
+  id: totrans-437
   prefs: []
   type: TYPE_NORMAL
 - en: xtst.append(x_test[i])
+  id: totrans-438
   prefs: []
   type: TYPE_NORMAL
 - en: ytst.append(1)
+  id: totrans-439
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("cifar10_train_cat_dog_small_images.npy", np.array(xtrn)[:1000])
+  id: totrans-440
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("cifar10_train_cat_dog_small_labels.npy", np.array(ytrn)[:1000])
+  id: totrans-441
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("cifar10_test_cat_dog_small_images.npy", np.array(xtst)[:1000])
+  id: totrans-442
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("cifar10_test_cat_dog_small_labels.npy", np.array(ytst)[:1000])
+  id: totrans-443
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 14-12: Building the small dog and cat dataset*'
+  id: totrans-444
   prefs: []
   type: TYPE_NORMAL
 - en: We load the full CIFAR-10 data, train and test, and then loop over each sample.
@@ -1763,6 +2416,7 @@
     have been added, we keep the first 1,000 and write them to disk to be our small
     dog and cat training and test sets. Keeping the first 1,000 samples gives us a
     dataset that is close to split 50/50 between classes.
+  id: totrans-445
   prefs: []
   type: TYPE_NORMAL
 - en: Notice that immediately after loading the CIFAR-10 images, we subscript them
@@ -1773,69 +2427,91 @@
     the center 28 × 28 region of each image. The first dimension is the number of
     images in the train or test set. The last dimension is the number of channels—three
     since these are RGB images.
+  id: totrans-446
   prefs: []
   type: TYPE_NORMAL
 - en: Building the vehicle dataset is equally straightforward ([Listing 14-13](ch14.xhtml#ch14lis13)).
+  id: totrans-447
   prefs: []
   type: TYPE_NORMAL
 - en: x_train = np.load("cifar10_aug_train_images.npy")
+  id: totrans-448
   prefs: []
   type: TYPE_NORMAL
 - en: y_train = np.load("cifar10_aug_train_labels.npy")
+  id: totrans-449
   prefs: []
   type: TYPE_NORMAL
 - en: x_test = np.load("cifar10_aug_test_images.npy")
+  id: totrans-450
   prefs: []
   type: TYPE_NORMAL
 - en: y_test = np.load("cifar10_test_labels.npy")
+  id: totrans-451
   prefs: []
   type: TYPE_NORMAL
 - en: vehicles= [0,1,8,9]
+  id: totrans-452
   prefs: []
   type: TYPE_NORMAL
 - en: xv_train = []; xv_test = []
+  id: totrans-453
   prefs: []
   type: TYPE_NORMAL
 - en: yv_train = []; yv_test = []
+  id: totrans-454
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(y_train.shape[0]):'
+  id: totrans-455
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (y_train[i] in vehicles):'
+  id: totrans-456
   prefs: []
   type: TYPE_NORMAL
 - en: xv_train.append(x_train[i])
+  id: totrans-457
   prefs: []
   type: TYPE_NORMAL
 - en: yv_train.append(vehicles.index(y_train[i]))
+  id: totrans-458
   prefs: []
   type: TYPE_NORMAL
 - en: 'for i in range(y_test.shape[0]):'
+  id: totrans-459
   prefs: []
   type: TYPE_NORMAL
 - en: 'if (y_test[i] in vehicles):'
+  id: totrans-460
   prefs: []
   type: TYPE_NORMAL
 - en: xv_test.append(x_test[i])
+  id: totrans-461
   prefs: []
   type: TYPE_NORMAL
 - en: yv_test.append(vehicles.index(y_test[i]))
+  id: totrans-462
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("cifar10_train_vehicles_images.npy", np.array(xv_train))
+  id: totrans-463
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("cifar10_train_vehicles_labels.npy", np.array(yv_train))
+  id: totrans-464
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("cifar10_test_vehicles_images.npy", np.array(xv_test))
+  id: totrans-465
   prefs: []
   type: TYPE_NORMAL
 - en: np.save("cifar10_test_vehicles_labels.npy", np.array(yv_test))
+  id: totrans-466
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 14-13: Building the vehicle dataset*'
+  id: totrans-467
   prefs: []
   type: TYPE_NORMAL
 - en: Here we work with the augmented versions. The augmented test set is 28×28 pixels
@@ -1845,32 +2521,39 @@
     the vehicles list of the element matching the current sample’s class label, hence
     using `index` on `vehicles`. The vehicle dataset has 200,000 samples in the training
     set, 50,000 from each of the four classes.
+  id: totrans-468
   prefs: []
   type: TYPE_NORMAL
 - en: To proceed then, we need to (1) train the deep model on the vehicle dataset;
     (2) adapt the model to the dog and cat dataset; and (3) train the deep model initialized
     with the weights from the vehicle model. We’ll also train the shallow and deep
     models from scratch, using the dog and cat dataset for comparison purposes.
+  id: totrans-469
   prefs: []
   type: TYPE_NORMAL
 - en: 'We gave the code for the deep model in the first section of this chapter so
     we won’t reproduce it here. In particular, see [Listing 14-3](ch14.xhtml#ch14lis3).
     The code itself is in the file *cifar10_cnn_vehicles.py*. The relevant changes
     for the vehicle model are shown here:'
+  id: totrans-470
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE9]'
+  id: totrans-471
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: We use a minibatch size of 64\. There are four classes (airplane, automobile,
     ship, truck), and we’ll train for 12 epochs. When we’re done training, we’ll store
     the model in *cifar10_cnn_vehicles_model.h5* so we can use its weights and biases
     for fine-tuning the dog and cat model. Training this model takes several hours
     on our CPU system. The final test accuracy is 88.2 percent, so it is performing
     well enough for our purposes.
+  id: totrans-472
   prefs: []
   type: TYPE_NORMAL
 - en: Adapting Our Model for Fine-Tuning
+  id: totrans-473
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -1879,6 +2562,7 @@
     with one that expects two. We also need to decide which layer’s weights we’ll
     freeze and which we’ll update during training. This step is essential, and we’ll
     see how our choices affect the fine-tuning results.
+  id: totrans-474
   prefs: []
   type: TYPE_NORMAL
 - en: When fine-tuning, it’s standard practice to freeze lower-level weights; they
@@ -1890,6 +2574,7 @@
     the size of the model and the data itself. Experimentation is required. Note that
     the transfer learning of the previous section can be considered fine-tuning with
     all the weights frozen.
+  id: totrans-475
   prefs: []
   type: TYPE_NORMAL
 - en: 'Note that if we’re using SGD with fine-tuning, we typically reduce the learning
@@ -1897,6 +2582,7 @@
     weights: the model is already “close” to a desired minimum of the error function,
     so we don’t need big steps to find it. Our experiment will use Adadelta, which
     will adjust the learning rate step size for us.'
+  id: totrans-476
   prefs: []
   type: TYPE_NORMAL
 - en: The deep model has multiple convolutional layers. We’ll experiment with freezing
@@ -1907,137 +2593,180 @@
     with a model that freezes all the convolutional layers and allows only the dense
     layers to be adapted during training. Doing this is reminiscent of transfer learning,
     though we’ll allow the dense layers to update their weights.
+  id: totrans-477
   prefs: []
   type: TYPE_NORMAL
 - en: Let’s create the code for fine-tuning by using the vehicle model that we trained
     earlier ([Listing 14-14](ch14.xhtml#ch14lis14)).
+  id: totrans-478
   prefs: []
   type: TYPE_NORMAL
 - en: import keras
+  id: totrans-479
   prefs: []
   type: TYPE_NORMAL
 - en: from keras.models import load_model
+  id: totrans-480
   prefs: []
   type: TYPE_NORMAL
 - en: from keras.layers import Dense
+  id: totrans-481
   prefs: []
   type: TYPE_NORMAL
 - en: from keras import backend as K
+  id: totrans-482
   prefs: []
   type: TYPE_NORMAL
 - en: import numpy as np
+  id: totrans-483
   prefs: []
   type: TYPE_NORMAL
 - en: batch_size = 64
+  id: totrans-484
   prefs: []
   type: TYPE_NORMAL
 - en: num_classes = 2
+  id: totrans-485
   prefs: []
   type: TYPE_NORMAL
 - en: epochs = 36
+  id: totrans-486
   prefs: []
   type: TYPE_NORMAL
 - en: img_rows, img_cols = 28,28
+  id: totrans-487
   prefs: []
   type: TYPE_NORMAL
 - en: x_train = np.load("cifar10_train_cat_dog_small_images.npy")
+  id: totrans-488
   prefs: []
   type: TYPE_NORMAL
 - en: y_train = np.load("cifar10_train_cat_dog_small_labels.npy")
+  id: totrans-489
   prefs: []
   type: TYPE_NORMAL
 - en: x_test = np.load("cifar10_test_cat_dog_small_images.npy")
+  id: totrans-490
   prefs: []
   type: TYPE_NORMAL
 - en: y_test = np.load("cifar10_test_cat_dog_small_labels.npy")
+  id: totrans-491
   prefs: []
   type: TYPE_NORMAL
 - en: 'if K.image_data_format() == ''channels_first'':'
+  id: totrans-492
   prefs: []
   type: TYPE_NORMAL
 - en: x_train = x_train.reshape(x_train.shape[0], 3, img_rows, img_cols)
+  id: totrans-493
   prefs: []
   type: TYPE_NORMAL
 - en: x_test = x_test.reshape(x_test.shape[0], 3, img_rows, img_cols)
+  id: totrans-494
   prefs: []
   type: TYPE_NORMAL
 - en: input_shape = (3, img_rows, img_cols)
+  id: totrans-495
   prefs: []
   type: TYPE_NORMAL
 - en: 'else:'
+  id: totrans-496
   prefs: []
   type: TYPE_NORMAL
 - en: x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 3)
+  id: totrans-497
   prefs: []
   type: TYPE_NORMAL
 - en: x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 3)
+  id: totrans-498
   prefs: []
   type: TYPE_NORMAL
 - en: input_shape = (img_rows, img_cols, 3)
+  id: totrans-499
   prefs: []
   type: TYPE_NORMAL
 - en: x_train = x_train.astype('float32')
+  id: totrans-500
   prefs: []
   type: TYPE_NORMAL
 - en: x_test = x_test.astype('float32')
+  id: totrans-501
   prefs: []
   type: TYPE_NORMAL
 - en: x_train /= 255
+  id: totrans-502
   prefs: []
   type: TYPE_NORMAL
 - en: x_test /= 255
+  id: totrans-503
   prefs: []
   type: TYPE_NORMAL
 - en: y_train = keras.utils.to_categorical(y_train, num_classes)
+  id: totrans-504
   prefs: []
   type: TYPE_NORMAL
 - en: y_test = keras.utils.to_categorical(y_test, num_classes)
+  id: totrans-505
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 14-14: Fine-tuning the vehicle model. See* cifar10_cnn_cat_dog_fine_tune_3.py.'
+  id: totrans-506
   prefs: []
   type: TYPE_NORMAL
 - en: These lines should be familiar by now. First we load and preprocess the small
     dog and cat dataset. Note that we are using a minibatch size of 64, two classes
     (0 = cat, 1 = dog), and 36 epochs.
+  id: totrans-507
   prefs: []
   type: TYPE_NORMAL
 - en: Next, we need to load the vehicle model, strip off its top layer, and replace
     it with a two-class softmax ([Listing 14-15](ch14.xhtml#ch14lis15)). This is also
     where we will freeze some combination of the first two convolutional layers.
+  id: totrans-508
   prefs: []
   type: TYPE_NORMAL
 - en: model = load_model("cifar10_cnn_vehicles_model.h5")
+  id: totrans-509
   prefs: []
   type: TYPE_NORMAL
 - en: ❶ model.layers.pop()
+  id: totrans-510
   prefs: []
   type: TYPE_NORMAL
 - en: ❷ model.outputs = [model.layers[-1].output]
+  id: totrans-511
   prefs: []
   type: TYPE_NORMAL
 - en: model.layers[-1].outbound_nodes = []
+  id: totrans-512
   prefs: []
   type: TYPE_NORMAL
 - en: ❸ model.add(Dense(num_classes, name="softmax", activation='softmax'))
+  id: totrans-513
   prefs: []
   type: TYPE_NORMAL
 - en: ❹ model.layers[0].trainable = False
+  id: totrans-514
   prefs: []
   type: TYPE_NORMAL
 - en: model.layers[1].trainable = False
+  id: totrans-515
   prefs: []
   type: TYPE_NORMAL
 - en: model.compile(loss=keras.losses.categorical_crossentropy,
+  id: totrans-516
   prefs: []
   type: TYPE_NORMAL
 - en: optimizer=keras.optimizers.Adadelta(),
+  id: totrans-517
   prefs: []
   type: TYPE_NORMAL
 - en: metrics=['accuracy'])
+  id: totrans-518
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 14-15: Adjusting the vehicle model for dogs and cats*'
+  id: totrans-519
   prefs: []
   type: TYPE_NORMAL
 - en: After we load the model, we use Keras to remove the top layer ❶. We need to
@@ -2046,49 +2775,64 @@
     classes ❸. This example is set to freeze the weights of the first two convolutional
     layers ❹. We’ll test each possible combination involving the first two convolutional
     layers. Finally, we compile the updated model and specify the Adadelta optimizer.
+  id: totrans-520
   prefs: []
   type: TYPE_NORMAL
 - en: We train the model by calling the `fit` method, as before as shown in [Listing
     14-16](ch14.xhtml#ch14lis16).
+  id: totrans-521
   prefs: []
   type: TYPE_NORMAL
 - en: score = model.evaluate(x_test[100:], y_test[100:], verbose=0)
+  id: totrans-522
   prefs: []
   type: TYPE_NORMAL
 - en: print('Initial test loss:', score[0])
+  id: totrans-523
   prefs: []
   type: TYPE_NORMAL
 - en: print('Initial test accuracy:', score[1])
+  id: totrans-524
   prefs: []
   type: TYPE_NORMAL
 - en: history = model.fit(x_train, y_train,
+  id: totrans-525
   prefs: []
   type: TYPE_NORMAL
 - en: batch_size=batch_size,
+  id: totrans-526
   prefs: []
   type: TYPE_NORMAL
 - en: epochs=epochs,
+  id: totrans-527
   prefs: []
   type: TYPE_NORMAL
 - en: verbose=0,
+  id: totrans-528
   prefs: []
   type: TYPE_NORMAL
 - en: validation_data=(x_test[:100], y_test[:100]))
+  id: totrans-529
   prefs: []
   type: TYPE_NORMAL
 - en: score = model.evaluate(x_test[100:], y_test[100:], verbose=0)
+  id: totrans-530
   prefs: []
   type: TYPE_NORMAL
 - en: print('Test loss:', score[0])
+  id: totrans-531
   prefs: []
   type: TYPE_NORMAL
 - en: print('Test accuracy:', score[1])
+  id: totrans-532
   prefs: []
   type: TYPE_NORMAL
 - en: model.save("cifar10_cnn_cat_dog_fine_tune_3_model.h5")
+  id: totrans-533
   prefs: []
   type: TYPE_NORMAL
 - en: '*Listing 14-16: Training and testing the dog and cat model*'
+  id: totrans-534
   prefs: []
   type: TYPE_NORMAL
 - en: We are calling `evaluate` using the last 90 percent of the test data, *before*
@@ -2097,6 +2841,7 @@
     a second time. Finally, we save the model and the training history. This model
     froze both of the first two convolutional layers. Other models will freeze or
     unfreeze these layers for the remaining three possibilities.
+  id: totrans-535
   prefs: []
   type: TYPE_NORMAL
 - en: 'We mentioned earlier that we’d also train a model by freezing all of the convolutional
@@ -2106,12 +2851,16 @@
     as the transfer learning approach of the previous section. To freeze all the convolutional
     layers, we replace the direct assignments to specific layers’ `trainable` property
     with a loop over all the layers:'
+  id: totrans-536
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-537
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Testing Our Model
+  id: totrans-538
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -2122,48 +2871,61 @@
     dense layer below it has 128 nodes, so each model needs to randomly initialize
     128 × 2 + 2 = 258 weights and biases for the new layer. This is the source of
     the difference.
+  id: totrans-539
   prefs: []
   type: TYPE_NORMAL
 - en: Without training, the initial model accuracy hovers around 50 to 51 percent,
     with each model slightly different because of the initialization we just mentioned.
     This is a two-class model, so this means that without any training, it is randomly
     guessing between dog and cat.
+  id: totrans-540
   prefs: []
   type: TYPE_NORMAL
 - en: After we have trained all of the models and tallied all of the per model accuracies,
     we get [Table 14-2](ch14.xhtml#ch14tab2), where we present accuracy as mean ±
     standard error.
+  id: totrans-541
   prefs: []
   type: TYPE_NORMAL
 - en: '**Table 14-2:** Dog and Cat Test Set Accuracies for the Shallow, Deep, and
     Fine-Tuned Deep Models'
+  id: totrans-542
   prefs: []
   type: TYPE_NORMAL
 - en: '| **Model** | **Freeze Conv0** | **Freeze Conv1** | **Accuracy (%)** |'
+  id: totrans-543
   prefs: []
   type: TYPE_TB
 - en: '| --- | --- | --- | --- |'
+  id: totrans-544
   prefs: []
   type: TYPE_TB
 - en: '| Shallow | – | – | 64.375 ± 0.388 |'
+  id: totrans-545
   prefs: []
   type: TYPE_TB
 - en: '| Deep | – | – | 61.142 ± 0.509 |'
+  id: totrans-546
   prefs: []
   type: TYPE_TB
 - en: '| Fine-tune 0 | False | False | 62.683 ± 3.689 |'
+  id: totrans-547
   prefs: []
   type: TYPE_TB
 - en: '| Fine-tune 1 | True | False | 69.142 ± 0.934 |'
+  id: totrans-548
   prefs: []
   type: TYPE_TB
 - en: '| Fine-tune 2 | False | True | 68.842 ± 0.715 |'
+  id: totrans-549
   prefs: []
   type: TYPE_TB
 - en: '| Fine-tune 3 | True | True | 70.050 ± 0.297 |'
+  id: totrans-550
   prefs: []
   type: TYPE_TB
 - en: '| Freeze all | – | – | 57.042 ± 0.518 |'
+  id: totrans-551
   prefs: []
   type: TYPE_TB
 - en: 'What to make of these results? First, we see that training the deep architecture
@@ -2175,6 +2937,7 @@
     equally effective: two are even worse than the best from-scratch result (“Fine-tune
     0” and “Freeze all”). So, we do not want to freeze all the convolutional layers,
     nor do we want to be free to update all of them.'
+  id: totrans-552
   prefs: []
   type: TYPE_NORMAL
 - en: This leaves fine-tune models 1, 2, and 3 to consider. The “Fine-tune 3” model
@@ -2189,6 +2952,7 @@
     the sorts of structures present in CIFAR-10 images, and, since our dog and cat
     dataset is also from CIFAR-10, it is reasonable to believe that the same kernels
     will be useful with those images as well.
+  id: totrans-553
   prefs: []
   type: TYPE_NORMAL
 - en: However, when we froze all the convolutional layers of the deep architecture,
@@ -2199,6 +2963,7 @@
     structures that distinguish dogs from cats. If we cannot modify these layers,
     there is no opportunity for them to be conditioned on the very things that we
     need them to learn.
+  id: totrans-554
   prefs: []
   type: TYPE_NORMAL
 - en: 'This fine-tuning example shows the power of the technique when it is applicable.
@@ -2210,9 +2975,11 @@
     Learning for Medical Imaging” by Maithra Raghu et al. This paper uses transfer
     learning/fine-tuning between pretrained ImageNet models and medical images and
     shows that shallow models trained from scratch are often just as good.'
+  id: totrans-555
   prefs: []
   type: TYPE_NORMAL
 - en: Summary
+  id: totrans-556
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -2224,11 +2991,13 @@
     After this, we introduced two fundamental techniques, transfer learning and fine-tuning,
     and showed how to implement them in Keras. These techniques should be understood
     and in your deep learning bag of tricks going forward.
+  id: totrans-557
   prefs: []
   type: TYPE_NORMAL
 - en: In the next chapter, we’ll present a case study with a dataset we have not yet
     worked with. We’ll assume the role of data scientists tasked with making a model
     for this dataset and work our way through, from initial data processing to model
     exploration and final model construction.
+  id: totrans-558
   prefs: []
   type: TYPE_NORMAL
