@@ -295,6 +295,7 @@
   id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单 12-2](ch12.xhtml#ch12list2)中微型应用程序的目的是将消息存储在 SQL 表中，并通过 HTTP REST API 提供对这些消息的访问。每条消息由一个频道号、一个源字符串和一个内容字符串组成。'
 - en: '[PRE3]'
   id: totrans-38
   prefs: []
@@ -304,6 +305,7 @@
   id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-2：用于存储消息的 SQL 表架构*'
 - en: 'We also want to stream these messages to the client so that it can process
     them in real time. To do this, we’re going to use the `LISTEN` and `NOTIFY` features
     of PostgreSQL. These features allow us to listen for messages sent by a function
@@ -311,6 +313,8 @@
   id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还希望将这些消息流式传输到客户端，以便它可以实时处理它们。为此，我们将使用 PostgreSQL 的 `LISTEN` 和 `NOTIFY` 功能。这些功能允许我们监听
+    PostgreSQL 执行的函数发送的消息：
 - en: '[PRE4]'
   id: totrans-41
   prefs: []
@@ -325,6 +329,9 @@
   id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码创建了一个用 pl/pgsql 编写的触发器函数，这是 PostgreSQL 独有的一种语言。请注意，我们也可以使用其他语言编写此函数，例如 Python
+    本身，因为 PostgreSQL 嵌入了 Python 解释器以提供 pl/python 语言。我们在这里执行的单一简单操作并不需要利用 Python，因此坚持使用
+    pl/pgsql 是一个明智的选择。
 - en: The function `notify_on_insert()` ➊ performs a call to `pg_notify()` ➋, which
     is the function that actually sends the notification. The first argument is a
     string that represents a *channel*, while the second is a string carrying the
@@ -334,11 +341,15 @@
   id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数 `notify_on_insert()` ➊ 调用了 `pg_notify()` ➋，该函数实际上发送了通知。第一个参数是表示 *频道* 的字符串，而第二个参数是承载实际
+    *有效载荷* 的字符串。我们根据行中频道列的值动态定义频道。在这种情况下，有效载荷将是整行数据的 JSON 格式。是的，PostgreSQL 确实知道如何将一行数据转换为
+    JSON！
 - en: 'Next, we want to send a notification message on each `INSERT` performed in
     the message table, so we need to trigger this function on such events:'
   id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们希望在每次在消息表中执行 `INSERT` 时发送通知消息，因此我们需要在此类事件上触发该函数：
 - en: '[PRE5]'
   id: totrans-45
   prefs: []
@@ -349,10 +360,12 @@
   id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 该函数现在已经连接并将在每次在消息表中执行成功的`INSERT`时被执行。
 - en: 'We can check that it works by using the `LISTEN` operation in `psql`:'
   id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过在 `psql` 中使用 `LISTEN` 操作来检查它是否工作正常：
 - en: '[PRE6]'
   id: totrans-48
   prefs: []
@@ -364,6 +377,8 @@
   id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦行被插入，通知便会被发送，并且我们能够通过 PostgreSQL 客户端接收到它。现在我们只需构建流式传输该事件的 Python 应用程序，如 [清单
+    12-3](ch12.xhtml#ch12list3) 所示。
 - en: '[PRE7]'
   id: totrans-50
   prefs: []
@@ -373,6 +388,7 @@
   id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: '*清单 12-3：监听并接收通知流*'
 - en: '[Listing 12-3](ch12.xhtml#ch12list3) connects to PostgreSQL using the `psycopg2`
     library. The `psycopg2` library is a Python module that implements the PostgreSQL
     network protocol and allows us to connect to a PostgreSQL server to send SQL requests
@@ -386,12 +402,17 @@
   id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: '[清单 12-3](ch12.xhtml#ch12list3)使用 `psycopg2` 库连接到 PostgreSQL。`psycopg2` 库是一个
+    Python 模块，实现了 PostgreSQL 网络协议，并允许我们连接到 PostgreSQL 服务器发送 SQL 请求并接收结果。我们本可以使用提供抽象层的库，例如
+    `sqlalchemy`，但是抽象库并没有提供访问 PostgreSQL 的 `LISTEN` 和 `NOTIFY` 功能。需要注意的是，使用像 `sqlalchemy`
+    这样的库时，仍然可以访问底层数据库连接来执行代码，但对于这个示例来说这样做没有意义，因为我们不需要 ORM 库提供的其他功能。'
 - en: 'The program listens on `channel_1`, and as soon as it receives a notification,
     prints it to the screen. If we run the program and insert a row in the `message`
     table, we get the following output:'
   id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 程序监听 `channel_1`，一旦收到通知，就会将其打印到屏幕上。如果我们运行程序并在 `message` 表中插入一行数据，我们会得到以下输出：
 - en: '[PRE8]'
   id: totrans-54
   prefs: []
@@ -404,11 +425,13 @@
   id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦我们插入行，PostgreSQL 会运行触发器并发送通知。我们的程序接收到通知并打印通知负载；在这里，通知负载就是被序列化为 JSON 的行。现在，我们具备了接收插入数据库的数据的基本能力，而无需做任何额外的请求或工作。
 - en: '***Building the Application***'
   id: totrans-56
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: '***构建应用程序***'
 - en: 'Next, we’ll use *Flask*, a simple HTTP micro-framework, to build our application.
     We’re going to build an HTTP server that streams the flux of `insert` using the
     *Server-Sent Events* message protocol defined by HTML5\. An alternative would
@@ -416,6 +439,8 @@
   id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: '接下来，我们将使用 *Flask*，一个简单的 HTTP 微框架，来构建我们的应用程序。我们将构建一个 HTTP 服务器，使用 HTML5 定义的 *Server-Sent
+    Events* 消息协议流式传输 `insert` 数据流。另一种选择是使用 HTTP/1.1 定义的 *Transfer-Encoding: chunked*：'
 - en: '[PRE9]'
   id: totrans-58
   prefs: []
@@ -430,6 +455,8 @@
   id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个应用程序足够简单，支持流式传输，但不支持其他数据检索操作。我们使用 Flask 将 HTTP 请求 `GET /message/channel` 路由到我们的流式代码。一旦调用该代码，应用程序会返回一个具有
+    `text/event-stream` MIME 类型的响应，并返回一个生成器函数，而不是一个字符串。Flask 会调用这个函数，并在每次生成器生成内容时发送结果。
 - en: The generator, `stream_messages()`, reuses the code we wrote earlier to listen
     to PostgreSQL notifications. It receives the channel identifier as an argument,
     listens to that channel, and then yields the payload. Remember that we used PostgreSQL’s
@@ -439,20 +466,26 @@
   id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成器 `stream_messages()` 重用了我们之前写的代码来监听 PostgreSQL 通知。它接收频道标识符作为参数，监听该频道，然后返回负载。记住，我们在触发器函数中使用了
+    PostgreSQL 的 JSON 编码函数，所以我们已经从 PostgreSQL 接收到了 JSON 数据。我们不需要重新编码数据，因为直接将 JSON
+    数据发送给 HTTP 客户端是可以的。
 - en: '**NOTE**'
   id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**'
 - en: '*For the sake of simplicity, this example application has been written in a
     single file. If this were a real application, I would move the storage-handling
     implementation into its own Python module.*'
   id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: '*为了简化起见，这个示例应用程序是写在一个文件中的。如果这是一个真正的应用程序，我会将存储处理实现移动到它自己的 Python 模块中。*'
 - en: 'We can now run the server:'
   id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们现在可以运行服务器：
 - en: '[PRE10]'
   id: totrans-64
   prefs: []
@@ -463,6 +496,7 @@
   id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 在另一个终端中，我们可以连接并检索已输入的事件。连接时，没有数据接收，并且连接保持打开状态：
 - en: '[PRE11]'
   id: totrans-66
   prefs: []
@@ -474,6 +508,7 @@
   id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是，一旦我们在 `message` 表中插入一些行，我们会开始通过运行 `curl` 的终端看到数据流入。在第三个终端中，我们在数据库中插入一条消息：
 - en: '[PRE12]'
   id: totrans-68
   prefs: []
@@ -483,6 +518,7 @@
   id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是数据输出：
 - en: '[PRE13]'
   id: totrans-70
   prefs: []
@@ -495,6 +531,8 @@
   id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些数据会打印到运行 `curl` 的终端中。这样就保持了 `curl` 与 HTTP 服务器的连接，同时等待下一个消息流的到来。我们创建了一个流式服务，而没有做任何轮询，建立了一个完全基于
+    *推送* 的系统，信息在一个点到另一个点之间无缝流动。
 - en: A naive and arguably more portable implementation of this application would
     instead repeatedly loop over a `SELECT` statement to poll for new data inserted
     in the table. This would work with any other storage system that does not support
@@ -502,11 +540,13 @@
   id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个天真且可能更具可移植性的实现会反复循环执行 `SELECT` 语句，以轮询表中插入的新数据。这种方式适用于任何不支持发布-订阅模式的存储系统，而不是像本例中所示的这种方式。
 - en: '**Dimitri Fontaine on Databases**'
   id: totrans-73
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '**Dimitri Fontaine 论数据库**'
 - en: Dimitri is a skilled PostgreSQL Major Contributor who works at Citus Data and
     argues with other database gurus on the *pgsql-hackers* mailing list. We’ve shared
     a lot of open source adventures, and he’s been kind enough to answer some questions
