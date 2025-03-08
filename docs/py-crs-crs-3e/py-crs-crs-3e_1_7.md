@@ -1,5 +1,5 @@
 
-## 用户输入与 while 循环
+## 第七章：用户输入与 while 循环
 
 ![](img/chapterart.png)
 

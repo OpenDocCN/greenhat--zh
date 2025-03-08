@@ -1,5 +1,5 @@
 
-## 字典
+## 第六章：字典
 
 ![](img/chapterart.png)
 

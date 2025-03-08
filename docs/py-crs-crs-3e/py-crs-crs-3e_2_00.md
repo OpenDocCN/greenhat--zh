@@ -1,6 +1,4 @@
-# 9
-
-类
+# 第九章：类
 
 ![](img/chapterart.png)
 
