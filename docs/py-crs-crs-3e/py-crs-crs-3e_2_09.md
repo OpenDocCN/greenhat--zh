@@ -1,6 +1,4 @@
-# 第十七章：17
-
-使用 API
+# 第十七章：使用 API
 
 ![](img/chapterart.png)
 

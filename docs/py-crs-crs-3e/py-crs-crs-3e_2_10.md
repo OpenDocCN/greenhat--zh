@@ -1,6 +1,4 @@
-# 第十八章：18
-
-开始使用 Django
+# 第十八章：开始使用 Django
 
 ![](img/chapterart.png)
 
