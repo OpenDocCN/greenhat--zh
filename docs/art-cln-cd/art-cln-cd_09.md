@@ -1,6 +1,4 @@
-# 9
-
-集中注意力
+# 集中注意力
 
 ![](img/chapterart.png)
 
