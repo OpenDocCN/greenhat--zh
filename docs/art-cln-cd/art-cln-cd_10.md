@@ -1,4 +1,4 @@
-# 作者寄语
+# 第十章：作者寄语
 
 ![](img/chapterart.png)
 
