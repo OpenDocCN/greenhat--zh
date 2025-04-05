@@ -10,10 +10,10 @@
         飞龙：负责人名称
         wizardforcel：负责人 Github 用户名
         562826179：负责人 QQ
-        geekdoc-python-pt2-zh：ApacheCN 的 Github 仓库名称
-        geekdoc-python-pt2-zh：DockerHub 仓库名称
-        geekdoc-python-pt2-zh：PYPI 包名称
-        geekdoc-python-pt2-zh：NPM 包名称
+        greenhat-python--zh：ApacheCN 的 Github 仓库名称
+        greenhat-python--zh：DockerHub 仓库名称
+        greenhat-python--zh：PYPI 包名称
+        greenhat-python--zh：NPM 包名称
     
     CNAME
     
@@ -23,14 +23,14 @@
     
         GeekDoc Python 译文集（二）：文档中文名
         #b6459a：显示颜色
-        geekdoc-python-pt2-zh：ApacheCN 的 Github 仓库名称
+        greenhat-python--zh：ApacheCN 的 Github 仓库名称
 
     asset/docsify-flygon-footer.js
     
-        geekdoc-python-pt2-zh：ApacheCN 的 Github 仓库名称
+        greenhat-python--zh：ApacheCN 的 Github 仓库名称
 -->
 
-# GeekDoc Python 译文集（二）
+# GreenHat Python 译文集
 
 > 协议：[CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 > 
@@ -38,23 +38,23 @@
 > 
 > 敢于公开博弈，敢于激化矛盾，敢于同归于尽！
 
-* [在线阅读](https://gdpy2.flygon.net)
+* [在线阅读](https://ghpy.flygon.net)
 
 ## 下载
 
 ### Docker
 
 ```
-docker pull apachecn0/geekdoc-python-pt2-zh
-docker run -tid -p <port>:80 apachecn0/geekdoc-python-pt2-zh
+docker pull apachecn0/greenhat-python--zh
+docker run -tid -p <port>:80 apachecn0/greenhat-python--zh
 # 访问 http://localhost:{port} 查看文档
 ```
 
 ### NPM
 
 ```
-npm install -g geekdoc-python-pt2-zh
-geekdoc-python-pt2-zh <port>
+npm install -g greenhat-python--zh
+greenhat-python--zh <port>
 # 访问 http://localhost:{port} 查看文档
 ```
 
